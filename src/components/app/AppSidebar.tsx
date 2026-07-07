@@ -19,9 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Users, BarChart3, Cloud, Smartphone, Settings, LogOut,
-  Package, OctagonAlert, Sparkles, QrCode, CreditCard, Shield, Brain, Zap,
-  ClipboardList, Building2, Activity, Warehouse,
+  LayoutDashboard, Users, Smartphone, LogOut,
+  Package, OctagonAlert, Zap, Building2, Warehouse,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
