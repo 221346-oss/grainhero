@@ -439,11 +439,123 @@ export const listSensorDevices = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("sensor_devices")
-      .select("*")
+      .select("*, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
     return data ?? [];
+  });
+
+const sensorTypeEnum = z.enum(["co2","humidity","light","moisture","ph","pressure","temperature","voc"]);
+const sensorInput = z.object({
+  id: z.string().uuid().optional(),
+  device_id: z.string().min(1).max(80).optional(),
+  device_name: z.string().min(1).max(200),
+  mac_address: z.string().max(80).optional().nullable(),
+  model: z.string().max(100).optional().nullable(),
+  manufacturer: z.string().max(100).optional().nullable(),
+  firmware_version: z.string().max(50).optional().nullable(),
+  device_type: z.string().max(50).optional().nullable(),
+  category: z.string().max(50).optional().nullable(),
+  sensor_types: z.array(sensorTypeEnum).optional().nullable(),
+  warehouse_id: z.string().uuid(),
+  silo_id: z.string().uuid(),
+  status: z.enum(["active","offline","error","maintenance"]).default("active"),
+  power_source: z.enum(["solar","battery","direct","hybrid"]).optional().nullable(),
+  data_transmission_interval: z.number().int().positive().optional().nullable(),
+  calibration_interval_days: z.number().int().positive().optional().nullable(),
+  last_calibration_date: z.string().optional().nullable(),
+  is_enabled: z.boolean().optional(),
+  notes: z.string().max(2000).optional().nullable(),
+});
+
+export const upsertSensorDevice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => sensorInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const base = {
+      device_name: data.device_name,
+      mac_address: data.mac_address ?? null,
+      model: data.model ?? null,
+      manufacturer: data.manufacturer ?? null,
+      firmware_version: data.firmware_version ?? null,
+      device_type: data.device_type ?? "environmental",
+      category: data.category ?? "environmental",
+      sensor_types: data.sensor_types ?? [],
+      warehouse_id: data.warehouse_id,
+      silo_id: data.silo_id,
+      status: data.status,
+      power_source: data.power_source ?? null,
+      data_transmission_interval: data.data_transmission_interval ?? 60,
+      calibration_interval_days: data.calibration_interval_days ?? 365,
+      last_calibration_date: data.last_calibration_date || null,
+      is_enabled: data.is_enabled ?? true,
+      notes: data.notes ?? null,
+      updated_by: context.userId,
+    };
+    if (data.id) {
+      const { data: row, error } = await context.supabase.from("sensor_devices").update(base).eq("id", data.id).select("*").single();
+      if (error) throw error;
+      return row;
+    }
+    const deviceId = data.device_id ?? `DEV-${Date.now().toString().slice(-8)}`;
+    const { data: row, error } = await context.supabase.from("sensor_devices").insert({
+      ...base,
+      device_id: deviceId,
+      admin_id: context.userId,
+      created_by: context.userId,
+    }).select("*").single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteSensorDevice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("sensor_devices").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+// Latest reading per device (used to power live tiles)
+type LatestReading = {
+  id: string; device_id: string; reading_timestamp: string;
+  temperature_value: number | null; humidity_value: number | null;
+  co2_value: number | null; voc_value: number | null;
+  moisture_value: number | null; pressure_value: number | null;
+  ml_risk_class: string | null; ml_risk_score: number | null;
+  anomaly_detected: boolean | null;
+  battery_level: number | null; signal_strength: number | null;
+};
+export const listLatestSensorReadings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<LatestReading[]> => {
+    const { data, error } = await context.supabase
+      .from("sensor_readings")
+      .select("id, device_id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, pressure_value, ml_risk_class, ml_risk_score, anomaly_detected, battery_level, signal_strength")
+      .order("reading_timestamp", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    const rows = (data ?? []) as LatestReading[];
+    const map = new Map<string, LatestReading>();
+    for (const r of rows) if (!map.has(r.device_id)) map.set(r.device_id, r);
+    return Array.from(map.values());
+  });
+
+// Recent readings for a single device (history)
+export const listDeviceReadings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ device_id: z.string().uuid(), limit: z.number().int().max(500).default(50) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("sensor_readings")
+      .select("id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, ml_risk_class, ml_risk_score, anomaly_detected")
+      .eq("device_id", data.device_id)
+      .order("reading_timestamp", { ascending: false })
+      .limit(data.limit);
+    if (error) throw error;
+    return rows ?? [];
   });
 
 export const listActuators = createServerFn({ method: "GET" })
