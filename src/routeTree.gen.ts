@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
+import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
@@ -47,6 +48,11 @@ const AuthenticatedWarehousesRoute = AuthenticatedWarehousesRouteImport.update({
   path: '/warehouses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSilosRoute = AuthenticatedSilosRouteImport.update({
+  id: '/silos',
+  path: '/silos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
   id: '/not-allowed',
   path: '/not-allowed',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/_authenticated/silos': typeof AuthenticatedSilosRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/dashboard'
     | '/not-allowed'
+    | '/silos'
     | '/warehouses'
     | '/auth/reset-password'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/dashboard'
     | '/not-allowed'
+    | '/silos'
     | '/warehouses'
     | '/auth/reset-password'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/dashboard'
     | '/_authenticated/not-allowed'
+    | '/_authenticated/silos'
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWarehousesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/silos': {
+      id: '/_authenticated/silos'
+      path: '/silos'
+      fullPath: '/silos'
+      preLoaderRoute: typeof AuthenticatedSilosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/not-allowed': {
       id: '/_authenticated/not-allowed'
       path: '/not-allowed'
@@ -189,12 +208,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
+  AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
+  AuthenticatedSilosRoute: AuthenticatedSilosRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
 }
 
