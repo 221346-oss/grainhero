@@ -93,8 +93,8 @@ function TraceabilityPage() {
     return (
       <div className="p-4 sm:p-6 space-y-6">
         <div className="space-y-2">
-          <TSSkeleton className="h-8 w-64" />
-          <TSSkeleton className="h-4 w-96 max-w-full" />
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96 max-w-full" />
         </div>
         <StatsSkeleton />
         <TableSkeleton rows={8} cols={5} />
