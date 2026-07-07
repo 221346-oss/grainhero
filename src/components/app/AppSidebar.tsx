@@ -111,7 +111,7 @@ function NavRow({ item, active, collapsed }: { item: NavItem; active: boolean; c
             : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         )}
       >
-        <Link to={item.to} className="flex items-center gap-3">
+        <Link to={item.to} data-tour={`nav-${item.name}`} className="flex items-center gap-3">
           <item.icon
             className={cn(
               "shrink-0 transition-transform duration-200",

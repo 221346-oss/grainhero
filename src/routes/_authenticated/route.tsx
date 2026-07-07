@@ -6,6 +6,7 @@ import { Bell, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ThemeInit } from "@/components/app/ThemeInit";
 import { SessionGuard } from "@/components/app/SessionGuard";
+import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -26,8 +27,11 @@ function AuthenticatedLayout() {
     <SidebarProvider>
       <ThemeInit />
       <SessionGuard />
+      <OnboardingTour />
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
+        <div data-tour="sidebar" className="contents">
+          <AppSidebar />
+        </div>
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
             <SidebarTrigger className="shrink-0" />
@@ -44,6 +48,7 @@ function AuthenticatedLayout() {
             <Link
               to="/notifications"
               aria-label="Notifications"
+              data-tour="topbar-notifications"
               className="relative shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
             >
               <Bell className="h-4 w-4" />
@@ -52,6 +57,7 @@ function AuthenticatedLayout() {
             <Link
               to="/settings"
               aria-label="Your profile"
+              data-tour="topbar-profile"
               className="shrink-0 h-9 w-9 rounded-full grid place-items-center text-[12px] font-bold text-[--fusion-ink] shadow-sm relative overflow-hidden ring-1 ring-black/5 hover:ring-[--fusion-grape]/60 transition"
               style={avatar ? undefined : { background: "var(--gradient-fusion)" }}
             >

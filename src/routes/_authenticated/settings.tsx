@@ -176,6 +176,23 @@ function SettingsPage() {
               <div><Label>Country</Label><Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></div>
             </CardContent>
           </Card>
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>App tour</CardTitle>
+              <CardDescription>Replay the guided walkthrough of the dashboard.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <button
+                type="button"
+                onClick={() => {
+                  import("@/components/app/OnboardingTour").then((m) => m.restartOnboardingTour());
+                }}
+                className="inline-flex items-center gap-2 rounded-md bg-[#00a63e] hover:bg-[#029238] text-white px-4 py-2 text-sm font-medium"
+              >
+                Replay the tour
+              </button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="notifications">
