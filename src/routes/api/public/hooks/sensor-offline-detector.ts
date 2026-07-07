@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/public/hooks/sensor-offline-detector"
 
         const { data: stale, error: findErr } = await supabaseAdmin
           .from("sensor_devices")
-          .select("id, admin_id, device_id, silo_id, warehouse_id, sensor_type")
+          .select("id, admin_id, device_id, device_name, silo_id, warehouse_id")
           .eq("status", "active")
           .lt("last_heartbeat", cutoff);
 
@@ -37,14 +37,16 @@ export const Route = createFileRoute("/api/public/hooks/sensor-offline-detector"
 
           // Emit one grain_alerts row per stale sensor
           const rows = (stale ?? []).map((s) => ({
+            alert_id: `SENSOR-OFFLINE-${s.id}-${Date.now()}`,
             admin_id: s.admin_id,
-            sensor_device_id: s.id,
+            device_id: s.id,
             silo_id: s.silo_id,
             warehouse_id: s.warehouse_id,
-            alert_type: "sensor_offline",
-            severity: "high",
-            title: `Sensor ${s.device_id ?? s.id} went offline`,
-            message: `${s.sensor_type ?? "Sensor"} has not reported in over 5 minutes`,
+            alert_type: "system",
+            priority: "high" as const,
+            source: "sensor-offline-detector",
+            title: `Sensor ${s.device_name ?? s.device_id} offline`,
+            message: `Device ${s.device_id} has not sent a heartbeat in over 5 minutes`,
             status: "pending" as const,
           }));
 
