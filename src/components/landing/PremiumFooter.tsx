@@ -8,16 +8,15 @@ export function PremiumFooter() {
 
 
   const productLinks = [
-    { href: '/pricing', label: 'Pricing' },
-    { href: '/checkout', label: 'Get Started' },
-    { href: '/auth/login', label: 'Login' }
+    { href: '#pricing', label: 'Pricing' },
+    { href: '/auth', label: 'Get Started' },
+    { href: '/auth', label: 'Login' }
   ]
 
   const companyLinks = [
-    { href: '/about', label: 'About Us' },
-    { href: '/faq', label: 'FAQs' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/privacy-policy', label: 'Privacy Policy' }
+    { href: '#features', label: 'Features' },
+    { href: '#how-it-works', label: 'How it Works' },
+    { href: '#team-section', label: 'Team' },
   ]
 
   return (
@@ -73,12 +72,12 @@ export function PremiumFooter() {
             <ul className="space-y-3">
               {productLinks.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    to={link.href}
+                  <a
+                    href={link.href}
                     className="text-gray-400 hover:text-[#00a63e] transition-colors text-sm"
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -90,12 +89,12 @@ export function PremiumFooter() {
             <ul className="space-y-3">
               {companyLinks.map((link) => (
                 <li key={link.href}>
-                  <Link
-                    to={link.href}
+                  <a
+                    href={link.href}
                     className="text-gray-400 hover:text-[#00a63e] transition-colors text-sm"
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
