@@ -189,7 +189,7 @@ function BuyersPage() {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <PageHeader title="Buyers" subtitle="Customers purchasing your grain — contacts, ratings & preferences" />
         <Button size="sm" onClick={openCreate} className="gap-1.5 self-start md:self-auto">

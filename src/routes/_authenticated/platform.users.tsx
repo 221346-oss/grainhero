@@ -45,7 +45,7 @@ function UsersPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4">
       <Card>
         <CardContent className="p-4 flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
