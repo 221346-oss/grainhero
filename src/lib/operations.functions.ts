@@ -94,34 +94,34 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       context.supabase.from("silos").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_batches").select("id, status", { count: "exact" }).limit(1000),
       context.supabase.from("sensor_devices").select("id, status", { count: "exact" }).limit(1000),
-      context.supabase.from("actuators").select("id, is_active", { count: "exact" }).limit(1000),
-      context.supabase.from("grain_alerts").select("id, status, severity", { count: "exact" }).limit(1000),
+      context.supabase.from("actuators").select("id, status", { count: "exact" }).limit(1000),
+      context.supabase.from("grain_alerts").select("id, status, alert_type", { count: "exact" }).limit(1000),
       context.supabase.from("buyers").select("id", { count: "exact", head: true }),
     ]);
-    const batchesData = batches.data ?? [];
-    const alertsData = alerts.data ?? [];
-    const sensorsData = sensors.data ?? [];
-    const actuatorsData = actuators.data ?? [];
+    const batchesData = (batches.data ?? []) as Array<{ status: string | null }>;
+    const sensorsData = (sensors.data ?? []) as Array<{ status: string | null }>;
+    const actuatorsData = (actuators.data ?? []) as Array<{ status: string | null }>;
+    const alertsData = (alerts.data ?? []) as Array<{ status: string | null; alert_type: string | null }>;
     return {
       warehouses: warehouses.count ?? 0,
       silos: silos.count ?? 0,
       buyers: buyers.count ?? 0,
       batches: {
         total: batches.count ?? 0,
-        active: batchesData.filter((b: { status?: string }) => b.status === "active" || b.status === "in_storage").length,
+        active: batchesData.filter((b) => b.status === "stored" || b.status === "processing").length,
       },
       sensors: {
         total: sensors.count ?? 0,
-        online: sensorsData.filter((s: { status?: string }) => s.status === "online" || s.status === "active").length,
+        online: sensorsData.filter((s) => s.status === "active").length,
       },
       actuators: {
         total: actuators.count ?? 0,
-        active: actuatorsData.filter((a: { is_active?: boolean }) => a.is_active).length,
+        active: actuatorsData.filter((a) => a.status === "active").length,
       },
       alerts: {
         total: alerts.count ?? 0,
-        open: alertsData.filter((a: { status?: string }) => a.status === "open" || a.status === "active").length,
-        critical: alertsData.filter((a: { severity?: string }) => a.severity === "critical" || a.severity === "high").length,
+        open: alertsData.filter((a) => a.status === "open" || a.status === "active").length,
+        critical: alertsData.filter((a) => a.alert_type === "critical" || a.alert_type === "high").length,
       },
     };
   });
