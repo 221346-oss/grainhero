@@ -20,7 +20,7 @@ function SensorsPage() {
         { key: "sensor_type", label: "Type" },
         { key: "location", label: "Location" },
         { key: "status", label: "Status", render: (r) => <StatusBadge value={r.status as string} /> },
-        { key: "last_seen", label: "Last seen", render: (r) => r.last_seen ? new Date(r.last_seen as string).toLocaleString() : "—" },
+        { key: "last_heartbeat", label: "Last seen", render: (r) => r.last_heartbeat ? new Date(r.last_heartbeat as string).toLocaleString() : "—" },
       ]}
     />
   );
