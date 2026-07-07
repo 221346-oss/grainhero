@@ -1,3 +1,4 @@
+import { ListSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -123,9 +124,7 @@ function NotificationsPage() {
       <Card className="border-slate-200/70">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <RefreshCw className="h-8 w-8 animate-spin text-slate-300" />
-            </div>
+            <div className="p-4"><ListSkeleton rows={5} /></div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
               <Bell className="h-12 w-12 mb-3 opacity-30" />

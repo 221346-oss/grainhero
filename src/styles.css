@@ -206,3 +206,19 @@ html { scroll-behavior: smooth; }
 /* Hidden scrollbar utility (sidebar, popovers) */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* Skeleton shimmer — LinkedIn / YouTube / GitHub style */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--muted-foreground) 8%, transparent) 0%,
+    color-mix(in oklab, var(--muted-foreground) 16%, transparent) 50%,
+    color-mix(in oklab, var(--muted-foreground) 8%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}

@@ -1,3 +1,4 @@
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ function PlatformOverview() {
   const fn = useServerFn(getPlatformMetrics);
   const { data, isLoading } = useQuery({ queryKey: ["platform-metrics"], queryFn: () => fn() });
 
-  if (isLoading || !data) return <div className="p-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" /></div>;
+  if (isLoading || !data) return <div className="p-6"><DashboardSkeleton /></div>;
 
   return (
     <div className="space-y-6">
