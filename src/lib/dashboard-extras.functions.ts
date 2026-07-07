@@ -17,8 +17,8 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .limit(5),
       context.supabase
         .from("profiles")
-        .select("id, name, email, avatar_url, last_login_at")
-        .order("last_login_at", { ascending: false, nullsFirst: false })
+        .select("id, name, email, updated_at")
+        .order("updated_at", { ascending: false, nullsFirst: false })
         .limit(5),
       context.supabase
         .from("actuators")
