@@ -1,3 +1,4 @@
+import { FormSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -88,7 +89,7 @@ function SettingsPage() {
 
   const initials = initialsOf(form.name, data?.email ?? "");
 
-  if (isLoading) return <div className="p-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" /></div>;
+  if (isLoading) return <div className="p-6 md:p-8 max-w-4xl mx-auto"><FormSkeleton fields={6} /></div>;
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto">

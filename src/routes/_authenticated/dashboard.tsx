@@ -1,3 +1,4 @@
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,9 +23,7 @@ function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[60vh] text-slate-500">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading your workspace…
-      </div>
+      <div className="p-6"><DashboardSkeleton /></div>
     );
   }
   if (error) {
