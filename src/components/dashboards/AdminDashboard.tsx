@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Building2, DollarSign, TrendingUp, Package, Activity } from "lucide-react";
-import { PageHeader, StatCard, Placeholder } from "./_shared";
+import { PageHeader, StatCard } from "./_shared";
 import { useDashboardStats } from "./useDashboardStats";
+import { RecentBatchesCard, RecentAlertsCard, TeamCard, ActuatorsCard, SilosOccupancyCard } from "./DashboardBlocks";
 
 export function AdminDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
@@ -21,18 +21,11 @@ export function AdminDashboard({ name }: { name?: string }) {
         <StatCard label="Open Alerts" value={s?.alerts.open ?? "—"} icon={Activity} accent="rose" />
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Team Activity</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Recent Alerts</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-        <Card className="md:col-span-2 border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Subscription & Billing</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
+        <RecentBatchesCard />
+        <RecentAlertsCard />
+        <TeamCard />
+        <ActuatorsCard />
+        <SilosOccupancyCard />
       </div>
     </div>
   );
