@@ -25,6 +25,7 @@ import {
   Brain, Cpu, BarChart3,
   Wallet, CreditCard, Sparkles,
   Activity, AlertOctagon, FileBarChart,
+  Wrench, Server, ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -54,6 +55,8 @@ const iotNav: NavItem[] = [
   { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "maintenance", label: "Maintenance", to: "/maintenance", icon: Wrench, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "server-monitoring", label: "Device Health", to: "/server-monitoring", icon: Server, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
 const insightsNav: NavItem[] = [
   { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
@@ -74,6 +77,7 @@ const businessNav: NavItem[] = [
 ];
 const adminNav: NavItem[] = [
   { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "security-center", label: "Security Center", to: "/security-center", icon: ShieldCheck, roles: ["super_admin", "admin"] },
   { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
 const platformNav: NavItem[] = [

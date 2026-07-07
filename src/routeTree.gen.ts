@@ -20,7 +20,9 @@ import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authe
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
+import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
@@ -28,6 +30,7 @@ import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
+import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
 import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
@@ -103,11 +106,23 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedServerMonitoringRoute =
+  AuthenticatedServerMonitoringRouteImport.update({
+    id: '/server-monitoring',
+    path: '/server-monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
   id: '/sensors',
   path: '/sensors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSecurityCenterRoute =
+  AuthenticatedSecurityCenterRouteImport.update({
+    id: '/security-center',
+    path: '/security-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
   id: '/revenue',
   path: '/revenue',
@@ -144,6 +159,12 @@ const AuthenticatedMlModelsRoute = AuthenticatedMlModelsRouteImport.update({
   path: '/ml-models',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMaintenanceRoute =
+  AuthenticatedMaintenanceRouteImport.update({
+    id: '/maintenance',
+    path: '/maintenance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
   id: '/insurance',
   path: '/insurance',
@@ -256,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -263,7 +285,9 @@ export interface FileRoutesByFullPath {
   '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
+  '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
+  '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
@@ -293,13 +317,16 @@ export interface FileRoutesByTo {
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
+  '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
+  '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
@@ -331,6 +358,7 @@ export interface FileRoutesById {
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
+  '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
   '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -338,7 +366,9 @@ export interface FileRoutesById {
   '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
+  '/_authenticated/security-center': typeof AuthenticatedSecurityCenterRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
+  '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
@@ -370,6 +400,7 @@ export interface FileRouteTypes {
     | '/grain-batches'
     | '/incidents'
     | '/insurance'
+    | '/maintenance'
     | '/ml-models'
     | '/not-allowed'
     | '/notifications'
@@ -377,7 +408,9 @@ export interface FileRouteTypes {
     | '/platform'
     | '/reports'
     | '/revenue'
+    | '/security-center'
     | '/sensors'
+    | '/server-monitoring'
     | '/settings'
     | '/silos'
     | '/subscription'
@@ -407,13 +440,16 @@ export interface FileRouteTypes {
     | '/grain-batches'
     | '/incidents'
     | '/insurance'
+    | '/maintenance'
     | '/ml-models'
     | '/not-allowed'
     | '/notifications'
     | '/plans'
     | '/reports'
     | '/revenue'
+    | '/security-center'
     | '/sensors'
+    | '/server-monitoring'
     | '/settings'
     | '/silos'
     | '/subscription'
@@ -444,6 +480,7 @@ export interface FileRouteTypes {
     | '/_authenticated/grain-batches'
     | '/_authenticated/incidents'
     | '/_authenticated/insurance'
+    | '/_authenticated/maintenance'
     | '/_authenticated/ml-models'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
@@ -451,7 +488,9 @@ export interface FileRouteTypes {
     | '/_authenticated/platform'
     | '/_authenticated/reports'
     | '/_authenticated/revenue'
+    | '/_authenticated/security-center'
     | '/_authenticated/sensors'
+    | '/_authenticated/server-monitoring'
     | '/_authenticated/settings'
     | '/_authenticated/silos'
     | '/_authenticated/subscription'
@@ -555,11 +594,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/server-monitoring': {
+      id: '/_authenticated/server-monitoring'
+      path: '/server-monitoring'
+      fullPath: '/server-monitoring'
+      preLoaderRoute: typeof AuthenticatedServerMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sensors': {
       id: '/_authenticated/sensors'
       path: '/sensors'
       fullPath: '/sensors'
       preLoaderRoute: typeof AuthenticatedSensorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/security-center': {
+      id: '/_authenticated/security-center'
+      path: '/security-center'
+      fullPath: '/security-center'
+      preLoaderRoute: typeof AuthenticatedSecurityCenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/revenue': {
@@ -609,6 +662,13 @@ declare module '@tanstack/react-router' {
       path: '/ml-models'
       fullPath: '/ml-models'
       preLoaderRoute: typeof AuthenticatedMlModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/maintenance': {
+      id: '/_authenticated/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/insurance': {
@@ -764,6 +824,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
   AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
+  AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
   AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -771,7 +832,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
+  AuthenticatedSecurityCenterRoute: typeof AuthenticatedSecurityCenterRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
+  AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
@@ -792,6 +855,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
   AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
+  AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
   AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
@@ -799,7 +863,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
+  AuthenticatedSecurityCenterRoute: AuthenticatedSecurityCenterRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
+  AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
