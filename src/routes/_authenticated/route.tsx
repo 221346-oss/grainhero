@@ -5,13 +5,14 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { Bell, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ThemeInit } from "@/components/app/ThemeInit";
+import { SessionGuard } from "@/components/app/SessionGuard";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
+    if (error || !data.user) throw redirect({ to: "/auth/login" });
     return { user: data.user };
   },
   component: AuthenticatedLayout,
@@ -24,6 +25,7 @@ function AuthenticatedLayout() {
   return (
     <SidebarProvider>
       <ThemeInit />
+      <SessionGuard />
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
