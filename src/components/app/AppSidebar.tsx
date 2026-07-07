@@ -63,10 +63,7 @@ const adminNav: NavItem[] = [
   { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
 const platformNav: NavItem[] = [
-  { name: "platform", label: "Overview", to: "/platform", icon: Crown, roles: ["super_admin"], badge: "SU" },
-  { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
-  { name: "platform-users", label: "All Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
-  { name: "platform-logs", label: "System Logs", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
+  { name: "platform", label: "Platform Console", to: "/platform", icon: Crown, roles: ["super_admin"], badge: "SU" },
 ];
 
 function Section({ label, items, role, currentPath }: { label: string; items: NavItem[]; role: AppRole; currentPath: string }) {
