@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ function IncidentsPage() {
   const ackFn = useServerFn(acknowledgeIncident);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["incidents"], queryFn: () => fn(), refetchInterval: 30_000 });
+  useRealtimeInvalidate("grain_alerts", [["incidents"]]);
 
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
