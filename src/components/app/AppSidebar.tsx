@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Smartphone, LogOut,
   Package, OctagonAlert, Zap, Building2, Warehouse,
-  QrCode, Bell, ClipboardList,
+  QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -54,6 +54,13 @@ const insightsNav: NavItem[] = [
   { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "notifications", label: "Notifications", to: "/notifications", icon: Bell, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager"] },
+];
+const businessNav: NavItem[] = [
+  { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
+];
+const adminNav: NavItem[] = [
+  { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
 
 function Section({ label, items, role, currentPath }: { label: string; items: NavItem[]; role: AppRole; currentPath: string }) {
@@ -130,6 +137,8 @@ export function AppSidebar() {
         <Section label="Grain Operations" items={grainOpsNav} role={role} currentPath={currentPath} />
         <Section label="IoT & Monitoring" items={iotNav} role={role} currentPath={currentPath} />
         <Section label="Insights & Audit" items={insightsNav} role={role} currentPath={currentPath} />
+        <Section label="Business" items={businessNav} role={role} currentPath={currentPath} />
+        <Section label="Administration" items={adminNav} role={role} currentPath={currentPath} />
       </SidebarContent>
       <SidebarFooter className="border-t border-slate-100">
         <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start text-slate-600 hover:text-red-600 hover:bg-red-50">
