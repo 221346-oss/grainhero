@@ -28,6 +28,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
+import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
@@ -142,6 +143,11 @@ const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
   path: '/insurance',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIncidentsRoute = AuthenticatedIncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedGrainBatchesRoute =
   AuthenticatedGrainBatchesRouteImport.update({
     id: '/grain-batches',
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
@@ -313,6 +321,7 @@ export interface FileRoutesById {
   '/_authenticated/environmental': typeof AuthenticatedEnvironmentalRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
   '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
@@ -350,6 +359,7 @@ export interface FileRouteTypes {
     | '/environmental'
     | '/grain-alerts'
     | '/grain-batches'
+    | '/incidents'
     | '/insurance'
     | '/ml-models'
     | '/not-allowed'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/environmental'
     | '/grain-alerts'
     | '/grain-batches'
+    | '/incidents'
     | '/insurance'
     | '/ml-models'
     | '/not-allowed'
@@ -420,6 +431,7 @@ export interface FileRouteTypes {
     | '/_authenticated/environmental'
     | '/_authenticated/grain-alerts'
     | '/_authenticated/grain-batches'
+    | '/_authenticated/incidents'
     | '/_authenticated/insurance'
     | '/_authenticated/ml-models'
     | '/_authenticated/not-allowed'
@@ -587,6 +599,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInsuranceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/incidents': {
+      id: '/_authenticated/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof AuthenticatedIncidentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/grain-batches': {
       id: '/_authenticated/grain-batches'
       path: '/grain-batches'
@@ -724,6 +743,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEnvironmentalRoute: typeof AuthenticatedEnvironmentalRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
+  AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
   AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
@@ -750,6 +770,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEnvironmentalRoute: AuthenticatedEnvironmentalRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
+  AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
   AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
