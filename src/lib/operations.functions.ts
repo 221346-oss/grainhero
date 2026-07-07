@@ -446,6 +446,7 @@ export const listSensorDevices = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+const sensorTypeEnum = z.enum(["co2","humidity","light","moisture","ph","pressure","temperature","voc"]);
 const sensorInput = z.object({
   id: z.string().uuid().optional(),
   device_id: z.string().min(1).max(80).optional(),
@@ -455,7 +456,8 @@ const sensorInput = z.object({
   manufacturer: z.string().max(100).optional().nullable(),
   firmware_version: z.string().max(50).optional().nullable(),
   device_type: z.string().max(50).optional().nullable(),
-  sensor_types: z.array(z.string()).optional().nullable(),
+  category: z.string().max(50).optional().nullable(),
+  sensor_types: z.array(sensorTypeEnum).optional().nullable(),
   warehouse_id: z.string().uuid(),
   silo_id: z.string().uuid().optional().nullable(),
   status: z.enum(["active","offline","error","maintenance"]).default("active"),
@@ -478,6 +480,7 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
       manufacturer: data.manufacturer ?? null,
       firmware_version: data.firmware_version ?? null,
       device_type: data.device_type ?? "environmental",
+      category: data.category ?? "environmental",
       sensor_types: data.sensor_types ?? [],
       warehouse_id: data.warehouse_id,
       silo_id: data.silo_id ?? null,
@@ -516,20 +519,27 @@ export const deleteSensorDevice = createServerFn({ method: "POST" })
   });
 
 // Latest reading per device (used to power live tiles)
+type LatestReading = {
+  id: string; device_id: string; reading_timestamp: string;
+  temperature_value: number | null; humidity_value: number | null;
+  co2_value: number | null; voc_value: number | null;
+  moisture_value: number | null; pressure_value: number | null;
+  ml_risk_class: string | null; ml_risk_score: number | null;
+  anomaly_detected: boolean | null;
+  battery_level: number | null; signal_strength: number | null;
+};
 export const listLatestSensorReadings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<LatestReading[]> => {
     const { data, error } = await context.supabase
       .from("sensor_readings")
       .select("id, device_id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, pressure_value, ml_risk_class, ml_risk_score, anomaly_detected, battery_level, signal_strength")
       .order("reading_timestamp", { ascending: false })
       .limit(500);
     if (error) throw error;
-    // reduce to latest per device
-    const map = new Map<string, unknown>();
-    for (const r of (data ?? []) as Array<{ device_id: string }>) {
-      if (!map.has(r.device_id)) map.set(r.device_id, r);
-    }
+    const rows = (data ?? []) as LatestReading[];
+    const map = new Map<string, LatestReading>();
+    for (const r of rows) if (!map.has(r.device_id)) map.set(r.device_id, r);
     return Array.from(map.values());
   });
 
