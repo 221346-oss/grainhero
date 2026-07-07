@@ -54,13 +54,13 @@ export const syncFirebaseSnapshot = createServerFn({ method: "POST" })
     // Resolve firebase device keys → local sensor_devices rows (device_code match)
     const { data: devices } = await supabase
       .from("sensor_devices")
-      .select("id, device_code, silo_id, warehouse_id, admin_id")
-      .in("device_code", deviceIds);
+      .select("id, device_id, silo_id, warehouse_id, admin_id")
+      .in("device_id", deviceIds);
 
     let synced = 0;
     let skipped = 0;
     for (const dev of devices ?? []) {
-      const live = snap[dev.device_code]?.live;
+      const live = snap[dev.device_id]?.live;
       if (!live) {
         skipped++;
         continue;
@@ -79,7 +79,7 @@ export const syncFirebaseSnapshot = createServerFn({ method: "POST" })
         lid_state: live.lid_state === 1 ? 1 : 0,
         battery_level: live.battery ?? null,
         signal_strength: live.signal ?? null,
-        raw_payload: live as unknown as Record<string, unknown>,
+        raw_payload: live as unknown as never,
         reading_timestamp: live.ts ? new Date(live.ts).toISOString() : new Date().toISOString(),
       });
       if (error) skipped++;
