@@ -702,6 +702,20 @@ export const controlActuator = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw error;
+
+    // Bridge: publish command to Firebase RTDB (best-effort, non-blocking)
+    try {
+      const { publishActuatorCommand } = await import("./actuator-bridge.server");
+      await publishActuatorCommand(row.actuator_id, {
+        action: data.action,
+        value: data.value ?? null,
+        by: context.userId,
+        at: now,
+      });
+    } catch (e) {
+      console.warn("Actuator bridge publish failed", e);
+    }
+
     return row;
   });
 
