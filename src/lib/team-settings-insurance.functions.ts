@@ -120,13 +120,13 @@ export const getMySettings = createServerFn({ method: "GET" })
 export const updateMySettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: {
-    name?: string; phone?: string; business_type?: string;
+    name?: string; phone?: string; business_type?: string; avatar?: string | null;
     address?: Record<string, unknown>; location?: Record<string, unknown>;
     preferences?: Record<string, unknown>;
   }) => d)
   .handler(async ({ data, context }) => {
     const update: Record<string, any> = {};
-    for (const k of ["name","phone","business_type","address","location","preferences"] as const) {
+    for (const k of ["name","phone","business_type","avatar","address","location","preferences"] as const) {
       if (data[k] !== undefined) update[k] = data[k];
     }
     const { error } = await context.supabase.from("profiles").update(update as any).eq("id", context.userId);
