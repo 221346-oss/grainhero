@@ -20,6 +20,7 @@ import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authe
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -104,6 +105,12 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedServerMonitoringRoute =
+  AuthenticatedServerMonitoringRouteImport.update({
+    id: '/server-monitoring',
+    path: '/server-monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
   id: '/sensors',
   path: '/sensors',
@@ -272,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/sensors': typeof AuthenticatedSensorsRoute
+  '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
@@ -309,6 +317,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/sensors': typeof AuthenticatedSensorsRoute
+  '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
@@ -349,6 +358,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
+  '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
@@ -389,6 +399,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/revenue'
     | '/sensors'
+    | '/server-monitoring'
     | '/settings'
     | '/silos'
     | '/subscription'
@@ -426,6 +437,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/revenue'
     | '/sensors'
+    | '/server-monitoring'
     | '/settings'
     | '/silos'
     | '/subscription'
@@ -465,6 +477,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/revenue'
     | '/_authenticated/sensors'
+    | '/_authenticated/server-monitoring'
     | '/_authenticated/settings'
     | '/_authenticated/silos'
     | '/_authenticated/subscription'
@@ -566,6 +579,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/server-monitoring': {
+      id: '/_authenticated/server-monitoring'
+      path: '/server-monitoring'
+      fullPath: '/server-monitoring'
+      preLoaderRoute: typeof AuthenticatedServerMonitoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sensors': {
@@ -793,6 +813,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
+  AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
@@ -822,6 +843,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
+  AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
