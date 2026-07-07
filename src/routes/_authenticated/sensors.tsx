@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import {
   Cpu, Plus, Search, Edit2, Trash2, Eye, Loader2, Inbox, Wifi, WifiOff,
   Battery, Thermometer, Droplets, Wind, AlertTriangle, Radio, Package, Building2,
@@ -105,6 +106,8 @@ function SensorsPage() {
   const listWhFn = useServerFn(listWarehouses);
   const listSiloFn = useServerFn(listSilos);
   const qc = useQueryClient();
+  useRealtimeInvalidate("sensor_readings", [["sensor-readings-latest"]]);
+  useRealtimeInvalidate("actuators", [["actuators"]]);
 
   const { data, isLoading } = useQuery({ queryKey: ["sensor-devices"], queryFn: () => listFn() as Promise<Device[]> });
   const { data: readings } = useQuery({
