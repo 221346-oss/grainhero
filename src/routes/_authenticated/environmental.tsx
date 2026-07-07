@@ -96,7 +96,7 @@ function EnvironmentalPage() {
   };
 
   // Live silo microclimate from Firebase (all sensors)
-  const liveSensors = useFirebaseAllSensors();
+  const { readings: liveSensors } = useFirebaseAllSensors();
   const firstDeviceId = Object.keys(liveSensors)[0];
   const liveSilo = firstDeviceId ? liveSensors[firstDeviceId] : null;
 
