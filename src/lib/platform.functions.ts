@@ -79,9 +79,9 @@ export const listAllTenants = createServerFn({ method: "GET" })
       supabaseAdmin.from("grain_batches").select("admin_id").in("admin_id", ids),
     ]);
     const teamMap = new Map<string, number>();
-    for (const r of teamCounts ?? []) teamMap.set(r.admin_id, (teamMap.get(r.admin_id) ?? 0) + 1);
+    for (const r of teamCounts ?? []) { if (r.admin_id) teamMap.set(r.admin_id, (teamMap.get(r.admin_id) ?? 0) + 1); }
     const batchMap = new Map<string, number>();
-    for (const r of batchCounts ?? []) batchMap.set(r.admin_id, (batchMap.get(r.admin_id) ?? 0) + 1);
+    for (const r of batchCounts ?? []) { if (r.admin_id) batchMap.set(r.admin_id, (batchMap.get(r.admin_id) ?? 0) + 1); }
     return (admins ?? []).map((a: any) => ({
       ...a,
       team_size: (teamMap.get(a.id) ?? 0) + 1,
