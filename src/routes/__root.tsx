@@ -77,10 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Coming Soon" },
-      { name: "description", content: "Be the first to know when we launch." },
-      { property: "og:title", content: "Coming Soon" },
-      { property: "og:description", content: "Be the first to know when we launch." },
+      { title: "GrainHero — AI-Powered Grain Storage Management" },
+      {
+        name: "description",
+        content:
+          "Monitor, predict, and optimize your grain storage with GrainHero's intelligent SaaS platform.",
+      },
+      { property: "og:title", content: "GrainHero — Smart Grain Storage, Powered by AI" },
+      {
+        property: "og:description",
+        content:
+          "AI-powered grain storage management platform with real-time monitoring and predictive analytics.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
