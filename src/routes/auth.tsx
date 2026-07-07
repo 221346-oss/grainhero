@@ -27,7 +27,7 @@ function AuthPage() {
   // Redirect if already logged in
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: '/' })
+      if (data.user) navigate({ to: '/dashboard' })
     })
   }, [navigate])
 
@@ -112,7 +112,7 @@ function LoginForm() {
       setMsg({ type: 'error', text: error.message })
     } else {
       setMsg({ type: 'success', text: 'Signed in! Redirecting…' })
-      setTimeout(() => navigate({ to: '/' }), 600)
+      setTimeout(() => navigate({ to: '/dashboard' }), 600)
     }
     setLoading(false)
   }
@@ -215,7 +215,7 @@ function SignupForm({ onDone }: { onDone: () => void }) {
       setTimeout(onDone, 1800)
     } else {
       setMsg({ type: 'success', text: 'Account created! Redirecting…' })
-      setTimeout(() => (window.location.href = '/'), 800)
+      setTimeout(() => (window.location.href = '/dashboard'), 800)
     }
   }
 
