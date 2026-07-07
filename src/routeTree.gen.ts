@@ -23,6 +23,7 @@ import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
+import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -96,6 +97,12 @@ const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
   path: '/actuators',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksSensorOfflineDetectorRoute =
+  ApiPublicHooksSensorOfflineDetectorRouteImport.update({
+    id: '/api/public/hooks/sensor-offline-detector',
+    path: '/api/public/hooks/sensor-offline-detector',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAlertsEscalationRoute =
   ApiPublicHooksAlertsEscalationRouteImport.update({
     id: '/api/public/hooks/alerts-escalation',
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,6 +142,7 @@ export interface FileRoutesByTo {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,6 +161,7 @@ export interface FileRoutesById {
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/sensor-offline-detector'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/sensor-offline-detector'
   id:
     | '__root__'
     | '/'
@@ -203,6 +215,7 @@ export interface FileRouteTypes {
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/sensor-offline-detector'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -211,6 +224,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
+  ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -313,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedActuatorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/sensor-offline-detector': {
+      id: '/api/public/hooks/sensor-offline-detector'
+      path: '/api/public/hooks/sensor-offline-detector'
+      fullPath: '/api/public/hooks/sensor-offline-detector'
+      preLoaderRoute: typeof ApiPublicHooksSensorOfflineDetectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/alerts-escalation': {
       id: '/api/public/hooks/alerts-escalation'
       path: '/api/public/hooks/alerts-escalation'
@@ -366,6 +387,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
+  ApiPublicHooksSensorOfflineDetectorRoute:
+    ApiPublicHooksSensorOfflineDetectorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
