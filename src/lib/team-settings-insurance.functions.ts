@@ -73,12 +73,12 @@ export const updateTeamMember = createServerFn({ method: "POST" })
     const { data: isManager } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" });
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
 
-    const update: Record<string, unknown> = {};
+    const update: Record<string, any> = {};
     if (data.name !== undefined) update.name = data.name;
     if (data.phone !== undefined) update.phone = data.phone;
     if (data.blocked !== undefined) update.blocked = data.blocked;
     if (Object.keys(update).length) {
-      const { error } = await context.supabase.from("profiles").update(update).eq("id", data.id);
+      const { error } = await context.supabase.from("profiles").update(update as any).eq("id", data.id);
       if (error) throw error;
     }
     if (data.role) {
@@ -125,11 +125,11 @@ export const updateMySettings = createServerFn({ method: "POST" })
     preferences?: Record<string, unknown>;
   }) => d)
   .handler(async ({ data, context }) => {
-    const update: Record<string, unknown> = {};
+    const update: Record<string, any> = {};
     for (const k of ["name","phone","business_type","address","location","preferences"] as const) {
       if (data[k] !== undefined) update[k] = data[k];
     }
-    const { error } = await context.supabase.from("profiles").update(update).eq("id", context.userId);
+    const { error } = await context.supabase.from("profiles").update(update as any).eq("id", context.userId);
     if (error) throw error;
     return { ok: true };
   });
@@ -140,14 +140,14 @@ export type InsurancePolicyRow = {
   id: string; policy_number: string; provider_name: string; coverage_type: string;
   coverage_amount: number; premium_amount: number; deductible: number; status: string;
   start_date: string | null; end_date: string | null; renewal_date: string | null;
-  covered_batches: unknown; risk_factors: unknown; notes: string | null; created_at: string;
+  covered_batches: any; risk_factors: any; notes: string | null; created_at: string;
 };
 
 export type InsuranceClaimRow = {
   id: string; claim_number: string; policy_id: string | null; claim_type: string;
   description: string | null; amount_claimed: number; amount_approved: number; status: string;
   incident_date: string | null; filed_date: string | null; approved_date: string | null;
-  batch_affected: unknown; photos: unknown; notes: string | null; created_at: string;
+  batch_affected: any; photos: any; notes: string | null; created_at: string;
 };
 
 async function tenantAdminId(supabase: any, userId: string): Promise<string> {
