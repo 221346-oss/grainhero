@@ -3,11 +3,14 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft } from "lucide-react";
+import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import pricingData from "@/lib/pricing-data";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +38,14 @@ function CheckoutPage() {
   const [selected, setSelected] = useState<string>(initial ?? "intermediate");
   const [iotQuantity, setIotQuantity] = useState(1);
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("Pakistan");
+  const [phone, setPhone] = useState("");
+  const [preferredDate, setPreferredDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [taxId, setTaxId] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
@@ -46,12 +57,36 @@ function CheckoutPage() {
 
   const startFn = useServerFn(createStripeCheckoutSession);
   const start = useMutation({
-    mutationFn: () => startFn({ data: { planId: selected as "basic" | "intermediate" | "pro", iotQuantity } }),
+    mutationFn: () =>
+      startFn({
+        data: {
+          planId: selected as "basic" | "intermediate" | "pro",
+          iotQuantity,
+          install: {
+            address: address.trim(),
+            city: city.trim(),
+            country: country.trim(),
+            phone: phone.trim(),
+            preferredDate: preferredDate || null,
+            notes: notes.trim() || null,
+            businessName: businessName.trim() || null,
+            taxId: taxId.trim() || null,
+          },
+        },
+      }),
     onSuccess: ({ url }) => {
       window.location.href = url;
     },
     onError: (e: Error) => toast.error(e.message ?? "Could not start checkout"),
   });
+
+  const canPay =
+    authed &&
+    iotQuantity >= 1 &&
+    address.trim().length > 2 &&
+    city.trim().length > 0 &&
+    country.trim().length > 0 &&
+    phone.trim().length > 3;
 
   const planData = pricingData.find((p) => p.id === selected);
 
@@ -110,7 +145,7 @@ function CheckoutPage() {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="text-base">IoT sensor setup</CardTitle>
-              <CardDescription>One-time hardware install per unit</CardDescription>
+              <CardDescription>Rs. 7,000 per sensor · our technician will install on-site</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
@@ -153,7 +188,7 @@ function CheckoutPage() {
                       <Shield className="h-3.5 w-3.5 text-emerald-600" /> Secure payment via Stripe
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-emerald-600" /> Instant activation
+                      <Clock className="h-3.5 w-3.5 text-emerald-600" /> Technician visit scheduled after payment
                     </div>
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Cancel anytime
@@ -162,7 +197,7 @@ function CheckoutPage() {
                   {authed ? (
                     <Button
                       className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
-                      disabled={start.isPending}
+                      disabled={start.isPending || !canPay}
                       onClick={() => start.mutate()}
                     >
                       {start.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Proceed to payment"}
@@ -177,11 +212,57 @@ function CheckoutPage() {
                       </Link>
                     </Button>
                   )}
+                  {authed && !canPay && (
+                    <p className="text-[11px] text-amber-700">Fill your install address, city, country and phone below to continue.</p>
+                  )}
                 </>
               )}
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600" /> Install details</CardTitle>
+            <CardDescription>Where our technician should install and how to reach you.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <Label htmlFor="addr">Install address *</Label>
+                <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, landmark" maxLength={300} />
+              </div>
+              <div>
+                <Label htmlFor="city">City *</Label>
+                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={120} />
+              </div>
+              <div>
+                <Label htmlFor="country">Country *</Label>
+                <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} maxLength={120} />
+              </div>
+              <div>
+                <Label htmlFor="phone">Contact phone *</Label>
+                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 …" maxLength={40} />
+              </div>
+              <div>
+                <Label htmlFor="date">Preferred install date</Label>
+                <Input id="date" type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="biz">Business name (invoicing)</Label>
+                <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} maxLength={200} />
+              </div>
+              <div>
+                <Label htmlFor="tax">GST / Tax ID</Label>
+                <Input id="tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} maxLength={80} />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="notes">Notes for the technician</Label>
+                <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="Warehouse count, silo count, access instructions, etc." />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
