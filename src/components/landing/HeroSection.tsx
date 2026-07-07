@@ -98,7 +98,7 @@ export function HeroSection() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => { window.location.href = '/checkout' }}
+              onClick={() => { window.location.href = '/auth' }}
               className="bg-[#00a63e]/80 backdrop-blur-md shadow-[0_8px_32px_0_rgba(0,166,62,0.3)] text-white font-semibold px-8 py-3.5 rounded-full hover:bg-[#00a63e] transition-all duration-300 text-base cursor-pointer"
             >
               Start Free Trial
