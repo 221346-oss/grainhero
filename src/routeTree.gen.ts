@@ -17,6 +17,7 @@ import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-passw
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
+import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -58,6 +59,12 @@ const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
   path: '/not-allowed',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGrainBatchesRoute =
+  AuthenticatedGrainBatchesRouteImport.update({
+    id: '/grain-batches',
+    path: '/grain-batches',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -69,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
@@ -79,6 +87,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
@@ -91,6 +100,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/dashboard'
+    | '/grain-batches'
     | '/not-allowed'
     | '/silos'
     | '/warehouses'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/dashboard'
+    | '/grain-batches'
     | '/not-allowed'
     | '/silos'
     | '/warehouses'
@@ -124,6 +136,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/_authenticated/dashboard'
+    | '/_authenticated/grain-batches'
     | '/_authenticated/not-allowed'
     | '/_authenticated/silos'
     | '/_authenticated/warehouses'
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/grain-batches': {
+      id: '/_authenticated/grain-batches'
+      path: '/grain-batches'
+      fullPath: '/grain-batches'
+      preLoaderRoute: typeof AuthenticatedGrainBatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -207,6 +227,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
@@ -214,6 +235,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
