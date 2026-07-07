@@ -77,11 +77,76 @@ export const listSilos = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("silos")
-      .select("*, warehouses(name)")
+      .select("*, warehouses(id, name, warehouse_id), current_batch:grain_batches!silos_current_batch_id_fkey(id, batch_id, grain_type)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
     return data ?? [];
+  });
+
+const siloInput = z.object({
+  id: z.string().uuid().optional(),
+  silo_id: z.string().min(1).max(50).optional(),
+  name: z.string().min(1).max(200).optional(),
+  warehouse_id: z.string().uuid(),
+  capacity_kg: z.number().positive(),
+  location_description: z.string().max(500).optional().nullable(),
+  status: z.enum(["active", "offline", "error", "maintenance"]).default("active"),
+  notes: z.string().max(2000).optional().nullable(),
+});
+
+export const upsertSilo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => siloInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const location = { description: data.location_description ?? null };
+    if (data.id) {
+      // Update: don't touch silo_id or name (immutable per original app)
+      const { data: row, error } = await context.supabase
+        .from("silos")
+        .update({
+          warehouse_id: data.warehouse_id,
+          capacity_kg: data.capacity_kg,
+          location,
+          status: data.status,
+          notes: data.notes ?? null,
+          updated_by: context.userId,
+        })
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    // Insert: auto-generate silo_id and name if not provided
+    const siloId = data.silo_id ?? `SILO-${Date.now().toString().slice(-8)}`;
+    const name = data.name ?? `Silo ${siloId.slice(-4)}`;
+    const { data: row, error } = await context.supabase
+      .from("silos")
+      .insert({
+        silo_id: siloId,
+        name,
+        warehouse_id: data.warehouse_id,
+        capacity_kg: data.capacity_kg,
+        location,
+        status: data.status,
+        notes: data.notes ?? null,
+        admin_id: context.userId,
+        created_by: context.userId,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteSilo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("silos").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
   });
 
 export const listGrainBatches = createServerFn({ method: "GET" })
