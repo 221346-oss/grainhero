@@ -79,6 +79,17 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   .update({ stripe_customer_id: s.customer })
                   .eq("id", userId);
               }
+              // Promote the purchaser to tenant admin
+              if (userId) {
+                await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+                await supabaseAdmin
+                  .from("user_roles")
+                  .insert({ user_id: userId, role: "admin" } as never);
+                await supabaseAdmin
+                  .from("profiles")
+                  .update({ admin_id: userId } as never)
+                  .eq("id", userId);
+              }
               if (userId) {
                 await supabaseAdmin.from("security_events").insert({
                   user_id: userId,
@@ -114,10 +125,27 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 intermediate: "Grain Professional",
                 pro: "Grain Enterprise",
               };
+              const planLimits: Record<string, { users: number; devices: number; storage: number; batches: number }> = {
+                basic: { users: 5, devices: 3, storage: 10, batches: 100 },
+                intermediate: { users: 10, devices: 6, storage: 50, batches: 500 },
+                pro: { users: 999999, devices: 15, storage: 999999, batches: 999999 },
+              };
+              const limits = planLimits[planId] ?? planLimits.basic;
               const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial"]);
               const status = validStatuses.has(sub.status) ? sub.status : "active";
               const interval = price?.recurring?.interval ?? "month";
               const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
+              // Ensure purchaser has admin role (idempotent)
+              if (adminId) {
+                await supabaseAdmin.from("user_roles").delete().eq("user_id", adminId);
+                await supabaseAdmin
+                  .from("user_roles")
+                  .insert({ user_id: adminId, role: "admin" } as never);
+                await supabaseAdmin
+                  .from("profiles")
+                  .update({ admin_id: adminId } as never)
+                  .eq("id", adminId);
+              }
               await supabaseAdmin.from("subscriptions").upsert(
                 {
                   admin_id: adminId,
@@ -137,6 +165,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   billing_cycle: billingCycle as never,
                   stripe_subscription_id: sub.id,
                   stripe_customer_id: sub.customer,
+                  max_users: limits.users,
+                  max_devices: limits.devices,
+                  max_storage_gb: limits.storage,
+                  max_batches: limits.batches,
                 } as never,
                 { onConflict: "stripe_subscription_id" },
               );
