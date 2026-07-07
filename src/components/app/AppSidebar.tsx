@@ -24,6 +24,7 @@ import {
   QrCode, Bell, ClipboardList, Shield, Settings, UserCog, Crown,
   Brain, Cpu, BarChart3,
   Wallet, CreditCard, Sparkles,
+  Activity, AlertOctagon, FileBarChart,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -51,6 +52,8 @@ const iotNav: NavItem[] = [
   { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
 const insightsNav: NavItem[] = [
   { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
@@ -60,6 +63,7 @@ const insightsNav: NavItem[] = [
 const intelligenceNav: NavItem[] = [
   { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["super_admin", "admin", "manager"], badge: "AI" },
   { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
+  { name: "reports", label: "Reports", to: "/reports", icon: FileBarChart, roles: ["super_admin", "admin", "manager"] },
   { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["super_admin", "admin"], badge: "ML" },
 ];
 const businessNav: NavItem[] = [
