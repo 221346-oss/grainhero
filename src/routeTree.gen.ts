@@ -31,6 +31,7 @@ import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
+import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
@@ -151,6 +152,12 @@ const AuthenticatedPlatformIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
+const AuthenticatedPlatformUsersRoute =
+  AuthenticatedPlatformUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
 const AuthenticatedPlatformTenantsRoute =
   AuthenticatedPlatformTenantsRouteImport.update({
     id: '/tenants',
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/auth/reset-password'
     | '/platform/tenants'
+    | '/platform/users'
     | '/platform/'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/sensor-offline-detector'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/warehouses'
     | '/auth/reset-password'
     | '/platform/tenants'
+    | '/platform/users'
     | '/platform'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/sensor-offline-detector'
@@ -325,6 +337,7 @@ export interface FileRouteTypes {
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
     | '/_authenticated/platform/tenants'
+    | '/_authenticated/platform/users'
     | '/_authenticated/platform/'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/sensor-offline-detector'
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedPlatformRoute
     }
+    '/_authenticated/platform/users': {
+      id: '/_authenticated/platform/users'
+      path: '/users'
+      fullPath: '/platform/users'
+      preLoaderRoute: typeof AuthenticatedPlatformUsersRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
     '/_authenticated/platform/tenants': {
       id: '/_authenticated/platform/tenants'
       path: '/tenants'
@@ -521,11 +541,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPlatformRouteChildren {
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
+  AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
 const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
+  AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
