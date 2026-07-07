@@ -9,13 +9,13 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const cronSecret = process.env.CRON_SECRET;
         const dbUrl = process.env.FIREBASE_DATABASE_URL;
-        if (!cronSecret) return new Response("CRON_SECRET missing", { status: 500 });
+        const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY;
         if (!dbUrl) return new Response("FIREBASE_DATABASE_URL missing", { status: 500 });
+        if (!anonKey) return new Response("SUPABASE_PUBLISHABLE_KEY missing", { status: 500 });
 
-        const auth = request.headers.get("authorization") ?? "";
-        if (auth !== `Bearer ${cronSecret}`) {
+        const apikey = request.headers.get("apikey") ?? "";
+        if (apikey !== anonKey) {
           return new Response("Unauthorized", { status: 401 });
         }
 
