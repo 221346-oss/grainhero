@@ -21,6 +21,7 @@ import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
+import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
@@ -99,6 +100,11 @@ const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
 const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
   id: '/platform',
   path: '/platform',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/plans': typeof AuthenticatedPlansRoute
   '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/sensors': typeof AuthenticatedSensorsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByTo {
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/plans': typeof AuthenticatedPlansRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
@@ -282,6 +290,7 @@ export interface FileRoutesById {
   '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/ml-models'
     | '/not-allowed'
     | '/notifications'
+    | '/plans'
     | '/platform'
     | '/sensors'
     | '/settings'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/ml-models'
     | '/not-allowed'
     | '/notifications'
+    | '/plans'
     | '/sensors'
     | '/settings'
     | '/silos'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ml-models'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
+    | '/_authenticated/plans'
     | '/_authenticated/platform'
     | '/_authenticated/sensors'
     | '/_authenticated/settings'
@@ -486,6 +498,13 @@ declare module '@tanstack/react-router' {
       path: '/platform'
       fullPath: '/platform'
       preLoaderRoute: typeof AuthenticatedPlatformRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plans': {
+      id: '/_authenticated/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof AuthenticatedPlansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notifications': {
@@ -649,6 +668,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -671,6 +691,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
