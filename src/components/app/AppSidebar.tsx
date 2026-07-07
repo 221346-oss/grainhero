@@ -42,35 +42,13 @@ const dashboardNav: NavItem[] = [
 const grainOpsNav: NavItem[] = [
   { name: "grain-batches", label: "Grain Batches", to: "/grain-batches", icon: Package, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "silos", label: "Silos", to: "/silos", icon: Warehouse, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["super_admin", "admin", "manager"] },
-  { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
 const iotNav: NavItem[] = [
   { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "environmental", label: "Environmental", to: "/environmental", icon: Cloud, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["super_admin", "admin", "manager", "technician"] },
-];
-const aiNav: NavItem[] = [
-  { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Sparkles, roles: ["super_admin", "admin", "manager", "technician"], badge: "AI" },
-  { name: "model-performance", label: "ML Models", to: "/model-performance", icon: Brain, roles: ["super_admin", "admin", "manager"], badge: "ML" },
-  { name: "data-visualization", label: "Analytics", to: "/data-visualization", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
-];
-const businessNav: NavItem[] = [
-  { name: "payments", label: "Payments", to: "/payments", icon: CreditCard, roles: ["super_admin", "admin", "manager"] },
-  { name: "reports", label: "Reports", to: "/reports", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
-  { name: "activity-logs", label: "Activity", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
-];
-const systemNav: NavItem[] = [
-  { name: "team-management", label: "Team", to: "/team-management", icon: Users, roles: ["super_admin", "admin", "manager"] },
-  { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin"] },
-];
-const superAdminNav: NavItem[] = [
-  { name: "customers", label: "Customers", to: "/super-admin/customers", icon: Building2, roles: ["super_admin"] },
-  { name: "plans", label: "Plans", to: "/super-admin/subscriptions", icon: CreditCard, roles: ["super_admin"] },
-  { name: "system-health", label: "System Health", to: "/system-health", icon: Activity, roles: ["super_admin"] },
-  { name: "global-analytics", label: "Global Analytics", to: "/global-analytics", icon: BarChart3, roles: ["super_admin"] },
 ];
 
 function Section({ label, items, role, currentPath }: { label: string; items: NavItem[]; role: AppRole; currentPath: string }) {
@@ -146,10 +124,6 @@ export function AppSidebar() {
         <Section label="Overview" items={dashboardNav} role={role} currentPath={currentPath} />
         <Section label="Grain Operations" items={grainOpsNav} role={role} currentPath={currentPath} />
         <Section label="IoT & Monitoring" items={iotNav} role={role} currentPath={currentPath} />
-        <Section label="AI & Analytics" items={aiNav} role={role} currentPath={currentPath} />
-        <Section label="Business" items={businessNav} role={role} currentPath={currentPath} />
-        <Section label="System" items={systemNav} role={role} currentPath={currentPath} />
-        <Section label="Super Admin" items={superAdminNav} role={role} currentPath={currentPath} />
       </SidebarContent>
       <SidebarFooter className="border-t border-slate-100">
         <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start text-slate-600 hover:text-red-600 hover:bg-red-50">
