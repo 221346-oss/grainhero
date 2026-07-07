@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wrench, Cpu, AlertOctagon, CheckCircle2, Zap, Smartphone } from "lucide-react";
 import { PageHeader, StatCard, Placeholder } from "./_shared";
+import { useDashboardStats } from "./useDashboardStats";
 
 export function TechnicianDashboard({ name }: { name?: string }) {
+  const { data: s } = useDashboardStats();
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       <PageHeader
@@ -11,10 +13,10 @@ export function TechnicianDashboard({ name }: { name?: string }) {
         badge="Technician"
       />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Sensors Online" value="—" icon={Smartphone} accent="emerald" />
-        <StatCard label="Actuators Active" value="—" icon={Zap} accent="sky" />
-        <StatCard label="Open Alerts" value="—" icon={AlertOctagon} accent="rose" />
-        <StatCard label="Tasks Completed" value="—" icon={CheckCircle2} accent="violet" />
+        <StatCard label="Sensors Online" value={`${s?.sensors.online ?? 0}/${s?.sensors.total ?? 0}`} icon={Smartphone} accent="emerald" />
+        <StatCard label="Actuators Active" value={`${s?.actuators.active ?? 0}/${s?.actuators.total ?? 0}`} icon={Zap} accent="sky" />
+        <StatCard label="Open Alerts" value={s?.alerts.open ?? "—"} icon={AlertOctagon} accent="rose" />
+        <StatCard label="Critical" value={s?.alerts.critical ?? "—"} icon={CheckCircle2} accent="violet" />
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="border-slate-200/70 shadow-sm">
