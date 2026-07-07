@@ -9,7 +9,7 @@ import { FeaturesSection } from '@/components/landing/FeaturesSection'
 import { StatsSection } from '@/components/landing/StatsSection'
 import { TeamSection } from '@/components/landing/TeamSection'
 import { PremiumFooter } from '@/components/landing/PremiumFooter'
-import pricingData from '@/lib/pricing-data.js'
+import pricingData from '@/lib/pricing-data'
 
 export const Route = createFileRoute('/')({
   head: () => ({
