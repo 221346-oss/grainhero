@@ -8,8 +8,8 @@ const navLinks = [
   { href: '#features', label: 'FEATURES' },
   { href: '#how-it-works', label: 'HOW IT WORKS' },
   { href: '#pricing', label: 'PRICING' },
-  { href: '/about', label: 'ABOUT', isRoute: true },
-  { href: '/contact', label: 'CONTACT', isRoute: true },
+  
+  
 ]
 
 export function GlassNav() {
