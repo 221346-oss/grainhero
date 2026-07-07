@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Smartphone, LogOut,
   Package, OctagonAlert, Zap, Building2, Warehouse,
-  QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
+  QrCode, Bell, ClipboardList, Shield, Settings, UserCog, Crown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -61,6 +61,12 @@ const businessNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
+];
+const platformNav: NavItem[] = [
+  { name: "platform", label: "Overview", to: "/platform", icon: Crown, roles: ["super_admin"], badge: "SU" },
+  { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
+  { name: "platform-users", label: "All Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
+  { name: "platform-logs", label: "System Logs", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
 ];
 
 function Section({ label, items, role, currentPath }: { label: string; items: NavItem[]; role: AppRole; currentPath: string }) {
@@ -139,6 +145,7 @@ export function AppSidebar() {
         <Section label="Insights & Audit" items={insightsNav} role={role} currentPath={currentPath} />
         <Section label="Business" items={businessNav} role={role} currentPath={currentPath} />
         <Section label="Administration" items={adminNav} role={role} currentPath={currentPath} />
+        <Section label="Platform" items={platformNav} role={role} currentPath={currentPath} />
       </SidebarContent>
       <SidebarFooter className="border-t border-slate-100">
         <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start text-slate-600 hover:text-red-600 hover:bg-red-50">
