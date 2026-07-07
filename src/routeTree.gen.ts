@@ -52,6 +52,7 @@ import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
 import { Route as AuthenticatedPlatformRevenueRouteImport } from './routes/_authenticated/platform.revenue'
+import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
@@ -289,6 +290,12 @@ const AuthenticatedPlatformRevenueRoute =
     path: '/revenue',
     getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
+const AuthenticatedPlatformOrdersRoute =
+  AuthenticatedPlatformOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
 const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
     id: '/logs',
@@ -365,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
@@ -414,6 +422,7 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
@@ -466,6 +475,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/_authenticated/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
@@ -518,6 +528,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/platform/logs'
+    | '/platform/orders'
     | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/platform/logs'
+    | '/platform/orders'
     | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
@@ -618,6 +630,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/_authenticated/platform/logs'
+    | '/_authenticated/platform/orders'
     | '/_authenticated/platform/revenue'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
@@ -945,6 +958,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformRevenueRouteImport
       parentRoute: typeof AuthenticatedPlatformRoute
     }
+    '/_authenticated/platform/orders': {
+      id: '/_authenticated/platform/orders'
+      path: '/orders'
+      fullPath: '/platform/orders'
+      preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
     '/_authenticated/platform/logs': {
       id: '/_authenticated/platform/logs'
       path: '/logs'
@@ -992,6 +1012,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPlatformRouteChildren {
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
   AuthenticatedPlatformRevenueRoute: typeof AuthenticatedPlatformRevenueRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
@@ -1000,6 +1021,7 @@ interface AuthenticatedPlatformRouteChildren {
 
 const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
   AuthenticatedPlatformRevenueRoute: AuthenticatedPlatformRevenueRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
