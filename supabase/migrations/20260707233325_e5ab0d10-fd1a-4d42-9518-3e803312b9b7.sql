@@ -1,0 +1,1 @@
+ALTER TABLE public.subscriptions ADD COLUMN IF NOT EXISTS notified_expiry_thresholds INTEGER[] NOT NULL DEFAULT '{}';
