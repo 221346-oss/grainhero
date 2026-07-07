@@ -1,9 +1,9 @@
-'use client'
+
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Wheat, Menu } from 'lucide-react'
-import { Link } from '@/i18n/navigation'
+import { Link } from '@tanstack/react-router'
 const navLinks = [
   { href: '#features', label: 'FEATURES' },
   { href: '#how-it-works', label: 'HOW IT WORKS' },

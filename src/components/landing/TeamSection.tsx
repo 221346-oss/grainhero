@@ -1,8 +1,7 @@
-'use client'
+
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Image from 'next/image'
 
 export function TeamSection() {
   const [isVisible, setIsVisible] = useState(false)
