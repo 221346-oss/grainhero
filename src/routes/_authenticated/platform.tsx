@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, LayoutDashboard, Users, Building2, ClipboardList, DollarSign } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Building2, ClipboardList, DollarSign, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMyRole } from "@/lib/roles.functions";
 
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/platform")({ component: Pl
 const tabs = [
   { to: "/platform", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/platform/revenue", label: "Revenue", icon: DollarSign },
+  { to: "/platform/orders", label: "Install Orders", icon: Package },
   { to: "/platform/tenants", label: "Tenants", icon: Building2 },
   { to: "/platform/users", label: "Users", icon: Users },
   { to: "/platform/logs", label: "System Logs", icon: ClipboardList },

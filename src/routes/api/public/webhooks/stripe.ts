@@ -66,6 +66,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const s = event.data.object as {
                 customer?: string;
                 subscription?: string;
+                payment_intent?: string;
                 client_reference_id?: string;
                 metadata?: Record<string, string>;
                 amount_total?: number;
@@ -73,6 +74,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               };
               const userId = s.client_reference_id ?? s.metadata?.user_id;
               const planId = s.metadata?.plan_id ?? null;
+              const hardwareOrderId = s.metadata?.hardware_order_id ?? null;
               if (userId && s.customer) {
                 await supabaseAdmin
                   .from("profiles")
@@ -97,6 +99,76 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   event: "billing.checkout_completed",
                   meta: { plan_id: planId, subscription: s.subscription ?? null } as never,
                 });
+              }
+
+              // Fulfil the pending hardware/install order and notify super admins.
+              if (hardwareOrderId) {
+                await supabaseAdmin
+                  .from("hardware_orders" as never)
+                  .update({
+                    status: "new",
+                    stripe_payment_intent: s.payment_intent ?? null,
+                  } as never)
+                  .eq("id", hardwareOrderId);
+
+                // In-app notification for every super admin.
+                const { data: supers } = await supabaseAdmin
+                  .from("user_roles")
+                  .select("user_id")
+                  .eq("role", "super_admin");
+                const superIds = (supers ?? []).map((r: { user_id: string }) => r.user_id);
+                if (superIds.length > 0) {
+                  await supabaseAdmin.from("notifications").insert(
+                    superIds.map((uid) => ({
+                      user_id: uid,
+                      tenant_id: uid,
+                      type: "order.new",
+                      subject: "New install order placed",
+                      body: `A new install order was placed for plan ${planId ?? "?"}. Order id: ${hardwareOrderId}`,
+                      is_read: false,
+                    })) as never,
+                  );
+                }
+
+                // Email SUPPORT_EMAIL via Resend gateway.
+                try {
+                  const gatewayKey = process.env.LOVABLE_API_KEY;
+                  const resendKey = process.env.RESEND_API_KEY;
+                  const to = process.env.SUPPORT_EMAIL;
+                  const from = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
+                  if (gatewayKey && resendKey && to) {
+                    const { data: order } = await supabaseAdmin
+                      .from("hardware_orders" as never)
+                      .select("id,plan_name,hardware_quantity,hardware_total,install_address,install_city,install_country,contact_phone,preferred_install_date,notes")
+                      .eq("id", hardwareOrderId)
+                      .maybeSingle();
+                    const o = (order as Record<string, unknown> | null) ?? {};
+                    await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${gatewayKey}`,
+                        "X-Connection-Api-Key": resendKey,
+                      },
+                      body: JSON.stringify({
+                        from,
+                        to: [to],
+                        subject: `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`,
+                        html: `<h2>New install order</h2>
+<p><b>Order:</b> ${o.id ?? hardwareOrderId}</p>
+<p><b>Plan:</b> ${o.plan_name ?? planId ?? "-"}</p>
+<p><b>Hardware units:</b> ${o.hardware_quantity ?? 0} × Rs. 7,000 = Rs. ${Number(o.hardware_total ?? 0).toLocaleString()}</p>
+<p><b>Install address:</b><br/>${o.install_address ?? "-"}<br/>${o.install_city ?? ""}, ${o.install_country ?? ""}</p>
+<p><b>Contact phone:</b> ${o.contact_phone ?? "-"}</p>
+<p><b>Preferred date:</b> ${o.preferred_install_date ?? "-"}</p>
+<p><b>Notes:</b> ${o.notes ?? "-"}</p>
+<p>Open the Platform → Orders console to assign a technician.</p>`,
+                      }),
+                    }).catch((e) => console.warn("[order email] failed:", e));
+                  }
+                } catch (e) {
+                  console.warn("[order email] error:", e);
+                }
               }
               break;
             }

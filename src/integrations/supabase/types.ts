@@ -896,6 +896,134 @@ export type Database = {
           },
         ]
       }
+      hardware_order_messages: {
+        Row: {
+          created_at: string
+          emailed: boolean
+          id: string
+          message: string
+          order_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          emailed?: boolean
+          id?: string
+          message: string
+          order_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          emailed?: boolean
+          id?: string
+          message?: string
+          order_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_order_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hardware_orders: {
+        Row: {
+          admin_id: string
+          business_name: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
+          contact_phone: string | null
+          created_at: string
+          currency: string
+          hardware_quantity: number
+          hardware_total: number
+          hardware_unit_price: number
+          id: string
+          install_address: string | null
+          install_city: string | null
+          install_country: string | null
+          installed_at: string | null
+          notes: string | null
+          plan_id: string | null
+          plan_name: string | null
+          preferred_install_date: string | null
+          refunded: boolean
+          scheduled_install_date: string | null
+          status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
+          tax_id: string | null
+          technician_name: string | null
+          technician_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          business_name?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          hardware_quantity?: number
+          hardware_total?: number
+          hardware_unit_price?: number
+          id?: string
+          install_address?: string | null
+          install_city?: string | null
+          install_country?: string | null
+          installed_at?: string | null
+          notes?: string | null
+          plan_id?: string | null
+          plan_name?: string | null
+          preferred_install_date?: string | null
+          refunded?: boolean
+          scheduled_install_date?: string | null
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          tax_id?: string | null
+          technician_name?: string | null
+          technician_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          business_name?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          hardware_quantity?: number
+          hardware_total?: number
+          hardware_unit_price?: number
+          id?: string
+          install_address?: string | null
+          install_city?: string | null
+          install_country?: string | null
+          installed_at?: string | null
+          notes?: string | null
+          plan_id?: string | null
+          plan_name?: string | null
+          preferred_install_date?: string | null
+          refunded?: boolean
+          scheduled_install_date?: string | null
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          tax_id?: string | null
+          technician_name?: string | null
+          technician_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       insurance_claims: {
         Row: {
           admin_id: string
