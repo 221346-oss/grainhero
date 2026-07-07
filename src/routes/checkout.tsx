@@ -94,7 +94,7 @@ function CheckoutPage() {
     if (d.businessName) setBusinessName(d.businessName);
     if (d.taxId) setTaxId(d.taxId);
     if (d.address || d.phone) {
-      toast("Restored your previous checkout details", { icon: "↩️" });
+      toast("↩️ Restored your previous checkout details");
     }
   }, [initial]);
 
