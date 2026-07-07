@@ -53,6 +53,7 @@ import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
+import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 
@@ -292,6 +293,12 @@ const ApiPublicHooksSensorOfflineDetectorRoute =
     path: '/api/public/hooks/sensor-offline-detector',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksExpiryRemindersRoute =
+  ApiPublicHooksExpiryRemindersRouteImport.update({
+    id: '/api/public/hooks/expiry-reminders',
+    path: '/api/public/hooks/expiry-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAlertsEscalationRoute =
   ApiPublicHooksAlertsEscalationRouteImport.update({
     id: '/api/public/hooks/alerts-escalation',
@@ -349,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
 }
@@ -395,6 +403,7 @@ export interface FileRoutesByTo {
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
 }
@@ -444,6 +453,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
 }
@@ -493,6 +503,7 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
   fileRoutesByTo: FileRoutesByTo
@@ -539,6 +550,7 @@ export interface FileRouteTypes {
     | '/platform'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
   id:
@@ -587,6 +599,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
   fileRoutesById: FileRoutesById
@@ -599,6 +612,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
+  ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
 }
@@ -913,6 +927,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSensorOfflineDetectorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/expiry-reminders': {
+      id: '/api/public/hooks/expiry-reminders'
+      path: '/api/public/hooks/expiry-reminders'
+      fullPath: '/api/public/hooks/expiry-reminders'
+      preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/alerts-escalation': {
       id: '/api/public/hooks/alerts-escalation'
       path: '/api/public/hooks/alerts-escalation'
@@ -1050,6 +1071,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
+  ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
