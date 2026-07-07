@@ -91,7 +91,7 @@ function Section({ label, items, role, currentPath }: { label: string; items: Na
   if (visible.length === 0) return null;
   return (
     <SidebarGroup>
-      {!collapsed && <SidebarGroupLabel className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em]">{label}</SidebarGroupLabel>}
+      {!collapsed && <SidebarGroupLabel className="text-[10px] font-black text-sidebar-foreground/55 uppercase tracking-[0.18em] px-2">{label}</SidebarGroupLabel>}
       <SidebarGroupContent>
         <SidebarMenu>
           {visible.map((item) => {
@@ -101,11 +101,24 @@ function Section({ label, items, role, currentPath }: { label: string; items: Na
             return (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-                  <Link to={item.to} className={cn("flex items-center gap-3", active && "bg-emerald-50 text-emerald-700")}>
-                    <item.icon className="h-4 w-4 shrink-0" strokeWidth={active ? 2.5 : 2} />
-                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  <Link
+                    to={item.to}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg transition-colors",
+                      active
+                        ? "bg-[--fusion-mint] text-[--fusion-ink] font-semibold shadow-sm"
+                        : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" strokeWidth={active ? 2.6 : 2} />
+                    {!collapsed && <span className="truncate text-[13px]">{item.label}</span>}
                     {!collapsed && item.badge && (
-                      <Badge className={cn("ml-auto text-[9px] px-1.5 py-0 h-4 font-bold", (item.badge === "AI" || item.badge === "ML") ? "bg-emerald-600" : "bg-slate-200 text-slate-700")}>
+                      <Badge className={cn(
+                        "ml-auto text-[9px] px-1.5 py-0 h-4 font-black tracking-wide border-0",
+                        (item.badge === "AI" || item.badge === "ML")
+                          ? "bg-[--fusion-grape] text-white"
+                          : "bg-[--fusion-ink]/10 text-[--fusion-ink]",
+                      )}>
                         {item.badge}
                       </Badge>
                     )}
@@ -142,16 +155,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-slate-100">
-        <Link to="/dashboard" className="flex items-center gap-3 px-2 py-3">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-500 to-emerald-700 flex items-center justify-center shadow-md shrink-0">
-            <span className="text-white font-black text-base">G</span>
+      <SidebarHeader className="border-b border-sidebar-border/60">
+        <Link to="/dashboard" className="flex items-center gap-2 px-1 py-2">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 ring-1 ring-black/5"
+            style={{ background: "var(--gradient-fusion)" }}
+            aria-label="Home"
+          >
+            <span className="text-[--fusion-ink] font-black text-base">✦</span>
           </div>
           {!collapsed && (
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-bold text-slate-900 tracking-tight leading-tight truncate">GrainHero</span>
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">{role.replace("_", " ")}</span>
-            </div>
+            <span className="text-[10px] font-black text-sidebar-foreground/60 uppercase tracking-[0.24em]">
+              {role.replace("_", " ")}
+            </span>
           )}
         </Link>
       </SidebarHeader>
@@ -165,8 +181,8 @@ export function AppSidebar() {
         <Section label="Administration" items={adminNav} role={role} currentPath={currentPath} />
         <Section label="Platform" items={platformNav} role={role} currentPath={currentPath} />
       </SidebarContent>
-      <SidebarFooter className="border-t border-slate-100">
-        <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start text-slate-600 hover:text-red-600 hover:bg-red-50">
+      <SidebarFooter className="border-t border-sidebar-border/60">
+        <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start text-sidebar-foreground/80 hover:text-red-600 hover:bg-red-500/10">
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="ml-2">Sign out</span>}
         </Button>
