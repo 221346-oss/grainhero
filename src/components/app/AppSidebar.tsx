@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Smartphone, LogOut,
   Package, OctagonAlert, Zap, Building2, Warehouse,
-  QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
+  QrCode, Bell, ClipboardList, Shield, Settings, UserCog, Crown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -62,6 +62,9 @@ const adminNav: NavItem[] = [
   { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
+const platformNav: NavItem[] = [
+  { name: "platform", label: "Platform Console", to: "/platform", icon: Crown, roles: ["super_admin"], badge: "SU" },
+];
 
 function Section({ label, items, role, currentPath }: { label: string; items: NavItem[]; role: AppRole; currentPath: string }) {
   const { state } = useSidebar();
@@ -74,7 +77,9 @@ function Section({ label, items, role, currentPath }: { label: string; items: Na
       <SidebarGroupContent>
         <SidebarMenu>
           {visible.map((item) => {
-            const active = currentPath === item.to;
+            const active = item.to === "/platform"
+              ? currentPath === "/platform" || currentPath.startsWith("/platform/")
+              : currentPath === item.to;
             return (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
@@ -139,6 +144,7 @@ export function AppSidebar() {
         <Section label="Insights & Audit" items={insightsNav} role={role} currentPath={currentPath} />
         <Section label="Business" items={businessNav} role={role} currentPath={currentPath} />
         <Section label="Administration" items={adminNav} role={role} currentPath={currentPath} />
+        <Section label="Platform" items={platformNav} role={role} currentPath={currentPath} />
       </SidebarContent>
       <SidebarFooter className="border-t border-slate-100">
         <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start text-slate-600 hover:text-red-600 hover:bg-red-50">

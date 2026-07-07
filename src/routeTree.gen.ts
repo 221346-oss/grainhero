@@ -20,6 +20,7 @@ import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authe
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
+import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
@@ -29,6 +30,10 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
+import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
+import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
+import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 
@@ -88,6 +93,11 @@ const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
   path: '/sensors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedNotificationsRoute =
   AuthenticatedNotificationsRouteImport.update({
     id: '/notifications',
@@ -137,6 +147,30 @@ const AuthenticatedActivityLogsRoute =
     path: '/activity-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformIndexRoute =
+  AuthenticatedPlatformIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
+const AuthenticatedPlatformUsersRoute =
+  AuthenticatedPlatformUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
+const AuthenticatedPlatformTenantsRoute =
+  AuthenticatedPlatformTenantsRouteImport.update({
+    id: '/tenants',
+    path: '/tenants',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
+const AuthenticatedPlatformLogsRoute =
+  AuthenticatedPlatformLogsRouteImport.update({
+    id: '/logs',
+    path: '/logs',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
 const ApiPublicHooksSensorOfflineDetectorRoute =
   ApiPublicHooksSensorOfflineDetectorRouteImport.update({
     id: '/api/public/hooks/sensor-offline-detector',
@@ -163,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/insurance': typeof AuthenticatedInsuranceRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/sensors': typeof AuthenticatedSensorsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
@@ -170,6 +205,10 @@ export interface FileRoutesByFullPath {
   '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
 }
@@ -193,6 +232,10 @@ export interface FileRoutesByTo {
   '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
 }
@@ -211,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
@@ -218,6 +262,10 @@ export interface FileRoutesById {
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
 }
@@ -236,6 +284,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/not-allowed'
     | '/notifications'
+    | '/platform'
     | '/sensors'
     | '/settings'
     | '/silos'
@@ -243,6 +292,10 @@ export interface FileRouteTypes {
     | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
+    | '/platform/logs'
+    | '/platform/tenants'
+    | '/platform/users'
+    | '/platform/'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/sensor-offline-detector'
   fileRoutesByTo: FileRoutesByTo
@@ -266,6 +319,10 @@ export interface FileRouteTypes {
     | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
+    | '/platform/logs'
+    | '/platform/tenants'
+    | '/platform/users'
+    | '/platform'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/sensor-offline-detector'
   id:
@@ -283,6 +340,7 @@ export interface FileRouteTypes {
     | '/_authenticated/insurance'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
+    | '/_authenticated/platform'
     | '/_authenticated/sensors'
     | '/_authenticated/settings'
     | '/_authenticated/silos'
@@ -290,6 +348,10 @@ export interface FileRouteTypes {
     | '/_authenticated/traceability'
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
+    | '/_authenticated/platform/logs'
+    | '/_authenticated/platform/tenants'
+    | '/_authenticated/platform/users'
+    | '/_authenticated/platform/'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/sensor-offline-detector'
   fileRoutesById: FileRoutesById
@@ -382,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSensorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform': {
+      id: '/_authenticated/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof AuthenticatedPlatformRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/notifications': {
       id: '/_authenticated/notifications'
       path: '/notifications'
@@ -445,6 +514,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/': {
+      id: '/_authenticated/platform/'
+      path: '/'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/_authenticated/platform/users': {
+      id: '/_authenticated/platform/users'
+      path: '/users'
+      fullPath: '/platform/users'
+      preLoaderRoute: typeof AuthenticatedPlatformUsersRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/_authenticated/platform/tenants': {
+      id: '/_authenticated/platform/tenants'
+      path: '/tenants'
+      fullPath: '/platform/tenants'
+      preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/_authenticated/platform/logs': {
+      id: '/_authenticated/platform/logs'
+      path: '/logs'
+      fullPath: '/platform/logs'
+      preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
     '/api/public/hooks/sensor-offline-detector': {
       id: '/api/public/hooks/sensor-offline-detector'
       path: '/api/public/hooks/sensor-offline-detector'
@@ -462,6 +559,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedPlatformRouteChildren {
+  AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
+  AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
+  AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+}
+
+const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
+  AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
+  AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
+  AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+}
+
+const AuthenticatedPlatformRouteWithChildren =
+  AuthenticatedPlatformRoute._addFileChildren(
+    AuthenticatedPlatformRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
@@ -472,6 +588,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
@@ -490,6 +607,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
