@@ -1,16 +1,75 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
 
 export const listWarehouses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("warehouses")
-      .select("*")
+      .select("*, silos:silos(id)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
     return data ?? [];
+  });
+
+const warehouseInput = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1).max(200),
+  warehouse_id: z.string().min(1).max(50),
+  location_description: z.string().max(500).optional().nullable(),
+  address: z.string().max(500).optional().nullable(),
+  total_capacity_kg: z.number().nonnegative().optional().nullable(),
+  status: z.enum(["active", "offline", "error", "maintenance"]).default("active"),
+  notes: z.string().max(2000).optional().nullable(),
+});
+
+export const upsertWarehouse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => warehouseInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const location = {
+      description: data.location_description ?? null,
+      address: data.address ?? null,
+    };
+    const payload = {
+      name: data.name,
+      warehouse_id: data.warehouse_id,
+      location,
+      total_capacity_kg: data.total_capacity_kg ?? null,
+      status: data.status,
+      notes: data.notes ?? null,
+      admin_id: context.userId,
+      created_by: context.userId,
+      updated_by: context.userId,
+    };
+    if (data.id) {
+      const { data: row, error } = await context.supabase
+        .from("warehouses")
+        .update({ ...payload, updated_by: context.userId })
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    const { data: row, error } = await context.supabase
+      .from("warehouses")
+      .insert(payload)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteWarehouse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("warehouses").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
   });
 
 export const listSilos = createServerFn({ method: "GET" })
