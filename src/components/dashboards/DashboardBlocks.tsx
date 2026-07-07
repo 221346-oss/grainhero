@@ -110,7 +110,7 @@ export function TeamCard() {
               <p className="text-sm font-medium truncate">{u.name ?? "—"}</p>
               <p className="text-xs text-slate-500 truncate">{u.email}</p>
             </div>
-            <span className="text-[10px] text-slate-400">{u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : "never"}</span>
+            <span className="text-[10px] text-slate-400">{u.updated_at ? new Date(u.updated_at).toLocaleDateString() : "—"}</span>
           </div>
         ))}
       </CardContent>
