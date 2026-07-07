@@ -563,11 +563,135 @@ export const listActuators = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("actuators")
-      .select("*")
+      .select("*, silos(id, silo_id, name, warehouse_id, warehouses(id, name, warehouse_id))")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
     return data ?? [];
+  });
+
+const actuatorInput = z.object({
+  id: z.string().uuid().optional(),
+  actuator_id: z.string().min(1).max(80),
+  name: z.string().min(1).max(200),
+  actuator_type: z.enum(["fan", "vent", "heater", "cooler", "alarm", "light"]),
+  silo_id: z.string().uuid(),
+  manufacturer: z.string().max(200).optional().nullable(),
+  model: z.string().max(200).optional().nullable(),
+  mac_address: z.string().max(80).optional().nullable(),
+  status: z.enum(["active", "offline", "error", "maintenance"]).default("active"),
+  control_mode: z.enum(["auto", "manual", "failsafe"]).default("auto"),
+  is_enabled: z.boolean().default(true),
+  power_level: z.number().min(0).max(100).optional().nullable(),
+  target_fan_speed: z.number().min(0).max(100).optional().nullable(),
+  tags: z.array(z.string()).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+});
+
+export const upsertActuator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => actuatorInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const payload = {
+      actuator_id: data.actuator_id,
+      name: data.name,
+      actuator_type: data.actuator_type,
+      silo_id: data.silo_id,
+      manufacturer: data.manufacturer ?? null,
+      model: data.model ?? null,
+      mac_address: data.mac_address ?? null,
+      status: data.status,
+      control_mode: data.control_mode,
+      is_enabled: data.is_enabled,
+      power_level: data.power_level ?? null,
+      target_fan_speed: data.target_fan_speed ?? null,
+      tags: data.tags ?? null,
+      notes: data.notes ?? null,
+      admin_id: context.userId,
+      created_by: context.userId,
+      updated_by: context.userId,
+    };
+    if (data.id) {
+      const { data: row, error } = await context.supabase
+        .from("actuators")
+        .update({ ...payload, updated_by: context.userId })
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    const { data: row, error } = await context.supabase
+      .from("actuators")
+      .insert(payload)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteActuator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("actuators").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+const controlInput = z.object({
+  id: z.string().uuid(),
+  action: z.enum(["turn_on", "turn_off", "set_value", "auto", "manual", "emergency_stop"]),
+  value: z.number().min(0).max(100).optional(),
+});
+
+export const controlActuator = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => controlInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const now = new Date().toISOString();
+    const patch: Record<string, unknown> = { updated_by: context.userId };
+    if (data.action === "turn_on") {
+      patch.is_on = true;
+      patch.status = "active";
+      patch.control_mode = "manual";
+      patch.human_requested_fan = true;
+      if (typeof data.value === "number") patch.power_level = data.value;
+      patch.current_operation = { action: "turn_on", value: data.value ?? null, at: now, by: context.userId };
+    } else if (data.action === "turn_off") {
+      patch.is_on = false;
+      patch.control_mode = "manual";
+      patch.human_requested_fan = false;
+      patch.power_level = 0;
+      patch.current_operation = { action: "turn_off", at: now, by: context.userId };
+    } else if (data.action === "set_value") {
+      patch.power_level = data.value ?? 0;
+      patch.target_fan_speed = data.value ?? 0;
+      patch.control_mode = "manual";
+      patch.current_operation = { action: "set_value", value: data.value ?? 0, at: now, by: context.userId };
+    } else if (data.action === "auto") {
+      patch.control_mode = "auto";
+      patch.human_requested_fan = false;
+      patch.current_operation = { action: "auto", at: now, by: context.userId };
+    } else if (data.action === "manual") {
+      patch.control_mode = "manual";
+      patch.current_operation = { action: "manual", at: now, by: context.userId };
+    } else if (data.action === "emergency_stop") {
+      patch.is_on = false;
+      patch.power_level = 0;
+      patch.status = "maintenance";
+      patch.control_mode = "manual";
+      patch.human_requested_fan = false;
+      patch.current_operation = { action: "emergency_stop", at: now, by: context.userId };
+    }
+    const { data: row, error } = await context.supabase
+      .from("actuators")
+      .update(patch)
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
   });
 
 export const listGrainAlerts = createServerFn({ method: "GET" })
