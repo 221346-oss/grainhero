@@ -108,22 +108,37 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const adminId = prof?.id ?? sub.metadata?.user_id ?? null;
               if (!adminId) break;
               const price = sub.items?.data[0]?.price;
+              const planId = sub.metadata?.plan_id ?? "";
+              const planNameMap: Record<string, string> = {
+                basic: "Grain Starter",
+                intermediate: "Grain Professional",
+                pro: "Grain Enterprise",
+              };
+              const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial"]);
+              const status = validStatuses.has(sub.status) ? sub.status : "active";
+              const interval = price?.recurring?.interval ?? "month";
+              const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
               await supabaseAdmin.from("subscriptions").upsert(
                 {
                   admin_id: adminId,
-                  plan_id: sub.metadata?.plan_id ?? "unknown",
-                  plan_name: sub.metadata?.plan_id ?? "Subscription",
-                  status: sub.status,
+                  plan_name: (planNameMap[planId] ?? "Custom") as never,
+                  plan_description: `Stripe subscription (${planId})`,
+                  status: status as never,
                   auto_renew: !(sub.cancel_at_period_end ?? false),
+                  start_date: new Date().toISOString(),
+                  end_date: sub.current_period_end
+                    ? new Date(sub.current_period_end * 1000).toISOString()
+                    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                   next_payment_date: sub.current_period_end
                     ? new Date(sub.current_period_end * 1000).toISOString()
                     : null,
                   price_per_month: price ? Number(price.unit_amount) / 100 : 0,
                   currency: (price?.currency ?? "usd").toUpperCase(),
-                  billing_cycle: price?.recurring?.interval ?? "month",
-                  external_subscription_id: sub.id,
+                  billing_cycle: billingCycle as never,
+                  stripe_subscription_id: sub.id,
+                  stripe_customer_id: sub.customer,
                 } as never,
-                { onConflict: "external_subscription_id" },
+                { onConflict: "stripe_subscription_id" },
               );
               await supabaseAdmin.from("security_events").insert({
                 user_id: adminId,
@@ -142,7 +157,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   auto_renew: false,
                   cancellation_date: new Date().toISOString(),
                 } as never)
-                .eq("external_subscription_id", sub.id);
+                .eq("stripe_subscription_id", sub.id);
               break;
             }
             case "invoice.payment_failed":
