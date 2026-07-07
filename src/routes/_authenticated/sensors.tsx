@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import {
   Cpu, Plus, Search, Edit2, Trash2, Eye, Loader2, Inbox, Wifi, WifiOff,
   Battery, Thermometer, Droplets, Wind, AlertTriangle, Radio, Package, Building2,
