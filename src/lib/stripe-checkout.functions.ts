@@ -35,6 +35,16 @@ async function stripeFetch(path: string, body: URLSearchParams | null, method: "
 const checkoutInput = z.object({
   planId: z.enum(["basic", "intermediate", "pro"]),
   iotQuantity: z.number().int().min(0).max(50).default(1),
+  install: z.object({
+    address: z.string().trim().min(3).max(300),
+    city: z.string().trim().min(1).max(120),
+    country: z.string().trim().min(1).max(120),
+    phone: z.string().trim().min(4).max(40),
+    preferredDate: z.string().trim().max(40).optional().nullable(),
+    notes: z.string().trim().max(1000).optional().nullable(),
+    businessName: z.string().trim().max(200).optional().nullable(),
+    taxId: z.string().trim().max(80).optional().nullable(),
+  }),
 });
 
 /**
@@ -74,6 +84,42 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
       }
     }
 
+    // Create a pending hardware/install order draft so the webhook can fulfill
+    // it and notify super-admins after payment succeeds.
+    const iotUnit = Number(plan.iotCharge ?? 7000);
+    const iotTotal = data.iotQuantity * iotUnit;
+    let orderId: string | null = null;
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: order, error } = await supabaseAdmin
+        .from("hardware_orders" as never)
+        .insert({
+          admin_id: context.userId,
+          plan_id: plan.id,
+          plan_name: plan.name,
+          hardware_quantity: data.iotQuantity,
+          hardware_unit_price: iotUnit,
+          hardware_total: iotTotal,
+          currency: "PKR",
+          install_address: data.install.address,
+          install_city: data.install.city,
+          install_country: data.install.country,
+          contact_phone: data.install.phone,
+          preferred_install_date: data.install.preferredDate || null,
+          notes: data.install.notes || null,
+          business_name: data.install.businessName || null,
+          tax_id: data.install.taxId || null,
+          status: "pending_payment",
+        } as never)
+        .select("id")
+        .single();
+      if (error) throw error;
+      orderId = (order as { id: string }).id;
+    } catch (e) {
+      console.error("could not create hardware order draft", e);
+      throw new Error("Could not create install order. Please try again.");
+    }
+
     // Build line items: recurring subscription + optional one-time IoT setup
     const params = form({
       mode: "subscription",
@@ -84,6 +130,7 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
       "metadata[user_id]": context.userId,
       "metadata[plan_id]": plan.id,
       "metadata[iot_quantity]": String(data.iotQuantity),
+      "metadata[hardware_order_id]": orderId ?? "",
       allow_promotion_codes: "true",
       "subscription_data[metadata][user_id]": context.userId,
       "subscription_data[metadata][plan_id]": plan.id,
@@ -105,6 +152,18 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     }
 
     const session = await stripeFetch("/checkout/sessions", params);
+    // Stash the session id on the order so the webhook can look it up.
+    if (orderId) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin
+          .from("hardware_orders" as never)
+          .update({ stripe_session_id: session.id } as never)
+          .eq("id", orderId);
+      } catch (e) {
+        console.warn("could not stash session id on order", e);
+      }
+    }
     return { url: session.url as string, id: session.id as string };
   });
 
