@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -40,6 +41,11 @@ const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
+  id: '/not-allowed',
+  path: '/not-allowed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
 }
 export interface FileRoutesById {
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
 }
 export interface FileRouteTypes {
@@ -76,9 +85,16 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/dashboard'
+    | '/not-allowed'
     | '/auth/reset-password'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/sitemap.xml' | '/dashboard' | '/auth/reset-password'
+  to:
+    | '/'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/dashboard'
+    | '/not-allowed'
+    | '/auth/reset-password'
   id:
     | '__root__'
     | '/'
@@ -86,6 +102,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/_authenticated/dashboard'
+    | '/_authenticated/not-allowed'
     | '/auth/reset-password'
   fileRoutesById: FileRoutesById
 }
@@ -133,6 +150,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthResetPasswordRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_authenticated/not-allowed': {
+      id: '/_authenticated/not-allowed'
+      path: '/not-allowed'
+      fullPath: '/not-allowed'
+      preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -145,10 +169,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
