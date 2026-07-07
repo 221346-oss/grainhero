@@ -896,6 +896,140 @@ export type Database = {
           },
         ]
       }
+      insurance_claims: {
+        Row: {
+          admin_id: string
+          amount_approved: number
+          amount_claimed: number
+          approved_date: string | null
+          batch_affected: Json
+          claim_number: string
+          claim_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          filed_date: string | null
+          id: string
+          incident_date: string | null
+          notes: string | null
+          photos: Json
+          policy_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          amount_approved?: number
+          amount_claimed?: number
+          approved_date?: string | null
+          batch_affected?: Json
+          claim_number: string
+          claim_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          filed_date?: string | null
+          id?: string
+          incident_date?: string | null
+          notes?: string | null
+          photos?: Json
+          policy_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          amount_approved?: number
+          amount_claimed?: number
+          approved_date?: string | null
+          batch_affected?: Json
+          claim_number?: string
+          claim_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          filed_date?: string | null
+          id?: string
+          incident_date?: string | null
+          notes?: string | null
+          photos?: Json
+          policy_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claims_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_policies: {
+        Row: {
+          admin_id: string
+          coverage_amount: number
+          coverage_type: string
+          covered_batches: Json
+          created_at: string
+          created_by: string | null
+          deductible: number
+          end_date: string | null
+          id: string
+          notes: string | null
+          policy_number: string
+          premium_amount: number
+          provider_name: string
+          renewal_date: string | null
+          risk_factors: Json
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          coverage_amount?: number
+          coverage_type?: string
+          covered_batches?: Json
+          created_at?: string
+          created_by?: string | null
+          deductible?: number
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          policy_number: string
+          premium_amount?: number
+          provider_name: string
+          renewal_date?: string | null
+          risk_factors?: Json
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          coverage_amount?: number
+          coverage_type?: string
+          covered_batches?: Json
+          created_at?: string
+          created_by?: string | null
+          deductible?: number
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          policy_number?: string
+          premium_amount?: number
+          provider_name?: string
+          renewal_date?: string | null
+          risk_factors?: Json
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           admin_id: string
