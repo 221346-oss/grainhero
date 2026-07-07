@@ -206,20 +206,20 @@ function ActuatorsPage() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <PageHeader
-        title="Actuator Control Center"
-        subtitle="Fans, vents, heaters, coolers, alarms & lights — direct hardware control"
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="destructive" size="sm" className="gap-1.5" onClick={emergency}>
-              <AlertTriangle className="h-4 w-4" /> Emergency Stop
-            </Button>
-            <Button size="sm" onClick={openCreate} className="gap-1.5">
-              <Plus className="h-4 w-4" /> New Actuator
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+        <PageHeader
+          title="Actuator Control Center"
+          subtitle="Fans, vents, heaters, coolers, alarms & lights — direct hardware control"
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button variant="destructive" size="sm" className="gap-1.5" onClick={emergency}>
+            <AlertTriangle className="h-4 w-4" /> Emergency Stop
+          </Button>
+          <Button size="sm" onClick={openCreate} className="gap-1.5">
+            <Plus className="h-4 w-4" /> New Actuator
+          </Button>
+        </div>
+      </div>
 
       {/* Stats strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
