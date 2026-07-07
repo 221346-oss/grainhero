@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
+import { countPendingOrders } from "@/lib/hardware-orders.functions";
 import { useQueryClient } from "@tanstack/react-query";
 
 type NavItem = {
@@ -82,6 +83,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "revenue", label: "Revenue", to: "/revenue", icon: Wallet, roles: ["super_admin", "admin", "manager"] },
       { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
       { name: "plans", label: "Plans", to: "/plans", icon: Sparkles, roles: ["super_admin", "admin", "manager", "technician"] },
+      { name: "orders", label: "My Install Orders", to: "/orders", icon: Package, roles: ["admin"] },
     ],
   },
 ];
@@ -237,6 +239,14 @@ export function AppSidebar() {
     queryFn: () => fetchRole(),
   });
   const role: AppRole = data?.role ?? "pending";
+  const fetchPending = useServerFn(countPendingOrders);
+  const { data: pending } = useQuery({
+    queryKey: ["pending-order-count"],
+    queryFn: () => fetchPending(),
+    enabled: role === "super_admin",
+    refetchInterval: 60_000,
+  });
+  const pendingCount = pending?.count ?? 0;
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -261,7 +271,16 @@ export function AppSidebar() {
         <MoreButton role={role} currentPath={currentPath} />
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border/60 gap-0">
-        <Section items={bottomNav} role={role} currentPath={currentPath} showLabel={false} />
+        <Section
+          items={bottomNav.map((n) =>
+            n.name === "platform" && pendingCount > 0
+              ? { ...n, badge: String(pendingCount) }
+              : n,
+          )}
+          role={role}
+          currentPath={currentPath}
+          showLabel={false}
+        />
         <Button
           variant="ghost"
           size="sm"
