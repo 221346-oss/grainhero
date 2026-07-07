@@ -1,87 +1,294 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Thermometer, Droplet, Wind, Wheat, AlertTriangle, Activity } from "lucide-react";
-import { getEnvironmentalOverview } from "@/lib/monitoring.functions";
+import { Input } from "@/components/ui/input";
+import {
+  BarChart3, Cloud, MapPin, Thermometer, Droplets, Wind, Gauge, Sun, Eye,
+  Sunrise, Sunset, CloudRain, Snowflake, CloudLightning, Activity,
+} from "lucide-react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
+import { geocodeCity, getWeatherBundle } from "@/lib/openweather.functions";
+import { useFirebaseAllSensors } from "@/hooks/use-firebase-sensor";
 
 export const Route = createFileRoute("/_authenticated/environmental")({
-  component: EnvPage,
+  component: EnvironmentalPage,
 });
 
-function Stat({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string; sub?: string; color: string }) {
-  return (
-    <Card><CardContent className="p-4 flex items-center gap-3">
-      <Icon className={`h-6 w-6 ${color}`} />
-      <div><div className="text-xs uppercase text-slate-500 font-semibold">{label}</div><div className="text-xl font-bold">{value}</div>{sub && <div className="text-xs text-slate-500">{sub}</div>}</div>
-    </CardContent></Card>
-  );
+interface OWCurrent {
+  main?: { temp?: number; feels_like?: number; humidity?: number; pressure?: number; temp_min?: number; temp_max?: number; grnd_level?: number };
+  wind?: { speed?: number; deg?: number; gust?: number };
+  visibility?: number;
+  clouds?: { all?: number };
+  rain?: { "1h"?: number; "3h"?: number };
+  snow?: { "1h"?: number; "3h"?: number };
+  weather?: Array<{ main?: string; description?: string; icon?: string }>;
+  name?: string;
+  sys?: { country?: string; sunrise?: number; sunset?: number };
 }
+interface OWForecastItem {
+  dt: number;
+  main: { temp: number; humidity: number; feels_like?: number; pressure?: number };
+  wind?: { speed?: number };
+  rain?: { "3h"?: number };
+  snow?: { "3h"?: number };
+  clouds?: { all?: number };
+}
+interface AQIComponents { co?: number; no?: number; no2?: number; o3?: number; so2?: number; pm2_5?: number; pm10?: number; nh3?: number }
 
-function EnvPage() {
-  const fn = useServerFn(getEnvironmentalOverview);
-  const { data } = useQuery({ queryKey: ["environmental"], queryFn: () => fn(), refetchInterval: 60_000 });
+function windDir(deg?: number) {
+  if (deg === undefined) return "--";
+  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+function fmtTime(unix?: number) { return unix ? new Date(unix * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--"; }
+function aqiLabel(v: number | null) { return v === null ? "--" : (["", "Good", "Fair", "Moderate", "Poor", "Very Poor"][v] ?? "--"); }
+function aqiColor(v: number | null) { return v === null ? "text-slate-500" : (["", "text-emerald-600", "text-lime-600", "text-yellow-600", "text-orange-600", "text-red-600"][v] ?? "text-slate-500"); }
 
-  const env = data?.env;
-  const trend = data?.trend ?? [];
-  const silos = data?.siloLatest ?? [];
-  const maxT = Math.max(1, ...trend.map((t: any) => t.temp));
+function EnvironmentalPage() {
+  const geoFn = useServerFn(geocodeCity);
+  const bundleFn = useServerFn(getWeatherBundle);
+
+  const [cityQuery, setCityQuery] = useState("Lahore");
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+
+  const geo = useMutation({
+    mutationFn: (city: string) => geoFn({ data: { city } }),
+    onSuccess: (d) => { setCoords({ lat: d.lat, lon: d.lon }); toast.success(`${d.name}, ${d.country}`); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const weather = useQuery({
+    queryKey: ["weather-bundle", coords?.lat, coords?.lon],
+    queryFn: () => bundleFn({ data: coords! }),
+    enabled: !!coords,
+    refetchInterval: 5 * 60_000,
+  });
+
+  const current = weather.data?.current as OWCurrent | undefined;
+  const forecastList = (weather.data?.forecast as { list?: OWForecastItem[] } | undefined)?.list ?? [];
+  const aqiPayload = weather.data?.aqi as { list?: Array<{ main?: { aqi?: number }; components?: AQIComponents }> } | undefined;
+  const aqi = aqiPayload?.list?.[0]?.main?.aqi ?? null;
+  const aqiComp = aqiPayload?.list?.[0]?.components ?? null;
+
+  const forecastSeries = useMemo(() => forecastList.map((it) => ({
+    ts: new Date(it.dt * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit" }),
+    temp: it.main?.temp ?? null,
+    feels: it.main?.feels_like ?? null,
+    humidity: it.main?.humidity ?? null,
+    wind: it.wind?.speed ?? null,
+    rain: it.rain?.["3h"] ?? 0,
+    snow: it.snow?.["3h"] ?? 0,
+  })), [forecastList]);
+
+  useEffect(() => { if (!coords) geo.mutate(cityQuery); /* eslint-disable-next-line */ }, []);
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) return toast.error("Geolocation not available");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      (err) => toast.error(`Location error: ${err.message}`),
+    );
+  };
+
+  // Live silo microclimate from Firebase (all sensors)
+  const { readings: liveSensors } = useFirebaseAllSensors();
+  const firstDeviceId = Object.keys(liveSensors)[0];
+  const liveSilo = firstDeviceId ? liveSensors[firstDeviceId] : null;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Activity className="h-6 w-6 text-emerald-600" /> Environmental Monitoring</h1>
-        <p className="text-sm text-slate-500 mt-1">Live conditions across silos over the last 24 hours ({data?.samples ?? 0} samples).</p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Environmental Data</h1>
+          <p className="text-sm text-muted-foreground mt-1">OpenWeather snapshot · AQI · 5-day forecast · Live silo microclimate</p>
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat icon={Thermometer} label="Temperature" value={`${(env?.temp.avg ?? 0).toFixed(1)}°C`} sub={`range ${(env?.temp.min ?? 0).toFixed(1)}–${(env?.temp.max ?? 0).toFixed(1)}`} color="text-orange-600" />
-        <Stat icon={Droplet} label="Humidity" value={`${(env?.hum.avg ?? 0).toFixed(1)}%`} sub={`range ${(env?.hum.min ?? 0).toFixed(0)}–${(env?.hum.max ?? 0).toFixed(0)}`} color="text-blue-600" />
-        <Stat icon={Wheat} label="Moisture" value={`${(env?.moist.avg ?? 0).toFixed(1)}%`} sub={`range ${(env?.moist.min ?? 0).toFixed(1)}–${(env?.moist.max ?? 0).toFixed(1)}`} color="text-amber-600" />
-        <Stat icon={Wind} label="CO₂" value={`${(env?.co2.avg ?? 0).toFixed(0)} ppm`} sub={`peak ${(env?.co2.max ?? 0).toFixed(0)}`} color="text-slate-600" />
-        <Stat icon={AlertTriangle} label="Anomalies" value={String(data?.anomalies ?? 0)} sub={`${data?.condensationRisk ?? 0} condensation risks`} color="text-red-600" />
-      </div>
+      <Card className="bg-gradient-to-br from-sky-50 to-blue-50/40">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-sky-600" /> Select Location</CardTitle>
+          <CardDescription>Type a city or use your current location</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Input className="w-[260px]" placeholder="e.g. Lahore" value={cityQuery} onChange={(e) => setCityQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") geo.mutate(cityQuery); }} />
+          <Button onClick={() => geo.mutate(cityQuery)} disabled={geo.isPending}>Search</Button>
+          <Button variant="outline" onClick={useMyLocation}>Use My Location</Button>
+          {coords && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{coords.lat.toFixed(3)}, {coords.lon.toFixed(3)}</Badge>}
+        </CardContent>
+      </Card>
 
       <Card>
-        <CardHeader><CardTitle>24-hour trend</CardTitle><CardDescription>Hourly average temperature</CardDescription></CardHeader>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2"><Sun className="h-5 w-5 text-yellow-500" /> Current Weather</CardTitle>
+              <CardDescription>{current ? `${current.name ?? "Selected"}${current.sys?.country ? ", " + current.sys.country : ""} • ${new Date().toLocaleString()}` : "Waiting for data"}</CardDescription>
+            </div>
+            {current?.weather?.[0]?.icon && (
+              <div className="flex items-center gap-2">
+                <img src={`https://openweathermap.org/img/wn/${current.weather[0].icon}@2x.png`} alt="" width={56} height={56} />
+                <span className="text-sm font-medium capitalize text-slate-600">{current.weather[0].description}</span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-1 h-32">
-            {trend.map((t: any) => (
-              <div key={t.hour} className="flex-1 flex flex-col items-center justify-end group" title={`${t.hour}: ${t.temp.toFixed(1)}°C`}>
-                <div className="w-full bg-orange-400 rounded-t group-hover:bg-orange-500 transition-colors" style={{ height: `${(t.temp / maxT) * 100}%`, minHeight: t.temp > 0 ? "2px" : "0" }} />
-              </div>
-            ))}
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6 text-sm">
+            <Metric icon={Thermometer} label="Temp" value={current?.main?.temp !== undefined ? `${current.main.temp.toFixed(1)}°C` : "--"} sub={`Feels ${current?.main?.feels_like?.toFixed(1) ?? "--"}°C`} color="orange" />
+            <Metric icon={Droplets} label="Humidity" value={`${current?.main?.humidity ?? "--"}%`} color="blue" />
+            <Metric icon={Gauge} label="Pressure" value={`${current?.main?.pressure ?? "--"} hPa`} color="purple" />
+            <Metric icon={Wind} label="Wind" value={`${current?.wind?.speed ?? "--"} m/s`} sub={windDir(current?.wind?.deg)} color="cyan" />
+            <Metric icon={CloudRain} label="Rain" value={`${current?.rain?.["1h"] ?? 0} mm/h`} color="indigo" />
+            <Metric icon={Snowflake} label="Snow" value={`${current?.snow?.["1h"] ?? 0} mm/h`} color="slate" />
           </div>
-          <div className="flex justify-between text-[10px] text-slate-400 mt-2">
-            <span>{trend[0]?.hour}</span><span>{trend[trend.length - 1]?.hour}</span>
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-5 mt-3 text-sm">
+            <MiniMetric icon={Eye} label="Visibility" value={current?.visibility !== undefined ? `${(current.visibility / 1000).toFixed(1)} km` : "--"} />
+            <MiniMetric icon={Cloud} label="Cloudiness" value={`${current?.clouds?.all ?? "--"}%`} />
+            <MiniMetric icon={Thermometer} label="Min / Max" value={`${current?.main?.temp_min?.toFixed(1) ?? "--"}° / ${current?.main?.temp_max?.toFixed(1) ?? "--"}°`} />
+            <MiniMetric icon={Sunrise} label="Sunrise" value={fmtTime(current?.sys?.sunrise)} />
+            <MiniMetric icon={Sunset} label="Sunset" value={fmtTime(current?.sys?.sunset)} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Silo readings</CardTitle><CardDescription>Latest sample per silo</CardDescription></CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y">
-            {silos.map((s: any) => (
-              <div key={s.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-slate-900">{s.name}</div>
-                  <div className="text-xs text-slate-500">{s.silo_id} · {s.status}</div>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <Badge variant="outline" className="text-orange-700 border-orange-200">{Number(s.latest?.temperature_value ?? 0).toFixed(1)}°C</Badge>
-                  <Badge variant="outline" className="text-blue-700 border-blue-200">{Number(s.latest?.humidity_value ?? 0).toFixed(0)}% RH</Badge>
-                  <Badge variant="outline" className="text-amber-700 border-amber-200">{Number(s.latest?.moisture_value ?? 0).toFixed(1)}% M</Badge>
-                  {s.latest?.anomaly_detected && <Badge className="bg-red-100 text-red-800">anomaly</Badge>}
-                  {s.latest?.condensation_risk && <Badge className="bg-amber-100 text-amber-800">condensation</Badge>}
-                </div>
-              </div>
-            ))}
-            {silos.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No sensor data in the last 24 hours.</div>}
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><CloudLightning className="h-5 w-5 text-emerald-600" /> Air Quality Index</CardTitle>
+          <CardDescription>Real-time pollutants from OpenWeather</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4 mb-4">
+            <div className={`text-4xl font-bold ${aqiColor(aqi)}`}>{aqi ?? "--"}</div>
+            <div>
+              <div className={`text-lg font-semibold ${aqiColor(aqi)}`}>{aqiLabel(aqi)}</div>
+              <div className="text-xs text-slate-500">1 = Good … 5 = Very Poor</div>
+            </div>
           </div>
+          {aqiComp && (
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4 text-sm">
+              {[
+                ["PM2.5", aqiComp.pm2_5, "text-red-600"],
+                ["PM10", aqiComp.pm10, "text-orange-600"],
+                ["O₃", aqiComp.o3, "text-blue-600"],
+                ["NO₂", aqiComp.no2, "text-purple-600"],
+                ["SO₂", aqiComp.so2, "text-amber-600"],
+                ["CO", aqiComp.co, "text-slate-600"],
+                ["NO", aqiComp.no, "text-teal-600"],
+                ["NH₃", aqiComp.nh3, "text-lime-600"],
+              ].map(([label, value, color]) => (
+                <div key={String(label)} className="p-2 rounded-lg border bg-white">
+                  <div className="text-xs text-slate-500">{label as string}</div>
+                  <div className={`text-lg font-bold ${color as string}`}>{typeof value === "number" ? value.toFixed(1) : "--"} <span className="text-xs font-normal text-slate-400">μg/m³</span></div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> 5-Day Forecast (3-hourly)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {forecastSeries.length > 0 ? (
+            <div className="space-y-6">
+              <ForecastChart title="Temperature & Feels-like">
+                <LineChart data={forecastSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} tick={{ fontSize: 10 }} />
+                  <YAxis /><Tooltip />
+                  <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} name="Temp (°C)" />
+                  <Line type="monotone" dataKey="feels" stroke="#fb923c" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Feels (°C)" />
+                </LineChart>
+              </ForecastChart>
+              <ForecastChart title="Precipitation">
+                <AreaChart data={forecastSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} tick={{ fontSize: 10 }} />
+                  <YAxis /><Tooltip />
+                  <Area type="monotone" dataKey="rain" stroke="#3b82f6" fill="#93c5fd" fillOpacity={0.4} name="Rain mm/3h" />
+                  <Area type="monotone" dataKey="snow" stroke="#6366f1" fill="#a5b4fc" fillOpacity={0.3} name="Snow mm/3h" />
+                </AreaChart>
+              </ForecastChart>
+              <ForecastChart title="Humidity & Wind">
+                <LineChart data={forecastSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} tick={{ fontSize: 10 }} />
+                  <YAxis yAxisId="left" /><YAxis yAxisId="right" orientation="right" /><Tooltip />
+                  <Line yAxisId="left" type="monotone" dataKey="humidity" stroke="#059669" strokeWidth={2} dot={false} name="Humidity %" />
+                  <Line yAxisId="right" type="monotone" dataKey="wind" stroke="#0ea5e9" strokeWidth={2} dot={false} name="Wind m/s" />
+                </LineChart>
+              </ForecastChart>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-8 text-center">{weather.isFetching ? "Loading forecast…" : "Search for a city to see forecast."}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-emerald-600" /> Indoor Silo Microclimate
+            {liveSilo && <Badge variant="outline" className="text-emerald-600 border-emerald-300 ml-auto">● Live</Badge>}
+          </CardTitle>
+          <CardDescription>{liveSilo ? `Firebase RTDB · ${firstDeviceId} · ${new Date(liveSilo.ts ?? Date.now()).toLocaleString()}` : "Waiting for silo data…"}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {liveSilo ? (
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 text-sm">
+              <TileStat label="Temp" value={`${(liveSilo.temperature ?? 0).toFixed(1)}°C`} tone="red" />
+              <TileStat label="Humidity" value={`${(liveSilo.humidity ?? 0).toFixed(1)}%`} tone="cyan" />
+              <TileStat label="TVOC" value={`${liveSilo.voc ?? 0} ppb`} tone="violet" />
+              <TileStat label="CO₂" value={`${liveSilo.co2 ?? 0} ppm`} tone="slate" />
+              <TileStat label="Fan" value={String(liveSilo.fan_state ?? "off").toUpperCase()} tone="amber" />
+              <TileStat label="Lid" value={String(liveSilo.lid_state ?? "closed").toUpperCase()} tone="sky" />
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No live device data yet. Ensure device is streaming to Firebase RTDB /devices/{"{deviceId}"}/live.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function Metric({ icon: Icon, label, value, sub, color }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; sub?: string; color: string }) {
+  return (
+    <div className={`p-3 rounded-lg bg-gradient-to-br from-${color}-50 to-${color}-100/40 border border-${color}-100`}>
+      <div className={`text-xs uppercase text-${color}-600 flex items-center gap-1`}><Icon className="h-3 w-3" /> {label}</div>
+      <div className={`text-2xl font-bold text-${color}-700`}>{value}</div>
+      {sub && <div className={`text-xs text-${color}-500 mt-0.5`}>{sub}</div>}
+    </div>
+  );
+}
+function MiniMetric({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+  return (
+    <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
+      <div className="text-xs uppercase text-slate-500 flex items-center gap-1"><Icon className="h-3 w-3" /> {label}</div>
+      <div className="text-lg font-semibold">{value}</div>
+    </div>
+  );
+}
+function TileStat({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className={`p-3 rounded-lg bg-${tone}-50 border border-${tone}-100 text-center`}>
+      <div className={`text-xs uppercase text-${tone}-500`}>{label}</div>
+      <div className={`text-xl font-bold text-${tone}-700`}>{value}</div>
+    </div>
+  );
+}
+function ForecastChart({ title, children }: { title: string; children: React.ReactElement }) {
+  return (
+    <div>
+      <h4 className="text-sm font-medium mb-2">{title}</h4>
+      <div style={{ height: 220 }}><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>
     </div>
   );
 }

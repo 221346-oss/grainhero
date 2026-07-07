@@ -1,9 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Package, Truck, AlertTriangle, TrendingUp, Activity, BarChart3 } from "lucide-react";
-import { PageHeader, StatCard, Placeholder } from "./_shared";
+import { PageHeader, StatCard } from "./_shared";
 import { useDashboardStats } from "./useDashboardStats";
+import { RecentBatchesCard, RecentAlertsCard, SilosOccupancyCard, ActuatorsCard } from "./DashboardBlocks";
 
 export function ManagerDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
@@ -23,33 +21,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
         <StatCard label="Critical" value={s?.alerts.critical ?? "—"} icon={BarChart3} accent="amber" />
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Recent Batches</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Active Alerts</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-        <Card className="md:col-span-2 border-slate-200/70 shadow-sm">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Storage Capacity</CardTitle>
-              <Badge variant="secondary">Preview</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {["Silo A", "Silo B", "Silo C"].map((silo, i) => (
-              <div key={silo} className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">{silo}</span>
-                  <span className="font-semibold text-slate-900">{[68, 42, 91][i]}%</span>
-                </div>
-                <Progress value={[68, 42, 91][i]} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <RecentBatchesCard />
+        <RecentAlertsCard />
+        <SilosOccupancyCard />
+        <ActuatorsCard />
       </div>
     </div>
   );

@@ -9,9 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Brain, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Search } from "lucide-react";
+import { Brain, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Search, Sparkles, Loader2 } from "lucide-react";
 import { getBatchPredictions } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { getSpoilageInsight } from "@/lib/ai-insights.functions";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/ai-predictions")({
   component: AIPredictionsPage,
@@ -41,6 +45,13 @@ function AIPredictionsPage() {
   });
 
   const [q, setQ] = useState("");
+  const [insight, setInsight] = useState<null | { risk_level: string; insight: string; recommendations: string[]; batch_id: string }>(null);
+  const insightFn = useServerFn(getSpoilageInsight);
+  const runInsight = useMutation({
+    mutationFn: (v: { siloId: string; batch_id: string }) => insightFn({ data: { siloId: v.siloId } }).then((r) => ({ ...r, batch_id: v.batch_id })),
+    onSuccess: (d) => setInsight(d),
+    onError: (e: Error) => toast.error(e.message),
+  });
   const preds = data?.predictions ?? [];
 
   const filtered = useMemo(() => {
@@ -138,6 +149,14 @@ function AIPredictionsPage() {
                     <span className="font-semibold text-slate-900">{p.score}%</span>
                   </div>
                   <Progress value={p.score} className="h-2" />
+                  <Button size="sm" variant="outline" className="w-full mt-2 gap-1.5"
+                    disabled={!p.silo_id || (runInsight.isPending && runInsight.variables?.batch_id === p.batch_id)}
+                    onClick={() => runInsight.mutate({ siloId: p.silo_id, batch_id: p.batch_id })}>
+                    {runInsight.isPending && runInsight.variables?.batch_id === p.batch_id
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <Sparkles className="h-3.5 w-3.5" />}
+                    AI Insight
+                  </Button>
                 </div>
               </div>
             ))}
@@ -147,6 +166,24 @@ function AIPredictionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!insight} onOpenChange={(o) => !o && setInsight(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-emerald-600" /> AI Spoilage Insight</DialogTitle>
+            <DialogDescription>{insight?.batch_id} — risk level <Badge className={levelBadge(insight?.risk_level ?? "low")}>{insight?.risk_level}</Badge></DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-slate-700 whitespace-pre-wrap">{insight?.insight}</p>
+          {insight?.recommendations && insight.recommendations.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Recommendations</p>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700">
+                {insight.recommendations.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
