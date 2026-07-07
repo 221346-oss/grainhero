@@ -19,6 +19,7 @@ import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
+import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 
@@ -72,6 +73,12 @@ const AuthenticatedGrainBatchesRoute =
     path: '/grain-batches',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedGrainAlertsRoute =
+  AuthenticatedGrainAlertsRouteImport.update({
+    id: '/grain-alerts',
+    path: '/grain-alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/sensors': typeof AuthenticatedSensorsRoute
@@ -102,6 +110,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/sensors': typeof AuthenticatedSensorsRoute
@@ -117,6 +126,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/actuators'
     | '/dashboard'
+    | '/grain-alerts'
     | '/grain-batches'
     | '/not-allowed'
     | '/sensors'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/actuators'
     | '/dashboard'
+    | '/grain-alerts'
     | '/grain-batches'
     | '/not-allowed'
     | '/sensors'
@@ -159,6 +171,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/actuators'
     | '/_authenticated/dashboard'
+    | '/_authenticated/grain-alerts'
     | '/_authenticated/grain-batches'
     | '/_authenticated/not-allowed'
     | '/_authenticated/sensors'
@@ -246,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGrainBatchesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/grain-alerts': {
+      id: '/_authenticated/grain-alerts'
+      path: '/grain-alerts'
+      fullPath: '/grain-alerts'
+      preLoaderRoute: typeof AuthenticatedGrainAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -266,6 +286,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
@@ -276,6 +297,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
