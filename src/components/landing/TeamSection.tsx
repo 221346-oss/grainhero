@@ -188,11 +188,10 @@ function FounderCard({ founder }: { founder: { name: string; role: string; bount
 
         {/* Photo */}
         <div className="relative mb-3 sm:mb-4 mx-auto w-24 h-24 sm:w-32 sm:h-32 border-2 border-black bg-gray-100 rounded-sm overflow-hidden">
-          <Image
+          <img
             src={founder.image}
             alt={founder.name}
-            fill
-            className="object-cover rounded-sm"
+            className="absolute inset-0 w-full h-full object-cover rounded-sm"
             style={{ filter: 'sepia(10%) contrast(105%) brightness(100%) saturate(95%)' }}
           />
         </div>
