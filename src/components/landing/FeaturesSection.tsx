@@ -285,11 +285,10 @@ function FeatureCard({ feature, hoveredPhoto }: {
     >
       {/* Image */}
       <div className="h-44 mb-6 rounded-sm relative overflow-hidden">
-        <Image
+        <img
           src={feature.image}
           alt={feature.title}
-          fill
-          className="object-cover rounded-sm"
+          className="absolute inset-0 w-full h-full object-cover rounded-sm"
           style={{
             filter: 'sepia(10%) saturate(90%) brightness(92%) contrast(1.1)'
           }}
