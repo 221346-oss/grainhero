@@ -110,7 +110,16 @@ Expose GrainGuard as an MCP server so Claude/other agents can query it:
 
 ---
 
-## 🎯 Recommended immediate next step
-**Batch 7A: Realtime subscriptions** — smallest, unlocks live UX everywhere, no new secrets. Then **7B Firebase** since it's the biggest architectural addition and everything downstream (predictions, alerts) benefits from live data.
+## ✅ Phase 7 progress
+- **7A** Realtime — DONE (grain_alerts, sensor_readings, notifications, incidents)
+- **7B** Firebase live sensor bridge — DONE (service-account server bridge + cron)
+- **7C-B** Lovable AI Gateway spoilage insight — DONE (`ai-insights.functions.ts`, wired into `/ai-predictions`)
+- **7E** Actuator device bridge — DONE (Firebase RTDB `/devices/{id}/commands/{cmdId}` publish inside `controlActuator`)
+- Environmental page ported to full OpenWeather (server proxy) + live silo microclimate
+- Dashboards (Admin/Manager/Technician) now render real recent batches, alerts, team, actuators, silo occupancy from `getDashboardExtras`
 
-Reply with **"7A"**, **"7B"**, or name the module you want first.
+## Remaining
+- 7C Path A (hosted numeric ML endpoints) — needs `ML_INFERENCE_URL`
+- 7D MCP server exposing GrainGuard tools
+- Actuator device firmware must consume `/devices/{id}/commands` and write ACKs back
+- Stripe checkout wiring, QR generation, chatbot page
