@@ -1,117 +1,300 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Check, Loader2, Mail } from "lucide-react";
-import { useState } from "react";
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Check, Cpu } from 'lucide-react'
 
-import { joinWaitlist } from "@/lib/waitlist.functions";
-import { cn } from "@/lib/utils";
+import { GlassNav } from '@/components/landing/GlassNav'
+import { HeroSection } from '@/components/landing/HeroSection'
+import { FeaturesSection } from '@/components/landing/FeaturesSection'
+import { StatsSection } from '@/components/landing/StatsSection'
+import { TeamSection } from '@/components/landing/TeamSection'
+import { PremiumFooter } from '@/components/landing/PremiumFooter'
+import pricingData from '@/lib/pricing-data.js'
 
-export const Route = createFileRoute("/")({
-  component: Index,
-});
+export const Route = createFileRoute('/')({
+  head: () => ({
+    meta: [
+      { title: 'GrainHero — AI-Powered Grain Storage Management' },
+      {
+        name: 'description',
+        content:
+          "Monitor, predict, and optimize your grain storage with GrainHero's intelligent SaaS platform. AI-powered spoilage prediction, IoT sensors, and real-time analytics.",
+      },
+      { property: 'og:title', content: 'GrainHero — Smart Grain Storage, Powered by AI' },
+      {
+        property: 'og:description',
+        content:
+          'AI-powered grain storage management platform with real-time monitoring and predictive analytics.',
+      },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+    ],
+  }),
+  component: HomePage,
+})
 
-type Status =
-  | { type: "success"; message: string }
-  | { type: "error"; message: string };
+type Plan = {
+  id: string
+  name: string
+  priceFrontend?: string
+  description: string
+  features: string[]
+  link?: string
+  price?: number
+  duration?: string
+  popular?: boolean
+  iotChargeLabel?: string
+}
 
-function Index() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<Status | null>(null);
-  const [isPending, setIsPending] = useState(false);
+function HomePage() {
+  return (
+    <main className="min-h-screen bg-white text-black">
+      <GlassNav />
+      <section id="hero" aria-label="Hero section">
+        <HeroSection />
+      </section>
+      <section aria-label="Features section">
+        <FeaturesSection />
+      </section>
+      <section aria-label="Statistics">
+        <StatsSection />
+      </section>
+      <section aria-label="Pricing">
+        <PricingShowcase />
+      </section>
+      <section aria-label="Team">
+        <TeamSection />
+      </section>
+      <section aria-label="Call to action">
+        <CTA />
+      </section>
+      <PremiumFooter />
+    </main>
+  )
+}
 
-  const submitWaitlist = useServerFn(joinWaitlist);
+function PricingShowcase() {
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(
+    (pricingData as Plan[])[0]?.id ?? null,
+  )
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setStatus(null);
-    setIsPending(true);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
-    try {
-      const result = await submitWaitlist({ data: { email } });
-      setStatus({ type: "success", message: result.message });
-      setEmail("");
-    } catch {
-      setStatus({
-        type: "error",
-        message: "Something went wrong. Please try again.",
-      });
-    } finally {
-      setIsPending(false);
-    }
-  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setIsVisible(true)
+      },
+      { threshold: 0.1 },
+    )
+    const el = document.getElementById('pricing')
+    if (el) observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const nextSlide = useCallback(() => {
+    setActiveSlide((prev) => (prev + 1) % (pricingData as Plan[]).length)
+  }, [])
+
+  useEffect(() => {
+    if (!isMobile || !isVisible) return
+    const timer = setInterval(nextSlide, 4500)
+    return () => clearInterval(timer)
+  }, [isMobile, isVisible, nextSlide])
+
+  const plans = pricingData as Plan[]
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 py-12">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-60"
-        style={{
-          background:
-            "radial-gradient(circle at 80% 20%, oklch(0.968 0.007 247.896 / 0.6) 0%, transparent 40%), radial-gradient(circle at 20% 80%, oklch(0.929 0.013 255.508 / 0.4) 0%, transparent 40%)",
-        }}
-      />
-
-      <main className="w-full max-w-md text-center">
-        <div className="mb-8 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-          <Mail className="h-7 w-7" />
+    <section id="pricing" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#f0fdf4]">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8 sm:mb-12">
+          <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900">
+            Pick the plan that <br className="hidden sm:block" />
+            checks your boxes
+          </h3>
         </div>
 
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-          Coming Soon
-        </h1>
-
-        <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-          Something special is on the way. Join the waitlist and be the first to
-          know when we launch.
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 flex flex-col gap-3 sm:flex-row"
-        >
-          <input
-            type="email"
-            name="email"
-            required
-            autoComplete="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-foreground shadow-sm outline-none ring-ring transition-all placeholder:text-muted-foreground focus:ring-2 focus:ring-offset-2 focus:ring-offset-background"
-          />
-          <button
-            type="submit"
-            disabled={isPending}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-70"
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                Notify me
-                <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        {status && (
-          <div
-            className={cn(
-              "mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm",
-              status.type === "success"
-                ? "bg-secondary text-secondary-foreground"
-                : "bg-destructive/10 text-destructive",
-            )}
-          >
-            {status.type === "success" && <Check className="h-4 w-4" />}
-            {status.message}
+        <div className="md:hidden max-w-sm mx-auto">
+          <div className="relative h-[480px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeSlide}
+                initial={{ opacity: 0, x: 60, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -60, scale: 0.95 }}
+                transition={{ duration: 0.4, ease: 'easeInOut' }}
+                className="absolute inset-0"
+              >
+                <PricingCard
+                  p={plans[activeSlide]}
+                  isSelected={selectedPlanId === plans[activeSlide].id}
+                  setSelectedPlanId={setSelectedPlanId}
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
-        )}
-      </main>
+          <div className="flex justify-center gap-2 mt-6">
+            {plans.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveSlide(i)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  i === activeSlide ? 'bg-[#00a63e] scale-125' : 'bg-gray-300'
+                }`}
+                aria-label={`View plan ${i + 1}`}
+              />
+            ))}
+          </div>
+        </div>
 
-      <footer className="absolute bottom-6 text-sm text-muted-foreground">
-        © {new Date().getFullYear()}. All rights reserved.
-      </footer>
-    </div>
-  );
+        <div className="hidden md:flex flex-wrap justify-center gap-6">
+          {plans.map((p) => (
+            <PricingCard
+              key={p.id}
+              p={p}
+              isSelected={selectedPlanId === p.id}
+              setSelectedPlanId={setSelectedPlanId}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PricingCard({
+  p,
+  isSelected,
+  setSelectedPlanId,
+}: {
+  p: Plan
+  isSelected: boolean
+  setSelectedPlanId: (id: string) => void
+}) {
+  const priceText = p.priceFrontend ?? `Rs. ${p.price?.toLocaleString()}${p.duration ?? ''}`
+  return (
+    <label
+      className={`cursor-pointer text-left w-full h-full max-w-sm rounded-2xl bg-white border-2 p-7 shadow-sm transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl block ${
+        isSelected
+          ? 'border-[#00a63e] ring-2 ring-[#00a63e]/20'
+          : 'border-gray-200 hover:border-[#00a63e]/60'
+      }`}
+    >
+      <input
+        type="radio"
+        name="landing-plan"
+        value={p.id}
+        checked={isSelected}
+        onChange={() => setSelectedPlanId(p.id)}
+        className="sr-only"
+      />
+      {p.popular && (
+        <div className="mb-3 text-xs font-semibold text-white inline-block bg-[#00a63e] px-3 py-1 rounded-full">
+          Most Popular
+        </div>
+      )}
+      <h4 className="text-xl font-bold">{p.name}</h4>
+      <p className="text-3xl font-black mt-2 text-[#00a63e]">{priceText}</p>
+      {p.iotChargeLabel && (
+        <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 mt-2">
+          <Cpu className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>{p.iotChargeLabel}</span>
+        </div>
+      )}
+      <ul className="mt-5 space-y-2.5 text-sm text-gray-700">
+        {p.features.map((f, idx) => (
+          <li key={idx} className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-[#00a63e] flex-shrink-0" />
+            {f}
+          </li>
+        ))}
+      </ul>
+      <Link
+        to="/auth"
+        onClick={() => {
+          try {
+            localStorage.setItem('selectedPlanId', p.id)
+          } catch {}
+        }}
+        className={`mt-6 inline-block w-full text-center py-3 rounded-full font-bold transition ${
+          isSelected
+            ? 'bg-[#00a63e] text-white hover:bg-[#029238]'
+            : 'border-2 border-gray-200 hover:border-[#00a63e] hover:text-[#00a63e]'
+        }`}
+      >
+        {p.id === 'custom' ? 'Contact Us' : 'Choose plan'}
+      </Link>
+    </label>
+  )
+}
+
+function CTA() {
+  return (
+    <section
+      className="relative py-24 overflow-hidden"
+      style={{
+        background:
+          'linear-gradient(135deg, #0d2818 0%, #0a1f14 30%, #071208 60%, #0a1f14 100%)',
+      }}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <div
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 2px 2px, rgba(0,166,62,0.4) 1px, transparent 0)',
+            backgroundSize: '40px 40px',
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      </div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00a63e]/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl" />
+
+      <div className="container mx-auto px-4 text-center relative z-10 max-w-4xl">
+        <motion.h2
+          className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          Ready to optimize your<br />
+          <span className="text-[#00a63e]">grain storage?</span>
+        </motion.h2>
+        <motion.p
+          className="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          Join thousands of farmers and grain operators who trust GrainHero to protect their harvest
+          and maximize profits.
+        </motion.p>
+        <motion.div
+          className="flex flex-wrap gap-4 justify-center"
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Link
+            to="/auth"
+            className="bg-[#00a63e] text-white px-10 py-4 rounded-full text-lg font-bold hover:bg-[#029238] transition-colors cursor-pointer"
+          >
+            Get Started Free
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  )
 }
