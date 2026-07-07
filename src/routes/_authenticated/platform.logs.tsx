@@ -1,3 +1,4 @@
+import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -44,7 +45,7 @@ function LogsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" /></div>
+            <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
           ) : data.length === 0 ? (
             <div className="p-10 text-center text-slate-500">No logs</div>
           ) : (
