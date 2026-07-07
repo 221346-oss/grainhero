@@ -142,3 +142,53 @@
     color: var(--color-foreground);
   }
 }
+
+/* ============================
+   GrainHero landing utilities
+   ============================ */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(25px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.glass-navbar-green {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.text-shadow-strong { text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.9); }
+.text-shadow-medium { text-shadow: 0 1px 3px rgba(0,0,0,0.7), 0 1px 1px rgba(0,0,0,0.8); }
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+@keyframes drift-left {
+  0%,100% { transform: translateX(0); } 50% { transform: translateX(-15px); }
+}
+@keyframes drift-right {
+  0%,100% { transform: translateX(0); } 50% { transform: translateX(15px); }
+}
+@keyframes filmScroll { from { transform: translateX(0); } to { transform: translateX(-2272px); } }
+@keyframes perforationsScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes projectorLight {
+  0%,100% { opacity: 0.05; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.15; transform: translate(-50%, -50%) scale(1.1); }
+}
+@keyframes photoSway1 { 0%,100%{transform:rotate(2deg) translateY(0);} 50%{transform:rotate(-1deg) translateY(-3px);} }
+@keyframes photoSway2 { 0%,100%{transform:rotate(-1deg) translateY(0);} 50%{transform:rotate(3deg) translateY(-2px);} }
+@keyframes photoSway3 { 0%,100%{transform:rotate(1deg) translateY(0);} 50%{transform:rotate(-2deg) translateY(-4px);} }
+@keyframes ropeSlackSway { 0%,100%{transform:scaleY(1) translateY(0);} 50%{transform:scaleY(1.02) translateY(1px);} }
+
+.float-gentle { animation: float-gentle 6s ease-in-out infinite; }
+.drift-left { animation: drift-left 8s ease-in-out infinite; }
+.drift-right { animation: drift-right 7s ease-in-out infinite; }
+.film-scroll-animation { animation: filmScroll 28s linear infinite; }
+.perforations-scroll-animation { animation: perforationsScroll 28s linear infinite; }
+.photo-sway-1 { animation: photoSway1 8s ease-in-out infinite; }
+.photo-sway-2 { animation: photoSway2 9s ease-in-out infinite; }
+.photo-sway-3 { animation: photoSway3 7s ease-in-out infinite; }
+.rope-sway { animation: ropeSlackSway 12s ease-in-out infinite; }
+
+html { scroll-behavior: smooth; }
