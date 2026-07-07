@@ -24,12 +24,13 @@ export const listNotifications = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(listNotifInput, d))
   .handler(async ({ data, context }) => {
+    const limit = data.limit ?? 50;
     let q = context.supabase
       .from("notifications")
       .select("*")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
-      .limit(data.limit);
+      .limit(limit);
     if (data.filter === "unread") q = q.eq("read", false);
     if (data.filter === "read") q = q.eq("read", true);
     const { data: rows, error } = await q;
@@ -99,8 +100,10 @@ export const listActivityLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(listLogsInput, d))
   .handler(async ({ data, context }) => {
-    const from = (data.page - 1) * data.limit;
-    const to = from + data.limit - 1;
+    const page = data.page ?? 1;
+    const limit = data.limit ?? 20;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
     let q = context.supabase
       .from("activity_logs")
@@ -131,10 +134,10 @@ export const listActivityLogs = createServerFn({ method: "POST" })
     return {
       logs: rows ?? [],
       pagination: {
-        current_page: data.page,
-        total_pages: Math.max(1, Math.ceil(total / data.limit)),
+        current_page: page,
+        total_pages: Math.max(1, Math.ceil(total / limit)),
         total_items: total,
-        items_per_page: data.limit,
+        items_per_page: limit,
       },
       summary: { categories },
     };
@@ -178,7 +181,7 @@ export const createActivityLog = createServerFn({ method: "POST" })
       entity_id: data.entity_id ?? null,
       entity_ref: data.entity_ref ?? null,
       severity: data.severity,
-      metadata: (data.metadata ?? {}) as Record<string, unknown>,
+      metadata: (data.metadata ?? {}) as never,
     });
     if (error) throw error;
     return { ok: true };
