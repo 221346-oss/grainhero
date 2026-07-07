@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
+import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -57,6 +58,12 @@ const AuthenticatedWarehousesRoute = AuthenticatedWarehousesRouteImport.update({
   path: '/warehouses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTraceabilityRoute =
+  AuthenticatedTraceabilityRouteImport.update({
+    id: '/traceability',
+    path: '/traceability',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSilosRoute = AuthenticatedSilosRouteImport.update({
   id: '/silos',
   path: '/silos',
@@ -138,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
+  '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -157,6 +165,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
+  '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -178,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
+  '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/sensors'
     | '/silos'
+    | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/sensors'
     | '/silos'
+    | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
@@ -238,6 +250,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/sensors'
     | '/_authenticated/silos'
+    | '/_authenticated/traceability'
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
@@ -295,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/warehouses'
       fullPath: '/warehouses'
       preLoaderRoute: typeof AuthenticatedWarehousesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/traceability': {
+      id: '/_authenticated/traceability'
+      path: '/traceability'
+      fullPath: '/traceability'
+      preLoaderRoute: typeof AuthenticatedTraceabilityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/silos': {
@@ -395,6 +415,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
+  AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
 }
 
@@ -409,6 +430,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
+  AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
 }
 

@@ -343,7 +343,7 @@ function TimelineBody({ batch }: { batch: Batch }) {
             title="Risk Assessment" date={batch.last_risk_assessment ?? batch.intake_date}
             desc="AI-powered spoilage risk evaluation"
             items={[
-              ["Risk Level", batch.spoilage_label],
+              ["Risk Level", batch.spoilage_label ?? "N/A"],
               ["Risk Score", `${Number(batch.risk_score ?? 0)}%`],
               ["Assessment", (batch.risk_score ?? 0) >= 70 ? "High" : (batch.risk_score ?? 0) >= 40 ? "Medium" : "Low"],
               ["Confidence", `${Number(batch.ai_prediction_confidence ?? 0)}%`],
