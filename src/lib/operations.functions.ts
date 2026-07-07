@@ -650,7 +650,7 @@ export const controlActuator = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => controlInput.parse(d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
-    const patch: Record<string, unknown> = { updated_by: context.userId };
+    const patch: Database["public"]["Tables"]["actuators"]["Update"] = { updated_by: context.userId };
     if (data.action === "turn_on") {
       patch.is_on = true;
       patch.status = "active";
