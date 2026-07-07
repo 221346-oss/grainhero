@@ -51,6 +51,29 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       .from("profiles").select("admin_id, id").eq("id", context.userId).maybeSingle();
     const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? tenantId;
 
+    // Enforce plan-based staff limit (admin's active subscription)
+    if (!isSuper) {
+      const { supabaseAdmin: sa } = await import("@/integrations/supabase/client.server");
+      const { data: sub } = await sa
+        .from("subscriptions")
+        .select("max_users, status")
+        .eq("admin_id", admin_id)
+        .in("status", ["active", "trial"] as never)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!sub) throw new Error("No active subscription. Purchase a plan first to invite staff.");
+      const maxUsers = Number((sub as { max_users?: number }).max_users ?? 0);
+      const { count } = await sa
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .or(`admin_id.eq.${admin_id},id.eq.${admin_id}`);
+      const current = count ?? 1;
+      if (maxUsers > 0 && current >= maxUsers) {
+        throw new Error(`Staff limit reached (${current}/${maxUsers}). Upgrade your plan to add more members.`);
+      }
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email.trim().toLowerCase(), {
       data: { name: data.name ?? "", invited_role: data.role, admin_id },
