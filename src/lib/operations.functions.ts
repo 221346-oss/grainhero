@@ -700,11 +700,138 @@ export const listGrainAlerts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("grain_alerts")
-      .select("*")
-      .order("created_at", { ascending: false })
+      .select("*, silos(id, silo_id, name), warehouses(id, name, warehouse_id), grain_batches(id, batch_id, grain_type)")
+      .order("triggered_at", { ascending: false, nullsFirst: false })
       .limit(500);
     if (error) throw error;
     return data ?? [];
+  });
+
+const alertInput = z.object({
+  id: z.string().uuid().optional(),
+  alert_id: z.string().min(1).max(80),
+  title: z.string().min(1).max(200),
+  message: z.string().min(1).max(2000),
+  priority: z.enum(["low", "medium", "high", "critical"]),
+  status: z.enum(["pending", "acknowledged", "resolved", "escalated"]).default("pending"),
+  source: z.string().min(1).max(80),
+  alert_type: z.string().max(80).optional().nullable(),
+  silo_id: z.string().uuid().optional().nullable(),
+  warehouse_id: z.string().uuid().optional().nullable(),
+  batch_id: z.string().uuid().optional().nullable(),
+  tags: z.array(z.string()).optional().nullable(),
+});
+
+export const upsertGrainAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => alertInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const payload = {
+      alert_id: data.alert_id,
+      title: data.title,
+      message: data.message,
+      priority: data.priority,
+      status: data.status,
+      source: data.source,
+      alert_type: data.alert_type ?? null,
+      silo_id: data.silo_id ?? null,
+      warehouse_id: data.warehouse_id ?? null,
+      batch_id: data.batch_id ?? null,
+      tags: data.tags ?? null,
+      admin_id: context.userId,
+      created_by: context.userId,
+      triggered_at: new Date().toISOString(),
+    };
+    if (data.id) {
+      const { data: row, error } = await context.supabase
+        .from("grain_alerts")
+        .update(payload)
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    const { data: row, error } = await context.supabase
+      .from("grain_alerts")
+      .insert(payload)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteGrainAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("grain_alerts").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+const alertActionInput = z.object({
+  id: z.string().uuid(),
+  action: z.enum(["acknowledge", "resolve", "escalate", "reopen"]),
+  notes: z.string().max(2000).optional(),
+  resolution_type: z.string().max(80).optional(),
+  escalated_to: z.string().max(200).optional(),
+  reason: z.string().max(500).optional(),
+});
+
+export const actionGrainAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => alertActionInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const now = new Date().toISOString();
+    const patch: Database["public"]["Tables"]["grain_alerts"]["Update"] = {};
+    if (data.action === "acknowledge") {
+      patch.status = "acknowledged";
+      patch.acknowledged_at = now;
+      patch.acknowledged_by = context.userId;
+    } else if (data.action === "resolve") {
+      patch.status = "resolved";
+      patch.resolved_at = now;
+      patch.resolved_by = context.userId;
+      patch.resolution = {
+        type: data.resolution_type ?? "manual",
+        notes: data.notes ?? null,
+        at: now,
+        by: context.userId,
+      };
+    } else if (data.action === "escalate") {
+      const { data: current } = await context.supabase
+        .from("grain_alerts")
+        .select("escalation_level, escalation_history")
+        .eq("id", data.id)
+        .single();
+      const level = (current?.escalation_level ?? 0) + 1;
+      const history = Array.isArray(current?.escalation_history) ? current!.escalation_history : [];
+      patch.status = "escalated";
+      patch.escalation_level = level;
+      patch.escalation_history = [
+        ...history,
+        {
+          level,
+          escalated_to: data.escalated_to ?? null,
+          escalated_by: context.userId,
+          escalated_at: now,
+          reason: data.reason ?? null,
+        },
+      ] as unknown as Database["public"]["Tables"]["grain_alerts"]["Update"]["escalation_history"];
+    } else if (data.action === "reopen") {
+      patch.status = "pending";
+      patch.resolved_at = null;
+      patch.resolved_by = null;
+    }
+    const { data: row, error } = await context.supabase
+      .from("grain_alerts")
+      .update(patch)
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
   });
 
 export const listBuyers = createServerFn({ method: "GET" })
