@@ -77,7 +77,7 @@ export const listSilos = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("silos")
-      .select("*, warehouses(id, name, warehouse_id), current_batch:grain_batches!silos_current_batch_id_fkey(id, batch_id, grain_type)")
+      .select("*, warehouses(id, name, warehouse_id), current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
