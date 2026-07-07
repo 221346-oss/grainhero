@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Save, User, Bell, MapPin, Loader2, Palette, Check } from "lucide-react";
+import { Save, User, Bell, MapPin, Loader2, Palette, Check, Camera, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/dashboards/_shared";
 import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
 import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { initialsOf } from "@/hooks/useMyProfile";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -30,10 +31,11 @@ function SettingsPage() {
   function selectTheme(id: ThemeId) { setTheme(id); applyTheme(id); }
 
   const [form, setForm] = useState({
-    name: "", phone: "", business_type: "farm",
+    name: "", phone: "", business_type: "farm", avatar: null as string | null,
     address: "", city: "", country: "",
     prefs: { email_alerts: true, sms_alerts: false, push_notifications: true, weekly_reports: true } as Prefs,
   });
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!data) return;
@@ -41,6 +43,7 @@ function SettingsPage() {
     const prefs = (data.preferences ?? {}) as any;
     setForm({
       name: data.name ?? "", phone: data.phone ?? "", business_type: data.business_type ?? "farm",
+      avatar: (data as any).avatar ?? null,
       address: addr.address ?? "", city: addr.city ?? "", country: addr.country ?? "",
       prefs: { email_alerts: prefs.email_alerts ?? true, sms_alerts: prefs.sms_alerts ?? false, push_notifications: prefs.push_notifications ?? true, weekly_reports: prefs.weekly_reports ?? true },
     });
@@ -48,13 +51,42 @@ function SettingsPage() {
 
   const save = useMutation({
     mutationFn: () => saveFn({ data: {
-      name: form.name, phone: form.phone, business_type: form.business_type,
+      name: form.name, phone: form.phone, business_type: form.business_type, avatar: form.avatar,
       address: { address: form.address, city: form.city, country: form.country },
       preferences: form.prefs as Record<string, unknown>,
     } }),
     onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["my-settings"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+    const resized = await new Promise<string>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const size = 256;
+        const canvas = document.createElement("canvas");
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext("2d")!;
+        const s = Math.min(img.width, img.height);
+        const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
+        ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+    setForm((f) => ({ ...f, avatar: resized }));
+  }
+
+  const initials = initialsOf(form.name, data?.email ?? "");
 
   if (isLoading) return <div className="p-10 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400" /></div>;
 
@@ -74,6 +106,45 @@ function SettingsPage() {
           <Card>
             <CardHeader><CardTitle>Profile</CardTitle><CardDescription>Basic information about you.</CardDescription></CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="relative h-20 w-20 rounded-full overflow-hidden ring-1 ring-black/10 grid place-items-center text-lg font-bold text-[--fusion-ink] shadow-sm group"
+                  style={form.avatar ? undefined : { background: "var(--gradient-fusion)" }}
+                  aria-label="Change profile picture"
+                >
+                  {form.avatar ? (
+                    <img src={form.avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
+                  <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
+                    <Camera className="h-5 w-5" />
+                  </span>
+                </button>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-foreground">Profile picture</div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                      <Camera className="h-4 w-4 mr-2" /> {form.avatar ? "Change" : "Upload"}
+                    </Button>
+                    {form.avatar && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, avatar: null })}>
+                        <Trash2 className="h-4 w-4 mr-2" /> Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Square image works best. Save to apply.</p>
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.currentTarget.value = ""; }}
+                />
+              </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
                 <div><Label>Email</Label><Input value={data?.email ?? ""} disabled /></div>
