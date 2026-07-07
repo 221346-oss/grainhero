@@ -106,6 +106,8 @@ function SensorsPage() {
   const listWhFn = useServerFn(listWarehouses);
   const listSiloFn = useServerFn(listSilos);
   const qc = useQueryClient();
+  useRealtimeInvalidate("sensor_readings", [["sensor-readings-latest"]]);
+  useRealtimeInvalidate("actuators", [["actuators"]]);
 
   const { data, isLoading } = useQuery({ queryKey: ["sensor-devices"], queryFn: () => listFn() as Promise<Device[]> });
   const { data: readings } = useQuery({
