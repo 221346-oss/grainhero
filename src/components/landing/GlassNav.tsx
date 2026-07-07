@@ -96,26 +96,16 @@ export function GlassNav() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
-              {navLinks.map((link) =>
-                link.isRoute ? (
-                  <Link
-                    key={link.href}
-                    to={link.href}
-                    className="text-white/90 hover:text-white font-medium transition-all duration-300 hover:scale-105 text-sm uppercase tracking-wide"
-                  >
-                    {link.label}
-                  </Link>
-                ) : (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={(e) => handleAnchorClick(e, link.href)}
-                    className="text-white/90 hover:text-white font-medium transition-all duration-300 hover:scale-105 text-sm uppercase tracking-wide"
-                  >
-                    {link.label}
-                  </a>
-                )
-              )}
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => handleAnchorClick(e, link.href)}
+                  className="text-white/90 hover:text-white font-medium transition-all duration-300 hover:scale-105 text-sm uppercase tracking-wide"
+                >
+                  {link.label}
+                </a>
+              ))}
             </div>
 
             {/* Right side */}
