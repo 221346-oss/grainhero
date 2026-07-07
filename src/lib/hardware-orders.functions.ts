@@ -2,6 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// Order rows contain arbitrary column values; return them as a JSON-safe map.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type HardwareOrder = Record<string, any>;
+
 const STATUS = z.enum([
   "pending_payment",
   "new",
@@ -22,7 +26,7 @@ export const listMyHardwareOrders = createServerFn({ method: "GET" })
       .eq("admin_id", context.userId)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return { orders: (data ?? []) as Array<Record<string, unknown>> };
+    return { orders: (data ?? []) as HardwareOrder[] };
   });
 
 /** Super-admin: list every order. */
@@ -40,20 +44,22 @@ export const listAllHardwareOrders = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw error;
     // Attach the buyer profile so the console can show name + email.
-    const adminIds = Array.from(new Set((data ?? []).map((o: Record<string, unknown>) => o.admin_id as string)));
-    let profiles: Record<string, { name?: string; email?: string }> = {};
+    const rows = (data ?? []) as HardwareOrder[];
+    const adminIds = Array.from(new Set(rows.map((o) => o.admin_id as string)));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let profiles: Record<string, any> = {};
     if (adminIds.length > 0) {
       const { data: profs } = await context.supabase
         .from("profiles")
         .select("id,name,email")
         .in("id", adminIds);
-      profiles = Object.fromEntries((profs ?? []).map((p) => [p.id, { name: p.name, email: p.email }]));
+      profiles = Object.fromEntries((profs ?? []).map((p) => [p.id, { name: p.name ?? null, email: p.email ?? null }]));
     }
     return {
-      orders: (data ?? []).map((o: Record<string, unknown>) => ({
+      orders: rows.map((o) => ({
         ...o,
         buyer: profiles[o.admin_id as string] ?? null,
-      })),
+      })) as HardwareOrder[],
     };
   });
 
@@ -97,7 +103,7 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
     if (error) throw error;
 
     // Notify the buyer in-app.
-    const o = updated as Record<string, unknown>;
+    const o = updated as HardwareOrder;
     await supabaseAdmin.from("notifications").insert({
       user_id: o.admin_id as string,
       tenant_id: o.admin_id as string,
@@ -107,7 +113,7 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
       is_read: false,
     } as never);
 
-    return { order: o };
+    return { order: o as HardwareOrder };
   });
 
 const messageInput = z.object({
