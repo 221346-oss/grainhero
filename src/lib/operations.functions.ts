@@ -38,7 +38,7 @@ const warehouseInput = z.object({
 
 export const upsertWarehouse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => warehouseInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(warehouseInput, d))
   .handler(async ({ data, context }) => {
     const location = {
       description: data.location_description ?? null,
@@ -108,7 +108,7 @@ const siloInput = z.object({
 
 export const upsertSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => siloInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
     const location = { description: data.location_description ?? null };
     if (data.id) {
@@ -200,7 +200,7 @@ const batchInput = z.object({
 
 export const upsertGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => batchInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
     // resolve warehouse from silo
     const { data: silo, error: siloErr } = await context.supabase
@@ -329,7 +329,7 @@ const dispatchInput = z.object({
 
 export const dispatchGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => dispatchInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(dispatchInput, d))
   .handler(async ({ data, context }) => {
     let buyerId = data.buyer_id ?? null;
     if (!buyerId && data.new_buyer?.name) {
@@ -410,7 +410,7 @@ const spoilageInput = z.object({
 
 export const logSpoilageEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => spoilageInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(spoilageInput, d))
   .handler(async ({ data, context }) => {
     const { data: batch, error: getErr } = await context.supabase
       .from("grain_batches").select("spoilage_events, spoilage_label, risk_score").eq("id", data.id).single();
@@ -482,7 +482,7 @@ const sensorInput = z.object({
 
 export const upsertSensorDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => sensorInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(sensorInput, d))
   .handler(async ({ data, context }) => {
     const base = {
       device_name: data.device_name,
@@ -601,7 +601,7 @@ const actuatorInput = z.object({
 
 export const upsertActuator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => actuatorInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(actuatorInput, d))
   .handler(async ({ data, context }) => {
     const payload = {
       actuator_id: data.actuator_id,
@@ -658,7 +658,7 @@ const controlInput = z.object({
 
 export const controlActuator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => controlInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(controlInput, d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
     const patch: Database["public"]["Tables"]["actuators"]["Update"] = { updated_by: context.userId };
@@ -734,7 +734,7 @@ const alertInput = z.object({
 
 export const upsertGrainAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => alertInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(alertInput, d))
   .handler(async ({ data, context }) => {
     const payload = {
       alert_id: data.alert_id,
@@ -791,7 +791,7 @@ const alertActionInput = z.object({
 
 export const actionGrainAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => alertActionInput.parse(d))
+  .inputValidator((d: unknown) => parseOrThrow(alertActionInput, d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
     const patch: Database["public"]["Tables"]["grain_alerts"]["Update"] = {};
