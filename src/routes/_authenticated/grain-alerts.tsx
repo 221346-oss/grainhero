@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import {
   AlertTriangle, AlertCircle, Bell, Activity, CheckCircle, Clock,
   ArrowUpRight, Search, Plus, Eye, Trash2, Loader2, Inbox, Shield,
@@ -86,6 +87,7 @@ const emptyForm: Form = {
 function GrainAlertsPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listGrainAlerts);
+  useRealtimeInvalidate("grain_alerts", [["grain-alerts"]]);
   const silosFn = useServerFn(listSilos);
   const whFn = useServerFn(listWarehouses);
   const saveFn = useServerFn(upsertGrainAlert);
