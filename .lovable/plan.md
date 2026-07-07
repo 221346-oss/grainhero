@@ -1,72 +1,116 @@
-## Scope discovered
+# GrainGuard Port — Status & Next Steps
 
-`frontend_code/app/[locale]/(authenticated)/` contains **44 route folders** and 4 role-dashboard components (SuperAdmin, Admin, Manager, Technician). That's too much to port in one pass without prioritization — so I'm splitting it into 5 phases, each with an explicit **cron / edge / server-fn audit** as you requested.
+## ✅ What's Done (Phases 1–6, mapped to your list)
 
-## Phase 3 — Authenticated shell + role routing (this next step)
+### Phase 1–3: Foundation
+- TanStack Start migration, Supabase wired, RLS + `has_role()`, `_authenticated` gate, role-based sidebar, `not-allowed` route.
 
-Port the app chrome and the 4 role dashboards so login lands somewhere real.
+### Phase 4: Core dashboard modules
+| Module | Route | Server fns | Status |
+|---|---|---|---|
+| Role-based Dashboard (Manager/Admin/Technician/SuperAdmin) | `/dashboard` | `operations.functions.ts` | ✅ |
+| Warehouses | `/warehouses` | ✅ | ✅ |
+| Silos + thresholds | `/silos` | ✅ | ✅ |
+| Grain Batches (intake→dispatch) | `/grain-batches` | ✅ | ✅ |
+| Sensor Devices + Readings (historical) | `/sensors` | ✅ | ✅ |
+| Actuators (fan/vent/heater) | `/actuators` | ✅ | ✅ |
+| Grain Alerts | `/grain-alerts` | ✅ | ⚠️ Realtime subscription not yet wired |
+| Buyers + Invoices + Payments | `/buyers`, `/revenue` | `billing.functions.ts` | ✅ |
+| Subscriptions + Invoices | `/subscription`, `/plans` | ✅ | ✅ (Stripe pending) |
 
-Files to create:
-- `src/routes/_authenticated/route.tsx` — integration-managed gate (already correct pattern; verify `ssr:false` + `getUser()` redirect to `/auth`).
-- `src/components/app/AppSidebar.tsx` — port `frontend_code/components/sidebar.tsx`, role-aware nav (super_admin/admin/manager/technician menus).
-- `src/components/app/AppShell.tsx` — top bar + sidebar layout with `<Outlet/>`.
-- `src/routes/_authenticated/dashboard.tsx` — reads `user_roles`, renders the matching dashboard component below.
-- `src/components/dashboards/{SuperAdmin,Admin,Manager,Technician}Dashboard.tsx` — 1:1 UI port, mock data initially, real queries wired in Phase 4.
-- `src/routes/_authenticated/not-allowed.tsx` — role-gated fallback.
-- `src/lib/roles.functions.ts` — `getMyRole()` server fn (uses `requireSupabaseAuth` + `has_role`).
+### Phase 5: Advanced modules
+| Module | Route | Status |
+|---|---|---|
+| Analytics | `/analytics` | ✅ |
+| AI Predictions / Spoilage | `/ai-predictions` | ⚠️ Mock data — no real model call |
+| ML Models registry | `/ml-models` | ⚠️ Placeholder — no live model binding |
+| Reports (CSV export) | `/reports` | ✅ |
+| Environmental | `/environmental` | ✅ |
+| Incidents | `/incidents` | ✅ |
+| Maintenance | `/maintenance` | ✅ |
+| Device Health | `/server-monitoring` | ✅ |
+| Team Management | `/team-management` | ✅ |
+| Notifications | `/notifications` | ✅ |
+| Activity Logs | `/activity-logs` | ✅ |
+| Traceability | `/traceability` | ✅ |
+| Insurance | `/insurance` | ✅ |
+| Settings / Profile | `/settings` | ✅ |
+| Security Center | `/security-center` | ✅ admin+ |
+| **Super-admin subtree** | `/platform`, `/platform/tenants`, `/platform/users`, `/platform/logs` | ✅ |
 
-**Cron / edge audit for Phase 3:** none required. Pure UI + one auth-gated server fn. No webhooks, no scheduled work.
+### Phase 6: Polish
+- ✅ SEO metadata per route (head() titles + descriptions)
+- ✅ Role-gated sidebar visibility
+- ⏳ Public sitemap.xml — pending
+- ⏳ i18n — deferred (optional)
+- ⏳ Stripe — deferred (optional)
+- ⏳ `/new` sub-routes for create-forms (currently dialogs) — pending
+- ⏳ Chatbot — pending
 
-## Phase 4 — Core operational pages (real Supabase data)
+---
 
-Pages: `warehouses`, `silos`, `grain-batches`, `sensors`, `actuators`, `grain-alerts`, `alerts`, `buyers`, `payments`, `invoices`, `profile`, `settings`, `notifications`, `notification-settings`.
+## ⚠️ Known Gaps in Ported Code
+1. **Realtime**: `grain_alerts` and `sensor_readings` need `supabase.channel().on('postgres_changes')` subscriptions in-page (currently poll or on-load only).
+2. **Firebase**: Original app streamed live sensor data from Firebase RTDB — not yet integrated. Currently all reads hit Supabase historical tables.
+3. **AI / ML pages** show structure but call no real inference — pure Supabase reads of past predictions.
+4. **QR codes** on batches — UI hooks exist but generator not wired.
+5. **Actuator control** — writes to `actuators` table but no MQTT/device push bridge.
+6. **Create-form sub-routes** (`/incidents/new`, `/maintenance/new`, etc.) — use inline dialogs instead of dedicated routes.
 
-For each: list + detail + create/edit form, server fns backed by RLS.
+---
 
-**Cron / edge audit for Phase 4:**
-- **Cron needed:** `alerts-escalation` (every 5 min) — scan `grain_alerts` where `status='open'` past SLA, mark escalated, insert notification rows. Implement as TanStack server route `/api/public/hooks/alerts-escalation` + `pg_cron` calling it with `apikey` header.
-- **Cron needed:** `sensor-offline-detector` (every 2 min) — flag `sensor_devices` where `last_seen < now() - 5min` as `offline`, emit `grain_alerts`.
-- **Edge / webhook:** none in this phase.
+## 🚀 Phase 7 — Real Integrations (proposed order)
 
-## Phase 5 — Firebase sensor bridge (this is your "sensor readings come from Firebase" answer)
+### 7A. Realtime everywhere (1 batch)
+Wire `supabase.channel()` in `useEffect` for: `grain_alerts`, `sensor_readings`, `notifications`, `incidents`. Enable Realtime publication in a migration.
 
-Two viable patterns; recommending **Option A** you already picked:
+### 7B. Firebase live sensor bridge (1 batch)
+```text
+Device → Firebase RTDB (live) ──┐
+                                 ├─→ UI (Sensors, Silos, Environmental)
+Supabase (historical/analytics) ─┘
+```
+- Add `firebase/app` + `firebase/database` client.
+- New `useFirebaseSensor(deviceId)` hook — subscribes to `/devices/{id}/live`.
+- Server fn `syncFirebaseToSupabase` (cron via `/api/public/cron/sync`) writes snapshots into `sensor_readings` every N min.
+- Secrets needed: `VITE_FIREBASE_*` (publishable config is fine in client).
 
-- **TanStack server route** `/api/public/hooks/firebase-sensor-ingest` — Firebase Cloud Function or Realtime Database `onWrite` trigger posts each new reading here. Route verifies HMAC signature (`FIREBASE_INGEST_SECRET` via `add_secret`), validates payload with Zod, writes to `sensor_readings` via `supabaseAdmin`, and evaluates thresholds → inserts `grain_alerts` when breached.
-- Client dashboards then use **Supabase Realtime** (already enabled on `sensor_readings`, `grain_alerts`, `grain_batches`) — no direct Firebase read from the browser.
+### 7C. Custom ML model integration (1–2 batches)
+Two paths — pick one per model:
 
-**Cron / edge audit for Phase 5:**
-- **Webhook (edge-style):** the ingest route above. Public prefix, signature-verified.
-- **Cron needed:** `sensor-rollups` (every 15 min) — aggregate `sensor_readings` into hourly/daily buckets for charts, so dashboards don't scan raw rows.
-- **Optional cron:** `firebase-poll-fallback` — only if you also want a pull path when the Firebase push webhook is down. Skipping unless you ask.
+**Path A — Hosted inference (recommended for start)**
+- Deploy your model (spoilage, quality, yield) to HuggingFace Inference / Replicate / your own FastAPI on Render.
+- Add `predict.functions.ts` with `runSpoilagePrediction({ siloId })` — reads recent readings, POSTs to model endpoint, writes result to a new `ml_predictions` table.
+- Secret: `ML_INFERENCE_URL`, `ML_INFERENCE_TOKEN`.
 
-Deliverable at end of Phase 5: live temperature/humidity/CO2 streams from your existing Firebase into Supabase, feeding realtime dashboards.
+**Path B — Edge inference (Lovable AI Gateway)**
+- Use `LOVABLE_API_KEY` + gateway for LLM-based reasoning over sensor summaries (natural-language insights, anomaly explanations).
+- Combine with Path A for numerical models.
 
-## Phase 6 — Analytics, AI, reporting
+Wire `/ai-predictions` and `/ml-models` to real endpoints, add "Run prediction" buttons, show confidence + history.
 
-Pages: `analytics`, `global-analytics`, `data-visualization`, `reports`, `ai-analytics`, `ai-predictions`, `ai-spoilage`, `model-performance`, `environmental`, `traceability`, `incidents`, `maintenance`, `insurance`.
+### 7D. MCP server (1 batch — advanced)
+Expose GrainGuard as an MCP server so Claude/other agents can query it:
+- New server route `/api/public/mcp` (SSE).
+- Tools: `get_silo_status`, `list_active_alerts`, `run_spoilage_prediction`, `get_batch_traceability`.
+- Auth via bearer token per tenant.
+- Secret: `MCP_TENANT_TOKEN_SALT`.
 
-- AI features use Lovable AI Gateway (default) via server fn — no third-party keys needed.
+### 7E. Actuator device bridge (1 batch)
+- MQTT broker (HiveMQ Cloud) or HTTP webhook to device gateway.
+- Server fn `commandActuator({ id, action })` publishes to `commands/{deviceId}`.
+- Device ACKs write back to `actuators.last_state`.
 
-**Cron / edge audit for Phase 6:**
-- **Cron needed:** `ai-spoilage-nightly` (02:00) — run spoilage risk model over active `grain_batches`, upsert predictions.
-- **Cron needed:** `report-digest-weekly` (Mon 07:00) — build weekly PDF/email digest per admin tenant.
-- **Edge:** none.
+### 7F. Polish tail
+- Public sitemap.xml route
+- QR code generation (`qrcode` pkg) on batch detail
+- Chatbot page using Lovable AI Gateway
+- Stripe subscription checkout
+- `/new` create-form sub-routes if you prefer routed forms over dialogs
 
-## Phase 7 — Admin, billing, security, super-admin
+---
 
-Pages: `super-admin`, `team-management`, `users`, `plans`, `plan-management`, `billing`, `checkout`, `revenue-management`, `subscriptions`, `security`, `security-center`, `system-health`, `system-logs`, `server-monitoring`, `activity-logs`, `mobile`.
+## 🎯 Recommended immediate next step
+**Batch 7A: Realtime subscriptions** — smallest, unlocks live UX everywhere, no new secrets. Then **7B Firebase** since it's the biggest architectural addition and everything downstream (predictions, alerts) benefits from live data.
 
-- Role management uses admin server fns gated by `has_role(_, 'super_admin')` or `'admin'`.
-- Stripe billing via existing Stripe knowledge if you want real payments; otherwise stub UI.
-
-**Cron / edge audit for Phase 7:**
-- **Webhook:** Stripe `/api/public/hooks/stripe-webhook` (only if enabling real billing) — signature-verified, updates `subscriptions`.
-- **Cron needed:** `subscription-renewals-check` (daily 06:00) — flag subs expiring in 7 days, notify admins.
-- **Cron needed:** `activity-logs-retention` (daily 03:00) — delete `activity_logs` older than N days (SQL-only cron, no route).
-
-## Executing this turn
-
-I'll build **Phase 3 only** now (shell + 4 role dashboards + role gate). No cron/edge work required for Phase 3. After you confirm the login flow lands correctly, I'll move to Phase 4 and stand up the first cron jobs listed above.
-
-If you want a different order (e.g., Phase 5 Firebase bridge first, before feature pages), say so and I'll reshuffle. Otherwise I proceed with Phase 3 immediately.
+Reply with **"7A"**, **"7B"**, or name the module you want first.
