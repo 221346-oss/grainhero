@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app/AppSidebar";
 import { Bell, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ThemeInit } from "@/components/app/ThemeInit";
+import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -17,6 +18,9 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const { data: profile } = useMyProfile();
+  const avatar = profile?.avatar ?? null;
+  const initials = initialsOf(profile?.name, profile?.email);
   return (
     <SidebarProvider>
       <ThemeInit />
@@ -43,10 +47,19 @@ function AuthenticatedLayout() {
               <Bell className="h-4 w-4" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
             </Link>
-            <div className="shrink-0 h-9 w-9 rounded-full grid place-items-center text-[13px] font-black text-[--fusion-ink] shadow-sm relative" style={{ background: "var(--gradient-fusion)" }}>
-              G
+            <Link
+              to="/settings"
+              aria-label="Your profile"
+              className="shrink-0 h-9 w-9 rounded-full grid place-items-center text-[12px] font-bold text-[--fusion-ink] shadow-sm relative overflow-hidden ring-1 ring-black/5 hover:ring-[--fusion-grape]/60 transition"
+              style={avatar ? undefined : { background: "var(--gradient-fusion)" }}
+            >
+              {avatar ? (
+                <img src={avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              ) : (
+                <span>{initials}</span>
+              )}
               <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
-            </div>
+            </Link>
           </header>
           <main className="flex-1 overflow-y-auto">
             <Outlet />

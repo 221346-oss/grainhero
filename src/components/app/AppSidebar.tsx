@@ -230,22 +230,15 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border/60">
-        <Link to="/dashboard" className="flex items-center gap-2 px-1 py-2">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 ring-1 ring-black/5"
-            style={{ background: "var(--gradient-fusion)" }}
-            aria-label="Home"
-          >
-            <span className="text-[--fusion-ink] font-black text-base">✦</span>
-          </div>
-          {!collapsed && (
+      {!collapsed && (
+        <SidebarHeader className="border-b border-sidebar-border/60">
+          <div className="px-2 py-2">
             <span className="text-[10px] font-black text-sidebar-foreground/60 uppercase tracking-[0.24em]">
               {role.replace("_", " ")}
             </span>
-          )}
-        </Link>
-      </SidebarHeader>
+          </div>
+        </SidebarHeader>
+      )}
       <SidebarContent>
         <Section items={pinnedNav} role={role} currentPath={currentPath} showLabel={false} />
         <MoreButton role={role} currentPath={currentPath} />
