@@ -23,11 +23,14 @@ import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
+import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
@@ -109,6 +112,11 @@ const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
   path: '/not-allowed',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMlModelsRoute = AuthenticatedMlModelsRouteImport.update({
+  id: '/ml-models',
+  path: '/ml-models',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
   id: '/insurance',
   path: '/insurance',
@@ -136,6 +144,17 @@ const AuthenticatedBuyersRoute = AuthenticatedBuyersRouteImport.update({
   path: '/buyers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAiPredictionsRoute =
+  AuthenticatedAiPredictionsRouteImport.update({
+    id: '/ai-predictions',
+    path: '/ai-predictions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
   id: '/actuators',
   path: '/actuators',
@@ -190,11 +209,14 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
+  '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/platform': typeof AuthenticatedPlatformRouteWithChildren
@@ -218,11 +240,14 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
+  '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/sensors': typeof AuthenticatedSensorsRoute
@@ -247,11 +272,14 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
+  '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
+  '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
@@ -277,11 +305,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/activity-logs'
     | '/actuators'
+    | '/ai-predictions'
+    | '/analytics'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
     | '/grain-batches'
     | '/insurance'
+    | '/ml-models'
     | '/not-allowed'
     | '/notifications'
     | '/platform'
@@ -305,11 +336,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/activity-logs'
     | '/actuators'
+    | '/ai-predictions'
+    | '/analytics'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
     | '/grain-batches'
     | '/insurance'
+    | '/ml-models'
     | '/not-allowed'
     | '/notifications'
     | '/sensors'
@@ -333,11 +367,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
+    | '/_authenticated/ai-predictions'
+    | '/_authenticated/analytics'
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
     | '/_authenticated/grain-alerts'
     | '/_authenticated/grain-batches'
     | '/_authenticated/insurance'
+    | '/_authenticated/ml-models'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
     | '/_authenticated/platform'
@@ -465,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ml-models': {
+      id: '/_authenticated/ml-models'
+      path: '/ml-models'
+      fullPath: '/ml-models'
+      preLoaderRoute: typeof AuthenticatedMlModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/insurance': {
       id: '/_authenticated/insurance'
       path: '/insurance'
@@ -498,6 +542,20 @@ declare module '@tanstack/react-router' {
       path: '/buyers'
       fullPath: '/buyers'
       preLoaderRoute: typeof AuthenticatedBuyersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ai-predictions': {
+      id: '/_authenticated/ai-predictions'
+      path: '/ai-predictions'
+      fullPath: '/ai-predictions'
+      preLoaderRoute: typeof AuthenticatedAiPredictionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/actuators': {
@@ -581,11 +639,14 @@ const AuthenticatedPlatformRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
+  AuthenticatedAiPredictionsRoute: typeof AuthenticatedAiPredictionsRoute
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
+  AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
@@ -600,11 +661,14 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
+  AuthenticatedAiPredictionsRoute: AuthenticatedAiPredictionsRoute,
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
+  AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,

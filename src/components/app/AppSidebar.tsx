@@ -22,6 +22,7 @@ import {
   LayoutDashboard, Users, Smartphone, LogOut,
   Package, OctagonAlert, Zap, Building2, Warehouse,
   QrCode, Bell, ClipboardList, Shield, Settings, UserCog, Crown,
+  Brain, Cpu, BarChart3,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -54,6 +55,11 @@ const insightsNav: NavItem[] = [
   { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "notifications", label: "Notifications", to: "/notifications", icon: Bell, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager"] },
+];
+const intelligenceNav: NavItem[] = [
+  { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["super_admin", "admin", "manager"], badge: "AI" },
+  { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
+  { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["super_admin", "admin"], badge: "ML" },
 ];
 const businessNav: NavItem[] = [
   { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
@@ -142,6 +148,7 @@ export function AppSidebar() {
         <Section label="Grain Operations" items={grainOpsNav} role={role} currentPath={currentPath} />
         <Section label="IoT & Monitoring" items={iotNav} role={role} currentPath={currentPath} />
         <Section label="Insights & Audit" items={insightsNav} role={role} currentPath={currentPath} />
+        <Section label="Intelligence" items={intelligenceNav} role={role} currentPath={currentPath} />
         <Section label="Business" items={businessNav} role={role} currentPath={currentPath} />
         <Section label="Administration" items={adminNav} role={role} currentPath={currentPath} />
         <Section label="Platform" items={platformNav} role={role} currentPath={currentPath} />
