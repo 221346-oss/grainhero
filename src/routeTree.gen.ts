@@ -32,6 +32,7 @@ import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
+import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
@@ -175,6 +176,11 @@ const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
 const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/orders': typeof AuthenticatedOrdersRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
@@ -388,6 +395,7 @@ export interface FileRoutesByTo {
   '/ml-models': typeof AuthenticatedMlModelsRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/orders': typeof AuthenticatedOrdersRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/ml-models'
     | '/not-allowed'
     | '/notifications'
+    | '/orders'
     | '/plans'
     | '/platform'
     | '/reports'
@@ -538,6 +548,7 @@ export interface FileRouteTypes {
     | '/ml-models'
     | '/not-allowed'
     | '/notifications'
+    | '/orders'
     | '/plans'
     | '/reports'
     | '/revenue'
@@ -587,6 +598,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ml-models'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
+    | '/_authenticated/orders'
     | '/_authenticated/plans'
     | '/_authenticated/platform'
     | '/_authenticated/reports'
@@ -791,6 +803,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof AuthenticatedPlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notifications': {
@@ -1008,6 +1027,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
@@ -1039,6 +1059,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
