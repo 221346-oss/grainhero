@@ -145,6 +145,13 @@ function SuccessPage() {
   const emailDone = Boolean(s?.emailVerified);
   const allDone = paymentDone && emailDone;
 
+  // Once we've confirmed the subscription is live, drop the saved checkout draft.
+  useEffect(() => {
+    if (paymentDone && typeof window !== "undefined") {
+      try { window.localStorage.removeItem("grainhero.checkoutDraft.v1"); } catch { /* ignore */ }
+    }
+  }, [paymentDone]);
+
   const planLabel = useMemo(() => {
     const raw = (s?.subscription as { plan_name?: string } | null)?.plan_name;
     return raw ? String(raw).replace(/_/g, " ") : null;
