@@ -75,7 +75,7 @@ function TeamPage() {
   }, [members]);
 
   const invite = useMutation({
-    mutationFn: (v: { data: { email: string; name?: string; role: Role } }) => inviteFn(v),
+    mutationFn: (v: { data: { email: string; name?: string; role: "admin" | "manager" | "technician" } }) => inviteFn(v),
     onSuccess: () => { toast.success("Invitation sent"); setInviteOpen(false); setInviteForm({ email: "", name: "", role: "technician" }); qc.invalidateQueries({ queryKey: ["team-members"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -192,7 +192,7 @@ function TeamPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
-            <Button onClick={() => invite.mutate({ data: { email: inviteForm.email.trim(), name: inviteForm.name || undefined, role: inviteForm.role } })} disabled={invite.isPending || !inviteForm.email} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={() => invite.mutate({ data: { email: inviteForm.email.trim(), name: inviteForm.name || undefined, role: inviteForm.role as "admin" | "manager" | "technician" } })} disabled={invite.isPending || !inviteForm.email || inviteForm.role === "pending"} className="bg-emerald-600 hover:bg-emerald-700">
               {invite.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
               Send invite
             </Button>

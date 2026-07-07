@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
+import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -62,6 +63,12 @@ const AuthenticatedTraceabilityRoute =
   AuthenticatedTraceabilityRouteImport.update({
     id: '/traceability',
     path: '/traceability',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTeamManagementRoute =
+  AuthenticatedTeamManagementRouteImport.update({
+    id: '/team-management',
+    path: '/team-management',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSilosRoute = AuthenticatedSilosRouteImport.update({
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
+  '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -165,6 +173,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
+  '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -187,6 +196,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
+  '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/sensors'
     | '/silos'
+    | '/team-management'
     | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/sensors'
     | '/silos'
+    | '/team-management'
     | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
@@ -250,6 +262,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/sensors'
     | '/_authenticated/silos'
+    | '/_authenticated/team-management'
     | '/_authenticated/traceability'
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
@@ -315,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/traceability'
       fullPath: '/traceability'
       preLoaderRoute: typeof AuthenticatedTraceabilityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/team-management': {
+      id: '/_authenticated/team-management'
+      path: '/team-management'
+      fullPath: '/team-management'
+      preLoaderRoute: typeof AuthenticatedTeamManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/silos': {
@@ -415,6 +435,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
+  AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
 }
@@ -430,6 +451,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
+  AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
 }
