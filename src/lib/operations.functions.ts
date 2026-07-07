@@ -856,6 +856,79 @@ export const listBuyers = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+const buyerInput = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, "Buyer name is required").max(200),
+  contact_name: z.string().min(1, "Contact name is required").max(200),
+  contact_email: z.string().email("Invalid email").optional().nullable().or(z.literal("")),
+  contact_phone: z.string().max(50).optional().nullable(),
+  contact_designation: z.string().max(120).optional().nullable(),
+  company_name: z.string().max(200).optional().nullable(),
+  buyer_type: z.enum(["local_mill","exporter","wholesaler","retailer","government"]).optional().nullable(),
+  status: z.enum(["active","paused","inactive"]).default("active"),
+  address: z.string().max(500).optional().nullable(),
+  city: z.string().max(120).optional().nullable(),
+  state: z.string().max(120).optional().nullable(),
+  country: z.string().max(120).optional().nullable(),
+  preferred_grain_types: z.array(z.enum(["Wheat","Rice","Maize","Corn","Barley","Sorghum"])).optional().nullable(),
+  preferred_payment_terms: z.string().max(120).optional().nullable(),
+  rating: z.number().min(0).max(5).optional().nullable(),
+  tags: z.array(z.string()).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+});
+
+export const upsertBuyer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => parseOrThrow(buyerInput, d))
+  .handler(async ({ data, context }) => {
+    const payload = {
+      name: data.name,
+      contact_name: data.contact_name,
+      contact_email: data.contact_email || null,
+      contact_phone: data.contact_phone ?? null,
+      contact_designation: data.contact_designation ?? null,
+      company_name: data.company_name ?? null,
+      buyer_type: data.buyer_type ?? null,
+      status: data.status,
+      address: data.address ?? null,
+      city: data.city ?? null,
+      state: data.state ?? null,
+      country: data.country ?? null,
+      preferred_grain_types: data.preferred_grain_types ?? null,
+      preferred_payment_terms: data.preferred_payment_terms ?? null,
+      rating: data.rating ?? null,
+      tags: data.tags ?? null,
+      notes: data.notes ?? null,
+      admin_id: context.userId,
+    };
+    if (data.id) {
+      const { data: row, error } = await context.supabase
+        .from("buyers")
+        .update(payload)
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return row;
+    }
+    const { data: row, error } = await context.supabase
+      .from("buyers")
+      .insert(payload)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+export const deleteBuyer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("buyers").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 // Dashboard aggregate counts used by role dashboards
 export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
