@@ -308,6 +308,24 @@ function SensorsPage() {
             <DialogTitle>{form.id ? "Edit sensor" : "New sensor device"}</DialogTitle>
             <DialogDescription>Device ID is auto-generated if omitted.</DialogDescription>
           </DialogHeader>
+          {warehouses.length === 0 && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <div className="font-medium">You have no warehouses yet.</div>
+                <Link to="/warehouses" className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
+              </div>
+            </div>
+          )}
+          {warehouses.length > 0 && form.warehouse_id && filteredSilos.length === 0 && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <div className="font-medium">This warehouse has no silos.</div>
+                <Link to="/silos" className="underline">Add a silo</Link> before registering a sensor.
+              </div>
+            </div>
+          )}
           <form id="sensor-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); saveMut.mutate(form); }}>
             <div>
               <Label>Device name *</Label>
@@ -413,9 +431,18 @@ function SensorsPage() {
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button form="sensor-form" type="submit" disabled={saveMut.isPending || !form.device_name || !form.warehouse_id || !form.silo_id}>
-              {saveMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : form.id ? "Save changes" : "Create sensor"}
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              {(!form.device_name || !form.warehouse_id || !form.silo_id) && (
+                <span className="text-[11px] text-muted-foreground">
+                  Missing:{" "}
+                  {[!form.device_name && "name", !form.warehouse_id && "warehouse", !form.silo_id && "silo"]
+                    .filter(Boolean).join(", ")}
+                </span>
+              )}
+              <Button form="sensor-form" type="submit" disabled={saveMut.isPending || !form.device_name || !form.warehouse_id || !form.silo_id}>
+                {saveMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : form.id ? "Save changes" : "Create sensor"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
