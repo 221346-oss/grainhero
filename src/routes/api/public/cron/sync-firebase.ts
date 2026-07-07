@@ -9,9 +9,7 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const dbUrl = process.env.FIREBASE_DATABASE_URL;
         const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY;
-        if (!dbUrl) return new Response("FIREBASE_DATABASE_URL missing", { status: 500 });
         if (!anonKey) return new Response("SUPABASE_PUBLISHABLE_KEY missing", { status: 500 });
 
         const apikey = request.headers.get("apikey") ?? "";
@@ -19,11 +17,13 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           return new Response("Unauthorized", { status: 401 });
         }
 
-        const fbAuth = process.env.FIREBASE_DATABASE_SECRET;
-        const url = `${dbUrl.replace(/\/$/, "")}/devices.json${fbAuth ? `?auth=${encodeURIComponent(fbAuth)}` : ""}`;
-        const fbRes = await fetch(url);
-        if (!fbRes.ok) return new Response(`Firebase ${fbRes.status}`, { status: 502 });
-        const snap = (await fbRes.json()) as Record<string, { live?: Record<string, unknown> }> | null;
+        const { fetchFirebaseDevices } = await import("@/lib/firebase-admin.server");
+        let snap: Record<string, { live?: Record<string, unknown> }>;
+        try {
+          snap = await fetchFirebaseDevices<{ live?: Record<string, unknown> }>("devices");
+        } catch (e) {
+          return new Response(`Firebase error: ${(e as Error).message}`, { status: 502 });
+        }
         const deviceIds = Object.keys(snap ?? {});
         if (deviceIds.length === 0) return Response.json({ synced: 0 });
 
