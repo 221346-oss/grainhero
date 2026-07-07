@@ -29,6 +29,7 @@ import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authent
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
@@ -143,6 +144,11 @@ const AuthenticatedBuyersRoute = AuthenticatedBuyersRouteImport.update({
   path: '/buyers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAiPredictionsRoute =
   AuthenticatedAiPredictionsRouteImport.update({
     id: '/ai-predictions',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
@@ -265,6 +273,7 @@ export interface FileRoutesById {
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
@@ -297,6 +306,7 @@ export interface FileRouteTypes {
     | '/activity-logs'
     | '/actuators'
     | '/ai-predictions'
+    | '/analytics'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/activity-logs'
     | '/actuators'
     | '/ai-predictions'
+    | '/analytics'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
@@ -357,6 +368,7 @@ export interface FileRouteTypes {
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
     | '/_authenticated/ai-predictions'
+    | '/_authenticated/analytics'
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
     | '/_authenticated/grain-alerts'
@@ -532,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuyersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ai-predictions': {
       id: '/_authenticated/ai-predictions'
       path: '/ai-predictions'
@@ -621,6 +640,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedAiPredictionsRoute: typeof AuthenticatedAiPredictionsRoute
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
@@ -642,6 +662,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedAiPredictionsRoute: AuthenticatedAiPredictionsRoute,
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
