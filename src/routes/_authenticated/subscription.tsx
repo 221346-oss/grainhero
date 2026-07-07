@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { CreditCard, Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar } from "lucide-react";
 import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions";
+import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   component: SubscriptionPage,
@@ -43,6 +44,7 @@ function UsageRow({ icon: Icon, label, used, max }: { icon: any; label: string; 
 function SubscriptionPage() {
   const fn = useServerFn(getMySubscription);
   const cancelFn = useServerFn(cancelMySubscription);
+  const portalFn = useServerFn(createStripeBillingPortalSession);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
 
@@ -53,6 +55,12 @@ function SubscriptionPage() {
     mutationFn: () => cancelFn({ data: { reason: reason || undefined } }),
     onSuccess: () => { toast.success("Subscription cancelled"); setConfirmOpen(false); qc.invalidateQueries({ queryKey: ["my-subscription"] }); },
     onError: (e: any) => toast.error(e.message ?? "Failed to cancel"),
+  });
+
+  const portalM = useMutation({
+    mutationFn: () => portalFn(),
+    onSuccess: ({ url }: { url: string }) => { window.location.href = url; },
+    onError: (e: any) => toast.error(e.message ?? "Could not open billing portal"),
   });
 
   const role = data?.role ?? "pending";
@@ -69,7 +77,14 @@ function SubscriptionPage() {
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600" /> My Subscription</h1>
           <p className="text-sm text-slate-500 mt-1">Manage your plan, usage and billing history.</p>
         </div>
-        <Button asChild variant="outline"><Link to="/plans">Browse plans</Link></Button>
+        <div className="flex gap-2">
+          {sub && (
+            <Button variant="outline" onClick={() => portalM.mutate()} disabled={portalM.isPending}>
+              {portalM.isPending ? "Opening…" : "Manage billing"}
+            </Button>
+          )}
+          <Button asChild variant="outline"><Link to="/plans">Browse plans</Link></Button>
+        </div>
       </div>
 
       {!sub && (

@@ -1203,6 +1203,7 @@ export type Database = {
           price_id: string | null
           shift_pattern: string | null
           status: Database["public"]["Enums"]["user_status"] | null
+          stripe_customer_id: string | null
           subscription_plan: string | null
           updated_at: string | null
           updated_by: string | null
@@ -1239,6 +1240,7 @@ export type Database = {
           price_id?: string | null
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
+          stripe_customer_id?: string | null
           subscription_plan?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -1275,6 +1277,7 @@ export type Database = {
           price_id?: string | null
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
+          stripe_customer_id?: string | null
           subscription_plan?: string | null
           updated_at?: string | null
           updated_by?: string | null

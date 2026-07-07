@@ -40,7 +40,7 @@ function PlansPage() {
                 ))}
               </ul>
               <Button asChild className="w-full" variant={p.popular ? "default" : "outline"}>
-                <Link to="/subscription">Manage subscription</Link>
+                <Link to="/checkout" search={{ plan: p.id } as never}>Subscribe</Link>
               </Button>
             </CardContent>
           </Card>
