@@ -1,21 +1,11 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { Wheat, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { supabase } from '@/integrations/supabase/client'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
+// Legacy path — dedicated pages live at /auth/login, /auth/signup, etc.
 export const Route = createFileRoute('/auth')({
-  head: () => ({
-    meta: [
-      { title: 'Sign in — GrainHero' },
-      { name: 'description', content: 'Sign in or create your GrainHero account.' },
-    ],
-  }),
-  component: AuthPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/auth/login' })
+  },
+  component: () => null,
 })
 
 type Msg = { type: 'success' | 'error' | 'info'; text: string } | null
