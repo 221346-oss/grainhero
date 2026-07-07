@@ -74,7 +74,7 @@ export function PremiumFooter() {
               {productLinks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    to={link.href}
                     className="text-gray-400 hover:text-[#00a63e] transition-colors text-sm"
                   >
                     {link.label}
@@ -91,7 +91,7 @@ export function PremiumFooter() {
               {companyLinks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    to={link.href}
                     className="text-gray-400 hover:text-[#00a63e] transition-colors text-sm"
                   >
                     {link.label}
