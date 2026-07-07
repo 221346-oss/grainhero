@@ -22,7 +22,6 @@ import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authent
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
-import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 
@@ -92,11 +91,6 @@ const AuthenticatedBuyersRoute = AuthenticatedBuyersRouteImport.update({
   path: '/buyers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
-  id: '/actuators',
-  path: '/actuators',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const ApiPublicHooksSensorOfflineDetectorRoute =
   ApiPublicHooksSensorOfflineDetectorRouteImport.update({
     id: '/api/public/hooks/sensor-offline-detector',
@@ -114,7 +108,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/actuators': typeof AuthenticatedActuatorsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
@@ -131,7 +124,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/actuators': typeof AuthenticatedActuatorsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
@@ -150,7 +142,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
@@ -169,7 +160,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
-    | '/actuators'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
@@ -186,7 +176,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
-    | '/actuators'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
@@ -204,7 +193,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
-    | '/_authenticated/actuators'
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
     | '/_authenticated/grain-alerts'
@@ -320,13 +308,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuyersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/actuators': {
-      id: '/_authenticated/actuators'
-      path: '/actuators'
-      fullPath: '/actuators'
-      preLoaderRoute: typeof AuthenticatedActuatorsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/api/public/hooks/sensor-offline-detector': {
       id: '/api/public/hooks/sensor-offline-detector'
       path: '/api/public/hooks/sensor-offline-detector'
@@ -345,7 +326,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
@@ -357,7 +337,6 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
