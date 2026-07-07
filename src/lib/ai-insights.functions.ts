@@ -22,9 +22,9 @@ export const getSpoilageInsight = createServerFn({ method: "POST" })
 
     const { data: readings } = await context.supabase
       .from("sensor_readings")
-      .select("recorded_at, temperature_value, humidity_value, moisture_value, co2_value, voc_value, anomaly_detected, condensation_risk")
+      .select("reading_timestamp, temperature_value, humidity_value, moisture_value, co2_value, voc_value, anomaly_detected, condensation_risk")
       .eq("silo_id", data.siloId)
-      .order("recorded_at", { ascending: false })
+      .order("reading_timestamp", { ascending: false })
       .limit(48);
 
     const recent = readings ?? [];
@@ -42,8 +42,8 @@ export const getSpoilageInsight = createServerFn({ method: "POST" })
       current_batch: silo.current_batch,
       readings_count: recent.length,
       window: {
-        from: recent[recent.length - 1]?.recorded_at,
-        to: recent[0]?.recorded_at,
+        from: recent[recent.length - 1]?.reading_timestamp,
+        to: recent[0]?.reading_timestamp,
       },
       averages: {
         temperature: avg(recent.map((r) => Number(r.temperature_value ?? 0))),
