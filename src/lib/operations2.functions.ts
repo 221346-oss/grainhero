@@ -61,7 +61,7 @@ export const markMaintenanceDone = createServerFn({ method: "POST" })
     const now = new Date();
     const next = new Date(now.getTime() + data.nextInDays * 24 * 3600 * 1000);
     const table = data.kind === "device" ? "sensor_devices" : "actuators";
-    const { error } = await context.supabase
+    const { error } = await (context.supabase as any)
       .from(table)
       .update({ last_maintenance_date: now.toISOString(), next_maintenance_date: next.toISOString() })
       .eq("id", data.id);
