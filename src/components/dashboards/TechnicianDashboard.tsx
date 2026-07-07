@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wrench, Cpu, AlertOctagon, CheckCircle2, Zap, Smartphone } from "lucide-react";
-import { PageHeader, StatCard, Placeholder } from "./_shared";
+import { AlertOctagon, CheckCircle2, Zap, Smartphone } from "lucide-react";
+import { PageHeader, StatCard } from "./_shared";
 import { useDashboardStats } from "./useDashboardStats";
+import { ActuatorsCard, RecentAlertsCard, SilosOccupancyCard } from "./DashboardBlocks";
 
 export function TechnicianDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
@@ -19,14 +19,9 @@ export function TechnicianDashboard({ name }: { name?: string }) {
         <StatCard label="Critical" value={s?.alerts.critical ?? "—"} icon={CheckCircle2} accent="violet" />
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Cpu className="w-4 h-4" /> Device Health</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Wrench className="w-4 h-4" /> Maintenance Queue</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
+        <ActuatorsCard />
+        <RecentAlertsCard />
+        <SilosOccupancyCard />
       </div>
     </div>
   );
