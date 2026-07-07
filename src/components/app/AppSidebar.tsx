@@ -77,7 +77,9 @@ function Section({ label, items, role, currentPath }: { label: string; items: Na
       <SidebarGroupContent>
         <SidebarMenu>
           {visible.map((item) => {
-            const active = currentPath === item.to;
+            const active = item.to === "/platform"
+              ? currentPath === "/platform" || currentPath.startsWith("/platform/")
+              : currentPath === item.to;
             return (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
