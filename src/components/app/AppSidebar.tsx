@@ -97,25 +97,36 @@ const bottomNav: NavItem[] = [
 function NavRow({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-        <Link
-          to={item.to}
-          className={cn(
-            "flex items-center gap-3 rounded-lg transition-colors",
-            active
-              ? "bg-[--fusion-mint] text-[--fusion-ink] font-semibold shadow-sm"
-              : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-          )}
-        >
-          <item.icon className="h-4 w-4 shrink-0" strokeWidth={active ? 2.6 : 2} />
+      <SidebarMenuButton
+        asChild
+        isActive={active}
+        tooltip={item.label}
+        className={cn(
+          "h-9 rounded-lg transition-all",
+          collapsed && "justify-center px-0",
+          active
+            ? "bg-[--fusion-mint] text-[--fusion-ink] font-semibold shadow-sm hover:bg-[--fusion-mint] hover:text-[--fusion-ink]"
+            : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        )}
+      >
+        <Link to={item.to} className="flex items-center gap-3">
+          <item.icon
+            className={cn(
+              "shrink-0 transition-transform duration-200",
+              active ? "h-[18px] w-[18px] scale-110" : "h-4 w-4 group-hover/menu-item:scale-110",
+            )}
+            strokeWidth={active ? 2.6 : 2}
+          />
           {!collapsed && <span className="truncate text-[13px]">{item.label}</span>}
           {!collapsed && item.badge && (
-            <Badge className={cn(
-              "ml-auto text-[9px] px-1.5 py-0 h-4 font-black tracking-wide border-0",
-              (item.badge === "AI" || item.badge === "ML")
-                ? "bg-[--fusion-grape] text-white"
-                : "bg-[--fusion-ink]/10 text-[--fusion-ink]",
-            )}>
+            <Badge
+              className={cn(
+                "ml-auto text-[9px] px-1.5 py-0 h-4 font-black tracking-wide border-0",
+                item.badge === "AI" || item.badge === "ML"
+                  ? "bg-[--fusion-grape] text-white"
+                  : "bg-[--fusion-ink]/10 text-[--fusion-ink]",
+              )}
+            >
               {item.badge}
             </Badge>
           )}
@@ -126,19 +137,19 @@ function NavRow({ item, active, collapsed }: { item: NavItem; active: boolean; c
 }
 
 function Section({ label, items, role, currentPath, showLabel = true }: { label?: string; items: NavItem[]; role: AppRole; currentPath: string; showLabel?: boolean }) {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const visible = items.filter((i) => i.roles.includes(role));
   if (visible.length === 0) return null;
   return (
-    <SidebarGroup>
+    <SidebarGroup className={cn(collapsed && "px-0 items-center")}> 
       {!collapsed && showLabel && label && (
         <SidebarGroupLabel className="text-[10px] font-black text-sidebar-foreground/55 uppercase tracking-[0.18em] px-2">
           {label}
         </SidebarGroupLabel>
       )}
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className={cn(collapsed && "items-center gap-1")}>
           {visible.map((item) => {
             const active = item.to === "/platform"
               ? currentPath === "/platform" || currentPath.startsWith("/platform/")
@@ -152,20 +163,26 @@ function Section({ label, items, role, currentPath, showLabel = true }: { label?
 }
 
 function MoreButton({ role, currentPath }: { role: AppRole; currentPath: string }) {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const visibleGroups = moreGroups
     .map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(role)) }))
     .filter((g) => g.items.length > 0);
   if (visibleGroups.length === 0) return null;
   return (
-    <SidebarGroup>
+    <SidebarGroup className={cn(collapsed && "px-0 items-center")}>
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className={cn(collapsed && "items-center")}>
           <SidebarMenuItem>
             <Popover>
               <PopoverTrigger asChild>
-                <SidebarMenuButton tooltip="More" className="text-sidebar-foreground/85 hover:bg-sidebar-accent">
+                <SidebarMenuButton
+                  tooltip="More"
+                  className={cn(
+                    "h-9 rounded-lg text-sidebar-foreground/85 hover:bg-sidebar-accent",
+                    collapsed && "justify-center px-0",
+                  )}
+                >
                   <MoreHorizontal className="h-4 w-4 shrink-0" />
                   {!collapsed && <span className="text-[13px]">More</span>}
                 </SidebarMenuButton>
@@ -209,8 +226,8 @@ function MoreButton({ role, currentPath }: { role: AppRole; currentPath: string 
 }
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -245,7 +262,15 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border/60 gap-0">
         <Section items={bottomNav} role={role} currentPath={currentPath} showLabel={false} />
-        <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start text-sidebar-foreground/80 hover:text-red-600 hover:bg-red-500/10">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSignOut}
+          className={cn(
+            "h-9 text-sidebar-foreground/80 hover:text-red-600 hover:bg-red-500/10",
+            collapsed ? "justify-center px-0 w-9 mx-auto" : "justify-start",
+          )}
+        >
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="ml-2">Sign out</span>}
         </Button>
