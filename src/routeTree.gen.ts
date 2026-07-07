@@ -22,6 +22,7 @@ import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -110,6 +111,11 @@ const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
 const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
   id: '/revenue',
   path: '/revenue',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/platform': typeof AuthenticatedPlatformRouteWithChildren
+  '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/plans': typeof AuthenticatedPlansRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -366,6 +375,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/plans'
     | '/platform'
+    | '/reports'
     | '/revenue'
     | '/sensors'
     | '/settings'
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
     | '/not-allowed'
     | '/notifications'
     | '/plans'
+    | '/reports'
     | '/revenue'
     | '/sensors'
     | '/settings'
@@ -438,6 +449,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/plans'
     | '/_authenticated/platform'
+    | '/_authenticated/reports'
     | '/_authenticated/revenue'
     | '/_authenticated/sensors'
     | '/_authenticated/settings'
@@ -555,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/revenue'
       fullPath: '/revenue'
       preLoaderRoute: typeof AuthenticatedRevenueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform': {
@@ -750,6 +769,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -777,6 +797,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
