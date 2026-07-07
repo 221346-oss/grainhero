@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
+import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -54,6 +55,11 @@ const AuthenticatedSilosRoute = AuthenticatedSilosRouteImport.update({
   path: '/silos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
+  id: '/sensors',
+  path: '/sensors',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
   id: '/not-allowed',
   path: '/not-allowed',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/grain-batches'
     | '/not-allowed'
+    | '/sensors'
     | '/silos'
     | '/warehouses'
     | '/auth/reset-password'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/grain-batches'
     | '/not-allowed'
+    | '/sensors'
     | '/silos'
     | '/warehouses'
     | '/auth/reset-password'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/grain-batches'
     | '/_authenticated/not-allowed'
+    | '/_authenticated/sensors'
     | '/_authenticated/silos'
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
@@ -201,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSilosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sensors': {
+      id: '/_authenticated/sensors'
+      path: '/sensors'
+      fullPath: '/sensors'
+      preLoaderRoute: typeof AuthenticatedSensorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/not-allowed': {
       id: '/_authenticated/not-allowed'
       path: '/not-allowed'
@@ -229,6 +248,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
+  AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
 }
@@ -237,6 +257,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
+  AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
 }
