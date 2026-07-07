@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Save, User, Bell, MapPin, Loader2 } from "lucide-react";
+import { Save, User, Bell, MapPin, Loader2, Palette, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
+import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -24,6 +26,8 @@ function SettingsPage() {
   const saveFn = useServerFn(updateMySettings);
 
   const { data, isLoading } = useQuery({ queryKey: ["my-settings"], queryFn: () => getFn() });
+  const [theme, setTheme] = useState<ThemeId>(() => getStoredTheme());
+  function selectTheme(id: ThemeId) { setTheme(id); applyTheme(id); }
 
   const [form, setForm] = useState({
     name: "", phone: "", business_type: "farm",
@@ -63,6 +67,7 @@ function SettingsPage() {
           <TabsTrigger value="profile"><User className="h-4 w-4 mr-2" />Profile</TabsTrigger>
           <TabsTrigger value="location"><MapPin className="h-4 w-4 mr-2" />Location</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notifications</TabsTrigger>
+          <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-2" />Appearance</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -119,6 +124,51 @@ function SettingsPage() {
                   />
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="appearance">
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme</CardTitle>
+              <CardDescription>Pick a color theme. Applies to the whole app instantly and is remembered on this device.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {THEMES.map((t) => {
+                  const active = t.id === theme;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => selectTheme(t.id)}
+                      className={cn(
+                        "group relative rounded-2xl border p-4 text-left transition-all",
+                        active ? "border-[--fusion-grape] ring-2 ring-[--fusion-grape]/40" : "border-border hover:border-foreground/20",
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        {t.swatch.map((c, i) => (
+                          <span
+                            key={i}
+                            className="h-8 w-8 rounded-full ring-1 ring-black/10 shadow-sm"
+                            style={{ background: c }}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold text-sm text-foreground">{t.name}</div>
+                        {active && (
+                          <span className="h-6 w-6 rounded-full bg-[--fusion-grape] text-white grid place-items-center">
+                            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
