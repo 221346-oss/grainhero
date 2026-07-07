@@ -23,6 +23,7 @@ import {
   Package, OctagonAlert, Zap, Building2, Warehouse,
   QrCode, Bell, ClipboardList, Shield, Settings, UserCog, Crown,
   Brain, Cpu, BarChart3,
+  Wallet, CreditCard, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -63,6 +64,9 @@ const intelligenceNav: NavItem[] = [
 ];
 const businessNav: NavItem[] = [
   { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
+  { name: "revenue", label: "Revenue", to: "/revenue", icon: Wallet, roles: ["super_admin", "admin", "manager"] },
+  { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
+  { name: "plans", label: "Plans", to: "/plans", icon: Sparkles, roles: ["super_admin", "admin", "manager", "technician"] },
 ];
 const adminNav: NavItem[] = [
   { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
