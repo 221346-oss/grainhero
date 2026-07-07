@@ -20,6 +20,7 @@ import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authe
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
+import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
@@ -86,6 +87,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
   id: '/sensors',
   path: '/sensors',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/insurance': typeof AuthenticatedInsuranceRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/platform': typeof AuthenticatedPlatformRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/insurance': typeof AuthenticatedInsuranceRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/platform': typeof AuthenticatedPlatformRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/silos': typeof AuthenticatedSilosRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/platform': typeof AuthenticatedPlatformRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
@@ -236,6 +245,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/not-allowed'
     | '/notifications'
+    | '/platform'
     | '/sensors'
     | '/settings'
     | '/silos'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/insurance'
     | '/not-allowed'
     | '/notifications'
+    | '/platform'
     | '/sensors'
     | '/settings'
     | '/silos'
@@ -283,6 +294,7 @@ export interface FileRouteTypes {
     | '/_authenticated/insurance'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
+    | '/_authenticated/platform'
     | '/_authenticated/sensors'
     | '/_authenticated/settings'
     | '/_authenticated/silos'
@@ -382,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSensorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform': {
+      id: '/_authenticated/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof AuthenticatedPlatformRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/notifications': {
       id: '/_authenticated/notifications'
       path: '/notifications'
@@ -472,6 +491,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
@@ -490,6 +510,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedPlatformRoute: AuthenticatedPlatformRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
