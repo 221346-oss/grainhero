@@ -166,35 +166,20 @@ export function GlassNav() {
               className="flex-1 flex flex-col"
               style={{ background: 'linear-gradient(135deg, #0d2818 0%, #0a1f14 30%, #071208 60%, #0a1f14 100%)' }}
             >
-              {navLinks.map((link, i) =>
-                link.isRoute ? (
-                  <Link
-                    key={link.href}
-                    to={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex-1 flex items-center justify-center text-white text-[17px] font-medium uppercase tracking-[0.15em] border-b border-white/10 transition-colors active:bg-white/10"
-                    style={{
-                      animationDelay: `${0.1 + i * 0.08}s`,
-                    }}
-                  >
-                    {link.label}
-                  </Link>
-                ) : (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={(e) => {
-                      handleAnchorClick(e, link.href)
-                    }}
-                    className="flex-1 flex items-center justify-center text-white text-[17px] font-medium uppercase tracking-[0.15em] border-b border-white/10 transition-colors active:bg-white/10"
-                    style={{
-                      animationDelay: `${0.1 + i * 0.08}s`,
-                    }}
-                  >
-                    {link.label}
-                  </a>
-                )
-              )}
+              {navLinks.map((link, i) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => {
+                    handleAnchorClick(e, link.href)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="flex-1 flex items-center justify-center text-white text-[17px] font-medium uppercase tracking-[0.15em] border-b border-white/10 transition-colors active:bg-white/10"
+                  style={{ animationDelay: `${0.1 + i * 0.08}s` }}
+                >
+                  {link.label}
+                </a>
+              ))}
 
               {/* Login link */}
               <Link
