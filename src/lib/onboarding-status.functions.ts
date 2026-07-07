@@ -27,13 +27,13 @@ export const getMyOnboardingStatus = createServerFn({ method: "GET" })
 
     const { data: sub } = await supabase
       .from("subscriptions")
-      .select("id, plan_id, status, current_period_end")
+      .select("id, plan_name, status, end_date")
       .eq("admin_id", userId)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    const { data: latestOrder } = await supabase
+    const { data: latestOrderRaw } = await supabase
       .from("hardware_orders" as never)
       .select("id, status, plan_name, hardware_quantity, hardware_total, currency, created_at, technician_name, preferred_install_date")
       .eq("admin_id", userId)
@@ -41,22 +41,23 @@ export const getMyOnboardingStatus = createServerFn({ method: "GET" })
       .limit(1)
       .maybeSingle();
 
-    const { data: pendingOrders } = await supabase
+    const { data: pendingOrdersRaw } = await supabase
       .from("hardware_orders" as never)
       .select("id, plan_id, plan_name, hardware_quantity, created_at")
       .eq("admin_id", userId)
       .eq("status", "pending_payment")
       .order("created_at", { ascending: false });
 
-    const subActive = sub?.status === "active" || sub?.status === "trialing";
+    const subRow = (sub as { status?: string | null } | null) ?? null;
+    const subActive = subRow?.status === "active" || subRow?.status === "trialing";
 
     return {
       email,
       emailVerified,
       profile: profile ?? null,
-      subscription: sub ?? null,
+      subscription: (sub as unknown as Record<string, string | number | null> | null) ?? null,
       subscriptionActive: subActive,
-      latestOrder: (latestOrder as Record<string, unknown> | null) ?? null,
-      pendingOrders: (pendingOrders ?? []) as Record<string, unknown>[],
+      latestOrder: (latestOrderRaw as Record<string, string | number | null> | null) ?? null,
+      pendingOrders: (pendingOrdersRaw ?? []) as Record<string, string | number | null>[],
     };
   });
