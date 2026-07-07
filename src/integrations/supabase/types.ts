@@ -1144,6 +1144,33 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_prices: {
+        Row: {
+          currency: string
+          plan_id: string
+          product_id: string
+          setup_price_id: string | null
+          subscription_price_id: string
+          updated_at: string
+        }
+        Insert: {
+          currency?: string
+          plan_id: string
+          product_id: string
+          setup_price_id?: string | null
+          subscription_price_id: string
+          updated_at?: string
+        }
+        Update: {
+          currency?: string
+          plan_id?: string
+          product_id?: string
+          setup_price_id?: string | null
+          subscription_price_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: Json | null
@@ -1290,6 +1317,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          ip: string | null
+          meta: Json
+          tenant_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          ip?: string | null
+          meta?: Json
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          ip?: string | null
+          meta?: Json
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       sensor_devices: {
         Row: {
