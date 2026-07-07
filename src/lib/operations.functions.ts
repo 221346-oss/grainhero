@@ -3,6 +3,16 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
+// Turn ZodError into a readable one-liner so the client toast is helpful.
+function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
+  const r = schema.safeParse(data);
+  if (r.success) return r.data;
+  const msg = r.error.issues
+    .map((i) => `${i.path.join(".") || "field"}: ${i.message}`)
+    .join(" · ");
+  throw new Error(msg);
+}
+
 export const listWarehouses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
