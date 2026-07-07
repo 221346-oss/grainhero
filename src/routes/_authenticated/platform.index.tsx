@@ -16,7 +16,7 @@ function PlatformOverview() {
   if (isLoading || !data) return <div className="p-6"><DashboardSkeleton /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Tenants" value={data.totalTenants} icon={Building2} accent="sky" />
         <StatCard label="Total Users" value={data.totalUsers} icon={Users} accent="violet" />

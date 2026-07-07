@@ -26,7 +26,7 @@ function LogsPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4">
       <Card>
         <CardContent className="p-4 flex items-center gap-3">
           <ClipboardList className="h-4 w-4 text-slate-500" />
