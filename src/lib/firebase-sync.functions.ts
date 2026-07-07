@@ -14,17 +14,6 @@ interface FirebaseLive {
   ts?: number;
 }
 
-async function fetchFirebaseSnapshot(): Promise<Record<string, { live?: FirebaseLive }>> {
-  const dbUrl = process.env.FIREBASE_DATABASE_URL;
-  if (!dbUrl) throw new Error("FIREBASE_DATABASE_URL not configured");
-  const auth = process.env.FIREBASE_DATABASE_SECRET;
-  const url = `${dbUrl.replace(/\/$/, "")}/devices.json${auth ? `?auth=${encodeURIComponent(auth)}` : ""}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Firebase fetch failed: ${res.status}`);
-  const json = (await res.json()) as Record<string, { live?: FirebaseLive }> | null;
-  return json ?? {};
-}
-
 /**
  * Manual sync trigger (admin+). Pulls current /devices snapshot from Firebase
  * and inserts one sensor_readings row per device that has a matching
@@ -47,7 +36,8 @@ export const syncFirebaseSnapshot = createServerFn({ method: "POST" })
       return { synced: 0, skipped: 0, error: "Forbidden" };
     }
 
-    const snap = await fetchFirebaseSnapshot();
+    const { fetchFirebaseDevices } = await import("./firebase-admin.server");
+    const snap = await fetchFirebaseDevices<{ live?: FirebaseLive }>("devices");
     const deviceIds = Object.keys(snap);
     if (deviceIds.length === 0) return { synced: 0, skipped: 0 };
 
