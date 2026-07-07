@@ -15,14 +15,17 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
+import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
 import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
+import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 
@@ -55,6 +58,12 @@ const AuthenticatedWarehousesRoute = AuthenticatedWarehousesRouteImport.update({
   path: '/warehouses',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTraceabilityRoute =
+  AuthenticatedTraceabilityRouteImport.update({
+    id: '/traceability',
+    path: '/traceability',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSilosRoute = AuthenticatedSilosRouteImport.update({
   id: '/silos',
   path: '/silos',
@@ -65,6 +74,12 @@ const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
   path: '/sensors',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
   id: '/not-allowed',
   path: '/not-allowed',
@@ -97,6 +112,12 @@ const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
   path: '/actuators',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedActivityLogsRoute =
+  AuthenticatedActivityLogsRouteImport.update({
+    id: '/activity-logs',
+    path: '/activity-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicHooksSensorOfflineDetectorRoute =
   ApiPublicHooksSensorOfflineDetectorRouteImport.update({
     id: '/api/public/hooks/sensor-offline-detector',
@@ -114,14 +135,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
+  '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -131,14 +155,17 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/silos': typeof AuthenticatedSilosRoute
+  '/traceability': typeof AuthenticatedTraceabilityRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -150,14 +177,17 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
+  '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -169,14 +199,17 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/activity-logs'
     | '/actuators'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
     | '/grain-batches'
     | '/not-allowed'
+    | '/notifications'
     | '/sensors'
     | '/silos'
+    | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
@@ -186,14 +219,17 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/activity-logs'
     | '/actuators'
     | '/buyers'
     | '/dashboard'
     | '/grain-alerts'
     | '/grain-batches'
     | '/not-allowed'
+    | '/notifications'
     | '/sensors'
     | '/silos'
+    | '/traceability'
     | '/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
@@ -204,14 +240,17 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
+    | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
     | '/_authenticated/grain-alerts'
     | '/_authenticated/grain-batches'
     | '/_authenticated/not-allowed'
+    | '/_authenticated/notifications'
     | '/_authenticated/sensors'
     | '/_authenticated/silos'
+    | '/_authenticated/traceability'
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
     | '/api/public/hooks/alerts-escalation'
@@ -271,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWarehousesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/traceability': {
+      id: '/_authenticated/traceability'
+      path: '/traceability'
+      fullPath: '/traceability'
+      preLoaderRoute: typeof AuthenticatedTraceabilityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/silos': {
       id: '/_authenticated/silos'
       path: '/silos'
@@ -283,6 +329,13 @@ declare module '@tanstack/react-router' {
       path: '/sensors'
       fullPath: '/sensors'
       preLoaderRoute: typeof AuthenticatedSensorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/not-allowed': {
@@ -327,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedActuatorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/activity-logs': {
+      id: '/_authenticated/activity-logs'
+      path: '/activity-logs'
+      fullPath: '/activity-logs'
+      preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/hooks/sensor-offline-detector': {
       id: '/api/public/hooks/sensor-offline-detector'
       path: '/api/public/hooks/sensor-offline-detector'
@@ -345,26 +405,32 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
+  AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
+  AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
 }
 
