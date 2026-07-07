@@ -178,6 +178,47 @@ function CheckoutPage() {
           <p className="text-slate-600 mt-2">You can change or cancel anytime.</p>
         </div>
 
+        {canceled && (
+          <Card className="border-amber-300 bg-amber-50">
+            <CardContent className="p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="font-medium text-amber-900">Payment was canceled</p>
+                <p className="text-amber-800">No charges yet — your details are saved and you can try again below.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {authed && pending.length > 0 && (
+          <Card className="border-emerald-300 bg-emerald-50">
+            <CardContent className="p-4 flex items-start gap-3">
+              <RefreshCw className="h-5 w-5 text-emerald-700 shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="font-medium text-emerald-900">Resume your previous checkout</p>
+                <p className="text-emerald-800">
+                  We saved your {pending[0].plan_name ?? pending[0].plan_id ?? "plan"} order
+                  {typeof pending[0].hardware_quantity === "number" ? ` with ${pending[0].hardware_quantity} sensor(s)` : ""}. Pick up right where you left off.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-emerald-600 text-emerald-700 hover:bg-emerald-100"
+                onClick={() => {
+                  const p = pending[0];
+                  if (p.plan_id === "basic" || p.plan_id === "intermediate" || p.plan_id === "pro") {
+                    setSelected(p.plan_id);
+                  }
+                  if (typeof p.hardware_quantity === "number") setIotQuantity(p.hardware_quantity);
+                }}
+              >
+                Resume
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid gap-4 md:grid-cols-3">
           {pricingData.map((p) => {
             const isSel = p.id === selected;
