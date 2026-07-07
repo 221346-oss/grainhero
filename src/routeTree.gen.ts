@@ -50,6 +50,7 @@ import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authent
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformRevenueRouteImport } from './routes/_authenticated/platform.revenue'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
@@ -276,6 +277,12 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/tenants',
     getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
+const AuthenticatedPlatformRevenueRoute =
+  AuthenticatedPlatformRevenueRouteImport.update({
+    id: '/revenue',
+    path: '/revenue',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
 const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
     id: '/logs',
@@ -351,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
@@ -398,6 +406,7 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
@@ -448,6 +457,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/_authenticated/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
@@ -498,6 +508,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/platform/logs'
+    | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
     | '/platform/'
@@ -545,6 +556,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/platform/logs'
+    | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
     | '/platform'
@@ -594,6 +606,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/_authenticated/platform/logs'
+    | '/_authenticated/platform/revenue'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/platform/'
@@ -906,6 +919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedPlatformRoute
     }
+    '/_authenticated/platform/revenue': {
+      id: '/_authenticated/platform/revenue'
+      path: '/revenue'
+      fullPath: '/platform/revenue'
+      preLoaderRoute: typeof AuthenticatedPlatformRevenueRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
     '/_authenticated/platform/logs': {
       id: '/_authenticated/platform/logs'
       path: '/logs'
@@ -953,6 +973,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPlatformRouteChildren {
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformRevenueRoute: typeof AuthenticatedPlatformRevenueRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
@@ -960,6 +981,7 @@ interface AuthenticatedPlatformRouteChildren {
 
 const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformRevenueRoute: AuthenticatedPlatformRevenueRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
