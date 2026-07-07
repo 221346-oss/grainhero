@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ListSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -204,7 +205,7 @@ function SilosPage() {
 
       {/* Grid */}
       {isLoading ? (
-        <div className="flex justify-center py-24 text-slate-500"><Loader2 className="w-6 h-6 animate-spin" /></div>
+        <ListSkeleton />
       ) : rows.length === 0 ? (
         <Card className="border-dashed border-slate-300 bg-white/50">
           <CardContent className="py-16 flex flex-col items-center text-slate-500">
