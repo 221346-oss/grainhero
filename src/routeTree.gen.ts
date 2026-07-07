@@ -24,6 +24,7 @@ import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
+import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 
@@ -104,6 +105,12 @@ const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
   path: '/actuators',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedActivityLogsRoute =
+  AuthenticatedActivityLogsRouteImport.update({
+    id: '/activity-logs',
+    path: '/activity-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicHooksSensorOfflineDetectorRoute =
   ApiPublicHooksSensorOfflineDetectorRouteImport.update({
     id: '/api/public/hooks/sensor-offline-detector',
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -139,6 +147,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -159,6 +168,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/activity-logs'
     | '/actuators'
     | '/buyers'
     | '/dashboard'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/activity-logs'
     | '/actuators'
     | '/buyers'
     | '/dashboard'
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/sitemap.xml'
+    | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
@@ -347,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedActuatorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/activity-logs': {
+      id: '/_authenticated/activity-logs'
+      path: '/activity-logs'
+      fullPath: '/activity-logs'
+      preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/hooks/sensor-offline-detector': {
       id: '/api/public/hooks/sensor-offline-detector'
       path: '/api/public/hooks/sensor-offline-detector'
@@ -365,6 +385,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -378,6 +399,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
