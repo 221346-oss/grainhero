@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, MapPin } from "lucide-react";
+import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, MapPin, RefreshCw, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,31 @@ import { toast } from "sonner";
 import pricingData from "@/lib/pricing-data";
 import { supabase } from "@/integrations/supabase/client";
 import { createStripeCheckoutSession } from "@/lib/stripe-checkout.functions";
+import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
+
+const DRAFT_KEY = "grainhero.checkoutDraft.v1";
+type Draft = {
+  selected: string;
+  iotQuantity: number;
+  address: string;
+  city: string;
+  country: string;
+  phone: string;
+  preferredDate: string;
+  notes: string;
+  businessName: string;
+  taxId: string;
+};
+
+function loadDraft(): Partial<Draft> | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Partial<Draft>) : null;
+  } catch {
+    return null;
+  }
+}
 
 const search = z.object({
   plan: z.enum(["basic", "intermediate", "pro"]).optional(),
@@ -46,14 +71,57 @@ function CheckoutPage() {
   const [notes, setNotes] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [taxId, setTaxId] = useState("");
+  const draftLoaded = useRef(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, []);
 
+  // Restore any locally-saved draft (from an interrupted session).
+  useEffect(() => {
+    if (draftLoaded.current) return;
+    draftLoaded.current = true;
+    const d = loadDraft();
+    if (!d) return;
+    if (!initial && d.selected) setSelected(d.selected);
+    if (typeof d.iotQuantity === "number") setIotQuantity(d.iotQuantity);
+    if (d.address) setAddress(d.address);
+    if (d.city) setCity(d.city);
+    if (d.country) setCountry(d.country);
+    if (d.phone) setPhone(d.phone);
+    if (d.preferredDate) setPreferredDate(d.preferredDate);
+    if (d.notes) setNotes(d.notes);
+    if (d.businessName) setBusinessName(d.businessName);
+    if (d.taxId) setTaxId(d.taxId);
+    if (d.address || d.phone) {
+      toast("Restored your previous checkout details", { icon: "↩️" });
+    }
+  }, [initial]);
+
+  // Persist to localStorage so a page refresh / dropped payment doesn't lose progress.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const draft: Draft = {
+      selected, iotQuantity, address, city, country, phone,
+      preferredDate, notes, businessName, taxId,
+    };
+    try { window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
+  }, [selected, iotQuantity, address, city, country, phone, preferredDate, notes, businessName, taxId]);
+
   useEffect(() => {
     if (canceled) toast("Checkout canceled. You can pick a plan and try again.");
   }, [canceled]);
+
+  // If the buyer is logged in, look up any incomplete orders so we can show a resume banner.
+  const statusFn = useServerFn(getMyOnboardingStatus);
+  const statusQuery = useQuery({
+    queryKey: ["checkout-onboarding-status"],
+    queryFn: () => statusFn(),
+    enabled: authed === true,
+  });
+  const pending = (statusQuery.data?.pendingOrders ?? []) as Array<{
+    id: string; plan_id?: string; plan_name?: string; hardware_quantity?: number;
+  }>;
 
   const startFn = useServerFn(createStripeCheckoutSession);
   const start = useMutation({
@@ -75,6 +143,9 @@ function CheckoutPage() {
         },
       }),
     onSuccess: ({ url }) => {
+      // Payment is being handed off to Stripe. Keep the draft in localStorage
+      // (so the user can resume if Stripe closes without a webhook) — it's
+      // cleared from /checkout/success once we detect the subscription is live.
       window.location.href = url;
     },
     onError: (e: Error) => toast.error(e.message ?? "Could not start checkout"),
