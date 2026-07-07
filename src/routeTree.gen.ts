@@ -50,9 +50,11 @@ import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authent
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformRevenueRouteImport } from './routes/_authenticated/platform.revenue'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
+import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 
@@ -275,6 +277,12 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/tenants',
     getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
+const AuthenticatedPlatformRevenueRoute =
+  AuthenticatedPlatformRevenueRouteImport.update({
+    id: '/revenue',
+    path: '/revenue',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
 const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
     id: '/logs',
@@ -290,6 +298,12 @@ const ApiPublicHooksSensorOfflineDetectorRoute =
   ApiPublicHooksSensorOfflineDetectorRouteImport.update({
     id: '/api/public/hooks/sensor-offline-detector',
     path: '/api/public/hooks/sensor-offline-detector',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksExpiryRemindersRoute =
+  ApiPublicHooksExpiryRemindersRouteImport.update({
+    id: '/api/public/hooks/expiry-reminders',
+    path: '/api/public/hooks/expiry-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksAlertsEscalationRoute =
@@ -344,11 +358,13 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
 }
@@ -390,11 +406,13 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
 }
@@ -439,11 +457,13 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/_authenticated/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
 }
@@ -488,11 +508,13 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/platform/logs'
+    | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
     | '/platform/'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
   fileRoutesByTo: FileRoutesByTo
@@ -534,11 +556,13 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/platform/logs'
+    | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
     | '/platform'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
   id:
@@ -582,11 +606,13 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/checkout/success'
     | '/_authenticated/platform/logs'
+    | '/_authenticated/platform/revenue'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/platform/'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
   fileRoutesById: FileRoutesById
@@ -599,6 +625,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
+  ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
 }
@@ -892,6 +919,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedPlatformRoute
     }
+    '/_authenticated/platform/revenue': {
+      id: '/_authenticated/platform/revenue'
+      path: '/revenue'
+      fullPath: '/platform/revenue'
+      preLoaderRoute: typeof AuthenticatedPlatformRevenueRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
     '/_authenticated/platform/logs': {
       id: '/_authenticated/platform/logs'
       path: '/logs'
@@ -913,6 +947,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSensorOfflineDetectorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/expiry-reminders': {
+      id: '/api/public/hooks/expiry-reminders'
+      path: '/api/public/hooks/expiry-reminders'
+      fullPath: '/api/public/hooks/expiry-reminders'
+      preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/alerts-escalation': {
       id: '/api/public/hooks/alerts-escalation'
       path: '/api/public/hooks/alerts-escalation'
@@ -932,6 +973,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedPlatformRouteChildren {
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformRevenueRoute: typeof AuthenticatedPlatformRevenueRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
@@ -939,6 +981,7 @@ interface AuthenticatedPlatformRouteChildren {
 
 const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformRevenueRoute: AuthenticatedPlatformRevenueRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
@@ -1050,6 +1093,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
+  ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,

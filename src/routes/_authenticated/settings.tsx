@@ -20,7 +20,7 @@ import { initialsOf } from "@/hooks/useMyProfile";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
-type Prefs = { email_alerts?: boolean; sms_alerts?: boolean; push_notifications?: boolean; weekly_reports?: boolean };
+type Prefs = { email_alerts?: boolean; sms_alerts?: boolean; push_notifications?: boolean; weekly_reports?: boolean; expiry_email_alerts?: boolean; expiry_push_alerts?: boolean };
 
 function SettingsPage() {
   const qc = useQueryClient();
@@ -34,7 +34,7 @@ function SettingsPage() {
   const [form, setForm] = useState({
     name: "", phone: "", business_type: "farm", avatar: null as string | null,
     address: "", city: "", country: "",
-    prefs: { email_alerts: true, sms_alerts: false, push_notifications: true, weekly_reports: true } as Prefs,
+    prefs: { email_alerts: true, sms_alerts: false, push_notifications: true, weekly_reports: true, expiry_email_alerts: true, expiry_push_alerts: true } as Prefs,
   });
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -46,7 +46,7 @@ function SettingsPage() {
       name: data.name ?? "", phone: data.phone ?? "", business_type: data.business_type ?? "farm",
       avatar: (data as any).avatar ?? null,
       address: addr.address ?? "", city: addr.city ?? "", country: addr.country ?? "",
-      prefs: { email_alerts: prefs.email_alerts ?? true, sms_alerts: prefs.sms_alerts ?? false, push_notifications: prefs.push_notifications ?? true, weekly_reports: prefs.weekly_reports ?? true },
+      prefs: { email_alerts: prefs.email_alerts ?? true, sms_alerts: prefs.sms_alerts ?? false, push_notifications: prefs.push_notifications ?? true, weekly_reports: prefs.weekly_reports ?? true, expiry_email_alerts: prefs.expiry_email_alerts ?? true, expiry_push_alerts: prefs.expiry_push_alerts ?? true },
     });
   }, [data]);
 
@@ -187,6 +187,8 @@ function SettingsPage() {
                 { key: "sms_alerts", label: "SMS alerts" },
                 { key: "push_notifications", label: "Push notifications" },
                 { key: "weekly_reports", label: "Weekly reports" },
+                { key: "expiry_email_alerts", label: "Email me when my plan is about to expire (7 / 3 / 1 days)" },
+                { key: "expiry_push_alerts", label: "In-app notification when my plan is about to expire" },
               ].map((row) => (
                 <div key={row.key} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
                   <span className="text-sm font-medium text-slate-700">{row.label}</span>

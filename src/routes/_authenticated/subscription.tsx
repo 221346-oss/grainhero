@@ -9,9 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { CreditCard, Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar } from "lucide-react";
+import { CreditCard, Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2 } from "lucide-react";
 import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions";
 import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
+import { changeMyPlan, cancelAtPeriodEnd, resumeSubscription } from "@/lib/subscription-management.functions";
+import pricingData from "@/lib/pricing-data";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   component: SubscriptionPage,
@@ -45,11 +48,16 @@ function SubscriptionPage() {
   const fn = useServerFn(getMySubscription);
   const cancelFn = useServerFn(cancelMySubscription);
   const portalFn = useServerFn(createStripeBillingPortalSession);
+  const changeFn = useServerFn(changeMyPlan);
+  const cancelPeriodFn = useServerFn(cancelAtPeriodEnd);
+  const resumeFn = useServerFn(resumeSubscription);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [changeOpen, setChangeOpen] = useState(false);
+  const [newPlan, setNewPlan] = useState<"basic" | "intermediate" | "pro">("intermediate");
 
   const cancelM = useMutation({
     mutationFn: () => cancelFn({ data: { reason: reason || undefined } }),
@@ -61,6 +69,22 @@ function SubscriptionPage() {
     mutationFn: () => portalFn(),
     onSuccess: ({ url }: { url: string }) => { window.location.href = url; },
     onError: (e: any) => toast.error(e.message ?? "Could not open billing portal"),
+  });
+
+  const changeM = useMutation({
+    mutationFn: () => changeFn({ data: { planId: newPlan } }),
+    onSuccess: () => { toast.success("Plan updated"); setChangeOpen(false); qc.invalidateQueries({ queryKey: ["my-subscription"] }); },
+    onError: (e: any) => toast.error(e.message ?? "Failed to change plan"),
+  });
+  const cancelPeriodM = useMutation({
+    mutationFn: () => cancelPeriodFn(),
+    onSuccess: () => { toast.success("Will cancel at period end"); qc.invalidateQueries({ queryKey: ["my-subscription"] }); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+  const resumeM = useMutation({
+    mutationFn: () => resumeFn(),
+    onSuccess: () => { toast.success("Subscription resumed"); qc.invalidateQueries({ queryKey: ["my-subscription"] }); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
   const role = data?.role ?? "pending";
@@ -81,6 +105,11 @@ function SubscriptionPage() {
           {sub && (
             <Button variant="outline" onClick={() => portalM.mutate()} disabled={portalM.isPending}>
               {portalM.isPending ? "Opening…" : "Manage billing"}
+            </Button>
+          )}
+          {sub && canManage && sub.status !== "cancelled" && (
+            <Button variant="outline" onClick={() => { setNewPlan((sub.plan_name?.toLowerCase().includes("pro") ? "pro" : sub.plan_name?.toLowerCase().includes("inter") ? "intermediate" : "basic") as any); setChangeOpen(true); }}>
+              <ArrowUpRight className="h-4 w-4 mr-2" /> Upgrade / Downgrade
             </Button>
           )}
           <Button asChild variant="outline"><Link to="/plans">Browse plans</Link></Button>
@@ -169,9 +198,18 @@ function SubscriptionPage() {
           </Card>
 
           {canManage && sub.status !== "cancelled" && (
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {(sub as any).cancel_at_period_end ? (
+                <Button variant="outline" onClick={() => resumeM.mutate()} disabled={resumeM.isPending}>
+                  <RotateCcw className="h-4 w-4 mr-2" /> Resume subscription
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => cancelPeriodM.mutate()} disabled={cancelPeriodM.isPending}>
+                  <Calendar className="h-4 w-4 mr-2" /> Cancel at period end
+                </Button>
+              )}
               <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-                <XCircle className="h-4 w-4 mr-2" /> Cancel subscription
+                <XCircle className="h-4 w-4 mr-2" /> Cancel now
               </Button>
             </div>
           )}
@@ -188,6 +226,32 @@ function SubscriptionPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>Keep plan</Button>
             <Button variant="destructive" onClick={() => cancelM.mutate()} disabled={cancelM.isPending}>Confirm cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={changeOpen} onOpenChange={setChangeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change plan</DialogTitle>
+            <DialogDescription>The change applies immediately with prorated billing on your next invoice.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Select value={newPlan} onValueChange={(v) => setNewPlan(v as any)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {pricingData.map((p: any) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name} — {p.currency ?? "USD"} {p.price}/mo</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setChangeOpen(false)}>Cancel</Button>
+            <Button onClick={() => changeM.mutate()} disabled={changeM.isPending}>
+              {changeM.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Confirm change
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

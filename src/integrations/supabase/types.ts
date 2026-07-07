@@ -1919,6 +1919,7 @@ export type Database = {
           max_users: number | null
           next_payment_date: string | null
           notes: string | null
+          notified_expiry_thresholds: number[]
           payment_method: string | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           plan_description: string | null
@@ -1963,6 +1964,7 @@ export type Database = {
           max_users?: number | null
           next_payment_date?: string | null
           notes?: string | null
+          notified_expiry_thresholds?: number[]
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           plan_description?: string | null
@@ -2007,6 +2009,7 @@ export type Database = {
           max_users?: number | null
           next_payment_date?: string | null
           notes?: string | null
+          notified_expiry_thresholds?: number[]
           payment_method?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           plan_description?: string | null
