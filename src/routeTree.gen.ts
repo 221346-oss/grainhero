@@ -23,6 +23,7 @@ import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
+import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -95,6 +96,12 @@ const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
   path: '/actuators',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksAlertsEscalationRoute =
+  ApiPublicHooksAlertsEscalationRouteImport.update({
+    id: '/api/public/hooks/alerts-escalation',
+    path: '/api/public/hooks/alerts-escalation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
   '/silos': typeof AuthenticatedSilosRoute
   '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,6 +151,7 @@ export interface FileRoutesById {
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
   '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/silos'
     | '/warehouses'
     | '/auth/reset-password'
+    | '/api/public/hooks/alerts-escalation'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/silos'
     | '/warehouses'
     | '/auth/reset-password'
+    | '/api/public/hooks/alerts-escalation'
   id:
     | '__root__'
     | '/'
@@ -190,6 +202,7 @@ export interface FileRouteTypes {
     | '/_authenticated/silos'
     | '/_authenticated/warehouses'
     | '/auth/reset-password'
+    | '/api/public/hooks/alerts-escalation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +210,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -299,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedActuatorsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/alerts-escalation': {
+      id: '/api/public/hooks/alerts-escalation'
+      path: '/api/public/hooks/alerts-escalation'
+      fullPath: '/api/public/hooks/alerts-escalation'
+      preLoaderRoute: typeof ApiPublicHooksAlertsEscalationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -344,6 +365,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

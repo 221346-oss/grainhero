@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/public/hooks/alerts-escalation")({
         const { data, error } = await supabaseAdmin
           .from("grain_alerts")
           .update({ status: "escalated", updated_at: new Date().toISOString() })
-          .in("status", ["open", "active"])
+          .in("status", ["pending", "acknowledged"])
           .lt("created_at", cutoff)
           .select("id");
 
