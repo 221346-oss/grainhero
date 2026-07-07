@@ -271,7 +271,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
     // update silo occupancy and current_batch link
     await context.supabase.from("silos").update({
       current_occupancy_kg: (silo.current_occupancy_kg ?? 0) + data.quantity_kg,
-      current_batch: row.id,
+      current_batch_id: row.id,
       batch_loaded_date: new Date().toISOString(),
       batch_dispatched_date: null,
       updated_by: context.userId,
@@ -290,10 +290,10 @@ export const deleteGrainBatch = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("grain_batches").delete().eq("id", data.id);
     if (error) throw error;
     if (batch?.silo_id) {
-      const { data: silo } = await context.supabase.from("silos").select("id, current_batch, current_occupancy_kg").eq("id", batch.silo_id).single();
+      const { data: silo } = await context.supabase.from("silos").select("id, current_batch_id, current_occupancy_kg").eq("id", batch.silo_id).single();
       const remaining = Math.max(0, (silo?.current_occupancy_kg ?? 0) - Number(batch.quantity_kg ?? 0));
-      const patch: Record<string, unknown> = { current_occupancy_kg: remaining, updated_by: context.userId };
-      if (silo?.current_batch === data.id) patch.current_batch = null;
+      const patch: { current_occupancy_kg: number; updated_by: string; current_batch_id?: string | null } = { current_occupancy_kg: remaining, updated_by: context.userId };
+      if (silo?.current_batch_id === data.id) patch.current_batch_id = null;
       await context.supabase.from("silos").update(patch).eq("id", batch.silo_id);
     }
     return { ok: true };
@@ -328,7 +328,7 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
         contact_name: data.new_buyer.name,
         contact_phone: data.new_buyer.contact_phone ?? null,
         contact_email: data.new_buyer.contact_email ?? null,
-        buyer_type: "individual",
+        buyer_type: "retailer",
         status: "active",
       }).select("id").single();
       if (bErr) throw bErr;
@@ -372,14 +372,14 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
     if (error) throw error;
 
     if (isFull && batch.silo_id) {
-      const { data: silo } = await context.supabase.from("silos").select("id, current_batch, current_occupancy_kg").eq("id", batch.silo_id).single();
+      const { data: silo } = await context.supabase.from("silos").select("id, current_batch_id, current_occupancy_kg").eq("id", batch.silo_id).single();
       const remaining = Math.max(0, (silo?.current_occupancy_kg ?? 0) - Number(batch.quantity_kg));
-      const patch: Record<string, unknown> = {
+      const patch: { current_occupancy_kg: number; batch_dispatched_date: string; updated_by: string; current_batch_id?: string | null } = {
         current_occupancy_kg: remaining,
         batch_dispatched_date: new Date().toISOString(),
         updated_by: context.userId,
       };
-      if (silo?.current_batch === data.id) patch.current_batch = null;
+      if (silo?.current_batch_id === data.id) patch.current_batch_id = null;
       await context.supabase.from("silos").update(patch).eq("id", batch.silo_id);
     }
 
