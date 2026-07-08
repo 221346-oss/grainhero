@@ -72,9 +72,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 amount_total?: number;
                 currency?: string;
               };
-              const userId = s.client_reference_id ?? s.metadata?.user_id;
+              const userId = s.metadata?.user_id ?? null;
               const planId = s.metadata?.plan_id ?? null;
-              const hardwareOrderId = s.metadata?.hardware_order_id ?? null;
+              const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
               if (userId && s.customer) {
                 await supabaseAdmin
                   .from("profiles")
@@ -107,6 +107,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   .from("hardware_orders" as never)
                   .update({
                     status: "new",
+                    stripe_customer_id: s.customer ?? null,
+                    stripe_subscription_id: s.subscription ?? null,
                     stripe_payment_intent: s.payment_intent ?? null,
                   } as never)
                   .eq("id", hardwareOrderId);
@@ -189,6 +191,13 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 .eq("stripe_customer_id", sub.customer)
                 .maybeSingle();
               const adminId = prof?.id ?? sub.metadata?.user_id ?? null;
+              const hardwareOrderId = sub.metadata?.hardware_order_id ?? null;
+              if (hardwareOrderId) {
+                await supabaseAdmin
+                  .from("hardware_orders" as never)
+                  .update({ stripe_subscription_id: sub.id, stripe_customer_id: sub.customer } as never)
+                  .eq("id", hardwareOrderId);
+              }
               if (!adminId) break;
               const price = sub.items?.data[0]?.price;
               const planId = sub.metadata?.plan_id ?? "";

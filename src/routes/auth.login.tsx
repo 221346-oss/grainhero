@@ -110,8 +110,8 @@ function LoginPage() {
         </form>
         <p className="text-sm text-center text-muted-foreground">
           New to GrainHero?{" "}
-          <Link to="/auth/signup" className="text-[#00a63e] font-medium hover:underline">
-            Create an account
+          <Link to="/checkout" className="text-[#00a63e] font-medium hover:underline">
+            Choose a plan first
           </Link>
         </p>
       </div>

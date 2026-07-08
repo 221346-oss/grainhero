@@ -14,6 +14,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -83,6 +84,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CheckoutRoute,
 } as any)
 const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
@@ -371,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/checkout/': typeof CheckoutIndexRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
@@ -386,7 +393,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
-  '/checkout': typeof CheckoutRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
@@ -421,6 +427,7 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/checkout': typeof CheckoutIndexRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
@@ -474,6 +481,7 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/checkout/': typeof CheckoutIndexRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/_authenticated/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
@@ -527,6 +535,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/signup'
     | '/checkout/success'
+    | '/checkout/'
     | '/platform/logs'
     | '/platform/orders'
     | '/platform/revenue'
@@ -542,7 +551,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/checkout'
     | '/sitemap.xml'
     | '/activity-logs'
     | '/actuators'
@@ -577,6 +585,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/signup'
     | '/checkout/success'
+    | '/checkout'
     | '/platform/logs'
     | '/platform/orders'
     | '/platform/revenue'
@@ -629,6 +638,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/signup'
     | '/checkout/success'
+    | '/checkout/'
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/revenue'
@@ -691,6 +701,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/checkout/': {
+      id: '/checkout/'
+      path: '/'
+      fullPath: '/checkout/'
+      preLoaderRoute: typeof CheckoutIndexRouteImport
+      parentRoute: typeof CheckoutRoute
     }
     '/checkout/success': {
       id: '/checkout/success'
@@ -1118,10 +1135,12 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface CheckoutRouteChildren {
   CheckoutSuccessRoute: typeof CheckoutSuccessRoute
+  CheckoutIndexRoute: typeof CheckoutIndexRoute
 }
 
 const CheckoutRouteChildren: CheckoutRouteChildren = {
   CheckoutSuccessRoute: CheckoutSuccessRoute,
+  CheckoutIndexRoute: CheckoutIndexRoute,
 }
 
 const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
@@ -1144,3 +1163,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
