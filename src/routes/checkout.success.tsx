@@ -11,6 +11,8 @@ import {
   Truck,
   ArrowRight,
   PartyPopper,
+  UserPlus,
+  CalendarCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,8 +20,15 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
+import { claimPaidCheckoutForUser, getCheckoutSessionSummary } from "@/lib/stripe-checkout.functions";
+import { getAuthRedirectOrigin } from "@/lib/app-url";
+
+const search = z.object({
+  session_id: z.string().optional(),
+});
 
 export const Route = createFileRoute("/checkout/success")({
+  validateSearch: (s) => search.parse(s),
   head: () => ({
     meta: [
       { title: "Welcome to GrainHero 🎉" },
@@ -116,9 +125,13 @@ function StepRow({
 
 function SuccessPage() {
   const navigate = useNavigate();
+  const { session_id: sessionId } = Route.useSearch();
   const statusFn = useServerFn(getMyOnboardingStatus);
+  const summaryFn = useServerFn(getCheckoutSessionSummary);
+  const claimFn = useServerFn(claimPaidCheckoutForUser);
   const [resending, setResending] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
@@ -140,8 +153,24 @@ function SuccessPage() {
     },
   });
 
+  const summaryQuery = useQuery({
+    queryKey: ["checkout-session-summary", sessionId],
+    queryFn: () => summaryFn({ data: { sessionId: sessionId! } }),
+    enabled: Boolean(sessionId),
+  });
+
+  useEffect(() => {
+    if (signedIn !== true || !sessionId || claiming) return;
+    setClaiming(true);
+    claimFn({ data: { sessionId } })
+      .then(() => query.refetch())
+      .catch((e) => toast.error((e as Error).message ?? "Could not link payment to your account"))
+      .finally(() => setClaiming(false));
+  }, [claimFn, claiming, query, sessionId, signedIn]);
+
   const s = query.data;
-  const paymentDone = Boolean(s?.subscriptionActive);
+  const summary = summaryQuery.data;
+  const paymentDone = Boolean(s?.subscriptionActive || summary?.paid);
   const emailDone = Boolean(s?.emailVerified);
   const allDone = paymentDone && emailDone;
 
@@ -161,10 +190,11 @@ function SuccessPage() {
     if (!s?.email) return;
     setResending(true);
     try {
+      const redirectOrigin = getAuthRedirectOrigin();
       const { error } = await supabase.auth.resend({
         type: "signup",
         email: s.email,
-        options: { emailRedirectTo: `${window.location.origin}/checkout/success` },
+        options: { emailRedirectTo: `${redirectOrigin}/checkout/success${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}` },
       });
       if (error) throw error;
       toast.success("Verification email sent — check your inbox");
@@ -178,6 +208,8 @@ function SuccessPage() {
   // Signed-out visitor landing here from Stripe (e.g. paid as guest / session
   // expired): send them to sign-in so we can identify them and restore state.
   if (signedIn === false) {
+    const email = summary?.email ?? "";
+    const redirectPath = `/checkout/success${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}`;
     return (
       <div
         className="min-h-screen flex items-center justify-center px-4"
@@ -191,11 +223,22 @@ function SuccessPage() {
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Payment received!</h1>
             <p className="text-sm text-slate-600">
-              Sign in with the email you used at checkout to finish activating your account.
+              Create your password with the same email you used at checkout. Then your account and technician order will unlock automatically.
             </p>
+            {summary?.planName && (
+              <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3 text-left text-xs text-emerald-900">
+                <b>{summary.planName}</b>{summary.hardwareQuantity ? ` · ${summary.hardwareQuantity} sensor(s)` : ""}
+                {email ? <div className="mt-1 text-emerald-700">{email}</div> : null}
+              </div>
+            )}
             <Button asChild className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
-              <Link to="/auth/login" search={{ redirect: "/checkout/success" } as never}>
-                Sign in to continue <ArrowRight className="h-4 w-4 ml-1" />
+              <Link to="/auth/signup" search={{ email: email || undefined, redirect: redirectPath } as never}>
+                Create password & activate <UserPlus className="h-4 w-4 ml-1" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/auth/login" search={{ prefill: email || undefined, redirect: redirectPath } as never}>
+                I already have an account <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
             </Button>
           </CardContent>
@@ -220,7 +263,7 @@ function SuccessPage() {
             Welcome to GrainHero <Sparkles className="h-6 w-6 text-amber-500" />
           </h1>
           <p className="text-slate-600 max-w-md mx-auto">
-            Your payment is confirmed. A few quick steps and you're all set up.
+            Your payment is confirmed. Follow the path below and GrainHero will be ready for you fast.
           </p>
           {planLabel && (
             <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white capitalize">{planLabel} plan</Badge>
@@ -239,6 +282,12 @@ function SuccessPage() {
                   ? "Stripe has settled your payment and your plan is live."
                   : "This usually takes a few seconds. You can leave this page open."
               }
+            />
+            <StepRow
+              done={Boolean(s?.profile)}
+              icon={<UserPlus className="h-4 w-4" />}
+              title="Account connected"
+              desc={claiming ? "Linking your paid order to this account…" : "Your checkout email is connected to your GrainHero login."}
             />
             <StepRow
               done={emailDone}
@@ -262,7 +311,7 @@ function SuccessPage() {
             />
             <StepRow
               done={false}
-              icon={<Truck className="h-4 w-4" />}
+              icon={<CalendarCheck className="h-4 w-4" />}
               title="Technician install scheduled"
               desc={
                 (s?.latestOrder as { technician_name?: string } | null)?.technician_name
@@ -272,9 +321,15 @@ function SuccessPage() {
             />
             <StepRow
               done={false}
+              icon={<Truck className="h-4 w-4" />}
+              title="On-site setup by GrainHero"
+              desc="Our technician installs IoT sensors, checks your storage setup, and turns monitoring live."
+            />
+            <StepRow
+              done={false}
               icon={<ShieldCheck className="h-4 w-4" />}
-              title="Explore your dashboard"
-              desc="Set up silos, warehouses, and invite your team while you wait for the install."
+              title="First dashboard walkthrough"
+              desc="A quick in-app guide will point out plans, orders, notifications, silos, sensors, and settings."
               action={
                 <Button
                   size="sm"
