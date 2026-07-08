@@ -933,13 +933,15 @@ export type Database = {
       }
       hardware_orders: {
         Row: {
-          admin_id: string
+          admin_id: string | null
           business_name: string | null
           cancel_reason: string | null
           cancelled_at: string | null
           contact_phone: string | null
           created_at: string
           currency: string
+          customer_email: string | null
+          customer_name: string | null
           hardware_quantity: number
           hardware_total: number
           hardware_unit_price: number
@@ -955,21 +957,25 @@ export type Database = {
           refunded: boolean
           scheduled_install_date: string | null
           status: string
+          stripe_customer_id: string | null
           stripe_payment_intent: string | null
           stripe_session_id: string | null
+          stripe_subscription_id: string | null
           tax_id: string | null
           technician_name: string | null
           technician_phone: string | null
           updated_at: string
         }
         Insert: {
-          admin_id: string
+          admin_id?: string | null
           business_name?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           contact_phone?: string | null
           created_at?: string
           currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
           hardware_quantity?: number
           hardware_total?: number
           hardware_unit_price?: number
@@ -985,21 +991,25 @@ export type Database = {
           refunded?: boolean
           scheduled_install_date?: string | null
           status?: string
+          stripe_customer_id?: string | null
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
           tax_id?: string | null
           technician_name?: string | null
           technician_phone?: string | null
           updated_at?: string
         }
         Update: {
-          admin_id?: string
+          admin_id?: string | null
           business_name?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           contact_phone?: string | null
           created_at?: string
           currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
           hardware_quantity?: number
           hardware_total?: number
           hardware_unit_price?: number
@@ -1015,8 +1025,10 @@ export type Database = {
           refunded?: boolean
           scheduled_install_date?: string | null
           status?: string
+          stripe_customer_id?: string | null
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
           tax_id?: string | null
           technician_name?: string | null
           technician_phone?: string | null
