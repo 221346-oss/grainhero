@@ -45,7 +45,7 @@ export const listAllHardwareOrders = createServerFn({ method: "GET" })
     if (error) throw error;
     // Attach the buyer profile so the console can show name + email.
     const rows = (data ?? []) as HardwareOrder[];
-    const adminIds = Array.from(new Set(rows.map((o) => o.admin_id as string)));
+    const adminIds = Array.from(new Set(rows.map((o) => o.admin_id as string | null).filter(Boolean) as string[]));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let profiles: Record<string, any> = {};
     if (adminIds.length > 0) {
@@ -58,7 +58,10 @@ export const listAllHardwareOrders = createServerFn({ method: "GET" })
     return {
       orders: rows.map((o) => ({
         ...o,
-        buyer: profiles[o.admin_id as string] ?? null,
+        buyer: profiles[o.admin_id as string] ?? {
+          name: o.customer_name ?? null,
+          email: o.customer_email ?? null,
+        },
       })) as HardwareOrder[],
     };
   });
@@ -104,14 +107,16 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
 
     // Notify the buyer in-app.
     const o = updated as HardwareOrder;
-    await supabaseAdmin.from("notifications").insert({
-      user_id: o.admin_id as string,
-      tenant_id: o.admin_id as string,
-      type: `order.${data.status ?? "update"}`,
-      subject: `Your install order was updated`,
-      body: `Status: ${o.status}${o.technician_name ? ` · Tech: ${o.technician_name}` : ""}${o.scheduled_install_date ? ` · Scheduled: ${new Date(o.scheduled_install_date as string).toLocaleString()}` : ""}`,
-      is_read: false,
-    } as never);
+    if (o.admin_id) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: o.admin_id as string,
+        tenant_id: o.admin_id as string,
+        type: `order.${data.status ?? "update"}`,
+        subject: `Your install order was updated`,
+        body: `Status: ${o.status}${o.technician_name ? ` · Tech: ${o.technician_name}` : ""}${o.scheduled_install_date ? ` · Scheduled: ${new Date(o.scheduled_install_date as string).toLocaleString()}` : ""}`,
+        is_read: false,
+      } as never);
+    }
 
     return { order: o as HardwareOrder };
   });
@@ -136,20 +141,22 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order } = await supabaseAdmin
       .from("hardware_orders" as never)
-      .select("id,admin_id")
+      .select("id,admin_id,customer_email,customer_name")
       .eq("id", data.orderId)
       .single();
     if (!order) throw new Error("Order not found");
-    const buyerId = (order as { admin_id: string }).admin_id;
+    const buyerId = (order as { admin_id?: string | null }).admin_id ?? null;
 
     let emailed = false;
     if (data.emailBuyer) {
-      const { data: buyer } = await supabaseAdmin
-        .from("profiles")
-        .select("email,name")
-        .eq("id", buyerId)
-        .maybeSingle();
-      const email = (buyer as { email?: string } | null)?.email;
+      const { data: buyer } = buyerId
+        ? await supabaseAdmin
+            .from("profiles")
+            .select("email,name")
+            .eq("id", buyerId)
+            .maybeSingle()
+        : { data: null };
+      const email = (buyer as { email?: string } | null)?.email ?? (order as { customer_email?: string | null }).customer_email ?? null;
       const gatewayKey = process.env.LOVABLE_API_KEY;
       const resendKey = process.env.RESEND_API_KEY;
       const from = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
@@ -179,14 +186,16 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
       emailed,
     } as never);
 
-    await supabaseAdmin.from("notifications").insert({
-      user_id: buyerId,
-      tenant_id: buyerId,
-      type: "order.message",
-      subject: "New message about your install order",
-      body: data.message,
-      is_read: false,
-    } as never);
+    if (buyerId) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: buyerId,
+        tenant_id: buyerId,
+        type: "order.message",
+        subject: "New message about your install order",
+        body: data.message,
+        is_read: false,
+      } as never);
+    }
 
     return { ok: true, emailed };
   });
