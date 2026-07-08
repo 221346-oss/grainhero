@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 import { validateSignupForm, validatePassword, type PasswordStrength } from "@/lib/validation";
+import { getAuthRedirectOrigin } from "@/lib/app-url";
 
 const search = z.object({
   plan: z.string().optional(),
@@ -56,11 +57,12 @@ function SignupPage() {
     }
     setLoading(true);
     const redirectQs = plan ? `?plan=${encodeURIComponent(plan)}&email=${encodeURIComponent(form.email)}` : "";
+    const redirectOrigin = getAuthRedirectOrigin();
     const { data, error } = await supabase.auth.signUp({
       email: form.email.trim().toLowerCase(),
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/login${redirectQs}`,
+        emailRedirectTo: `${redirectOrigin}/auth/login${redirectQs}`,
         data: {
           name: form.name.trim(),
           phone: form.phone.trim(),
