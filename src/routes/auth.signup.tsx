@@ -14,6 +14,7 @@ import { getAuthRedirectOrigin } from "@/lib/app-url";
 const search = z.object({
   plan: z.string().optional(),
   email: z.string().email().optional(),
+  redirect: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth/signup")({
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/auth/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { plan, email: prefillEmail } = Route.useSearch();
+  const { plan, email: prefillEmail, redirect } = Route.useSearch();
   const [form, setForm] = useState({
     name: "",
     email: prefillEmail ?? "",
@@ -56,13 +57,17 @@ function SignupPage() {
       return;
     }
     setLoading(true);
+    const safeRedirect = redirect?.startsWith("/") ? redirect : null;
     const redirectQs = plan ? `?plan=${encodeURIComponent(plan)}&email=${encodeURIComponent(form.email)}` : "";
+    const confirmPath = safeRedirect
+      ? `${safeRedirect}${safeRedirect.includes("?") ? "&" : "?"}email=${encodeURIComponent(form.email)}`
+      : `/auth/login${redirectQs}`;
     const redirectOrigin = getAuthRedirectOrigin();
     const { data, error } = await supabase.auth.signUp({
       email: form.email.trim().toLowerCase(),
       password: form.password,
       options: {
-        emailRedirectTo: `${redirectOrigin}/auth/login${redirectQs}`,
+        emailRedirectTo: `${redirectOrigin}${confirmPath}`,
         data: {
           name: form.name.trim(),
           phone: form.phone.trim(),
@@ -80,7 +85,8 @@ function SignupPage() {
       return;
     }
     // Auto-confirmed / already signed in
-    if (plan) navigate({ to: "/checkout", search: { plan } as never });
+    if (safeRedirect) navigate({ to: safeRedirect as never });
+    else if (plan) navigate({ to: "/checkout", search: { plan } as never });
     else navigate({ to: "/dashboard" });
   };
 
