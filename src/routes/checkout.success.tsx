@@ -133,6 +133,7 @@ function SuccessPage() {
   const [resending, setResending] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [claiming, setClaiming] = useState(false);
+  const claimStarted = useRef(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
@@ -161,13 +162,14 @@ function SuccessPage() {
   });
 
   useEffect(() => {
-    if (signedIn !== true || !sessionId || claiming) return;
+    if (signedIn !== true || !sessionId || claimStarted.current) return;
+    claimStarted.current = true;
     setClaiming(true);
     claimFn({ data: { sessionId } })
       .then(() => query.refetch())
       .catch((e) => toast.error((e as Error).message ?? "Could not link payment to your account"))
       .finally(() => setClaiming(false));
-  }, [claimFn, claiming, query, sessionId, signedIn]);
+  }, [claimFn, query, sessionId, signedIn]);
 
   const s = query.data;
   const summary = summaryQuery.data;
