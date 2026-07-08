@@ -1,7 +1,6 @@
 
 
 import { Wheat } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 
 export function PremiumFooter() {
   const currentYear = new Date().getFullYear()
@@ -9,8 +8,8 @@ export function PremiumFooter() {
 
   const productLinks = [
     { href: '#pricing', label: 'Pricing' },
-    { href: '/auth', label: 'Get Started' },
-    { href: '/auth', label: 'Login' }
+    { href: '/checkout', label: 'Get Started' },
+    { href: '/auth/login', label: 'Login' }
   ]
 
   const companyLinks = [

@@ -218,7 +218,7 @@ function PricingCard({
         ))}
       </ul>
       <Link
-        to="/auth"
+        to="/checkout"
         onClick={() => {
           try {
             localStorage.setItem('selectedPlanId', p.id)
@@ -288,7 +288,7 @@ function CTA() {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <Link
-            to="/auth"
+            to="/checkout"
             className="bg-[#00a63e] text-white px-10 py-4 rounded-full text-lg font-bold hover:bg-[#029238] transition-colors cursor-pointer"
           >
             Get Started Free
