@@ -1,7 +1,6 @@
 
 
 import { Wheat } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 
 export function PremiumFooter() {
   const currentYear = new Date().getFullYear()
