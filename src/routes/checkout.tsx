@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, MapPin, RefreshCw, AlertCircle } from "lucide-react";
+import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, MapPin, RefreshCw, AlertCircle, User, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,8 @@ const DRAFT_KEY = "grainhero.checkoutDraft.v1";
 type Draft = {
   selected: string;
   iotQuantity: number;
+  customerName: string;
+  customerEmail: string;
   address: string;
   city: string;
   country: string;
@@ -63,6 +65,8 @@ function CheckoutPage() {
   const [selected, setSelected] = useState<string>(initial ?? "intermediate");
   const [iotQuantity, setIotQuantity] = useState(1);
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("Pakistan");
@@ -83,8 +87,14 @@ function CheckoutPage() {
     draftLoaded.current = true;
     const d = loadDraft();
     if (!d) return;
+    const storedPlan = (() => {
+      try { return window.localStorage.getItem("selectedPlanId"); } catch { return null; }
+    })();
     if (!initial && d.selected) setSelected(d.selected);
+    else if (!initial && (storedPlan === "basic" || storedPlan === "intermediate" || storedPlan === "pro")) setSelected(storedPlan);
     if (typeof d.iotQuantity === "number") setIotQuantity(d.iotQuantity);
+    if (d.customerName) setCustomerName(d.customerName);
+    if (d.customerEmail) setCustomerEmail(d.customerEmail);
     if (d.address) setAddress(d.address);
     if (d.city) setCity(d.city);
     if (d.country) setCountry(d.country);
@@ -102,11 +112,11 @@ function CheckoutPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const draft: Draft = {
-      selected, iotQuantity, address, city, country, phone,
+      selected, iotQuantity, customerName, customerEmail, address, city, country, phone,
       preferredDate, notes, businessName, taxId,
     };
     try { window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
-  }, [selected, iotQuantity, address, city, country, phone, preferredDate, notes, businessName, taxId]);
+  }, [selected, iotQuantity, customerName, customerEmail, address, city, country, phone, preferredDate, notes, businessName, taxId]);
 
   useEffect(() => {
     if (canceled) toast("Checkout canceled. You can pick a plan and try again.");
@@ -130,6 +140,10 @@ function CheckoutPage() {
         data: {
           planId: selected as "basic" | "intermediate" | "pro",
           iotQuantity,
+          customer: {
+            name: customerName.trim(),
+            email: customerEmail.trim().toLowerCase(),
+          },
           install: {
             address: address.trim(),
             city: city.trim(),
@@ -152,8 +166,9 @@ function CheckoutPage() {
   });
 
   const canPay =
-    authed &&
     iotQuantity >= 1 &&
+    customerName.trim().length > 1 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) &&
     address.trim().length > 2 &&
     city.trim().length > 0 &&
     country.trim().length > 0 &&
@@ -175,7 +190,21 @@ function CheckoutPage() {
 
         <div className="text-center">
           <h1 className="text-3xl font-bold text-slate-900">Choose your plan</h1>
-          <p className="text-slate-600 mt-2">You can change or cancel anytime.</p>
+          <p className="text-slate-600 mt-2">Choose a plan, pay securely, then create your account after payment.</p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-4">
+          {[
+            ["1", "Plan"],
+            ["2", "Payment"],
+            ["3", "Account"],
+            ["4", "Technician"],
+          ].map(([n, label]) => (
+            <div key={label} className="rounded-xl border border-white/70 bg-white/80 px-4 py-3 text-center shadow-sm">
+              <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">{n}</div>
+              <p className="text-xs font-semibold text-slate-700">{label}</p>
+            </div>
+          ))}
         </div>
 
         {canceled && (
@@ -306,32 +335,43 @@ function CheckoutPage() {
                       <CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Cancel anytime
                     </div>
                   </div>
-                  {authed ? (
-                    <Button
-                      className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
-                      disabled={start.isPending || !canPay}
-                      onClick={() => start.mutate()}
-                    >
-                      {start.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Proceed to payment"}
-                    </Button>
-                  ) : (
-                    <Button asChild className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
-                      <Link
-                        to="/auth/signup"
-                        search={{ plan: selected } as never}
-                      >
-                        Sign up to continue
-                      </Link>
-                    </Button>
-                  )}
-                  {authed && !canPay && (
-                    <p className="text-[11px] text-amber-700">Fill your install address, city, country and phone below to continue.</p>
+                  <Button
+                    className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
+                    disabled={start.isPending || !canPay}
+                    onClick={() => start.mutate()}
+                  >
+                    {start.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pay securely with Stripe"}
+                  </Button>
+                  {!canPay && (
+                    <p className="text-[11px] text-amber-700">Fill your name, email, install address, city, country and phone to continue.</p>
                   )}
                 </>
               )}
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><User className="h-4 w-4 text-emerald-600" /> Buyer details</CardTitle>
+            <CardDescription>Your account will be created with this email after payment.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="customer-name">Full name *</Label>
+                <Input id="customer-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Your name" maxLength={160} />
+              </div>
+              <div>
+                <Label htmlFor="customer-email">Email *</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input id="customer-email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@example.com" className="pl-9" maxLength={180} />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
