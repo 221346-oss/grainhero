@@ -2,35 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import pricingData from "@/lib/pricing-data";
-
-const STRIPE_API = "https://api.stripe.com/v1";
-
-function form(params: Record<string, string | number | undefined>) {
-  const body = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== null) body.append(k, String(v));
-  }
-  return body;
-}
-
-async function stripeFetch(path: string, body: URLSearchParams | null, method: "GET" | "POST" = "POST") {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("Stripe not configured");
-  const res = await fetch(`${STRIPE_API}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: body ?? undefined,
-  });
-  const text = await res.text();
-  if (!res.ok) {
-    console.error(`[stripe ${res.status}] ${path}: ${text}`);
-    throw new Error(`Stripe error ${res.status}: ${text.slice(0, 300)}`);
-  }
-  return JSON.parse(text);
-}
+import { stripeFetch, stripeForm } from "@/lib/stripe-api.server";
 
 const checkoutInput = z.object({
   planId: z.enum(["basic", "intermediate", "pro"]),
@@ -81,7 +53,7 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     if (!customerId) {
       const created = await stripeFetch(
         "/customers",
-        form({
+        stripeForm({
           email: customerEmail,
           name: customerName,
           "metadata[user_id]": existingUserId ?? undefined,
@@ -89,7 +61,7 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
       );
       customerId = created.id as string;
       if (existingUserId) {
-        await supabaseAdmin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", context.userId);
+        await supabaseAdmin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", existingUserId);
       }
     }
 
@@ -132,7 +104,7 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     }
 
     // Build line items: recurring subscription + optional one-time IoT setup
-    const params = form({
+    const params = stripeForm({
       mode: "subscription",
       customer: customerId ?? undefined,
       client_reference_id: orderId ?? undefined,
@@ -335,7 +307,7 @@ export const createStripeBillingPortalSession = createServerFn({ method: "POST" 
     const origin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
     const session = await stripeFetch(
       "/billing_portal/sessions",
-      form({ customer: customerId, return_url: `${origin}/subscription` }),
+      stripeForm({ customer: customerId, return_url: `${origin}/subscription` }),
     );
     return { url: session.url as string };
   });
