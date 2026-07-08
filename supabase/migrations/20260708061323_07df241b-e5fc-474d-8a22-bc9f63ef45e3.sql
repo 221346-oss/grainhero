@@ -1,0 +1,1 @@
+ALTER TABLE public.hardware_orders ADD COLUMN IF NOT EXISTS confirmation_email_sent_at timestamptz;
