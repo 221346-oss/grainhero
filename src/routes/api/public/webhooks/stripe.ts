@@ -59,6 +59,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 
         const event = JSON.parse(rawBody) as { type: string; data: { object: Record<string, unknown> } };
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { sendCheckoutConfirmationEmail } = await import("@/lib/checkout-emails.functions");
 
         try {
           switch (event.type) {
@@ -75,6 +76,15 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const userId = s.metadata?.user_id ?? null;
               const planId = s.metadata?.plan_id ?? null;
               const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
+              const sessionId = (s as { id?: string }).id ?? null;
+              // Send buyer confirmation email (idempotent).
+              if (sessionId) {
+                try {
+                  await sendCheckoutConfirmationEmail({ data: { sessionId } });
+                } catch (e) {
+                  console.warn("[stripe-webhook] confirm email failed:", (e as Error).message);
+                }
+              }
               if (userId && s.customer) {
                 await supabaseAdmin
                   .from("profiles")
