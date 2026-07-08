@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
 import { claimPaidCheckoutForUser, getCheckoutSessionSummary } from "@/lib/stripe-checkout.functions";
+import { sendCheckoutConfirmationEmail } from "@/lib/checkout-emails.functions";
 import { getAuthRedirectOrigin } from "@/lib/app-url";
 
 const search = z.object({
@@ -130,10 +131,12 @@ function SuccessPage() {
   const statusFn = useServerFn(getMyOnboardingStatus);
   const summaryFn = useServerFn(getCheckoutSessionSummary);
   const claimFn = useServerFn(claimPaidCheckoutForUser);
+  const sendConfirmFn = useServerFn(sendCheckoutConfirmationEmail);
   const [resending, setResending] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [claiming, setClaiming] = useState(false);
   const claimStarted = useRef(false);
+  const confirmSent = useRef(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
@@ -170,6 +173,16 @@ function SuccessPage() {
       .catch((e) => toast.error((e as Error).message ?? "Could not link payment to your account"))
       .finally(() => setClaiming(false));
   }, [claimFn, query, sessionId, signedIn]);
+
+  // Fire the buyer confirmation email as soon as we know the session id — works
+  // for both guest and signed-in flows; the server function is idempotent.
+  useEffect(() => {
+    if (!sessionId || confirmSent.current) return;
+    confirmSent.current = true;
+    sendConfirmFn({ data: { sessionId } }).catch((e) =>
+      console.warn("[confirm email]", (e as Error).message),
+    );
+  }, [sendConfirmFn, sessionId]);
 
   const s = query.data;
   const summary = summaryQuery.data;
