@@ -131,7 +131,6 @@ function SuccessPage() {
   const summaryFn = useServerFn(getCheckoutSessionSummary);
   const claimFn = useServerFn(claimPaidCheckoutForUser);
   const sendConfirmFn = useServerFn(sendCheckoutConfirmationEmail);
-  const [resending, setResending] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [claiming, setClaiming] = useState(false);
   const claimStarted = useRef(false);
@@ -186,8 +185,9 @@ function SuccessPage() {
   const s = query.data;
   const summary = summaryQuery.data;
   const paymentDone = Boolean(s?.subscriptionActive || summary?.paid);
-  const emailDone = Boolean(s?.emailVerified);
-  const allDone = paymentDone && emailDone;
+  const profileConnected = Boolean(s?.profile);
+  // Consider account ready once payment is confirmed and profile is linked
+  const allDone = paymentDone && profileConnected;
 
   // Once we've confirmed the subscription is live, drop the saved checkout draft.
   useEffect(() => {
@@ -200,25 +200,6 @@ function SuccessPage() {
     const raw = (s?.subscription as { plan_name?: string } | null)?.plan_name;
     return raw ? String(raw).replace(/_/g, " ") : null;
   }, [s]);
-
-  const resendVerification = async () => {
-    if (!s?.email) return;
-    setResending(true);
-    try {
-      const redirectOrigin = getAuthRedirectOrigin();
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: s.email,
-        options: { emailRedirectTo: `${redirectOrigin}/checkout/success${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}` },
-      });
-      if (error) throw error;
-      toast.success("Verification email sent — check your inbox");
-    } catch (e) {
-      toast.error((e as Error).message ?? "Could not resend email");
-    } finally {
-      setResending(false);
-    }
-  };
 
   // Signed-out visitor landing here from Stripe — auto-redirect to signup
   // as soon as we know the email (from the session summary query).
@@ -293,30 +274,10 @@ function SuccessPage() {
               }
             />
             <StepRow
-              done={Boolean(s?.profile)}
-              icon={<UserPlus className="h-4 w-4" />}
+              done={profileConnected}
+              icon={<User className="h-4 w-4" />}
               title="Account connected"
               desc={claiming ? "Linking your paid order to this account…" : "Your checkout email is connected to your GrainHero login."}
-            />
-            <StepRow
-              done={emailDone}
-              icon={<Mail className="h-4 w-4" />}
-              title={emailDone ? "Email verified" : "Verify your email"}
-              desc={
-                emailDone
-                  ? `${s?.email ?? "Your email"} is confirmed.`
-                  : `Click the link we sent to ${s?.email ?? "your inbox"} to secure your account.`
-              }
-              action={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={resending}
-                  onClick={resendVerification}
-                >
-                  {resending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Resend email"}
-                </Button>
-              }
             />
             <StepRow
               done={false}
