@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
+import { getAuthRedirectOrigin } from "@/lib/app-url";
 
 export const Route = createFileRoute("/auth/forgot-password")({
   head: () => ({ meta: [{ title: "Reset password — GrainHero" }] }),
@@ -21,8 +22,9 @@ function ForgotPage() {
     e.preventDefault();
     setMsg(null);
     setLoading(true);
+    const redirectOrigin = getAuthRedirectOrigin();
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: `${redirectOrigin}/auth/reset-password`,
     });
     setLoading(false);
     if (error) setMsg({ type: "error", text: error.message });
