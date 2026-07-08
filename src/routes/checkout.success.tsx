@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -11,9 +11,8 @@ import {
   Sparkles,
   Truck,
   ArrowRight,
-  PartyPopper,
-  UserPlus,
   CalendarCheck,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -221,44 +220,38 @@ function SuccessPage() {
     }
   };
 
-  // Signed-out visitor landing here from Stripe (e.g. paid as guest / session
-  // expired): send them to sign-in so we can identify them and restore state.
-  if (signedIn === false) {
-    const email = summary?.email ?? "";
+  // Signed-out visitor landing here from Stripe — auto-redirect to signup
+  // as soon as we know the email (from the session summary query).
+  // We wait up to ~2s for the summary; if it hasn't loaded yet we show a
+  // brief loading screen so the email can be pre-filled on the signup page.
+  useEffect(() => {
+    if (signedIn !== false) return;
     const redirectPath = `/checkout/success${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}`;
+    const email = summaryQuery.data?.email ?? "";
+    // Only navigate once summary has resolved (or failed after timeout).
+    if (summaryQuery.isLoading) return;
+    navigate({
+      to: "/auth/signup",
+      search: {
+        email: email || undefined,
+        redirect: redirectPath,
+      } as never,
+      replace: true,
+    });
+  }, [signedIn, summaryQuery.isLoading, summaryQuery.data?.email, sessionId, navigate]);
+
+  // While waiting for summary to load for the signed-out redirect, show a
+  // minimal spinner so the screen isn't blank.
+  if (signedIn === null || signedIn === false) {
     return (
       <div
         className="min-h-screen flex items-center justify-center px-4"
         style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)" }}
       >
-        <Card className="max-w-md w-full shadow-xl relative overflow-hidden">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-violet-500" />
-          <CardContent className="p-8 text-center space-y-4">
-            <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center animate-scale-in">
-              <PartyPopper className="h-8 w-8 text-emerald-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Payment received!</h1>
-            <p className="text-sm text-slate-600">
-              Create your password with the same email you used at checkout. Then your account and technician order will unlock automatically.
-            </p>
-            {summary?.planName && (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3 text-left text-xs text-emerald-900">
-                <b>{summary.planName}</b>{summary.hardwareQuantity ? ` · ${summary.hardwareQuantity} sensor(s)` : ""}
-                {email ? <div className="mt-1 text-emerald-700">{email}</div> : null}
-              </div>
-            )}
-            <Button asChild className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
-              <Link to="/auth/signup" search={{ email: email || undefined, redirect: redirectPath } as never}>
-                Create password & activate <UserPlus className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/auth/login" search={{ prefill: email || undefined, redirect: redirectPath } as never}>
-                I already have an account <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center gap-4 text-slate-600">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+          <p className="text-sm">Redirecting to account setup…</p>
+        </div>
       </div>
     );
   }

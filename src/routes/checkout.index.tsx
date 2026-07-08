@@ -16,6 +16,7 @@ import pricingData from "@/lib/pricing-data";
 import { supabase } from "@/integrations/supabase/client";
 import { createStripeCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
+import { validateEmail, validateName, validatePhone } from "@/lib/validation";
 
 const DRAFT_KEY = "grainhero.checkoutDraft.v1";
 type Draft = {
@@ -77,9 +78,53 @@ function CheckoutPage() {
   const [taxId, setTaxId] = useState("");
   const draftLoaded = useRef(false);
 
+  // Field validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, []);
+
+  // Validation helper
+  const validateField = (field: string, value: string) => {
+    let result: { isValid: boolean; message: string };
+    switch (field) {
+      case "customerName":
+        result = validateName(value);
+        break;
+      case "customerEmail":
+        result = validateEmail(value);
+        break;
+      case "phone":
+        result = validatePhone(value);
+        break;
+      case "address":
+        result = !value.trim() || value.trim().length < 3
+          ? { isValid: false, message: "Address must be at least 3 characters" }
+          : { isValid: true, message: "" };
+        break;
+      case "city":
+        result = !value.trim()
+          ? { isValid: false, message: "City is required" }
+          : { isValid: true, message: "" };
+        break;
+      case "country":
+        result = !value.trim()
+          ? { isValid: false, message: "Country is required" }
+          : { isValid: true, message: "" };
+        break;
+      default:
+        result = { isValid: true, message: "" };
+    }
+    
+    setErrors(prev => ({ ...prev, [field]: result.message }));
+    return result.isValid;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
 
   // Restore any locally-saved draft (from an interrupted session).
   useEffect(() => {
@@ -344,6 +389,34 @@ function CheckoutPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Grand Total Summary */}
+                <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-sky-50">
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Monthly subscription</span>
+                        <span className="font-medium">Rs. {planData?.price.toLocaleString()}/mo</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">IoT setup (one-time)</span>
+                        <span className="font-medium">Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                      </div>
+                      <Separator className="bg-slate-300" />
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-base font-semibold text-slate-900">Total due today</span>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-emerald-700">
+                            Rs. {((planData?.price ?? 0) + iotQuantity * 7000).toLocaleString()}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            Then Rs. {planData?.price.toLocaleString()}/month
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
 
@@ -357,14 +430,49 @@ function CheckoutPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <Label htmlFor="customer-name">Full name *</Label>
-                      <Input id="customer-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Your name" maxLength={160} />
+                      <Input 
+                        id="customer-name" 
+                        value={customerName} 
+                        onChange={(e) => {
+                          setCustomerName(e.target.value);
+                          if (touched.customerName) validateField("customerName", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("customerName");
+                          validateField("customerName", customerName);
+                        }}
+                        placeholder="e.g., Ahmed Khan" 
+                        maxLength={160}
+                        className={touched.customerName && errors.customerName ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.customerName && errors.customerName && (
+                        <p className="text-xs text-red-600 mt-1">{errors.customerName}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="customer-email">Email *</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <Input id="customer-email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@example.com" className="pl-9" maxLength={180} />
+                        <Input 
+                          id="customer-email" 
+                          type="email" 
+                          value={customerEmail} 
+                          onChange={(e) => {
+                            setCustomerEmail(e.target.value);
+                            if (touched.customerEmail) validateField("customerEmail", e.target.value);
+                          }}
+                          onBlur={() => {
+                            handleBlur("customerEmail");
+                            validateField("customerEmail", customerEmail);
+                          }}
+                          placeholder="ahmed@grainstorage.pk" 
+                          className={`pl-9 ${touched.customerEmail && errors.customerEmail ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                          maxLength={180} 
+                        />
                       </div>
+                      {touched.customerEmail && errors.customerEmail && (
+                        <p className="text-xs text-red-600 mt-1">{errors.customerEmail}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -381,19 +489,86 @@ function CheckoutPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2">
                       <Label htmlFor="addr">Install address *</Label>
-                      <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, landmark" maxLength={300} />
+                      <Input 
+                        id="addr" 
+                        value={address} 
+                        onChange={(e) => {
+                          setAddress(e.target.value);
+                          if (touched.address) validateField("address", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("address");
+                          validateField("address", address);
+                        }}
+                        placeholder="e.g., Main Bazar Road, near Grain Market, Faisalabad" 
+                        maxLength={300}
+                        className={touched.address && errors.address ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.address && errors.address && (
+                        <p className="text-xs text-red-600 mt-1">{errors.address}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="city">City *</Label>
-                      <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={120} />
+                      <Input 
+                        id="city" 
+                        value={city} 
+                        onChange={(e) => {
+                          setCity(e.target.value);
+                          if (touched.city) validateField("city", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("city");
+                          validateField("city", city);
+                        }}
+                        placeholder="e.g., Lahore, Faisalabad, Multan" 
+                        maxLength={120}
+                        className={touched.city && errors.city ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.city && errors.city && (
+                        <p className="text-xs text-red-600 mt-1">{errors.city}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="country">Country *</Label>
-                      <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} maxLength={120} />
+                      <Input 
+                        id="country" 
+                        value={country} 
+                        onChange={(e) => {
+                          setCountry(e.target.value);
+                          if (touched.country) validateField("country", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("country");
+                          validateField("country", country);
+                        }}
+                        maxLength={120}
+                        className={touched.country && errors.country ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.country && errors.country && (
+                        <p className="text-xs text-red-600 mt-1">{errors.country}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="phone">Contact phone *</Label>
-                      <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 …" maxLength={40} />
+                      <Input 
+                        id="phone" 
+                        value={phone} 
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (touched.phone) validateField("phone", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("phone");
+                          validateField("phone", phone);
+                        }}
+                        placeholder="+92 300 1234567" 
+                        maxLength={40}
+                        className={touched.phone && errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.phone && errors.phone && (
+                        <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="date">Preferred install date</Label>
@@ -401,15 +576,15 @@ function CheckoutPage() {
                     </div>
                     <div>
                       <Label htmlFor="biz">Business name (invoicing)</Label>
-                      <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} maxLength={200} />
+                      <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g., Khan Grain Storage Pvt. Ltd." maxLength={200} />
                     </div>
                     <div>
                       <Label htmlFor="tax">GST / Tax ID</Label>
-                      <Input id="tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} maxLength={80} />
+                      <Input id="tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="e.g., 12-3456789-0" maxLength={80} />
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="notes">Notes for the technician</Label>
-                      <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="Warehouse count, silo count, access instructions, etc." />
+                      <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="e.g., 3 warehouses, 12 silos total, access via back gate, need 2-day advance notice" />
                     </div>
                   </div>
                 </CardContent>
@@ -422,24 +597,63 @@ function CheckoutPage() {
                   <CardTitle className="text-base flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" /> Review your order</CardTitle>
                   <CardDescription>Confirm everything looks right before we hand you to Stripe.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
+                <CardContent className="space-y-3 text-sm">
+                  {/* Plan */}
                   <div className="rounded-lg bg-emerald-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Plan</p>
+                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold mb-1">Plan</p>
                     <p className="font-medium text-slate-900">{planData?.name} — {planData?.priceFrontend}</p>
                   </div>
+
+                  {/* Buyer */}
                   <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Buyer</p>
-                    <p className="text-slate-900">{customerName} · {customerEmail}</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">Buyer</p>
+                    <p className="text-slate-900">{customerName}</p>
+                    <p className="text-slate-600 text-xs">{customerEmail}</p>
+                    {businessName && <p className="text-slate-600 text-xs mt-0.5">Business: {businessName}</p>}
+                    {taxId && <p className="text-slate-600 text-xs">GST / Tax ID: {taxId}</p>}
                   </div>
+
+                  {/* Install site */}
                   <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Install site</p>
-                    <p className="text-slate-900">{address}, {city}, {country}</p>
-                    <p className="text-slate-600 text-xs">Phone: {phone}{preferredDate ? ` · Preferred: ${preferredDate}` : ""}</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">Install site</p>
+                    <p className="text-slate-900">{address}</p>
+                    <p className="text-slate-600 text-xs">{city}, {country}</p>
+                    <p className="text-slate-600 text-xs">Phone: {phone}</p>
+                    {preferredDate && <p className="text-slate-600 text-xs">Preferred date: {preferredDate}</p>}
                   </div>
+
+                  {/* IoT setup */}
                   <div className="rounded-lg bg-amber-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">IoT setup</p>
-                    <p className="text-slate-900">{iotQuantity} sensor(s) × Rs. 7,000 = Rs. {(iotQuantity * 7000).toLocaleString()}</p>
+                    <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold mb-1">IoT setup (one-time)</p>
+                    <p className="text-slate-900">{iotQuantity} sensor(s) × Rs. 7,000 = <span className="font-semibold">Rs. {(iotQuantity * 7000).toLocaleString()}</span></p>
                   </div>
+
+                  {/* Technician notes */}
+                  {notes && (
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">Notes for technician</p>
+                      <p className="text-slate-700 text-xs whitespace-pre-wrap">{notes}</p>
+                    </div>
+                  )}
+
+                  {/* Pricing breakdown */}
+                  <div className="rounded-lg border border-slate-200 p-3 space-y-2">
+                    <div className="flex justify-between text-xs text-slate-600">
+                      <span>Subscription (first month)</span>
+                      <span>Rs. {planData?.price.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-600">
+                      <span>IoT sensor setup</span>
+                      <span>Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-sm font-bold text-slate-900">
+                      <span>Total charged today</span>
+                      <span>Rs. {((planData?.price ?? 0) + iotQuantity * 7000).toLocaleString()}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500">Then Rs. {planData?.price.toLocaleString()}/mo recurring. Cancel anytime.</p>
+                  </div>
+
                   <Button
                     className="w-full h-11 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white text-base font-semibold shadow-md"
                     disabled={start.isPending || !canPay}
@@ -475,20 +689,20 @@ function CheckoutPage() {
                 {planData && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">{planData.name}</span>
-                      <span className="font-medium">Rs. {planData.price.toLocaleString()}/mo</span>
+                      <span className="text-slate-600">{planData.name} (monthly)</span>
+                      <span className="font-medium">Rs. {planData.price.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">IoT setup × {iotQuantity}</span>
                       <span className="font-medium">Rs. {(iotQuantity * 7000).toLocaleString()}</span>
                     </div>
                     <Separator />
-                    <div className="flex justify-between text-sm font-semibold">
-                      <span>Due today (setup)</span>
-                      <span>Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                    <div className="flex justify-between text-base font-bold text-slate-900">
+                      <span>Total due today</span>
+                      <span>Rs. {(planData.price + iotQuantity * 7000).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-xs text-slate-500">
-                      <span>Then</span>
+                      <span>Then every month</span>
                       <span>Rs. {planData.price.toLocaleString()}/mo</span>
                     </div>
                     <Separator />
