@@ -172,3 +172,12 @@ function escapeHtml(s: string) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+async function loadAdmin() {
+  try {
+    const mod = await import("@/integrations/supabase/client.server");
+    return mod.supabaseAdmin;
+  } catch {
+    return null;
+  }
+}
