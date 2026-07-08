@@ -176,6 +176,31 @@ function CheckoutPage() {
 
   const planData = pricingData.find((p) => p.id === selected);
 
+  // Wizard steps: 0 Plan · 1 Buyer · 2 Install · 3 Review & Pay
+  const [step, setStep] = useState(0);
+  const stepMeta = [
+    { n: 1, label: "Plan", icon: Package },
+    { n: 2, label: "Buyer", icon: User },
+    { n: 3, label: "Install", icon: MapPin },
+    { n: 4, label: "Review & Pay", icon: CreditCard },
+  ];
+  const stepValid = [
+    !!selected && iotQuantity >= 1,
+    customerName.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()),
+    address.trim().length > 2 && city.trim().length > 0 && country.trim().length > 0 && phone.trim().length > 3,
+    canPay,
+  ];
+
+  const goNext = () => {
+    if (!stepValid[step]) {
+      toast.error("Please complete the highlighted fields to continue.");
+      return;
+    }
+    setStep((s) => Math.min(3, s + 1));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const goBack = () => setStep((s) => Math.max(0, s - 1));
+
   return (
     <div className="min-h-screen py-10 px-4" style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)" }}>
       <div className="max-w-5xl mx-auto space-y-6">
@@ -189,22 +214,37 @@ function CheckoutPage() {
         </div>
 
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-900">Choose your plan</h1>
-          <p className="text-slate-600 mt-2">Choose a plan, pay securely, then create your account after payment.</p>
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm">
+            <Sparkles className="h-3.5 w-3.5" /> Set up in under 3 minutes
+          </div>
+          <h1 className="mt-3 text-3xl md:text-4xl font-bold text-slate-900">{stepMeta[step].label}</h1>
+          <p className="text-slate-600 mt-2">Step {step + 1} of 4 — {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.</p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-4">
-          {[
-            ["1", "Plan"],
-            ["2", "Payment"],
-            ["3", "Account"],
-            ["4", "Technician"],
-          ].map(([n, label]) => (
-            <div key={label} className="rounded-xl border border-white/70 bg-white/80 px-4 py-3 text-center shadow-sm">
-              <div className="mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">{n}</div>
-              <p className="text-xs font-semibold text-slate-700">{label}</p>
-            </div>
-          ))}
+        <div className="rounded-2xl border border-white/70 bg-white/70 backdrop-blur p-3 shadow-sm">
+          <div className="grid grid-cols-4 gap-2">
+            {stepMeta.map((s, i) => {
+              const Icon = s.icon;
+              const done = i < step;
+              const active = i === step;
+              return (
+                <button
+                  key={s.label}
+                  type="button"
+                  onClick={() => { if (i < step || stepValid.slice(0, i).every(Boolean)) setStep(i); }}
+                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition ${active ? "bg-emerald-600 text-white shadow" : done ? "bg-emerald-100 text-emerald-800" : "text-slate-500 hover:bg-slate-100"}`}
+                >
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full ${active ? "bg-white text-emerald-600" : done ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"} text-xs font-bold`}>
+                    {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+                  </div>
+                  <span className="text-[11px] font-semibold leading-tight">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all" style={{ width: `${((step + 1) / 4) * 100}%` }} />
+          </div>
         </div>
 
         {canceled && (
@@ -248,173 +288,221 @@ function CheckoutPage() {
           </Card>
         )}
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {pricingData.map((p) => {
-            const isSel = p.id === selected;
-            return (
-              <Card
-                key={p.id}
-                onClick={() => setSelected(p.id)}
-                className={`cursor-pointer transition ${isSel ? "border-emerald-500 ring-2 ring-emerald-200 shadow-lg" : "hover:border-slate-300"}`}
-              >
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* Step content */}
+          <div className="space-y-6">
+            {step === 0 && (
+              <>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {pricingData.map((p) => {
+                    const isSel = p.id === selected;
+                    return (
+                      <Card
+                        key={p.id}
+                        onClick={() => setSelected(p.id)}
+                        className={`cursor-pointer transition ${isSel ? "border-emerald-500 ring-2 ring-emerald-200 shadow-lg scale-[1.01]" : "hover:border-slate-300 hover:shadow-md"}`}
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-lg">{p.name}</CardTitle>
+                            {p.popular && <Badge className="bg-emerald-600">Popular</Badge>}
+                          </div>
+                          <CardDescription className="text-xs">{p.description}</CardDescription>
+                          <div className="pt-2">
+                            <div className="text-2xl font-bold text-slate-900">{p.priceFrontend}</div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <ul className="space-y-1.5 text-xs">
+                            {p.features.slice(0, 5).map((f: string) => (
+                              <li key={f} className="flex items-start gap-2 text-slate-700">
+                                <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2"><Cpu className="h-4 w-4 text-amber-600" /> IoT sensor setup</CardTitle>
+                    <CardDescription>Rs. 7,000 per sensor · our technician installs on-site</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setIotQuantity(Math.max(1, iotQuantity - 1))}>−</Button>
+                      <input
+                        type="number" min={1} max={50} value={iotQuantity}
+                        onChange={(e) => setIotQuantity(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+                        className="w-20 h-9 px-2 rounded border border-slate-200 text-sm text-center"
+                      />
+                      <Button type="button" variant="outline" size="sm" onClick={() => setIotQuantity(Math.min(50, iotQuantity + 1))}>+</Button>
+                      <span className="text-xs text-slate-500">= Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {step === 1 && (
+              <Card>
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">{p.name}</CardTitle>
-                    {p.popular && <Badge className="bg-emerald-600">Popular</Badge>}
-                  </div>
-                  <CardDescription className="text-xs">{p.description}</CardDescription>
-                  <div className="pt-2">
-                    <div className="text-2xl font-bold text-slate-900">{p.priceFrontend}</div>
-                  </div>
+                  <CardTitle className="text-base flex items-center gap-2"><User className="h-4 w-4 text-emerald-600" /> Buyer details</CardTitle>
+                  <CardDescription>Your account will be created with this email after payment.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-1.5 text-xs">
-                    {p.features.slice(0, 5).map((f: string) => (
-                      <li key={f} className="flex items-start gap-2 text-slate-700">
-                        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label htmlFor="customer-name">Full name *</Label>
+                      <Input id="customer-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Your name" maxLength={160} />
+                    </div>
+                    <div>
+                      <Label htmlFor="customer-email">Email *</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Input id="customer-email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@example.com" className="pl-9" maxLength={180} />
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
+            )}
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">IoT sensor setup</CardTitle>
-              <CardDescription>Rs. 7,000 per sensor · our technician will install on-site</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <Cpu className="h-5 w-5 text-amber-600" />
-                <label htmlFor="iot-qty" className="text-sm">Quantity</label>
-                <input
-                  id="iot-qty"
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={iotQuantity}
-                  onChange={(e) => setIotQuantity(Math.max(0, Math.min(50, Number(e.target.value) || 0)))}
-                  className="w-20 h-9 px-2 rounded border border-slate-200 text-sm"
-                />
-                <span className="text-xs text-slate-500">
-                  × Rs. 7,000 = Rs. {(iotQuantity * 7000).toLocaleString()}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+            {step === 2 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600" /> Install details</CardTitle>
+                  <CardDescription>Where our technician should install and how to reach you.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="addr">Install address *</Label>
+                      <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, landmark" maxLength={300} />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">City *</Label>
+                      <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={120} />
+                    </div>
+                    <div>
+                      <Label htmlFor="country">Country *</Label>
+                      <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} maxLength={120} />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone">Contact phone *</Label>
+                      <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 …" maxLength={40} />
+                    </div>
+                    <div>
+                      <Label htmlFor="date">Preferred install date</Label>
+                      <Input id="date" type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor="biz">Business name (invoicing)</Label>
+                      <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} maxLength={200} />
+                    </div>
+                    <div>
+                      <Label htmlFor="tax">GST / Tax ID</Label>
+                      <Input id="tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} maxLength={80} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="notes">Notes for the technician</Label>
+                      <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="Warehouse count, silo count, access instructions, etc." />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Order summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {planData && (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span>{planData.name}</span>
-                    <span>Rs. {planData.price.toLocaleString()}/mo</span>
+            {step === 3 && (
+              <Card className="border-emerald-200">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" /> Review your order</CardTitle>
+                  <CardDescription>Confirm everything looks right before we hand you to Stripe.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <div className="rounded-lg bg-emerald-50 p-3">
+                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Plan</p>
+                    <p className="font-medium text-slate-900">{planData?.name} — {planData?.priceFrontend}</p>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>IoT setup × {iotQuantity}</span>
-                    <span>Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Buyer</p>
+                    <p className="text-slate-900">{customerName} · {customerEmail}</p>
                   </div>
-                  <Separator />
-                  <div className="space-y-1 text-xs text-slate-500">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-3.5 w-3.5 text-emerald-600" /> Secure payment via Stripe
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-emerald-600" /> Technician visit scheduled after payment
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Cancel anytime
-                    </div>
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Install site</p>
+                    <p className="text-slate-900">{address}, {city}, {country}</p>
+                    <p className="text-slate-600 text-xs">Phone: {phone}{preferredDate ? ` · Preferred: ${preferredDate}` : ""}</p>
+                  </div>
+                  <div className="rounded-lg bg-amber-50 p-3">
+                    <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">IoT setup</p>
+                    <p className="text-slate-900">{iotQuantity} sensor(s) × Rs. 7,000 = Rs. {(iotQuantity * 7000).toLocaleString()}</p>
                   </div>
                   <Button
-                    className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
+                    className="w-full h-11 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white text-base font-semibold shadow-md"
                     disabled={start.isPending || !canPay}
                     onClick={() => start.mutate()}
                   >
-                    {start.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pay securely with Stripe"}
+                    {start.isPending ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Redirecting to Stripe…</>) : (<><Shield className="h-4 w-4 mr-2" /> Pay securely with Stripe</>)}
                   </Button>
-                  {!canPay && (
-                    <p className="text-[11px] text-amber-700">Fill your name, email, install address, city, country and phone to continue.</p>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
+                  <p className="text-[11px] text-slate-500 text-center">You'll be redirected to Stripe's secure checkout. No charges until you confirm.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Nav buttons */}
+            <div className="flex items-center justify-between">
+              <Button type="button" variant="ghost" onClick={goBack} disabled={step === 0}>
+                <ArrowLeft className="h-4 w-4 mr-1" /> Back
+              </Button>
+              {step < 3 ? (
+                <Button type="button" onClick={goNext} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  Continue <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Sticky summary */}
+          <aside className="lg:sticky lg:top-6 h-fit">
+            <Card className="border-white/70 bg-white/80 backdrop-blur shadow-md">
+              <CardHeader>
+                <CardTitle className="text-base">Order summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {planData && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">{planData.name}</span>
+                      <span className="font-medium">Rs. {planData.price.toLocaleString()}/mo</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">IoT setup × {iotQuantity}</span>
+                      <span className="font-medium">Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-sm font-semibold">
+                      <span>Due today (setup)</span>
+                      <span>Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-500">
+                      <span>Then</span>
+                      <span>Rs. {planData.price.toLocaleString()}/mo</span>
+                    </div>
+                    <Separator />
+                    <ul className="space-y-1.5 text-xs text-slate-600">
+                      <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-emerald-600" /> Secure Stripe checkout</li>
+                      <li className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-emerald-600" /> Technician visit after payment</li>
+                      <li className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Cancel anytime</li>
+                    </ul>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </aside>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2"><User className="h-4 w-4 text-emerald-600" /> Buyer details</CardTitle>
-            <CardDescription>Your account will be created with this email after payment.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="customer-name">Full name *</Label>
-                <Input id="customer-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Your name" maxLength={160} />
-              </div>
-              <div>
-                <Label htmlFor="customer-email">Email *</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input id="customer-email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@example.com" className="pl-9" maxLength={180} />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600" /> Install details</CardTitle>
-            <CardDescription>Where our technician should install and how to reach you.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <Label htmlFor="addr">Install address *</Label>
-                <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, landmark" maxLength={300} />
-              </div>
-              <div>
-                <Label htmlFor="city">City *</Label>
-                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={120} />
-              </div>
-              <div>
-                <Label htmlFor="country">Country *</Label>
-                <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} maxLength={120} />
-              </div>
-              <div>
-                <Label htmlFor="phone">Contact phone *</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 …" maxLength={40} />
-              </div>
-              <div>
-                <Label htmlFor="date">Preferred install date</Label>
-                <Input id="date" type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="biz">Business name (invoicing)</Label>
-                <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} maxLength={200} />
-              </div>
-              <div>
-                <Label htmlFor="tax">GST / Tax ID</Label>
-                <Input id="tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} maxLength={80} />
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="notes">Notes for the technician</Label>
-                <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="Warehouse count, silo count, access instructions, etc." />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
