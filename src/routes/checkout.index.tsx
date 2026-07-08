@@ -48,7 +48,7 @@ const search = z.object({
   canceled: z.union([z.literal("1"), z.literal(1)]).optional(),
 });
 
-export const Route = createFileRoute("/checkout")({
+export const Route = createFileRoute("/checkout/")({
   validateSearch: (s) => search.parse(s),
   head: () => ({
     meta: [
