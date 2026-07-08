@@ -111,13 +111,13 @@ export function GlassNav() {
             {/* Right side */}
             <div className="flex items-center space-x-3">
               <Link
-                to="/auth"
+                to="/auth/login"
                 className="hidden sm:inline-block text-white/90 hover:text-white font-medium transition-colors text-sm"
               >
                 Login
               </Link>
               <Link
-                to="/auth"
+                to="/checkout"
                 className="hidden sm:inline-block bg-[#00a63e] text-white font-semibold px-5 py-2 rounded-full hover:bg-[#029238] transition-all duration-300 text-sm"
               >
                 Get Started
@@ -183,7 +183,7 @@ export function GlassNav() {
 
               {/* Login link */}
               <Link
-                to="/auth"
+                to="/auth/login"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex-1 flex items-center justify-center text-white text-[17px] font-medium uppercase tracking-[0.15em] border-b border-white/10 active:bg-white/10"
               >
@@ -193,7 +193,7 @@ export function GlassNav() {
               {/* Get Started CTA */}
               <div className="flex items-center justify-center py-6">
                 <Link
-                  to="/auth"
+                  to="/checkout"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="bg-[#00a63e] text-white font-semibold px-8 py-3 rounded-full hover:bg-[#029238] transition-all text-sm uppercase tracking-wider"
                 >
