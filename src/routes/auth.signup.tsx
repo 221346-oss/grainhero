@@ -42,6 +42,9 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
   const [strength, setStrength] = useState<PasswordStrength>({ score: 0, feedback: [], isValid: false });
+  const [sentEmail, setSentEmail] = useState<string | null>(null);
+  const [confirmPath, setConfirmPath] = useState<string>("/auth/login");
+  const [resending, setResending] = useState(false);
 
   const update = (k: keyof typeof form, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -59,7 +62,7 @@ function SignupPage() {
     setLoading(true);
     const safeRedirect = redirect?.startsWith("/") ? redirect : null;
     const redirectQs = plan ? `?plan=${encodeURIComponent(plan)}&email=${encodeURIComponent(form.email)}` : "";
-    const confirmPath = safeRedirect
+    const nextConfirmPath = safeRedirect
       ? `${safeRedirect}${safeRedirect.includes("?") ? "&" : "?"}email=${encodeURIComponent(form.email)}`
       : `/auth/login${redirectQs}`;
     const redirectOrigin = getAuthRedirectOrigin();
@@ -67,7 +70,7 @@ function SignupPage() {
       email: form.email.trim().toLowerCase(),
       password: form.password,
       options: {
-        emailRedirectTo: `${redirectOrigin}${confirmPath}`,
+        emailRedirectTo: `${redirectOrigin}${nextConfirmPath}`,
         data: {
           name: form.name.trim(),
           phone: form.phone.trim(),
@@ -81,6 +84,8 @@ function SignupPage() {
       return;
     }
     if (data.user && !data.session) {
+      setSentEmail(form.email.trim().toLowerCase());
+      setConfirmPath(nextConfirmPath);
       setMsg({ type: "success", text: "Check your inbox to confirm your email, then sign in." });
       return;
     }
@@ -88,6 +93,20 @@ function SignupPage() {
     if (safeRedirect) navigate({ to: safeRedirect as never });
     else if (plan) navigate({ to: "/checkout", search: { plan } as never });
     else navigate({ to: "/dashboard" });
+  };
+
+  const resend = async () => {
+    if (!sentEmail) return;
+    setResending(true);
+    setMsg(null);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: sentEmail,
+      options: { emailRedirectTo: `${getAuthRedirectOrigin()}${confirmPath}` },
+    });
+    setResending(false);
+    if (error) setMsg({ type: "error", text: error.message });
+    else setMsg({ type: "success", text: `Confirmation resent to ${sentEmail}` });
   };
 
   return (
@@ -142,6 +161,23 @@ function SignupPage() {
             />
           </div>
           <Message msg={msg} />
+          {sentEmail && (
+            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-900 space-y-2">
+              <p>
+                We sent a confirmation link to <b>{sentEmail}</b>. Didn't get it? Check spam, then resend.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={resending}
+                onClick={resend}
+                className="w-full"
+              >
+                {resending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resend confirmation email"}
+              </Button>
+            </div>
+          )}
           <Button type="submit" disabled={loading} className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create account"}
           </Button>
