@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import pricingData from "@/lib/pricing-data";
-import { stripeFetch, stripeForm } from "@/lib/stripe-api.server";
 
 const checkoutInput = z.object({
   planId: z.enum(["basic", "intermediate", "pro"]),
@@ -38,6 +37,7 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     const origin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
     const customerEmail = data.customer.email.trim().toLowerCase();
     const customerName = data.customer.name.trim();
+    const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Link immediately when the email already belongs to a user; otherwise the
@@ -158,6 +158,7 @@ const checkoutSummaryInput = z.object({ sessionId: z.string().trim().min(5).max(
 export const getCheckoutSessionSummary = createServerFn({ method: "GET" })
   .inputValidator((d) => checkoutSummaryInput.parse(d))
   .handler(async ({ data }) => {
+    const { stripeFetch } = await import("@/lib/stripe-api.server");
     const session = await stripeFetch(`/checkout/sessions/${encodeURIComponent(data.sessionId)}`, null, "GET") as {
       id: string;
       status?: string;
@@ -189,6 +190,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => claimInput.parse(d ?? {}))
   .handler(async ({ data, context }) => {
+    const { stripeFetch } = await import("@/lib/stripe-api.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -297,6 +299,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
 export const createStripeBillingPortalSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
     const { data: profile } = await context.supabase
       .from("profiles")
       .select("stripe_customer_id")
