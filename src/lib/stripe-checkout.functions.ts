@@ -38,18 +38,39 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     const customerEmail = data.customer.email.trim().toLowerCase();
     const customerName = data.customer.name.trim();
     const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Try to load supabaseAdmin — if SUPABASE_SERVICE_ROLE_KEY is missing
+    // (project not fully wired to Cloud), the Proxy throws on first access.
+    // Degrade gracefully so the buyer can still reach Stripe; the webhook +
+    // post-payment claim flow will attach the order to the user later.
+    let admin: Awaited<ReturnType<typeof import("@/integrations/supabase/client.server").supabaseAdmin.from>>["from"] extends never ? never : typeof import("@/integrations/supabase/client.server").supabaseAdmin | null = null;
+    try {
+      const mod = await import("@/integrations/supabase/client.server");
+      // Touch the proxy to force key check up-front.
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      mod.supabaseAdmin.auth;
+      admin = mod.supabaseAdmin;
+    } catch (e) {
+      console.warn("[checkout] supabaseAdmin unavailable, running guest-only flow:", (e as Error).message);
+      admin = null;
+    }
 
     // Link immediately when the email already belongs to a user; otherwise the
     // post-payment signup/login flow claims the paid order by matching email.
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("id, email, name, stripe_customer_id")
-      .ilike("email", customerEmail)
-      .maybeSingle();
-
-    let customerId: string | null = (profile as { stripe_customer_id?: string } | null)?.stripe_customer_id ?? null;
-    const existingUserId = (profile as { id?: string } | null)?.id ?? null;
+    let profile: { id?: string; stripe_customer_id?: string } | null = null;
+    if (admin) {
+      try {
+        const { data: p } = await admin
+          .from("profiles")
+          .select("id, email, name, stripe_customer_id")
+          .ilike("email", customerEmail)
+          .maybeSingle();
+        profile = (p as { id?: string; stripe_customer_id?: string } | null) ?? null;
+      } catch (e) {
+        console.warn("[checkout] profile lookup failed:", (e as Error).message);
+      }
+    }
+    let customerId: string | null = profile?.stripe_customer_id ?? null;
+    const existingUserId = profile?.id ?? null;
     if (!customerId) {
       const created = await stripeFetch(
         "/customers",
@@ -60,8 +81,10 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
         }),
       );
       customerId = created.id as string;
-      if (existingUserId) {
-        await supabaseAdmin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", existingUserId);
+      if (existingUserId && admin) {
+        try {
+          await admin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", existingUserId);
+        } catch (e) { console.warn("[checkout] profile update failed:", (e as Error).message); }
       }
     }
 
@@ -70,37 +93,38 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     const iotUnit = Number(plan.iotCharge ?? 7000);
     const iotTotal = data.iotQuantity * iotUnit;
     let orderId: string | null = null;
-    try {
-      const { data: order, error } = await supabaseAdmin
-        .from("hardware_orders" as never)
-        .insert({
-          admin_id: existingUserId,
-          customer_name: customerName,
-          customer_email: customerEmail,
-          stripe_customer_id: customerId,
-          plan_id: plan.id,
-          plan_name: plan.name,
-          hardware_quantity: data.iotQuantity,
-          hardware_unit_price: iotUnit,
-          hardware_total: iotTotal,
-          currency: "PKR",
-          install_address: data.install.address,
-          install_city: data.install.city,
-          install_country: data.install.country,
-          contact_phone: data.install.phone,
-          preferred_install_date: data.install.preferredDate || null,
-          notes: data.install.notes || null,
-          business_name: data.install.businessName || null,
-          tax_id: data.install.taxId || null,
-          status: "pending_payment",
-        } as never)
-        .select("id")
-        .single();
-      if (error) throw error;
-      orderId = (order as { id: string }).id;
-    } catch (e) {
-      console.error("could not create hardware order draft", e);
-      throw new Error("Could not create install order. Please try again.");
+    if (admin) {
+      try {
+        const { data: order, error } = await admin
+          .from("hardware_orders" as never)
+          .insert({
+            admin_id: existingUserId,
+            customer_name: customerName,
+            customer_email: customerEmail,
+            stripe_customer_id: customerId,
+            plan_id: plan.id,
+            plan_name: plan.name,
+            hardware_quantity: data.iotQuantity,
+            hardware_unit_price: iotUnit,
+            hardware_total: iotTotal,
+            currency: "PKR",
+            install_address: data.install.address,
+            install_city: data.install.city,
+            install_country: data.install.country,
+            contact_phone: data.install.phone,
+            preferred_install_date: data.install.preferredDate || null,
+            notes: data.install.notes || null,
+            business_name: data.install.businessName || null,
+            tax_id: data.install.taxId || null,
+            status: "pending_payment",
+          } as never)
+          .select("id")
+          .single();
+        if (error) throw error;
+        orderId = (order as { id: string }).id;
+      } catch (e) {
+        console.warn("[checkout] could not create hardware order draft (continuing):", (e as Error).message);
+      }
     }
 
     // Build line items: recurring subscription + optional one-time IoT setup
@@ -140,9 +164,9 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
 
     const session = await stripeFetch("/checkout/sessions", params);
     // Stash the session id on the order so the webhook can look it up.
-    if (orderId) {
+    if (orderId && admin) {
       try {
-        await supabaseAdmin
+        await admin
           .from("hardware_orders" as never)
           .update({ stripe_session_id: session.id } as never)
           .eq("id", orderId);
