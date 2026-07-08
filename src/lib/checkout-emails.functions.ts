@@ -45,11 +45,10 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
 
     // Load the order (best-effort — email still sends without a DB row).
     let order: OrderRow = {};
-    let admin: typeof import("@/integrations/supabase/client.server")["supabaseAdmin"] | null = null;
+    let admin: Awaited<ReturnType<typeof loadAdmin>> = null;
     try {
-      const mod = await import("@/integrations/supabase/client.server");
-      void mod.supabaseAdmin.auth;
-      admin = mod.supabaseAdmin;
+      admin = await loadAdmin();
+      if (!admin) throw new Error("no admin");
       const { data: row } = await admin
         .from("hardware_orders" as never)
         .select(
