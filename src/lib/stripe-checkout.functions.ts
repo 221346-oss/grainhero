@@ -42,12 +42,12 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     // (project not fully wired to Cloud), the Proxy throws on first access.
     // Degrade gracefully so the buyer can still reach Stripe; the webhook +
     // post-payment claim flow will attach the order to the user later.
-    let admin: Awaited<ReturnType<typeof import("@/integrations/supabase/client.server").supabaseAdmin.from>>["from"] extends never ? never : typeof import("@/integrations/supabase/client.server").supabaseAdmin | null = null;
+    type AdminClient = typeof import("@/integrations/supabase/client.server")["supabaseAdmin"];
+    let admin: AdminClient | null = null;
     try {
       const mod = await import("@/integrations/supabase/client.server");
-      // Touch the proxy to force key check up-front.
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      mod.supabaseAdmin.auth;
+      // Touch the proxy to force the key check up-front.
+      void mod.supabaseAdmin.auth;
       admin = mod.supabaseAdmin;
     } catch (e) {
       console.warn("[checkout] supabaseAdmin unavailable, running guest-only flow:", (e as Error).message);
