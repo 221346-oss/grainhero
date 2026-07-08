@@ -9,8 +9,8 @@ export function PremiumFooter() {
 
   const productLinks = [
     { href: '#pricing', label: 'Pricing' },
-    { href: '/auth', label: 'Get Started' },
-    { href: '/auth', label: 'Login' }
+    { href: '/checkout', label: 'Get Started' },
+    { href: '/auth/login', label: 'Login' }
   ]
 
   const companyLinks = [
