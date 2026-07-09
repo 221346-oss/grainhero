@@ -226,4 +226,3 @@ Impact: Better UX + monetization ready + form quality
 
 
 
-stripe sy account my aagy kam nhi ho rha hy, review and pay pr nhi ja rha

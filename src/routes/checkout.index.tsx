@@ -16,7 +16,7 @@ import pricingData from "@/lib/pricing-data";
 import { supabase } from "@/integrations/supabase/client";
 import { createStripeCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
-import { validateEmail, validateName, validatePhone } from "@/lib/validation";
+import { validateEmail } from "@/lib/validation";
 
 const DRAFT_KEY = "grainhero.checkoutDraft.v1";
 type Draft = {
@@ -86,19 +86,59 @@ function CheckoutPage() {
     supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, []);
 
+  // Just trim whitespace — no auto-conversion, user must include country code
+  const normalizePhone = (value: string): string => value.trim();
+
+  const isPhoneValid = (value: string): boolean => {
+    const n = value.trim();
+    if (!n.startsWith("+")) return false;
+    const d = n.slice(1).replace(/[\s\-\(\)]/g, "");
+    return /^\d+$/.test(d) && d.length >= 7 && d.length <= 15;
+  };
+
+  const isNameValid = (value: string): boolean => {
+    const parts = value.trim().split(/\s+/).filter((p) => p.length > 0);
+    return parts.length >= 2 && parts.every((p) => p.length >= 2);
+  };
+
   // Validation helper
   const validateField = (field: string, value: string) => {
     let result: { isValid: boolean; message: string };
     switch (field) {
-      case "customerName":
-        result = validateName(value);
+      case "customerName": {
+        if (!value.trim()) {
+          result = { isValid: false, message: "Full name is required" };
+        } else if (!isNameValid(value)) {
+          const parts = value.trim().split(/\s+/).filter((p) => p.length > 0);
+          if (parts.length < 2) {
+            result = { isValid: false, message: "Please enter first and last name" };
+          } else {
+            result = { isValid: false, message: "Each name part must be at least 2 characters" };
+          }
+        } else {
+          result = { isValid: true, message: "" };
+        }
         break;
+      }
       case "customerEmail":
         result = validateEmail(value);
         break;
-      case "phone":
-        result = validatePhone(value);
+      case "phone": {
+        const normalized = normalizePhone(value);
+        if (!normalized) {
+          result = { isValid: false, message: "Phone number is required" };
+        } else if (!normalized.startsWith("+")) {
+          result = { isValid: false, message: "Must start with + and country code e.g. +1, +44, +92" };
+        } else {
+          const digits = normalized.slice(1).replace(/[\s\-\(\)]/g, "");
+          if (!/^\d+$/.test(digits) || digits.length < 7 || digits.length > 15) {
+            result = { isValid: false, message: "Enter a valid phone number e.g. +92 300 1234567" };
+          } else {
+            result = { isValid: true, message: "" };
+          }
+        }
         break;
+      }
       case "address":
         result = !value.trim() || value.trim().length < 3
           ? { isValid: false, message: "Address must be at least 3 characters" }
@@ -193,7 +233,7 @@ function CheckoutPage() {
             address: address.trim(),
             city: city.trim(),
             country: country.trim(),
-            phone: phone.trim(),
+            phone: normalizePhone(phone).trim(),
             preferredDate: preferredDate || null,
             notes: notes.trim() || null,
             businessName: businessName.trim() || null,
@@ -212,12 +252,12 @@ function CheckoutPage() {
 
   const canPay =
     iotQuantity >= 1 &&
-    customerName.trim().length > 1 &&
+    isNameValid(customerName) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) &&
     address.trim().length > 2 &&
     city.trim().length > 0 &&
     country.trim().length > 0 &&
-    phone.trim().length > 3;
+    isPhoneValid(phone);
 
   const planData = pricingData.find((p) => p.id === selected);
 
@@ -231,14 +271,26 @@ function CheckoutPage() {
   ];
   const stepValid = [
     !!selected && iotQuantity >= 1,
-    customerName.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()),
-    address.trim().length > 2 && city.trim().length > 0 && country.trim().length > 0 && phone.trim().length > 3,
+    isNameValid(customerName) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()),
+    address.trim().length > 2 && city.trim().length > 0 && country.trim().length > 0 && isPhoneValid(phone),
     canPay,
   ];
 
   const goNext = () => {
     if (!stepValid[step]) {
-      toast.error("Please complete the highlighted fields to continue.");
+      // Mark all fields on current step as touched so errors show
+      if (step === 1) {
+        setTouched(prev => ({ ...prev, customerName: true, customerEmail: true }));
+        validateField("customerName", customerName);
+        validateField("customerEmail", customerEmail);
+      } else if (step === 2) {
+        setTouched(prev => ({ ...prev, address: true, city: true, country: true, phone: true }));
+        validateField("address", address);
+        validateField("city", city);
+        validateField("country", country);
+        validateField("phone", phone);
+      }
+      toast.error("Please fix the errors above to continue.");
       return;
     }
     setStep((s) => Math.min(3, s + 1));
@@ -562,7 +614,7 @@ function CheckoutPage() {
                           handleBlur("phone");
                           validateField("phone", phone);
                         }}
-                        placeholder="+92 300 1234567" 
+                        placeholder="+92 300 1234567 / +1 555 0000" 
                         maxLength={40}
                         className={touched.phone && errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
                       />

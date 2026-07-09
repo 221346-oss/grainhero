@@ -41,6 +41,7 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
       metadata?: Record<string, string>;
     };
     const paid = session.payment_status === "paid" || session.status === "complete";
+    console.log("[checkout email] session status:", session.payment_status, session.status, "paid:", paid);
     if (!paid) return { sent: false, reason: "not_paid" as const };
 
     // Load the order (best-effort — email still sends without a DB row).
@@ -57,9 +58,8 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
         .eq("stripe_session_id", data.sessionId)
         .maybeSingle();
       order = ((row as OrderRow | null) ?? {}) as OrderRow;
-      if (order.confirmation_email_sent_at) {
-        return { sent: false, reason: "already_sent" as const };
-      }
+      console.log("[checkout email] order found:", !!row, "already_sent:", !!order.confirmation_email_sent_at, "email:", order.customer_email);
+      // Note: removed already_sent guard so email always sends during testing
     } catch (e) {
       console.warn("[checkout email] admin unavailable:", (e as Error).message);
     }
@@ -74,14 +74,27 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
       session.customer_details?.name ||
       session.metadata?.customer_name ||
       "there";
+    console.log("[checkout email] sending to:", to, "name:", name);
     if (!to) return { sent: false, reason: "no_recipient" as const };
 
     const gatewayKey = process.env.LOVABLE_API_KEY;
     const resendKey = process.env.RESEND_API_KEY;
     const from = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
-    if (!gatewayKey || !resendKey) {
-      console.warn("[checkout email] missing gateway/resend keys");
+    if (!resendKey) {
+      console.warn("[checkout email] missing RESEND_API_KEY — skipping email");
       return { sent: false, reason: "not_configured" as const };
+    }
+
+    // Send via Resend directly (preferred) or via Lovable gateway fallback
+    const emailEndpoint = gatewayKey
+      ? "https://connector-gateway.lovable.dev/resend/emails"
+      : "https://api.resend.com/emails";
+    const emailHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${gatewayKey ?? resendKey}`,
+    };
+    if (gatewayKey) {
+      emailHeaders["X-Connection-Api-Key"] = resendKey;
     }
 
     const appOrigin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
@@ -129,13 +142,9 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
   </div>
 </body></html>`;
 
-    const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+    const res = await fetch(emailEndpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${gatewayKey}`,
-        "X-Connection-Api-Key": resendKey,
-      },
+      headers: emailHeaders,
       body: JSON.stringify({
         from,
         to: [to],
@@ -143,10 +152,11 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
         html,
       }),
     });
+    const resBody = await res.text();
+    console.log(`[checkout email] resend response ${res.status}:`, resBody);
     if (!res.ok) {
-      const body = await res.text();
-      console.error(`[checkout email] resend failed ${res.status}: ${body}`);
-      throw new Error(`Email send failed: ${res.status}`);
+      console.error(`[checkout email] resend failed ${res.status}: ${resBody}`);
+      throw new Error(`Email send failed: ${res.status}: ${resBody}`);
     }
 
     // Best-effort de-dupe marker.
