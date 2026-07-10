@@ -24,8 +24,8 @@ type Reading = {
   reading_timestamp: string;
 };
 
-// Compute a heuristic spoilage risk score 0-100 for a batch given latest reading.
-function computeRisk(batch: {
+// Compute a heuristic spoilage risk score 0-100 for a batch if ML inference is missing.
+function computeFallbackRisk(batch: {
   moisture_content: number | null;
   risk_score: number | null;
   grain_type: string | null;
@@ -54,10 +54,6 @@ function computeRisk(batch: {
   if (co2 !== null && co2 > 1500) { score += 15; factors.push(`CO₂ ${co2.toFixed(0)}ppm`); }
   if (voc !== null && voc > 500) { score += 10; factors.push(`VOC ${voc.toFixed(0)}`); }
 
-  if (r?.ml_risk_score != null) {
-    score = Math.max(score, Math.round(r.ml_risk_score * 100));
-    if (r.ml_risk_class) factors.push(`ML: ${r.ml_risk_class}`);
-  }
   if (batch.risk_score != null) score = Math.max(score, batch.risk_score);
 
   score = Math.min(100, Math.max(0, Math.round(score)));
@@ -98,7 +94,20 @@ export const getBatchPredictions = createServerFn({ method: "GET" })
 
     const predictions = list.map((b: any) => {
       const r = latestByBatch.get(b.id) ?? null;
-      const risk = computeRisk(b, r);
+      
+      let risk;
+      // If we have actual ML predictions from the sensor reading, use them
+      if (r?.ml_risk_score != null && r?.ml_risk_class != null) {
+        risk = {
+          score: r.ml_risk_score,
+          level: r.ml_risk_class as "low" | "moderate" | "high" | "critical",
+          factors: [`ML: ${r.ml_risk_class}`]
+        };
+      } else {
+        // Fallback to heuristic
+        risk = computeFallbackRisk(b, r);
+      }
+
       return {
         id: b.id,
         batch_id: b.batch_id,
