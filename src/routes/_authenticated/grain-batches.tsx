@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ListSkeleton } from "@/components/app/skeletons";
+import { BrandedLoader } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -365,7 +365,7 @@ function GrainBatchesPage() {
       </div>
 
       {isLoading ? (
-        <ListSkeleton />
+        <BrandedLoader />
       ) : rows.length === 0 ? (
         <Card className="border-dashed border-slate-300 bg-white/50">
           <CardContent className="py-16 flex flex-col items-center text-slate-500">

@@ -1,4 +1,4 @@
-import { DashboardSkeleton } from "@/components/app/skeletons";
+import { BrandedLoader } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
