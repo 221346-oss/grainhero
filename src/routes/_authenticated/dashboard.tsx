@@ -22,9 +22,7 @@ function DashboardPage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="p-6"><DashboardSkeleton /></div>
-    );
+    return <BrandedLoader />;
   }
   if (error) {
     return <div className="p-8 text-red-600">Failed to load role: {(error as Error).message}</div>;

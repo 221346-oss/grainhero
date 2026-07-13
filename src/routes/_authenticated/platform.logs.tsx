@@ -45,7 +45,7 @@ function LogsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
+            <div className="p-4"><BrandedLoader /></div>
           ) : data.length === 0 ? (
             <div className="p-10 text-center text-slate-500">No logs</div>
           ) : (

@@ -35,7 +35,7 @@ function TenantsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-4"><TableSkeleton rows={6} cols={4} /></div>
+            <div className="p-4"><BrandedLoader /></div>
           ) : filtered.length === 0 ? (
             <div className="p-10 text-center text-slate-500">No tenants found</div>
           ) : (

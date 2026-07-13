@@ -13,7 +13,7 @@ function PlatformOverview() {
   const fn = useServerFn(getPlatformMetrics);
   const { data, isLoading } = useQuery({ queryKey: ["platform-metrics"], queryFn: () => fn() });
 
-  if (isLoading || !data) return <div className="p-6"><DashboardSkeleton /></div>;
+  if (isLoading || !data) return <BrandedLoader />;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
