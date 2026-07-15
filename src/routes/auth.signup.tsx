@@ -107,6 +107,12 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
   const [strength, setStrength] = useState<PasswordStrength>({ score: 0, feedback: [], isValid: false });
+  const [touched, setTouched] = useState<Record<keyof typeof form, boolean>>({
+    name: false, email: false, phone: false, password: false, confirmPassword: false,
+  });
+  const [fieldErrors, setFieldErrors] = useState<Record<keyof typeof form, string>>({
+    name: "", email: "", phone: "", password: "", confirmPassword: "",
+  });
 
   const update = (k: keyof typeof form, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
