@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated")({
       const rs = (roles ?? []).map((r) => r.role as string);
       const isSuperAdmin = rs.includes("super_admin");
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
-      if (isSuperAdmin && !alsoOperational) throw redirect({ to: "/platform" });
+      if (isSuperAdmin && !alsoOperational) throw redirect({ to: "/dashboard" });
     }
 
     return { user: data.user };
