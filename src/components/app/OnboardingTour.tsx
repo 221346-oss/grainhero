@@ -343,8 +343,8 @@ export function OnboardingTour() {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] pointer-events-none">
-      {/* Backdrop with spotlight cutout */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-auto" onClick={next}>
+      {/* Backdrop with spotlight cutout - no click to prevent accidental skip */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-auto">
         <defs>
           <mask id="gh-tour-mask">
             <rect width="100%" height="100%" fill="white" />
