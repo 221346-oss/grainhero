@@ -116,3 +116,47 @@ export const getPlatformLogs = createServerFn({ method: "GET" })
     if (error) throw error;
     return rows ?? [];
   });
+
+export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [signupsRes, alertsRes, seriesRes] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("id, name, email, business_type, subscription_plan, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabaseAdmin
+        .from("grain_alerts")
+        .select("id, admin_id, alert_type, severity, message, created_at")
+        .in("severity", ["critical", "high"])
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabaseAdmin
+        .from("profiles")
+        .select("created_at")
+        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+    ]);
+
+    // Build signups-per-day series (last 30 days).
+    const buckets: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      buckets[d.toISOString().slice(0, 10)] = 0;
+    }
+    for (const p of seriesRes.data ?? []) {
+      const key = String(p.created_at ?? "").slice(0, 10);
+      if (key in buckets) buckets[key] += 1;
+    }
+    const signupsSeries = Object.entries(buckets).map(([date, count]) => ({ date, count }));
+
+    return {
+      recentSignups: signupsRes.data ?? [],
+      systemAlerts: alertsRes.data ?? [],
+      signupsSeries,
+    };
+  });
