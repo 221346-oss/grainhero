@@ -11,9 +11,26 @@ import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth/login" });
+
+    // Super admins are blocked from operational routes (silos, warehouses,
+    // grain batches, sensors, actuators). They belong on /platform.
+    const OPERATIONAL_PREFIXES = [
+      "/silos", "/warehouses", "/grain-batches", "/sensors", "/actuators",
+    ];
+    if (OPERATIONAL_PREFIXES.some((p) => location.pathname.startsWith(p))) {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id);
+      const rs = (roles ?? []).map((r) => r.role as string);
+      const isSuperAdmin = rs.includes("super_admin");
+      const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
+      if (isSuperAdmin && !alsoOperational) throw redirect({ to: "/platform" });
+    }
+
     return { user: data.user };
   },
   component: AuthenticatedLayout,
