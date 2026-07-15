@@ -1,44 +1,59 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Search, ArrowRight, Command } from "lucide-react";
+import { Search, ArrowRight, Command, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NavTarget = { label: string; to: string; group: string };
+type NavTarget = { label: string; to: string; group: string; keywords?: string };
 
-// Global nav catalog for quick-jump on dashboard / platform scopes.
+// Global nav catalog — every authenticated destination.
 const NAV_TARGETS: NavTarget[] = [
-  { label: "Dashboard", to: "/dashboard", group: "Home" },
-  { label: "Grain Batches", to: "/grain-batches", group: "Operations" },
+  { label: "Dashboard", to: "/dashboard", group: "Home", keywords: "home overview" },
+  // Operations
+  { label: "Grain Batches", to: "/grain-batches", group: "Operations", keywords: "lots inventory" },
   { label: "Silos", to: "/silos", group: "Operations" },
   { label: "Warehouses", to: "/warehouses", group: "Operations" },
-  { label: "Sensors", to: "/sensors", group: "Operations" },
-  { label: "Actuators", to: "/actuators", group: "Operations" },
+  { label: "Sensors", to: "/sensors", group: "Operations", keywords: "iot devices" },
+  { label: "Actuators", to: "/actuators", group: "Operations", keywords: "iot control" },
   { label: "Alerts", to: "/grain-alerts", group: "Operations" },
   { label: "Incidents", to: "/incidents", group: "Operations" },
   { label: "Maintenance", to: "/maintenance", group: "Operations" },
+  { label: "Environmental", to: "/environmental", group: "Operations", keywords: "climate weather" },
+  // Insights
   { label: "AI Predictions", to: "/ai-predictions", group: "Insights" },
   { label: "Analytics", to: "/analytics", group: "Insights" },
   { label: "Reports", to: "/reports", group: "Insights" },
   { label: "ML Models", to: "/ml-models", group: "Insights" },
-  { label: "Data Visualization", to: "/data-visualization", group: "Insights" },
+  { label: "Data Visualization", to: "/data-visualization", group: "Insights", keywords: "charts graphs" },
   { label: "Traceability", to: "/traceability", group: "Insights" },
   { label: "Notifications", to: "/notifications", group: "Insights" },
-  { label: "Activity Logs", to: "/activity-logs", group: "Insights" },
-  { label: "Buyers", to: "/buyers", group: "Business" },
-  { label: "Revenue", to: "/revenue", group: "Business" },
+  { label: "Activity Logs", to: "/activity-logs", group: "Insights", keywords: "audit history" },
+  // Business
+  { label: "Buyers", to: "/buyers", group: "Business", keywords: "customers" },
+  { label: "Orders", to: "/orders", group: "Business", keywords: "hardware install" },
+  { label: "Revenue", to: "/revenue", group: "Business", keywords: "income" },
   { label: "Subscription", to: "/subscription", group: "Business" },
-  { label: "Plans", to: "/plans", group: "Business" },
+  { label: "Plans", to: "/plans", group: "Business", keywords: "pricing" },
   { label: "Insurance", to: "/insurance", group: "Business" },
-  { label: "Team", to: "/team-management", group: "Admin" },
-  { label: "Security", to: "/security-center", group: "Admin" },
+  // Admin
+  { label: "Team", to: "/team-management", group: "Admin", keywords: "members users" },
+  { label: "Security Center", to: "/security-center", group: "Admin" },
+  { label: "Server Monitoring", to: "/server-monitoring", group: "Admin" },
   { label: "Settings", to: "/settings", group: "Admin" },
-  { label: "Platform Console", to: "/platform", group: "Admin" },
+  // Platform (super_admin)
+  { label: "Platform · Tenants", to: "/platform/tenants", group: "Platform" },
+  { label: "Platform · Users & roles", to: "/platform/users", group: "Platform" },
+  { label: "Platform · Plans & pricing", to: "/platform/plans", group: "Platform" },
+  { label: "Platform · Revenue", to: "/platform/revenue", group: "Platform" },
+  { label: "Platform · Pipeline", to: "/platform/pipeline", group: "Platform", keywords: "hubspot leads" },
+  { label: "Platform · Leads", to: "/platform/leads", group: "Platform" },
+  { label: "Platform · Install orders", to: "/platform/orders", group: "Platform", keywords: "hardware" },
+  { label: "Platform · Health", to: "/platform/health", group: "Platform" },
+  { label: "Platform · Audit logs", to: "/platform/audit-logs", group: "Platform" },
+  { label: "Platform · System logs", to: "/platform/logs", group: "Platform" },
 ];
 
-// Human-readable label per route prefix.
+// Human-readable label per route prefix — for page-scoped placeholder.
 const PAGE_LABELS: Record<string, string> = {
-  "/dashboard": "Global search",
-  "/platform": "Platform (tenants, users, logs)",
   "/grain-batches": "batches",
   "/silos": "silos",
   "/sensors": "sensors",
@@ -54,13 +69,25 @@ const PAGE_LABELS: Record<string, string> = {
   "/activity-logs": "activity",
   "/reports": "reports",
   "/plans": "plans",
+  "/insurance": "policies",
+  "/subscription": "your subscription",
+  "/environmental": "environmental readings",
+  "/traceability": "batch traceability",
+  "/analytics": "analytics",
+  "/ai-predictions": "predictions",
+  "/ml-models": "models",
+  "/data-visualization": "visualisations",
+  "/security-center": "security events",
+  "/server-monitoring": "server metrics",
+  "/revenue": "revenue records",
+  "/settings": "settings",
 };
 
 function scopeFor(pathname: string): { global: boolean; label: string } {
   if (pathname === "/dashboard" || pathname.startsWith("/platform")) {
-    return { global: true, label: PAGE_LABELS[pathname === "/dashboard" ? "/dashboard" : "/platform"] };
+    return { global: true, label: pathname === "/dashboard" ? "Global search" : "Platform search" };
   }
-  const key = Object.keys(PAGE_LABELS).find((k) => k !== "/dashboard" && k !== "/platform" && pathname.startsWith(k));
+  const key = Object.keys(PAGE_LABELS).find((k) => pathname.startsWith(k));
   return { global: false, label: key ? `Search ${PAGE_LABELS[key]} on this page` : "Search this page" };
 }
 
@@ -87,20 +114,23 @@ export function AppSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
   const scope = useMemo(() => scopeFor(pathname), [pathname]);
 
-  // "/" or "Cmd/Ctrl+K" focuses the bar.
+  // Global shortcuts: "/" and ⌘K / Ctrl+K focus the bar. Esc clears + closes.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const typing = target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable);
       if ((e.key === "/" && !typing) || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) {
         e.preventDefault();
         inputRef.current?.focus();
+        inputRef.current?.select();
       }
       if (e.key === "Escape") {
         inputRef.current?.blur();
         setOpen(false);
+        setQ("");
       }
     };
     window.addEventListener("keydown", onKey);
@@ -118,13 +148,42 @@ export function AppSearch() {
   useEffect(() => {
     setQ("");
     setOpen(false);
+    setHighlight(0);
   }, [pathname]);
 
   const matches = useMemo(() => {
     if (!scope.global || !q.trim()) return [];
     const needle = q.trim().toLowerCase();
-    return NAV_TARGETS.filter((t) => t.label.toLowerCase().includes(needle)).slice(0, 8);
+    return NAV_TARGETS.filter((t) =>
+      t.label.toLowerCase().includes(needle) ||
+      t.group.toLowerCase().includes(needle) ||
+      (t.keywords ?? "").toLowerCase().includes(needle),
+    ).slice(0, 10);
   }, [q, scope.global]);
+
+  // Keep highlight in bounds when the result list changes.
+  useEffect(() => { setHighlight(0); }, [q]);
+
+  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!scope.global) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      setHighlight((h) => (matches.length ? (h + 1) % matches.length : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setOpen(true);
+      setHighlight((h) => (matches.length ? (h - 1 + matches.length) % matches.length : 0));
+    } else if (e.key === "Enter") {
+      const target = matches[highlight] ?? matches[0];
+      if (target) {
+        e.preventDefault();
+        setOpen(false);
+        setQ("");
+        navigate({ to: target.to as never });
+      }
+    }
+  };
 
   return (
     <div className="relative w-full">
@@ -136,6 +195,7 @@ export function AppSearch() {
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={onInputKeyDown}
         placeholder={scope.global ? "Search silos, batches, sensors, or jump to a page…" : scope.label}
         aria-label={scope.label}
         className={cn(
@@ -152,25 +212,37 @@ export function AppSearch() {
           {matches.length === 0 ? (
             <div className="p-4 text-sm text-muted-foreground">No matching pages.</div>
           ) : (
-            <ul className="max-h-80 overflow-y-auto">
-              {matches.map((m) => (
-                <li key={m.to}>
-                  <Link
-                    to={m.to}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setOpen(false);
-                      setQ("");
-                    }}
-                    className="flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted"
-                  >
-                    <span className="flex-1">{m.label}</span>
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{m.group}</span>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="max-h-80 overflow-y-auto">
+                {matches.map((m, i) => (
+                  <li key={m.to}>
+                    <Link
+                      to={m.to as never}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseEnter={() => setHighlight(i)}
+                      onClick={() => { setOpen(false); setQ(""); }}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 text-sm",
+                        i === highlight ? "bg-muted" : "hover:bg-muted/60",
+                      )}
+                    >
+                      <span className="flex-1">{m.label}</span>
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{m.group}</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex items-center justify-between gap-3 px-3 py-1.5 border-t border-border bg-muted/40 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-2">
+                  <kbd className="rounded border border-border/60 px-1">↑</kbd>
+                  <kbd className="rounded border border-border/60 px-1">↓</kbd> navigate
+                </span>
+                <span className="flex items-center gap-1">
+                  <CornerDownLeft className="h-3 w-3" /> open · <kbd className="rounded border border-border/60 px-1">esc</kbd> close
+                </span>
+              </div>
+            </>
           )}
         </div>
       )}
