@@ -122,7 +122,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
               w.recentSignups.length === 0 ? <div className="text-xs text-muted-foreground">No signups yet.</div> :
               <ul className="divide-y divide-border">
-                {w.recentSignups.slice(0, 6).map((s) => (
+                {w.recentSignups.slice(0, 6).map((s: any) => (
                   <li key={s.id} className="py-1.5 flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-xs font-medium truncate">{s.name || s.email}</div>
@@ -148,14 +148,14 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
               w.systemAlerts.length === 0 ? <div className="text-xs text-muted-foreground">No critical alerts.</div> :
               <ul className="divide-y divide-border">
-                {w.systemAlerts.slice(0, 6).map((a) => (
+                {w.systemAlerts.slice(0, 6).map((a: any) => (
                   <li key={a.id} className="py-1.5 flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-xs font-medium truncate">{a.alert_type ?? "Alert"}</div>
                       <div className="text-[10px] text-muted-foreground truncate">{a.message ?? ""}</div>
                     </div>
-                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${a.severity === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                      {a.severity}
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${a.priority === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                      {a.priority}
                     </span>
                   </li>
                 ))}

@@ -16,12 +16,12 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("user_roles").select("role, user_id"),
       supabaseAdmin.from("grain_batches").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("silos").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("grain_alerts").select("id, severity", { count: "exact" }),
+      supabaseAdmin.from("grain_alerts").select("id, priority", { count: "exact" }),
       supabaseAdmin.from("subscriptions").select("id, status, plan_name, monthly_price"),
       supabaseAdmin.from("activity_logs").select("id, severity", { count: "exact" }),
     ]);
     const tenants = new Set((profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id));
-    const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.severity === "critical").length;
+    const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.priority === "critical").length;
     const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active");
     const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.monthly_price) || 0), 0);
     const roleDist: Record<string, number> = {};
@@ -131,8 +131,8 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .limit(10),
       supabaseAdmin
         .from("grain_alerts")
-        .select("id, admin_id, alert_type, severity, message, created_at")
-        .in("severity", ["critical", "high"])
+        .select("id, admin_id, alert_type, priority, message, created_at")
+        .in("priority", ["critical", "high"])
         .order("created_at", { ascending: false })
         .limit(10),
       supabaseAdmin
