@@ -276,10 +276,19 @@ function CheckoutPage() {
   ];
   const stepValid = [
     !!selected && iotQuantity >= 1,
-    customerName.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) && customerPassword.length >= 8,
-    address.trim().length > 2 && country.trim().length > 0 && phone.trim().length > 3,
+    isNameValid(customerName) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) && customerPassword.length >= 8,
+    address.trim().length > 2 && country.trim().length > 0 && isPhoneValid(phone),
     canPay,
   ];
+
+  const missingReasons: string[] = [];
+  if (iotQuantity < 1) missingReasons.push("Add at least 1 IoT sensor");
+  if (!isNameValid(customerName)) missingReasons.push("Enter your full name (first + last, 2+ chars each)");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) missingReasons.push("Enter a valid email");
+  if (customerPassword.length < 8) missingReasons.push("Password must be at least 8 characters");
+  if (address.trim().length <= 2) missingReasons.push("Enter your install address");
+  if (!country.trim()) missingReasons.push("Enter your country");
+  if (!isPhoneValid(phone)) missingReasons.push("Enter a valid phone with country code, e.g. +92 300 1234567");
 
   const goNext = () => {
     if (!stepValid[step]) {
@@ -699,6 +708,14 @@ function CheckoutPage() {
                     {start.isPending ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Redirecting to Stripe…</>) : (<><Shield className="h-4 w-4 mr-2" /> Pay securely with Stripe</>)}
                   </Button>
                   <p className="text-[11px] text-slate-500 text-center">You'll be redirected to Stripe's secure checkout. No charges until you confirm.</p>
+                  {!canPay && missingReasons.length > 0 && (
+                    <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                      <p className="font-semibold mb-1">Complete these to enable payment:</p>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        {missingReasons.map((r) => (<li key={r}>{r}</li>))}
+                      </ul>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
