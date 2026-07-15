@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import QRCodeDisplay from "@/components/QRCodeDisplay";
 import { ListSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -603,26 +604,15 @@ function GrainBatchesPage() {
       </Dialog>
 
       {/* QR */}
-      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-        <DialogContent className="max-w-xs">
-          <DialogHeader>
-            <DialogTitle className="text-base">Batch QR</DialogTitle>
-            <DialogDescription className="text-xs">{selected?.batch_id}</DialogDescription>
-          </DialogHeader>
-          {selected?.qr_code ? (
-            <div className="flex flex-col items-center gap-3 py-2">
-              <img
-                alt="QR code"
-                className="w-48 h-48 border rounded-md bg-white"
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(selected.qr_code)}`}
-              />
-              <p className="text-[10px] text-slate-500 break-all text-center">{selected.qr_code.slice(0, 60)}…</p>
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500 py-6 text-center">No QR code available.</p>
-          )}
-        </DialogContent>
-      </Dialog>
+      {selected && (
+        <QRCodeDisplay
+          qrCode={selected.qr_code || ""}
+          batchId={selected.batch_id}
+          grainType={selected.grain_type}
+          isOpen={qrOpen}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
 
       {/* Dispatch */}
       <Dialog open={dispatchOpen} onOpenChange={(o) => { setDispatchOpen(o); if (!o) setDispatch(emptyDispatch); }}>
