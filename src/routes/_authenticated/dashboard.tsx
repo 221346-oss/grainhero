@@ -28,14 +28,14 @@ function DashboardPage() {
     return <div className="p-8 text-red-600">Failed to load role: {(error as Error).message}</div>;
   }
 
-  const role = data?.role ?? "admin";
+  const role = data?.role && data.role !== "pending" ? data.role : "admin";
   const name = data?.profile?.name ?? undefined;
 
   switch (role) {
     case "super_admin": return <SuperAdminDashboard name={name} />;
     case "manager": return <ManagerDashboard name={name} />;
     case "technician": return <TechnicianDashboard name={name} />;
-    // "admin" and any other/pending → admin dashboard by default
+    // "admin" and any legacy/pending role → admin dashboard by default
     default: return <AdminDashboard name={name} />;
   }
 }
