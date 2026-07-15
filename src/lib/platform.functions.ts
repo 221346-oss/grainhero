@@ -144,7 +144,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .select("id, status, monthly_price, plan_name, created_at, cancelled_at"),
       supabaseAdmin
         .from("hubspot_sync_log")
-        .select("id, sync_type, sync_status, created_at")
+        .select("id, action, status, hubspot_object_type, created_at")
         .order("created_at", { ascending: false })
         .limit(50),
     ]);
@@ -175,7 +175,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     // Pipeline snapshot — aggregate HubSpot sync activity by status.
     const pipeline: Record<string, number> = {};
     for (const r of pipelineRes.data ?? []) {
-      const k = String(r.sync_status ?? "unknown");
+      const k = String((r as { status?: string | null }).status ?? "unknown");
       pipeline[k] = (pipeline[k] ?? 0) + 1;
     }
 
