@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import QRCodeDisplay from "@/components/QRCodeDisplay";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -250,28 +251,15 @@ function TraceabilityPage() {
       </Dialog>
 
       {/* QR dialog */}
-      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <QrCode className="h-5 w-5 text-emerald-600" /> {selected?.batch_id}
-            </DialogTitle>
-            <DialogDescription>{selected?.grain_type}</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 p-4">
-            <div className="p-4 bg-white border-2 border-slate-200 rounded-lg">
-              {selected?.qr_code ? (
-                <img src={selected.qr_code} alt="QR" className="w-56 h-56" />
-              ) : (
-                <div className="w-56 h-56 flex items-center justify-center text-slate-400">
-                  <QrCode className="h-24 w-24" />
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-slate-500 text-center break-all">{selected?.qr_code ?? "No QR generated"}</p>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {selected && (
+        <QRCodeDisplay
+          qrCode={selected.qr_code || ""}
+          batchId={selected.batch_id}
+          grainType={selected.grain_type}
+          isOpen={qrOpen}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
     </div>
   );
 }

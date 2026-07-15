@@ -69,6 +69,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Insights",
     items: [
+      { name: "data-visualization", label: "Data Visualization", to: "/data-visualization", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
       { name: "reports", label: "Reports", to: "/reports", icon: FileBarChart, roles: ["super_admin", "admin", "manager"] },
       { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["super_admin", "admin"], badge: "ML" },
       { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
