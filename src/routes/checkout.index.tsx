@@ -708,6 +708,14 @@ function CheckoutPage() {
                     {start.isPending ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Redirecting to Stripe…</>) : (<><Shield className="h-4 w-4 mr-2" /> Pay securely with Stripe</>)}
                   </Button>
                   <p className="text-[11px] text-slate-500 text-center">You'll be redirected to Stripe's secure checkout. No charges until you confirm.</p>
+                  {!canPay && missingReasons.length > 0 && (
+                    <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                      <p className="font-semibold mb-1">Complete these to enable payment:</p>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        {missingReasons.map((r) => (<li key={r}>{r}</li>))}
+                      </ul>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
