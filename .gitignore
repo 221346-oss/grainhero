@@ -30,7 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
+preview.js
 package-lock.json
 
 # Environment variables with sensitive credentials
