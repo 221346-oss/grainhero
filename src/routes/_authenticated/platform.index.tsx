@@ -2,8 +2,9 @@ import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Users, Package, Warehouse, OctagonAlert, CreditCard, DollarSign, ClipboardList, UserPlus, AlertTriangle, TrendingUp } from "lucide-react";
+import { Building2, Users, Package, Warehouse, OctagonAlert, CreditCard, DollarSign, ClipboardList, UserPlus, AlertTriangle, TrendingUp, Sparkles, ScrollText, Activity, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "@tanstack/react-router";
 import { StatCard } from "@/components/dashboards/_shared";
 import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform.functions";
 import { formatDistanceToNow } from "date-fns";
@@ -22,6 +23,30 @@ function PlatformOverview() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Quick actions — the super admin's shortcut deck */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { to: "/platform/tenants", label: "Manage tenants", icon: Building2, tone: "from-sky-500 to-sky-700" },
+          { to: "/platform/users", label: "Users & roles", icon: Users, tone: "from-violet-500 to-violet-700" },
+          { to: "/platform/plans", label: "Plans & pricing", icon: Sparkles, tone: "from-emerald-500 to-emerald-700" },
+          { to: "/platform/revenue", label: "Revenue & MRR", icon: DollarSign, tone: "from-amber-500 to-amber-700" },
+          { to: "/platform/pipeline", label: "HubSpot pipeline", icon: TrendingUp, tone: "from-rose-500 to-rose-700" },
+          { to: "/platform/leads", label: "Leads", icon: UserPlus, tone: "from-fuchsia-500 to-fuchsia-700" },
+          { to: "/platform/health", label: "System health", icon: Activity, tone: "from-teal-500 to-teal-700" },
+          { to: "/platform/audit-logs", label: "Audit logs", icon: ScrollText, tone: "from-slate-500 to-slate-700" },
+        ].map((a) => (
+          <Link key={a.to} to={a.to} className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-3 shadow-sm hover:shadow-md transition">
+            <div className={`inline-flex items-center justify-center h-9 w-9 rounded-lg bg-gradient-to-br ${a.tone} text-white shadow`}> 
+              <a.icon className="h-4 w-4" />
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-800">{a.label}</span>
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-slate-700 transition" />
+            </div>
+          </Link>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Tenants" value={data.totalTenants} icon={Building2} accent="sky" />
         <StatCard label="Total Users" value={data.totalUsers} icon={Users} accent="violet" />
