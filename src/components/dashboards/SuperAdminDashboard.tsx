@@ -35,12 +35,12 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      {/* Compact header */}
+      {/* Compact header + primary CTAs */}
       <header className="flex items-center gap-3">
         <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-red-500 to-red-700 grid place-items-center shadow-sm">
           <Crown className="h-4 w-4 text-white" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="text-lg md:text-xl font-black tracking-tight truncate">
             Super Admin{name ? ` — ${name}` : ""}
           </h1>
@@ -48,6 +48,12 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             Platform owner console
           </p>
         </div>
+        <Link to="/platform/users" className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold hover:bg-muted transition">
+          <UserPlus className="h-3.5 w-3.5" /> Invite user
+        </Link>
+        <Link to="/platform/plans" className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-gradient-to-br from-emerald-500 to-emerald-700 text-white px-2.5 py-1.5 text-xs font-semibold shadow-sm">
+          <Sparkles className="h-3.5 w-3.5" /> New plan
+        </Link>
       </header>
 
       {/* Metrics — dense 4/6 grid */}
@@ -123,14 +129,17 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
               w.recentSignups.length === 0 ? <div className="text-xs text-muted-foreground">No signups yet.</div> :
               <ul className="divide-y divide-border">
                 {w.recentSignups.slice(0, 6).map((s: any) => (
-                  <li key={s.id} className="py-1.5 flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium truncate">{s.name || s.email}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{s.email}</div>
-                    </div>
-                    <div className="text-[10px] text-muted-foreground whitespace-nowrap">
-                      {formatDistanceToNow(new Date(s.created_at), { addSuffix: true })}
-                    </div>
+                  <li key={s.id}>
+                    <Link to="/platform/users" className="py-1.5 flex items-center justify-between gap-2 hover:bg-muted/40 rounded px-1 -mx-1">
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium truncate">{s.name || s.email}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{s.email}</div>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground whitespace-nowrap flex items-center gap-1">
+                        {formatDistanceToNow(new Date(s.created_at), { addSuffix: true })}
+                        <ArrowRight className="h-3 w-3" />
+                      </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -149,14 +158,16 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
               w.systemAlerts.length === 0 ? <div className="text-xs text-muted-foreground">No critical alerts.</div> :
               <ul className="divide-y divide-border">
                 {w.systemAlerts.slice(0, 6).map((a: any) => (
-                  <li key={a.id} className="py-1.5 flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium truncate">{a.alert_type ?? "Alert"}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{a.message ?? ""}</div>
-                    </div>
-                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${a.priority === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                      {a.priority}
-                    </span>
+                  <li key={a.id}>
+                    <Link to="/platform/health" className="py-1.5 flex items-center justify-between gap-2 hover:bg-muted/40 rounded px-1 -mx-1">
+                      <div className="min-w-0">
+                        <div className="text-xs font-medium truncate">{a.alert_type ?? "Alert"}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{a.message ?? ""}</div>
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${a.priority === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                        {a.priority}
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -173,6 +184,12 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
           <CardContent className="pt-0">
             {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
               <>
+                <div className="flex items-baseline justify-between mb-1">
+                  <div className="text-lg font-black tracking-tight">{w.signupsTotal ?? 0}</div>
+                  <div className={`text-[10px] font-semibold ${((w.wowDelta ?? 0) >= 0) ? "text-emerald-600" : "text-rose-600"}`}>
+                    {(w.wowDelta ?? 0) >= 0 ? "▲" : "▼"} {Math.abs(w.wowDelta ?? 0)}% WoW
+                  </div>
+                </div>
                 <div className="flex items-end gap-0.5 h-20">
                   {w.signupsSeries.map((p) => (
                     <div key={p.date} className="flex-1">
@@ -192,6 +209,58 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             }
           </CardContent>
         </Card>
+      </div>
+
+      {/* Revenue + Pipeline snapshots */}
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Link to="/platform/revenue" className="group">
+          <Card className="hover:shadow-md transition">
+            <CardHeader className="py-3 flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-emerald-600" /> Revenue snapshot
+              </CardTitle>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
+            </CardHeader>
+            <CardContent className="pt-0 grid grid-cols-3 gap-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">MRR</div>
+                <div className="text-lg font-black">${w ? w.revenue.mrr.toLocaleString() : "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Active</div>
+                <div className="text-lg font-black">{w?.revenue.activeSubs ?? "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Churned</div>
+                <div className="text-lg font-black text-rose-700">{w?.revenue.churnedSubs ?? "—"}</div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/platform/pipeline" className="group">
+          <Card className="hover:shadow-md transition">
+            <CardHeader className="py-3 flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-rose-600" /> Pipeline snapshot
+              </CardTitle>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
+            </CardHeader>
+            <CardContent className="pt-0">
+              {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
+                Object.keys(w.pipeline).length === 0 ? <div className="text-xs text-muted-foreground">No pipeline activity yet.</div> :
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(w.pipeline).map(([status, n]) => (
+                    <div key={status} className="rounded-md border border-border bg-muted/40 px-2.5 py-1">
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{status}</div>
+                      <div className="text-sm font-bold">{n}</div>
+                    </div>
+                  ))}
+                </div>
+              }
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
