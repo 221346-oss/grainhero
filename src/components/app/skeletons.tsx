@@ -89,3 +89,81 @@ export function DashboardSkeleton() {
 export function InlineListSkeleton() {
   return <ListSkeleton rows={3} />;
 }
+
+export function ChartSkeleton({ className, height = "h-56" }: { className?: string; height?: string }) {
+  return (
+    <div className={cn("rounded-xl border border-slate-200 bg-white p-4 space-y-3", className)}>
+      <Bar className="h-3 w-32" />
+      <div className={cn("flex items-end gap-2", height)}>
+        {Array.from({ length: 14 }).map((_, i) => (
+          <div key={i} className="flex-1 rounded-md bg-slate-200/70 animate-pulse" style={{ height: `${20 + ((i * 37) % 80)}%` }} />
+        ))}
+      </div>
+      <div className="flex justify-between">
+        <Bar className="h-2 w-10" />
+        <Bar className="h-2 w-10" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Unified per-page loading skeleton — pick the variant that matches the page shape:
+ * - dashboard: header + stat tiles + widget cards (used by /dashboard, super-admin, manager, technician).
+ * - table:    filter bar + tabular rows (used by list pages: silos, batches, sensors, tenants, users…).
+ * - insight:  stat strip + charts (analytics, revenue, pipeline, health…).
+ * - form:     labelled fields + supporting cards (settings, plans editor, subscription…).
+ */
+export function PageSkeleton({
+  variant = "dashboard",
+  className,
+}: {
+  variant?: "dashboard" | "table" | "insight" | "form";
+  className?: string;
+}) {
+  if (variant === "table") {
+    return (
+      <div className={cn("p-4 md:p-6 space-y-4", className)}>
+        <div className="flex items-center justify-between gap-3">
+          <Bar className="h-6 w-40" />
+          <Bar className="h-9 w-32 rounded-md" />
+        </div>
+        <div className="flex gap-2"><Bar className="h-9 w-64 rounded-md" /><Bar className="h-9 w-28 rounded-md" /></div>
+        <TableSkeleton rows={8} cols={5} />
+      </div>
+    );
+  }
+  if (variant === "insight") {
+    return (
+      <div className={cn("p-4 md:p-6 space-y-4", className)}>
+        <Bar className="h-6 w-48" />
+        <StatsSkeleton count={4} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+      </div>
+    );
+  }
+  if (variant === "form") {
+    return (
+      <div className={cn("p-4 md:p-6 grid gap-4 lg:grid-cols-3", className)}>
+        <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-4">
+          <FormSkeleton fields={6} />
+        </div>
+        <div className="space-y-4"><CardsSkeleton count={2} /></div>
+      </div>
+    );
+  }
+  // dashboard
+  return (
+    <div className={cn("p-4 md:p-6 space-y-4", className)}>
+      <div className="flex items-center gap-3">
+        <Bar className="h-9 w-9 rounded-lg" />
+        <div className="space-y-2"><Bar className="h-4 w-40" /><Bar className="h-2 w-24" /></div>
+      </div>
+      <StatsSkeleton count={6} />
+      <CardsSkeleton count={3} />
+    </div>
+  );
+}
