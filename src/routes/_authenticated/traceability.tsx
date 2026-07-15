@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { BrandedLoader } from "@/components/app/skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatsSkeleton, TableSkeleton } from "@/components/app/skeletons";
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -91,7 +92,16 @@ function TraceabilityPage() {
   };
 
   if (isLoading) {
-    return <BrandedLoader />;
+    return (
+      <div className="p-4 sm:p-6 space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </div>
+        <StatsSkeleton />
+        <TableSkeleton rows={8} cols={5} />
+      </div>
+    );
   }
 
   return (

@@ -1,4 +1,4 @@
-import { BrandedLoader } from "@/components/app/skeletons";
+import { CardsSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -262,7 +262,7 @@ function ActuatorsPage() {
 
       {/* Grid of actuator cards */}
       {isLoading ? (
-        <BrandedLoader />
+        <CardsSkeleton />
       ) : filtered.length === 0 ? (
         <Card><CardContent className="py-16 text-center text-muted-foreground">
           <Inbox className="h-8 w-8 mx-auto mb-3 opacity-50" />

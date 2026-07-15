@@ -1,4 +1,4 @@
-import { BrandedLoader } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,7 @@ function PlatformOverview() {
   const fn = useServerFn(getPlatformMetrics);
   const { data, isLoading } = useQuery({ queryKey: ["platform-metrics"], queryFn: () => fn() });
 
-  if (isLoading || !data) return <BrandedLoader />;
+  if (isLoading || !data) return <div className="p-6"><DashboardSkeleton /></div>;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">

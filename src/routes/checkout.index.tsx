@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Sparkles, Package } from "lucide-react";
+import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Sparkles, Package, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import pricingData from "@/lib/pricing-data";
+import pricingData, { getCheckoutTotals } from "@/lib/pricing-data";
 import { supabase } from "@/integrations/supabase/client";
 import { createStripeCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
@@ -23,6 +23,7 @@ type Draft = {
   iotQuantity: number;
   customerName: string;
   customerEmail: string;
+  customerPassword: string;
   address: string;
   city: string;
   country: string;
@@ -67,6 +68,8 @@ function CheckoutPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPassword, setCustomerPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("Pakistan");
@@ -95,6 +98,7 @@ function CheckoutPage() {
     if (typeof d.iotQuantity === "number") setIotQuantity(d.iotQuantity);
     if (d.customerName) setCustomerName(d.customerName);
     if (d.customerEmail) setCustomerEmail(d.customerEmail);
+    if (d.customerPassword) setCustomerPassword(d.customerPassword);
     if (d.address) setAddress(d.address);
     if (d.city) setCity(d.city);
     if (d.country) setCountry(d.country);
@@ -112,11 +116,11 @@ function CheckoutPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const draft: Draft = {
-      selected, iotQuantity, customerName, customerEmail, address, city, country, phone,
+      selected, iotQuantity, customerName, customerEmail, customerPassword, address, city, country, phone,
       preferredDate, notes, businessName, taxId,
     };
     try { window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
-  }, [selected, iotQuantity, customerName, customerEmail, address, city, country, phone, preferredDate, notes, businessName, taxId]);
+  }, [selected, iotQuantity, customerName, customerEmail, customerPassword, address, city, country, phone, preferredDate, notes, businessName, taxId]);
 
   useEffect(() => {
     if (canceled) toast("Checkout canceled. You can pick a plan and try again.");
@@ -169,12 +173,13 @@ function CheckoutPage() {
     iotQuantity >= 1 &&
     customerName.trim().length > 1 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) &&
+    customerPassword.length >= 8 &&
     address.trim().length > 2 &&
-    city.trim().length > 0 &&
     country.trim().length > 0 &&
     phone.trim().length > 3;
 
   const planData = pricingData.find((p) => p.id === selected);
+  const checkoutTotals = planData ? getCheckoutTotals(selected, iotQuantity) : null;
 
   // Wizard steps: 0 Plan · 1 Buyer · 2 Install · 3 Review & Pay
   const [step, setStep] = useState(0);
@@ -186,8 +191,8 @@ function CheckoutPage() {
   ];
   const stepValid = [
     !!selected && iotQuantity >= 1,
-    customerName.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()),
-    address.trim().length > 2 && city.trim().length > 0 && country.trim().length > 0 && phone.trim().length > 3,
+    customerName.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) && customerPassword.length >= 8,
+    address.trim().length > 2 && country.trim().length > 0 && phone.trim().length > 3,
     canPay,
   ];
 
@@ -329,7 +334,7 @@ function CheckoutPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2"><Cpu className="h-4 w-4 text-amber-600" /> IoT sensor setup</CardTitle>
-                    <CardDescription>Rs. 7,000 per sensor · our technician installs on-site</CardDescription>
+                    <CardDescription>Rs. {(planData?.iotCharge ?? 7000).toLocaleString()} per sensor · our technician installs on-site</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap items-center gap-3">
@@ -340,7 +345,9 @@ function CheckoutPage() {
                         className="w-20 h-9 px-2 rounded border border-slate-200 text-sm text-center"
                       />
                       <Button type="button" variant="outline" size="sm" onClick={() => setIotQuantity(Math.min(50, iotQuantity + 1))}>+</Button>
-                      <span className="text-xs text-slate-500">= Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                      <span className="text-xs text-slate-500">
+                        = Rs. {(checkoutTotals?.iotTotal ?? iotQuantity * 7000).toLocaleString()}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -366,6 +373,30 @@ function CheckoutPage() {
                         <Input id="customer-email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@example.com" className="pl-9" maxLength={180} />
                       </div>
                     </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="customer-password">Password * <span className="text-slate-400 font-normal text-xs">(min. 8 characters)</span></Label>
+                      <div className="relative">
+                        <Input
+                          id="customer-password"
+                          type={showPassword ? "text" : "password"}
+                          value={customerPassword}
+                          onChange={(e) => setCustomerPassword(e.target.value)}
+                          placeholder="Create a password for your account"
+                          className="pr-10"
+                          maxLength={128}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((s) => !s)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      {customerPassword.length > 0 && customerPassword.length < 8 && (
+                        <p className="text-xs text-red-500 mt-1">Password must be at least 8 characters</p>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -380,12 +411,8 @@ function CheckoutPage() {
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2">
-                      <Label htmlFor="addr">Install address *</Label>
+                      <Label htmlFor="addr">Office address *</Label>
                       <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, landmark" maxLength={300} />
-                    </div>
-                    <div>
-                      <Label htmlFor="city">City *</Label>
-                      <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} maxLength={120} />
                     </div>
                     <div>
                       <Label htmlFor="country">Country *</Label>
@@ -402,10 +429,6 @@ function CheckoutPage() {
                     <div>
                       <Label htmlFor="biz">Business name (invoicing)</Label>
                       <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} maxLength={200} />
-                    </div>
-                    <div>
-                      <Label htmlFor="tax">GST / Tax ID</Label>
-                      <Input id="tax" value={taxId} onChange={(e) => setTaxId(e.target.value)} maxLength={80} />
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="notes">Notes for the technician</Label>
@@ -433,13 +456,38 @@ function CheckoutPage() {
                   </div>
                   <div className="rounded-lg bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Install site</p>
-                    <p className="text-slate-900">{address}, {city}, {country}</p>
+                    <p className="text-slate-900">{address}, {country}</p>
                     <p className="text-slate-600 text-xs">Phone: {phone}{preferredDate ? ` · Preferred: ${preferredDate}` : ""}</p>
                   </div>
                   <div className="rounded-lg bg-amber-50 p-3">
                     <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">IoT setup</p>
-                    <p className="text-slate-900">{iotQuantity} sensor(s) × Rs. 7,000 = Rs. {(iotQuantity * 7000).toLocaleString()}</p>
+                    <p className="text-slate-900">
+                      {iotQuantity} sensor(s) × Rs. {(checkoutTotals?.iotUnit ?? 7000).toLocaleString()} = Rs. {(checkoutTotals?.iotTotal ?? iotQuantity * 7000).toLocaleString()}
+                    </p>
                   </div>
+                  {notes.trim() && (
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Notes for technician</p>
+                      <p className="text-slate-900 text-sm mt-1 whitespace-pre-wrap">{notes.trim()}</p>
+                    </div>
+                  )}
+                  {checkoutTotals && (
+                    <div className="rounded-lg border border-emerald-300 bg-white p-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Plan (first month)</span>
+                        <span className="font-medium">Rs. {checkoutTotals.monthlyPrice.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mt-1">
+                        <span className="text-slate-600">Sensor setup</span>
+                        <span className="font-medium">Rs. {checkoutTotals.iotTotal.toLocaleString()}</span>
+                      </div>
+                      <Separator className="my-2" />
+                      <div className="flex justify-between font-semibold text-slate-900">
+                        <span>Total due today</span>
+                        <span className="text-emerald-700">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
                   <Button
                     className="w-full h-11 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white text-base font-semibold shadow-md"
                     disabled={start.isPending || !canPay}
@@ -472,24 +520,24 @@ function CheckoutPage() {
                 <CardTitle className="text-base">Order summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {planData && (
+                {checkoutTotals && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">{planData.name}</span>
-                      <span className="font-medium">Rs. {planData.price.toLocaleString()}/mo</span>
+                      <span className="text-slate-600">{checkoutTotals.plan.name} (1st month)</span>
+                      <span className="font-medium">Rs. {checkoutTotals.monthlyPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">IoT setup × {iotQuantity}</span>
-                      <span className="font-medium">Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                      <span className="text-slate-600">IoT sensors × {checkoutTotals.iotQuantity}</span>
+                      <span className="font-medium">Rs. {checkoutTotals.iotTotal.toLocaleString()}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-sm font-semibold">
-                      <span>Due today (setup)</span>
-                      <span>Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                      <span>Total due today</span>
+                      <span className="text-emerald-700">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-xs text-slate-500">
-                      <span>Then</span>
-                      <span>Rs. {planData.price.toLocaleString()}/mo</span>
+                      <span>Then monthly</span>
+                      <span>Rs. {checkoutTotals.monthlyPrice.toLocaleString()}/mo</span>
                     </div>
                     <Separator />
                     <ul className="space-y-1.5 text-xs text-slate-600">

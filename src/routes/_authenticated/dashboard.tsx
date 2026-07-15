@@ -1,4 +1,4 @@
-import { BrandedLoader } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,7 +22,9 @@ function DashboardPage() {
   });
 
   if (isLoading) {
-    return <BrandedLoader />;
+    return (
+      <div className="p-6"><DashboardSkeleton /></div>
+    );
   }
   if (error) {
     return <div className="p-8 text-red-600">Failed to load role: {(error as Error).message}</div>;

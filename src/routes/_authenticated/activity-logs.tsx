@@ -1,4 +1,4 @@
-import { BrandedLoader } from "@/components/app/skeletons";
+import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -233,7 +233,7 @@ function ActivityLogsPage() {
             </CardHeader>
             <CardContent className="p-0">
               {isLoading ? (
-                <div className="p-4"><BrandedLoader /></div>
+                <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
               ) : logs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                   <FileText className="h-12 w-12 mb-3" />

@@ -12,7 +12,7 @@ const checkoutInput = z.object({
   }),
   install: z.object({
     address: z.string().trim().min(3).max(300),
-    city: z.string().trim().min(1).max(120),
+    city: z.string().trim().max(120).optional().nullable(),
     country: z.string().trim().min(1).max(120),
     phone: z.string().trim().min(4).max(40),
     preferredDate: z.string().trim().max(40).optional().nullable(),
