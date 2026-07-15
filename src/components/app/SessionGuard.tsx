@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { trackLoginAndAdvance } from "@/lib/hubspot.functions";
 
 /**
  * Lightweight session listener. During this testing/onboarding phase we
@@ -17,6 +18,10 @@ export function SessionGuard() {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         navigate({ to: "/auth/login", replace: true });
+      }
+      if (event === "SIGNED_IN") {
+        // Increment login count and, at 3+ logins, advance HubSpot deal.
+        void trackLoginAndAdvance().catch(() => {});
       }
     });
     return () => {
