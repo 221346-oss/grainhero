@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ThemeInit } from "@/components/app/ThemeInit";
 import { SessionGuard } from "@/components/app/SessionGuard";
@@ -41,7 +42,7 @@ function AuthenticatedLayout() {
   const avatar = profile?.avatar ?? null;
   const initials = initialsOf(profile?.name, profile?.email);
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <ThemeInit />
       <SessionGuard />
       <OnboardingTour />
@@ -52,15 +53,8 @@ function AuthenticatedLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
             <SidebarTrigger className="shrink-0" />
-            <div className="flex-1 flex items-center justify-center max-w-2xl mx-auto">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="search"
-                  placeholder="Search silos, batches, sensors…"
-                  className="w-full h-9 pl-9 pr-3 rounded-full text-sm bg-muted/60 hover:bg-muted focus:bg-background border border-transparent focus:border-[--fusion-grape]/50 focus:outline-none transition placeholder:text-muted-foreground"
-                />
-              </div>
+            <div className="flex-1 max-w-2xl mx-auto w-full">
+              <AppSearch />
             </div>
             <Link
               to="/notifications"

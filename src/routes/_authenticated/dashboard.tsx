@@ -8,8 +8,6 @@ import { SuperAdminDashboard } from "@/components/dashboards/SuperAdminDashboard
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
 import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard";
-import { PendingDashboard } from "@/components/dashboards/PendingDashboard";
-
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
@@ -30,14 +28,14 @@ function DashboardPage() {
     return <div className="p-8 text-red-600">Failed to load role: {(error as Error).message}</div>;
   }
 
-  const role = data?.role ?? "pending";
+  const role = data?.role ?? "admin";
   const name = data?.profile?.name ?? undefined;
 
   switch (role) {
     case "super_admin": return <SuperAdminDashboard name={name} />;
-    case "admin": return <AdminDashboard name={name} />;
     case "manager": return <ManagerDashboard name={name} />;
     case "technician": return <TechnicianDashboard name={name} />;
-    default: return <PendingDashboard name={name} />;
+    // "admin" and any other/pending → admin dashboard by default
+    default: return <AdminDashboard name={name} />;
   }
 }
