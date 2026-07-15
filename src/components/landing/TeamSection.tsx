@@ -15,7 +15,7 @@ export function TeamSection() {
       bounty: 'Strategic Visionary',
       description:
         'The driving force behind GrainHero, Sharjeel leads our mission to modernize global grain storage with a focus on sustainability and impact.',
-      image: '/images/teams/sharjeel.jfif',
+      image: '/images/team/Sharjeel.jpeg',
       rotation: 'rotate-2'
     },
     {
@@ -24,7 +24,7 @@ export function TeamSection() {
       bounty: 'Operations Lead',
       description:
         'Shaheer ensures the seamless execution of GrainHero’s operations, bridging the gap between innovative technology and real-world agricultural needs.',
-      image: '/images/teams/shaheer.jfif',
+      image: '/images/team/Shaheer.jpeg',
       rotation: '-rotate-1'
     },
     {
@@ -33,7 +33,7 @@ export function TeamSection() {
       bounty: 'Tech Architect',
       description:
         'The technical mastermind combining software engineering, AI research, and IoT expertise to build our world-class monitoring platform.',
-      image: '/images/teams/atif.jfif',
+      image: '/images/team/Atif.jpeg',
       rotation: 'rotate-1'
     }
   ]
@@ -81,7 +81,7 @@ export function TeamSection() {
             }`}
           >
             <span className="block mb-1 sm:mb-2">The People Behind</span>
-            <span className="block text-[#00a63e]">GRAINHERO</span>
+            <span className="block text-[#2FAC0C]">GRAINHERO</span>
           </h2>
         </div>
 
@@ -191,8 +191,12 @@ function FounderCard({ founder }: { founder: { name: string; role: string; bount
           <img
             src={founder.image}
             alt={founder.name}
-            className="absolute inset-0 w-full h-full object-cover rounded-sm"
-            style={{ filter: 'sepia(10%) contrast(105%) brightness(100%) saturate(95%)' }}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={
+              founder.name === 'Sharjeel Bilal'
+                ? { filter: 'sepia(10%) contrast(105%) brightness(100%) saturate(95%)', width: '100%', height: '100%' }
+                : { filter: 'sepia(10%) contrast(105%) brightness(100%) saturate(95%)' }
+            }
           />
         </div>
 

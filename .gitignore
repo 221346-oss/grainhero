@@ -30,3 +30,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables with sensitive credentials
+.env
+.env.local
+
+# Firebase service account
+smart-silo-service-account.json
+
+# Documentation and guide files (not for git)
+DAILY_REPORT.md
+GIT_PUSH_GUIDE.md
+RESEND_SETUP.md
+EMAIL_SETUP.md
+CONTACT_FORM_SETUP.md
+SUPABASE_CONTACT_SETUP.md

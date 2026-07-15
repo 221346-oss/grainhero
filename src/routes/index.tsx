@@ -3,12 +3,16 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Cpu } from 'lucide-react'
 
-import { GlassNav } from '@/components/landing/GlassNav'
-import { HeroSection } from '@/components/landing/HeroSection'
-import { FeaturesSection } from '@/components/landing/FeaturesSection'
+import { NewGlassNav } from '@/components/landing/NewGlassNav'
+import { NewHeroSection } from '@/components/landing/NewHeroSection'
+import { NewFeaturesSection } from '@/components/landing/NewFeaturesSection'
+import { NewHowItWorks } from '@/components/landing/NewHowItWorks'
+import { BenefitsSection } from '@/components/landing/BenefitsSection'
+import { TechnologySection } from '@/components/landing/TechnologySection'
 import { StatsSection } from '@/components/landing/StatsSection'
-import { TeamSection } from '@/components/landing/TeamSection'
-import { PremiumFooter } from '@/components/landing/PremiumFooter'
+import { FAQSection } from '@/components/landing/FAQSection'
+import { NewCTASection } from '@/components/landing/NewCTASection'
+import { NewFooter } from '@/components/landing/NewFooter'
 import pricingData from '@/lib/pricing-data'
 
 export const Route = createFileRoute('/')({
@@ -30,7 +34,7 @@ export const Route = createFileRoute('/')({
       { name: 'twitter:card', content: 'summary_large_image' },
     ],
   }),
-  component: HomePage,
+  component: NewHomePage,
 })
 
 type Plan = {
@@ -46,29 +50,38 @@ type Plan = {
   iotChargeLabel?: string
 }
 
-function HomePage() {
+function NewHomePage() {
   return (
-    <main className="min-h-screen bg-white text-black">
-      <GlassNav />
+    <main className="min-h-screen bg-[#EDE9D4] text-[#404F44]">
+      <NewGlassNav />
       <section id="hero" aria-label="Hero section">
-        <HeroSection />
+        <NewHeroSection />
       </section>
-      <section aria-label="Features section">
-        <FeaturesSection />
+      <section id="features" aria-label="Features section">
+        <NewFeaturesSection />
+      </section>
+      <section id="how-it-works" aria-label="How it works">
+        <NewHowItWorks />
+      </section>
+      <section id="benefits" aria-label="Benefits">
+        <BenefitsSection />
+      </section>
+      <section id="technology" aria-label="Technology">
+        <TechnologySection />
       </section>
       <section aria-label="Statistics">
         <StatsSection />
       </section>
-      <section aria-label="Pricing">
+      <section id="pricing" aria-label="Pricing">
         <PricingShowcase />
       </section>
-      <section aria-label="Team">
-        <TeamSection />
+      <section id="faq" aria-label="FAQ">
+        <FAQSection />
       </section>
       <section aria-label="Call to action">
-        <CTA />
+        <NewCTASection />
       </section>
-      <PremiumFooter />
+      <NewFooter />
     </main>
   )
 }
@@ -113,17 +126,33 @@ function PricingShowcase() {
   const plans = pricingData as Plan[]
 
   return (
-    <section id="pricing" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#f0fdf4]">
+    <section id="pricing" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4]">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8 sm:mb-12">
-          <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900">
-            Pick the plan that <br className="hidden sm:block" />
-            checks your boxes
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-8 sm:mb-10"
+        >
+          <div className="inline-block bg-[#2FAC0C]/10 px-4 py-2 rounded-full mb-4">
+            <span className="text-[#2FAC0C] text-sm font-semibold uppercase tracking-wider">
+              Flexible Pricing
+            </span>
+          </div>
+          <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#252d26] mb-4">
+            Pick the Plan That <br className="hidden sm:block" />
+            <span className="text-[#2FAC0C]">Checks Your Boxes</span>
           </h3>
-        </div>
+          <p className="text-lg text-[#404F44] max-w-2xl mx-auto">
+            Choose the perfect plan for your operation. Scale up or down anytime.
+          </p>
+        </motion.div>
 
+        {/* Mobile Carousel */}
         <div className="md:hidden max-w-sm mx-auto">
-          <div className="relative h-[480px]">
+          <div className="relative h-[500px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSlide}
@@ -147,7 +176,7 @@ function PricingShowcase() {
                 key={i}
                 onClick={() => setActiveSlide(i)}
                 className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  i === activeSlide ? 'bg-[#00a63e] scale-125' : 'bg-gray-300'
+                  i === activeSlide ? 'bg-[#2FAC0C] scale-125' : 'bg-[#404F44]/30'
                 }`}
                 aria-label={`View plan ${i + 1}`}
               />
@@ -155,14 +184,22 @@ function PricingShowcase() {
           </div>
         </div>
 
+        {/* Desktop Grid */}
         <div className="hidden md:flex flex-wrap justify-center gap-6">
-          {plans.map((p) => (
-            <PricingCard
+          {plans.map((p, index) => (
+            <motion.div
               key={p.id}
-              p={p}
-              isSelected={selectedPlanId === p.id}
-              setSelectedPlanId={setSelectedPlanId}
-            />
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <PricingCard
+                p={p}
+                isSelected={selectedPlanId === p.id}
+                setSelectedPlanId={setSelectedPlanId}
+              />
+            </motion.div>
           ))}
         </div>
       </div>
@@ -182,12 +219,20 @@ function PricingCard({
   const priceText = p.priceFrontend ?? `Rs. ${p.price?.toLocaleString()}${p.duration ?? ''}`
   return (
     <label
-      className={`cursor-pointer text-left w-full h-full max-w-sm rounded-2xl bg-white border-2 p-7 shadow-sm transition-all duration-300 transform hover:-translate-y-2 hover:shadow-xl block ${
+      className={`cursor-pointer text-left w-full h-full max-w-sm rounded-2xl bg-white border-2 p-7 shadow-sm transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:scale-105 block ${
         isSelected
-          ? 'border-[#00a63e] ring-2 ring-[#00a63e]/20'
-          : 'border-gray-200 hover:border-[#00a63e]/60'
-      }`}
+          ? 'border-[#2FAC0C] ring-2 ring-[#2FAC0C]/20 shadow-xl'
+          : 'border-[#2FAC0C]/20 hover:border-[#2FAC0C]/60'
+      } ${p.popular ? 'relative overflow-hidden' : ''}`}
     >
+      {p.popular && (
+        <>
+          <div className="absolute top-0 right-0 bg-[#2FAC0C] text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+            POPULAR
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#2FAC0C]/5 to-transparent pointer-events-none" />
+        </>
+      )}
       <input
         type="radio"
         name="landing-plan"
@@ -196,105 +241,40 @@ function PricingCard({
         onChange={() => setSelectedPlanId(p.id)}
         className="sr-only"
       />
-      {p.popular && (
-        <div className="mb-3 text-xs font-semibold text-white inline-block bg-[#00a63e] px-3 py-1 rounded-full">
-          Most Popular
-        </div>
-      )}
-      <h4 className="text-xl font-bold">{p.name}</h4>
-      <p className="text-3xl font-black mt-2 text-[#00a63e]">{priceText}</p>
-      {p.iotChargeLabel && (
-        <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 mt-2">
-          <Cpu className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>{p.iotChargeLabel}</span>
-        </div>
-      )}
-      <ul className="mt-5 space-y-2.5 text-sm text-gray-700">
-        {p.features.map((f, idx) => (
-          <li key={idx} className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-[#00a63e] flex-shrink-0" />
-            {f}
-          </li>
-        ))}
-      </ul>
-      <Link
-        to="/checkout"
-        onClick={() => {
-          try {
-            localStorage.setItem('selectedPlanId', p.id)
-          } catch {}
-        }}
-        className={`mt-6 inline-block w-full text-center py-3 rounded-full font-bold transition ${
-          isSelected
-            ? 'bg-[#00a63e] text-white hover:bg-[#029238]'
-            : 'border-2 border-gray-200 hover:border-[#00a63e] hover:text-[#00a63e]'
-        }`}
-      >
-        {p.id === 'custom' ? 'Contact Us' : 'Choose plan'}
-      </Link>
-    </label>
-  )
-}
-
-function CTA() {
-  return (
-    <section
-      className="relative py-24 overflow-hidden"
-      style={{
-        background:
-          'linear-gradient(135deg, #0d2818 0%, #0a1f14 30%, #071208 60%, #0a1f14 100%)',
-      }}
-    >
-      <div className="absolute inset-0 opacity-10">
-        <div
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 2px 2px, rgba(0,166,62,0.4) 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-            width: '100%',
-            height: '100%',
+      <div className="relative z-10">
+        <h4 className="text-xl font-bold text-[#252d26] mb-2">{p.name}</h4>
+        <p className="text-3xl font-black text-[#2FAC0C] mb-2">{priceText}</p>
+        {p.iotChargeLabel && (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-[#2FAC0C] bg-[#2FAC0C]/10 border border-[#2FAC0C]/20 rounded-lg px-3 py-1.5 mb-4">
+            <Cpu className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>{p.iotChargeLabel}</span>
+          </div>
+        )}
+        <p className="text-[#404F44] text-sm mb-5">{p.description}</p>
+        <ul className="space-y-2.5 text-sm text-[#404F44] mb-6">
+          {p.features.map((f, idx) => (
+            <li key={idx} className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-[#2FAC0C] flex-shrink-0 mt-0.5" />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+        <Link
+          to="/checkout"
+          onClick={() => {
+            try {
+              localStorage.setItem('selectedPlanId', p.id)
+            } catch {}
           }}
-        />
+          className={`mt-auto inline-block w-full text-center py-3 rounded-full font-bold transition-all duration-300 hover:scale-105 ${
+            isSelected
+              ? 'bg-[#2FAC0C] text-white hover:bg-[#2FAC0C]/90 shadow-lg'
+              : 'border-2 border-[#2FAC0C]/30 text-[#2FAC0C] hover:border-[#2FAC0C] hover:bg-[#2FAC0C]/10'
+          }`}
+        >
+          {p.id === 'custom' ? 'Contact Us' : 'Choose Plan'}
+        </Link>
       </div>
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00a63e]/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl" />
-
-      <div className="container mx-auto px-4 text-center relative z-10 max-w-4xl">
-        <motion.h2
-          className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          Ready to optimize your<br />
-          <span className="text-[#00a63e]">grain storage?</span>
-        </motion.h2>
-        <motion.p
-          className="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          Join thousands of farmers and grain operators who trust GrainHero to protect their harvest
-          and maximize profits.
-        </motion.p>
-        <motion.div
-          className="flex flex-wrap gap-4 justify-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <Link
-            to="/checkout"
-            className="bg-[#00a63e] text-white px-10 py-4 rounded-full text-lg font-bold hover:bg-[#029238] transition-colors cursor-pointer"
-          >
-            Get Started Free
-          </Link>
-        </motion.div>
-      </div>
-    </section>
+    </label>
   )
 }
