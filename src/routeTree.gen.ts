@@ -40,6 +40,7 @@ import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -235,6 +236,11 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -340,63 +346,63 @@ const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
 } as any)
 const AuthenticatedPlatformUsersRoute =
   AuthenticatedPlatformUsersRouteImport.update({
-    id: '/platform/users',
-    path: '/platform/users',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformTenantsRoute =
   AuthenticatedPlatformTenantsRouteImport.update({
-    id: '/platform/tenants',
-    path: '/platform/tenants',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/tenants',
+    path: '/tenants',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformRevenueRoute =
   AuthenticatedPlatformRevenueRouteImport.update({
-    id: '/platform/revenue',
-    path: '/platform/revenue',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/revenue',
+    path: '/revenue',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformPlansRoute =
   AuthenticatedPlatformPlansRouteImport.update({
-    id: '/platform/plans',
-    path: '/platform/plans',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/plans',
+    path: '/plans',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformPipelineRoute =
   AuthenticatedPlatformPipelineRouteImport.update({
-    id: '/platform/pipeline',
-    path: '/platform/pipeline',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/pipeline',
+    path: '/pipeline',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformOrdersRoute =
   AuthenticatedPlatformOrdersRouteImport.update({
-    id: '/platform/orders',
-    path: '/platform/orders',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
-    id: '/platform/logs',
-    path: '/platform/logs',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/logs',
+    path: '/logs',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformLeadsRoute =
   AuthenticatedPlatformLeadsRouteImport.update({
-    id: '/platform/leads',
-    path: '/platform/leads',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/leads',
+    path: '/leads',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformHealthRoute =
   AuthenticatedPlatformHealthRouteImport.update({
-    id: '/platform/health',
-    path: '/platform/health',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/health',
+    path: '/health',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const AuthenticatedPlatformAuditLogsRoute =
   AuthenticatedPlatformAuditLogsRouteImport.update({
-    id: '/platform/audit-logs',
-    path: '/platform/audit-logs',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/audit-logs',
+    path: '/audit-logs',
+    getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
@@ -465,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/plans': typeof AuthenticatedPlansRoute
+  '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -531,6 +538,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/plans': typeof AuthenticatedPlansRoute
+  '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -600,6 +608,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
+  '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
   '/_authenticated/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -669,6 +678,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/orders'
     | '/plans'
+    | '/platform'
     | '/reports'
     | '/revenue'
     | '/security-center'
@@ -735,6 +745,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/orders'
     | '/plans'
+    | '/platform'
     | '/reports'
     | '/revenue'
     | '/security-center'
@@ -803,6 +814,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
     | '/_authenticated/plans'
+    | '/_authenticated/platform'
     | '/_authenticated/reports'
     | '/_authenticated/revenue'
     | '/_authenticated/security-center'
@@ -1082,6 +1094,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform': {
+      id: '/_authenticated/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof AuthenticatedPlatformRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/plans': {
       id: '/_authenticated/plans'
       path: '/plans'
@@ -1217,73 +1236,73 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/platform/users': {
       id: '/_authenticated/platform/users'
-      path: '/platform/users'
+      path: '/users'
       fullPath: '/platform/users'
       preLoaderRoute: typeof AuthenticatedPlatformUsersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/tenants': {
       id: '/_authenticated/platform/tenants'
-      path: '/platform/tenants'
+      path: '/tenants'
       fullPath: '/platform/tenants'
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/revenue': {
       id: '/_authenticated/platform/revenue'
-      path: '/platform/revenue'
+      path: '/revenue'
       fullPath: '/platform/revenue'
       preLoaderRoute: typeof AuthenticatedPlatformRevenueRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/plans': {
       id: '/_authenticated/platform/plans'
-      path: '/platform/plans'
+      path: '/plans'
       fullPath: '/platform/plans'
       preLoaderRoute: typeof AuthenticatedPlatformPlansRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/pipeline': {
       id: '/_authenticated/platform/pipeline'
-      path: '/platform/pipeline'
+      path: '/pipeline'
       fullPath: '/platform/pipeline'
       preLoaderRoute: typeof AuthenticatedPlatformPipelineRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/orders': {
       id: '/_authenticated/platform/orders'
-      path: '/platform/orders'
+      path: '/orders'
       fullPath: '/platform/orders'
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/logs': {
       id: '/_authenticated/platform/logs'
-      path: '/platform/logs'
+      path: '/logs'
       fullPath: '/platform/logs'
       preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/leads': {
       id: '/_authenticated/platform/leads'
-      path: '/platform/leads'
+      path: '/leads'
       fullPath: '/platform/leads'
       preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/health': {
       id: '/_authenticated/platform/health'
-      path: '/platform/health'
+      path: '/health'
       fullPath: '/platform/health'
       preLoaderRoute: typeof AuthenticatedPlatformHealthRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/_authenticated/platform/audit-logs': {
       id: '/_authenticated/platform/audit-logs'
-      path: '/platform/audit-logs'
+      path: '/audit-logs'
       fullPath: '/platform/audit-logs'
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/api/public/webhooks/stripe': {
       id: '/api/public/webhooks/stripe'
@@ -1330,6 +1349,37 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedPlatformRouteChildren {
+  AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
+  AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
+  AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
+  AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
+  AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
+  AuthenticatedPlatformRevenueRoute: typeof AuthenticatedPlatformRevenueRoute
+  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
+  AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
+}
+
+const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
+  AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
+  AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
+  AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
+  AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
+  AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
+  AuthenticatedPlatformRevenueRoute: AuthenticatedPlatformRevenueRoute,
+  AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
+  AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
+}
+
+const AuthenticatedPlatformRouteWithChildren =
+  AuthenticatedPlatformRoute._addFileChildren(
+    AuthenticatedPlatformRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
@@ -1349,6 +1399,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
+  AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
   AuthenticatedSecurityCenterRoute: typeof AuthenticatedSecurityCenterRoute
@@ -1360,16 +1411,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
-  AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
-  AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
-  AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
-  AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
-  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
-  AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
-  AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
-  AuthenticatedPlatformRevenueRoute: typeof AuthenticatedPlatformRevenueRoute
-  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
-  AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1391,6 +1432,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
+  AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
   AuthenticatedSecurityCenterRoute: AuthenticatedSecurityCenterRoute,
@@ -1402,16 +1444,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
-  AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
-  AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
-  AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
-  AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
-  AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
-  AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
-  AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
-  AuthenticatedPlatformRevenueRoute: AuthenticatedPlatformRevenueRoute,
-  AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
-  AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
