@@ -500,6 +500,47 @@ export type Database = {
           },
         ]
       }
+      email_send_log: {
+        Row: {
+          email_type: string
+          error_message: string | null
+          id: string
+          provider_message_id: string | null
+          recipient_email: string
+          sent_at: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          email_type: string
+          error_message?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_email: string
+          sent_at?: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_email?: string
+          sent_at?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_send_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grain_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -1039,6 +1080,50 @@ export type Database = {
         }
         Relationships: []
       }
+      hubspot_sync_log: {
+        Row: {
+          action: string
+          created_at: string
+          error_message: string | null
+          hubspot_object_id: string | null
+          hubspot_object_type: string
+          id: string
+          payload: Json | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_message?: string | null
+          hubspot_object_id?: string | null
+          hubspot_object_type: string
+          id?: string
+          payload?: Json | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          hubspot_object_id?: string | null
+          hubspot_object_type?: string
+          id?: string
+          payload?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hubspot_sync_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_claims: {
         Row: {
           admin_id: string
@@ -1289,26 +1374,41 @@ export type Database = {
       }
       plan_prices: {
         Row: {
+          annual_price_cents: number | null
           currency: string
+          features: Json
+          is_active: boolean
           plan_id: string
           product_id: string
           setup_price_id: string | null
+          stripe_price_id_annual: string | null
+          stripe_price_id_monthly: string | null
           subscription_price_id: string
           updated_at: string
         }
         Insert: {
+          annual_price_cents?: number | null
           currency?: string
+          features?: Json
+          is_active?: boolean
           plan_id: string
           product_id: string
           setup_price_id?: string | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
           subscription_price_id: string
           updated_at?: string
         }
         Update: {
+          annual_price_cents?: number | null
           currency?: string
+          features?: Json
+          is_active?: boolean
           plan_id?: string
           product_id?: string
           setup_price_id?: string | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
           subscription_price_id?: string
           updated_at?: string
         }
@@ -1333,6 +1433,8 @@ export type Database = {
           fcm_tokens: Json | null
           first_login: boolean | null
           has_access: string | null
+          hubspot_contact_id: string | null
+          hubspot_deal_id: string | null
           id: string
           invitation_expires: string | null
           invitation_role: string | null
@@ -1340,6 +1442,7 @@ export type Database = {
           invited_by: string | null
           last_login: string | null
           location: Json | null
+          login_count: number
           name: string
           phone: string | null
           preferences: Json | null
@@ -1348,6 +1451,7 @@ export type Database = {
           status: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id: string | null
           subscription_plan: string | null
+          trial_ends_at: string | null
           updated_at: string | null
           updated_by: string | null
           warehouse_id: string | null
@@ -1370,6 +1474,8 @@ export type Database = {
           fcm_tokens?: Json | null
           first_login?: boolean | null
           has_access?: string | null
+          hubspot_contact_id?: string | null
+          hubspot_deal_id?: string | null
           id: string
           invitation_expires?: string | null
           invitation_role?: string | null
@@ -1377,6 +1483,7 @@ export type Database = {
           invited_by?: string | null
           last_login?: string | null
           location?: Json | null
+          login_count?: number
           name?: string
           phone?: string | null
           preferences?: Json | null
@@ -1385,6 +1492,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
           subscription_plan?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
           warehouse_id?: string | null
@@ -1407,6 +1515,8 @@ export type Database = {
           fcm_tokens?: Json | null
           first_login?: boolean | null
           has_access?: string | null
+          hubspot_contact_id?: string | null
+          hubspot_deal_id?: string | null
           id?: string
           invitation_expires?: string | null
           invitation_role?: string | null
@@ -1414,6 +1524,7 @@ export type Database = {
           invited_by?: string | null
           last_login?: string | null
           location?: Json | null
+          login_count?: number
           name?: string
           phone?: string | null
           preferences?: Json | null
@@ -1422,6 +1533,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
           subscription_plan?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
           warehouse_id?: string | null
@@ -2343,6 +2455,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       actuator_type: "fan" | "vent" | "heater" | "cooler" | "alarm" | "light"
