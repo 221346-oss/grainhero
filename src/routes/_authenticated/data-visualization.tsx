@@ -860,7 +860,7 @@ function DataVisualizationPage() {
                         : "—",
                     icon: <Thermometer className="h-4 w-4 text-rose-500" />,
                     warn:
-                      liveTelemetry?.temperature > 35 ||
+                      (liveTelemetry?.temperature ?? 0) > 35 ||
                       (!liveTelemetry && history.length && history[history.length - 1].temperature > 35),
                   },
                   {
@@ -872,7 +872,7 @@ function DataVisualizationPage() {
                         : "—",
                     icon: <Droplets className="h-4 w-4 text-sky-500" />,
                     warn:
-                      liveTelemetry?.humidity > 75 ||
+                      (liveTelemetry?.humidity ?? 0) > 75 ||
                       (!liveTelemetry && history.length && history[history.length - 1].humidity > 75),
                   },
                   {
