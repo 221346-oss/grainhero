@@ -6,13 +6,13 @@ import { RecentBatchesCard, RecentAlertsCard, TeamCard, ActuatorsCard, SilosOccu
 export function AdminDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
       <PageHeader
-        title={`Admin Dashboard${name ? ` — ${name}` : ""}`}
+        title={`Admin${name ? ` — ${name}` : ""}`}
         subtitle="Tenant overview: team, silos, revenue and operations"
         badge="Admin"
       />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         <StatCard label="Buyers" value={s?.buyers ?? "—"} icon={Users} accent="emerald" />
         <StatCard label="Warehouses" value={s?.warehouses ?? "—"} icon={Building2} accent="sky" />
         <StatCard label="Active Batches" value={s?.batches.active ?? "—"} icon={Package} accent="violet" />
@@ -20,7 +20,7 @@ export function AdminDashboard({ name }: { name?: string }) {
         <StatCard label="Sensors Online" value={s?.sensors.online ?? "—"} icon={TrendingUp} accent="amber" />
         <StatCard label="Open Alerts" value={s?.alerts.open ?? "—"} icon={Activity} accent="rose" />
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         <RecentBatchesCard />
         <RecentAlertsCard />
         <TeamCard />

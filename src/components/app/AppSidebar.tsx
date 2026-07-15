@@ -26,6 +26,7 @@ import {
   Wallet, CreditCard, Sparkles,
   Activity, AlertOctagon, FileBarChart,
   Wrench, Server, ShieldCheck, MoreHorizontal,
+  DollarSign, TrendingUp, UserPlus, ScrollText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -51,6 +52,11 @@ const pinnedNav: NavItem[] = [
   { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin", "manager", "technician"] },
   { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["super_admin", "admin", "manager"], badge: "AI" },
   { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
+  // Super-admin-only pins (platform ops)
+  { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
+  { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
+  { name: "platform-revenue", label: "Revenue", to: "/platform/revenue", icon: DollarSign, roles: ["super_admin"] },
+  { name: "platform-plans", label: "Plans", to: "/platform/plans", icon: Sparkles, roles: ["super_admin"] },
 ];
 
 // Everything else lives behind a "More" popover, grouped like Slack's overflow menu.
@@ -87,6 +93,17 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "orders", label: "My Install Orders", to: "/orders", icon: Package, roles: ["admin"] },
     ],
   },
+  {
+    label: "Platform",
+    items: [
+      { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
+      { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
+      { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
+      { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
+      { name: "platform-logs", label: "System Logs", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
+      { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
+    ],
+  },
 ];
 
 // Bottom "admin" strip — Slack shows Admin at the bottom of the workspace rail.
@@ -94,7 +111,6 @@ const bottomNav: NavItem[] = [
   { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "security-center", label: "Security", to: "/security-center", icon: ShieldCheck, roles: ["super_admin", "admin"] },
   { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "platform", label: "Platform", to: "/platform", icon: Crown, roles: ["super_admin"], badge: "SU" },
 ];
 
 function NavRow({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
@@ -247,7 +263,8 @@ export function AppSidebar() {
     enabled: role === "super_admin",
     refetchInterval: 60_000,
   });
-  const pendingCount = pending?.count ?? 0;
+  // pending count kept available for future badge on Install Orders
+  void pending;
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -272,16 +289,7 @@ export function AppSidebar() {
         <MoreButton role={role} currentPath={currentPath} />
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border/60 gap-0">
-        <Section
-          items={bottomNav.map((n) =>
-            n.name === "platform" && pendingCount > 0
-              ? { ...n, badge: String(pendingCount) }
-              : n,
-          )}
-          role={role}
-          currentPath={currentPath}
-          showLabel={false}
-        />
+        <Section items={bottomNav} role={role} currentPath={currentPath} showLabel={false} />
         <Button
           variant="ghost"
           size="sm"
