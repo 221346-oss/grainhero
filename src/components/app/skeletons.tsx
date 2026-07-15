@@ -1,159 +1,73 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Wheat } from "lucide-react";
 
 /**
- * Content-shaped skeletons (LinkedIn / YouTube style).
- * Use these instead of a spinner while the initial page data loads.
+ * Branded Loader featuring the GrainHero logo in the center and a spinning green ring.
+ * Replaces generic grey pulse skeletons for a premium loading experience.
  */
-
-export function StatsSkeleton({ count = 4, className }: { count?: number; className?: string }) {
+export function BrandedLoader({
+  fullScreen = true,
+  text = "Loading your dashboard…"
+}: {
+  fullScreen?: boolean;
+  text?: string;
+}) {
   return (
-    <div className={cn("grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4", className)}>
-      {Array.from({ length: count }).map((_, i) => (
-        <Card key={i} className="border-slate-200/70">
-          <CardHeader className="pb-2">
-            <Skeleton className="h-3 w-24" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-7 w-16" />
-          </CardContent>
-        </Card>
-      ))}
+    <div className={cn(
+      "flex flex-col items-center justify-center transition-all duration-300",
+      fullScreen 
+        ? "min-h-screen bg-gradient-to-br from-emerald-50/40 to-sky-50/40" 
+        : "h-[320px] w-full bg-transparent"
+    )}>
+      <div className="flex flex-col items-center gap-4">
+        {/* Centered Logo with green ring around it */}
+        <div className="relative">
+          <div className="h-16 w-16 rounded-2xl bg-[#00a63e] flex items-center justify-center shadow-lg shadow-emerald-100">
+            <Wheat className="h-9 w-9 text-white animate-[pulse_2s_infinite]" />
+          </div>
+          {/* Spinning green ring */}
+          <div className="absolute -inset-1.5 rounded-[18px] border-2 border-emerald-100 border-t-[#00a63e] animate-[spin_1.2s_linear_infinite]" />
+        </div>
+
+        {/* Brand details */}
+        <div className="text-center">
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">GrainHero</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">{text}</p>
+        </div>
+
+        {/* Dynamic progress bar */}
+        <div className="w-36 h-1 bg-emerald-100 rounded-full overflow-hidden mt-1">
+          <div className="h-full bg-gradient-to-r from-[#00a63e] to-emerald-400 rounded-full animate-[progress_1.5s_ease-in-out_infinite]" />
+        </div>
+      </div>
     </div>
   );
 }
 
-export function ListSkeleton({ rows = 6, className }: { rows?: number; className?: string }) {
-  return (
-    <Card className={cn("border-slate-200/70", className)}>
-      <CardContent className="p-0 divide-y divide-border/60">
-        {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 p-4">
-            <Skeleton className="h-9 w-9 rounded-full shrink-0" />
-            <div className="flex-1 min-w-0 space-y-2">
-              <Skeleton className="h-3.5 w-1/3" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-            <Skeleton className="h-5 w-16 rounded-full hidden sm:block" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
+export function StatsSkeleton({ className }: { count?: number; className?: string }) {
+  return <BrandedLoader fullScreen={false} text="Loading stats…" />;
 }
 
-export function TableSkeleton({ rows = 8, cols = 5, className }: { rows?: number; cols?: number; className?: string }) {
-  return (
-    <Card className={cn("border-slate-200/70 overflow-hidden", className)}>
-      <div className="p-4 border-b border-border/60 flex gap-4">
-        {Array.from({ length: cols }).map((_, i) => (
-          <Skeleton key={i} className={cn("h-3", i === 0 ? "w-24" : "flex-1")} />
-        ))}
-      </div>
-      <div className="divide-y divide-border/50">
-        {Array.from({ length: rows }).map((_, r) => (
-          <div key={r} className="flex items-center gap-4 p-4">
-            {Array.from({ length: cols }).map((_, c) => (
-              <Skeleton key={c} className={cn("h-4", c === 0 ? "w-24" : "flex-1")} />
-            ))}
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
+export function ListSkeleton({ className }: { rows?: number; className?: string }) {
+  return <BrandedLoader fullScreen={false} text="Loading list details…" />;
 }
 
-export function CardsSkeleton({ count = 6, className }: { count?: number; className?: string }) {
-  return (
-    <div className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
-      {Array.from({ length: count }).map((_, i) => (
-        <Card key={i} className="border-slate-200/70">
-          <CardHeader className="flex-row items-center gap-3 space-y-0">
-            <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-3.5 w-2/3" />
-              <Skeleton className="h-3 w-1/3" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-3 w-full" />
-            <Skeleton className="h-3 w-5/6" />
-            <Skeleton className="h-3 w-3/4" />
-            <div className="flex gap-2 pt-2">
-              <Skeleton className="h-6 w-16 rounded-full" />
-              <Skeleton className="h-6 w-20 rounded-full" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+export function TableSkeleton({ className }: { rows?: number; cols?: number; className?: string }) {
+  return <BrandedLoader fullScreen={false} text="Loading table data…" />;
 }
 
-export function FormSkeleton({ fields = 6, className }: { fields?: number; className?: string }) {
-  return (
-    <Card className={cn("border-slate-200/70", className)}>
-      <CardHeader className="space-y-2">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-3 w-64" />
-      </CardHeader>
-      <CardContent className="grid md:grid-cols-2 gap-4">
-        {Array.from({ length: fields }).map((_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-9 w-full rounded-md" />
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
+export function CardsSkeleton({ className }: { count?: number; className?: string }) {
+  return <BrandedLoader fullScreen={false} text="Loading cards…" />;
+}
+
+export function FormSkeleton({ className }: { fields?: number; className?: string }) {
+  return <BrandedLoader fullScreen={false} text="Loading form fields…" />;
 }
 
 export function DashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-4 w-80 max-w-full" />
-      </div>
-      <StatsSkeleton />
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2 border-slate-200/70">
-          <CardHeader><Skeleton className="h-4 w-32" /></CardHeader>
-          <CardContent><Skeleton className="h-56 w-full rounded-lg" /></CardContent>
-        </Card>
-        <Card className="border-slate-200/70">
-          <CardHeader><Skeleton className="h-4 w-24" /></CardHeader>
-          <CardContent className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+  return <BrandedLoader fullScreen={false} text="Loading dashboard modules…" />;
 }
 
-/** Section-level fallback for inline data blocks. */
-export function InlineListSkeleton({ rows = 4 }: { rows?: number }) {
-  return (
-    <div className="space-y-2 py-2">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3">
-          <Skeleton className="h-4 w-4 rounded-full" />
-          <Skeleton className="h-3 flex-1" />
-          <Skeleton className="h-3 w-16" />
-        </div>
-      ))}
-    </div>
-  );
+export function InlineListSkeleton() {
+  return <BrandedLoader fullScreen={false} text="Syncing latest info…" />;
 }
