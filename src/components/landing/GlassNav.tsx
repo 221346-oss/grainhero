@@ -8,8 +8,7 @@ const navLinks = [
   { href: '#features', label: 'FEATURES' },
   { href: '#how-it-works', label: 'HOW IT WORKS' },
   { href: '#pricing', label: 'PRICING' },
-  
-  
+  { href: 'mailto:support@grainhero.app', label: 'CONTACT' },
 ]
 
 export function GlassNav() {

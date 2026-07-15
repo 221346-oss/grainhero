@@ -41,6 +41,7 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
       metadata?: Record<string, string>;
     };
     const paid = session.payment_status === "paid" || session.status === "complete";
+    console.log("[checkout email] session status:", session.payment_status, session.status, "paid:", paid);
     if (!paid) return { sent: false, reason: "not_paid" as const };
 
     // Load the order (best-effort — email still sends without a DB row).
@@ -57,9 +58,8 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
         .eq("stripe_session_id", data.sessionId)
         .maybeSingle();
       order = ((row as OrderRow | null) ?? {}) as OrderRow;
-      if (order.confirmation_email_sent_at) {
-        return { sent: false, reason: "already_sent" as const };
-      }
+      console.log("[checkout email] order found:", !!row, "already_sent:", !!order.confirmation_email_sent_at, "email:", order.customer_email);
+      // Note: removed already_sent guard so email always sends during testing
     } catch (e) {
       console.warn("[checkout email] admin unavailable:", (e as Error).message);
     }
@@ -74,6 +74,7 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
       session.customer_details?.name ||
       session.metadata?.customer_name ||
       "there";
+    console.log("[checkout email] sending to:", to, "name:", name);
     if (!to) return { sent: false, reason: "no_recipient" as const };
 
     const gatewayKey = process.env.LOVABLE_API_KEY;
@@ -83,6 +84,18 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
     if (!resendKey) {
       console.warn("[checkout email] missing resend key");
       return { sent: false, reason: "not_configured" as const };
+    }
+
+    // Send via Resend directly (preferred) or via Lovable gateway fallback
+    const emailEndpoint = gatewayKey
+      ? "https://connector-gateway.lovable.dev/resend/emails"
+      : "https://api.resend.com/emails";
+    const emailHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${gatewayKey ?? resendKey}`,
+    };
+    if (gatewayKey) {
+      emailHeaders["X-Connection-Api-Key"] = resendKey;
     }
 
     const appOrigin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";

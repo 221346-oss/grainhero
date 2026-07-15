@@ -44,6 +44,7 @@ import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
+import { Route as AuthenticatedDataVisualizationRouteImport } from './routes/_authenticated/data-visualization'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -51,6 +52,7 @@ import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
+import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
 import { Route as AuthenticatedPlatformRevenueRouteImport } from './routes/_authenticated/platform.revenue'
@@ -246,6 +248,12 @@ const AuthenticatedEnvironmentalRoute =
     path: '/environmental',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDataVisualizationRoute =
+  AuthenticatedDataVisualizationRouteImport.update({
+    id: '/data-visualization',
+    path: '/data-visualization',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -284,6 +292,11 @@ const AuthenticatedPlatformIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
+const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
+  id: '/api/firebase/live-sensors',
+  path: '/api/firebase/live-sensors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPlatformUsersRoute =
   AuthenticatedPlatformUsersRouteImport.update({
     id: '/users',
@@ -355,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/data-visualization': typeof AuthenticatedDataVisualizationRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
@@ -390,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -407,6 +422,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/data-visualization': typeof AuthenticatedDataVisualizationRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
@@ -441,6 +457,7 @@ export interface FileRoutesByTo {
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -461,6 +478,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/data-visualization': typeof AuthenticatedDataVisualizationRoute
   '/_authenticated/environmental': typeof AuthenticatedEnvironmentalRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
@@ -496,6 +514,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -516,6 +535,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/buyers'
     | '/dashboard'
+    | '/data-visualization'
     | '/environmental'
     | '/grain-alerts'
     | '/grain-batches'
@@ -551,6 +571,7 @@ export interface FileRouteTypes {
     | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
+    | '/api/firebase/live-sensors'
     | '/platform/'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -568,6 +589,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/buyers'
     | '/dashboard'
+    | '/data-visualization'
     | '/environmental'
     | '/grain-alerts'
     | '/grain-batches'
@@ -602,6 +624,7 @@ export interface FileRouteTypes {
     | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
+    | '/api/firebase/live-sensors'
     | '/platform'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -621,6 +644,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/data-visualization'
     | '/_authenticated/environmental'
     | '/_authenticated/grain-alerts'
     | '/_authenticated/grain-batches'
@@ -656,6 +680,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/revenue'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
+    | '/api/firebase/live-sensors'
     | '/_authenticated/platform/'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -670,6 +695,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   CheckoutRoute: typeof CheckoutRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
@@ -924,6 +950,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEnvironmentalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/data-visualization': {
+      id: '/_authenticated/data-visualization'
+      path: '/data-visualization'
+      fullPath: '/data-visualization'
+      preLoaderRoute: typeof AuthenticatedDataVisualizationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -972,6 +1005,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/platform/'
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/api/firebase/live-sensors': {
+      id: '/api/firebase/live-sensors'
+      path: '/api/firebase/live-sensors'
+      fullPath: '/api/firebase/live-sensors'
+      preLoaderRoute: typeof ApiFirebaseLiveSensorsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/platform/users': {
       id: '/_authenticated/platform/users'
@@ -1076,6 +1116,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDataVisualizationRoute: typeof AuthenticatedDataVisualizationRoute
   AuthenticatedEnvironmentalRoute: typeof AuthenticatedEnvironmentalRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
@@ -1108,6 +1149,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDataVisualizationRoute: AuthenticatedDataVisualizationRoute,
   AuthenticatedEnvironmentalRoute: AuthenticatedEnvironmentalRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
@@ -1174,6 +1216,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   CheckoutRoute: CheckoutRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
   ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
