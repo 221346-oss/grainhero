@@ -1,100 +1,94 @@
-# Super-Admin Revenue + Admin Plan Management
+# Super Admin + HubSpot + Email Automation
 
-Two related surfaces plus a shared expiry-alert engine.
+Implements everything in your uploaded spec across three parts. Existing `/platform.*` routes are already the Super Admin area — we'll extend them (rename intent, not URLs, to avoid breaking links) and add the missing pages.
 
----
+## Part 1 — Super Admin restructuring
 
-## 1. Super-Admin Revenue Dashboard (`/revenue`)
+### Access control
+- Add a Super Admin role gate that hides operational features from Super Admin users in the sidebar and blocks routing to them:
+  - Silos, Warehouses, Grain Batches, Sensors, Actuators (IoT config)
+- Keep these features fully available to `admin` / `manager` / `technician` — only Super Admin is blocked.
+- Enforced in `AppSidebar` (hide links) + `_authenticated/route.tsx` (redirect Super Admin away from `/silos`, `/warehouses`, `/grain-batches`, `/sensors`, `/actuators`).
 
-Rebuild the existing `revenue.tsx` (super-admin only) as a full analytics page.
+### Pages (all under existing `/platform.*` namespace)
+Already present, will be reviewed/tightened: `platform.index` (dashboard), `platform.tenants`, `platform.users`, `platform.revenue`, `platform.logs`, `platform.orders`, `plans`.
 
-**KPI cards**
-- MRR (sum of active monthly-normalized subscriptions)
-- Total revenue (all-time, from paid invoices)
-- Active subscribers / Trial / Cancelled
-- Churn rate (last 30d)
-- Expiring in next 7 days
+Missing pages to build:
+- `/platform/plans` — CRUD for subscription plans (name, price monthly/annual, Stripe price IDs, feature limits: max users, max batches, max silos, storage GB, API calls/mo, feature toggles: AI predictions, advanced analytics, API access, white-label). Uses existing `plan_prices` table + a new `plan_features` JSON column.
+- `/platform/health` — System health: server status pills, CPU/memory (from `security_events` + a new lightweight metrics ping), API p50/p95/p99 response time (recorded via middleware), error rates 24h/7d/30d, uptime %, recent incidents.
+- `/platform/audit-logs` — filtered view over `activity_logs` + `security_events` (config changes, security events, access logs).
+- `/platform/pipeline` — HubSpot deals funnel (see Part 2).
+- `/platform/leads` — HubSpot contacts list + activity (see Part 2).
 
-**Charts** (Recharts, already in project)
-- Revenue over time (line, 30/90/365-day toggle)
-- Revenue by plan (stacked bar: Starter/Professional/Enterprise)
-- Subscriber growth (area chart)
-- Plan distribution (pie chart)
+### Dashboard (`platform.index`) additions
+Cards for: total tenants (active/trial/churned), total users, MRR, ARR, uptime %, active subs per plan.
 
-**Tables**
-- Recent transactions (invoices)
-- Subscriptions expiring soon (with "Send reminder" button)
-- Top customers by revenue
+## Part 2 — HubSpot CRM integration
 
-**Actions**
-- "Trigger expiry emails now" button → runs the reminder job on demand
-- Export CSV of revenue for accounting
+### Secrets (server-side only — never `VITE_*` for the API key)
+- `HUBSPOT_ACCESS_TOKEN` (added via secrets tool)
+- `HUBSPOT_PORTAL_ID` (added via secrets tool)
 
-Data comes from a new `getRevenueAnalytics` server fn (super_admin gated) that aggregates from `subscriptions` and `invoices`.
+Note: your spec uses `VITE_HUBSPOT_API_KEY`, but that would leak the token into the browser bundle. We'll call HubSpot from TanStack server functions with the secret token instead.
 
----
+### Database migration
+- `profiles`: add `hubspot_contact_id text`, `hubspot_deal_id text` + indexes.
+- New `hubspot_sync_log` (user_id, action, object_type, object_id, status, error_message, created_at) with RLS: super admin read-only, service_role full.
 
-## 2. Admin Subscription Management (`/subscription`)
+### Files
+- `src/lib/hubspot/client.server.ts` — server-only HubSpot client using `@hubspot/api-client`.
+- `src/lib/hubspot.functions.ts` — server functions: `createHubspotContact`, `createHubspotDeal`, `updateHubspotDealStage`, `listHubspotDeals`, `listHubspotContacts`. Each logs to `hubspot_sync_log`.
+- Deal-stage mapping table from your spec (Trial Started → Closed Won/Lost).
 
-Extend existing `subscription.tsx` for tenant admins.
+### Integration triggers
+- Signup (`auth.signup.tsx` success path) → create contact + deal in `appointmentscheduled`.
+- Login counter → increment on `profiles.login_count`; at 3+ push stage `qualifiedtobuy`.
+- First warehouse/silo created (`operations.functions.ts`) → `presentationscheduled`.
+- Demo request (contact form with `subject=demo`) → `decisionmakerboughtin`.
+- Stripe webhook `checkout.session.completed` (`api/public/webhooks/stripe.ts`) → `closedwon`.
+- Trial-expired cron → `closedlost`.
 
-**Current plan card** — shows plan name, next renewal, usage bars (already exists).
+### Super Admin views
+- `/platform/pipeline` — funnel viz + deal list + actions (send quote / update stage) calling server fns.
+- `/platform/leads` — contact list with activity feed.
 
-**New actions**
-- **Upgrade / Downgrade** → opens plan picker; calls Stripe API to swap the subscription item (prorated). Uses `stripe.subscriptions.update` server-side.
-- **Cancel subscription** → confirm dialog; calls `stripe.subscriptions.update({cancel_at_period_end: true})`. Shows "Cancels on <date>" banner after.
-- **Resume** (if cancel_at_period_end true) → clears cancellation.
-- **Manage billing** (Stripe portal) — already exists.
+## Part 3 — Email automation (Resend)
 
-**Alert preferences (in Settings → Notifications tab)**
-- Toggle: Email me when plan is about to expire (7/3/1 day)
-- Toggle: Browser push notification for expiry
-- Stored in `profiles.preferences` JSONB.
+### Secrets
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `APP_ORIGIN` (already partially present, will verify).
 
----
+### Templates
+- New `src/lib/email-templates.ts` with `welcomeEmailHTML`, `day3EmailHTML`, `day10EmailHTML`, `trialEndingEmailHTML`, `reengagementEmailHTML` (verbatim from your spec, escapeHtml included).
 
-## 3. Expiry Alert Engine
+### Sending
+- `src/lib/email-automation.functions.ts` — server functions: `sendWelcomeEmail`, `sendScheduledLifecycleEmail(userId, stage)`, `sendTrialEndingEmail`, `sendReengagementEmail`. Uses Resend HTTP API. Records sent emails to a new `email_send_log` table so we never double-send.
 
-**Server fn `sendExpiryReminders`** (callable manually by super-admin + via cron)
-- Finds subscriptions where `end_date` falls in {7, 3, 1} days and status='active'.
-- Sends email via **Resend connector** (project already has `RESEND_API_KEY`).
-- Sends browser push via existing web-push setup (`WEB_PUSH_*` secrets present).
-- Writes `security_events` audit row per notification to prevent duplicate sends within the same day/threshold.
+### Triggers
+- **Welcome** — inline server fn call on signup success.
+- **Day 3 / Day 10 / Trial Ending / Re-engagement** — new cron route `src/routes/api/public/cron/lifecycle-emails.ts` that runs daily. Signed with a shared secret in `x-cron-secret`. Query users by `created_at`, `trial_ends_at`, `last_login_at`, filter against `email_send_log`, send + record.
 
-**Automation** — pg_cron job runs daily at 09:00 UTC calling
-`/api/public/hooks/expiry-reminders` (server route, apikey-authed) which invokes the reminder fn.
+### Migration
+- `email_send_log` (user_id, email_type, sent_at) with unique(user_id, email_type) to prevent duplicates.
+- `profiles`: add `trial_ends_at`, `last_login_at`, `login_count` if not present.
 
-**Templates**
-- Subject: "Your Grainheroo plan expires in N days"
-- Body: plan name, expiry date, "Renew / Manage billing" CTA linking to `/subscription`.
+## Technical notes
+- No secrets in client bundle: HubSpot + Resend calls run in TanStack server functions / server routes only.
+- Cron endpoint under `/api/public/*` requires header `x-cron-secret` matching env `CRON_SECRET`.
+- Sidebar hiding + route guards both use the existing `useMyProfile` role check plus a new `is_super_admin(uid)` security-definer SQL function.
+- All new tables get GRANTs to `authenticated` + `service_role` and RLS scoped to super admin reads.
 
----
+## Order of execution
+1. Migration: profiles columns, `hubspot_sync_log`, `email_send_log`, `is_super_admin()` fn, plan feature columns.
+2. Secrets: `HUBSPOT_ACCESS_TOKEN`, `HUBSPOT_PORTAL_ID`, `CRON_SECRET` (Resend already set).
+3. `bun add @hubspot/api-client`.
+4. HubSpot client + server functions + sync log.
+5. Email templates + automation server functions + cron route.
+6. Trigger wiring (signup, login, warehouse/silo create, Stripe webhook, contact form demo).
+7. Super Admin route gating + sidebar hiding.
+8. Build `/platform/plans` (full CRUD), `/platform/health`, `/platform/audit-logs`, `/platform/pipeline`, `/platform/leads`.
+9. Extend `/platform/index` dashboard with MRR/ARR/uptime/plan-breakdown cards.
 
-## 4. Files to touch / create
-
-**New**
-- `src/lib/revenue-analytics.functions.ts` — `getRevenueAnalytics`, `listExpiringSubscriptions`
-- `src/lib/subscription-management.functions.ts` — `changePlan`, `cancelSubscription`, `resumeSubscription`
-- `src/lib/expiry-reminders.functions.ts` + `.server.ts` — reminder engine (Resend + web-push)
-- `src/routes/api/public/hooks/expiry-reminders.ts` — cron endpoint
-- `src/components/revenue/*` — chart components
-
-**Edited**
-- `src/routes/_authenticated/revenue.tsx` — full rebuild
-- `src/routes/_authenticated/subscription.tsx` — add upgrade/downgrade/cancel
-- `src/routes/_authenticated/settings.tsx` — add "Notifications" tab with expiry-alert toggles
-
-**Migration**
-- Add `notified_expiry_thresholds INT[] DEFAULT '{}'` to `subscriptions` (dedupe reminders)
-- pg_cron job for daily reminder trigger
-
----
-
-## 5. Technical notes
-
-- Stripe plan changes: retrieve subscription, update its item to the new `price_id` with `proration_behavior: 'create_prorations'`. Webhook already handles the `customer.subscription.updated` event → keeps DB in sync.
-- Revenue currency: normalize everything to PKR (project's currency) — subscriptions store `currency` and `price_per_month`.
-- All super-admin fns gate on `has_role(uid, 'super_admin')`; return 403 otherwise.
-- Charts use existing `recharts` from shadcn.
-
-Approve to build.
+## Open questions
+- Confirm HubSpot access token type (Private App recommended — safest for server-side).
+- Confirm Resend `from` domain is verified so emails send in production.
+- OK to reuse existing `/platform.*` URLs instead of your `/super-admin/*` paths? (existing routes already work; renaming breaks bookmarks and would require redirects.)
