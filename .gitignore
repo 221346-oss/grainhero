@@ -31,8 +31,9 @@ dist-ssr
 *.sln
 *.sw?
 
+package-lock.json
+
 # Environment variables with sensitive credentials
-.env
 .env.local
 
 # Firebase service account
