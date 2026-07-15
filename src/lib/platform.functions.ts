@@ -123,7 +123,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     await assertSuperAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [signupsRes, alertsRes, seriesRes] = await Promise.all([
+    const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes] = await Promise.all([
       supabaseAdmin
         .from("profiles")
         .select("id, name, email, business_type, subscription_plan, created_at")
@@ -139,6 +139,14 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .from("profiles")
         .select("created_at")
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      supabaseAdmin
+        .from("subscriptions")
+        .select("id, status, monthly_price, plan_name, created_at, cancelled_at"),
+      supabaseAdmin
+        .from("hubspot_sync_log")
+        .select("id, sync_type, sync_status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50),
     ]);
 
     // Build signups-per-day series (last 30 days).
@@ -153,10 +161,35 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
       if (key in buckets) buckets[key] += 1;
     }
     const signupsSeries = Object.entries(buckets).map(([date, count]) => ({ date, count }));
+    const signupsTotal = signupsSeries.reduce((s, p) => s + p.count, 0);
+    const last7 = signupsSeries.slice(-7).reduce((s, p) => s + p.count, 0);
+    const prev7 = signupsSeries.slice(-14, -7).reduce((s, p) => s + p.count, 0);
+    const wowDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
+
+    // Revenue snapshot.
+    const subs = subsRes.data ?? [];
+    const activeSubs = subs.filter((s: any) => s.status === "active");
+    const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancelled_at);
+    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.monthly_price) || 0), 0);
+
+    // Pipeline snapshot — aggregate HubSpot sync activity by status.
+    const pipeline: Record<string, number> = {};
+    for (const r of pipelineRes.data ?? []) {
+      const k = String(r.sync_status ?? "unknown");
+      pipeline[k] = (pipeline[k] ?? 0) + 1;
+    }
 
     return {
       recentSignups: signupsRes.data ?? [],
       systemAlerts: alertsRes.data ?? [],
       signupsSeries,
+      signupsTotal,
+      wowDelta,
+      revenue: {
+        mrr,
+        activeSubs: activeSubs.length,
+        churnedSubs: churnedSubs.length,
+      },
+      pipeline,
     };
   });
