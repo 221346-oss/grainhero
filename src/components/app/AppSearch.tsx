@@ -1,44 +1,59 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Search, ArrowRight, Command } from "lucide-react";
+import { Search, ArrowRight, Command, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NavTarget = { label: string; to: string; group: string };
+type NavTarget = { label: string; to: string; group: string; keywords?: string };
 
-// Global nav catalog for quick-jump on dashboard / platform scopes.
+// Global nav catalog — every authenticated destination.
 const NAV_TARGETS: NavTarget[] = [
-  { label: "Dashboard", to: "/dashboard", group: "Home" },
-  { label: "Grain Batches", to: "/grain-batches", group: "Operations" },
+  { label: "Dashboard", to: "/dashboard", group: "Home", keywords: "home overview" },
+  // Operations
+  { label: "Grain Batches", to: "/grain-batches", group: "Operations", keywords: "lots inventory" },
   { label: "Silos", to: "/silos", group: "Operations" },
   { label: "Warehouses", to: "/warehouses", group: "Operations" },
-  { label: "Sensors", to: "/sensors", group: "Operations" },
-  { label: "Actuators", to: "/actuators", group: "Operations" },
+  { label: "Sensors", to: "/sensors", group: "Operations", keywords: "iot devices" },
+  { label: "Actuators", to: "/actuators", group: "Operations", keywords: "iot control" },
   { label: "Alerts", to: "/grain-alerts", group: "Operations" },
   { label: "Incidents", to: "/incidents", group: "Operations" },
   { label: "Maintenance", to: "/maintenance", group: "Operations" },
+  { label: "Environmental", to: "/environmental", group: "Operations", keywords: "climate weather" },
+  // Insights
   { label: "AI Predictions", to: "/ai-predictions", group: "Insights" },
   { label: "Analytics", to: "/analytics", group: "Insights" },
   { label: "Reports", to: "/reports", group: "Insights" },
   { label: "ML Models", to: "/ml-models", group: "Insights" },
-  { label: "Data Visualization", to: "/data-visualization", group: "Insights" },
+  { label: "Data Visualization", to: "/data-visualization", group: "Insights", keywords: "charts graphs" },
   { label: "Traceability", to: "/traceability", group: "Insights" },
   { label: "Notifications", to: "/notifications", group: "Insights" },
-  { label: "Activity Logs", to: "/activity-logs", group: "Insights" },
-  { label: "Buyers", to: "/buyers", group: "Business" },
-  { label: "Revenue", to: "/revenue", group: "Business" },
+  { label: "Activity Logs", to: "/activity-logs", group: "Insights", keywords: "audit history" },
+  // Business
+  { label: "Buyers", to: "/buyers", group: "Business", keywords: "customers" },
+  { label: "Orders", to: "/orders", group: "Business", keywords: "hardware install" },
+  { label: "Revenue", to: "/revenue", group: "Business", keywords: "income" },
   { label: "Subscription", to: "/subscription", group: "Business" },
-  { label: "Plans", to: "/plans", group: "Business" },
+  { label: "Plans", to: "/plans", group: "Business", keywords: "pricing" },
   { label: "Insurance", to: "/insurance", group: "Business" },
-  { label: "Team", to: "/team-management", group: "Admin" },
-  { label: "Security", to: "/security-center", group: "Admin" },
+  // Admin
+  { label: "Team", to: "/team-management", group: "Admin", keywords: "members users" },
+  { label: "Security Center", to: "/security-center", group: "Admin" },
+  { label: "Server Monitoring", to: "/server-monitoring", group: "Admin" },
   { label: "Settings", to: "/settings", group: "Admin" },
-  { label: "Platform Console", to: "/platform", group: "Admin" },
+  // Platform (super_admin)
+  { label: "Platform · Tenants", to: "/platform/tenants", group: "Platform" },
+  { label: "Platform · Users & roles", to: "/platform/users", group: "Platform" },
+  { label: "Platform · Plans & pricing", to: "/platform/plans", group: "Platform" },
+  { label: "Platform · Revenue", to: "/platform/revenue", group: "Platform" },
+  { label: "Platform · Pipeline", to: "/platform/pipeline", group: "Platform", keywords: "hubspot leads" },
+  { label: "Platform · Leads", to: "/platform/leads", group: "Platform" },
+  { label: "Platform · Install orders", to: "/platform/orders", group: "Platform", keywords: "hardware" },
+  { label: "Platform · Health", to: "/platform/health", group: "Platform" },
+  { label: "Platform · Audit logs", to: "/platform/audit-logs", group: "Platform" },
+  { label: "Platform · System logs", to: "/platform/logs", group: "Platform" },
 ];
 
-// Human-readable label per route prefix.
+// Human-readable label per route prefix — for page-scoped placeholder.
 const PAGE_LABELS: Record<string, string> = {
-  "/dashboard": "Global search",
-  "/platform": "Platform (tenants, users, logs)",
   "/grain-batches": "batches",
   "/silos": "silos",
   "/sensors": "sensors",
@@ -54,13 +69,25 @@ const PAGE_LABELS: Record<string, string> = {
   "/activity-logs": "activity",
   "/reports": "reports",
   "/plans": "plans",
+  "/insurance": "policies",
+  "/subscription": "your subscription",
+  "/environmental": "environmental readings",
+  "/traceability": "batch traceability",
+  "/analytics": "analytics",
+  "/ai-predictions": "predictions",
+  "/ml-models": "models",
+  "/data-visualization": "visualisations",
+  "/security-center": "security events",
+  "/server-monitoring": "server metrics",
+  "/revenue": "revenue records",
+  "/settings": "settings",
 };
 
 function scopeFor(pathname: string): { global: boolean; label: string } {
   if (pathname === "/dashboard" || pathname.startsWith("/platform")) {
-    return { global: true, label: PAGE_LABELS[pathname === "/dashboard" ? "/dashboard" : "/platform"] };
+    return { global: true, label: pathname === "/dashboard" ? "Global search" : "Platform search" };
   }
-  const key = Object.keys(PAGE_LABELS).find((k) => k !== "/dashboard" && k !== "/platform" && pathname.startsWith(k));
+  const key = Object.keys(PAGE_LABELS).find((k) => pathname.startsWith(k));
   return { global: false, label: key ? `Search ${PAGE_LABELS[key]} on this page` : "Search this page" };
 }
 
