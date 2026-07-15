@@ -2,15 +2,18 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, ArrowRight, ArrowLeft, Sparkles, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * A game-style guided tour that plays the first time a signed-in user lands
  * on the app (and can be replayed from Settings). Each step points to a real
  * UI element via `data-tour="…"`, highlights it with a spotlight, and shows
  * a friendly tooltip with next/back/skip controls.
+ * 
+ * Tour completion is stored per-user in Supabase profiles.preferences.onboarding_completed
  */
 
-const STORAGE_KEY = "gh_onboarding_v1_done";
+const STORAGE_KEY = "gh_onboarding_v1_done"; // Fallback for local storage
 const RESTART_EVENT = "gh:restart-tour";
 
 type Step = {
@@ -74,13 +77,41 @@ const STEPS: Step[] = [
 ];
 
 /** Public helper — call to replay the tour from anywhere. */
-export function restartOnboardingTour() {
+export async function restartOnboardingTour() {
   if (typeof window === "undefined") return;
+  
+  // Clear local storage fallback
   try {
     window.localStorage.removeItem(STORAGE_KEY);
   } catch {
     /* ignore */
   }
+  
+  // Clear Supabase preference
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("id", user.id)
+        .single();
+      
+      const preferences = (profile?.preferences as any) || {};
+      await supabase
+        .from("profiles")
+        .update({
+          preferences: {
+            ...preferences,
+            onboarding_completed: false,
+          },
+        })
+        .eq("id", user.id);
+    }
+  } catch (error) {
+    console.error("Failed to reset onboarding in database:", error);
+  }
+  
   window.dispatchEvent(new Event(RESTART_EVENT));
 }
 
@@ -88,35 +119,101 @@ export function OnboardingTour() {
   const [active, setActive] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Check if user has completed onboarding (Supabase + localStorage fallback)
+  const checkOnboardingStatus = useCallback(async () => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return true; // Not logged in, don't show tour
+      
+      setUserId(user.id);
+      
+      // Check Supabase first (source of truth)
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("id", user.id)
+        .single();
+      
+      if (error) {
+        console.error("Error fetching profile:", error);
+        // Fallback to localStorage on database error
+        try {
+          return window.localStorage.getItem(STORAGE_KEY) === "1";
+        } catch {
+          return false;
+        }
+      }
+      
+      const preferences = (profile?.preferences as any) || {};
+      
+      // If onboarding_completed is explicitly set in database, use that
+      if (preferences.onboarding_completed !== undefined) {
+        return preferences.onboarding_completed;
+      }
+      
+      // For existing users without the flag, check localStorage as migration path
+      try {
+        const localDone = window.localStorage.getItem(STORAGE_KEY) === "1";
+        if (localDone) {
+          // Migrate localStorage flag to database
+          await supabase
+            .from("profiles")
+            .update({
+              preferences: {
+                ...preferences,
+                onboarding_completed: true,
+                onboarding_completed_at: new Date().toISOString(),
+              },
+            })
+            .eq("id", user.id);
+          return true;
+        }
+      } catch {
+        /* ignore localStorage errors */
+      }
+      
+      // New user - show the tour
+      return false;
+    } catch (error) {
+      console.error("Error checking onboarding status:", error);
+      // Fallback to localStorage on any error
+      try {
+        return window.localStorage.getItem(STORAGE_KEY) === "1";
+      } catch {
+        return false;
+      }
+    }
+  }, []);
 
   // Kick off on first visit + listen for manual restarts.
   useEffect(() => {
-    let done = false;
-    try {
-      done = window.localStorage.getItem(STORAGE_KEY) === "1";
-    } catch {
-      /* ignore */
-    }
-    if (!done) {
-      // Delay so sidebar & layout have mounted fully
-      const t = setTimeout(() => setActive(true), 1500);
-      const onRestart = () => {
+    let mounted = true;
+    
+    checkOnboardingStatus().then((done) => {
+      if (mounted && !done) {
+        // Small delay so the sidebar & layout have mounted.
+        const t = setTimeout(() => {
+          if (mounted) setActive(true);
+        }, 450);
+        return () => clearTimeout(t);
+      }
+    });
+
+    const onRestart = () => {
+      if (mounted) {
         setStepIdx(0);
         setActive(true);
-      };
-      window.addEventListener(RESTART_EVENT, onRestart);
-      return () => {
-        clearTimeout(t);
-        window.removeEventListener(RESTART_EVENT, onRestart);
-      };
-    }
-    const onRestart = () => {
-      setStepIdx(0);
-      setActive(true);
+      }
     };
     window.addEventListener(RESTART_EVENT, onRestart);
-    return () => window.removeEventListener(RESTART_EVENT, onRestart);
-  }, []);
+    return () => {
+      mounted = false;
+      window.removeEventListener(RESTART_EVENT, onRestart);
+    };
+  }, [checkOnboardingStatus]);
 
   const step = STEPS[stepIdx];
 
@@ -150,14 +247,44 @@ export function OnboardingTour() {
     };
   }, [active, measure]);
 
-  const finish = useCallback(() => {
+  const finish = useCallback(async () => {
+    // Save to localStorage as fallback
     try {
       window.localStorage.setItem(STORAGE_KEY, "1");
     } catch {
       /* ignore */
     }
+    
+    // Save to Supabase (source of truth)
+    if (userId) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("preferences")
+          .eq("id", userId)
+          .single();
+        
+        const preferences = (profile?.preferences as any) || {};
+        await supabase
+          .from("profiles")
+          .update({
+            preferences: {
+              ...preferences,
+              onboarding_completed: true,
+              onboarding_completed_at: new Date().toISOString(),
+            },
+          })
+          .eq("id", userId);
+        
+        console.log("✅ Onboarding tour completed and saved to database");
+      } catch (error) {
+        console.error("Failed to save onboarding completion to database:", error);
+        // Tour still closes, localStorage is the fallback
+      }
+    }
+    
     setActive(false);
-  }, []);
+  }, [userId]);
 
   const next = () => {
     if (stepIdx >= STEPS.length - 1) return finish();

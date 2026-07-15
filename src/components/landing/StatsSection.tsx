@@ -29,9 +29,9 @@ export function StatsSection() {
   return (
     <section
       id="stats-section"
-      className="relative py-12 sm:py-24 overflow-hidden"
+      className="relative py-10 sm:py-16 overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #00a63e 0%, #029238 40%, #016c28 100%)'
+        background: 'linear-gradient(135deg, #2FAC0C 0%, #2FAC0C 40%, #252d26 100%)'
       }}
     >
       {/* Background pattern */}
@@ -48,8 +48,8 @@ export function StatsSection() {
       </div>
 
       <div className="container mx-auto px-4 sm:px-8 lg:px-12 relative z-10 max-w-7xl">
-        {/* Header — compact on mobile */}
-        <div className="text-center mb-6 sm:mb-16">
+        {/* Header */}
+        <div className="text-center mb-6 sm:mb-10">
           <h2
             className={`text-2xl sm:text-5xl lg:text-6xl font-black leading-tight text-white transform transition-all duration-1000 ${
               isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'
@@ -69,12 +69,12 @@ export function StatsSection() {
               transition={{ delay: index * 0.15 + 0.3, duration: 0.6 }}
               className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center hover:bg-white/15 transition-all duration-300 group"
             >
-              {/* Icon — smaller on mobile */}
+              {/* Icon */}
               <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4">
                 <stat.icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
 
-              {/* Counter — smaller on mobile */}
+              {/* Counter */}
               <div className="text-2xl sm:text-4xl lg:text-5xl font-black text-white mb-1 sm:mb-2">
                 {isVisible ? (
                   <AnimatedNumber value={stat.value} suffix={stat.suffix} />
@@ -87,27 +87,6 @@ export function StatsSection() {
             </motion.div>
           ))}
         </div>
-
-        {/* Trust badges — horizontal scroll on mobile */}
-        <div 
-          className="mt-8 sm:mt-16 flex flex-nowrap sm:flex-wrap justify-start sm:justify-center gap-2 sm:gap-8 overflow-x-auto pb-2 sm:pb-0 [&::-webkit-scrollbar]:hidden"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {['ISO Certified', 'GDPR Compliant', '256-bit Encrypted', 'SOC 2 Ready'].map(
-            (badge, i) => (
-              <motion.div
-                key={badge}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={isVisible ? { opacity: 1, scale: 1 } : {}}
-                transition={{ delay: i * 0.1 + 0.8, duration: 0.4 }}
-                className="flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 flex-shrink-0"
-              >
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-white/70" />
-                <span className="text-xs sm:text-sm font-medium text-white/80 whitespace-nowrap">{badge}</span>
-              </motion.div>
-            )
-          )}
-        </div>
       </div>
     </section>
   )
@@ -119,7 +98,7 @@ function AnimatedNumber({ value, suffix }: { value: number; suffix: string }) {
   const isDecimal = value % 1 !== 0
 
   useEffect(() => {
-    const duration = 2000
+    const duration = 4000
     const startTime = Date.now()
 
     const timer = setInterval(() => {
@@ -141,3 +120,4 @@ function AnimatedNumber({ value, suffix }: { value: number; suffix: string }) {
     </span>
   )
 }
+
