@@ -1526,7 +1526,6 @@ export type Database = {
           last_calibration_date: string | null
           last_heartbeat: string | null
           last_maintenance_date: string | null
-          last_ping_at: string | null
           mac_address: string | null
           manufacturer: string | null
           ml_decision: string | null
@@ -1578,7 +1577,6 @@ export type Database = {
           last_calibration_date?: string | null
           last_heartbeat?: string | null
           last_maintenance_date?: string | null
-          last_ping_at?: string | null
           mac_address?: string | null
           manufacturer?: string | null
           ml_decision?: string | null
@@ -1630,7 +1628,6 @@ export type Database = {
           last_calibration_date?: string | null
           last_heartbeat?: string | null
           last_maintenance_date?: string | null
-          last_ping_at?: string | null
           mac_address?: string | null
           manufacturer?: string | null
           ml_decision?: string | null
