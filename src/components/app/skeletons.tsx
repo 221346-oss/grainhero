@@ -1,73 +1,91 @@
 import { cn } from "@/lib/utils";
-import { Wheat } from "lucide-react";
 
-/**
- * Branded Loader featuring the GrainHero logo in the center and a spinning green ring.
- * Replaces generic grey pulse skeletons for a premium loading experience.
- */
-export function BrandedLoader({
-  fullScreen = true,
-  text = "Loading your dashboard…"
-}: {
-  fullScreen?: boolean;
-  text?: string;
-}) {
+// Lightweight grey pulse skeletons (previous version restored).
+function Bar({ className }: { className?: string }) {
+  return <div className={cn("animate-pulse rounded-md bg-slate-200/80", className)} />;
+}
+
+export function StatsSkeleton({ count = 4, className }: { count?: number; className?: string }) {
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center transition-all duration-300",
-      fullScreen 
-        ? "min-h-screen bg-gradient-to-br from-emerald-50/40 to-sky-50/40" 
-        : "h-[320px] w-full bg-transparent"
-    )}>
-      <div className="flex flex-col items-center gap-4">
-        {/* Centered Logo with green ring around it */}
-        <div className="relative">
-          <div className="h-16 w-16 rounded-2xl bg-[#00a63e] flex items-center justify-center shadow-lg shadow-emerald-100">
-            <Wheat className="h-9 w-9 text-white animate-[pulse_2s_infinite]" />
-          </div>
-          {/* Spinning green ring */}
-          <div className="absolute -inset-1.5 rounded-[18px] border-2 border-emerald-100 border-t-[#00a63e] animate-[spin_1.2s_linear_infinite]" />
+    <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-4", className)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+          <Bar className="h-3 w-20" />
+          <Bar className="h-7 w-24" />
+          <Bar className="h-2 w-16" />
         </div>
-
-        {/* Brand details */}
-        <div className="text-center">
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">GrainHero</h2>
-          <p className="text-xs text-slate-500 mt-1 font-medium">{text}</p>
-        </div>
-
-        {/* Dynamic progress bar */}
-        <div className="w-36 h-1 bg-emerald-100 rounded-full overflow-hidden mt-1">
-          <div className="h-full bg-gradient-to-r from-[#00a63e] to-emerald-400 rounded-full animate-[progress_1.5s_ease-in-out_infinite]" />
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
 
-export function StatsSkeleton({ className }: { count?: number; className?: string }) {
-  return <BrandedLoader fullScreen={false} text="Loading stats…" />;
+export function ListSkeleton({ rows = 5, className }: { rows?: number; className?: string }) {
+  return (
+    <div className={cn("space-y-2", className)}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 bg-white">
+          <Bar className="h-9 w-9 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Bar className="h-3 w-1/3" />
+            <Bar className="h-2 w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-export function ListSkeleton({ className }: { rows?: number; className?: string }) {
-  return <BrandedLoader fullScreen={false} text="Loading list details…" />;
+export function TableSkeleton({ rows = 6, cols = 4, className }: { rows?: number; cols?: number; className?: string }) {
+  return (
+    <div className={cn("rounded-xl border border-slate-200 bg-white overflow-hidden", className)}>
+      <div className="grid gap-2 p-3 border-b border-slate-100" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+        {Array.from({ length: cols }).map((_, i) => <Bar key={i} className="h-3" />)}
+      </div>
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} className="grid gap-2 p-3 border-b border-slate-50" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+          {Array.from({ length: cols }).map((_, c) => <Bar key={c} className="h-3" />)}
+        </div>
+      ))}
+    </div>
+  );
 }
 
-export function TableSkeleton({ className }: { rows?: number; cols?: number; className?: string }) {
-  return <BrandedLoader fullScreen={false} text="Loading table data…" />;
+export function CardsSkeleton({ count = 3, className }: { count?: number; className?: string }) {
+  return (
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4", className)}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+          <Bar className="h-24 w-full" />
+          <Bar className="h-4 w-2/3" />
+          <Bar className="h-3 w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
-export function CardsSkeleton({ className }: { count?: number; className?: string }) {
-  return <BrandedLoader fullScreen={false} text="Loading cards…" />;
-}
-
-export function FormSkeleton({ className }: { fields?: number; className?: string }) {
-  return <BrandedLoader fullScreen={false} text="Loading form fields…" />;
+export function FormSkeleton({ fields = 4, className }: { fields?: number; className?: string }) {
+  return (
+    <div className={cn("space-y-4", className)}>
+      {Array.from({ length: fields }).map((_, i) => (
+        <div key={i} className="space-y-2">
+          <Bar className="h-3 w-24" />
+          <Bar className="h-9 w-full" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function DashboardSkeleton() {
-  return <BrandedLoader fullScreen={false} text="Loading dashboard modules…" />;
+  return (
+    <div className="space-y-6">
+      <StatsSkeleton />
+      <CardsSkeleton count={2} />
+    </div>
+  );
 }
 
 export function InlineListSkeleton() {
-  return <BrandedLoader fullScreen={false} text="Syncing latest info…" />;
+  return <ListSkeleton rows={3} />;
 }

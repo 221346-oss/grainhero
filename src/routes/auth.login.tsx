@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const { prefill, redirect, reason } = Route.useSearch();
   const [email, setEmail] = useState(prefill ?? "");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(
     reason === "idle"
@@ -56,12 +57,9 @@ function LoginPage() {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Send OTP to the email — Supabase delivers it via their email system
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
-      options: {
-        shouldCreateUser: false, // only existing users can log in
-      },
+      password,
     });
 
     setLoading(false);
@@ -71,12 +69,7 @@ function LoginPage() {
       return;
     }
 
-    // OTP sent — go to verify page
-    navigate({
-      to: "/auth/verify-otp",
-      search: { email: normalizedEmail } as never,
-      replace: true,
-    });
+    navigate({ to: redirect ?? "/dashboard", replace: true });
   };
 
   return (
@@ -85,7 +78,7 @@ function LoginPage() {
         <div className="text-center">
           <h1 className="text-2xl font-semibold">Welcome back</h1>
           <p className="text-sm text-muted-foreground">
-            Enter your email and we'll send you a one-time code
+            Sign in with your email and password
           </p>
         </div>
 
@@ -99,10 +92,34 @@ function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="you@company.com"
+                autoComplete="email"
                 className="pl-9"
                 required
                 autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="li-password">Password</Label>
+              <Link to="/auth/forgot-password" className="text-xs text-[#00a63e] hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                id="li-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                className="pl-9"
+                required
+                minLength={6}
               />
             </div>
           </div>
@@ -116,7 +133,7 @@ function LoginPage() {
           >
             {loading
               ? <Loader2 className="w-4 h-4 animate-spin" />
-              : "Send verification code"}
+              : "Sign in"}
           </Button>
         </form>
 
