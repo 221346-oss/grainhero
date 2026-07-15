@@ -15,6 +15,8 @@ import { validateSignupForm, validatePassword, type PasswordStrength } from "@/l
 import { resolvePlanId, type PlanId } from "@/lib/pricing-data";
 import { getCheckoutSessionSummary } from "@/lib/stripe-checkout.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
+import { sendWelcomeEmail } from "@/lib/email-automation.functions";
+import { syncSignupToHubspot } from "@/lib/hubspot.functions";
 
 const DRAFT_KEY = "grainhero.checkoutDraft.v1";
 
@@ -184,6 +186,19 @@ function SignupPage() {
       setMsg({ type: "error", text: `Account created but sign-in failed: ${signInError.message}` });
       return;
     }
+
+    // Fire-and-forget: welcome email + HubSpot sync (don't block the redirect).
+    const [firstName, ...rest] = form.name.trim().split(/\s+/);
+    void sendWelcomeEmail().catch((e) => console.warn("[signup] welcome email failed:", e));
+    void syncSignupToHubspot({
+      data: {
+        email: normalizedEmail,
+        firstName,
+        lastName: rest.join(" ") || undefined,
+        phone: form.phone.trim() || undefined,
+        company: form.name.trim(),
+      },
+    }).catch((e) => console.warn("[signup] hubspot sync failed:", e));
 
     // Step 4: Redirect directly to dashboard (or original redirect target)
     if (safeRedirect) navigate({ to: safeRedirect as never });

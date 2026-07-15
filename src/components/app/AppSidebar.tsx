@@ -44,11 +44,11 @@ type NavItem = {
 // Pinned = the ~8 items always visible in the sidebar (Slack-style "starred/channels").
 const pinnedNav: NavItem[] = [
   { name: "dashboard", label: "Home", to: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "silos", label: "Silos", to: "/silos", icon: Warehouse, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["admin", "manager", "technician"] },
+  { name: "silos", label: "Silos", to: "/silos", icon: Warehouse, roles: ["admin", "manager", "technician"] },
+  { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin", "manager", "technician"] },
+  { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager", "technician"] },
+  { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin", "manager", "technician"] },
   { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["super_admin", "admin", "manager"], badge: "AI" },
   { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
 ];
@@ -58,7 +58,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Operations",
     items: [
-      { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["super_admin", "admin", "manager", "technician"] },
+      { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
       { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["super_admin", "admin", "manager"] },
       { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
       { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["super_admin", "admin", "manager", "technician"] },
