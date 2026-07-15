@@ -16,6 +16,7 @@ import pricingData, { getCheckoutTotals } from "@/lib/pricing-data";
 import { supabase } from "@/integrations/supabase/client";
 import { createStripeCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
+import { validateEmail } from "@/lib/validation";
 
 const DRAFT_KEY = "grainhero.checkoutDraft.v1";
 type Draft = {
@@ -80,9 +81,93 @@ function CheckoutPage() {
   const [taxId, setTaxId] = useState("");
   const draftLoaded = useRef(false);
 
+  // Field validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, []);
+
+  // Just trim whitespace — no auto-conversion, user must include country code
+  const normalizePhone = (value: string): string => value.trim();
+
+  const isPhoneValid = (value: string): boolean => {
+    const n = value.trim();
+    if (!n.startsWith("+")) return false;
+    const d = n.slice(1).replace(/[\s\-\(\)]/g, "");
+    return /^\d+$/.test(d) && d.length >= 7 && d.length <= 15;
+  };
+
+  const isNameValid = (value: string): boolean => {
+    const parts = value.trim().split(/\s+/).filter((p) => p.length > 0);
+    return parts.length >= 2 && parts.every((p) => p.length >= 2);
+  };
+
+  // Validation helper
+  const validateField = (field: string, value: string) => {
+    let result: { isValid: boolean; message: string };
+    switch (field) {
+      case "customerName": {
+        if (!value.trim()) {
+          result = { isValid: false, message: "Full name is required" };
+        } else if (!isNameValid(value)) {
+          const parts = value.trim().split(/\s+/).filter((p) => p.length > 0);
+          if (parts.length < 2) {
+            result = { isValid: false, message: "Please enter first and last name" };
+          } else {
+            result = { isValid: false, message: "Each name part must be at least 2 characters" };
+          }
+        } else {
+          result = { isValid: true, message: "" };
+        }
+        break;
+      }
+      case "customerEmail":
+        result = validateEmail(value);
+        break;
+      case "phone": {
+        const normalized = normalizePhone(value);
+        if (!normalized) {
+          result = { isValid: false, message: "Phone number is required" };
+        } else if (!normalized.startsWith("+")) {
+          result = { isValid: false, message: "Must start with + and country code e.g. +1, +44, +92" };
+        } else {
+          const digits = normalized.slice(1).replace(/[\s\-\(\)]/g, "");
+          if (!/^\d+$/.test(digits) || digits.length < 7 || digits.length > 15) {
+            result = { isValid: false, message: "Enter a valid phone number e.g. +92 300 1234567" };
+          } else {
+            result = { isValid: true, message: "" };
+          }
+        }
+        break;
+      }
+      case "address":
+        result = !value.trim() || value.trim().length < 3
+          ? { isValid: false, message: "Address must be at least 3 characters" }
+          : { isValid: true, message: "" };
+        break;
+      case "city":
+        result = !value.trim()
+          ? { isValid: false, message: "City is required" }
+          : { isValid: true, message: "" };
+        break;
+      case "country":
+        result = !value.trim()
+          ? { isValid: false, message: "Country is required" }
+          : { isValid: true, message: "" };
+        break;
+      default:
+        result = { isValid: true, message: "" };
+    }
+    
+    setErrors(prev => ({ ...prev, [field]: result.message }));
+    return result.isValid;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
 
   // Restore any locally-saved draft (from an interrupted session).
   useEffect(() => {
@@ -152,7 +237,7 @@ function CheckoutPage() {
             address: address.trim(),
             city: city.trim(),
             country: country.trim(),
-            phone: phone.trim(),
+            phone: normalizePhone(phone).trim(),
             preferredDate: preferredDate || null,
             notes: notes.trim() || null,
             businessName: businessName.trim() || null,
@@ -171,12 +256,12 @@ function CheckoutPage() {
 
   const canPay =
     iotQuantity >= 1 &&
-    customerName.trim().length > 1 &&
+    isNameValid(customerName) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) &&
     customerPassword.length >= 8 &&
     address.trim().length > 2 &&
     country.trim().length > 0 &&
-    phone.trim().length > 3;
+    isPhoneValid(phone);
 
   const planData = pricingData.find((p) => p.id === selected);
   const checkoutTotals = planData ? getCheckoutTotals(selected, iotQuantity) : null;
@@ -198,7 +283,19 @@ function CheckoutPage() {
 
   const goNext = () => {
     if (!stepValid[step]) {
-      toast.error("Please complete the highlighted fields to continue.");
+      // Mark all fields on current step as touched so errors show
+      if (step === 1) {
+        setTouched(prev => ({ ...prev, customerName: true, customerEmail: true }));
+        validateField("customerName", customerName);
+        validateField("customerEmail", customerEmail);
+      } else if (step === 2) {
+        setTouched(prev => ({ ...prev, address: true, city: true, country: true, phone: true }));
+        validateField("address", address);
+        validateField("city", city);
+        validateField("country", country);
+        validateField("phone", phone);
+      }
+      toast.error("Please fix the errors above to continue.");
       return;
     }
     setStep((s) => Math.min(3, s + 1));
@@ -351,6 +448,34 @@ function CheckoutPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Grand Total Summary */}
+                <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-sky-50">
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Monthly subscription</span>
+                        <span className="font-medium">Rs. {planData?.price.toLocaleString()}/mo</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">IoT setup (one-time)</span>
+                        <span className="font-medium">Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                      </div>
+                      <Separator className="bg-slate-300" />
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-base font-semibold text-slate-900">Total due today</span>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-emerald-700">
+                            Rs. {((planData?.price ?? 0) + iotQuantity * 7000).toLocaleString()}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            Then Rs. {planData?.price.toLocaleString()}/month
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
 
@@ -364,14 +489,49 @@ function CheckoutPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <Label htmlFor="customer-name">Full name *</Label>
-                      <Input id="customer-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Your name" maxLength={160} />
+                      <Input 
+                        id="customer-name" 
+                        value={customerName} 
+                        onChange={(e) => {
+                          setCustomerName(e.target.value);
+                          if (touched.customerName) validateField("customerName", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("customerName");
+                          validateField("customerName", customerName);
+                        }}
+                        placeholder="e.g., Ahmed Khan" 
+                        maxLength={160}
+                        className={touched.customerName && errors.customerName ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.customerName && errors.customerName && (
+                        <p className="text-xs text-red-600 mt-1">{errors.customerName}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="customer-email">Email *</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <Input id="customer-email" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="you@example.com" className="pl-9" maxLength={180} />
+                        <Input 
+                          id="customer-email" 
+                          type="email" 
+                          value={customerEmail} 
+                          onChange={(e) => {
+                            setCustomerEmail(e.target.value);
+                            if (touched.customerEmail) validateField("customerEmail", e.target.value);
+                          }}
+                          onBlur={() => {
+                            handleBlur("customerEmail");
+                            validateField("customerEmail", customerEmail);
+                          }}
+                          placeholder="ahmed@grainstorage.pk" 
+                          className={`pl-9 ${touched.customerEmail && errors.customerEmail ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                          maxLength={180} 
+                        />
                       </div>
+                      {touched.customerEmail && errors.customerEmail && (
+                        <p className="text-xs text-red-600 mt-1">{errors.customerEmail}</p>
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="customer-password">Password * <span className="text-slate-400 font-normal text-xs">(min. 8 characters)</span></Label>
@@ -416,11 +576,44 @@ function CheckoutPage() {
                     </div>
                     <div>
                       <Label htmlFor="country">Country *</Label>
-                      <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} maxLength={120} />
+                      <Input 
+                        id="country" 
+                        value={country} 
+                        onChange={(e) => {
+                          setCountry(e.target.value);
+                          if (touched.country) validateField("country", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("country");
+                          validateField("country", country);
+                        }}
+                        maxLength={120}
+                        className={touched.country && errors.country ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.country && errors.country && (
+                        <p className="text-xs text-red-600 mt-1">{errors.country}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="phone">Contact phone *</Label>
-                      <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 300 …" maxLength={40} />
+                      <Input 
+                        id="phone" 
+                        value={phone} 
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (touched.phone) validateField("phone", e.target.value);
+                        }}
+                        onBlur={() => {
+                          handleBlur("phone");
+                          validateField("phone", phone);
+                        }}
+                        placeholder="+92 300 1234567 / +1 555 0000" 
+                        maxLength={40}
+                        className={touched.phone && errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      />
+                      {touched.phone && errors.phone && (
+                        <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="date">Preferred install date</Label>
@@ -428,11 +621,11 @@ function CheckoutPage() {
                     </div>
                     <div>
                       <Label htmlFor="biz">Business name (invoicing)</Label>
-                      <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} maxLength={200} />
+                      <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g., Khan Grain Storage Pvt. Ltd." maxLength={200} />
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="notes">Notes for the technician</Label>
-                      <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="Warehouse count, silo count, access instructions, etc." />
+                      <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="e.g., 3 warehouses, 12 silos total, access via back gate, need 2-day advance notice" />
                     </div>
                   </div>
                 </CardContent>
@@ -445,20 +638,30 @@ function CheckoutPage() {
                   <CardTitle className="text-base flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" /> Review your order</CardTitle>
                   <CardDescription>Confirm everything looks right before we hand you to Stripe.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
+                <CardContent className="space-y-3 text-sm">
+                  {/* Plan */}
                   <div className="rounded-lg bg-emerald-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Plan</p>
+                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold mb-1">Plan</p>
                     <p className="font-medium text-slate-900">{planData?.name} — {planData?.priceFrontend}</p>
                   </div>
+
+                  {/* Buyer */}
                   <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Buyer</p>
-                    <p className="text-slate-900">{customerName} · {customerEmail}</p>
+                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">Buyer</p>
+                    <p className="text-slate-900">{customerName}</p>
+                    <p className="text-slate-600 text-xs">{customerEmail}</p>
+                    {businessName && <p className="text-slate-600 text-xs mt-0.5">Business: {businessName}</p>}
+                    {taxId && <p className="text-slate-600 text-xs">GST / Tax ID: {taxId}</p>}
                   </div>
+
+                  {/* Install site */}
                   <div className="rounded-lg bg-slate-50 p-3">
                     <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Install site</p>
                     <p className="text-slate-900">{address}, {country}</p>
                     <p className="text-slate-600 text-xs">Phone: {phone}{preferredDate ? ` · Preferred: ${preferredDate}` : ""}</p>
                   </div>
+
+                  {/* IoT setup */}
                   <div className="rounded-lg bg-amber-50 p-3">
                     <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">IoT setup</p>
                     <p className="text-slate-900">

@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { listWarehouses, upsertWarehouse, deleteWarehouse } from "@/lib/operations.functions";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 export const Route = createFileRoute("/_authenticated/warehouses")({
   component: WarehousesPage,
@@ -60,6 +61,9 @@ function WarehousesPage() {
   const upsert = useServerFn(upsertWarehouse);
   const del = useServerFn(deleteWarehouse);
   const qc = useQueryClient();
+  
+  // Plan limits check
+  const { canAddWarehouse, warehouseLimitMessage } = usePlanLimits();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["warehouses"],
@@ -182,10 +186,30 @@ function WarehousesPage() {
             <SelectItem value="error">Error</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={openCreate} className="gap-2">
+        <Button 
+          onClick={openCreate} 
+          className="gap-2"
+          disabled={!canAddWarehouse}
+          title={warehouseLimitMessage ?? "Create new warehouse"}
+        >
           <Plus className="w-4 h-4" /> New warehouse
         </Button>
       </div>
+
+      {/* Plan limit warning banner */}
+      {warehouseLimitMessage && (
+        <Card className="border-amber-300 bg-amber-50 mb-4">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Building2 className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-medium text-amber-900">{warehouseLimitMessage}</p>
+              <Link to="/subscription" className="text-amber-700 underline text-xs">
+                View plans →
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Table */}
       {isLoading ? (

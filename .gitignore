@@ -37,3 +37,7 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment variables — keep root .env tracked for public Supabase config,
+# but continue ignoring local/secret environment variants.
+.env.*
+!.env.example

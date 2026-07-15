@@ -111,6 +111,24 @@ function SignupPage() {
   const update = (k: keyof typeof form, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (k === "password") setStrength(validatePassword(v).strength);
+    
+    // Real-time validation on change (if field was touched)
+    if (touched[k]) {
+      validateSingleField(k, v);
+    }
+  };
+
+  const validateSingleField = (field: keyof typeof form, value: string) => {
+    const result = validateSignupForm({ ...form, [field]: value });
+    setFieldErrors(prev => ({
+      ...prev,
+      [field]: result.errors[field] || ""
+    }));
+  };
+
+  const handleBlur = (field: keyof typeof form) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateSingleField(field, form[field]);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -183,15 +201,48 @@ function SignupPage() {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="su-name">Full name</Label>
-            <Input id="su-name" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Jane Doe" required />
+            <Input 
+              id="su-name" 
+              value={form.name} 
+              onChange={(e) => update("name", e.target.value)} 
+              onBlur={() => handleBlur("name")}
+              placeholder="e.g., Ahmed Khan" 
+              required
+              className={touched.name && fieldErrors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
+            />
+            {touched.name && fieldErrors.name && (
+              <p className="text-xs text-red-600">{fieldErrors.name}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="su-email">Email</Label>
-            <Input id="su-email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} required />
+            <Input 
+              id="su-email" 
+              type="email" 
+              value={form.email} 
+              onChange={(e) => update("email", e.target.value)} 
+              onBlur={() => handleBlur("email")}
+              placeholder="ahmed@grainstorage.pk" 
+              required
+              className={touched.email && fieldErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+            />
+            {touched.email && fieldErrors.email && (
+              <p className="text-xs text-red-600">{fieldErrors.email}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="su-phone">Phone (optional)</Label>
-            <Input id="su-phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+92 300 0000000" />
+            <Input 
+              id="su-phone" 
+              value={form.phone} 
+              onChange={(e) => update("phone", e.target.value)} 
+              onBlur={() => handleBlur("phone")}
+              placeholder="+92 300 1234567"
+              className={touched.phone && fieldErrors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
+            />
+            {touched.phone && fieldErrors.phone && (
+              <p className="text-xs text-red-600">{fieldErrors.phone}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="su-password">Password</Label>
@@ -201,8 +252,9 @@ function SignupPage() {
                 type={showPassword ? "text" : "password"}
                 value={form.password}
                 onChange={(e) => update("password", e.target.value)}
+                onBlur={() => handleBlur("password")}
                 required
-                className="pr-10"
+                className={`pr-10 ${touched.password && fieldErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
               />
               <button
                 type="button"
@@ -213,6 +265,9 @@ function SignupPage() {
               </button>
             </div>
             {form.password && <PasswordStrengthIndicator strength={strength} />}
+            {touched.password && fieldErrors.password && (
+              <p className="text-xs text-red-600">{fieldErrors.password}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="su-confirm">Confirm password</Label>
@@ -221,8 +276,13 @@ function SignupPage() {
               type={showPassword ? "text" : "password"}
               value={form.confirmPassword}
               onChange={(e) => update("confirmPassword", e.target.value)}
+              onBlur={() => handleBlur("confirmPassword")}
               required
+              className={touched.confirmPassword && fieldErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}
             />
+            {touched.confirmPassword && fieldErrors.confirmPassword && (
+              <p className="text-xs text-red-600">{fieldErrors.confirmPassword}</p>
+            )}
           </div>
           <Message msg={msg} />
           <Button type="submit" disabled={loading} className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">

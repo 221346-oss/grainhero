@@ -155,6 +155,17 @@ export const deleteSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
+    const { count, error: countError } = await context.supabase
+      .from("grain_batches")
+      .select("id", { count: "exact", head: true })
+      .eq("silo_id", data.id)
+      .in("status", ["stored", "on_hold", "processing", "damaged", "expired"]);
+      
+    if (countError) throw countError;
+    if (count && count > 0) {
+      throw new Error("Cannot delete silo: it contains active grain batches. Dispatch or reassign them first.");
+    }
+
     const { error } = await context.supabase.from("silos").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
@@ -248,7 +259,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
     }
 
     const batchId = data.batch_id ?? `${data.grain_type.slice(0,3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
-    const qrPayload = JSON.stringify({ batch_id: batchId, grain_type: data.grain_type, ts: Date.now() });
+    const qrPayload = `GH-${batchId}-${Date.now()}`;
     const { data: row, error } = await context.supabase
       .from("grain_batches")
       .insert({
@@ -695,6 +706,22 @@ export const controlActuator = createServerFn({ method: "POST" })
       patch.human_requested_fan = false;
       patch.current_operation = { action: "emergency_stop", at: now, by: context.userId };
     }
+    const { data: actRow, error: actError } = await context.supabase
+      .from("actuators")
+      .select("actuator_id")
+      .eq("id", data.id)
+      .single();
+    if (actError) throw actError;
+
+    // Bridge: publish command to Firebase RTDB (blocking - will throw if offline/fails)
+    const { publishActuatorCommand } = await import("./actuator-bridge.server");
+    await publishActuatorCommand(actRow.actuator_id, {
+      action: data.action,
+      value: data.value ?? null,
+      by: context.userId,
+      at: now,
+    });
+
     const { data: row, error } = await context.supabase
       .from("actuators")
       .update(patch)
@@ -702,19 +729,6 @@ export const controlActuator = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw error;
-
-    // Bridge: publish command to Firebase RTDB (best-effort, non-blocking)
-    try {
-      const { publishActuatorCommand } = await import("./actuator-bridge.server");
-      await publishActuatorCommand(row.actuator_id, {
-        action: data.action,
-        value: data.value ?? null,
-        by: context.userId,
-        at: now,
-      });
-    } catch (e) {
-      console.warn("Actuator bridge publish failed", e);
-    }
 
     return row;
   });
@@ -982,4 +996,91 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         critical: alertsData.filter((a) => a.alert_type === "critical" || a.alert_type === "high").length,
       },
     };
+  });
+
+export const getSensorHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      device_uuid: z.string().uuid(),
+      hours: z.number().int().positive().default(6),
+      limit: z.number().int().max(1000).default(500),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    const cutoff = new Date(Date.now() - data.hours * 60 * 60 * 1000).toISOString();
+    const { data: rows, error } = await context.supabase
+      .from("sensor_readings")
+      .select("id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, dew_point, fan_state, lid_state, ml_risk_score, ml_risk_class, pressure_value, light_value, pest_presence_score")
+      .eq("device_id", data.device_uuid)
+      .gte("reading_timestamp", cutoff)
+      .order("reading_timestamp", { ascending: true })
+      .limit(data.limit);
+    if (error) throw error;
+    return rows ?? [];
+  });
+
+export const exportSensorCSV = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      device_id: z.string().uuid().optional(),
+    }).parse(d)
+  )
+  .handler(async ({ data, context }) => {
+    let query = context.supabase
+      .from("sensor_readings")
+      .select(`
+        reading_timestamp,
+        silo_id,
+        batch_id,
+        temperature_value,
+        humidity_value,
+        ambient_temperature,
+        ambient_humidity,
+        moisture_value,
+        fan_state,
+        fan_duty_cycle,
+        voc_value,
+        voc_relative,
+        dew_point,
+        ml_risk_class,
+        silos:silo_id(silo_id),
+        grain_batches:batch_id(batch_id)
+      `)
+      .order("reading_timestamp", { ascending: true })
+      .limit(1000);
+
+    if (data.device_id) {
+      query = query.eq("device_id", data.device_id);
+    }
+
+    const { data: readings, error } = await query;
+    if (error) throw error;
+
+    const csvHeader = 'timestamp,silo_id,batch_id,T_core,RH_core,T_amb,RH_amb,Grain_Moisture,fan_state,fan_duty,VOC_index,VOC_relative,dew_point_core,rainfall_last_hour,spoilage_label\n';
+
+    const csvRows = (readings ?? []).map((r: any) => {
+      const siloId = r.silos?.silo_id ?? r.silo_id ?? '';
+      const batchId = r.grain_batches?.batch_id ?? r.batch_id ?? '';
+      return [
+        r.reading_timestamp,
+        siloId,
+        batchId,
+        r.temperature_value ?? '',
+        r.humidity_value ?? '',
+        r.ambient_temperature ?? '',
+        r.ambient_humidity ?? '',
+        r.moisture_value ?? '',
+        r.fan_state ?? 0,
+        r.fan_duty_cycle ?? 0,
+        r.voc_value ?? '',
+        r.voc_relative ?? '',
+        r.dew_point ?? '',
+        0, // rainfall_last_hour fallback
+        r.ml_risk_class ?? 'unknown'
+      ].join(',');
+    });
+
+    return { csv: csvHeader + csvRows.join('\n') };
   });
