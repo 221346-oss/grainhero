@@ -66,8 +66,7 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
         const { data: batches } = await supabaseAdmin
           .from("grain_batches")
           .select("id, silo_id, grain_type, intake_date")
-          .is("deleted_at", null)
-          .eq("status", "active");
+          .is("deleted_at", null);
 
         const activeBatchMap = new Map();
         for (const b of batches ?? []) {
@@ -178,21 +177,8 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               mlRiskScore = mlRes.risk_score;
               mlConfidence = mlRes.confidence;
 
-              // Write to spoilage_predictions table as well
-              await supabaseAdmin.from("spoilage_predictions").insert({
-                batch_id: batchId,
-                silo_id: dev.silo_id,
-                temperature: temp,
-                humidity: hum,
-                moisture: moist,
-                voc: voc,
-                co2: co2,
-                storage_days: storageDays,
-                risk_score: mlRiskScore,
-                risk_class: mlRiskClass,
-                confidence: mlConfidence,
-                factors: mlRes.factors
-              });
+              // spoilage_predictions table not in schema — skip persisting predictions here.
+              void mlRes.factors;
 
               // AUTO-ACTUATION (GH1 Parity)
               const cls = mlRiskClass?.toLowerCase();
@@ -224,10 +210,10 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
 
           // GH1 Unix Timestamp logic (seconds to ms)
           let readingTime = now.toISOString();
-          let rawTs = live.timestamp ?? live.timestamp_unix ?? live.ts;
-          if (typeof rawTs === "number") {
-            if (rawTs < 2000000000) rawTs = rawTs * 1000;
-            readingTime = new Date(rawTs).toISOString();
+          const rawTsRaw = live.timestamp ?? live.timestamp_unix ?? live.ts;
+          if (typeof rawTsRaw === "number") {
+            const ms = rawTsRaw < 2000000000 ? rawTsRaw * 1000 : rawTsRaw;
+            readingTime = new Date(ms).toISOString();
           }
 
           const { error } = await supabaseAdmin.from("sensor_readings").insert({
@@ -274,7 +260,6 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
             };
 
             await supabaseAdmin.from("sensor_devices").update({
-              last_ping_at: now.toISOString(),
               last_heartbeat: now.toISOString(),
               connection_status: "online",
               // GH2 offline cron sets status="offline"; restore on recovery (GH1 uses connection_status only)
@@ -316,6 +301,8 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               if (temp != null && temp > 35) {
                 alertsToCreate.push({
                   alert_id: `TEMP-${Date.now()}`,
+                  admin_id: dev.admin_id,
+                  source: "system",
                   silo_id: dev.silo_id,
                   warehouse_id: dev.warehouse_id,
                   batch_id: batchId,
@@ -329,6 +316,8 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               if (hum != null && hum > 14.5) {
                 alertsToCreate.push({
                   alert_id: `HUM-${Date.now()}`,
+                  admin_id: dev.admin_id,
+                  source: "system",
                   silo_id: dev.silo_id,
                   warehouse_id: dev.warehouse_id,
                   batch_id: batchId,
@@ -356,6 +345,8 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                 if (!recentLeak) {
                   alertsToCreate.push({
                     alert_id: `LEAK-${Date.now()}`,
+                    admin_id: dev.admin_id,
+                    source: "system",
                     silo_id: dev.silo_id,
                     warehouse_id: dev.warehouse_id,
                     batch_id: batchId,
@@ -369,14 +360,15 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               }
 
               if (alertsToCreate.length > 0) {
-                await supabaseAdmin.from("grain_alerts").insert(alertsToCreate);
+                await supabaseAdmin.from("grain_alerts").insert(alertsToCreate as never);
               }
             }
 
             // 3. Closed-Loop Actuator State Sync
             if (dev.silo_id) {
-              const fanOn = live.fan_status === 'running' || live.fan_state === 1 || (live.pwm && live.pwm > 0);
-              const pwm = typeof live.pwm === 'number' ? live.pwm : (fanOn ? 100 : 0);
+              const pwmVal = typeof live.pwm === "number" ? live.pwm : 0;
+              const fanOn = live.fan_status === "running" || live.fan_state === 1 || pwmVal > 0;
+              const pwm = pwmVal > 0 ? pwmVal : fanOn ? 100 : 0;
               
               await supabaseAdmin.from("actuators")
                 .update({ is_on: !!fanOn, power_level: pwm })

@@ -222,3 +222,10 @@ html { scroll-behavior: smooth; }
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
+
+/* Branded loader progress bar animation */
+@keyframes progress {
+  0%   { width: 0%;   margin-left: 0; }
+  50%  { width: 70%;  margin-left: 15%; }
+  100% { width: 0%;   margin-left: 100%; }
+}

@@ -142,31 +142,21 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   );
                 }
 
-                // Email SUPPORT_EMAIL via Resend gateway.
+                // Email SUPPORT_EMAIL via Resend gateway or direct API.
                 try {
                   const gatewayKey = process.env.LOVABLE_API_KEY;
                   const resendKey = process.env.RESEND_API_KEY;
                   const to = process.env.SUPPORT_EMAIL;
-                  const from = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
-                  if (gatewayKey && resendKey && to) {
+                  const configFrom = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
+                  if (resendKey && to) {
                     const { data: order } = await supabaseAdmin
                       .from("hardware_orders" as never)
                       .select("id,plan_name,hardware_quantity,hardware_total,install_address,install_city,install_country,contact_phone,preferred_install_date,notes")
                       .eq("id", hardwareOrderId)
                       .maybeSingle();
                     const o = (order as Record<string, unknown> | null) ?? {};
-                    await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${gatewayKey}`,
-                        "X-Connection-Api-Key": resendKey,
-                      },
-                      body: JSON.stringify({
-                        from,
-                        to: [to],
-                        subject: `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`,
-                        html: `<h2>New install order</h2>
+                    const subject = `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`;
+                    const html = `<h2>New install order</h2>
 <p><b>Order:</b> ${o.id ?? hardwareOrderId}</p>
 <p><b>Plan:</b> ${o.plan_name ?? planId ?? "-"}</p>
 <p><b>Hardware units:</b> ${o.hardware_quantity ?? 0} × Rs. 7,000 = Rs. ${Number(o.hardware_total ?? 0).toLocaleString()}</p>
@@ -174,9 +164,56 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 <p><b>Contact phone:</b> ${o.contact_phone ?? "-"}</p>
 <p><b>Preferred date:</b> ${o.preferred_install_date ?? "-"}</p>
 <p><b>Notes:</b> ${o.notes ?? "-"}</p>
-<p>Open the Platform → Orders console to assign a technician.</p>`,
-                      }),
-                    }).catch((e) => console.warn("[order email] failed:", e));
+<p>Open the Platform → Orders console to assign a technician.</p>`;
+
+                    const trySendWebhookEmail = async (fromAddress: string) => {
+                      if (gatewayKey) {
+                        try {
+                          const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${gatewayKey}`,
+                              "X-Connection-Api-Key": resendKey,
+                            },
+                            body: JSON.stringify({
+                              from: fromAddress,
+                              to: [to],
+                              subject,
+                              html,
+                            }),
+                          });
+                          if (res.ok) return true;
+                        } catch (e) {
+                          console.warn("[webhook email] gateway send failed:", e);
+                        }
+                      }
+                      try {
+                        const res = await fetch("https://api.resend.com/emails", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${resendKey}`,
+                          },
+                          body: JSON.stringify({
+                            from: fromAddress,
+                            to: [to],
+                            subject,
+                            html,
+                          }),
+                        });
+                        return res.ok;
+                      } catch (e) {
+                        console.warn("[webhook email] direct send failed:", e);
+                        return false;
+                      }
+                    };
+
+                    let ok = await trySendWebhookEmail(configFrom);
+                    if (!ok && !configFrom.includes("resend.dev")) {
+                      console.log("[webhook email] Retrying with sandbox onboarding@resend.dev sender");
+                      await trySendWebhookEmail("GrainHero <onboarding@resend.dev>");
+                    }
                   }
                 } catch (e) {
                   console.warn("[order email] error:", e);

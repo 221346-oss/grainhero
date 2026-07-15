@@ -24,6 +24,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
+import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
@@ -144,6 +145,11 @@ const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
   path: '/success',
   getParentRoute: () => CheckoutRoute,
+} as any)
+const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
@@ -446,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -506,6 +513,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout': typeof CheckoutIndexRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -570,6 +578,7 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -634,6 +643,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
     | '/platform/logs'
@@ -694,6 +704,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout'
     | '/platform/logs'
@@ -757,6 +768,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
     | '/_authenticated/platform/logs'
@@ -901,6 +913,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/checkout/success'
       preLoaderRoute: typeof CheckoutSuccessRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/auth/verify-otp': {
+      id: '/auth/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/auth/verify-otp'
+      preLoaderRoute: typeof AuthVerifyOtpRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/auth/signup': {
       id: '/auth/signup'
@@ -1324,6 +1343,7 @@ interface AuthRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  AuthVerifyOtpRoute: typeof AuthVerifyOtpRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -1331,6 +1351,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSignupRoute: AuthSignupRoute,
+  AuthVerifyOtpRoute: AuthVerifyOtpRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
