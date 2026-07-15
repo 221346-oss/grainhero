@@ -200,13 +200,14 @@ function DataVisualizationPage() {
 
   const mlMetrics = useMemo((): MlMetrics => {
     const defaultMetrics = { accuracy: 0.941, precision: 0.925, recall: 0.938, f1_score: 0.931 };
-    if (!mlData?.models || mlData.models.length === 0) return defaultMetrics;
-    const model = mlData.models[0];
+    const models = (mlData?.models ?? []) as ReadonlyArray<Record<string, unknown>>;
+    if (models.length === 0) return defaultMetrics;
+    const model = models[0];
     return {
-      accuracy: model.accuracy ?? defaultMetrics.accuracy,
-      precision: model.precision ?? defaultMetrics.precision,
-      recall: model.recall ?? defaultMetrics.recall,
-      f1_score: model.f1_score ?? defaultMetrics.f1_score,
+      accuracy: (model.accuracy as number | undefined) ?? defaultMetrics.accuracy,
+      precision: (model.precision as number | undefined) ?? defaultMetrics.precision,
+      recall: (model.recall as number | undefined) ?? defaultMetrics.recall,
+      f1_score: (model.f1_score as number | undefined) ?? defaultMetrics.f1_score,
     };
   }, [mlData]);
 
