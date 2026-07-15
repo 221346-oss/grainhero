@@ -8,6 +8,10 @@ export interface LiveReading {
   co2?: number;
   voc?: number;
   tvoc_ppb?: number;         // GH1 legacy field name
+  tvoc?: number;
+  riskIndex?: number;
+  dewPoint?: number;
+  ml_risk_class?: string;
   moisture?: number;
   fan_state?: 0 | 1;
   lid_state?: 0 | 1;
