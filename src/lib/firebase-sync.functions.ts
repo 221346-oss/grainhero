@@ -138,7 +138,8 @@ export const getDeviceLiveTelemetry = createServerFn({ method: "POST" })
     const { fetchLivePayload } = await import("./firebase-admin.server");
     try {
       const payload = await fetchLivePayload(data.device_id);
-      return { ok: true, payload };
+      // Cast through JSON-serializable primitive record to satisfy TanStack's serializable validator.
+      return { ok: true, payload: (payload ?? null) as Record<string, string | number | boolean | null> | null };
     } catch (err) {
       console.error("[getDeviceLiveTelemetry] error:", err);
       return { ok: false, payload: null };
