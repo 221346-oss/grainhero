@@ -114,5 +114,6 @@ Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notification
    - ✅ Server Monitoring: banner (read-only page — no writes to hide).
    - ✅ Security Center: banner (page is already read-only).
    - ✅ Insurance: banner (server RLS still enforces per-tenant writes).
-   - Remaining: Analytics, Buyers, ML Models, Settings (append platform-config section), Environmental (weather-only, no tenant data).
+   - ✅ Analytics, ML Models, Buyers: platform scope banner added.
+   - Skipped: Environmental (weather-only, not tenant-scoped) and Settings (personal settings page — platform-config section deferred until impersonation lands).
 6. ⏳ Tenant impersonation (context cookie + write-lock middleware + banner + "View as tenant" button).
