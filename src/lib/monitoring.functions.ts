@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { blockIfImpersonating } from "./impersonation-guard";
 import { z } from "zod";
 import { getEffectiveRole } from "./rbac.server";
 
@@ -124,7 +125,7 @@ export const getIncidents = createServerFn({ method: "GET" })
 const ackInput = z.object({ id: z.string().uuid(), resolve: z.boolean().optional() });
 
 export const acknowledgeIncident = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, blockIfImpersonating])
   .inputValidator((d) => ackInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
