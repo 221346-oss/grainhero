@@ -106,4 +106,7 @@ Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notification
 3. ✅ `notifyPlatformEvent()` scaffold + wired into `toggleUserBlocked` and Stripe `invoice.payment_failed` + `customer.subscription.deleted`. Set secret `PLATFORM_EVENT_WEBHOOK_URL` to activate.
 4. ✅ Refactor 10 files off direct `has_role` onto `getEffectiveRole()` (roles, platform, revenue-analytics, monitoring, operations2, billing, analytics, team-settings-insurance, hardware-orders, firebase-sync, admin-test-email).
 5. ⏳ Per-page tenant/platform branching (13 pages — one component split per page).
+   - ✅ AI Predictions: added `getPlatformSpoilageOverview` + `PlatformView` (worst-offender tenants, risk distribution, read-only).
+   - ✅ Subscription / Reports / Orders: redirected super_admin to `/platform/revenue` / `/platform/orders` (existing platform equivalents — no dual view needed).
+   - Remaining pages: Analytics, Environmental, Incidents, Maintenance, Server Monitoring, Buyers, Insurance, ML Models, Security Center, Settings.
 6. ⏳ Tenant impersonation (context cookie + write-lock middleware + banner + "View as tenant" button).
