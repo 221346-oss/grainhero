@@ -318,6 +318,19 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   cancellation_date: new Date().toISOString(),
                 } as never)
                 .eq("stripe_subscription_id", sub.id);
+              try {
+                const { notifyPlatformEvent } = await import("@/lib/platform-notify.server");
+                const { data: subRow } = await supabaseAdmin
+                  .from("subscriptions")
+                  .select("customer_id, plan_name")
+                  .eq("stripe_subscription_id", sub.id)
+                  .maybeSingle();
+                await notifyPlatformEvent({
+                  type: "churn",
+                  customerId: (subRow as any)?.customer_id ?? sub.id,
+                  plan: (subRow as any)?.plan_name ?? null,
+                });
+              } catch { /* webhook telemetry only */ }
               break;
             }
             case "invoice.payment_failed":
@@ -335,6 +348,17 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   event: `billing.${event.type}`,
                   meta: { amount: inv.amount_paid, currency: inv.currency } as never,
                 });
+              }
+              if (event.type === "invoice.payment_failed") {
+                try {
+                  const { notifyPlatformEvent } = await import("@/lib/platform-notify.server");
+                  await notifyPlatformEvent({
+                    type: "stripe_payment_failed",
+                    customerId: inv.customer ?? "unknown",
+                    amount: inv.amount_paid,
+                    currency: inv.currency,
+                  });
+                } catch { /* telemetry only */ }
               }
               break;
             }
