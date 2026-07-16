@@ -183,7 +183,7 @@ export const getPlatformBuyersOverview = createServerFn({ method: "GET" })
 
     const [{ data: buyers }, { data: invoices }] = await Promise.all([
       sa.from("buyers").select("admin_id, status, rating, last_order_at").limit(10000),
-      sa.from("buyer_invoices").select("admin_id, total, status, created_at").limit(10000),
+      sa.from("buyer_invoices").select("admin_id, total_amount, payment_status, created_at").limit(10000),
     ]);
 
     const agg = new Map<string, { admin_id: string; buyers: number; active: number; ratingSum: number; ratingN: number; invoices: number; revenue: number; outstanding: number }>();
@@ -199,8 +199,8 @@ export const getPlatformBuyersOverview = createServerFn({ method: "GET" })
       const k = inv.admin_id ?? "unknown";
       const cur = agg.get(k) ?? { admin_id: k, buyers: 0, active: 0, ratingSum: 0, ratingN: 0, invoices: 0, revenue: 0, outstanding: 0 };
       cur.invoices += 1;
-      cur.revenue += Number(inv.total ?? 0);
-      if (inv.status !== "paid" && inv.status !== "cancelled") cur.outstanding += Number(inv.total ?? 0);
+      cur.revenue += Number(inv.total_amount ?? 0);
+      if (inv.payment_status !== "paid" && inv.payment_status !== "cancelled") cur.outstanding += Number(inv.total_amount ?? 0);
       agg.set(k, cur);
     }
 
