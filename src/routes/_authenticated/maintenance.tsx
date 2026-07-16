@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wrench, Battery, ShieldAlert, Clock, Search, CheckCircle2 } from "lucide-react";
 import { getMaintenanceOverview, markMaintenanceDone } from "@/lib/operations2.functions";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/maintenance")({
   component: MaintenancePage,
@@ -30,6 +32,7 @@ function MaintenancePage() {
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["maintenance"], queryFn: () => fn() });
   const [q, setQ] = useState("");
+  const { isSuperAdmin } = useIsSuperAdmin();
 
   const doneM = useMutation({
     mutationFn: (args: { id: string; kind: "device" | "actuator" }) => doneFn({ data: { ...args, nextInDays: 180 } }),
@@ -52,6 +55,9 @@ function MaintenancePage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Overdue and upcoming maintenance across every tenant. Marking assets serviced is disabled." />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Wrench className="h-6 w-6 text-emerald-600" /> Maintenance</h1>
         <p className="text-sm text-slate-500 mt-1">Servicing schedule for sensors and actuators.</p>
@@ -89,9 +95,11 @@ function MaintenancePage() {
                       {i.last_maintenance_date ? ` · last ${new Date(i.last_maintenance_date).toLocaleDateString()}` : ""}
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => doneM.mutate({ id: i.id, kind: i.kind })} disabled={doneM.isPending}>
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark serviced
-                  </Button>
+                  {!isSuperAdmin && (
+                    <Button size="sm" variant="outline" onClick={() => doneM.mutate({ id: i.id, kind: i.kind })} disabled={doneM.isPending}>
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark serviced
+                    </Button>
+                  )}
                 </div>
               );
             })}
