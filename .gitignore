@@ -7,7 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-
 node_modules
 dist
 dist-ssr
@@ -25,6 +24,13 @@ dist-ssr
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+
+# Google Cloud / Firebase service account credentials
+smart-silo-service-account.json
+*-service-account.json
+
+# Preview helper script
+preview.js
 
 # Editor directories and files
 .vscode/*
