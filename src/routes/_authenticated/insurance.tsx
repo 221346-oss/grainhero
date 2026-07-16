@@ -21,6 +21,8 @@ import {
   listClaims, upsertClaim, deleteClaim,
   type InsurancePolicyRow, type InsuranceClaimRow,
 } from "@/lib/team-settings-insurance.functions";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/insurance")({ component: InsurancePage });
 
@@ -141,6 +143,11 @@ function InsurancePage() {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      {useIsSuperAdmin().isSuperAdmin && (
+        <div className="mb-6">
+          <PlatformScopeBanner label="Policies and claims across every tenant. Totals reflect all insured value on the platform." />
+        </div>
+      )}
       <PageHeader title="Insurance" subtitle="Track your policies and claims across grain operations" />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
