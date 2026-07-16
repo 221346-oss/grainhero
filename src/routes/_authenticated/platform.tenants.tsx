@@ -1,13 +1,17 @@
 import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Building2, Search, Loader2, Users, Package } from "lucide-react";
+import { Building2, Search, Users, Package, UserCog } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRouter } from "@tanstack/react-router";
 import { listAllTenants } from "@/lib/platform.functions";
+import { startImpersonation } from "@/lib/impersonation.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/tenants")({ component: TenantsPage });
 
@@ -15,7 +19,19 @@ type Tenant = { id: string; name: string | null; email: string | null; business_
 
 function TenantsPage() {
   const fn = useServerFn(listAllTenants);
+  const impersonateFn = useServerFn(startImpersonation);
+  const qc = useQueryClient();
+  const router = useRouter();
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-tenants"], queryFn: () => fn() as Promise<Tenant[]> });
+  const impersonate = useMutation({
+    mutationFn: (targetAdminId: string) => impersonateFn({ data: { targetAdminId } }),
+    onSuccess: async (res) => {
+      toast.success(`Viewing as ${res.tenantName}`);
+      await qc.invalidateQueries();
+      router.navigate({ to: "/dashboard" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const [q, setQ] = useState("");
   const filtered = useMemo(() => data.filter((t) => {
     const s = q.toLowerCase();
@@ -53,6 +69,15 @@ function TenantsPage() {
                     {t.blocked ? "Blocked" : "Active"}
                   </Badge>
                   {t.subscription_plan && <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-200">{t.subscription_plan}</Badge>}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={impersonate.isPending}
+                    onClick={() => impersonate.mutate(t.id)}
+                    className="gap-1.5"
+                  >
+                    <UserCog className="h-3.5 w-3.5" /> View as
+                  </Button>
                 </div>
               ))}
             </div>

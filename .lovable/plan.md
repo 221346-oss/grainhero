@@ -116,4 +116,5 @@ Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notification
    - ✅ Insurance: banner (server RLS still enforces per-tenant writes).
    - ✅ Analytics, ML Models, Buyers: platform scope banner added.
    - Skipped: Environmental (weather-only, not tenant-scoped) and Settings (personal settings page — platform-config section deferred until impersonation lands).
-6. ⏳ Tenant impersonation (context cookie + write-lock middleware + banner + "View as tenant" button).
+6. ✅ Tenant impersonation: cookie-based (`gh_impersonate`) via `src/lib/impersonation.functions.ts` + `impersonation.server.ts`. `resolvePageScope` returns tenant scope while impersonating. Amber `ImpersonationBanner` in authenticated layout with Exit button. "View as" buttons on `platform/tenants` and admins in `platform/users`. `_authenticated/route.tsx` skips SUPER_ADMIN_REDIRECTS while the cookie is present so tenant pages are reachable.
+   - Limitation: write-lock is NOT enforced yet — super_admin RLS still permits writes across tenants. Banner warns; hardening deferred (would require per-mutation `assertNoImpersonation` middleware).
