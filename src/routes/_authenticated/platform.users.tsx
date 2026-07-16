@@ -4,13 +4,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, Loader2, ShieldOff, ShieldCheck, User as UserIcon } from "lucide-react";
+import { Search, ShieldOff, ShieldCheck, User as UserIcon, UserCog } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform.functions";
+import { startImpersonation } from "@/lib/impersonation.functions";
+import { useRouter } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/platform/users")({ component: UsersPage });
 
@@ -28,6 +30,8 @@ function UsersPage() {
   const qc = useQueryClient();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
+  const impersonateFn = useServerFn(startImpersonation);
+  const router = useRouter();
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
@@ -41,6 +45,15 @@ function UsersPage() {
   const toggle = useMutation({
     mutationFn: (v: { id: string; blocked: boolean }) => toggleFn({ data: v }),
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["platform-users"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const impersonate = useMutation({
+    mutationFn: (targetAdminId: string) => impersonateFn({ data: { targetAdminId } }),
+    onSuccess: async (res) => {
+      toast.success(`Viewing as ${res.tenantName}`);
+      await qc.invalidateQueries();
+      router.navigate({ to: "/dashboard" });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -89,6 +102,17 @@ function UsersPage() {
                     className={u.blocked ? "text-emerald-600 hover:bg-emerald-50" : "text-red-600 hover:bg-red-50"}>
                     {u.blocked ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
                   </Button>
+                  {u.role === "admin" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={impersonate.isPending}
+                      onClick={() => impersonate.mutate(u.id)}
+                      className="gap-1.5"
+                    >
+                      <UserCog className="h-3.5 w-3.5" /> View as
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
