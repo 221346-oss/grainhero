@@ -1,267 +1,227 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { formatDistanceToNow } from "date-fns";
-import {
-  Building2, Users, Package, Warehouse, OctagonAlert, CreditCard, DollarSign,
-  ClipboardList, UserPlus, AlertTriangle, TrendingUp, Sparkles, ScrollText,
-  Activity, ArrowRight, Crown,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatCard } from "./_shared";
-import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform.functions";
-
-const QUICK_ACTIONS: { to: string; label: string; icon: LucideIcon; tone: string }[] = [
-  { to: "/platform/tenants", label: "Tenants", icon: Building2, tone: "from-sky-500 to-sky-700" },
-  { to: "/platform/users", label: "Users & roles", icon: Users, tone: "from-violet-500 to-violet-700" },
-  { to: "/platform/plans", label: "Plans & pricing", icon: Sparkles, tone: "from-emerald-500 to-emerald-700" },
-  { to: "/platform/revenue", label: "Revenue", icon: DollarSign, tone: "from-amber-500 to-amber-700" },
-  { to: "/platform/pipeline", label: "Pipeline", icon: TrendingUp, tone: "from-rose-500 to-rose-700" },
-  { to: "/platform/leads", label: "Leads", icon: UserPlus, tone: "from-fuchsia-500 to-fuchsia-700" },
-  { to: "/platform/health", label: "Health", icon: Activity, tone: "from-teal-500 to-teal-700" },
-  { to: "/platform/audit-logs", label: "Audit logs", icon: ScrollText, tone: "from-slate-500 to-slate-700" },
-  { to: "/platform/orders", label: "Install orders", icon: Package, tone: "from-indigo-500 to-indigo-700" },
-  { to: "/platform/logs", label: "System logs", icon: ClipboardList, tone: "from-neutral-500 to-neutral-700" },
-];
+import { Badge } from "@/components/ui/badge";
+import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
+import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from "recharts";
 
 export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
-  const { data: m } = useQuery({ queryKey: ["platform-metrics"], queryFn: () => metricsFn() });
+  const revenueFn = useServerFn(getSaasRevenueAnalytics);
+  
+  const { data: m, isLoading: loadingMetrics } = useQuery({ 
+    queryKey: ["platform-metrics"], 
+    queryFn: () => metricsFn(),
+    refetchInterval: 30000
+  });
   const { data: w } = useQuery({ queryKey: ["platform-widgets"], queryFn: () => widgetsFn() });
+  const { data: revenueData } = useQuery({ 
+    queryKey: ["saas-revenue-dashboard"], 
+    queryFn: () => revenueFn() 
+  });
 
-  const maxCount = Math.max(1, ...(w?.signupsSeries.map((p) => p.count) ?? [1]));
+  const usersGrowth = w?.wowDelta ?? 0;
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      {/* Compact header + primary CTAs */}
-      <header className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-red-500 to-red-700 grid place-items-center shadow-sm">
-          <Crown className="h-4 w-4 text-white" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg md:text-xl font-black tracking-tight truncate">
-            Super Admin{name ? ` — ${name}` : ""}
-          </h1>
-          <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-            Platform owner console
+    <div className="p-4 max-w-[1600px] mx-auto space-y-4" style={{ backgroundColor: "#EDE9D4", minHeight: "100vh" }}>
+      {/* Header - Compact */}
+      <header className="flex items-center justify-between pb-2">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "#252d26" }}>Super Admin Dashboard</h1>
+          <p className="text-xs mt-0.5" style={{ color: "#404F44" }}>
+            {name ? `Welcome back, ${name}` : "Platform Management Console"}
           </p>
         </div>
-        <Link to="/platform/users" className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold hover:bg-muted transition">
-          <UserPlus className="h-3.5 w-3.5" /> Invite user
-        </Link>
-        <Link to="/platform/plans" className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-gradient-to-br from-emerald-500 to-emerald-700 text-white px-2.5 py-1.5 text-xs font-semibold shadow-sm">
-          <Sparkles className="h-3.5 w-3.5" /> New plan
-        </Link>
+        {usersGrowth !== 0 && (
+          <Badge className="px-2 py-1 text-xs" style={{ backgroundColor: "rgba(47, 172, 12, 0.15)", color: "#2FAC0C", border: "1px solid #2FAC0C" }}>
+            {usersGrowth > 0 ? '+' : ''}{usersGrowth}% Growth
+          </Badge>
+        )}
       </header>
 
-      {/* Metrics — dense 4/6 grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
-        <StatCard label="Tenants" value={m?.totalTenants ?? "—"} icon={Building2} accent="sky" />
-        <StatCard label="Users" value={m?.totalUsers ?? "—"} icon={Users} accent="violet" />
-        <StatCard label="Active Subs" value={m?.activeSubscriptions ?? "—"} icon={CreditCard} accent="emerald" />
-        <StatCard label="MRR" value={m ? `$${m.mrr.toLocaleString()}` : "—"} icon={DollarSign} accent="emerald" />
-        <StatCard label="Batches" value={m?.totalBatches ?? "—"} icon={Package} accent="amber" />
-        <StatCard label="Silos" value={m?.totalSilos ?? "—"} icon={Warehouse} accent="sky" />
-        <StatCard label="Critical Alerts" value={m?.criticalAlerts ?? "—"} icon={OctagonAlert} accent="rose" trend={m ? `${m.totalAlerts} total` : undefined} />
-        <StatCard label="Activity Logs" value={m?.totalLogs ?? "—"} icon={ClipboardList} accent="violet" />
+      {/* Main Metrics - Compact 6 Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Card className="shadow-sm hover:shadow-md transition-all border-l-4" style={{ backgroundColor: "#FFFFFF", borderLeftColor: "#2FAC0C" }}>
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#404F44" }}>Tenants</p>
+            <p className="text-2xl font-bold" style={{ color: "#252d26" }}>{m?.totalTenants ?? "0"}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-all border-l-4" style={{ backgroundColor: "#FFFFFF", borderLeftColor: "#2FAC0C" }}>
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#404F44" }}>Users</p>
+            <p className="text-2xl font-bold" style={{ color: "#252d26" }}>{m?.totalUsers ?? "0"}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-all border-l-4" style={{ backgroundColor: "#FFFFFF", borderLeftColor: "#2FAC0C" }}>
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#404F44" }}>Active Subs</p>
+            <p className="text-2xl font-bold" style={{ color: "#252d26" }}>{m?.activeSubscriptions ?? "0"}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-all border-l-4" style={{ backgroundColor: "#FFFFFF", borderLeftColor: "#2FAC0C" }}>
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#404F44" }}>MRR</p>
+            <p className="text-lg font-bold" style={{ color: "#252d26" }}>PKR {(m as any)?.mrr?.toLocaleString() ?? "0"}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-all border-l-4" style={{ backgroundColor: "#FFFFFF", borderLeftColor: "#DC2626" }}>
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#404F44" }}>Critical Alerts</p>
+            <p className="text-2xl font-bold" style={{ color: "#DC2626" }}>{m?.criticalAlerts ?? "0"}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-all border-l-4" style={{ backgroundColor: "#FFFFFF", borderLeftColor: "#2FAC0C" }}>
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#404F44" }}>Activity Logs</p>
+            <p className="text-2xl font-bold" style={{ color: "#252d26" }}>{(m as any)?.totalLogs ?? "0"}</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Quick actions */}
+      {/* Analytics Charts - Compact 3 Column */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <Card style={{ backgroundColor: "#FFFFFF", borderColor: "#2FAC0C", borderWidth: "1px" }}>
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="flex items-center justify-between text-sm">
+              <span style={{ color: "#252d26" }}>User Signups (30d)</span>
+              {usersGrowth !== 0 && (
+                <Badge className="text-xs px-1.5 py-0.5" style={{ backgroundColor: "#2FAC0C", color: "#FFFFFF" }}>
+                  {usersGrowth > 0 ? '+' : ''}{usersGrowth}%
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {w?.signupsSeries && w.signupsSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={w.signupsSeries}>
+                  <defs>
+                    <linearGradient id="userGrowth" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2FAC0C" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#2FAC0C" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#404F44" opacity={0.1} />
+                  <XAxis dataKey="date" stroke="#404F44" fontSize={9} />
+                  <YAxis stroke="#404F44" fontSize={9} />
+                  <Tooltip contentStyle={{ backgroundColor: "#252d26", border: "none", borderRadius: "4px", color: "white", fontSize: "11px", padding: "4px 8px" }} />
+                  <Area type="monotone" dataKey="count" stroke="#2FAC0C" fillOpacity={1} fill="url(#userGrowth)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">No data</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card style={{ backgroundColor: "#FFFFFF", borderColor: "#2FAC0C", borderWidth: "1px" }}>
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="text-sm" style={{ color: "#252d26" }}>Revenue by Plan</CardTitle>
+          </CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {revenueData?.planSeries && revenueData.planSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={revenueData.planSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#404F44" opacity={0.1} />
+                  <XAxis dataKey="plan" stroke="#404F44" fontSize={9} />
+                  <YAxis stroke="#404F44" fontSize={9} />
+                  <Tooltip contentStyle={{ backgroundColor: "#252d26", border: "none", borderRadius: "4px", color: "white", fontSize: "11px", padding: "4px 8px" }} />
+                  <Bar dataKey="mrr" fill="#2FAC0C" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">No data</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card style={{ backgroundColor: "#FFFFFF", borderColor: "#2FAC0C", borderWidth: "1px" }}>
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="text-sm" style={{ color: "#252d26" }}>Revenue Trend (12m)</CardTitle>
+          </CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {revenueData?.revenueSeries && revenueData.revenueSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData.revenueSeries}>
+                  <defs>
+                    <linearGradient id="revenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2FAC0C" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#2FAC0C" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#404F44" opacity={0.1} />
+                  <XAxis dataKey="month" stroke="#404F44" fontSize={9} />
+                  <YAxis stroke="#404F44" fontSize={9} />
+                  <Tooltip contentStyle={{ backgroundColor: "#252d26", border: "none", borderRadius: "4px", color: "white", fontSize: "11px", padding: "4px 8px" }} />
+                  <Area type="monotone" dataKey="revenue" stroke="#2FAC0C" fillOpacity={1} fill="url(#revenue)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">No data</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Platform Insight Cards - Compact */}
       <div>
-        <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">Manage</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-          {QUICK_ACTIONS.map((a) => {
-            const Icon = a.icon;
+        <h2 className="text-base font-bold mb-2" style={{ color: "#252d26" }}>Platform Insights</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 gap-2.5">
+          {[
+            { to: "/platform/tenants", label: "Tenants", value: m?.totalTenants ?? "—" },
+            { to: "/platform/users", label: "Users", value: m?.totalUsers ?? "—" },
+            { to: "/platform/pipeline", label: "Pipeline", value: "—" },
+            { to: "/platform/leads", label: "Leads", value: "—" },
+            { to: "/platform/health", label: "System Health", value: "—" },
+            { to: "/platform/audit-logs", label: "Audit Logs", value: (m as any)?.totalLogs ?? "—" },
+            { to: "/platform/orders", label: "Install Orders", value: "—" },
+            { to: "/revenue", label: "Revenue", value: m ? `PKR ${(m as any).mrr?.toLocaleString()}` : "—" },
+          ].map((item) => {
             return (
-              <Link
-                key={a.to}
-                to={a.to}
-                className="group flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 hover:shadow-sm transition"
-              >
-                <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${a.tone} text-white`}>
-                  <Icon className="h-3.5 w-3.5" />
-                </span>
-                <span className="text-xs font-semibold text-foreground truncate flex-1">{a.label}</span>
-                <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition" />
+              <Link key={item.to} to={item.to} className="group">
+                <Card 
+                  className="hover:shadow-md transition-all cursor-pointer" 
+                  style={{ backgroundColor: "#FFFFFF", borderColor: "#2FAC0C", borderWidth: "1px" }}
+                >
+                  <CardContent className="p-2.5">
+                    <p className="text-xs font-semibold mb-1" style={{ color: "#404F44" }}>{item.label}</p>
+                    <p className="text-base font-bold" style={{ color: "#252d26" }}>{item.value}</p>
+                  </CardContent>
+                </Card>
               </Link>
             );
           })}
         </div>
       </div>
 
-      {/* Role distribution — inline compact */}
-      {m && (
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Role distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(m.roleDistribution).map(([role, n]) => (
-                <div key={role} className="rounded-md border border-border bg-muted/40 px-2.5 py-1">
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{role.replace("_", " ")}</div>
-                  <div className="text-sm font-bold">{n as number}</div>
+      {/* Recent Activity - Compact */}
+      {w && (w as any).recentSignups && (w as any).recentSignups.length > 0 && (
+        <Card style={{ backgroundColor: "#FFFFFF", borderColor: "#2FAC0C", borderWidth: "1px" }}>
+          <CardContent className="p-3">
+            <h3 className="text-sm font-bold mb-2" style={{ color: "#252d26" }}>Recent Signups</h3>
+            <div className="space-y-1.5">
+              {((w as any).recentSignups || []).slice(0, 5).map((s: any) => (
+                <div key={s.id} className="flex items-center justify-between p-2 rounded text-sm" style={{ backgroundColor: "rgba(47, 172, 12, 0.05)" }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate text-sm" style={{ color: "#252d26" }}>{s.name || s.email}</p>
+                    <p className="text-xs truncate" style={{ color: "#404F44", opacity: 0.7 }}>{s.email}</p>
+                  </div>
+                  <p className="text-xs ml-2 whitespace-nowrap" style={{ color: "#404F44", opacity: 0.7 }}>{new Date(s.created_at).toLocaleDateString()}</p>
                 </div>
               ))}
-              {m.blockedUsers > 0 && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1">
-                  <div className="text-[10px] uppercase tracking-widest text-red-600 font-semibold">Blocked</div>
-                  <div className="text-sm font-bold text-red-700">{m.blockedUsers}</div>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
       )}
-
-      {/* Widgets: signups + alerts + trend */}
-      <div className="grid gap-3 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-emerald-600" /> Recent signups
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-              w.recentSignups.length === 0 ? <div className="text-xs text-muted-foreground">No signups yet.</div> :
-              <ul className="divide-y divide-border">
-                {w.recentSignups.slice(0, 6).map((s: any) => (
-                  <li key={s.id}>
-                    <Link to="/platform/users" className="py-1.5 flex items-center justify-between gap-2 hover:bg-muted/40 rounded px-1 -mx-1">
-                      <div className="min-w-0">
-                        <div className="text-xs font-medium truncate">{s.name || s.email}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{s.email}</div>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                        {formatDistanceToNow(new Date(s.created_at), { addSuffix: true })}
-                        <ArrowRight className="h-3 w-3" />
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            }
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-1">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-rose-600" /> System alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-              w.systemAlerts.length === 0 ? <div className="text-xs text-muted-foreground">No critical alerts.</div> :
-              <ul className="divide-y divide-border">
-                {w.systemAlerts.slice(0, 6).map((a: any) => (
-                  <li key={a.id}>
-                    <Link to="/platform/health" className="py-1.5 flex items-center justify-between gap-2 hover:bg-muted/40 rounded px-1 -mx-1">
-                      <div className="min-w-0">
-                        <div className="text-xs font-medium truncate">{a.alert_type ?? "Alert"}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{a.message ?? ""}</div>
-                      </div>
-                      <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${a.priority === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                        {a.priority}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            }
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-1">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-violet-600" /> Signups · 30d
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-              <>
-                <div className="flex items-baseline justify-between mb-1">
-                  <div className="text-lg font-black tracking-tight">{w.signupsTotal ?? 0}</div>
-                  <div className={`text-[10px] font-semibold ${((w.wowDelta ?? 0) >= 0) ? "text-emerald-600" : "text-rose-600"}`}>
-                    {(w.wowDelta ?? 0) >= 0 ? "▲" : "▼"} {Math.abs(w.wowDelta ?? 0)}% WoW
-                  </div>
-                </div>
-                <div className="flex items-end gap-0.5 h-20">
-                  {w.signupsSeries.map((p) => (
-                    <div key={p.date} className="flex-1">
-                      <div
-                        className="bg-gradient-to-t from-emerald-500 to-emerald-300 rounded-t"
-                        style={{ height: `${(p.count / maxCount) * 100}%`, minHeight: 2 }}
-                        title={`${p.date}: ${p.count}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
-                  <span>{w.signupsSeries[0]?.date}</span>
-                  <span>{w.signupsSeries[w.signupsSeries.length - 1]?.date}</span>
-                </div>
-              </>
-            }
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Revenue + Pipeline snapshots */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Link to="/platform/revenue" className="group">
-          <Card className="hover:shadow-md transition">
-            <CardHeader className="py-3 flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-emerald-600" /> Revenue snapshot
-              </CardTitle>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
-            </CardHeader>
-            <CardContent className="pt-0 grid grid-cols-3 gap-3">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">MRR</div>
-                <div className="text-lg font-black">${w ? w.revenue.mrr.toLocaleString() : "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Active</div>
-                <div className="text-lg font-black">{w?.revenue.activeSubs ?? "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Churned</div>
-                <div className="text-lg font-black text-rose-700">{w?.revenue.churnedSubs ?? "—"}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link to="/platform/pipeline" className="group">
-          <Card className="hover:shadow-md transition">
-            <CardHeader className="py-3 flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-rose-600" /> Pipeline snapshot
-              </CardTitle>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
-            </CardHeader>
-            <CardContent className="pt-0">
-              {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-                Object.keys(w.pipeline).length === 0 ? <div className="text-xs text-muted-foreground">No pipeline activity yet.</div> :
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(w.pipeline).map(([status, n]) => (
-                    <div key={status} className="rounded-md border border-border bg-muted/40 px-2.5 py-1">
-                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{status}</div>
-                      <div className="text-sm font-bold">{n}</div>
-                    </div>
-                  ))}
-                </div>
-              }
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
     </div>
   );
 }

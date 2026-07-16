@@ -196,7 +196,7 @@ export function AppSearch() {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onInputKeyDown}
-        placeholder={scope.global ? "Search silos, batches, sensors, or jump to a page…" : scope.label}
+        placeholder={scope.global ? "Search anything or jump to a page…" : scope.label}
         aria-label={scope.label}
         className={cn(
           "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-muted/60 hover:bg-muted focus:bg-background",

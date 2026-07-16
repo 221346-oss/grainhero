@@ -1,9 +1,14 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
-// Old "Platform Console" layout removed — super admin manages everything from
-// their dashboard. Redirect any /platform hit there.
+// Platform layout for super admin routes
 export const Route = createFileRoute("/_authenticated/platform")({
-  beforeLoad: () => {
-    throw redirect({ to: "/dashboard" });
-  },
+  component: PlatformLayout,
 });
+
+function PlatformLayout() {
+  return (
+    <div className="min-h-screen">
+      <Outlet />
+    </div>
+  );
+}

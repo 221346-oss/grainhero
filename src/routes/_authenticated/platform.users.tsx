@@ -4,13 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Search, Loader2, ShieldOff, ShieldCheck, User as UserIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listAllUsers, toggleUserBlocked } from "@/lib/platform.functions";
+import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/users")({ component: UsersPage });
 
@@ -44,50 +43,122 @@ function UsersPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const totalUsers = data.length;
+  const blockedUsers = data.filter((u) => u.blocked).length;
+  const unverifiedUsers = data.filter((u) => !u.email_verified).length;
+  const thisMonth = data.filter((u) => {
+    if (!u.created_at) return false;
+    const created = new Date(u.created_at);
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    return created >= monthAgo;
+  }).length;
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4">
-      <Card>
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Platform Users</h1>
+          <p className="text-sm text-slate-600 mt-1">Manage all users across tenants and organizations</p>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-purple-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Total Users</p>
+            <p className="text-3xl font-bold mt-1 text-slate-900">{totalUsers}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-emerald-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">This Month</p>
+            <p className="text-3xl font-bold mt-1 text-slate-900">{thisMonth}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-red-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Blocked</p>
+            <p className="text-3xl font-bold mt-1 text-red-600">{blockedUsers}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-amber-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Unverified</p>
+            <p className="text-3xl font-bold mt-1 text-amber-600">{unverifiedUsers}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Search and Filter */}
+      <Card className="shadow-sm">
         <CardContent className="p-4 flex flex-col md:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users..." className="pl-9" />
+          <div className="flex-1">
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or email..." />
           </div>
           <Select value={role} onValueChange={setRole}>
-            <SelectTrigger className="w-full md:w-48"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full md:w-52"><SelectValue placeholder="Filter by role" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All roles</SelectItem>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="technician">Technician</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="all">All roles ({data.length})</SelectItem>
+              <SelectItem value="super_admin">Super Admin ({data.filter(u => u.role === "super_admin").length})</SelectItem>
+              <SelectItem value="admin">Admin ({data.filter(u => u.role === "admin").length})</SelectItem>
+              <SelectItem value="manager">Manager ({data.filter(u => u.role === "manager").length})</SelectItem>
+              <SelectItem value="technician">Technician ({data.filter(u => u.role === "technician").length})</SelectItem>
+              <SelectItem value="pending">Pending ({data.filter(u => u.role === "pending").length})</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Users List */}
+      <Card className="shadow-md">
+        <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white">
+          <CardTitle className="text-lg">All Users</CardTitle>
+          <CardDescription>View and manage user accounts, roles, and access</CardDescription>
+        </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-4"><TableSkeleton rows={6} cols={5} /></div>
+            <div className="p-8 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
+              <p className="mt-2 text-sm text-slate-500">Loading users…</p>
+            </div>
           ) : filtered.length === 0 ? (
-            <div className="p-10 text-center text-slate-500">No users found</div>
+            <div className="p-12 text-center">
+              <p className="text-slate-500 font-medium">No users found</p>
+              <p className="text-sm text-slate-400 mt-1">Try adjusting your search or filter</p>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {filtered.map((u) => (
-                <div key={u.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center"><UserIcon className="h-4 w-4 text-slate-500" /></div>
+                <div key={u.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-slate-900 truncate">{u.name ?? "—"}</div>
-                    <div className="text-xs text-slate-500 truncate">{u.email}</div>
+                    <div className="font-semibold text-slate-900 truncate">{u.name ?? "Unnamed User"}</div>
+                    <div className="text-sm text-slate-500 truncate">{u.email}</div>
+                    {u.created_at && (
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        Joined {new Date(u.created_at).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
-                  <Badge variant="outline" className={ROLE_BADGE[u.role] ?? ROLE_BADGE.pending}>{u.role}</Badge>
-                  {u.blocked && <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Blocked</Badge>}
-                  {!u.email_verified && <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">Unverified</Badge>}
-                  <Button size="sm" variant="ghost" disabled={toggle.isPending}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className={ROLE_BADGE[u.role] ?? ROLE_BADGE.pending}>
+                      {u.role.replace("_", " ")}
+                    </Badge>
+                    {u.blocked && <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Blocked</Badge>}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant={u.blocked ? "default" : "outline"}
+                    disabled={toggle.isPending}
                     onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
-                    className={u.blocked ? "text-emerald-600 hover:bg-emerald-50" : "text-red-600 hover:bg-red-50"}>
-                    {u.blocked ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
+                    className={u.blocked ? "bg-emerald-600 hover:bg-emerald-700" : "text-red-600 hover:bg-red-50 border-red-200"}
+                  >
+                    {u.blocked ? "Unblock" : "Block"}
                   </Button>
                 </div>
               ))}
