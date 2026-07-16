@@ -30,6 +30,11 @@ export const Route = createFileRoute("/_authenticated")({
       "/revenue": "/platform/revenue",
       "/data-visualization": "/analytics",
       "/traceability": "/dashboard",
+      // Pages with an existing canonical platform equivalent — send
+      // super_admin there instead of showing the tenant lens.
+      "/subscription": "/platform/revenue",
+      "/reports": "/platform/revenue",
+      "/orders": "/platform/orders",
     };
 
     const path = location.pathname;
