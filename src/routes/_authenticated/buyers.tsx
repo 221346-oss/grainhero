@@ -19,6 +19,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { listBuyers, upsertBuyer, deleteBuyer } from "@/lib/operations.functions";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/buyers")({
   component: BuyersPage,
@@ -72,6 +74,7 @@ const STATUS_CLASS: Record<Status, string> = {
 
 function BuyersPage() {
   const qc = useQueryClient();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const listFn = useServerFn(listBuyers);
   const saveFn = useServerFn(upsertBuyer);
   const delFn = useServerFn(deleteBuyer);
@@ -190,6 +193,9 @@ function BuyersPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 md:space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Buyers across every tenant. New Buyer and edit actions still apply to your own tenant." />
+      )}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <PageHeader title="Buyers" subtitle="Customers purchasing your grain — contacts, ratings & preferences" />
         <Button size="sm" onClick={openCreate} className="gap-1.5 self-start md:self-auto">
