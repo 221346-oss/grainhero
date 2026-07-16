@@ -108,5 +108,11 @@ Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notification
 5. ⏳ Per-page tenant/platform branching (13 pages — one component split per page).
    - ✅ AI Predictions: added `getPlatformSpoilageOverview` + `PlatformView` (worst-offender tenants, risk distribution, read-only).
    - ✅ Subscription / Reports / Orders: redirected super_admin to `/platform/revenue` / `/platform/orders` (existing platform equivalents — no dual view needed).
-   - Remaining pages: Analytics, Environmental, Incidents, Maintenance, Server Monitoring, Buyers, Insurance, ML Models, Security Center, Settings.
+   - ✅ Shared `PlatformScopeBanner` + `useIsSuperAdmin` hook: pages already returning cross-tenant data via super_admin RLS now announce platform scope and hide tenant-write actions.
+   - ✅ Incidents: banner + acknowledge/resolve buttons hidden for super_admin.
+   - ✅ Maintenance: banner + "Mark serviced" hidden for super_admin.
+   - ✅ Server Monitoring: banner (read-only page — no writes to hide).
+   - ✅ Security Center: banner (page is already read-only).
+   - ✅ Insurance: banner (server RLS still enforces per-tenant writes).
+   - Remaining: Analytics, Buyers, ML Models, Settings (append platform-config section), Environmental (weather-only, no tenant data).
 6. ⏳ Tenant impersonation (context cookie + write-lock middleware + banner + "View as tenant" button).
