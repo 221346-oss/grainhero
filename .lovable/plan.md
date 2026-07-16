@@ -123,3 +123,10 @@ Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notification
    - `getPlatformIncidentsOverview` — cross-tenant alert totals, MTTA/MTTR, worst-offender ranking by open + critical.
    - `getPlatformMaintenanceOverview` — cross-tenant device totals, overdue/due-soon/low-battery ranking.
    - Both pages now branch: tenant users see the operational view, super_admin sees the aggregate ranking (no per-row actions).
+9. ✅ Rich per-tenant platform tables on Analytics, ML Models, Insurance, Buyers via new `src/lib/platform-overviews.functions.ts`:
+    - `getPlatformAnalyticsBreakdown` — revenue / volume / margin / spoilage ranking per tenant.
+    - `getPlatformMLInference` — 7-day inference volume, critical count, anomaly rate, avg confidence per tenant.
+    - `getPlatformInsuranceOverview` — coverage, premium, open claims, claim rate per tenant.
+    - `getPlatformBuyersOverview` — buyer count / rating / invoices / revenue / outstanding per tenant.
+    - Shared `<PlatformOverviewTable />` renders a compact top-N leaderboard on each page above the tenant UI.
+10. ⏳ Webhook activation (`PLATFORM_EVENT_WEBHOOK_URL`): scaffold is live in `notifyPlatformEvent()` and wired to signups, blocked users, and Stripe failures. Awaiting the user to add the Slack/Discord webhook URL as a secret to enable delivery.
