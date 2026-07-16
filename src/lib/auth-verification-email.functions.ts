@@ -24,7 +24,7 @@ export const sendOtpEmail = createServerFn({ method: "POST" })
     // generateLink type "email" triggers Supabase's OTP flow and returns
     // the hashed_token we pass to verifyOtp on the client.
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: "email",
+      type: "magiclink",
       email,
     });
 

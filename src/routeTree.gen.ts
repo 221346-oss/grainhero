@@ -59,18 +59,23 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
-import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
 import { Route as AuthenticatedPlatformRevenueRouteImport } from './routes/_authenticated/platform.revenue'
+import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
+import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
+import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
+import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
+import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -334,12 +339,6 @@ const AuthenticatedActivityLogsRoute =
     path: '/activity-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformIndexRoute =
-  AuthenticatedPlatformIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedPlatformRoute,
-  } as any)
 const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   id: '/api/firebase/live-sensors',
   path: '/api/firebase/live-sensors',
@@ -363,6 +362,18 @@ const AuthenticatedPlatformRevenueRoute =
     path: '/revenue',
     getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
+const AuthenticatedPlatformPlansRoute =
+  AuthenticatedPlatformPlansRouteImport.update({
+    id: '/plans',
+    path: '/plans',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
+const AuthenticatedPlatformPipelineRoute =
+  AuthenticatedPlatformPipelineRouteImport.update({
+    id: '/pipeline',
+    path: '/pipeline',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
 const AuthenticatedPlatformOrdersRoute =
   AuthenticatedPlatformOrdersRouteImport.update({
     id: '/orders',
@@ -373,6 +384,24 @@ const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
     id: '/logs',
     path: '/logs',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
+const AuthenticatedPlatformLeadsRoute =
+  AuthenticatedPlatformLeadsRouteImport.update({
+    id: '/leads',
+    path: '/leads',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
+const AuthenticatedPlatformHealthRoute =
+  AuthenticatedPlatformHealthRouteImport.update({
+    id: '/health',
+    path: '/health',
+    getParentRoute: () => AuthenticatedPlatformRoute,
+  } as any)
+const AuthenticatedPlatformAuditLogsRoute =
+  AuthenticatedPlatformAuditLogsRouteImport.update({
+    id: '/audit-logs',
+    path: '/audit-logs',
     getParentRoute: () => AuthenticatedPlatformRoute,
   } as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
@@ -402,6 +431,12 @@ const ApiPublicCronSyncFirebaseRoute =
   ApiPublicCronSyncFirebaseRouteImport.update({
     id: '/api/public/cron/sync-firebase',
     path: '/api/public/cron/sync-firebase',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronLifecycleEmailsRoute =
+  ApiPublicCronLifecycleEmailsRouteImport.update({
+    id: '/api/public/cron/lifecycle-emails',
+    path: '/api/public/cron/lifecycle-emails',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -455,13 +490,18 @@ export interface FileRoutesByFullPath {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
-  '/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
@@ -498,6 +538,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/plans': typeof AuthenticatedPlansRoute
+  '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -516,13 +557,18 @@ export interface FileRoutesByTo {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
-  '/platform': typeof AuthenticatedPlatformIndexRoute
+  '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
@@ -581,13 +627,18 @@ export interface FileRoutesById {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
-  '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
@@ -646,13 +697,18 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/platform/audit-logs'
+    | '/platform/health'
+    | '/platform/leads'
     | '/platform/logs'
     | '/platform/orders'
+    | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
-    | '/platform/'
+    | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/expiry-reminders'
@@ -689,6 +745,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/orders'
     | '/plans'
+    | '/platform'
     | '/reports'
     | '/revenue'
     | '/security-center'
@@ -707,13 +764,18 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout'
+    | '/platform/audit-logs'
+    | '/platform/health'
+    | '/platform/leads'
     | '/platform/logs'
     | '/platform/orders'
+    | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/revenue'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
-    | '/platform'
+    | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/expiry-reminders'
@@ -771,13 +833,18 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/health'
+    | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/orders'
+    | '/_authenticated/platform/pipeline'
+    | '/_authenticated/platform/plans'
     | '/_authenticated/platform/revenue'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/api/firebase/live-sensors'
-    | '/_authenticated/platform/'
+    | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/expiry-reminders'
@@ -800,6 +867,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
+  ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
@@ -1159,13 +1227,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/': {
-      id: '/_authenticated/platform/'
-      path: '/'
-      fullPath: '/platform/'
-      preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
-      parentRoute: typeof AuthenticatedPlatformRoute
-    }
     '/api/firebase/live-sensors': {
       id: '/api/firebase/live-sensors'
       path: '/api/firebase/live-sensors'
@@ -1194,6 +1255,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformRevenueRouteImport
       parentRoute: typeof AuthenticatedPlatformRoute
     }
+    '/_authenticated/platform/plans': {
+      id: '/_authenticated/platform/plans'
+      path: '/plans'
+      fullPath: '/platform/plans'
+      preLoaderRoute: typeof AuthenticatedPlatformPlansRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/_authenticated/platform/pipeline': {
+      id: '/_authenticated/platform/pipeline'
+      path: '/pipeline'
+      fullPath: '/platform/pipeline'
+      preLoaderRoute: typeof AuthenticatedPlatformPipelineRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
     '/_authenticated/platform/orders': {
       id: '/_authenticated/platform/orders'
       path: '/orders'
@@ -1206,6 +1281,27 @@ declare module '@tanstack/react-router' {
       path: '/logs'
       fullPath: '/platform/logs'
       preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/_authenticated/platform/leads': {
+      id: '/_authenticated/platform/leads'
+      path: '/leads'
+      fullPath: '/platform/leads'
+      preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/_authenticated/platform/health': {
+      id: '/_authenticated/platform/health'
+      path: '/health'
+      fullPath: '/platform/health'
+      preLoaderRoute: typeof AuthenticatedPlatformHealthRouteImport
+      parentRoute: typeof AuthenticatedPlatformRoute
+    }
+    '/_authenticated/platform/audit-logs': {
+      id: '/_authenticated/platform/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/platform/audit-logs'
+      preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
       parentRoute: typeof AuthenticatedPlatformRoute
     }
     '/api/public/webhooks/stripe': {
@@ -1243,25 +1339,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronSyncFirebaseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/lifecycle-emails': {
+      id: '/api/public/cron/lifecycle-emails'
+      path: '/api/public/cron/lifecycle-emails'
+      fullPath: '/api/public/cron/lifecycle-emails'
+      preLoaderRoute: typeof ApiPublicCronLifecycleEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedPlatformRouteChildren {
+  AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
+  AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
+  AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
+  AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformRevenueRoute: typeof AuthenticatedPlatformRevenueRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
-  AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
 const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
+  AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
+  AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
   AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
+  AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
+  AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformRevenueRoute: AuthenticatedPlatformRevenueRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
-  AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
 const AuthenticatedPlatformRouteWithChildren =
@@ -1385,6 +1496,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
+  ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
   ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
@@ -1395,13 +1507,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

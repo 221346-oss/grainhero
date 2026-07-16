@@ -53,30 +53,17 @@ function LoginPage() {
     e.preventDefault();
     setMsg(null);
     setLoading(true);
-
     const normalizedEmail = email.trim().toLowerCase();
-
-    // Send OTP to the email — Supabase delivers it via their email system
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
-      options: {
-        shouldCreateUser: false, // only existing users can log in
-      },
+      options: { shouldCreateUser: false },
     });
-
     setLoading(false);
-
     if (error) {
       setMsg({ type: "error", text: error.message });
       return;
     }
-
-    // OTP sent — go to verify page
-    navigate({
-      to: "/auth/verify-otp",
-      search: { email: normalizedEmail } as never,
-      replace: true,
-    });
+    navigate({ to: "/auth/verify-otp", search: { email: normalizedEmail } });
   };
 
   return (
@@ -85,7 +72,7 @@ function LoginPage() {
         <div className="text-center">
           <h1 className="text-2xl font-semibold">Welcome back</h1>
           <p className="text-sm text-muted-foreground">
-            Enter your email and we'll send you a one-time code
+            Enter your email — we'll send a 6-digit code
           </p>
         </div>
 
@@ -99,7 +86,8 @@ function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="you@company.com"
+                autoComplete="email"
                 className="pl-9"
                 required
                 autoFocus
@@ -114,9 +102,7 @@ function LoginPage() {
             disabled={loading}
             className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
           >
-            {loading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : "Send verification code"}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send code"}
           </Button>
         </form>
 
