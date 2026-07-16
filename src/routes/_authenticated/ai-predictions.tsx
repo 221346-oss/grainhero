@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Brain, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Search, Sparkles, Loader2 } from "lucide-react";
-import { getBatchPredictions } from "@/lib/analytics.functions";
+import { Brain, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Search, Sparkles, Loader2, Building2 } from "lucide-react";
+import { getBatchPredictions, getPlatformSpoilageOverview } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { getSpoilageInsight } from "@/lib/ai-insights.functions";
 import { useMutation } from "@tanstack/react-query";
@@ -32,15 +32,28 @@ function levelBadge(level: string) {
 
 function AIPredictionsPage() {
   const fetchRole = useServerFn(getMyRole);
-  const fetchPredictions = useServerFn(getBatchPredictions);
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
+  const isSuperAdmin = role === "super_admin";
   const allowed = ["super_admin", "admin", "manager"].includes(role);
+
+  if (!roleQ.isLoading && !allowed) {
+    return (
+      <div className="p-8 max-w-lg mx-auto">
+        <Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>AI Predictions are available to managers, admins and super admins.</CardDescription></CardHeader></Card>
+      </div>
+    );
+  }
+
+  return isSuperAdmin ? <PlatformView /> : <TenantView />;
+}
+
+function TenantView() {
+  const fetchPredictions = useServerFn(getBatchPredictions);
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["ai-predictions"],
     queryFn: () => fetchPredictions(),
-    enabled: allowed,
     refetchInterval: 60_000,
   });
 
@@ -69,14 +82,6 @@ function AIPredictionsPage() {
     low: preds.filter((p: any) => p.level === "low").length,
     avg: preds.length ? Math.round(preds.reduce((s: number, p: any) => s + p.score, 0) / preds.length) : 0,
   }), [preds]);
-
-  if (!roleQ.isLoading && !allowed) {
-    return (
-      <div className="p-8 max-w-lg mx-auto">
-        <Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>AI Predictions are available to managers, admins and super admins.</CardDescription></CardHeader></Card>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
