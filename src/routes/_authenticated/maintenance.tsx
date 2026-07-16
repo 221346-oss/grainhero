@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wrench, Battery, ShieldAlert, Clock, Search, CheckCircle2 } from "lucide-react";
-import { getMaintenanceOverview, markMaintenanceDone } from "@/lib/operations2.functions";
+import { getMaintenanceOverview, markMaintenanceDone, getPlatformMaintenanceOverview } from "@/lib/operations2.functions";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
@@ -27,12 +27,17 @@ function urgencyBadge(next: string | null) {
 }
 
 function MaintenancePage() {
+  const { isSuperAdmin } = useIsSuperAdmin();
+  if (isSuperAdmin) return <PlatformMaintenanceView />;
+  return <TenantMaintenanceView />;
+}
+
+function TenantMaintenanceView() {
   const fn = useServerFn(getMaintenanceOverview);
   const doneFn = useServerFn(markMaintenanceDone);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["maintenance"], queryFn: () => fn() });
   const [q, setQ] = useState("");
-  const { isSuperAdmin } = useIsSuperAdmin();
 
   const doneM = useMutation({
     mutationFn: (args: { id: string; kind: "device" | "actuator" }) => doneFn({ data: { ...args, nextInDays: 180 } }),
@@ -55,9 +60,6 @@ function MaintenancePage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      {isSuperAdmin && (
-        <PlatformScopeBanner label="Overdue and upcoming maintenance across every tenant. Marking assets serviced is disabled." />
-      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Wrench className="h-6 w-6 text-emerald-600" /> Maintenance</h1>
         <p className="text-sm text-slate-500 mt-1">Servicing schedule for sensors and actuators.</p>
@@ -95,16 +97,66 @@ function MaintenancePage() {
                       {i.last_maintenance_date ? ` · last ${new Date(i.last_maintenance_date).toLocaleDateString()}` : ""}
                     </div>
                   </div>
-                  {!isSuperAdmin && (
-                    <Button size="sm" variant="outline" onClick={() => doneM.mutate({ id: i.id, kind: i.kind })} disabled={doneM.isPending}>
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark serviced
-                    </Button>
-                  )}
+                  <Button size="sm" variant="outline" onClick={() => doneM.mutate({ id: i.id, kind: i.kind })} disabled={doneM.isPending}>
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark serviced
+                  </Button>
                 </div>
               );
             })}
             {combined.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No assets found.</div>}
           </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function PlatformMaintenanceView() {
+  const fn = useServerFn(getPlatformMaintenanceOverview);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["platform-maintenance"],
+    queryFn: () => fn(),
+    refetchInterval: 60_000,
+  });
+  const totals = data?.totals ?? { devices: 0, overdue: 0, dueSoon: 0, lowBattery: 0 };
+  const tenants = data?.tenants ?? [];
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <PlatformScopeBanner label="Overdue and upcoming maintenance across every tenant. Read-only." />
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Wrench className="h-6 w-6 text-emerald-600" /> Platform maintenance</h1>
+        <p className="text-sm text-slate-500 mt-1">Tenants ranked by overdue devices.</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Devices</div><div className="text-2xl font-bold">{totals.devices}</div></div><Wrench className="h-6 w-6 text-slate-500" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Overdue</div><div className="text-2xl font-bold text-red-600">{totals.overdue}</div></div><Clock className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due 30d</div><div className="text-2xl font-bold text-amber-600">{totals.dueSoon}</div></div><Clock className="h-6 w-6 text-amber-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Low battery</div><div className="text-2xl font-bold">{totals.lowBattery}</div></div><Battery className="h-6 w-6 text-amber-600" /></CardContent></Card>
+      </div>
+      <Card>
+        <CardHeader><CardTitle>Worst-offender tenants</CardTitle><CardDescription>Ranked by overdue devices, then due-soon.</CardDescription></CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-8 text-center text-sm text-slate-500">Loading…</div>
+          ) : error ? (
+            <div className="p-8 text-center text-sm text-red-600">Failed to load: {(error as Error).message}</div>
+          ) : tenants.length === 0 ? (
+            <div className="p-8 text-center text-sm text-slate-500">Every tenant is up to date.</div>
+          ) : (
+            <div className="divide-y">
+              {tenants.map((t) => (
+                <div key={t.adminId} className="p-4 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-slate-900 truncate">{t.tenantName}</div>
+                    <div className="text-xs text-slate-500">{t.devices} device{t.devices === 1 ? "" : "s"}</div>
+                  </div>
+                  <Badge className="bg-red-100 text-red-800 border-red-200"><ShieldAlert className="h-3.5 w-3.5 mr-1" />{t.overdue} overdue</Badge>
+                  <Badge className="bg-amber-100 text-amber-800 border-amber-200">{t.dueSoon} due 30d</Badge>
+                  <Badge variant="outline"><Battery className="h-3.5 w-3.5 mr-1" />{t.lowBattery} low</Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
