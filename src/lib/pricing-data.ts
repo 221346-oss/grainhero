@@ -96,4 +96,29 @@ const pricingData = [
   },
 ];
 
+export type PlanId = "basic" | "intermediate" | "pro";
+
+export function resolvePlanId(raw?: string | null): PlanId | null {
+  if (!raw) return null;
+  const trimmed = raw.trim().toLowerCase();
+  if (trimmed === "basic" || trimmed === "intermediate" || trimmed === "pro") return trimmed;
+  const byName = pricingData.find(
+    (p) =>
+      p.id === trimmed ||
+      p.name.toLowerCase() === trimmed ||
+      `grain ${p.name.toLowerCase()}` === trimmed,
+  );
+  return (byName?.id as PlanId) ?? null;
+}
+
+export function getCheckoutTotals(planId: string, iotQuantity: number) {
+  const plan = pricingData.find((p) => p.id === planId);
+  if (!plan) return null;
+  const iotUnit = Number(plan.iotCharge ?? 7000);
+  const qty = Math.max(1, Math.min(50, iotQuantity));
+  const iotTotal = qty * iotUnit;
+  const monthlyPrice = Number(plan.price ?? 0);
+  return { plan, iotQuantity: qty, iotUnit, iotTotal, monthlyPrice, dueToday: monthlyPrice + iotTotal };
+}
+
 export default pricingData;
