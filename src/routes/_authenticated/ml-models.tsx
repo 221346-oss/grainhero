@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Cpu, Database, Activity, GitBranch } from "lucide-react";
 import { getMLModels } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/ml-models")({
   component: MLModelsPage,
@@ -20,6 +21,7 @@ function MLModelsPage() {
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin"].includes(role);
+  const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
     queryKey: ["ml-models"],
@@ -39,6 +41,9 @@ function MLModelsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Inference volume, accuracy and confidence measured across every tenant. Retraining is not available from this view." />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Cpu className="h-6 w-6 text-emerald-600" /> ML Model Performance</h1>
         <p className="text-sm text-slate-500 mt-1">Health, accuracy and confidence of models powering AI Predictions.</p>
