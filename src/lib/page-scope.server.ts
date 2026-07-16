@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getEffectiveRole } from "./rbac.server";
 import type { AppRole } from "./roles.functions";
-import { readImpersonationCookie } from "./impersonation.functions";
+import { readImpersonationCookie } from "./impersonation.server";
 
 export type PageScope =
   | { scope: "platform"; adminId: null; role: AppRole }
