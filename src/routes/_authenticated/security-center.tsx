@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, ShieldAlert, UserX, Users, AlertTriangle } from "lucide-react";
 import { getSecurityOverview } from "@/lib/operations2.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/security-center")({
   component: SecurityCenterPage,
@@ -26,6 +27,7 @@ function SecurityCenterPage() {
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fnRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin"].includes(role);
+  const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
     queryKey: ["security-center"],
@@ -43,6 +45,9 @@ function SecurityCenterPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Access and audit events across every tenant. Read-only." />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><ShieldCheck className="h-6 w-6 text-emerald-600" /> Security Center</h1>
         <p className="text-sm text-slate-500 mt-1">User access, privilege overview and recent security events.</p>
