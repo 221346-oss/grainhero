@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { BarChart3, TrendingUp, Package, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle } from "lucide-react";
 import { getAnalyticsOverview } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   component: AnalyticsPage,
@@ -29,6 +30,7 @@ function AnalyticsPage() {
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin", "manager"].includes(role);
+  const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
     queryKey: ["analytics-overview"],
@@ -56,6 +58,9 @@ function AnalyticsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Aggregated operational and financial metrics across every tenant." />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><BarChart3 className="h-6 w-6 text-emerald-600" /> Business Analytics</h1>
         <p className="text-sm text-slate-500 mt-1">Operational and financial performance across your grain operations.</p>
