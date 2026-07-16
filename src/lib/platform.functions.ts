@@ -10,7 +10,7 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const [profiles, roles, batches, silos, alerts, subs, logs] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, admin_id, created_at, business_type, blocked", { count: "exact" }),
       supabaseAdmin.from("user_roles").select("role, user_id"),
@@ -132,7 +132,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
 
     const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes] = await Promise.all([
       supabaseAdmin
