@@ -104,6 +104,6 @@ Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notification
 1. ✅ Migration `get_my_role` + `rbac.server.ts` + `page-scope.server.ts`.
 2. ✅ Super_admin redirects (plans, team-management, activity-logs, revenue, data-visualization, traceability) + operational routes now redirect to `/not-allowed` instead of `/dashboard`.
 3. ✅ `notifyPlatformEvent()` scaffold + wired into `toggleUserBlocked` and Stripe `invoice.payment_failed` + `customer.subscription.deleted`. Set secret `PLATFORM_EVENT_WEBHOOK_URL` to activate.
-4. ⏳ Refactor 7 files off direct `has_role` onto `requireRole()`.
+4. ✅ Refactor 10 files off direct `has_role` onto `getEffectiveRole()` (roles, platform, revenue-analytics, monitoring, operations2, billing, analytics, team-settings-insurance, hardware-orders, firebase-sync, admin-test-email).
 5. ⏳ Per-page tenant/platform branching (13 pages — one component split per page).
 6. ⏳ Tenant impersonation (context cookie + write-lock middleware + banner + "View as tenant" button).
