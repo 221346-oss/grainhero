@@ -23,6 +23,8 @@ import {
 } from "@/lib/team-settings-insurance.functions";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
+import { getPlatformInsuranceOverview } from "@/lib/platform-overviews.functions";
 
 export const Route = createFileRoute("/_authenticated/insurance")({ component: InsurancePage });
 
@@ -77,6 +79,13 @@ function InsurancePage() {
   });
   const { data: claims = [], isLoading: claimsLoading } = useQuery({
     queryKey: ["insurance-claims"], queryFn: () => listClaimsFn() as Promise<InsuranceClaimRow[]>,
+  });
+
+  const fetchPlatformIns = useServerFn(getPlatformInsuranceOverview);
+  const platformInsQ = useQuery({
+    queryKey: ["platform-insurance-overview"],
+    queryFn: () => fetchPlatformIns(),
+    enabled: isSuperAdmin,
   });
 
   const [policyOpen, setPolicyOpen] = useState(false);
@@ -147,6 +156,24 @@ function InsurancePage() {
       {isSuperAdmin && (
         <div className="mb-6">
           <PlatformScopeBanner label="Policies and claims across every tenant. Totals reflect all insured value on the platform." />
+        </div>
+      )}
+      {isSuperAdmin && platformInsQ.data && (
+        <div className="mb-6">
+          <PlatformOverviewTable
+            title="Per-tenant insurance"
+            description={`Total coverage $${platformInsQ.data.totals.coverage.toLocaleString()} · ${platformInsQ.data.totals.openClaims} open claims`}
+            rows={platformInsQ.data.rows}
+            columns={[
+              { key: "activePolicies", label: "Active", align: "right", render: (r) => `${r.activePolicies}/${r.policies}` },
+              { key: "coverage", label: "Coverage", align: "right", render: (r) => `$${r.coverage.toLocaleString()}` },
+              { key: "premium", label: "Premium", align: "right", render: (r) => `$${r.premium.toLocaleString()}` },
+              { key: "openClaims", label: "Open claims", align: "right", render: (r) => (
+                  <span className={r.openClaims > 0 ? "text-amber-700 font-medium" : ""}>{r.openClaims}</span>
+                ) },
+              { key: "claimRate", label: "Claim rate", align: "right", render: (r) => `${(r.claimRate * 100).toFixed(0)}%` },
+            ]}
+          />
         </div>
       )}
       <PageHeader title="Insurance" subtitle="Track your policies and claims across grain operations" />
