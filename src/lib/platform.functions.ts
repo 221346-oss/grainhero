@@ -98,6 +98,17 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ blocked: data.blocked }).eq("id", data.id);
     if (error) throw error;
+    // Fire-and-forget platform event webhook.
+    try {
+      const { notifyPlatformEvent } = await import("./platform-notify.server");
+      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", data.id).maybeSingle();
+      await notifyPlatformEvent({
+        type: data.blocked ? "user_blocked" : "user_unblocked",
+        userId: data.id,
+        email: prof?.email ?? null,
+        by: context.userId,
+      });
+    } catch { /* never fail the action on webhook error */ }
     return { ok: true };
   });
 
