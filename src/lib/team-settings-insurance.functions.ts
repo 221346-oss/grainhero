@@ -1,5 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
+
+async function roleFlags(supabase: any, userId: string) {
+  const r = await getEffectiveRole(supabase, userId);
+  return {
+    role: r,
+    isSuper: r === "super_admin",
+    isAdmin: r === "admin",
+    isManager: r === "manager",
+  };
+}
 
 // ============= TEAM MANAGEMENT =============
 
