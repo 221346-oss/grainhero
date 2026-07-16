@@ -1,16 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 async function assertSuperAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
-  if (!data) throw new Error("Forbidden");
+  if ((await getEffectiveRole(supabase, userId)) !== "super_admin") throw new Error("Forbidden");
 }
 
 export const getPlatformMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const [profiles, roles, batches, silos, alerts, subs, logs] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, admin_id, created_at, business_type, blocked", { count: "exact" }),
       supabaseAdmin.from("user_roles").select("role, user_id"),
@@ -98,6 +98,17 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ blocked: data.blocked }).eq("id", data.id);
     if (error) throw error;
+    // Fire-and-forget platform event webhook.
+    try {
+      const { notifyPlatformEvent } = await import("./platform-notify.server");
+      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", data.id).maybeSingle();
+      await notifyPlatformEvent({
+        type: data.blocked ? "user_blocked" : "user_unblocked",
+        userId: data.id,
+        email: prof?.email ?? null,
+        by: context.userId,
+      });
+    } catch { /* never fail the action on webhook error */ }
     return { ok: true };
   });
 
@@ -121,7 +132,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
 
     const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes] = await Promise.all([
       supabaseAdmin

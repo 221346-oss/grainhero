@@ -1,15 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { blockIfImpersonating } from "./impersonation-guard";
 import { z } from "zod";
+import { getEffectiveRole } from "./rbac.server";
 
 async function role(supabase: any, userId: string) {
-  const roles: string[] = [];
-  for (const r of ["super_admin", "admin", "manager", "technician"]) {
-    const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: r });
-    if (data) roles.push(r);
-  }
-  const order = ["super_admin", "admin", "manager", "technician", "pending"];
-  return order.find((r) => roles.includes(r)) ?? "pending";
+  return getEffectiveRole(supabase, userId);
 }
 
 function requireAny(r: string, allowed: string[]) {
@@ -126,10 +122,82 @@ export const getIncidents = createServerFn({ method: "GET" })
     };
   });
 
+// ---------- Platform aggregation: incidents by tenant ----------
+
+export type PlatformIncidentsOverview = {
+  totals: { total: number; open: number; resolved: number; acknowledged: number };
+  mtta: number;
+  mttr: number;
+  tenants: Array<{
+    adminId: string;
+    tenantName: string;
+    total: number;
+    open: number;
+    critical: number;
+    lastTriggeredAt: string | null;
+  }>;
+};
+
+export const getPlatformIncidentsOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PlatformIncidentsOverview> => {
+    const r = await role(context.supabase, context.userId);
+    requireAny(r, ["super_admin"]);
+
+    const { data: alerts, error } = await context.supabase
+      .from("grain_alerts")
+      .select("id, priority, status, admin_id, triggered_at, acknowledged_at, resolved_at")
+      .order("triggered_at", { ascending: false })
+      .limit(2000);
+    if (error) throw error;
+    const list = (alerts ?? []) as any[];
+
+    const totals = {
+      total: list.length,
+      open: list.filter((x) => x.status === "open" || x.status === "active").length,
+      resolved: list.filter((x) => x.status === "resolved").length,
+      acknowledged: list.filter((x) => x.acknowledged_at && !x.resolved_at).length,
+    };
+    const avgMin = (arr: any[], a: string, b: string) =>
+      arr.length ? arr.reduce((s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000, 0) / arr.length : 0;
+    const mtta = avgMin(list.filter((x) => x.acknowledged_at && x.triggered_at), "acknowledged_at", "triggered_at");
+    const mttr = avgMin(list.filter((x) => x.resolved_at && x.triggered_at), "resolved_at", "triggered_at");
+
+    // Bucket by tenant.
+    const byTenant = new Map<string, { total: number; open: number; critical: number; lastTriggeredAt: string | null }>();
+    for (const a of list) {
+      const key = a.admin_id ?? "unknown";
+      const b = byTenant.get(key) ?? { total: 0, open: 0, critical: 0, lastTriggeredAt: null };
+      b.total += 1;
+      if (a.status === "open" || a.status === "active") b.open += 1;
+      if (a.priority === "critical") b.critical += 1;
+      if (a.triggered_at && (!b.lastTriggeredAt || a.triggered_at > b.lastTriggeredAt)) b.lastTriggeredAt = a.triggered_at;
+      byTenant.set(key, b);
+    }
+    const ids = Array.from(byTenant.keys()).filter((k) => k !== "unknown");
+    let profiles: Array<{ id: string; name: string | null; email: string | null }> = [];
+    if (ids.length > 0) {
+      const { data } = await context.supabase.from("profiles").select("id, name, email").in("id", ids);
+      profiles = data ?? [];
+    }
+    const nameOf = new Map(profiles.map((p) => [p.id, p.name ?? p.email ?? p.id]));
+
+    const tenants = Array.from(byTenant.entries())
+      .map(([adminId, b]) => ({
+        adminId,
+        tenantName: adminId === "unknown" ? "Unknown tenant" : (nameOf.get(adminId) ?? adminId),
+        ...b,
+      }))
+      .sort((a, b) => b.open - a.open || b.critical - a.critical || b.total - a.total)
+      .slice(0, 25);
+
+    return { totals, mtta, mttr, tenants };
+  });
+
 const ackInput = z.object({ id: z.string().uuid(), resolve: z.boolean().optional() });
 
 export const acknowledgeIncident = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, blockIfImpersonating])
   .inputValidator((d) => ackInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);

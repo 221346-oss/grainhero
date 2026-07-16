@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 const input = z.object({ to: z.string().trim().email().max(200) });
 
@@ -9,14 +10,8 @@ export const sendAdminTestEmail = createServerFn({ method: "POST" })
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
     // Authorize: only super_admin or admin
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "super_admin",
-    });
+    const isAdmin = (await getEffectiveRole(context.supabase, context.userId)) === "admin";
+    const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
     if (!isAdmin && !isSuper) throw new Error("Forbidden");
 
     const gatewayKey = process.env.LOVABLE_API_KEY;

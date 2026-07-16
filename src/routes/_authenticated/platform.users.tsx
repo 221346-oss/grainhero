@@ -27,6 +27,8 @@ function UsersPage() {
   const qc = useQueryClient();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
+  const impersonateFn = useServerFn(startImpersonation);
+  const router = useRouter();
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
@@ -40,6 +42,15 @@ function UsersPage() {
   const toggle = useMutation({
     mutationFn: (v: { id: string; blocked: boolean }) => toggleFn({ data: v }),
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["platform-users"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const impersonate = useMutation({
+    mutationFn: (targetAdminId: string) => impersonateFn({ data: { targetAdminId } }),
+    onSuccess: async (res) => {
+      toast.success(`Viewing as ${res.tenantName}`);
+      await qc.invalidateQueries();
+      router.navigate({ to: "/dashboard" });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -160,6 +171,17 @@ function UsersPage() {
                   >
                     {u.blocked ? "Unblock" : "Block"}
                   </Button>
+                  {u.role === "admin" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={impersonate.isPending}
+                      onClick={() => impersonate.mutate(u.id)}
+                      className="gap-1.5"
+                    >
+                      <UserCog className="h-3.5 w-3.5" /> View as
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>

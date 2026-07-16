@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 interface FirebaseLive {
   temperature?: number;
@@ -27,14 +28,8 @@ export const syncFirebaseSnapshot = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    });
-    const { data: isSuper } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "super_admin",
-    });
+    const isAdmin = (await getEffectiveRole(supabase, userId)) === "admin";
+    const isSuper = (await getEffectiveRole(supabase, userId)) === "super_admin";
     if (!isAdmin && !isSuper) {
       return { synced: 0, skipped: 0, error: "Forbidden" };
     }

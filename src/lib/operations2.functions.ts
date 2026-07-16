@@ -1,15 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { blockIfImpersonating } from "./impersonation-guard";
 import { z } from "zod";
+import { getEffectiveRole } from "./rbac.server";
 
 async function role(supabase: any, userId: string) {
-  const roles: string[] = [];
-  for (const r of ["super_admin", "admin", "manager", "technician"]) {
-    const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: r });
-    if (data) roles.push(r);
-  }
-  const order = ["super_admin", "admin", "manager", "technician", "pending"];
-  return order.find((r) => roles.includes(r)) ?? "pending";
+  return getEffectiveRole(supabase, userId);
 }
 function req(r: string, allowed: string[]) { if (!allowed.includes(r)) throw new Error("Forbidden"); }
 
@@ -50,10 +46,83 @@ export const getMaintenanceOverview = createServerFn({ method: "GET" })
     return { devices: list, actuators: actuators ?? [], totals };
   });
 
+// ---------- Platform aggregation: maintenance by tenant ----------
+
+export type PlatformMaintenanceOverview = {
+  totals: { devices: number; overdue: number; dueSoon: number; lowBattery: number };
+  tenants: Array<{
+    adminId: string;
+    tenantName: string;
+    devices: number;
+    overdue: number;
+    dueSoon: number;
+    lowBattery: number;
+  }>;
+};
+
+export const getPlatformMaintenanceOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PlatformMaintenanceOverview> => {
+    const r = await role(context.supabase, context.userId);
+    req(r, ["super_admin"]);
+
+    const { data: devices, error } = await context.supabase
+      .from("sensor_devices")
+      .select("id, admin_id, battery_level, next_maintenance_date")
+      .is("deleted_at", null)
+      .limit(5000);
+    if (error) throw error;
+    const list = (devices ?? []) as any[];
+    const now = Date.now();
+    const soon = now + 30 * 24 * 3600 * 1000;
+
+    const byTenant = new Map<string, { devices: number; overdue: number; dueSoon: number; lowBattery: number }>();
+    for (const d of list) {
+      const key = d.admin_id ?? "unknown";
+      const b = byTenant.get(key) ?? { devices: 0, overdue: 0, dueSoon: 0, lowBattery: 0 };
+      b.devices += 1;
+      if (d.next_maintenance_date) {
+        const t = new Date(d.next_maintenance_date).getTime();
+        if (t < now) b.overdue += 1;
+        else if (t <= soon) b.dueSoon += 1;
+      }
+      if (d.battery_level != null && d.battery_level < 20) b.lowBattery += 1;
+      byTenant.set(key, b);
+    }
+
+    const ids = Array.from(byTenant.keys()).filter((k) => k !== "unknown");
+    let profiles: Array<{ id: string; name: string | null; email: string | null }> = [];
+    if (ids.length > 0) {
+      const { data } = await context.supabase.from("profiles").select("id, name, email").in("id", ids);
+      profiles = data ?? [];
+    }
+    const nameOf = new Map(profiles.map((p) => [p.id, p.name ?? p.email ?? p.id]));
+
+    const tenants = Array.from(byTenant.entries())
+      .map(([adminId, b]) => ({
+        adminId,
+        tenantName: adminId === "unknown" ? "Unknown tenant" : (nameOf.get(adminId) ?? adminId),
+        ...b,
+      }))
+      .sort((a, b) => b.overdue - a.overdue || b.dueSoon - a.dueSoon || b.lowBattery - a.lowBattery)
+      .slice(0, 25);
+
+    const totals = {
+      devices: list.length,
+      overdue: tenants.reduce((s, t) => s + t.overdue, 0) + Array.from(byTenant.values()).slice(25).reduce((s, t) => s + t.overdue, 0),
+      dueSoon: Array.from(byTenant.values()).reduce((s, t) => s + t.dueSoon, 0),
+      lowBattery: Array.from(byTenant.values()).reduce((s, t) => s + t.lowBattery, 0),
+    };
+    // recompute overdue cleanly across ALL tenants (not just top-25)
+    totals.overdue = Array.from(byTenant.values()).reduce((s, t) => s + t.overdue, 0);
+
+    return { totals, tenants };
+  });
+
 const maintInput = z.object({ id: z.string().uuid(), kind: z.enum(["device", "actuator"]), nextInDays: z.number().int().min(1).max(3650).default(180) });
 
 export const markMaintenanceDone = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, blockIfImpersonating])
   .inputValidator((d) => maintInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);

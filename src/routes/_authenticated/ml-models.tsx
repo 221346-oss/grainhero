@@ -8,7 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Cpu, Database, Activity, GitBranch } from "lucide-react";
 import { getMLModels } from "@/lib/analytics.functions";
+import { getPlatformMLInference } from "@/lib/platform-overviews.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 
 export const Route = createFileRoute("/_authenticated/ml-models")({
   component: MLModelsPage,
@@ -20,11 +23,19 @@ function MLModelsPage() {
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin"].includes(role);
+  const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
     queryKey: ["ml-models"],
     queryFn: () => fetchModels(),
     enabled: allowed,
+  });
+
+  const fetchInf = useServerFn(getPlatformMLInference);
+  const infQ = useQuery({
+    queryKey: ["platform-ml-inference"],
+    queryFn: () => fetchInf(),
+    enabled: isSuperAdmin,
   });
 
   if (!roleQ.isLoading && !allowed) {
@@ -39,6 +50,25 @@ function MLModelsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Inference volume, accuracy and confidence measured across every tenant. Retraining is not available from this view." />
+      )}
+      {isSuperAdmin && infQ.data && (
+        <PlatformOverviewTable
+          title="Per-tenant inference (last 7 days)"
+          description={`${infQ.data.totalInferences.toLocaleString()} inferences · ${infQ.data.totalAnomalies.toLocaleString()} anomalies`}
+          rows={infQ.data.rows}
+          columns={[
+            { key: "inferences", label: "Inferences", align: "right", render: (r) => r.inferences.toLocaleString() },
+            { key: "critical", label: "Critical", align: "right", render: (r) => (
+                <span className={r.critical > 0 ? "text-red-600 font-medium" : ""}>{r.critical}</span>
+              ) },
+            { key: "anomalies", label: "Anomalies", align: "right", render: (r) => r.anomalies },
+            { key: "anomalyRate", label: "Anom rate", align: "right", render: (r) => `${(r.anomalyRate * 100).toFixed(1)}%` },
+            { key: "avgConfidence", label: "Avg conf", align: "right", render: (r) => `${(r.avgConfidence * 100).toFixed(1)}%` },
+          ]}
+        />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Cpu className="h-6 w-6 text-emerald-600" /> ML Model Performance</h1>
         <p className="text-sm text-slate-500 mt-1">Health, accuracy and confidence of models powering AI Predictions.</p>

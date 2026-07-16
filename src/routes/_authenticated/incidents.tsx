@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertOctagon, Search, CheckCircle2, Clock, TrendingDown } from "lucide-react";
-import { getIncidents, acknowledgeIncident } from "@/lib/monitoring.functions";
+import { getIncidents, acknowledgeIncident, getPlatformIncidentsOverview } from "@/lib/monitoring.functions";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/incidents")({
   component: IncidentsPage,
@@ -29,6 +31,12 @@ function statusBadge(s: string | null) {
 function fmtMin(m: number) { return m > 60 ? `${(m / 60).toFixed(1)}h` : `${Math.round(m)}m`; }
 
 function IncidentsPage() {
+  const { isSuperAdmin } = useIsSuperAdmin();
+  if (isSuperAdmin) return <PlatformIncidentsView />;
+  return <TenantIncidentsView />;
+}
+
+function TenantIncidentsView() {
   const fn = useServerFn(getIncidents);
   const ackFn = useServerFn(acknowledgeIncident);
   const qc = useQueryClient();
@@ -102,19 +110,72 @@ function IncidentsPage() {
                   <div className="text-[10px] text-slate-400 mt-1">{i.alert_id} · {i.triggered_at ? new Date(i.triggered_at).toLocaleString() : "—"}</div>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  {!i.acknowledged_at && (
-                    <Button size="sm" variant="outline" onClick={() => ackM.mutate({ id: i.id })} disabled={ackM.isPending}>Acknowledge</Button>
-                  )}
-                  {!i.resolved_at && (
-                    <Button size="sm" onClick={() => ackM.mutate({ id: i.id, resolve: true })} disabled={ackM.isPending}>
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Resolve
-                    </Button>
-                  )}
+                    {!i.acknowledged_at && (
+                      <Button size="sm" variant="outline" onClick={() => ackM.mutate({ id: i.id })} disabled={ackM.isPending}>Acknowledge</Button>
+                    )}
+                    {!i.resolved_at && (
+                      <Button size="sm" onClick={() => ackM.mutate({ id: i.id, resolve: true })} disabled={ackM.isPending}>
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Resolve
+                      </Button>
+                    )}
                 </div>
               </div>
             ))}
             {filtered.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No incidents match.</div>}
           </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function PlatformIncidentsView() {
+  const fn = useServerFn(getPlatformIncidentsOverview);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["platform-incidents"],
+    queryFn: () => fn(),
+    refetchInterval: 60_000,
+  });
+  const totals = data?.totals ?? { total: 0, open: 0, resolved: 0, acknowledged: 0 };
+  const tenants = data?.tenants ?? [];
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <PlatformScopeBanner label="Aggregate incident volume across every tenant. Read-only — no acknowledge or resolve." />
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><AlertOctagon className="h-6 w-6 text-red-600" /> Platform incidents</h1>
+        <p className="text-sm text-slate-500 mt-1">Cross-tenant alert load — worst offenders first.</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Card><CardContent className="p-4"><div className="text-xs uppercase text-slate-500 font-semibold">Total</div><div className="text-2xl font-bold">{totals.total}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase text-slate-500 font-semibold">Open</div><div className="text-2xl font-bold text-red-600">{totals.open}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase text-slate-500 font-semibold">Acknowledged</div><div className="text-2xl font-bold text-blue-600">{totals.acknowledged}</div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-2"><Clock className="h-5 w-5 text-slate-500" /><div><div className="text-xs uppercase text-slate-500 font-semibold">MTTA</div><div className="text-xl font-bold">{fmtMin(data?.mtta ?? 0)}</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-2"><TrendingDown className="h-5 w-5 text-slate-500" /><div><div className="text-xs uppercase text-slate-500 font-semibold">MTTR</div><div className="text-xl font-bold">{fmtMin(data?.mttr ?? 0)}</div></div></CardContent></Card>
+      </div>
+      <Card>
+        <CardHeader><CardTitle>Worst-offender tenants</CardTitle><CardDescription>Ranked by open incidents, then critical severity.</CardDescription></CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-8 text-center text-sm text-slate-500">Loading…</div>
+          ) : error ? (
+            <div className="p-8 text-center text-sm text-red-600">Failed to load: {(error as Error).message}</div>
+          ) : tenants.length === 0 ? (
+            <div className="p-8 text-center text-sm text-slate-500">No incidents across the platform.</div>
+          ) : (
+            <div className="divide-y">
+              {tenants.map((t) => (
+                <div key={t.adminId} className="p-4 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-slate-900 truncate">{t.tenantName}</div>
+                    <div className="text-xs text-slate-500">Last triggered: {t.lastTriggeredAt ? new Date(t.lastTriggeredAt).toLocaleString() : "—"}</div>
+                  </div>
+                  <Badge className="bg-red-100 text-red-800 border-red-200">{t.open} open</Badge>
+                  <Badge className="bg-orange-100 text-orange-800 border-orange-200">{t.critical} critical</Badge>
+                  <Badge variant="outline">{t.total} total</Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

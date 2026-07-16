@@ -33,6 +33,7 @@ function SecurityCenterPage() {
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fnRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin"].includes(role);
+  const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
     queryKey: ["security-center"],
