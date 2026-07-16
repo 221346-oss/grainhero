@@ -16,12 +16,28 @@ export const Route = createFileRoute("/_authenticated")({
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth/login" });
 
-    // Super admins are blocked from operational routes (silos, warehouses,
-    // grain batches, sensors, actuators). They belong on /platform.
+    // Role-aware guardrails: block super_admins from tenant-operational
+    // routes, and redirect them off tenant pages that have a canonical
+    // platform equivalent (avoid two lenses on the same data).
     const OPERATIONAL_PREFIXES = [
       "/silos", "/warehouses", "/grain-batches", "/sensors", "/actuators",
     ];
-    if (OPERATIONAL_PREFIXES.some((p) => location.pathname.startsWith(p))) {
+    // super_admin → platform equivalent. Keep in sync with plan §2.
+    const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
+      "/plans": "/platform/plans",
+      "/team-management": "/platform/users",
+      "/activity-logs": "/platform/audit-logs",
+      "/revenue": "/platform/revenue",
+      "/data-visualization": "/analytics",
+      "/traceability": "/dashboard",
+    };
+
+    const path = location.pathname;
+    const needsRoleCheck =
+      OPERATIONAL_PREFIXES.some((p) => path.startsWith(p)) ||
+      Object.keys(SUPER_ADMIN_REDIRECTS).some((p) => path === p || path.startsWith(p + "/"));
+
+    if (needsRoleCheck) {
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
@@ -29,7 +45,16 @@ export const Route = createFileRoute("/_authenticated")({
       const rs = (roles ?? []).map((r) => r.role as string);
       const isSuperAdmin = rs.includes("super_admin");
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
-      if (isSuperAdmin && !alsoOperational) throw redirect({ to: "/dashboard" });
+      if (isSuperAdmin && !alsoOperational) {
+        if (OPERATIONAL_PREFIXES.some((p) => path.startsWith(p))) {
+          throw redirect({ to: "/not-allowed" });
+        }
+        for (const [from, to] of Object.entries(SUPER_ADMIN_REDIRECTS)) {
+          if (path === from || path.startsWith(from + "/")) {
+            throw redirect({ to });
+          }
+        }
+      }
     }
 
     return { user: data.user };
