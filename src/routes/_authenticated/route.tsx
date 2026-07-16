@@ -9,6 +9,7 @@ import { ThemeInit } from "@/components/app/ThemeInit";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
+import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -50,7 +51,11 @@ export const Route = createFileRoute("/_authenticated")({
       const rs = (roles ?? []).map((r) => r.role as string);
       const isSuperAdmin = rs.includes("super_admin");
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
-      if (isSuperAdmin && !alsoOperational) {
+      // While impersonating, super_admin browses the app as the target
+      // tenant — skip the platform redirects so tenant pages are reachable.
+      const impersonating = typeof document !== "undefined" &&
+        document.cookie.split(/;\s*/).some((c) => c.startsWith("gh_impersonate="));
+      if (isSuperAdmin && !alsoOperational && !impersonating) {
         if (OPERATIONAL_PREFIXES.some((p) => path.startsWith(p))) {
           throw redirect({ to: "/not-allowed" });
         }
@@ -81,6 +86,7 @@ function AuthenticatedLayout() {
           <AppSidebar />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
+          <ImpersonationBanner />
           <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
             <SidebarTrigger className="shrink-0" />
             <div className="flex-1 max-w-2xl mx-auto w-full">
