@@ -64,6 +64,7 @@ const emptyClaim: ClaimForm = {
 
 function InsurancePage() {
   const qc = useQueryClient();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const listPoliciesFn = useServerFn(listPolicies);
   const savePolicyFn = useServerFn(upsertPolicy);
   const delPolicyFn = useServerFn(deletePolicy);
@@ -143,7 +144,7 @@ function InsurancePage() {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      {useIsSuperAdmin().isSuperAdmin && (
+      {isSuperAdmin && (
         <div className="mb-6">
           <PlatformScopeBanner label="Policies and claims across every tenant. Totals reflect all insured value on the platform." />
         </div>
