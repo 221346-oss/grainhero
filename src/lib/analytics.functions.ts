@@ -1,16 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 // ---------- helpers ----------
 
 async function assertAllowed(supabase: any, userId: string) {
-  const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
-  if (data) return true;
-  const { data: admin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (admin) return true;
-  const { data: mgr } = await supabase.rpc("has_role", { _user_id: userId, _role: "manager" });
-  if (mgr) return true;
-  throw new Error("Forbidden");
+  const r = await getEffectiveRole(supabase, userId);
+  if (!["super_admin", "admin", "manager"].includes(r)) throw new Error("Forbidden");
+  return true;
 }
 
 type Reading = {

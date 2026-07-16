@@ -1,15 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { getEffectiveRole } from "./rbac.server";
 
 async function role(supabase: any, userId: string) {
-  const roles: string[] = [];
-  for (const r of ["super_admin", "admin", "manager", "technician"]) {
-    const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: r });
-    if (data) roles.push(r);
-  }
-  const order = ["super_admin", "admin", "manager", "technician", "pending"];
-  return order.find((r) => roles.includes(r)) ?? "pending";
+  return getEffectiveRole(supabase, userId);
 }
 
 function requireAny(r: string, allowed: string[]) {

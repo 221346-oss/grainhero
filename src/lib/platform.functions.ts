@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 async function assertSuperAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
-  if (!data) throw new Error("Forbidden");
+  if ((await getEffectiveRole(supabase, userId)) !== "super_admin") throw new Error("Forbidden");
 }
 
 export const getPlatformMetrics = createServerFn({ method: "GET" })

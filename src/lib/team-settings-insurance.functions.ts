@@ -1,5 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
+
+async function roleFlags(supabase: any, userId: string) {
+  const r = await getEffectiveRole(supabase, userId);
+  return {
+    role: r,
+    isSuper: r === "super_admin",
+    isAdmin: r === "admin",
+    isManager: r === "manager",
+  };
+}
 
 // ============= TEAM MANAGEMENT =============
 
@@ -39,9 +50,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    const { data: isManager } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" });
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
     if (isManager && !isAdmin && !isSuper && data.role !== "technician") throw new Error("Managers can only invite technicians");
     if (isAdmin && !isSuper && data.role === "admin") throw new Error("Only super admins can invite admins");
@@ -91,9 +100,7 @@ export const updateTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    const { data: isManager } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" });
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
 
     const update: Record<string, any> = {};
@@ -116,8 +123,7 @@ export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const { isSuper, isAdmin } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin) throw new Error("Forbidden");
     if (data.id === context.userId) throw new Error("You cannot remove yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
