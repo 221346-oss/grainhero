@@ -101,9 +101,9 @@ Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notification
 
 ## Execution order
 
-1. Migration + `rbac.server.ts` + `page-scope.server.ts`.
-2. Refactor 7 files off direct `has_role`.
-3. Wire `not-allowed.tsx` + 6 super_admin redirects.
-4. Branch pages in the table above (one PR-shape per page: extract TenantView, add PlatformView, branch server fn).
-5. Impersonation (guard + banner + write-lock middleware).
-6. `notifyPlatformEvent()` + call-site wiring.
+1. ✅ Migration `get_my_role` + `rbac.server.ts` + `page-scope.server.ts`.
+2. ✅ Super_admin redirects (plans, team-management, activity-logs, revenue, data-visualization, traceability) + operational routes now redirect to `/not-allowed` instead of `/dashboard`.
+3. ✅ `notifyPlatformEvent()` scaffold + wired into `toggleUserBlocked` and Stripe `invoice.payment_failed` + `customer.subscription.deleted`. Set secret `PLATFORM_EVENT_WEBHOOK_URL` to activate.
+4. ⏳ Refactor 7 files off direct `has_role` onto `requireRole()`.
+5. ⏳ Per-page tenant/platform branching (13 pages — one component split per page).
+6. ⏳ Tenant impersonation (context cookie + write-lock middleware + banner + "View as tenant" button).
