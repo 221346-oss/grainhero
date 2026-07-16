@@ -1,10 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getEffectiveRole } from "./rbac.server";
 import type { AppRole } from "./roles.functions";
+import { readImpersonationCookie } from "./impersonation.functions";
 
 export type PageScope =
   | { scope: "platform"; adminId: null; role: AppRole }
-  | { scope: "tenant"; adminId: string; role: AppRole };
+  | { scope: "tenant"; adminId: string; role: AppRole; impersonating?: boolean };
 
 /**
  * Decide which lens a shared page should render for the current user.
@@ -20,6 +21,11 @@ export async function resolvePageScope(
 ): Promise<PageScope> {
   const role = await getEffectiveRole(supabase, userId);
   if (role === "super_admin") {
+    // Impersonation: super_admin viewing the app as a tenant admin.
+    const targetAdminId = readImpersonationCookie();
+    if (targetAdminId) {
+      return { scope: "tenant", adminId: targetAdminId, role, impersonating: true };
+    }
     return { scope: "platform", adminId: null, role };
   }
   const { data, error } = await supabase
