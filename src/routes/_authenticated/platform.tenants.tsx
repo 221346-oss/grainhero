@@ -1,7 +1,7 @@
 import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,19 +14,7 @@ type Tenant = { id: string; name: string | null; email: string | null; business_
 
 function TenantsPage() {
   const fn = useServerFn(listAllTenants);
-  const impersonateFn = useServerFn(startImpersonation);
-  const qc = useQueryClient();
-  const router = useRouter();
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-tenants"], queryFn: () => fn() as Promise<Tenant[]> });
-  const impersonate = useMutation({
-    mutationFn: (targetAdminId: string) => impersonateFn({ data: { targetAdminId } }),
-    onSuccess: async (res) => {
-      toast.success(`Viewing as ${res.tenantName}`);
-      await qc.invalidateQueries();
-      router.navigate({ to: "/dashboard" });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
   const [q, setQ] = useState("");
   const filtered = useMemo(() => data.filter((t) => {
     const s = q.toLowerCase();

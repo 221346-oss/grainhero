@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
+import { UserCog } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/users")({ component: UsersPage });
 
