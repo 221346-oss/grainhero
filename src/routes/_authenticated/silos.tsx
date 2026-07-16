@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Thermometer, Droplets, Wind,
-  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff,
+  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff, Brain,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { runMLPrediction } from "@/lib/ml-pipeline.functions";
 
 export const Route = createFileRoute("/_authenticated/silos")({
   component: SilosPage,
@@ -399,6 +400,29 @@ function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () =
   const h = silo.current_conditions?.humidity?.value;
   const c = silo.current_conditions?.co2?.value;
 
+  const runAI = useServerFn(runMLPrediction);
+  const [isRunningAI, setIsRunningAI] = useState(false);
+
+  async function onRunAI() {
+    if (!silo.id) return;
+    setIsRunningAI(true);
+    try {
+      const result = await runAI({ data: { siloId: silo.id } });
+      const level = result.riskLevel as string;
+      const score = result.riskScore as number;
+      const toneMap: Record<string, string> = { critical: "🔴", high: "🟠", moderate: "🟡", low: "🟢" };
+      const icon = toneMap[level] ?? "ℹ️";
+      toast(`${icon} AI Prediction: ${level.toUpperCase()} (${score}%)`, {
+        description: result.humanReviewRequired ? "ML unavailable — safety guardrail used." : `Source: ${result.predictionSource}`,
+        duration: 6000,
+      });
+    } catch (e) {
+      toast.error((e as Error).message ?? "AI prediction failed");
+    } finally {
+      setIsRunningAI(false);
+    }
+  }
+
   return (
     <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <CardContent className="p-4 space-y-3">
@@ -486,6 +510,10 @@ function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () =
         <div className="flex gap-1 pt-1">
           <Button variant="outline" size="sm" onClick={onView} className="flex-1 h-8"><Eye className="w-3.5 h-3.5 mr-1" />View</Button>
           <Button variant="outline" size="sm" onClick={onEdit} className="flex-1 h-8"><Edit2 className="w-3.5 h-3.5 mr-1" />Edit</Button>
+          <Button variant="outline" size="sm" onClick={onRunAI} className="flex-1 h-8 text-violet-600 hover:text-violet-700" disabled={isRunningAI}>
+            {isRunningAI ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Brain className="w-3.5 h-3.5 mr-1" />}
+            {isRunningAI ? "" : "AI"}
+          </Button>
           <Button variant="outline" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-rose-600 hover:text-rose-700 shrink-0"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </CardContent>

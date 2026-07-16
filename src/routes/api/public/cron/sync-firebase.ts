@@ -11,6 +11,10 @@ import { appendToMLDataset } from "@/lib/ml-csv-logger.server";
  *   GH2 path (new firmware): /devices/{deviceId}/live
  *   GH1 path (legacy ESP32):  /sensor_data/{deviceId}/latest
  *   Both trees are read and merged so no firmware update is required.
+ *
+ * ML: uses the shared runMLInference utility (ai-inference.functions.ts)
+ * which tries HuggingFace API first, falls back to local Python.
+ * Includes Fumigation Interlock — no fan commands when silo.fumigation_active.
  */
 export const Route = createFileRoute("/api/public/cron/sync-firebase")({
   server: {
@@ -73,7 +77,16 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           if (b.silo_id) activeBatchMap.set(b.silo_id, b);
         }
 
-        const { runPythonMLInference } = await import("@/lib/ai-inference.functions");
+        // --- Proactive HuggingFace Warm-up ---
+        // Fire a non-blocking ping to keep the ML container warm.
+        const mlUrl = process.env.GRAINHERO_ML_API_URL;
+        if (mlUrl) {
+          fetch(`${mlUrl.replace(/\/$/, "")}/health`, { method: "GET" })
+            .catch(e => console.warn("[ML Warmup] Failed to ping HuggingFace:", e.message));
+        }
+
+        // Shared ML utility — tries HuggingFace API then local Python fallback
+        const { runMLInference } = await import("@/lib/ai-inference.functions");
 
         let synced = 0;
         const now = new Date();
@@ -81,8 +94,6 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
         // 1. Process all devices (known + newly auto-registered)
         for (const dev of devices) {
           // snap is a unified map keyed by device_id → flat payload.
-          // Populated from BOTH /devices/{id}/live (GH2) and
-          // /sensor_data/{id}/latest (GH1 legacy) — see fetchAllDevicePayloads().
           const live = snap?.[dev.device_id];
           if (!live) continue;
           
@@ -137,10 +148,10 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           }
           pestScore = Math.min(1.0, Math.max(0.0, pestScore));
           
-          let mlRiskClass = null;
-          let mlRiskScore = null;
-          let mlConfidence = null;
-          let batchId = null;
+          let mlRiskClass: string | null = null;
+          let mlRiskScore: number | null = null;
+          let mlConfidence: number | null = null;
+          let batchId: string | null = null;
 
           const batch = activeBatchMap.get(dev.silo_id);
           if (batch && temp != null && hum != null) {
@@ -149,7 +160,6 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               Math.floor((now.getTime() - new Date(batch.intake_date).getTime()) / (1000 * 3600 * 24)) : 0;
 
             // GH1 parity: throttle ML auto-trigger to once per 60 seconds per device
-            // (firebaseRealtimeService.js lines 251-256 — lastMLTrigger[deviceId]).
             const mlThrottleCutoff = new Date(now.getTime() - 60_000).toISOString();
             const { data: recentMl } = await supabaseAdmin
               .from("sensor_readings")
@@ -159,49 +169,56 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               .gte("reading_timestamp", mlThrottleCutoff)
               .limit(1)
               .maybeSingle();
-            
+
             try {
               if (recentMl) {
                 // Skip ML inference + auto-actuation; reading insert still proceeds below.
               } else {
-              const mlRes = await runPythonMLInference({
-                temperature: temp,
-                humidity: hum,
-                moisture: moist ?? 12,
-                voc: voc ?? 0,
-                co2: co2 ?? 400,
-                storage_days: storageDays,
-                grain_type: batch.grain_type || "wheat"
-              });
-              mlRiskClass = mlRes.risk_class;
-              mlRiskScore = mlRes.risk_score;
-              mlConfidence = mlRes.confidence;
-
-              // spoilage_predictions table not in schema — skip persisting predictions here.
-              void mlRes.factors;
-
-              // AUTO-ACTUATION (GH1 Parity)
-              const cls = mlRiskClass?.toLowerCase();
-              if (cls === "risky" || cls === "spoiled") {
-                const fanSpeed = cls === "spoiled" ? 100 : 80;
-                await writeFirebaseControl(dev.device_id, {
-                  ml_requested_fan: true,
-                  target_fan_speed: fanSpeed,
-                  ml_decision: cls,
-                  led2: false,
-                  led3: cls === "risky",
-                  led4: cls === "spoiled"
+                const mlRes = await runMLInference({
+                  grain_type: batch.grain_type || "wheat",
+                  temperature: temp,
+                  humidity: hum,
+                  moisture: moist ?? 12,
+                  voc,
+                  co2,
+                  storage_days: storageDays,
                 });
-              } else if (cls === "safe") {
-                await writeFirebaseControl(dev.device_id, {
-                  ml_requested_fan: false,
-                  target_fan_speed: 0,
-                  ml_decision: "safe",
-                  led2: true,
-                  led3: false,
-                  led4: false
-                });
-              }
+
+                if (mlRes) {
+                  mlRiskClass = mlRes.risk_class;
+                  mlRiskScore = mlRes.risk_score;
+                  mlConfidence = mlRes.confidence;
+
+                  // AUTO-ACTUATION with Fumigation Interlock
+                  const { data: siloRow } = await supabaseAdmin
+                    .from("silos")
+                    .select("fumigation_active")
+                    .eq("id", dev.silo_id)
+                    .maybeSingle();
+                  const fumigationActive = !!(siloRow as any)?.fumigation_active;
+
+                  const cls = mlRes.risk_class;
+                  if ((cls === "high" || cls === "critical" || cls === "moderate") && !fumigationActive) {
+                    const fanSpeed = cls === "critical" ? 100 : cls === "high" ? 80 : 60;
+                    await writeFirebaseControl(dev.device_id, {
+                      ml_requested_fan: true,
+                      target_fan_speed: fanSpeed,
+                      ml_decision: cls,
+                      led2: false,
+                      led3: cls === "moderate" || cls === "high",
+                      led4: cls === "critical"
+                    });
+                  } else if (cls === "low" || fumigationActive) {
+                    await writeFirebaseControl(dev.device_id, {
+                      ml_requested_fan: false,
+                      target_fan_speed: 0,
+                      ml_decision: fumigationActive ? "fumigation_lock" : "safe",
+                      led2: !fumigationActive,
+                      led3: false,
+                      led4: false
+                    });
+                  }
+                }
               }
             } catch (mlErr) {
               console.error("ML Inference error for device", dev.device_id, mlErr);
@@ -262,7 +279,6 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
             await supabaseAdmin.from("sensor_devices").update({
               last_heartbeat: now.toISOString(),
               connection_status: "online",
-              // GH2 offline cron sets status="offline"; restore on recovery (GH1 uses connection_status only)
               status: "active",
               health_metrics: {
                 uptime_percentage: health.uptime_percentage ?? 100,
@@ -291,11 +307,7 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                });
             }
 
-            // Silo conditions are updated automatically by the Supabase trigger
-            // sync_sensor_to_silo_conditions which writes to current_conditions JSONB
-            // whenever a sensor_readings row is inserted. No redundant UPDATE needed.
-
-              // 2. Threshold Alerts (GH1 Parity)
+            // 2. Threshold Alerts (GH1 Parity)
             if (dev.silo_id && (temp != null || hum != null)) {
               const alertsToCreate = [];
               if (temp != null && temp > 35) {
@@ -329,8 +341,6 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                 });
               }
               // LDR Leakage / Tampering Detection (GH1 Parity)
-              // Throttle: one leakage alert per 30 minutes per device
-              // (firebaseRealtimeService.js lines 142-147).
               if (fanState === 0 && servoState === 0 && ambientLight != null && ambientLight > 5) {
                 const leakCutoff = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
                 const { data: recentLeak } = await supabaseAdmin
@@ -379,8 +389,6 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
         }
 
         // Offline Detection — mark devices that have not pinged in 15 minutes.
-        // Filters on status "active" (the correct enum value written by heartbeat above).
-        // "offline" is a valid device_status enum value.
         const offlineThreshold = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
         await supabaseAdmin.from("sensor_devices")
           .update({ status: "offline", connection_status: "offline" })
