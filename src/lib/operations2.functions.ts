@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { blockIfImpersonating } from "./impersonation-guard";
 import { z } from "zod";
 import { getEffectiveRole } from "./rbac.server";
 
@@ -48,7 +49,7 @@ export const getMaintenanceOverview = createServerFn({ method: "GET" })
 const maintInput = z.object({ id: z.string().uuid(), kind: z.enum(["device", "actuator"]), nextInDays: z.number().int().min(1).max(3650).default(180) });
 
 export const markMaintenanceDone = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireSupabaseAuth, blockIfImpersonating])
   .inputValidator((d) => maintInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
