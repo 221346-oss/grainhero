@@ -109,8 +109,7 @@ function TenantIncidentsView() {
                   <div className="text-xs text-slate-500 mt-1">{i.message}</div>
                   <div className="text-[10px] text-slate-400 mt-1">{i.alert_id} · {i.triggered_at ? new Date(i.triggered_at).toLocaleString() : "—"}</div>
                 </div>
-                {!isSuperAdmin && (
-                  <div className="flex gap-2 shrink-0">
+                <div className="flex gap-2 shrink-0">
                     {!i.acknowledged_at && (
                       <Button size="sm" variant="outline" onClick={() => ackM.mutate({ id: i.id })} disabled={ackM.isPending}>Acknowledge</Button>
                     )}
@@ -119,8 +118,7 @@ function TenantIncidentsView() {
                         <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Resolve
                       </Button>
                     )}
-                  </div>
-                )}
+                </div>
               </div>
             ))}
             {filtered.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No incidents match.</div>}
