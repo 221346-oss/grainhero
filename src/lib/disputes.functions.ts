@@ -151,3 +151,23 @@ export const resolveDispute = createServerFn({ method: "POST" })
     } catch { /* email best-effort */ }
     return { ok: true, refund: rez.refund };
   });
+
+export const getDisputeAttachmentUrls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    id: z.string().uuid(),
+    paths: z.array(z.string().min(1)).max(20),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // Moderator-only: verify role
+    const { data: role } = await context.supabase.rpc("get_my_role", { _user_id: context.userId });
+    if (role !== "super_admin" && role !== "admin") throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const results: Array<{ path: string; url: string | null }> = [];
+    for (const p of data.paths) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("dispute-attachments").createSignedUrl(p, 60 * 10);
+      results.push({ path: p, url: signed?.signedUrl ?? null });
+    }
+    return { urls: results };
+  });
