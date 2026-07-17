@@ -158,7 +158,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
-    const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes] = await Promise.all([
+    const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes, ordersRes, leadsRes] = await Promise.all([
       context.supabase
         .from("profiles")
         .select("id, name, email, business_type, subscription_plan, created_at")
@@ -182,6 +182,12 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .select("id, action, status, hubspot_object_type, created_at")
         .order("created_at", { ascending: false })
         .limit(50),
+      context.supabase
+        .from("hardware_orders" as never)
+        .select("id, status", { count: "exact", head: true }),
+      context.supabase
+        .from("waitlist_emails")
+        .select("id", { count: "exact", head: true }),
     ]);
 
     // Build signups-per-day series (last 30 days).
@@ -226,6 +232,9 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         churnedSubs: churnedSubs.length,
       },
       pipeline,
+      ordersTotal: (ordersRes as any)?.count ?? 0,
+      leadsTotal: (leadsRes as any)?.count ?? 0,
+      pipelineTotal: Object.values(pipeline).reduce((s, n) => s + n, 0),
     };
   });
 
