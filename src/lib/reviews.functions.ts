@@ -46,7 +46,14 @@ export const submitReview = createServerFn({ method: "POST" })
       if (tenantId !== o.admin_id) throw new Error("Forbidden");
     }
 
-    const status = settings.reviews.autoPublish ? "published" : "pending";
+    // Auto-moderation: banned phrases + rating threshold.
+    const bodyLc = data.body.toLowerCase();
+    const banned = (settings.reviewsPolicy?.bannedPhrases ?? [])
+      .some((p) => p && bodyLc.includes(p.toLowerCase()));
+    const belowThreshold = data.rating < (settings.reviewsPolicy?.autoPublishThreshold ?? 3);
+    const status = banned || belowThreshold
+      ? "pending"
+      : (settings.reviews.autoPublish ? "published" : "pending");
     const { error } = await sb.from("buyer_reviews").upsert({
       order_id: data.orderId, admin_id: o.admin_id,
       buyer_account_id: o.buyer_account_id,
