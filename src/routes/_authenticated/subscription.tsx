@@ -81,9 +81,6 @@ function SubscriptionPage() {
   const [reason, setReason] = useState("");
   const [changeOpen, setChangeOpen] = useState(false);
   const [newPlan, setNewPlan] = useState<"basic" | "intermediate" | "pro">("intermediate");
-  const [adminChangeSubId, setAdminChangeSubId] = useState<string | null>(null);
-  const [adminNewPlan, setAdminNewPlan] = useState<"basic" | "intermediate" | "pro">("intermediate");
-
   async function runAdmin(op: () => Promise<any>, successMsg: string) {
     try { await op(); toast.success(successMsg); qc.invalidateQueries({ queryKey: ["all-subscriptions"] }); }
     catch (e: any) { toast.error(e?.message ?? "Action failed"); }
@@ -300,8 +297,6 @@ function SubscriptionPage() {
           </div>
         </AdminDataCard>
       )}
-      {/* placeholder to keep newPlan setters referenced */}
-      {adminChangeSubId && <span className="hidden">{adminNewPlan}</span>}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
