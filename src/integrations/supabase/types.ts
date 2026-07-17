@@ -1591,6 +1591,7 @@ export type Database = {
           is_popular: boolean
           max_actuators: number
           max_batches: number
+          max_buyers: number
           max_sensors: number
           max_silos: number
           max_users: number
@@ -1609,6 +1610,7 @@ export type Database = {
           is_popular?: boolean
           max_actuators?: number
           max_batches?: number
+          max_buyers?: number
           max_sensors?: number
           max_silos?: number
           max_users?: number
@@ -1627,6 +1629,7 @@ export type Database = {
           is_popular?: boolean
           max_actuators?: number
           max_batches?: number
+          max_buyers?: number
           max_sensors?: number
           max_silos?: number
           max_users?: number
