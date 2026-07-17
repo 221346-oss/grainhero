@@ -95,6 +95,7 @@ import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/p
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -563,6 +564,12 @@ const AuthenticatedPlatformOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedPlatformOrdersRoute,
   } as any)
+const AuthenticatedBuyerOrdersOrderIdRoute =
+  AuthenticatedBuyerOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedBuyerOrdersRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -623,7 +630,7 @@ export interface FileRoutesByFullPath {
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
-  '/buyer/orders': typeof AuthenticatedBuyerOrdersRoute
+  '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -641,6 +648,7 @@ export interface FileRoutesByFullPath {
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
@@ -708,7 +716,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
-  '/buyer/orders': typeof AuthenticatedBuyerOrdersRoute
+  '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -726,6 +734,7 @@ export interface FileRoutesByTo {
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
+  '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
@@ -797,7 +806,7 @@ export interface FileRoutesById {
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
-  '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRoute
+  '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -815,6 +824,7 @@ export interface FileRoutesById {
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
@@ -904,6 +914,7 @@ export interface FileRouteTypes {
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
     | '/platform/'
+    | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/heartbeat-sweep'
@@ -989,6 +1000,7 @@ export interface FileRouteTypes {
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
     | '/platform'
+    | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/heartbeat-sweep'
@@ -1077,6 +1089,7 @@ export interface FileRouteTypes {
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
     | '/_authenticated/platform/'
+    | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
     | '/api/public/cron/heartbeat-sweep'
@@ -1721,6 +1734,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersRoute
     }
+    '/_authenticated/buyer/orders/$orderId': {
+      id: '/_authenticated/buyer/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/buyer/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedBuyerOrdersRoute
+    }
   }
 }
 
@@ -1748,6 +1768,20 @@ const AuthenticatedSilosRouteChildren: AuthenticatedSilosRouteChildren = {
 
 const AuthenticatedSilosRouteWithChildren =
   AuthenticatedSilosRoute._addFileChildren(AuthenticatedSilosRouteChildren)
+
+interface AuthenticatedBuyerOrdersRouteChildren {
+  AuthenticatedBuyerOrdersOrderIdRoute: typeof AuthenticatedBuyerOrdersOrderIdRoute
+}
+
+const AuthenticatedBuyerOrdersRouteChildren: AuthenticatedBuyerOrdersRouteChildren =
+  {
+    AuthenticatedBuyerOrdersOrderIdRoute: AuthenticatedBuyerOrdersOrderIdRoute,
+  }
+
+const AuthenticatedBuyerOrdersRouteWithChildren =
+  AuthenticatedBuyerOrdersRoute._addFileChildren(
+    AuthenticatedBuyerOrdersRouteChildren,
+  )
 
 interface AuthenticatedPlatformOrdersRouteChildren {
   AuthenticatedPlatformOrdersOrderIdRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -1814,7 +1848,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
-  AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRoute
+  AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
@@ -1864,7 +1898,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
-  AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRoute,
+  AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRouteWithChildren,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
   AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
