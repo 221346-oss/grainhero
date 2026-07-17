@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Package, CheckCircle, CalendarClock, ArrowLeftRight, Award, QrCode,
-  Warehouse, BarChart3, Bell, UserCog, PieChart, Sparkles, FileText,
-  Download, History, ThermometerSun, Truck, MapPin, Users, ClipboardCheck,
-  ArrowUpRight, Plus, TrendingUp, AlertTriangle, Layers, ShoppingCart,
-  ChevronRight, Activity, Wrench, AlertOctagon, Building2, Smartphone, Zap, Brain, Shield, DollarSign, Cpu, CreditCard, ShieldCheck,
+  QrCode, PieChart, FileText, History, ThermometerSun, MapPin,
+  ArrowUpRight, Plus, TrendingUp, ChevronRight, Activity, Wrench,
+  AlertOctagon, Building2, Shield, DollarSign, Bell,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 
 // ============================================================================
 // 1. DATA & TYPES
@@ -49,42 +49,6 @@ function useCountUp(target: number, duration = 1200) {
 }
 
 // ============================================================================
-// 3. HERO SECTION
-// ============================================================================
-
-function HeroSection({ name }: { name?: string }) {
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const t = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-  const timeFmt = (d: Date) =>
-    d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-
-  return (
-    <div className="py-2">
-      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#111827] tracking-tight leading-tight">
-        Welcome, {name || "Manahil Malik"}
-      </h1>
-      <p className="text-base md:text-lg text-[#6B7280] mt-3 font-medium">
-        {fmt(currentTime)} &middot;{" "}
-        <span className="tabular-nums font-semibold text-[#111827]">{timeFmt(currentTime)}</span>
-      </p>
-    </div>
-  );
-}
-
-// ============================================================================
 // 4. STAT CARD
 // ============================================================================
 
@@ -109,29 +73,29 @@ function StatCard({
 
   const inner = (
     <div
-      className={`group relative bg-white border ${accent.border} rounded-[13px] px-3.5 py-3 cursor-pointer overflow-hidden
-        transition-all duration-[250ms] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.10)] hover:-translate-y-[3px]`}
+      className={`group relative bg-card border border-border rounded-xl px-3 py-2.5 cursor-pointer overflow-hidden
+        transition-all duration-200 hover:border-emerald-400 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_10px_20px_-12px_rgba(16,185,129,0.25)]`}
     >
-      {Icon && <div className={`absolute top-0 right-0 w-10 h-10 rounded-bl-[36px] opacity-25 ${accent.bg}`} />}
+      {Icon && <div className={`absolute top-0 right-0 w-8 h-8 rounded-bl-[28px] opacity-25 ${accent.bg}`} />}
       <div className="relative flex items-center justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold text-[#9CA3AF] tracking-widest uppercase leading-none mb-1.5 truncate">{label}</p>
-          <p className={`text-[26px] font-bold tabular-nums leading-none tracking-tight ${accent.text}`}>{animated}</p>
+          <p className="text-[10px] font-semibold text-muted-foreground tracking-wider uppercase leading-none mb-1 truncate">{label}</p>
+          <p className={`text-xl sm:text-2xl font-black tabular-nums leading-tight tracking-tight ${accent.text}`}>{animated}</p>
           {trend && (
-            <span className={`inline-flex items-center gap-0.5 text-[9px] font-semibold mt-1.5 px-1.5 py-0.5 rounded-full ${accent.badge}`}>
+            <span className={`inline-flex items-center gap-0.5 text-[9px] font-semibold mt-1 px-1.5 py-0.5 rounded-full ${accent.badge}`}>
               <TrendingUp className="w-2 h-2" />
               {trend}
             </span>
           )}
         </div>
         {Icon && (
-          <div className={`w-7 h-7 rounded-[8px] flex items-center justify-center flex-shrink-0 ${accent.bg}`}>
-            <Icon className={`w-3.5 h-3.5 ${accent.text}`} />
+          <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${accent.bg}`}>
+            <Icon className={`w-3 h-3 ${accent.text}`} />
           </div>
         )}
       </div>
       {to && (
-        <p className="text-[10px] font-medium text-[#9CA3AF] mt-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <p className="text-[10px] font-medium text-muted-foreground mt-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           View <ArrowUpRight className="w-2.5 h-2.5" />
         </p>
       )}
@@ -152,11 +116,11 @@ function StatCard({
 // 5. SECTION HEADER
 // ============================================================================
 
-function SectionHeader({ title, description, size = "base" }: { title: string; description?: string; size?: "base" | "large" }) {
+function SectionHeader({ title, description }: { title: string; description?: string; size?: "base" | "large" }) {
   return (
-    <div className="mb-6">
-      <h2 className={`font-bold text-[#111827] tracking-tight ${size === "large" ? "text-3xl" : "text-2xl"}`}>{title}</h2>
-      {description && <p className={`text-[#6B7280] mt-1 ${size === "large" ? "text-lg" : "text-base"}`}>{description}</p>}
+    <div className="mb-3">
+      <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.15em]">{title}</h2>
+      {description && <p className="text-xs text-muted-foreground/80 mt-1">{description}</p>}
     </div>
   );
 }
@@ -177,15 +141,15 @@ function ActionCard({
   to?: string;
 }) {
   const inner = (
-    <div className="group bg-white border border-[#EAEAEA] rounded-2xl p-5 shadow-sm cursor-pointer flex flex-col gap-4 h-full hover:border-emerald-300 hover:shadow-md hover:-translate-y-1 transition-all duration-200">
-
-      <div className="flex-1">
-        <h3 className="text-base font-semibold text-[#111827] leading-snug">{title}</h3>
-        {description && <p className="text-sm text-[#6B7280] mt-2 leading-relaxed">{description}</p>}
+    <div className="group bg-card border border-border rounded-xl p-3 shadow-sm cursor-pointer flex items-center gap-3 h-full hover:border-emerald-400 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_10px_20px_-12px_rgba(16,185,129,0.25)] transition-all duration-200">
+      <div className="w-8 h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/40 grid place-items-center shrink-0">
+        <Icon className="w-4 h-4 text-emerald-600" />
       </div>
-      <div className="flex items-center justify-end pt-1 border-t border-[#F3F4F6]">
-        <ChevronRight className="w-4 h-4 text-[#D1D5DB] group-hover:text-emerald-500 transition-colors duration-200" />
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-foreground leading-snug truncate">{title}</h3>
+        {description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>}
       </div>
+      <ChevronRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-emerald-500 transition-colors duration-200 shrink-0" />
     </div>
   );
 
@@ -230,34 +194,26 @@ function ViewBatchesCard() {
   return (
     <div
       onClick={handleCardClick}
-      className="group bg-white border border-[#EAEAEA] rounded-2xl p-5 shadow-sm flex flex-col gap-4 hover:border-emerald-300 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+      className="group bg-card border border-border rounded-xl p-3 shadow-sm flex flex-col gap-2 hover:border-emerald-400 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_10px_20px_-12px_rgba(16,185,129,0.25)] transition-all duration-200 cursor-pointer"
     >
-
-
       <div className="flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-base font-semibold text-[#111827] leading-snug">Batch & Dispatch Management</h3>
+          <h3 className="text-sm font-semibold text-foreground leading-snug">Batch & Dispatch Management</h3>
           <button
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle batch status filter"
             aria-expanded={open}
-            className={`w-6 h-6 flex items-center justify-center rounded-lg border transition-all duration-200 flex-shrink-0 ${open
+            className={`w-5 h-5 flex items-center justify-center rounded-md border transition-all duration-200 flex-shrink-0 ${open
               ? "bg-emerald-600 border-emerald-600 text-white"
-              : "border-[#E5E7EB] text-[#9CA3AF] hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50"
+              : "border-border text-muted-foreground hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
               }`}
           >
             <Plus
-              style={{ width: 14, height: 14 }}
+              style={{ width: 12, height: 12 }}
               className={`transition-transform duration-200 ${open ? "rotate-45" : ""}`}
             />
           </button>
         </div>
-
-        {/*<p className="text-sm text-[#6B7280] mt-2 leading-relaxed">
-          View batches, approve dispatches, and schedule shipments.
-        </p>*/}
-
-        {/* Inline expanding dropdown — AnimatePresence only animates height, no x/y */}
         <AnimatePresence initial={false}>
           {open && (
             <motion.div
@@ -268,18 +224,18 @@ function ViewBatchesCard() {
               transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
               style={{ overflow: "hidden" }}
             >
-              <div className="mt-3 rounded-xl border border-[#E5E7EB] overflow-hidden">
+              <div className="mt-2 rounded-lg border border-border overflow-hidden">
                 {BATCH_STATUS_OPTIONS.map(({ label, value }, i) => (
                   <button
                     key={value}
                     onClick={() => handleSelect(value)}
-                    className={`w-full text-left px-3 py-2.5 text-sm font-medium text-[#374151] hover:bg-emerald-50 hover:text-emerald-700 transition-colors duration-150 flex items-center justify-between group/item ${i < BATCH_STATUS_OPTIONS.length - 1 ? "border-b border-[#F3F4F6]" : ""
+                    className={`w-full text-left px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 transition-colors duration-150 flex items-center justify-between group/item ${i < BATCH_STATUS_OPTIONS.length - 1 ? "border-b border-border" : ""
                       }`}
                   >
                     <span>{label}</span>
                     <ChevronRight
-                      style={{ width: 12, height: 12 }}
-                      className="text-[#D1D5DB] group-hover/item:text-emerald-500 transition-colors duration-150"
+                      style={{ width: 10, height: 10 }}
+                      className="text-muted-foreground group-hover/item:text-emerald-500 transition-colors duration-150"
                     />
                   </button>
                 ))}
@@ -288,12 +244,6 @@ function ViewBatchesCard() {
           )}
         </AnimatePresence>
       </div>
-
-      {!open && (
-        <div className="flex items-center justify-end pt-1 border-t border-[#F3F4F6]">
-          <ChevronRight className="w-4 h-4 text-[#D1D5DB] group-hover:text-emerald-500 transition-colors duration-200" />
-        </div>
-      )}
     </div>
   );
 }
@@ -304,13 +254,6 @@ function ViewBatchesCard() {
 
 export function ManagerDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
-
-  const sections: {
-    title: string;
-    description?: string;
-    items: { icon: React.ElementType; title: string; description?: string; to?: string }[];
-  }[] = [];
-
 
   const statCards = [
     {
@@ -355,46 +298,31 @@ export function ManagerDashboard({ name }: { name?: string }) {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: "#F8FAFC" }}>
-      <div className="p-3 md:p-5 w-full space-y-10">
+    <AdminPageShell
+      title={`Manager${name ? ` — ${name}` : ""}`}
+      subtitle="Operations, inventory, logistics and health at a glance"
+      actions={<Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Manager</Badge>}
+    >
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        {statCards.map((sc) => (
+          <StatCard key={sc.label} {...sc} />
+        ))}
+      </div>
 
-        {/* Hero */}
-        <HeroSection name={name} />
-
-        {/* Stats */}
-        <div>
-          <SectionHeader
-            title="Overview"
-            size="large"
-          />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {statCards.map((sc) => (
-              <StatCard key={sc.label} {...sc} />
-            ))}
-          </div>
-        </div>
-
-        {/* Overview & Analytics Parent Container */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full bg-[#FFFFFF] rounded-[20px] shadow-sm border border-[#E5E7EB] p-6 mt-8"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Overview & Analytics */}
+      <div>
+        <SectionHeader title="Jump to insights" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {/* Container 1: Operations */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.0, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-
-                <h3 className="font-bold text-[#111827] text-lg">Operations</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">Operations</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ViewBatchesCard />
                 <ActionCard
                   icon={Wrench}
@@ -419,14 +347,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-
-                <h3 className="font-bold text-[#111827] text-lg">Inventory & Storage</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">Inventory & Storage</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ActionCard
                   icon={ThermometerSun}
                   title="Environmental Conditions"
@@ -455,19 +379,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex flex-col mb-2">
-                <div className="flex items-center gap-2 text-emerald-600">
-
-                  <h3 className="font-bold text-[#111827] text-lg">Logistics</h3>
-                </div>
-                <p className="text-xs text-[#6B7280] mt-1">
-                  Manage shipment tracking, dispatch traceability, insurance, and logistics notifications from one place.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">Logistics</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ActionCard
                   icon={MapPin}
                   title="Track Buyer Shipments"
@@ -496,14 +411,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-
-                <h3 className="font-bold text-[#111827] text-lg">System & Financial Health</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">System & Financial Health</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ActionCard
                   icon={Activity}
                   title="System Health"
@@ -516,11 +427,8 @@ export function ManagerDashboard({ name }: { name?: string }) {
                 />
               </div>
             </motion.div>
-          </div>
-        </motion.div>
-
-
+        </div>
       </div>
-    </div>
+    </AdminPageShell>
   );
 }
