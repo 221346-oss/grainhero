@@ -91,6 +91,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { name: "platform-overview", label: "Overview", to: "/platform", icon: Activity, roles: ["super_admin"] },
       { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
+      { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
       { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
       { name: "platform-plans", label: "Plans & Thresholds", to: "/platform/plans", icon: CreditCard, roles: ["super_admin"] },
       { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
