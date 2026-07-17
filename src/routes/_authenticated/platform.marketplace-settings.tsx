@@ -84,7 +84,7 @@ function MarketplaceSettingsPage() {
             <p className="text-xs text-muted-foreground">
               Placeholders: <code>{"{{orderNumber}}"}</code>, <code>{"{{quantityKg}}"}</code>, <code>{"{{subtotal}}"}</code>, <code>{"{{currency}}"}</code>, <code>{"{{listingTitle}}"}</code>, <code>{"{{trackingUrl}}"}</code>.
             </p>
-            {(["placed","paymentSucceeded","paymentFailed","dispatched"] as const).map((k) => (
+            {(["placed","paymentSucceeded","paymentFailed","dispatched","outForDelivery","delivered","exception","reviewPromptBuyer","reviewPromptSeller"] as const).map((k) => (
               <div key={k} className="space-y-2 rounded-md border p-3">
                 <div className="text-sm font-medium capitalize">{k.replace(/([A-Z])/g, " $1")}</div>
                 <Field label="Subject">
@@ -95,6 +95,65 @@ function MarketplaceSettingsPage() {
                 </Field>
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Dispatch & couriers</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Tracking URL supports <code>{"{{trackingNumber}}"}</code>. Leave blank for couriers without web tracking.
+            </p>
+            {s.dispatch.couriers.map((c, i) => (
+              <div key={i} className="grid grid-cols-12 items-center gap-2 rounded-md border p-2">
+                <Input className="col-span-3" placeholder="key" value={c.key}
+                  onChange={(e) => setS((p) => { const cs = [...p.dispatch.couriers]; cs[i] = { ...cs[i], key: e.target.value }; return { ...p, dispatch: { ...p.dispatch, couriers: cs } }; })} />
+                <Input className="col-span-3" placeholder="Label" value={c.label}
+                  onChange={(e) => setS((p) => { const cs = [...p.dispatch.couriers]; cs[i] = { ...cs[i], label: e.target.value }; return { ...p, dispatch: { ...p.dispatch, couriers: cs } }; })} />
+                <Input className="col-span-5" placeholder="Tracking URL template" value={c.trackingUrlTemplate}
+                  onChange={(e) => setS((p) => { const cs = [...p.dispatch.couriers]; cs[i] = { ...cs[i], trackingUrlTemplate: e.target.value }; return { ...p, dispatch: { ...p.dispatch, couriers: cs } }; })} />
+                <Button className="col-span-1" size="sm" variant="ghost"
+                  onClick={() => setS((p) => ({ ...p, dispatch: { ...p.dispatch, couriers: p.dispatch.couriers.filter((_, ix) => ix !== i) } }))}>×</Button>
+              </div>
+            ))}
+            <Button size="sm" variant="outline"
+              onClick={() => setS((p) => ({ ...p, dispatch: { ...p.dispatch, couriers: [...p.dispatch.couriers, { key: "", label: "", trackingUrlTemplate: "" }] } }))}>
+              + Add courier
+            </Button>
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <Field label="SLA in-transit (h)"><Input type="number" value={s.dispatch.slaHours.inTransit}
+                onChange={(e) => setS((p) => ({ ...p, dispatch: { ...p.dispatch, slaHours: { ...p.dispatch.slaHours, inTransit: Number(e.target.value) } } }))} /></Field>
+              <Field label="Out for delivery (h)"><Input type="number" value={s.dispatch.slaHours.outForDelivery}
+                onChange={(e) => setS((p) => ({ ...p, dispatch: { ...p.dispatch, slaHours: { ...p.dispatch.slaHours, outForDelivery: Number(e.target.value) } } }))} /></Field>
+              <Field label="Delivered target (h)"><Input type="number" value={s.dispatch.slaHours.delivered}
+                onChange={(e) => setS((p) => ({ ...p, dispatch: { ...p.dispatch, slaHours: { ...p.dispatch.slaHours, delivered: Number(e.target.value) } } }))} /></Field>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Reviews & moderation</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div><div className="text-sm font-medium">Reviews enabled</div><div className="text-xs text-muted-foreground">When off, both sides cannot submit ratings.</div></div>
+              <Switch checked={s.reviews.enabled} onCheckedChange={(v) => setS((p) => ({ ...p, reviews: { ...p.reviews, enabled: v } }))} />
+            </div>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div><div className="text-sm font-medium">Auto-publish</div><div className="text-xs text-muted-foreground">Skip the moderation queue.</div></div>
+              <Switch checked={s.reviews.autoPublish} onCheckedChange={(v) => setS((p) => ({ ...p, reviews: { ...p.reviews, autoPublish: v } }))} />
+            </div>
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div><div className="text-sm font-medium">Show on storefront</div><div className="text-xs text-muted-foreground">Display average + latest reviews on listings.</div></div>
+              <Switch checked={s.reviews.showOnStorefront} onCheckedChange={(v) => setS((p) => ({ ...p, reviews: { ...p.reviews, showOnStorefront: v } }))} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Min characters"><Input type="number" value={s.reviews.minChars}
+                onChange={(e) => setS((p) => ({ ...p, reviews: { ...p.reviews, minChars: Number(e.target.value) } }))} /></Field>
+              <Field label="Prompt delay (h)"><Input type="number" value={s.reviews.promptDelayHours}
+                onChange={(e) => setS((p) => ({ ...p, reviews: { ...p.reviews, promptDelayHours: Number(e.target.value) } }))} /></Field>
+              <Field label="Min count for avg"><Input type="number" value={s.reviews.minCountForAverage}
+                onChange={(e) => setS((p) => ({ ...p, reviews: { ...p.reviews, minCountForAverage: Number(e.target.value) } }))} /></Field>
+            </div>
           </CardContent>
         </Card>
       </div>

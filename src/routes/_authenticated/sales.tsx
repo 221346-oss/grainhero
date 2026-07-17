@@ -18,6 +18,7 @@ import { Loader2, DollarSign } from "lucide-react";
 import { listOrders, getOrder, transitionOrder, getAllowedOrderTransitions } from "@/lib/buyer-orders.functions";
 import { generateInvoice, recordPayment, getSalesSummary } from "@/lib/invoicing.functions";
 import { OrdersSkeleton } from "@/components/app/skeletons";
+import { ShipmentPanel } from "@/components/app/marketplace/ShipmentPanel";
 
 export const Route = createFileRoute("/_authenticated/sales")({
   component: SalesPage,
@@ -290,6 +291,8 @@ function OrderDrawer({ orderId, onClose, onChanged }: { orderId: string; onClose
                 ))}
               </CardContent>
             </Card>
+
+            <ShipmentPanel orderId={o.id} canManage orderStatus={o.status} />
           </div>
         )}
         <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>

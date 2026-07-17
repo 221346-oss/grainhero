@@ -25,12 +25,34 @@ export interface MarketplaceSettings {
     paymentSucceeded: string;
     paymentFailed: string;
     dispatched: string;
+    outForDelivery: string;
+    delivered: string;
+    exception: string;
+    reviewPromptBuyer: string;
+    reviewPromptSeller: string;
   };
   emailBodies: {
     placed: string;
     paymentSucceeded: string;
     paymentFailed: string;
     dispatched: string;
+    outForDelivery: string;
+    delivered: string;
+    exception: string;
+    reviewPromptBuyer: string;
+    reviewPromptSeller: string;
+  };
+  dispatch: {
+    couriers: Array<{ key: string; label: string; trackingUrlTemplate: string }>;
+    slaHours: { inTransit: number; outForDelivery: number; delivered: number };
+  };
+  reviews: {
+    enabled: boolean;
+    autoPublish: boolean;
+    minChars: number;
+    promptDelayHours: number;
+    showOnStorefront: boolean;
+    minCountForAverage: number;
   };
 }
 
@@ -47,6 +69,11 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     paymentSucceeded: "Payment confirmed — order {{orderNumber}}",
     paymentFailed: "Payment issue on order {{orderNumber}}",
     dispatched: "Order {{orderNumber}} is on its way",
+    outForDelivery: "Out for delivery — order {{orderNumber}}",
+    delivered: "Delivered — order {{orderNumber}}",
+    exception: "Delivery update needed for order {{orderNumber}}",
+    reviewPromptBuyer: "How was your order {{orderNumber}}?",
+    reviewPromptSeller: "Rate the buyer for order {{orderNumber}}",
   },
   emailBodies: {
     placed:
@@ -57,6 +84,32 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       "Your payment for order {{orderNumber}} could not be completed.\nPlease retry from your order page: {{trackingUrl}}",
     dispatched:
       "Your order {{orderNumber}} has been dispatched. Expected arrival details will follow.\n\nTrack: {{trackingUrl}}",
+    outForDelivery:
+      "Your order {{orderNumber}} is out for delivery today.\n\nTrack: {{trackingUrl}}",
+    delivered:
+      "Your order {{orderNumber}} was marked delivered. Thanks for shopping with us!\n\nLeave a review: {{trackingUrl}}",
+    exception:
+      "There's a delivery exception on order {{orderNumber}}. We're looking into it — details on your order page: {{trackingUrl}}",
+    reviewPromptBuyer:
+      "Order {{orderNumber}} is complete. Tell other buyers how it went — it takes a minute: {{trackingUrl}}",
+    reviewPromptSeller:
+      "Order {{orderNumber}} is complete. Rate the buyer to help future sellers: {{trackingUrl}}",
+  },
+  dispatch: {
+    couriers: [
+      { key: "self", label: "Own fleet", trackingUrlTemplate: "" },
+      { key: "tcs", label: "TCS", trackingUrlTemplate: "https://www.tcsexpress.com/track/{{trackingNumber}}" },
+      { key: "leopards", label: "Leopards Courier", trackingUrlTemplate: "https://www.leopardscourier.com/tracking/{{trackingNumber}}" },
+    ],
+    slaHours: { inTransit: 48, outForDelivery: 12, delivered: 72 },
+  },
+  reviews: {
+    enabled: true,
+    autoPublish: false,
+    minChars: 20,
+    promptDelayHours: 24,
+    showOnStorefront: true,
+    minCountForAverage: 3,
   },
 };
 
@@ -67,6 +120,16 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
     ...r,
     emailSubjects: { ...DEFAULT_MARKETPLACE_SETTINGS.emailSubjects, ...(r.emailSubjects ?? {}) },
     emailBodies: { ...DEFAULT_MARKETPLACE_SETTINGS.emailBodies, ...(r.emailBodies ?? {}) },
+    dispatch: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.dispatch,
+      ...(r.dispatch ?? {}),
+      slaHours: {
+        ...DEFAULT_MARKETPLACE_SETTINGS.dispatch.slaHours,
+        ...((r.dispatch?.slaHours) ?? {}),
+      },
+      couriers: r.dispatch?.couriers ?? DEFAULT_MARKETPLACE_SETTINGS.dispatch.couriers,
+    },
+    reviews: { ...DEFAULT_MARKETPLACE_SETTINGS.reviews, ...(r.reviews ?? {}) },
   };
 }
 
@@ -99,17 +162,27 @@ const SCHEMA = z.object({
   currency: z.string().length(3),
   storefrontEnabled: z.boolean(),
   showBrandBanner: z.boolean(),
-  emailSubjects: z.object({
-    placed: z.string().min(1),
-    paymentSucceeded: z.string().min(1),
-    paymentFailed: z.string().min(1),
-    dispatched: z.string().min(1),
+  emailSubjects: z.record(z.string(), z.string().min(1)),
+  emailBodies: z.record(z.string(), z.string().min(1)),
+  dispatch: z.object({
+    couriers: z.array(z.object({
+      key: z.string().min(1),
+      label: z.string().min(1),
+      trackingUrlTemplate: z.string(),
+    })).max(20),
+    slaHours: z.object({
+      inTransit: z.number().min(0).max(1000),
+      outForDelivery: z.number().min(0).max(1000),
+      delivered: z.number().min(0).max(2000),
+    }),
   }),
-  emailBodies: z.object({
-    placed: z.string().min(1),
-    paymentSucceeded: z.string().min(1),
-    paymentFailed: z.string().min(1),
-    dispatched: z.string().min(1),
+  reviews: z.object({
+    enabled: z.boolean(),
+    autoPublish: z.boolean(),
+    minChars: z.number().int().min(0).max(2000),
+    promptDelayHours: z.number().int().min(0).max(720),
+    showOnStorefront: z.boolean(),
+    minCountForAverage: z.number().int().min(0).max(100),
   }),
 });
 

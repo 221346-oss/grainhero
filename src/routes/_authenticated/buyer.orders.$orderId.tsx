@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { z } from "zod";
+import { ShipmentPanel } from "@/components/app/marketplace/ShipmentPanel";
+import { BuyerReviewForm } from "@/components/app/marketplace/BuyerReviewForm";
 
 const search = z.object({ checkout: z.enum(["success", "cancel"]).optional() });
 
@@ -119,6 +121,13 @@ function OrderDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {(o.status === "dispatched" || o.status === "completed" || o.status === "paid") && (
+        <ShipmentPanel orderId={o.id} canManage={false} orderStatus={o.status} />
+      )}
+      {o.status === "completed" && (
+        <BuyerReviewForm orderId={o.id} />
+      )}
     </div>
   );
 }
