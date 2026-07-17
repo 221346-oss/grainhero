@@ -23,7 +23,7 @@ function AttentionPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <PageHeader title="Attention queue" description="Ranked silos needing action right now." />
+      <PageHeader title="Attention queue" subtitle="Ranked silos needing action right now." />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <TileCard icon={<AlertTriangle className="h-4 w-4 text-rose-500" />} label="Silos flagged" value={String(d?.rows.length ?? 0)} />
