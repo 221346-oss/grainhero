@@ -104,7 +104,7 @@ export const getPlanGate = createServerFn({ method: "POST" })
     }
 
     if (isNumeric(data.feature)) {
-      const limit = (plan as Record<string, number>)[data.feature] ?? 0;
+      const limit = (plan as unknown as Record<string, number>)[data.feature] ?? 0;
       const used = data.currentUsage ?? 0;
       return { allowed: used < limit, limit, used, planId };
     }
