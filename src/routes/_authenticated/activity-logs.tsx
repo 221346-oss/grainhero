@@ -213,22 +213,14 @@ function ActivityLogsPage() {
             {isLoading ? (
               <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
             ) : logs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-14 text-slate-400">
-                <p className="text-sm">No activity logs found</p>
+              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                <FileText className="h-12 w-12 mb-3" />
+                <p className="text-lg font-medium">No activity logs found</p>
+                <p className="text-sm mt-1">Logs will appear as actions are performed</p>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {isLoading ? (
-                <DashboardSkeleton />
-              ) : logs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                  <FileText className="h-12 w-12 mb-3" />
-                  <p className="text-lg font-medium">No activity logs found</p>
-                  <p className="text-sm mt-1">Logs will appear as actions are performed</p>
-                </div>
-              ) : (
-                <div className="relative pl-8 pr-4 py-4 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-slate-300 before:to-slate-100 space-y-4">
-                  {logs.map((log) => {
+            ) : (
+              <div className="relative pl-8 pr-4 py-4 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-slate-300 before:to-slate-100 space-y-4">
+                {logs.map((log) => {
                     const cc = CATEGORY[log.category] ?? CATEGORY.system;
                     const sc = SEVERITY[log.severity] ?? SEVERITY.info;
                     const isSel = selected?.id === log.id;
@@ -266,7 +258,6 @@ function ActivityLogsPage() {
                           </span>
                         </div>
                       </div>
-                    </div>
                   );
                 })}
               </div>
