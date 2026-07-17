@@ -109,6 +109,7 @@ import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
 import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
+import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
@@ -663,6 +664,12 @@ const ApiPublicCronDispatchSlaSweepRoute =
     path: '/api/public/cron/dispatch-sla-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronDeliveryDelayScanRoute =
+  ApiPublicCronDeliveryDelayScanRouteImport.update({
+    id: '/api/public/cron/delivery-delay-scan',
+    path: '/api/public/cron/delivery-delay-scan',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedTechnicianInstallsInstallIdRoute =
   AuthenticatedTechnicianInstallsInstallIdRouteImport.update({
     id: '/$installId',
@@ -780,6 +787,7 @@ export interface FileRoutesByFullPath {
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
@@ -883,6 +891,7 @@ export interface FileRoutesByTo {
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
@@ -990,6 +999,7 @@ export interface FileRoutesById {
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
@@ -1097,6 +1107,7 @@ export interface FileRouteTypes {
     | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
@@ -1200,6 +1211,7 @@ export interface FileRouteTypes {
     | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
@@ -1306,6 +1318,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
+    | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
@@ -1340,6 +1353,7 @@ export interface RootRouteChildren {
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
+  ApiPublicCronDeliveryDelayScanRoute: typeof ApiPublicCronDeliveryDelayScanRoute
   ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
   ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
@@ -2056,6 +2070,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronDispatchSlaSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/delivery-delay-scan': {
+      id: '/api/public/cron/delivery-delay-scan'
+      path: '/api/public/cron/delivery-delay-scan'
+      fullPath: '/api/public/cron/delivery-delay-scan'
+      preLoaderRoute: typeof ApiPublicCronDeliveryDelayScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/technician/installs/$installId': {
       id: '/_authenticated/technician/installs/$installId'
       path: '/$installId'
@@ -2355,6 +2376,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
+  ApiPublicCronDeliveryDelayScanRoute: ApiPublicCronDeliveryDelayScanRoute,
   ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
   ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
