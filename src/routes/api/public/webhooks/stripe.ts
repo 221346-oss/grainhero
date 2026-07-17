@@ -127,6 +127,12 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   } catch (e) {
                     console.warn("[stripe-webhook] buyer notify failed:", (e as Error).message);
                   }
+                  try {
+                    const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+                    await sendBuyerOrderEmail(supabaseAdmin, buyerOrderId, "paymentSucceeded");
+                  } catch (e) {
+                    console.warn("[stripe-webhook] buyer paid email failed:", (e as Error).message);
+                  }
                 }
               }
 
@@ -314,6 +320,33 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   }
                 } catch (e) {
                   console.warn("[order email] error:", e);
+                }
+              }
+              break;
+            }
+            case "checkout.session.async_payment_failed":
+            case "checkout.session.expired": {
+              const s = event.data.object as {
+                metadata?: Record<string, string>;
+              };
+              const buyerOrderId = s.metadata?.buyer_order_id ?? null;
+              if (buyerOrderId) {
+                const { data: bo } = await supabaseAdmin
+                  .from("buyer_orders").select("id, admin_id, status, order_number")
+                  .eq("id", buyerOrderId).maybeSingle();
+                const bor = bo as Record<string, unknown> | null;
+                if (bor && bor.status === "pending") {
+                  await supabaseAdmin.from("buyer_order_events").insert({
+                    order_id: buyerOrderId, admin_id: bor.admin_id,
+                    from_state: "pending", to_state: "pending",
+                    actor_user_id: null, note: `Payment ${event.type}`,
+                  } as never);
+                  try {
+                    const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+                    await sendBuyerOrderEmail(supabaseAdmin, buyerOrderId, "paymentFailed");
+                  } catch (e) {
+                    console.warn("[stripe-webhook] failed-payment email:", (e as Error).message);
+                  }
                 }
               }
               break;
