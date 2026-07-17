@@ -120,6 +120,16 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
     ...r,
     emailSubjects: { ...DEFAULT_MARKETPLACE_SETTINGS.emailSubjects, ...(r.emailSubjects ?? {}) },
     emailBodies: { ...DEFAULT_MARKETPLACE_SETTINGS.emailBodies, ...(r.emailBodies ?? {}) },
+    dispatch: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.dispatch,
+      ...(r.dispatch ?? {}),
+      slaHours: {
+        ...DEFAULT_MARKETPLACE_SETTINGS.dispatch.slaHours,
+        ...((r.dispatch?.slaHours) ?? {}),
+      },
+      couriers: r.dispatch?.couriers ?? DEFAULT_MARKETPLACE_SETTINGS.dispatch.couriers,
+    },
+    reviews: { ...DEFAULT_MARKETPLACE_SETTINGS.reviews, ...(r.reviews ?? {}) },
   };
 }
 
