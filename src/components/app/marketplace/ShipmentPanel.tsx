@@ -116,7 +116,7 @@ export function ShipmentPanel({
             <div className="space-y-1 text-xs border-t pt-2">
               {events.length === 0 ? (
                 <div className="text-muted-foreground">No tracking events yet.</div>
-              ) : events.map((e) => (
+              ) : (events as Array<{ id: string; label: string; location: string | null; at: string }>).map((e) => (
                 <div key={e.id} className="flex justify-between border-b py-1 last:border-0 text-slate-600">
                   <span><b>{e.label}</b>{e.location ? ` · ${e.location}` : ""}</span>
                   <span>{new Date(e.at).toLocaleString()}</span>
