@@ -114,6 +114,7 @@ import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
+import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 
@@ -696,6 +697,12 @@ const AuthenticatedPlatformLogisticsCommandCenterRoute =
     path: '/platform/logistics/command-center',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformLogisticsCarriersRoute =
+  AuthenticatedPlatformLogisticsCarriersRouteImport.update({
+    id: '/platform/logistics/carriers',
+    path: '/platform/logistics/carriers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBuyerOrdersOrderIdRoute =
   AuthenticatedBuyerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
@@ -799,6 +806,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
@@ -905,6 +913,7 @@ export interface FileRoutesByTo {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
@@ -1015,6 +1024,7 @@ export interface FileRoutesById {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
@@ -1125,6 +1135,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
+    | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
@@ -1231,6 +1242,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
+    | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
@@ -1340,6 +1352,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/platform/logistics/carriers'
     | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
@@ -2132,6 +2145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/logistics/carriers': {
+      id: '/_authenticated/platform/logistics/carriers'
+      path: '/platform/logistics/carriers'
+      fullPath: '/platform/logistics/carriers'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/buyer/orders/$orderId': {
       id: '/_authenticated/buyer/orders/$orderId'
       path: '/$orderId'
@@ -2277,6 +2297,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+  AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
   AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
 }
 
@@ -2345,6 +2366,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTechnicianInstallsRoute:
     AuthenticatedTechnicianInstallsRouteWithChildren,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+  AuthenticatedPlatformLogisticsCarriersRoute:
+    AuthenticatedPlatformLogisticsCarriersRoute,
   AuthenticatedPlatformLogisticsCommandCenterRoute:
     AuthenticatedPlatformLogisticsCommandCenterRoute,
 }
