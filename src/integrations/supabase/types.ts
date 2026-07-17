@@ -68,6 +68,57 @@ export type Database = {
         }
         Relationships: []
       }
+      actuator_commands: {
+        Row: {
+          ack_at: string | null
+          actuator_id: string
+          admin_id: string
+          command: string
+          correlation_id: string
+          created_at: string
+          error: string | null
+          expires_at: string
+          id: string
+          issued_by: string | null
+          params: Json
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ack_at?: string | null
+          actuator_id: string
+          admin_id: string
+          command: string
+          correlation_id?: string
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          issued_by?: string | null
+          params?: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ack_at?: string | null
+          actuator_id?: string
+          admin_id?: string
+          command?: string
+          correlation_id?: string
+          created_at?: string
+          error?: string | null
+          expires_at?: string
+          id?: string
+          issued_by?: string | null
+          params?: Json
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       actuators: {
         Row: {
           actuator_id: string
@@ -499,6 +550,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      device_heartbeats: {
+        Row: {
+          admin_id: string
+          battery: number | null
+          device_id: string
+          last_seen_at: string
+          rssi: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          battery?: number | null
+          device_id: string
+          last_seen_at?: string
+          rssi?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          battery?: number | null
+          device_id?: string
+          last_seen_at?: string
+          rssi?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       email_send_log: {
         Row: {
@@ -1784,6 +1865,7 @@ export type Database = {
           features: Json
           is_active: boolean
           is_popular: boolean
+          max_active_alert_rules: number | null
           max_actuators: number
           max_batches: number
           max_buyers: number
@@ -1804,6 +1886,7 @@ export type Database = {
           features?: Json
           is_active?: boolean
           is_popular?: boolean
+          max_active_alert_rules?: number | null
           max_actuators?: number
           max_batches?: number
           max_buyers?: number
@@ -1824,6 +1907,7 @@ export type Database = {
           features?: Json
           is_active?: boolean
           is_popular?: boolean
+          max_active_alert_rules?: number | null
           max_actuators?: number
           max_batches?: number
           max_buyers?: number
@@ -2287,6 +2371,7 @@ export type Database = {
           grain_type: string | null
           humidity_value: number | null
           id: string
+          ingested_at: string
           is_aggregated: boolean | null
           is_valid: boolean | null
           lid_state: number | null
@@ -2299,10 +2384,12 @@ export type Database = {
           pest_presence_score: number | null
           ph_value: number | null
           pressure_value: number | null
+          quality_flag: string
           raw_payload: Json | null
           reading_timestamp: string
           signal_strength: number | null
           silo_id: string | null
+          source: string
           spoilage_label: string | null
           storage_days: number | null
           temperature_unit: string | null
@@ -2344,6 +2431,7 @@ export type Database = {
           grain_type?: string | null
           humidity_value?: number | null
           id?: string
+          ingested_at?: string
           is_aggregated?: boolean | null
           is_valid?: boolean | null
           lid_state?: number | null
@@ -2356,10 +2444,12 @@ export type Database = {
           pest_presence_score?: number | null
           ph_value?: number | null
           pressure_value?: number | null
+          quality_flag?: string
           raw_payload?: Json | null
           reading_timestamp?: string
           signal_strength?: number | null
           silo_id?: string | null
+          source?: string
           spoilage_label?: string | null
           storage_days?: number | null
           temperature_unit?: string | null
@@ -2401,6 +2491,7 @@ export type Database = {
           grain_type?: string | null
           humidity_value?: number | null
           id?: string
+          ingested_at?: string
           is_aggregated?: boolean | null
           is_valid?: boolean | null
           lid_state?: number | null
@@ -2413,10 +2504,12 @@ export type Database = {
           pest_presence_score?: number | null
           ph_value?: number | null
           pressure_value?: number | null
+          quality_flag?: string
           raw_payload?: Json | null
           reading_timestamp?: string
           signal_strength?: number | null
           silo_id?: string | null
+          source?: string
           spoilage_label?: string | null
           storage_days?: number | null
           temperature_unit?: string | null
@@ -2468,6 +2561,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sensor_thresholds: {
+        Row: {
+          admin_id: string
+          created_at: string
+          created_by: string | null
+          critical_max: number | null
+          critical_min: number | null
+          enabled: boolean
+          hysteresis: number
+          id: string
+          max_value: number | null
+          metric: string
+          min_value: number | null
+          silo_id: string
+          updated_at: string
+          window_seconds: number
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          created_by?: string | null
+          critical_max?: number | null
+          critical_min?: number | null
+          enabled?: boolean
+          hysteresis?: number
+          id?: string
+          max_value?: number | null
+          metric: string
+          min_value?: number | null
+          silo_id: string
+          updated_at?: string
+          window_seconds?: number
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          created_by?: string | null
+          critical_max?: number | null
+          critical_min?: number | null
+          enabled?: boolean
+          hysteresis?: number
+          id?: string
+          max_value?: number | null
+          metric?: string
+          min_value?: number | null
+          silo_id?: string
+          updated_at?: string
+          window_seconds?: number
+        }
+        Relationships: []
       }
       silos: {
         Row: {
