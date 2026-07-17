@@ -53,6 +53,16 @@ export interface MarketplaceSettings {
     reasonCodes: Array<{ key: string; label: string }>;
     autoCancelUnpaidAfterHours: number;
   };
+  reputation: {
+    weights: { rating: number; onTime: number; disputeFree: number; transitSpeed: number };
+    badges: Array<{ key: string; label: string; minScore: number; colorToken: string }>;
+    verifiedMinScore: number;
+  };
+  reviewsPolicy: {
+    autoPublishThreshold: number; // ratings STRICTLY BELOW this stay pending
+    bannedPhrases: string[];
+    sellerResponseWindowDays: number;
+  };
 }
 
 export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
@@ -166,6 +176,20 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     ],
     autoCancelUnpaidAfterHours: 48,
   },
+  reputation: {
+    weights: { rating: 40, onTime: 30, disputeFree: 20, transitSpeed: 10 },
+    badges: [
+      { key: "verified",   label: "Verified seller",   minScore: 75, colorToken: "emerald" },
+      { key: "top",        label: "Top rated",         minScore: 90, colorToken: "amber" },
+      { key: "reliable",   label: "Reliable delivery", minScore: 60, colorToken: "sky" },
+    ],
+    verifiedMinScore: 75,
+  },
+  reviewsPolicy: {
+    autoPublishThreshold: 3,
+    bannedPhrases: [],
+    sellerResponseWindowDays: 30,
+  },
 };
 
 export function mergeSettings(raw: unknown): MarketplaceSettings {
@@ -197,6 +221,17 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
       ...DEFAULT_MARKETPLACE_SETTINGS.refunds,
       ...(r.refunds ?? {}),
       reasonCodes: r.refunds?.reasonCodes ?? DEFAULT_MARKETPLACE_SETTINGS.refunds.reasonCodes,
+    },
+    reputation: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.reputation,
+      ...(r.reputation ?? {}),
+      weights: { ...DEFAULT_MARKETPLACE_SETTINGS.reputation.weights, ...(r.reputation?.weights ?? {}) },
+      badges: r.reputation?.badges ?? DEFAULT_MARKETPLACE_SETTINGS.reputation.badges,
+    },
+    reviewsPolicy: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.reviewsPolicy,
+      ...(r.reviewsPolicy ?? {}),
+      bannedPhrases: r.reviewsPolicy?.bannedPhrases ?? DEFAULT_MARKETPLACE_SETTINGS.reviewsPolicy.bannedPhrases,
     },
   };
 }
