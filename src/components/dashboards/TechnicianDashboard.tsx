@@ -1,28 +1,31 @@
-import { AlertOctagon, CheckCircle2, Zap, Smartphone } from "lucide-react";
-import { PageHeader, StatCard } from "./_shared";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { useDashboardStats } from "./useDashboardStats";
 import { ActuatorsCard, RecentAlertsCard, SilosOccupancyCard } from "./DashboardBlocks";
+import { Badge } from "@/components/ui/badge";
 
 export function TechnicianDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        title={`Technician Dashboard${name ? ` — ${name}` : ""}`}
-        subtitle="Sensor health, actuator status and open maintenance work"
-        badge="Technician"
+    <AdminPageShell
+      title={`Technician${name ? ` — ${name}` : ""}`}
+      subtitle="Sensor health, actuator status and open maintenance work"
+      actions={<Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Technician</Badge>}
+    >
+      <AdminSummaryTiles
+        columns={4}
+        tiles={[
+          { key: "so", label: "Sensors online", value: `${s?.sensors.online ?? 0}/${s?.sensors.total ?? 0}` },
+          { key: "aa", label: "Actuators active", value: `${s?.actuators.active ?? 0}/${s?.actuators.total ?? 0}` },
+          { key: "oa", label: "Open alerts", value: s?.alerts.open ?? "—" },
+          { key: "ca", label: "Critical", value: s?.alerts.critical ?? "—" },
+        ]}
       />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Sensors Online" value={`${s?.sensors.online ?? 0}/${s?.sensors.total ?? 0}`} icon={Smartphone} accent="emerald" />
-        <StatCard label="Actuators Active" value={`${s?.actuators.active ?? 0}/${s?.actuators.total ?? 0}`} icon={Zap} accent="sky" />
-        <StatCard label="Open Alerts" value={s?.alerts.open ?? "—"} icon={AlertOctagon} accent="rose" />
-        <StatCard label="Critical" value={s?.alerts.critical ?? "—"} icon={CheckCircle2} accent="violet" />
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <ActuatorsCard />
         <RecentAlertsCard />
         <SilosOccupancyCard />
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

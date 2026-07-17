@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { AlertTriangle, Package, Users, Fan, Warehouse } from "lucide-react";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
 function useExtras() {
@@ -36,7 +35,7 @@ export function RecentBatchesCard() {
     <Card className="border-slate-200/70 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-base flex items-center gap-2"><Package className="h-4 w-4 text-emerald-600" /> Recent Batches</CardTitle>
+          <CardTitle className="text-base">Recent batches</CardTitle>
           <CardDescription>Latest 5 intake / dispatch</CardDescription>
         </div>
         <Button asChild size="sm" variant="outline"><Link to="/grain-batches">View all</Link></Button>
@@ -67,7 +66,7 @@ export function RecentAlertsCard() {
     <Card className="border-slate-200/70 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-rose-600" /> Recent Alerts</CardTitle>
+          <CardTitle className="text-base">Recent alerts</CardTitle>
           <CardDescription>Latest 5 grain alerts</CardDescription>
         </div>
         <Button asChild size="sm" variant="outline"><Link to="/grain-alerts">View all</Link></Button>
@@ -96,7 +95,7 @@ export function TeamCard() {
     <Card className="border-slate-200/70 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4 text-sky-600" /> Team</CardTitle>
+          <CardTitle className="text-base">Team</CardTitle>
           <CardDescription>Recent activity</CardDescription>
         </div>
         <Button asChild size="sm" variant="outline"><Link to="/team-management">Manage</Link></Button>
@@ -125,7 +124,7 @@ export function ActuatorsCard() {
     <Card className="border-slate-200/70 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-base flex items-center gap-2"><Fan className="h-4 w-4 text-indigo-600" /> Actuators</CardTitle>
+          <CardTitle className="text-base">Actuators</CardTitle>
           <CardDescription>Live device state</CardDescription>
         </div>
         <Button asChild size="sm" variant="outline"><Link to="/actuators">Control</Link></Button>
@@ -153,7 +152,7 @@ export function SilosOccupancyCard() {
     <Card className="border-slate-200/70 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-base flex items-center gap-2"><Warehouse className="h-4 w-4 text-amber-600" /> Silo Occupancy</CardTitle>
+          <CardTitle className="text-base">Silo occupancy</CardTitle>
           <CardDescription>Storage utilisation</CardDescription>
         </div>
         <Button asChild size="sm" variant="outline"><Link to="/silos">Details</Link></Button>
