@@ -108,25 +108,22 @@ async function sendInvoiceEmailAndTrack(
   sb: any, invoiceId: string, orderId: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const nowIso = new Date().toISOString();
+  const { data: cur } = await sb.from("buyer_invoices")
+    .select("email_attempts").eq("id", invoiceId).maybeSingle();
+  const nextAttempts = ((cur as { email_attempts?: number } | null)?.email_attempts ?? 0) + 1;
   try {
     const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
     await sendBuyerOrderEmail(sb, orderId, "invoiceReady");
     await sb.from("buyer_invoices").update({
       email_status: "sent", email_error: null, emailed: true, emailed_at: nowIso,
-      email_last_attempt_at: nowIso,
-    } as never).eq("id", invoiceId);
-    // increment counter
-    await sb.rpc("noop_fn").catch(() => {}); // no-op guard
-    await sb.from("buyer_invoices").update({
-      email_attempts: ((await sb.from("buyer_invoices").select("email_attempts").eq("id", invoiceId).maybeSingle()).data?.email_attempts ?? 0) + 1,
+      email_last_attempt_at: nowIso, email_attempts: nextAttempts,
     } as never).eq("id", invoiceId);
     return { ok: true };
   } catch (e) {
     const msg = (e as Error).message;
-    const prior = (await sb.from("buyer_invoices").select("email_attempts").eq("id", invoiceId).maybeSingle()).data?.email_attempts ?? 0;
     await sb.from("buyer_invoices").update({
       email_status: "failed", email_error: msg,
-      email_attempts: prior + 1, email_last_attempt_at: nowIso,
+      email_attempts: nextAttempts, email_last_attempt_at: nowIso,
     } as never).eq("id", invoiceId);
     return { ok: false, error: msg };
   }
