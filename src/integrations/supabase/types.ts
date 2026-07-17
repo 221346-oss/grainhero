@@ -959,6 +959,42 @@ export type Database = {
           },
         ]
       }
+      buyer_review_helpful: {
+        Row: {
+          buyer_account_id: string
+          created_at: string
+          id: string
+          review_id: string
+        }
+        Insert: {
+          buyer_account_id: string
+          created_at?: string
+          id?: string
+          review_id: string
+        }
+        Update: {
+          buyer_account_id?: string
+          created_at?: string
+          id?: string
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_review_helpful_buyer_account_id_fkey"
+            columns: ["buyer_account_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_review_helpful_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buyer_reviews: {
         Row: {
           admin_id: string
@@ -966,12 +1002,17 @@ export type Database = {
           buyer_account_id: string | null
           created_at: string
           direction: Database["public"]["Enums"]["review_direction"]
+          helpful_count: number
           id: string
           moderated_at: string | null
           moderated_by: string | null
           order_id: string
           rating: number
+          reported_at: string | null
+          reported_reason: string | null
           reviewer_user_id: string
+          seller_response: string | null
+          seller_response_at: string | null
           status: Database["public"]["Enums"]["review_status"]
           title: string | null
           updated_at: string
@@ -982,12 +1023,17 @@ export type Database = {
           buyer_account_id?: string | null
           created_at?: string
           direction: Database["public"]["Enums"]["review_direction"]
+          helpful_count?: number
           id?: string
           moderated_at?: string | null
           moderated_by?: string | null
           order_id: string
           rating: number
+          reported_at?: string | null
+          reported_reason?: string | null
           reviewer_user_id: string
+          seller_response?: string | null
+          seller_response_at?: string | null
           status?: Database["public"]["Enums"]["review_status"]
           title?: string | null
           updated_at?: string
@@ -998,12 +1044,17 @@ export type Database = {
           buyer_account_id?: string | null
           created_at?: string
           direction?: Database["public"]["Enums"]["review_direction"]
+          helpful_count?: number
           id?: string
           moderated_at?: string | null
           moderated_by?: string | null
           order_id?: string
           rating?: number
+          reported_at?: string | null
+          reported_reason?: string | null
           reviewer_user_id?: string
+          seller_response?: string | null
+          seller_response_at?: string | null
           status?: Database["public"]["Enums"]["review_status"]
           title?: string | null
           updated_at?: string
@@ -1299,6 +1350,49 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorite_listings: {
+        Row: {
+          buyer_account_id: string
+          created_at: string
+          id: string
+          listing_id: string
+        }
+        Insert: {
+          buyer_account_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+        }
+        Update: {
+          buyer_account_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_listings_buyer_account_id_fkey"
+            columns: ["buyer_account_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "grain_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings_v"
             referencedColumns: ["id"]
           },
         ]
@@ -3989,6 +4083,22 @@ export type Database = {
           variety: string | null
           warehouse_location: Json | null
           warehouse_name: string | null
+        }
+        Relationships: []
+      }
+      seller_reputation: {
+        Row: {
+          admin_id: string | null
+          avg_rating: number | null
+          avg_transit_hours: number | null
+          delivered_count: number | null
+          dispute_count: number | null
+          dispute_rate: number | null
+          fulfillment_score: number | null
+          on_time_count: number | null
+          on_time_rate: number | null
+          review_count_90d: number | null
+          review_count_total: number | null
         }
         Relationships: []
       }
