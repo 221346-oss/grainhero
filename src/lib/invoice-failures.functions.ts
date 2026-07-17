@@ -42,9 +42,11 @@ export const listInvoiceEmailFailures = createServerFn({ method: "GET" })
       ? await sb.from("profiles").select("id, name, email").in("id", sellerIds)
       : { data: [] };
     const nameOf = new Map((profiles ?? []).map((p: Row) => [p.id, p.name ?? p.email ?? p.id]));
-    return {
-      invoices: list.map((r) => ({ ...r, sellerName: nameOf.get(r.admin_id as string) ?? "—" })),
-    };
+    const invoices = list.map((r) => ({
+      ...r,
+      sellerName: (nameOf.get(r.admin_id as string) as string | undefined) ?? "—",
+    })) as Row[];
+    return { invoices };
   });
 
 export const getInvoiceHistory = createServerFn({ method: "GET" })
