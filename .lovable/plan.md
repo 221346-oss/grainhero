@@ -1,42 +1,69 @@
-# Phase 2 — Auth Hardening & Session Hygiene
+# Phase 3 — Plan Gating Enforcement
 
-Tighten the auth boundary so every protected surface has a verified session, sign-out fully drains client state, and suspicious activity is observable. Strictly additive — no route removals, no schema breaks.
+Goal: make `plan_thresholds` the single source of truth for every "can this tenant add another X / use feature Y" decision. Today the checks live only in `usePlanLimits` (client-side, based on `pricing-data`) and are trivially bypassed by calling the server fn directly.
 
 ## Scope
 
-1. **Session verification on the server**
-   - Add `src/lib/session.server.ts` helper `getVerifiedUser()` that wraps `context.supabase.auth.getUser()` (re-validates the JWT with the Auth server) — used by any server fn that must trust identity beyond `context.userId`.
-   - Audit `requireSupabaseAuth` call sites that make privileged decisions (role changes, plan changes, admin subscription actions) and swap them to `getVerifiedUser()` before the write.
+Server-side enforcement on every create/insert of a gated resource, plus consistent client UX (disabled buttons + upgrade nudges) reading the same gate.
 
-2. **Client sign-out drain**
-   - Centralize sign-out into `src/lib/auth/signOut.ts`:
-     `cancelQueries → clear → supabase.auth.signOut → navigate('/auth', { replace: true })`.
-   - Replace ad-hoc `supabase.auth.signOut()` calls in `AppSidebar`, `settings.tsx`, and any header menu to use the helper.
+### Gated resources → server fns
 
-3. **Session-aware header affordance**
-   - Ensure the marketing/landing header reflects session state (sign-in vs. account menu) driven by the existing root `onAuthStateChange` → `router.invalidate()` subscriber. No new listeners.
+| Feature key         | Table            | Server fn (insert path)           |
+| ------------------- | ---------------- | --------------------------------- |
+| `max_warehouses`*   | warehouses       | `upsertWarehouse` (insert branch) |
+| `max_silos`         | silos            | `upsertSilo` (insert branch)      |
+| `max_batches`       | grain_batches    | `upsertGrainBatch` (insert)       |
+| `max_sensors`       | sensor_devices   | `upsertSensorDevice` (insert)     |
+| `max_actuators`     | actuators        | `upsertActuator` (insert)         |
+| `max_buyers`        | buyers           | `upsertBuyer` (insert)            |
+| `max_users`         | user_roles       | `inviteTeamMember` (team-settings)|
 
-4. **Security event logging (additive)**
-   - Reuse existing `security_events` table. Add `logSecurityEvent()` helper in `src/lib/security-events.ts` (client + server variants).
-   - Emit events for: `sign_in_success`, `sign_in_failed`, `sign_out`, `password_reset_requested`, `role_change`, `plan_change_request`, `admin_suspend_toggle`.
-   - No UI changes — feeds the existing Security Center page.
+*Add `max_warehouses` to `plan_gate.ts` `PlanNumericFeature` union — currently missing.
 
-5. **Password reset page sanity**
-   - Verify `/reset-password` exists and is a public route; if missing, add minimal page that handles `type=recovery` and calls `updateUser({ password })`.
+### Feature toggles (boolean)
 
-6. **Rate-limit sensitive server fns (soft)**
-   - Add `src/lib/rate-limit.ts` in-memory token bucket (per-user, per-fn). Apply to `requestPlanChange`, `cancelSubscription`, admin mutation fns. Returns typed `{ error: 'rate_limited', retryAfter }` — no throws that break UI.
+- `exports` → gate `exportSensorCSV`, buyer/orders CSV exports
+- `alerts_sms` → gate SMS send path (future Twilio integration; add gate now so Phase later just plugs provider)
+- `api` → gate any `/api/public/*` tenant-scoped token issuance (placeholder assertion for now)
+- `insurance` → gate `insurance_policies` insert in `team-settings-insurance.functions.ts`
+
+## Work items
+
+1. **`src/lib/plan-gate.ts`**
+   - Add `max_warehouses` to `PlanNumericFeature` + `NUMERIC` list.
+   - Add helper `getTenantUsage(sb, tenantAdminId, feature)` that computes the current count for the gate's table (single switch), so callers don't have to pass `currentUsage`.
+   - Change `assertPlanAllows` signature to accept optional `context` + auto-compute usage when not supplied.
+   - Treat missing `plan_thresholds` row as "unlimited for super_admin, denied for others" (fix current `{allowed:false}` false-negative that would brick starter tenants if the row is missing).
+
+2. **`src/lib/operations.functions.ts`** — insert `await assertPlanAllows({ feature, context })` at the top of the insert branch of each upsert fn (Warehouse, Silo, Batch, Sensor, Actuator, Buyer). Skip when `id` present (update path).
+
+3. **`src/lib/team-settings-insurance.functions.ts`**
+   - `inviteTeamMember` → `assertPlanAllows({ feature: "max_users" })`.
+   - `insurance_policies` insert → `assertPlanAllows({ feature: "insurance" })`.
+
+4. **Error surface**: standardize response — catch `PlanLimitError` in a small `withPlanErrors()` wrapper (or inline) and rethrow as `throw new Error(\`PLAN_LIMIT:\${feature}:\${used}/\${limit}\`)` so the client toast can parse and show "Upgrade" CTA. Add `parsePlanLimitError(err)` helper in `plan-gate.ts` for the client.
+
+5. **Client hooks/UI**
+   - Deprecate `usePlanLimits` in favor of `usePlanGate` per feature. Keep a thin shim so existing Silo/Warehouse pages don't break; internally call `usePlanGate`.
+   - Add `<PlanLimitBanner feature="..." used=... />` (in `src/components/app/states.tsx`) that renders "X of Y used — Upgrade" with a link to `/plan-management`.
+   - Wire disabled state + banner into: silos, warehouses, sensors, actuators, buyers, batches, team pages. (Already-shipped disable logic on silos/warehouses gets migrated to the new hook.)
+
+6. **Activity logging**: on every `PlanLimitError`, `logActivity({ action: "plan_limit_hit", metadata: { feature, used, limit } })` server-side before rethrowing — feeds SuperAdmin insights on which caps bite.
 
 7. **Audit script**
-   - Extend `scripts/audit-server-fns.ts` to flag privileged fns (name matches `/promote|suspend|cancel|change|delete|admin/i` under `.middleware([requireSupabaseAuth])`) that don't call `getVerifiedUser()`.
+   - Extend `scripts/audit-server-fns.ts` with a new rule: any `.insert(` into a gated table inside a `createServerFn` handler must be preceded (in the same handler body) by `assertPlanAllows(` referencing that feature. Emit a warning listing the file:line so future inserts can't skip the gate silently.
 
-## Out of scope
-- MFA, OAuth providers, session timeout UI, device management — later phase.
-- Any schema changes (security_events already exists).
+8. **No DB migration needed** — Phase 1 already added `max_buyers` and normalized `features`.
 
-## Deliverables
-- 5 new files, ~4 file edits, 1 audit script extension.
-- Both audit scripts stay green.
-- No visual regressions; sign-out flow verified via Playwright (localhost, then check no cached protected data on `/auth`).
+## Verification
 
-Reply **approve** and I'll implement.
+- `bun run scripts/audit-routes.ts` and `bun run scripts/audit-server-fns.ts` both exit 0.
+- Manual: as a starter-plan admin, attempt to create silo #4 (starter cap is 3) → server rejects with `PLAN_LIMIT:max_silos:3/3`, UI shows upgrade banner, activity log entry appears in `activity_logs`.
+- Super-admin (no subscription row) is never blocked.
+
+## Out of scope (deferred)
+
+- Twilio wiring, Stripe upgrade CTA button navigation (Phase 6+).
+- Retroactive enforcement for tenants already over-cap — for now, block new inserts only.
+
+Reply **approve** to execute.
