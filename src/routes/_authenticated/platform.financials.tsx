@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown, TrendingUp, TrendingDown, DollarSign, Wallet, Package, Shield, LineChart as LineIcon } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, BarChart, Bar } from "recharts";
-import { getFinancialSummary } from "@/lib/financials.functions";
+import { getFinancialSummary, generateFinancialPdf } from "@/lib/financials.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/platform/financials")({
   component: FinancialsPage,
@@ -16,7 +17,19 @@ const COLORS = ["hsl(var(--primary))", "hsl(262 83% 58%)", "hsl(340 82% 60%)", "
 
 function FinancialsPage() {
   const fn = useServerFn(getFinancialSummary);
+  const pdfFn = useServerFn(generateFinancialPdf);
   const { data, isLoading } = useQuery({ queryKey: ["platform-financials"], queryFn: () => fn() });
+
+  async function downloadPdf(type: "pnl" | "revenue" | "mrr") {
+    try {
+      const r = await pdfFn({ data: { type } });
+      const blob = new Blob([Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0))], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = r.filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (e: any) { toast.error(e.message ?? "Failed to generate PDF"); }
+  }
 
   if (isLoading || !data) return <div className="p-8 text-sm text-muted-foreground">Loading financial dashboard…</div>;
   const { kpis, pnl, mix, planSplit, trend } = data;
@@ -29,9 +42,9 @@ function FinancialsPage() {
           <p className="text-sm text-muted-foreground mt-1">Platform-wide revenue, profit, and subscription health.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.open("/api/reports/pnl.pdf", "_blank")}><FileDown className="h-4 w-4 mr-1.5" /> P&L PDF</Button>
-          <Button variant="outline" size="sm" onClick={() => window.open("/api/reports/revenue.pdf", "_blank")}><FileDown className="h-4 w-4 mr-1.5" /> Revenue PDF</Button>
-          <Button variant="outline" size="sm" onClick={() => window.open("/api/reports/mrr.pdf", "_blank")}><FileDown className="h-4 w-4 mr-1.5" /> MRR PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => downloadPdf("pnl")}><FileDown className="h-4 w-4 mr-1.5" /> P&L PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => downloadPdf("revenue")}><FileDown className="h-4 w-4 mr-1.5" /> Revenue PDF</Button>
+          <Button variant="outline" size="sm" onClick={() => downloadPdf("mrr")}><FileDown className="h-4 w-4 mr-1.5" /> MRR PDF</Button>
         </div>
       </div>
 
