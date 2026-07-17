@@ -116,6 +116,9 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-invoice-failures", label: "Invoice Delivery", to: "/platform/invoice-failures", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-sellers", label: "Sellers", to: "/platform/sellers", icon: Users, roles: ["super_admin"] },
       { name: "platform-marketplace-health", label: "Marketplace Health", to: "/platform/marketplace-health", icon: TrendingUp, roles: ["super_admin"] },
+      { name: "platform-quality", label: "Quality Certificates", to: "/platform/quality", icon: ShoppingCart, roles: ["super_admin"] },
+      { name: "platform-messages", label: "Flagged Messages", to: "/platform/messages", icon: ScrollText, roles: ["super_admin"] },
+      { name: "returns", label: "Returns", to: "/returns", icon: ScrollText, roles: ["super_admin", "admin", "manager"] },
     ],
   },
 ];
