@@ -1,61 +1,61 @@
-# Phase 13 — Dispatch, Delivery Tracking & Post-Sale Reviews
+# Phase 14 — Dispatch Ops, Invoicing PDFs, Disputes & Refunds
 
-Phase 12 got buyers to `paid`. Phase 13 closes the loop: sellers dispatch the batch, buyers track it in real time, and both sides leave a rating that feeds back into marketplace trust. Every label, threshold, template and rating rule is editable by the super-admin — no hardcoded strings.
+Phase 13 gave sellers a dispatch drawer and buyers a live tracking column. Phase 14 closes the post-sale surface: a real seller event console, a super-admin analytics view for dispatch SLA, downloadable branded invoices emailed on payment, a buyer dispute flow with a moderation queue, and a Stripe-backed cancel/refund path. Every policy, template, and outcome remains editable in Super-admin → Marketplace Settings — zero hardcoding.
 
 ## Goals
-1. Seller-side dispatch workflow with courier + tracking metadata and status timeline.
-2. Buyer-side live tracking page (order timeline, shipment map/steps, invoice link, receipt).
-3. Delivery confirmation → auto-transition to `completed`, unlocking reviews.
-4. Two-way reviews (buyer→seller and seller→buyer) with moderation queue.
-5. All copy, courier list, SLA windows, review prompts, and moderation rules configurable via `platform_settings.config.dispatch` + `.reviews` from the SuperAdmin dashboard.
+1. Seller "Add event" console on `ShipmentPanel` with a preset library (`picked_up`, `in_transit`, `out_for_delivery`, `delivered`, `exception`), each preset mapped to a status transition; timeline + order events update live.
+2. `/platform/dispatch-analytics` — SLA compliance %, overdue shipments, on-time delivery rate, avg time in each state, with silo/batch/courier/date filters and CSV export.
+3. Real PDF invoices stored in Supabase Storage; auto-generated on `paid` and attached (link) to the payment-success email using the super-admin's template.
+4. Buyer dispute flow: post-delivery "Report an issue" with category + evidence; super-admin moderation queue with configurable resolution outcomes (refund, replacement, partial credit, reject).
+5. Cancel/refund flow: buyer self-cancel window + seller cancel, driving Stripe refund (full/partial) — window, allowed reasons, refund policy all in settings.
 
-## Data Model
-- `buyer_shipments` (new): `id, order_id, admin_id, courier_key, tracking_number, tracking_url, dispatched_at, expected_delivery_at, delivered_at, status (queued|in_transit|out_for_delivery|delivered|exception), notes`.
-- `buyer_shipment_events` (new): timeline entries (`shipment_id, at, code, label, location, source`), realtime-enabled.
-- `buyer_reviews` (new): `order_id, direction (buyer_to_seller|seller_to_buyer), rating (1-5), title, body, status (pending|published|rejected), moderated_by, moderated_at`.
-- Extend `buyer_orders`: `shipment_id`, `delivered_at`, `review_prompt_sent_at`.
-- Extend `platform_settings.config` with:
-  - `dispatch.couriers[]` (key, label, tracking_url_template)
-  - `dispatch.slaHours` (in_transit / out_for_delivery / delivered)
-  - `dispatch.emailSubjects/Bodies` for dispatched/out_for_delivery/delivered/exception
-  - `reviews.enabled`, `reviews.minChars`, `reviews.autoPublish`, `reviews.prompts` (buyer/seller subject+body)
-
-Every table ships with `GRANT` + RLS + owner/buyer-scoped policies and is added to `supabase_realtime`.
+## Data model (one migration)
+- Extend `platform_settings.config`:
+  - `dispatch.eventPresets[]` (code, label, sets_status?, requires_location?, requires_note?) — seeded defaults.
+  - `dispatch.analytics` (retentionDays, includedStatuses, exportEnabled).
+  - `invoicing` (storageBucket, numberPrefix, brandingLogoUrl, footerNote, emailAttachmentMode: `link`|`none`).
+  - `disputes` (enabled, windowHours, categories[], evidenceRequired, autoAckHours, resolutionOutcomes[] with `key,label,requiresRefundPct?`).
+  - `refunds` (buyerCancelWindowHours, sellerCancelAllowedStates[], reasons[], allowPartial, autoRefundOnCancel).
+- New tables (all with GRANT + RLS + realtime where noted):
+  - `buyer_disputes` (order_id, buyer_id, admin_id, category, description, evidence_urls[], status: `open|under_review|resolved|rejected`, resolution_key, resolution_note, refund_amount, opened_at, closed_at, moderated_by).
+  - `buyer_dispute_events` (dispute_id, at, actor_user_id, action, note) — realtime.
+  - `buyer_refunds` (order_id, invoice_id, dispute_id?, amount, currency, reason_key, stripe_refund_id, status: `pending|succeeded|failed`, created_by).
+- Extend `buyer_orders`: `cancelled_at`, `cancellation_reason`, `refund_status`, `invoice_pdf_url`.
+- Create private Storage bucket `invoices` with authenticated-read policy scoped to buyer_id / admin_id.
 
 ## Server functions
-- `dispatch.functions.ts`: `createShipment`, `updateShipmentStatus`, `appendShipmentEvent`, `markDelivered` (transitions order to `completed`, fires review prompt).
-- `dispatch-settings.functions.ts`: get/update `dispatch` and `reviews` blobs (super-admin only), reused by webhook and email helpers.
-- `reviews.functions.ts`: `submitReview`, `moderateReview`, `listReviewsForListing/Seller/Buyer`, `getMyPendingReviews`.
-- Extend `buyer-emails.server.ts` with `dispatched | outForDelivery | delivered | exception | reviewPrompt` kinds — all templates from settings.
-- Extend `buyer-portal.functions.ts` with `getOrderTracking(orderId)` returning shipment + events + review status.
+- `dispatch.functions.ts` (extend): `getEventPresets`, harden `appendShipmentEvent` to validate against preset list and drive status transitions atomically.
+- `dispatch-analytics.functions.ts`: aggregate queries (SLA %, overdue counts, avg dwell time per state) with filters; `exportDispatchCsv`.
+- `invoicing-pdf.server.ts`: build PDF via `pdf-lib` (Worker-safe), upload to `invoices/` bucket, return signed URL; called from Stripe webhook + retryable `regenerateInvoicePdf` fn.
+- Extend `buyer-emails.server.ts` `paymentSucceeded` kind to include `{{invoice_url}}` placeholder; template edited in settings.
+- `disputes.functions.ts`: `openDispute` (buyer, gated by settings window + delivered state), `listMyDisputes`, `listModerationQueue` (super-admin), `resolveDispute` (applies outcome; if outcome carries `requiresRefundPct`, calls refund helper).
+- `refunds.functions.ts`: `cancelOrder` (buyer/seller, state-machine gated), `issueRefund` (super-admin or auto from dispute); loads `supabaseAdmin` inside handler, calls Stripe `refunds.create` with `payment_intent` from `buyer_orders.stripe_payment_intent_id`, records `buyer_refunds`, updates order `status='refunded'` or `cancelled`.
+- Extend Stripe webhook: handle `charge.refunded` / `refund.updated` → sync `buyer_refunds.status`, emit buyer + seller notification via templated email.
 
 ## UI
-- Seller (Sales cockpit): "Dispatch" drawer on paid orders — pick courier from settings, enter tracking number, expected date. Post-dispatch shows timeline editor + "Mark delivered" and "Report exception".
-- Buyer portal (`/buyer/orders/$orderId`): live tracking column (status pill, ETA, event timeline via Supabase realtime), invoice download, "Leave a review" CTA once delivered.
-- Public listing page (`/marketplace/$slug`): show aggregate rating + latest published reviews (settings-gated).
-- Super-admin `/platform/marketplace-settings`: add **Dispatch** and **Reviews** tabs (couriers table editor, SLA sliders, email templates, moderation toggles).
-- Super-admin `/platform/reviews` moderation queue with approve/reject actions.
-
-## Automation & realtime
-- Cron `/api/public/cron/dispatch-sla-sweep` reads SLA hours from settings, flags overdue shipments as `exception`, notifies seller + buyer.
-- Realtime subscription on `buyer_shipment_events` for the tracking page.
-- On `markDelivered`: transition order `dispatched → completed`, insert `grain_batch_events` note, enqueue `reviewPrompt` emails to both sides after settings-defined delay.
+- `ShipmentPanel.tsx`: replace freeform input with a Preset select (from settings) + optional location/note fields; disable delivered button until required prior states exist per settings.
+- `/platform/dispatch-analytics`: `AdminPageShell` with summary tiles (SLA %, overdue, avg transit hrs), Recharts line + bar, filter bar (silo, batch, courier, date range), "Export CSV" button.
+- Buyer `/buyer/orders/$orderId`: after delivered → "Report an issue" button opens `DisputeDialog` (category from settings, description, evidence upload to `invoices/disputes/`). Cancel button visible during buyer window.
+- Sales cockpit: cancel button on paid orders (seller policy), refund action opens `RefundDialog` (full/partial per settings).
+- `/platform/disputes`: moderation queue table (open first), drawer with timeline, resolution outcome dropdown (from settings), optional refund amount input, resolve/reject actions.
+- `/platform/marketplace-settings`: add **Dispatch presets**, **Invoicing**, **Disputes**, **Refunds** tabs (list editors + toggles); no code deploys needed to change categories, outcomes, windows, or copy.
 
 ## Skeletons & routing
-- Register `ShipmentDrawerSkeleton`, `BuyerTrackingSkeleton`, `ReviewsModerationSkeleton` in `src/router.tsx` `PAGE_SKELETONS`.
-- New routes: `/platform/reviews`, existing `/buyer/orders/$orderId` extended, `/sales` drawer extended.
+Register `DispatchAnalyticsSkeleton`, `DisputesQueueSkeleton`, `BuyerDisputeDialogSkeleton` in `PAGE_SKELETONS`. Sidebar: add "Dispatch analytics" and "Disputes" under Super-admin.
 
-## Zero hardcoding checklist
-- Courier list, tracking URL patterns → settings.
-- SLA thresholds → settings.
-- Every email subject/body (dispatch, delivery, exception, review prompts) → settings.
-- Review moderation policy (auto-publish vs queue, min length, allow anonymous) → settings.
-- Storefront review display (show/hide, min count before showing average) → settings.
+## Automation
+- Extend `/api/public/cron/dispatch-sla-sweep` to also expire buyer cancel windows and auto-acknowledge stale disputes based on `disputes.autoAckHours`.
+- On successful Stripe refund webhook: update order + refund row, email both parties with settings-driven templates, emit notification, insert `buyer_order_events` entry.
+
+## Zero-hardcoding checklist
+- Event presets, SLA analytics filters, invoice branding/footer, dispute categories + outcomes, refund reasons + windows — all in `platform_settings.config`.
+- Every email (payment success w/ invoice, dispute opened/resolved, refund issued, cancellation) reads subject/body from settings with placeholder substitution.
 
 ## Acceptance
-- Seller can dispatch a paid order, buyer sees status change live without refresh.
-- Marking delivered auto-completes the order and unlocks reviews for both parties.
-- Super-admin edits a courier label or email template and the change is visible on next dispatch — no redeploy.
-- SLA cron flags an overdue shipment and both parties get the exception email using the current template.
+- Seller picks "Out for delivery" from the preset list → shipment status flips, buyer sees the event within seconds via realtime.
+- Super-admin loads `/platform/dispatch-analytics` and filters by silo → tiles + chart + CSV export all reflect the filter.
+- A paid order automatically has `invoice_pdf_url` set within a few seconds of the Stripe webhook; the buyer's payment-success email contains a working link.
+- Buyer opens a dispute inside the configured window; super-admin resolves with a "50% refund" outcome and Stripe processes the refund automatically; both parties get the resolution email.
+- Buyer cancels within window → Stripe refund fires, order transitions to `cancelled`, batch returns to `ready`, and the audit trail (`buyer_order_events` + `buyer_refunds`) is complete.
 
-Reply **go** to execute Phase 13.
+Reply **go** to execute Phase 14.
