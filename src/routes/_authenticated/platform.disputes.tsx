@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { listDisputes, getDispute, resolveDispute } from "@/lib/disputes.functions";
+import { listDisputes, getDispute, resolveDispute, getDisputeAttachmentUrls } from "@/lib/disputes.functions";
 import { getMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { initiateRefund } from "@/lib/refunds.functions";
 
@@ -79,9 +79,16 @@ function DisputeDialog({ id, onClose }: { id: string; onClose: () => void }) {
   const resolveFn = useServerFn(resolveDispute);
   const refundFn = useServerFn(initiateRefund);
   const settingsFn = useServerFn(getMarketplaceSettings);
+  const signFn = useServerFn(getDisputeAttachmentUrls);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["dispute", id], queryFn: () => getFn({ data: { id } }) });
   const { data: settings } = useQuery({ queryKey: ["marketplace-settings"], queryFn: () => settingsFn() });
+  const attachments = ((data?.dispute?.attachments ?? []) as Array<{ path: string; name: string }>);
+  const { data: attUrls } = useQuery({
+    enabled: attachments.length > 0,
+    queryKey: ["dispute-attachments", id, attachments.map((a) => a.path).join("|")],
+    queryFn: () => signFn({ data: { id, paths: attachments.map((a) => a.path) } }),
+  });
   const [rezKey, setRezKey] = useState("");
   const [note, setNote] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
@@ -120,6 +127,37 @@ function DisputeDialog({ id, onClose }: { id: string; onClose: () => void }) {
           <div className="space-y-3 text-sm">
             <div><b>Category:</b> {d.category}</div>
             <div className="rounded border p-2 bg-muted/40 whitespace-pre-wrap">{d.description}</div>
+            {attachments.length > 0 && (
+              <div>
+                <div className="text-xs font-medium mb-1">Attachments</div>
+                <ul className="space-y-1">
+                  {attachments.map((a) => {
+                    const u = attUrls?.urls.find((x) => x.path === a.path)?.url;
+                    return (
+                      <li key={a.path} className="text-xs">
+                        {u ? <a href={u} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline">{a.name}</a> : <span>{a.name} (loading…)</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+            {(data?.events?.length ?? 0) > 0 && (
+              <div>
+                <div className="text-xs font-medium mb-1">Audit trail</div>
+                <ul className="space-y-1 text-xs">
+                  {data!.events.map((ev) => (
+                    <li key={ev.id} className="flex justify-between border-b py-1 last:border-0">
+                      <span>
+                        <b>{ev.action}</b>
+                        {ev.note && <span className="text-muted-foreground"> · {ev.note}</span>}
+                      </span>
+                      <span className="text-muted-foreground">{new Date(ev.at).toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="space-y-2 border-t pt-3">
               <Label>Resolution</Label>
               <Select value={rezKey} onValueChange={setRezKey}>
@@ -137,7 +175,6 @@ function DisputeDialog({ id, onClose }: { id: string; onClose: () => void }) {
               <Label>Note</Label>
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
             </div>
-            <div className="text-xs text-muted-foreground">Events: {(data?.events ?? []).length}</div>
           </div>
         )}
         <DialogFooter>
