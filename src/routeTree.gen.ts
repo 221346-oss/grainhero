@@ -77,6 +77,7 @@ import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
 import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
@@ -467,6 +468,12 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/platform/tenants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformSlaAlertsRoute =
+  AuthenticatedPlatformSlaAlertsRouteImport.update({
+    id: '/platform/sla-alerts',
+    path: '/platform/sla-alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformSellersRoute =
   AuthenticatedPlatformSellersRouteImport.update({
     id: '/platform/sellers',
@@ -714,6 +721,7 @@ export interface FileRoutesByFullPath {
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -810,6 +818,7 @@ export interface FileRoutesByTo {
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -910,6 +919,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -1010,6 +1020,7 @@ export interface FileRouteTypes {
     | '/platform/plans'
     | '/platform/reviews'
     | '/platform/sellers'
+    | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -1106,6 +1117,7 @@ export interface FileRouteTypes {
     | '/platform/plans'
     | '/platform/reviews'
     | '/platform/sellers'
+    | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -1205,6 +1217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/plans'
     | '/_authenticated/platform/reviews'
     | '/_authenticated/platform/sellers'
+    | '/_authenticated/platform/sla-alerts'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
@@ -1740,6 +1753,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/sla-alerts': {
+      id: '/_authenticated/platform/sla-alerts'
+      path: '/platform/sla-alerts'
+      fullPath: '/platform/sla-alerts'
+      preLoaderRoute: typeof AuthenticatedPlatformSlaAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/sellers': {
       id: '/_authenticated/platform/sellers'
       path: '/platform/sellers'
@@ -2065,6 +2085,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
+  AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
@@ -2125,6 +2146,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
+  AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedTechnicianInstallsRoute:

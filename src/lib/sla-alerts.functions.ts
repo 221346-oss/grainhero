@@ -54,10 +54,10 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
         const expected = s.expected_delivery_at ? new Date(s.expected_delivery_at).getTime() : null;
         const limit = expected ?? (dispatched ? dispatched + overdueMs : nowMs);
         const overdueHours = Math.max(0, (nowMs - limit) / 3600_000);
-        return { ...s, overdueHours, limit };
+        return { ...s, overdueHours, limit } as Row;
       })
-      .filter((s) => s.overdueHours > 0)
-      .sort((a, b) => b.overdueHours - a.overdueHours);
+      .filter((s) => (s.overdueHours as number) > 0)
+      .sort((a, b) => (b.overdueHours as number) - (a.overdueHours as number));
 
     // Delivery-rate delta by seller.
     const bySeller = new Map<string, { adminId: string; current: Row[]; previous: Row[] }>();
