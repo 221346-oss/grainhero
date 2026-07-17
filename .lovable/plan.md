@@ -1,64 +1,94 @@
-# Admin Pages Redesign — Brand-Aligned, Compact, Low-Scroll
+# Admin & Super-Admin UI Redesign + Plan-Threshold Controls
+
+## Scope correction
+The `/platform/*` routes and other admin pages are **direct file-based routes** (e.g. `src/routes/_authenticated/platform.orders.tsx`, `activity-logs.tsx`, `orders.tsx`) — no dynamic router or wrapper layout. All work happens inside those individual route files plus a small shared `admin` component set.
+
+Two role lenses drive every page (already resolved via `getEffectiveRole` / `has_role`):
+- **admin** = tenant admin. Sees their own tenant's operational data + their own personnel (managers, technicians).
+- **super_admin** = platform operator. Sees tenant admins and platform-wide monitoring — never end-operators, batches, silos, or per-tenant operational rows.
 
 ## Goal
+1. Unify admin/super-admin pages to the landing brand look (emerald primary, slate neutrals, soft `from-slate-50 via-white to-emerald-50/30` bg) using Activity Logs as the visual template.
+2. Compact density — most pages fit one 1440×900 viewport, scrolling stays inside cards.
+3. Drop decorative icons; keep only functional ones (severity dot, close-chip, pagination, sort).
+4. Split Activity Logs by role: admin sees their team; super_admin sees admins + own actions.
+5. New Plan Thresholds page: super_admin edits plan limits/feature access; admin can request upgrade/downgrade from their own dashboard.
 
-Bring every `/platform/*` admin page (and other themed pages) in line with the same visual language used on the Activity Logs page, driven by the landing page brand palette (emerald/slate on a soft `from-slate-50 via-white to-emerald-50/30` background). Reduce vertical scroll, remove decorative icons, and use tight, professional density.
+## Part A — Shared admin shell
+New folder `src/components/app/admin/`:
+- `AdminPageShell.tsx` — gradient bg wrapper, responsive header (title + subtitle + right actions), no title icons.
+- `AdminSummaryTiles.tsx` — numeric tile row, click-to-filter ring, text-only labels.
+- `AdminFilterBar.tsx` — single card: search + selects + date range + Filter button.
+- `AdminDataCard.tsx` — bordered card with internal `max-h-[520px] overflow-auto` list/table + in-card pagination footer.
+- `AdminDetailPanel.tsx` — sticky right-column detail (replaces navigating to a detail page for most lists).
 
-## Reference (locked)
+All components use existing semantic tokens; no new colors, no new dependencies.
 
-- **Template page:** `src/routes/_authenticated/activity-logs.tsx` — its header, summary tile row, filter card, and 2-column content grid are the reference structure.
-- **Brand tokens:** emerald-600 primary, slate-900 text, slate-500 muted, slate-200 borders, soft emerald gradient page bg — mirroring landing (`NewHeroSection`, `NewFeaturesSection`).
+Layout rules for every refactored page:
+- Header: `grid-cols-[minmax(0,1fr)_auto]` mobile → `sm:flex` (per responsive-layout-patterns).
+- Body: `lg:grid-cols-3` — list spans 2, sticky detail spans 1.
+- Spacing: `p-4 sm:p-6 space-y-5`, `text-sm` body, page title `text-2xl sm:text-3xl`.
+- No icons in tile labels, card titles, filter labels, or nav items.
 
-## Shared building blocks (create once, reuse)
+## Part B — Activity Logs split by role
+File: `src/routes/_authenticated/activity-logs.tsx` (+ server function `listActivityLogs` in `src/lib/notifications-audit.functions.ts`).
 
-Add `src/components/app/admin/` with:
+Server-side scope resolution based on `getEffectiveRole`:
+| Role | Rows returned |
+|------|--------------|
+| technician / manager | Only their own actions. |
+| admin | All actions performed by users inside the caller's tenant (managers, technicians, admin themself). |
+| super_admin | Own super-admin actions + all `admin`-role actions across every tenant, with a `tenant_name` column and a tenant-filter select. |
 
-1. `AdminPageShell.tsx` — page wrapper (gradient bg, `p-4 sm:p-6 space-y-5`, responsive header with title + subtitle + right-slot actions, no icons in title).
-2. `AdminSummaryTiles.tsx` — compact tile row (5-col at md, 2-col at mobile), numeric-first, tiny label, click-to-filter ring, no per-tile icons unless status-critical.
-3. `AdminFilterBar.tsx` — single card, wraps search + selects + date range + primary Filter button; identical density to Activity Logs.
-4. `AdminDataCard.tsx` — bordered card matching Activity Logs' timeline card; compact table rows (h-10), zebra off, subtle hover.
-5. `AdminDetailPanel.tsx` — right-column sticky detail (like Activity Logs' Event Details), used when a row is selected instead of navigating away.
+UI additions:
+- Super-admin view: adds "Actor role" chip (admin/super_admin) and a Tenant filter select in the filter bar.
+- Admin view: adds "Team member" filter (their managers/technicians).
+- Same layout, no visual divergence beyond the extra filter select.
 
-All components use only semantic tokens already in `src/styles.css`; no new colors. Icons only where they carry meaning (severity dot, status pill) — headers, tiles, and filter labels are text-only.
+## Part C — Plan Thresholds & tenant subscription controls
+Data (one migration):
+- `public.plan_thresholds(plan_id text pk, name text, max_users int, max_silos int, max_batches int, max_sensors int, features jsonb, price_cents int, updated_at timestamptz)`.
+- `public.tenant_plan_change_requests(id uuid pk, tenant_id uuid, requested_plan text, current_plan text, direction text check in ('upgrade','downgrade'), status text check in ('pending','approved','rejected','auto_applied'), requested_by uuid, decided_by uuid, decided_at timestamptz, created_at timestamptz default now())`.
+- Grants + RLS: authenticated read on `plan_thresholds`; super_admin write. Admin can insert own tenant's change_request; super_admin full access; both can read own rows via `has_role`.
+- Seed `plan_thresholds` from existing `src/lib/pricing-data.ts` in the same migration.
 
-## Layout rules (applied to every admin page)
+Server functions (`src/lib/plan-thresholds.functions.ts`, all `requireSupabaseAuth`):
+- `listPlanThresholds` — any authenticated user.
+- `updatePlanThreshold` — super_admin only (verify via `context.supabase` + `has_role`).
+- `requestPlanChange({ requestedPlan })` — admin only; if `direction === 'upgrade'` and tenant's auto-upgrade flag is on, mark `auto_applied` and update tenant subscription immediately; else `pending`.
+- `decidePlanChangeRequest({ id, approve })` — super_admin only; on approve updates the tenant's plan.
+- `setTenantPlan({ tenantId, plan })` — super_admin manual override.
 
-- Page uses `min-h-screen` with the soft gradient bg, not full-screen scroll-heavy sections.
-- Header row: `grid-cols-[minmax(0,1fr)_auto]` on mobile → `sm:flex` (per responsive-layout-patterns).
-- Content grid: `lg:grid-cols-3`, main content spans 2, sticky detail spans 1 — same as Activity Logs, so lists don't push details off screen.
-- Tables: max ~10 rows visible, internal scroll inside the card (`max-h-[520px] overflow-auto`) instead of page scroll. Pagination lives inside the card footer.
-- Remove per-section decorative icons in card titles; keep only functional icons (sort, close chip, pagination arrows, severity dot).
-- Tighten spacing: `space-y-5` between sections, `p-4` inside cards, `text-sm` body, `text-2xl sm:text-3xl` page title only.
+New pages (both use AdminPageShell):
+1. `src/routes/_authenticated/platform.plans.tsx` — super_admin: editable table of plans (name, limits, feature toggles, price), plus a pending-requests panel in the right column.
+2. `src/routes/_authenticated/subscription.tsx` (existing, refactor) — admin: current plan tile, plan comparison, "Request upgrade/downgrade" button, toggle "Auto-approve upgrades", history of own requests.
 
-## Pages to refactor (in this order)
+## Part D — Page-by-page refactor (presentation only, no data changes)
 
+**Super-admin pages (show platform/admin oversight, never per-tenant operator data):**
+| Page | Focus |
+|------|-------|
+| `platform.index.tsx` | Tiles: total tenants, active admins, MRR, incidents-this-week + two-column widgets (recent signups, system alerts) sized to one viewport. |
+| `platform.tenants.tsx` | Tenants list + sticky tenant detail (plan, admin contact, usage vs threshold). Manual plan override lives here. |
+| `platform.users.tsx` | **Only admin-role users** across tenants; role filter chips (admin / super_admin). No managers/technicians. |
+| `platform.orders.tsx` | Hardware orders across tenants; tiles = statuses; list + detail. |
+| `platform.leads.tsx` / `platform.pipeline.tsx` | Marketing leads/pipeline; kanban stays inside a fixed-height card, no page scroll. |
+| `platform.audit-logs.tsx` / `platform.logs.tsx` | Align to Activity Logs shell; filters for actor role + tenant. |
+| `platform.health.tsx` | Metrics tiles + one status card grid. |
+| `platform.plans.tsx` *(new)* | Plan threshold editor + change-request queue. |
 
-| #   | Page                                            | Notes                                                                                                                               |
-| --- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `platform.orders.tsx`                           | Largest (294 lines). Split filters + table + detail into the shared shell; move stat tiles above filters; internal scroll on table. |
-| 2   | `platform.tenants.tsx`                          | Tiles → filter → list + sticky tenant detail.                                                                                       |
-| 3   | `platform.users.tsx`                            | Same shell; role filter chips instead of icon cards.                                                                                |
-| 4   | `platform.leads.tsx`                            | Pipeline counts as tiles; list + detail.                                                                                            |
-| 5   | `platform.pipeline.tsx`                         | Convert stage columns into compact kanban-like fixed-height card grid, no page scroll.                                              |
-| 6   | `platform.audit-logs.tsx` & `platform.logs.tsx` | Align with Activity Logs directly (they're already close).                                                                          |
-| 7   | `platform.health.tsx`                           | Metrics as tiles + one status card grid, no long stacked sections.                                                                  |
-| 8   | `platform.index.tsx` (Platform overview)        | Recompose using tiles + two-column widgets so it fits ~1 viewport on desktop.                                                       |
-
+**Admin pages** (`activity-logs.tsx`, `subscription.tsx`, `team-management.tsx`, `settings.tsx`) get the same shell + brand palette, no scope changes beyond Activity Logs.
 
 ## Out of scope
-
-- No data / server-function changes. Only presentation.
-- No new colors or fonts; no new dependencies.
-- Tenant-scoped pages (dashboard, batches, silos, etc.) untouched in this pass — a follow-up plan can extend the same shell to them.
+- Tenant operational pages (dashboard, grain-batches, silos, sensors, actuators, buyers, insurance) — unchanged.
+- No new AI, email, or webhook wiring.
+- No copy changes beyond what the new components require.
 
 ## Acceptance
+- Every page in Part D shares identical header/tile/filter/card visuals with Activity Logs.
+- Desktop 1440×900: main content visible without page scroll (internal card scroll only).
+- No icon in any page title, section title, tile label, or filter label.
+- Activity Logs returns role-appropriate rows verified via one query per role.
+- Super_admin can edit a plan threshold and approve a change request; admin can submit a change request and (if auto-upgrade is on) see the plan updated immediately.
 
-- All listed pages share identical header, tile, filter, and card visuals.
-- Desktop `1440×900`: each page's primary content visible without page scroll (only in-card scroll).
-- No icon appears in a page/section title or filter label.
-- Palette matches landing (emerald primary, slate neutrals, soft gradient bg) — no purple/indigo accents.  
-  
-Redo plan and review code first they are not platform pages ig now , they follow direct routing. and also activity logs pages show logs of admin should see about thier technicial manager and all but suepradmin should see his log of his performance, as well as of all admins. also a page where admin can update his plans threholds of those plans like limit and access of creations of aceess to pages based on plan they subscibed. superadmin can upgrade and degraaded them maually as well and auto if admin choose to upgrade via thier dashborad. superadmin every pages sshow superadmin and monitoring thigs relaed of amdin not admin person or thier operationns 
-
-Reply **approve** to build, or tell me which pages/rules to change.  
-  
+Reply **approve** to build, or tell me what to adjust.
