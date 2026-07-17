@@ -1595,6 +1595,7 @@ export type Database = {
           max_sensors: number
           max_silos: number
           max_users: number
+          max_warehouses: number
           name: string
           plan_id: string
           price_cents: number
@@ -1614,6 +1615,7 @@ export type Database = {
           max_sensors?: number
           max_silos?: number
           max_users?: number
+          max_warehouses?: number
           name: string
           plan_id: string
           price_cents?: number
@@ -1633,6 +1635,7 @@ export type Database = {
           max_sensors?: number
           max_silos?: number
           max_users?: number
+          max_warehouses?: number
           name?: string
           plan_id?: string
           price_cents?: number
