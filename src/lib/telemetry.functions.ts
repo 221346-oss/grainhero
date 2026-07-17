@@ -14,19 +14,19 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SB = any;
-type Row = Record<string, unknown>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Row = Record<string, any>;
 
 const METRIC_COLS: Record<string, string> = {
-  temperature: "temperature",
-  humidity: "humidity",
-  moisture: "moisture",
-  co2: "co2_level",
-  o2: "o2_level",
+  temperature: "temperature_value",
+  humidity: "humidity_value",
+  moisture: "moisture_value",
+  co2: "co2_value",
 };
 
 const READING_SCHEMA = z.object({
   sensorDeviceId: z.string().uuid(),
-  metric: z.enum(["temperature", "humidity", "moisture", "co2", "o2"]),
+  metric: z.enum(["temperature", "humidity", "moisture", "co2"]),
   value: z.number().finite(),
   source: z.enum(["manual", "mqtt", "http", "firebase"]).default("manual"),
   raw: z.record(z.string(), z.unknown()).optional(),
@@ -81,12 +81,12 @@ export async function writeReadingAndEvaluate(
   const rowPayload: Row = {
     admin_id: input.adminId,
     silo_id: input.siloId,
-    sensor_device_id: input.sensorDeviceId,
+    device_id: input.sensorDeviceId,
     [col]: input.value,
     source: input.source,
     raw_payload: input.raw ?? null,
     quality_flag: Number.isFinite(input.value) ? "ok" : "out_of_range",
-    recorded_at: input.recordedAt ?? new Date().toISOString(),
+    reading_timestamp: input.recordedAt ?? new Date().toISOString(),
     ingested_at: new Date().toISOString(),
   };
   await sb.from("sensor_readings").insert(rowPayload as never);
@@ -150,7 +150,7 @@ export async function writeReadingAndEvaluate(
   await emitNotification(sb, {
     recipientId: input.adminId,
     tenantAdminId: input.adminId,
-    category: "alert",
+    category: "ops",
     severity,
     title: `Silo alert: ${input.metric} ${severity}`,
     body: `Reading ${v} breached threshold on silo.`,
@@ -177,7 +177,7 @@ export const listThresholds = createServerFn({ method: "GET" })
 const THRESHOLD_INPUT = z.object({
   id: z.string().uuid().optional(),
   siloId: z.string().uuid(),
-  metric: z.enum(["temperature", "humidity", "moisture", "co2", "o2"]),
+  metric: z.enum(["temperature", "humidity", "moisture", "co2"]),
   minValue: z.number().nullable().optional(),
   maxValue: z.number().nullable().optional(),
   criticalMin: z.number().nullable().optional(),
@@ -251,11 +251,11 @@ export const getSiloReadings = createServerFn({ method: "GET" })
     const since = new Date(Date.now() - data.hours * 3600 * 1000).toISOString();
     const { data: rows, error } = await context.supabase
       .from("sensor_readings")
-      .select("recorded_at, temperature, humidity, moisture, co2_level, o2_level, quality_flag, source")
+      .select("reading_timestamp, temperature_value, humidity_value, moisture_value, co2_value, quality_flag, source")
       .eq("silo_id", data.siloId)
-      .gte("recorded_at", since)
-      .order("recorded_at", { ascending: true })
+      .gte("reading_timestamp", since)
+      .order("reading_timestamp", { ascending: true })
       .limit(2000);
     if (error) throw error;
-    return { readings: (rows ?? []) as Row[] };
+    return { readings: (rows ?? []) as unknown as Row[] };
   });
