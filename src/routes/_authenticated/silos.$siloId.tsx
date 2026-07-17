@@ -89,18 +89,18 @@ function SiloCockpit() {
         <Button asChild variant="ghost" size="sm"><Link to="/silos"><ArrowLeft className="h-4 w-4 mr-1" /> Silos</Link></Button>
       </div>
 
-      <PageHeader
-        title={siloName}
-        description={`${d.sensors.length} sensors · ${d.actuators.length} actuators · ${d.openAlerts.length} open alerts`}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setThresholdOpen(true)}><Sliders className="h-4 w-4 mr-1" /> Thresholds</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setAutomationOpen(true)}>
-              <Zap className="h-4 w-4 mr-1" /> Automation
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader
+          title={siloName}
+          subtitle={`${d.sensors.length} sensors · ${d.actuators.length} actuators · ${d.openAlerts.length} open alerts`}
+        />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setThresholdOpen(true)}><Sliders className="h-4 w-4 mr-1" /> Thresholds</Button>
+          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setAutomationOpen(true)}>
+            <Zap className="h-4 w-4 mr-1" /> Automation
+          </Button>
+        </div>
+      </div>
 
       {/* Top KPI row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -125,7 +125,7 @@ function SiloCockpit() {
           <div className="flex items-center gap-3 pt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><Wifi className="h-3.5 w-3.5 text-emerald-500" /> {online} online</span>
             <span className="flex items-center gap-1"><WifiOff className="h-3.5 w-3.5 text-muted-foreground" /> {d.sensors.length - online} offline</span>
-            <QualityBadge quality={(latest?.quality_flag as string) ?? null} />
+            <QualityBadge flag={(latest?.quality_flag as string) ?? null} />
             {latest?.reading_timestamp ? <span>Last reading {new Date(latest.reading_timestamp as string).toLocaleString()}</span> : null}
           </div>
         </CardContent>
@@ -136,7 +136,9 @@ function SiloCockpit() {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2"><CardTitle className="text-base">Live telemetry (24h)</CardTitle></CardHeader>
           <CardContent>
-            <LiveReadingChart siloId={siloId} hours={24} />
+            {d.sensors[0] ? (
+              <LiveReadingChart siloId={siloId} deviceId={d.sensors[0].id as string} hours={24} />
+            ) : <div className="text-sm text-muted-foreground">No sensors assigned.</div>}
           </CardContent>
         </Card>
 
@@ -220,7 +222,7 @@ function SiloCockpit() {
           <CardHeader className="pb-2"><CardTitle className="text-base">Command console</CardTitle></CardHeader>
           <CardContent>
             {activeActuator ? (
-              <CommandConsole actuatorId={activeActuator.id as string} actuatorName={String(activeActuator.name)} />
+              <CommandConsole actuatorId={activeActuator.id as string} />
             ) : (
               <div className="text-sm text-muted-foreground">Select an actuator to send commands.</div>
             )}
