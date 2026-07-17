@@ -72,6 +72,7 @@ import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authent
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
@@ -417,6 +418,12 @@ const AuthenticatedPlatformAuditLogsRoute =
     path: '/platform/audit-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminsAdminIdRoute =
+  AuthenticatedAdminsAdminIdRouteImport.update({
+    id: '/admins/$adminId',
+    path: '/admins/$adminId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
   path: '/api/public/webhooks/stripe',
@@ -505,6 +512,7 @@ export interface FileRoutesByFullPath {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
@@ -574,6 +582,7 @@ export interface FileRoutesByTo {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
@@ -646,6 +655,7 @@ export interface FileRoutesById {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
@@ -718,6 +728,7 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/admins/$adminId'
     | '/platform/audit-logs'
     | '/platform/health'
     | '/platform/leads'
@@ -787,6 +798,7 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout'
+    | '/admins/$adminId'
     | '/platform/audit-logs'
     | '/platform/health'
     | '/platform/leads'
@@ -858,6 +870,7 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/_authenticated/admins/$adminId'
     | '/_authenticated/platform/audit-logs'
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/leads'
@@ -1345,6 +1358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admins/$adminId': {
+      id: '/_authenticated/admins/$adminId'
+      path: '/admins/$adminId'
+      fullPath: '/admins/$adminId'
+      preLoaderRoute: typeof AuthenticatedAdminsAdminIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/webhooks/stripe': {
       id: '/api/public/webhooks/stripe'
       path: '/api/public/webhooks/stripe'
@@ -1421,6 +1441,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
+  AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
@@ -1464,6 +1485,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
+  AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
