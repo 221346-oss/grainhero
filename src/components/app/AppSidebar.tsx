@@ -57,7 +57,8 @@ const pinnedNav: NavItem[] = [
   { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
   { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
   { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
-  { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
+  { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
+  { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
   { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
 ];
 
@@ -80,7 +81,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Business",
     items: [
-      { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
+      { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
       { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
       { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
       { name: "plan-management", label: "Plan Management", to: "/plan-management", icon: CreditCard, roles: ["admin"] },
@@ -89,7 +90,6 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Platform",
     items: [
-      { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
       { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
       { name: "platform-plans", label: "Plans & Thresholds", to: "/platform/plans", icon: CreditCard, roles: ["super_admin"] },
       { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
