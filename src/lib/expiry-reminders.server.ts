@@ -65,16 +65,17 @@ export async function runExpiryReminders() {
       }
 
       if (wantsPush) {
-        await supabaseAdmin.from("notifications").insert({
-          admin_id: s.admin_id,
-          user_id: s.admin_id,
-          title: `Plan expires in ${threshold} day${threshold === 1 ? "" : "s"}`,
-          message: `Your ${s.plan_name ?? "subscription"} ends on ${new Date(s.end_date).toLocaleDateString()}. Renew to avoid interruption.`,
-          type: "warning",
+        const { emitNotification } = await import("@/lib/notify");
+        await emitNotification(supabaseAdmin, {
+          recipientId: s.admin_id,
+          tenantAdminId: s.admin_id,
           category: "billing",
-          entity_type: "subscription",
-          entity_id: s.id,
-          action_url: "/subscription",
+          severity: "warning",
+          title: `Plan expires in ${threshold} day${threshold === 1 ? "" : "s"}`,
+          body: `Your ${s.plan_name ?? "subscription"} ends on ${new Date(s.end_date).toLocaleDateString()}. Renew to avoid interruption.`,
+          link: "/subscription",
+          entityType: "subscription",
+          entityId: s.id,
         });
       }
 

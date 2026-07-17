@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
-import { Bell, Sun, Moon } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
+import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -105,15 +106,7 @@ function AuthenticatedLayout() {
                 ? <Sun className="h-4 w-4" />
                 : <Moon className="h-4 w-4" />}
             </button>
-            <Link
-              to="/notifications"
-              aria-label="Notifications"
-              data-tour="topbar-notifications"
-              className="relative shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
-            >
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
-            </Link>
+            <NotificationBell />
             <Link
               to="/settings"
               aria-label="Your profile"

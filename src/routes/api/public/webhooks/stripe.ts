@@ -172,22 +172,18 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 }
 
                 // In-app notification for every super admin.
-                const { data: supers } = await supabaseAdmin
-                  .from("user_roles")
-                  .select("user_id")
-                  .eq("role", "super_admin");
-                const superIds = (supers ?? []).map((r: { user_id: string }) => r.user_id);
-                if (superIds.length > 0) {
-                  await supabaseAdmin.from("notifications").insert(
-                    superIds.map((uid) => ({
-                      user_id: uid,
-                      tenant_id: uid,
-                      type: "order.new",
-                      subject: "New install order placed",
-                      body: `A new install order was placed for plan ${planId ?? "?"}. Order id: ${hardwareOrderId}`,
-                      is_read: false,
-                    })) as never,
-                  );
+                {
+                  const { emitToSuperAdmins } = await import("@/lib/notify");
+                  await emitToSuperAdmins(supabaseAdmin, {
+                    category: "order",
+                    severity: "info",
+                    title: "New install order placed",
+                    body: `A new install order was placed for plan ${planId ?? "?"}.`,
+                    link: "/platform/orders",
+                    entityType: "hardware_order",
+                    entityId: hardwareOrderId,
+                    metadata: { plan_id: planId },
+                  });
                 }
 
                 // Email SUPPORT_EMAIL via Resend gateway or direct API.

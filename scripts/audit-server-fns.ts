@@ -68,6 +68,15 @@ for (const file of files) {
     violations++;
   }
 
+  // Phase 5 — direct notifications inserts must go through @/lib/notify.
+  // Allow-list: the emitter module itself.
+  if (!rel.endsWith("notify.ts") && /\.from\(['"]notifications['"]\)\s*[\s\S]{0,120}\.insert\(/.test(src)) {
+    console.error(
+      `✗ ${rel}: direct notifications insert — use emitNotification/emitBulk/emitToRole/emitToSuperAdmins from @/lib/notify`,
+    );
+    violations++;
+  }
+
   // Module-scope process.env reads (unindented top-level declarations only).
   for (const line of topLevel.split("\n")) {
     if (/^(const|let|var)\s+\w+\s*=\s*process\.env\./.test(line)) {

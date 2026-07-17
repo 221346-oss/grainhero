@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { z } from "zod";
 import { logActivity } from "./activity";
+import { emitNotification, emitToSuperAdmins } from "./notify";
 
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
@@ -26,28 +27,7 @@ async function verifyAndLimit(
   if (!gate.ok) throw new Error(`Too many requests. Try again in ${gate.retryAfter}s.`);
 }
 
-async function notify(
-  sb: any,
-  userId: string,
-  tenantAdminId: string,
-  title: string,
-  body: string,
-  meta: Record<string, unknown>,
-) {
-  try {
-    await sb.from("notifications").insert({
-      admin_id: tenantAdminId,
-      user_id: userId,
-      type: "plan_change",
-      category: "billing",
-      title,
-      message: body,
-      metadata: meta as never,
-    } as never);
-  } catch (err) {
-    console.warn("[notify] insert failed", err);
-  }
-}
+// Notification helpers now live in @/lib/notify.
 
 /* -------------------- list -------------------- */
 
@@ -168,6 +148,27 @@ export const requestPlanChange = createServerFn({ method: "POST" })
         .update({ subscription_plan: data.requested_plan } as never)
         .eq("id", tenantAdminId);
       if (upErr) throw upErr;
+    }
+
+    // Notify super-admins of the incoming request (or auto-applied change).
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await emitToSuperAdmins(supabaseAdmin, {
+        category: "plan",
+        severity: autoApply ? "info" : "warning",
+        title: autoApply
+          ? `Auto-upgrade: ${current} → ${data.requested_plan}`
+          : `Plan change requested: ${current} → ${data.requested_plan}`,
+        body: autoApply
+          ? `Tenant auto-upgraded to ${data.requested_plan}.`
+          : `A tenant requested to switch to ${data.requested_plan}. Review in Plan requests.`,
+        link: "/platform/plans",
+        entityType: "plan_change_request",
+        entityId: inserted?.id ?? null,
+        metadata: { tenant_admin_id: tenantAdminId, direction, from: current, to: data.requested_plan },
+      });
+    } catch (err) {
+      console.warn("[requestPlanChange] super-admin notify failed", err);
     }
 
     return { ok: true, id: inserted?.id, auto_applied: autoApply };
@@ -292,16 +293,24 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
 
     if (req.requested_by) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await notify(
-        supabaseAdmin,
-        req.requested_by,
-        req.tenant_admin_id,
-        data.approve ? "Plan change approved" : "Plan change rejected",
-        data.approve
+      await emitNotification(supabaseAdmin, {
+        recipientId: req.requested_by,
+        tenantAdminId: req.tenant_admin_id,
+        category: "plan",
+        severity: data.approve ? "success" : "warning",
+        title: data.approve ? "Plan change approved" : "Plan change rejected",
+        body: data.approve
           ? `Your plan has been changed to ${req.requested_plan}.`
           : `Your request to switch to ${req.requested_plan} was rejected: ${decisionNote}`,
-        { request_id: data.id, from: req.current_plan, to: req.requested_plan, status: newStatus },
-      );
+        link: "/subscription",
+        entityType: "plan_change_request",
+        entityId: data.id,
+        metadata: {
+          from: req.current_plan,
+          to: req.requested_plan,
+          status: newStatus,
+        },
+      });
     }
 
     return { ok: true };

@@ -1,39 +1,71 @@
-# Phase 4 — Plan Change Lifecycle & Billing Sync
+# Phase 5 — Notifications & Realtime Unification
 
-Goal: turn `tenant_plan_change_requests` into a real, auditable workflow. Today admins can file a request but there is no super-admin review path, no Stripe sync, no activity trail, and no way for the requester to see status. Phase 4 closes that loop end-to-end while staying additive.
+## Goal
+Single, reliable notification pipeline with realtime delivery, unified read/unread state, and consistent UI across roles.
 
-## Scope
+## Problems today
+- Notifications inserted from multiple call sites with inconsistent shape (`type`, `severity`, `link`, `metadata`).
+- No realtime subscription — users must refresh to see new notifications.
+- `activity_logs` vs `notifications` overlap; super-admin activity feed duplicates entries.
+- No unread badge in header; no "mark all read".
+- Email/SMS side-channel not wired to the same event source, so users get in-app-only alerts for critical events.
 
-1. **Server functions** (`src/lib/plan-thresholds.functions.ts`)
-   - `listPlanChangeRequests({ status?, tenantId? })` — super-admin sees all; admin sees own tenant only. Ordered newest first, joined with requester profile + plan labels.
-   - `approvePlanChangeRequest({ requestId, note? })` — super-admin only (`requireRole('super_admin')` via `session.server.ts`). Updates request to `approved`, writes `profiles.subscription_plan` for tenant admin, upserts `subscriptions` row (status `active`, `current_period_end` = now + 30d), logs `plan_change_approved` activity + `security_events`.
-   - `rejectPlanChangeRequest({ requestId, reason })` — same guard, marks `rejected`, requires reason, logs activity.
-   - `cancelPlanChangeRequest({ requestId })` — requester or super-admin, only while `pending`.
-   - All mutations wrapped in `checkRateLimit` (10/min) and use `getVerifiedUser()`.
+## Deliverables
 
-2. **Client hook** (`src/hooks/usePlanChangeRequests.ts`)
-   - `useQuery` for list; `useMutation` for approve/reject/cancel with `queryClient.invalidateQueries(['plan-change-requests'])` and `['plan-gate']`.
+### 1. Schema hardening (migration)
+- Add missing columns to `notifications` if absent: `category` (enum: `billing | plan | order | install | security | system | ops`), `severity` (`info | success | warning | critical`), `link`, `metadata jsonb`, `read_at timestamptz`.
+- Backfill defaults for existing rows.
+- Enable realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;`
+- RLS: recipient can `SELECT`/`UPDATE own`; service_role full; super_admin `SELECT` all.
+- Index: `(recipient_id, read_at, created_at desc)`.
 
-3. **UI**
-   - Super-admin: new tab on `/platform/plans` — "Pending requests" table (tenant, current → requested plan, reason, filed at, Approve/Reject buttons). Reuses `AdminDataCard` in table density.
-   - Admin: on `/plan-management`, add "Your requests" section showing status timeline (pending → approved/rejected with note).
-   - Both surfaces show empty/error via `<EmptyState>` / `<ErrorState>`.
+### 2. Unified emitter — `src/lib/notify.ts` (server)
+- `emitNotification({ recipientId, category, severity, title, body, link?, metadata? })`
+- `emitToRole({ tenantAdminId, role, ... })` — fan-out to all users with a role under a tenant.
+- `emitToSuperAdmins(...)` — for platform-wide events (plan requests, new signups, churn).
+- Internally: insert row + optional email dispatch (via existing Resend helper) when `severity >= warning` and user has email opt-in.
+- All existing call sites in `plan-thresholds.functions.ts`, `billing.functions.ts`, `hardware-orders`, `installations`, `security_events` refactored to call this.
 
-4. **Notifications** (additive, best-effort)
-   - On approve/reject, insert a row in `notifications` for the requester (`type='plan_change'`). Silent failure — never blocks the mutation.
+### 3. Realtime hook — `src/hooks/useNotifications.ts` (client)
+- Subscribes to `postgres_changes` on `notifications` filtered by `recipient_id=eq.<me>`.
+- Merges into React Query cache (`['notifications', userId]`) — no refetch storm.
+- Returns `{ items, unreadCount, markRead, markAllRead }`.
+- Cleanup via `removeChannel` (per realtime rules).
 
-5. **Audit script**
-   - Extend `scripts/audit-server-fns.ts`: any fn matching `/plan.*change.*request/i` that mutates must call `requireRole` or `getVerifiedUser` — warn otherwise.
+### 4. Header notification bell
+- Reusable `<NotificationBell />` in `src/components/app/notifications/`.
+- Badge with unread count (99+ cap), popover list (last 20), severity color dot, click → navigate to `link` and mark read.
+- "Mark all read" and "View all" → `/notifications` page.
+- Mounted in `AppSidebar` header slot for all authenticated layouts.
 
-## Non-goals
+### 5. `/notifications` page
+- Full list with filters (category, severity, unread only).
+- Uses shared `AdminPageShell` + `AdminDataCard` for consistency.
+- Pagination (20/page).
 
-- No real Stripe API call yet (that lands with the billing phase). We only stamp the local `subscriptions` row so downstream gates/financials pick it up immediately.
-- No email/SMS — just in-app `notifications`.
-- No schema migration; `tenant_plan_change_requests` already has `status`, `reviewer_id`, `reviewer_note`, `reviewed_at`.
+### 6. Activity vs Notifications separation
+- `activity_logs` = immutable audit trail (who did what) — logged via `logActivity`.
+- `notifications` = actionable inbox for a specific recipient — via `emitNotification`.
+- Super-admin dashboard "Activity" feed reads from `activity_logs` only. Notification bell reads from `notifications` only. Remove the duplicate merge in `SuperAdminDashboard`.
 
-## Acceptance
+### 7. Wired events (Phase-5 scope)
+- Plan change requested → super-admins
+- Plan change approved/rejected → requester
+- Subscription created/canceled/renewed → tenant admin
+- Hardware order placed / status change → admin + assigned technician
+- Installation scheduled / completed → admin
+- Security event (`critical`) → tenant admin + super-admins
+- Plan limit hit (from `assertPlanAllows`) → tenant admin
 
-- `bun scripts/audit-routes.ts` and `bun scripts/audit-server-fns.ts` both green.
-- `tsgo` clean.
-- Super-admin can approve a request → tenant's `plan_gate` immediately reflects new caps; activity + security events written.
-- Admin sees status update on their `/plan-management` page after refetch.
+### 8. Audit script
+Extend `audit-server-fns.ts` to flag direct `supabase.from('notifications').insert(...)` outside `src/lib/notify.ts`.
+
+## Non-goals (deferred)
+- Push notifications (web-push / FCM) — Phase 12.
+- SMS via Twilio — Phase 8 (billing/critical only).
+- User-configurable notification preferences UI — Phase 9.
+
+## Verification
+- `tsgo` + `audit-routes` + `audit-server-fns` green.
+- Manual: place a plan request → super-admin bell shows unread within 2s without refresh.
+- RLS: user A cannot select user B's notifications (verified via `supabase--read_query`).
