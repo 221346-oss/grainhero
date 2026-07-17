@@ -134,9 +134,21 @@ export const resendInvoiceEmail = createServerFn({ method: "POST" })
   .validator((d) => z.object({ invoiceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: inv } = await context.supabase
-      .from("buyer_invoices").select("id, order_id").eq("id", data.invoiceId).maybeSingle();
+      .from("buyer_invoices").select("id, order_id, admin_id").eq("id", data.invoiceId).maybeSingle();
     const i = inv as Row | null;
     if (!i || !i.order_id) throw new Error("Invoice / order not found");
+    // Authorize: caller must be the tenant admin, super_admin, or the buyer.
+    const { data: role } = await context.supabase.rpc("get_my_role", { _user_id: context.userId });
+    const isStaff = role === "super_admin" || role === "admin" || role === "manager";
+    if (!isStaff) {
+      const { data: order } = await context.supabase
+        .from("buyer_orders").select("buyer_account_id").eq("id", i.order_id).maybeSingle();
+      const buyerAccountId = (order as Row | null)?.buyer_account_id;
+      const { data: acc } = buyerAccountId
+        ? await context.supabase.from("buyer_accounts").select("user_id").eq("id", buyerAccountId).maybeSingle()
+        : { data: null };
+      if ((acc as Row | null)?.user_id !== context.userId) throw new Error("Forbidden");
+    }
     return sendInvoiceEmailAndTrack(context.supabase, i.id as string, i.order_id as string);
   });
 
