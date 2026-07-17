@@ -99,6 +99,17 @@ export async function writeReadingAndEvaluate(
     status: "online",
   } as never);
 
+  // Phase 10 — Automation rule evaluation (independent of threshold breach).
+  try {
+    const { evaluateAutomationForReading } = await import("@/lib/automation-rules.functions");
+    await evaluateAutomationForReading(sb, {
+      adminId: input.adminId,
+      siloId: input.siloId,
+      metric: input.metric,
+      value: input.value,
+    });
+  } catch (_e) { /* automation must never block ingest */ }
+
   // Threshold evaluation
   const { data: th } = await sb
     .from("sensor_thresholds")
