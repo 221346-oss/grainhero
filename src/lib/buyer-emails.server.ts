@@ -10,7 +10,16 @@ import { loadMarketplaceSettings, renderTemplate } from "@/lib/marketplace-setti
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
-type Kind = "placed" | "paymentSucceeded" | "paymentFailed" | "dispatched";
+type Kind =
+  | "placed"
+  | "paymentSucceeded"
+  | "paymentFailed"
+  | "dispatched"
+  | "outForDelivery"
+  | "delivered"
+  | "exception"
+  | "reviewPromptBuyer"
+  | "reviewPromptSeller";
 
 async function fetchOrderCtx(sb: SupabaseClient<Database>, orderId: string): Promise<{
   to: string | null;
