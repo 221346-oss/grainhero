@@ -521,6 +521,6 @@ export function ManagerDashboard({ name }: { name?: string }) {
 
 
       </div>
-    </AdminPageShell>
+    </div>
   );
 }
