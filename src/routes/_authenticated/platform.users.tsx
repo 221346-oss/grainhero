@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
+import { startImpersonation } from "@/lib/impersonation.functions";
+import { saveImpersonationSession } from "@/components/app/ImpersonationBanner";
+import { UserCog } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/users")({ component: UsersPage });
 
@@ -28,6 +31,7 @@ function UsersPage() {
   const navigate = useNavigate();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
+  const impersonateFn = useServerFn(startImpersonation);
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
@@ -42,6 +46,29 @@ function UsersPage() {
     mutationFn: (v: { id: string; blocked: boolean }) => toggleFn({ data: v }),
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["platform-users"] }); },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const impersonate = useMutation({
+    mutationFn: (adminId: string) => {
+      console.log("Starting impersonation for adminId:", adminId);
+      return impersonateFn({ data: { adminId } });
+    },
+    onSuccess: (data) => {
+      console.log("Impersonation success:", data);
+      // Persist session to localStorage so the banner picks it up
+      saveImpersonationSession({
+        adminId: data.adminId,
+        adminName: data.adminName ?? "",
+        adminEmail: data.adminEmail ?? null,
+        businessType: data.businessType ?? null,
+      });
+      toast.success(`Now viewing as ${data.adminName}`);
+      navigate({ to: "/dashboard" });
+    },
+    onError: (e: Error) => {
+      console.error("Impersonation error:", e);
+      toast.error(e.message);
+    },
   });
  
   const totalUsers = data.length;
@@ -144,15 +171,29 @@ function UsersPage() {
                     </Badge>
                     {u.blocked && <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Blocked</Badge>}
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant={u.blocked ? "default" : "outline"}
-                    disabled={toggle.isPending}
-                    onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
-                    className={u.blocked ? "bg-emerald-600 hover:bg-emerald-700" : "text-red-600 hover:bg-red-50 border-red-200"}
-                  >
-                    {u.blocked ? "Unblock" : "Block"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {u.role === "admin" && !u.blocked && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        disabled={impersonate.isPending}
+                        onClick={() => impersonate.mutate(u.id)}
+                        className="text-blue-600 hover:bg-blue-50 border-blue-200"
+                      >
+                        <UserCog className="h-3 w-3 mr-1" />
+                        View as
+                      </Button>
+                    )}
+                    <Button 
+                      size="sm" 
+                      variant={u.blocked ? "default" : "outline"}
+                      disabled={toggle.isPending}
+                      onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
+                      className={u.blocked ? "bg-emerald-600 hover:bg-emerald-700" : "text-red-600 hover:bg-red-50 border-red-200"}
+                    >
+                      {u.blocked ? "Unblock" : "Block"}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

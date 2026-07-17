@@ -8,6 +8,7 @@ import { Link } from "@tanstack/react-router";
 import { ThemeInit } from "@/components/app/ThemeInit";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
+import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -74,6 +75,7 @@ function AuthenticatedLayout() {
           <AppSidebar />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
+          <ImpersonationBanner />
           <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
             <SidebarTrigger className="shrink-0" />
             <div className="flex-1 max-w-2xl mx-auto w-full">

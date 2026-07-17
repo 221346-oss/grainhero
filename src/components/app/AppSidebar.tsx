@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -32,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
 import { countPendingOrders } from "@/lib/hardware-orders.functions";
 import { useQueryClient } from "@tanstack/react-query";
+import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 
 type NavItem = {
   name: string;
@@ -246,12 +248,28 @@ export function AppSidebar() {
     queryKey: ["my-role"],
     queryFn: () => fetchRole(),
   });
-  const role: AppRole = data?.role ?? "pending";
+  const realRole: AppRole = data?.role ?? "pending";
+
+  // Track impersonation session reactively
+  const [impersonating, setImpersonating] = React.useState(() => getImpersonationSession());
+  React.useEffect(() => {
+    const sync = () => setImpersonating(getImpersonationSession());
+    window.addEventListener("storage", sync);
+    window.addEventListener("gh_impersonation_changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("gh_impersonation_changed", sync);
+    };
+  }, []);
+
+  // When super_admin is impersonating, show admin-level navigation
+  const role: AppRole = realRole === "super_admin" && impersonating ? "admin" : realRole;
+
   const fetchPending = useServerFn(countPendingOrders);
   const { data: pending } = useQuery({
     queryKey: ["pending-order-count"],
     queryFn: () => fetchPending(),
-    enabled: role === "super_admin",
+    enabled: realRole === "super_admin",
     refetchInterval: 60_000,
   });
   // pending count kept available for future badge on Install Orders
