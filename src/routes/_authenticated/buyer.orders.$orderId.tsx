@@ -11,6 +11,7 @@ import { CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 import { ShipmentPanel } from "@/components/app/marketplace/ShipmentPanel";
 import { BuyerReviewForm } from "@/components/app/marketplace/BuyerReviewForm";
+import { BuyerDisputeCard } from "@/components/app/marketplace/BuyerDisputeCard";
 
 const search = z.object({ checkout: z.enum(["success", "cancel"]).optional() });
 
@@ -127,6 +128,15 @@ function OrderDetail() {
       )}
       {o.status === "completed" && (
         <BuyerReviewForm orderId={o.id} />
+      )}
+      {["delivered","completed","dispatched","paid"].includes(o.status) && (
+        <BuyerDisputeCard orderId={o.id} />
+      )}
+      {o.invoice_pdf_url && (
+        <a href={o.invoice_pdf_url} target="_blank" rel="noopener noreferrer"
+           className="inline-block text-sm text-emerald-700 underline">
+          Download invoice (PDF)
+        </a>
       )}
     </div>
   );
