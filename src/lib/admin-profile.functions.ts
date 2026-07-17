@@ -21,7 +21,7 @@ export const getAdminProfile = createServerFn({ method: "GET" })
       supa.from("warehouses").select("id", { count: "exact", head: true }).eq("admin_id", data.adminId),
       supa.from("grain_batches").select("id, total_value_pkr, created_at").eq("admin_id", data.adminId).order("created_at", { ascending: false }).limit(500),
       supa.from("grain_alerts").select("id", { count: "exact", head: true }).eq("admin_id", data.adminId).is("resolved_at", null),
-      supa.from("subscriptions").select("plan_id, status, monthly_price_pkr, created_at").eq("admin_id", data.adminId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supa.from("subscriptions").select("plan_name, status, price_per_month, created_at").eq("admin_id", data.adminId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supa.from("profiles").select("id", { count: "exact", head: true }).eq("admin_id", data.adminId),
       supa.from("activity_logs").select("id, action, entity_type, entity_name, created_at").eq("admin_id", data.adminId).order("created_at", { ascending: false }).limit(10),
     ]);
@@ -37,9 +37,9 @@ export const getAdminProfile = createServerFn({ method: "GET" })
         openAlerts: alerts.count ?? 0,
         teamSize: teamCount.count ?? 0,
         totalRevenue,
-        currentPlan: sub.data?.plan_id ?? null,
+        currentPlan: sub.data?.plan_name ?? null,
         planStatus: sub.data?.status ?? null,
-        monthlyPrice: Number(sub.data?.monthly_price_pkr ?? 0),
+        monthlyPrice: Number(sub.data?.price_per_month ?? 0),
       },
       recentActivity: lastActivity.data ?? [],
     };
@@ -47,7 +47,7 @@ export const getAdminProfile = createServerFn({ method: "GET" })
 
 export const updateAdminContact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { adminId: string; patch: { name?: string; phone?: string; address?: string; city?: string; country?: string; notes?: string } }) => d)
+  .inputValidator((d: { adminId: string; patch: { name?: string; phone?: string; notes?: string } }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
