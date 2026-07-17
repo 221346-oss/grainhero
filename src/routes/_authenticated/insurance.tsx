@@ -1,4 +1,4 @@
-import { TableSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -165,7 +165,7 @@ function InsurancePage() {
           <Card>
             <CardContent className="p-0">
               {policiesLoading ? (
-                <div className="p-4"><TableSkeleton rows={5} cols={4} /></div>
+                <DashboardSkeleton />
               ) : policies.length === 0 ? (
                 <div className="p-10 text-center text-slate-500">No policies yet</div>
               ) : (
@@ -204,7 +204,7 @@ function InsurancePage() {
           <Card>
             <CardContent className="p-0">
               {claimsLoading ? (
-                <div className="p-4"><TableSkeleton rows={5} cols={4} /></div>
+                <DashboardSkeleton />
               ) : claims.length === 0 ? (
                 <div className="p-10 text-center text-slate-500">No claims yet</div>
               ) : (

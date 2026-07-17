@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -6,9 +6,10 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BarChart3, TrendingUp, Package, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle } from "lucide-react";
+import { BarChart3, TrendingUp, Package, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle, ArrowLeft } from "lucide-react";
 import { getAnalyticsOverview } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { AnalyticsSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   component: AnalyticsPage,
@@ -37,6 +38,8 @@ function AnalyticsPage() {
     refetchInterval: 60_000,
   });
 
+  if (roleQ.isLoading) return <AnalyticsSkeleton />;
+
   if (!roleQ.isLoading && !allowed) {
     return (
       <div className="p-8 max-w-lg mx-auto">
@@ -56,6 +59,9 @@ function AnalyticsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><BarChart3 className="h-6 w-6 text-emerald-600" /> Business Analytics</h1>
         <p className="text-sm text-slate-500 mt-1">Operational and financial performance across your grain operations.</p>

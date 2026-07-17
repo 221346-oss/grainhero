@@ -1,4 +1,4 @@
-import { ListSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,7 +134,7 @@ function TeamPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-4"><ListSkeleton rows={5} /></div>
+            <DashboardSkeleton />
           ) : filtered.length === 0 ? (
             <div className="p-10 text-center text-slate-500">No team members found</div>
           ) : (

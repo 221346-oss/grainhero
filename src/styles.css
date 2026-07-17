@@ -107,24 +107,25 @@
 }
 
 .dark {
-  --background: oklch(0.14 0.02 150);
-  --foreground: oklch(0.96 0.03 130);
-  --card: oklch(0.19 0.02 150);
-  --card-foreground: oklch(0.96 0.03 130);
-  --popover: oklch(0.19 0.02 150);
-  --popover-foreground: oklch(0.96 0.03 130);
+  /* Softer dark — slate-800 level, not pitch black */
+  --background: oklch(0.20 0.015 150);
+  --foreground: oklch(0.93 0.02 130);
+  --card: oklch(0.25 0.015 150);
+  --card-foreground: oklch(0.93 0.02 130);
+  --popover: oklch(0.25 0.015 150);
+  --popover-foreground: oklch(0.93 0.02 130);
   --primary: #ADFFBC;
   --primary-foreground: oklch(0.15 0.02 150);
-  --secondary: oklch(0.24 0.03 150);
-  --secondary-foreground: oklch(0.96 0.03 130);
-  --muted: oklch(0.22 0.02 150);
-  --muted-foreground: oklch(0.72 0.04 130);
-  --accent: oklch(0.35 0.12 140);
-  --accent-foreground: oklch(0.96 0.03 130);
-  --destructive: oklch(0.7 0.2 22);
+  --secondary: oklch(0.30 0.02 150);
+  --secondary-foreground: oklch(0.93 0.02 130);
+  --muted: oklch(0.28 0.015 150);
+  --muted-foreground: oklch(0.68 0.03 130);
+  --accent: oklch(0.38 0.10 140);
+  --accent-foreground: oklch(0.93 0.02 130);
+  --destructive: oklch(0.65 0.20 22);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 10%);
   --ring: #C674F2;
   --chart-1: #ADFFBC;
   --chart-2: #DCF095;
@@ -132,13 +133,13 @@
   --chart-4: oklch(0.75 0.18 90);
   --chart-5: oklch(0.65 0.22 25);
 
-  --sidebar: #1a1f14;
+  --sidebar: oklch(0.22 0.02 150);
   --sidebar-foreground: #DCF095;
   --sidebar-primary: #2b6b3a;
   --sidebar-primary-foreground: #ADFFBC;
-  --sidebar-accent: color-mix(in oklab, #ADFFBC 18%, transparent);
+  --sidebar-accent: color-mix(in oklab, #ADFFBC 15%, transparent);
   --sidebar-accent-foreground: #ADFFBC;
-  --sidebar-border: color-mix(in oklab, #ADFFBC 12%, transparent);
+  --sidebar-border: color-mix(in oklab, #ADFFBC 10%, transparent);
   --sidebar-ring: #C674F2;
 }
 
@@ -151,6 +152,80 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  /*
+   * Dark mode compatibility layer.
+   * Many dashboard pages use hardcoded slate-* Tailwind classes.
+   * These overrides make them respond to dark mode without touching every file.
+   */
+  .dark .text-slate-900 { color: oklch(0.93 0.02 130) !important; }
+  .dark .text-slate-800 { color: oklch(0.88 0.02 130) !important; }
+  .dark .text-slate-700 { color: oklch(0.82 0.02 130) !important; }
+  .dark .text-slate-600 { color: oklch(0.72 0.02 130) !important; }
+  .dark .text-slate-500 { color: oklch(0.62 0.02 130) !important; }
+  .dark .text-slate-400 { color: oklch(0.55 0.02 130) !important; }
+
+  .dark .bg-slate-50  { background-color: oklch(0.26 0.015 150) !important; }
+  .dark .bg-slate-100 { background-color: oklch(0.28 0.015 150) !important; }
+  .dark .bg-slate-200 { background-color: oklch(0.32 0.015 150) !important; }
+  .dark .bg-white     { background-color: var(--card) !important; }
+
+  .dark .border-slate-100 { border-color: oklch(1 0 0 / 8%)  !important; }
+  .dark .border-slate-200 { border-color: oklch(1 0 0 / 12%) !important; }
+  .dark .border-slate-300 { border-color: oklch(1 0 0 / 16%) !important; }
+
+  .dark .bg-gradient-to-br.from-slate-50 { background: var(--background) !important; }
+  .dark .hover\:bg-slate-50:hover  { background-color: oklch(0.27 0.015 150) !important; }
+  .dark .hover\:bg-slate-100:hover { background-color: oklch(0.30 0.015 150) !important; }
+
+  /* Landing page hardcoded backgrounds */
+  .dark .landing-bg   { background-color: oklch(0.20 0.015 150) !important; }
+  .dark .checkout-bg  { background-color: oklch(0.20 0.015 150) !important; }
+  .dark .auth-bg      { background: oklch(0.20 0.015 150) !important; }
+
+  /* ── Landing page section overrides ─────────────────────────────────────
+     Sections use bg-[#EDE9D4] or bg-[#252d26] as hardcoded Tailwind classes.
+     We target them via the CSS custom selector. */
+  .dark [class*="bg-[#EDE9D4]"]  { background-color: oklch(0.20 0.015 150) !important; }
+  .dark [class*="bg-[#252d26]"]  { background-color: oklch(0.17 0.015 150) !important; }
+  .dark [class*="bg-[#404F44]"]  { background-color: oklch(0.30 0.015 150) !important; }
+
+  /* Landing text colors */
+  .dark [class*="text-[#252d26]"] { color: oklch(0.93 0.02 130) !important; }
+  .dark [class*="text-[#404F44]"] { color: oklch(0.75 0.02 130) !important; }
+  .dark [class*="text-[#EDE9D4]"] { color: oklch(0.93 0.02 130) !important; }
+
+  /* Pricing cards on landing */
+  .dark [class*="bg-white"][class*="border-2"] { background-color: var(--card) !important; }
+  .dark [class*="text-[#252d26]"] { color: var(--foreground) !important; }
+
+  /* Feature flip card back (inline style #EDE9D4) — handled via JS class */
+  .dark .flip-card-back-dark { background-color: oklch(0.28 0.015 150) !important; }
+  .dark .flip-card-front-dark { background-color: var(--card) !important; }
+
+  /* Checkout page step navigator */
+  .dark .bg-white\/70 { background-color: oklch(0.25 0.015 150 / 70%) !important; }
+  .dark .border-white\/70 { border-color: oklch(1 0 0 / 12%) !important; }
+  .dark [class*="bg-white/70"] { background-color: oklch(0.25 0.015 150 / 80%) !important; }
+  .dark [class*="bg-white/80"] { background-color: oklch(0.25 0.015 150 / 90%) !important; }
+
+  /* Auth shell gradient background */
+  .dark .bg-background { background-color: var(--background) !important; }
+
+  /* Checkout & success inline gradient backgrounds */
+  .dark .checkout-inline-bg { background: var(--background) !important; }
+
+  /* Emerald tinted card backgrounds in checkout */
+  .dark [class*="bg-emerald-50"] { background-color: oklch(0.26 0.04 150) !important; }
+  .dark [class*="bg-emerald-100"] { background-color: oklch(0.28 0.06 150) !important; }
+  .dark [class*="from-emerald-50"] { --tw-gradient-from: oklch(0.26 0.04 150) !important; }
+  .dark [class*="to-sky-50"] { --tw-gradient-to: oklch(0.24 0.02 220) !important; }
+  .dark [class*="bg-amber-50"] { background-color: oklch(0.28 0.04 80) !important; }
+  .dark [class*="bg-amber-100"] { background-color: oklch(0.30 0.06 80) !important; }
+  .dark [class*="text-amber-900"] { color: oklch(0.85 0.10 80) !important; }
+  .dark [class*="text-amber-800"] { color: oklch(0.78 0.10 80) !important; }
+  .dark [class*="text-emerald-900"] { color: oklch(0.85 0.12 150) !important; }
+  .dark [class*="text-emerald-800"] { color: oklch(0.78 0.12 150) !important; }
 }
 
 /* ============================

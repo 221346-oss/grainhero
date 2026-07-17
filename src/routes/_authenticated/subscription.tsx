@@ -9,12 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { CreditCard, Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2 } from "lucide-react";
+import { CreditCard, Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2, ArrowLeft } from "lucide-react";
 import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions";
 import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
 import { changeMyPlan, cancelAtPeriodEnd, resumeSubscription } from "@/lib/subscription-management.functions";
 import pricingData from "@/lib/pricing-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SubscriptionSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   component: SubscriptionPage,
@@ -52,7 +53,7 @@ function SubscriptionPage() {
   const cancelPeriodFn = useServerFn(cancelAtPeriodEnd);
   const resumeFn = useServerFn(resumeSubscription);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -94,8 +95,13 @@ function SubscriptionPage() {
 
   const canManage = ["super_admin", "admin"].includes(role);
 
+  if (isLoading) return <SubscriptionSkeleton />;
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600" /> My Subscription</h1>
