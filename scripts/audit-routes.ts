@@ -31,6 +31,8 @@ for (const file of files) {
   const src = readFileSync(file, "utf8");
   const rel = relative(ROOT, file);
   const isProtected = rel.startsWith("_authenticated") || rel.includes("/_authenticated/");
+  // Server-route files under api/ run server-only; admin client imports allowed.
+  const isServerRoute = rel.startsWith("api/") || rel.includes("/api/");
 
   if (/loader\s*:/.test(src)) {
     if (!/errorComponent\s*:/.test(src)) {
@@ -43,7 +45,7 @@ for (const file of files) {
     }
   }
 
-  if (!isProtected && /['"]@\/integrations\/supabase\/client\.server['"]/.test(src)) {
+  if (!isProtected && !isServerRoute && /['"]@\/integrations\/supabase\/client\.server['"]/.test(src)) {
     console.error(`✗ ${rel}: public route imports client.server`);
     violations++;
   }

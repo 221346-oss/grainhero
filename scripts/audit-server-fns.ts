@@ -47,9 +47,9 @@ for (const file of files) {
     violations++;
   }
 
-  // Module-scope process.env reads
+  // Module-scope process.env reads (unindented top-level declarations only).
   for (const line of topLevel.split("\n")) {
-    if (/^\s*(const|let|var)\s+\w+\s*=\s*process\.env\./.test(line)) {
+    if (/^(const|let|var)\s+\w+\s*=\s*process\.env\./.test(line)) {
       console.error(`✗ ${rel}: module-scope process.env read — move inside handler`);
       violations++;
     }
