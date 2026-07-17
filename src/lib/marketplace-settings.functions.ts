@@ -82,6 +82,20 @@ export interface MarketplaceSettings {
     certificateValidityDays: number;
     metrics: Array<{ key: string; label: string; unit: string; min?: number; max?: number }>;
   };
+  logistics: {
+    carriersEnabled: boolean;
+    defaultPickupWindowHours: number;
+    defaultDeliveryWindowHours: number;
+    fuelCostPerLitre: number;
+    driverPayoutPerKm: number;
+    routeOptimizer: "nearest_neighbour" | "off";
+    distanceProvider: "haversine" | "osrm";
+    osrmBaseUrl: string;
+    pollingIntervalMinutes: number;
+    autoCloseAfterDeliveryHours: number;
+    deliveryDelayGraceMinutes: number;
+    licenseExpiryWarnDays: number[];
+  };
 }
 
 export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
