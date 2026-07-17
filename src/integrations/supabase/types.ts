@@ -363,6 +363,106 @@ export type Database = {
           },
         ]
       }
+      buyer_dispute_events: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          at: string
+          dispute_id: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          at?: string
+          dispute_id: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          at?: string
+          dispute_id?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_dispute_events_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_disputes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_disputes: {
+        Row: {
+          admin_id: string
+          buyer_id: string
+          category: string
+          closed_at: string | null
+          created_at: string
+          description: string
+          evidence_urls: string[]
+          id: string
+          moderated_by: string | null
+          opened_at: string
+          order_id: string
+          refund_amount: number | null
+          resolution_key: string | null
+          resolution_note: string | null
+          status: Database["public"]["Enums"]["dispute_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          buyer_id: string
+          category: string
+          closed_at?: string | null
+          created_at?: string
+          description: string
+          evidence_urls?: string[]
+          id?: string
+          moderated_by?: string | null
+          opened_at?: string
+          order_id: string
+          refund_amount?: number | null
+          resolution_key?: string | null
+          resolution_note?: string | null
+          status?: Database["public"]["Enums"]["dispute_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          buyer_id?: string
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          description?: string
+          evidence_urls?: string[]
+          id?: string
+          moderated_by?: string | null
+          opened_at?: string
+          order_id?: string
+          refund_amount?: number | null
+          resolution_key?: string | null
+          resolution_note?: string | null
+          status?: Database["public"]["Enums"]["dispute_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_disputes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buyer_invoices: {
         Row: {
           admin_id: string
@@ -542,6 +642,8 @@ export type Database = {
           batch_id: string | null
           buyer_account_id: string | null
           buyer_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
           channel: string
           checkout_url: string | null
           completed_at: string | null
@@ -551,12 +653,14 @@ export type Database = {
           dispatched_at: string | null
           expected_delivery_date: string | null
           id: string
+          invoice_pdf_url: string | null
           listing_id: string
           notes: string | null
           order_number: string
           paid_at: string | null
           placed_by: string | null
           quantity_kg: number
+          refund_status: string | null
           review_prompt_sent_at: string | null
           shipment_id: string | null
           shipping_address: Json | null
@@ -572,6 +676,8 @@ export type Database = {
           batch_id?: string | null
           buyer_account_id?: string | null
           buyer_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           channel?: string
           checkout_url?: string | null
           completed_at?: string | null
@@ -581,12 +687,14 @@ export type Database = {
           dispatched_at?: string | null
           expected_delivery_date?: string | null
           id?: string
+          invoice_pdf_url?: string | null
           listing_id: string
           notes?: string | null
           order_number: string
           paid_at?: string | null
           placed_by?: string | null
           quantity_kg: number
+          refund_status?: string | null
           review_prompt_sent_at?: string | null
           shipment_id?: string | null
           shipping_address?: Json | null
@@ -602,6 +710,8 @@ export type Database = {
           batch_id?: string | null
           buyer_account_id?: string | null
           buyer_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           channel?: string
           checkout_url?: string | null
           completed_at?: string | null
@@ -611,12 +721,14 @@ export type Database = {
           dispatched_at?: string | null
           expected_delivery_date?: string | null
           id?: string
+          invoice_pdf_url?: string | null
           listing_id?: string
           notes?: string | null
           order_number?: string
           paid_at?: string | null
           placed_by?: string | null
           quantity_kg?: number
+          refund_status?: string | null
           review_prompt_sent_at?: string | null
           shipment_id?: string | null
           shipping_address?: Json | null
@@ -758,6 +870,76 @@ export type Database = {
             columns: ["recorded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_refunds: {
+        Row: {
+          admin_id: string
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          dispute_id: string | null
+          id: string
+          invoice_id: string | null
+          order_id: string
+          reason_key: string | null
+          status: Database["public"]["Enums"]["refund_state"]
+          stripe_refund_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          dispute_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          order_id: string
+          reason_key?: string | null
+          status?: Database["public"]["Enums"]["refund_state"]
+          stripe_refund_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          dispute_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          order_id?: string
+          reason_key?: string | null
+          status?: Database["public"]["Enums"]["refund_state"]
+          stripe_refund_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_refunds_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_disputes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_refunds_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -3810,6 +3992,7 @@ export type Database = {
         | "retailer"
         | "government"
       device_status: "active" | "offline" | "error" | "maintenance"
+      dispute_status: "open" | "under_review" | "resolved" | "rejected"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
@@ -3829,6 +4012,7 @@ export type Database = {
         | "Grain Enterprise Plus"
         | "Custom"
       power_source: "solar" | "battery" | "direct" | "hybrid"
+      refund_state: "pending" | "succeeded" | "failed" | "cancelled"
       review_direction: "buyer_to_seller" | "seller_to_buyer"
       review_status: "pending" | "published" | "rejected"
       sensor_type:
@@ -4025,6 +4209,7 @@ export const Constants = {
         "government",
       ],
       device_status: ["active", "offline", "error", "maintenance"],
+      dispute_status: ["open", "under_review", "resolved", "rejected"],
       grain_type: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
       listing_status: ["draft", "active", "paused", "sold_out", "archived"],
       listing_visibility: ["private", "buyer_network", "public"],
@@ -4046,6 +4231,7 @@ export const Constants = {
         "Custom",
       ],
       power_source: ["solar", "battery", "direct", "hybrid"],
+      refund_state: ["pending", "succeeded", "failed", "cancelled"],
       review_direction: ["buyer_to_seller", "seller_to_buyer"],
       review_status: ["pending", "published", "rejected"],
       sensor_type: [
