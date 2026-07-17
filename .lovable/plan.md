@@ -1,85 +1,61 @@
-# Phase 12 — Buyer Marketplace Portal & Stripe Checkout
+# Phase 13 — Dispatch, Delivery Tracking & Post-Sale Reviews
 
-Ship the buyer-facing side of the sales loop introduced in Phase 11: a public marketplace where buyers browse `published` grain listings, self-serve orders, pay via Stripe Checkout, and track fulfillment. Sellers (Admin/Manager) get automated status flips as payments and dispatch events arrive.
+Phase 12 got buyers to `paid`. Phase 13 closes the loop: sellers dispatch the batch, buyers track it in real time, and both sides leave a rating that feeds back into marketplace trust. Every label, threshold, template and rating rule is editable by the super-admin — no hardcoded strings.
 
 ## Goals
+1. Seller-side dispatch workflow with courier + tracking metadata and status timeline.
+2. Buyer-side live tracking page (order timeline, shipment map/steps, invoice link, receipt).
+3. Delivery confirmation → auto-transition to `completed`, unlocking reviews.
+4. Two-way reviews (buyer→seller and seller→buyer) with moderation queue.
+5. All copy, courier list, SLA windows, review prompts, and moderation rules configurable via `platform_settings.config.dispatch` + `.reviews` from the SuperAdmin dashboard.
 
-1. Public marketplace surface (browse + detail) that respects listing `visibility` and stock.
-2. Authenticated buyer accounts (new `buyer` role) with an "My Orders" cockpit.
-3. Stripe Checkout for buyer orders — one-off `mode: payment`, seamless (already enabled).
-4. Webhook-driven state machine: `pending → confirmed → paid → dispatched → completed`.
-5. Seller-side notifications + activity log entries on every buyer transition.
-6. Downloadable invoice PDF from the buyer portal.
+## Data Model
+- `buyer_shipments` (new): `id, order_id, admin_id, courier_key, tracking_number, tracking_url, dispatched_at, expected_delivery_at, delivered_at, status (queued|in_transit|out_for_delivery|delivered|exception), notes`.
+- `buyer_shipment_events` (new): timeline entries (`shipment_id, at, code, label, location, source`), realtime-enabled.
+- `buyer_reviews` (new): `order_id, direction (buyer_to_seller|seller_to_buyer), rating (1-5), title, body, status (pending|published|rejected), moderated_by, moderated_at`.
+- Extend `buyer_orders`: `shipment_id`, `delivered_at`, `review_prompt_sent_at`.
+- Extend `platform_settings.config` with:
+  - `dispatch.couriers[]` (key, label, tracking_url_template)
+  - `dispatch.slaHours` (in_transit / out_for_delivery / delivered)
+  - `dispatch.emailSubjects/Bodies` for dispatched/out_for_delivery/delivered/exception
+  - `reviews.enabled`, `reviews.minChars`, `reviews.autoPublish`, `reviews.prompts` (buyer/seller subject+body)
 
-## Scope
+Every table ships with `GRANT` + RLS + owner/buyer-scoped policies and is added to `supabase_realtime`.
 
-### Data model (single migration)
+## Server functions
+- `dispatch.functions.ts`: `createShipment`, `updateShipmentStatus`, `appendShipmentEvent`, `markDelivered` (transitions order to `completed`, fires review prompt).
+- `dispatch-settings.functions.ts`: get/update `dispatch` and `reviews` blobs (super-admin only), reused by webhook and email helpers.
+- `reviews.functions.ts`: `submitReview`, `moderateReview`, `listReviewsForListing/Seller/Buyer`, `getMyPendingReviews`.
+- Extend `buyer-emails.server.ts` with `dispatched | outForDelivery | delivered | exception | reviewPrompt` kinds — all templates from settings.
+- Extend `buyer-portal.functions.ts` with `getOrderTracking(orderId)` returning shipment + events + review status.
 
-- Extend `app_role` enum: add `'buyer'`.
-- `buyer_accounts` table: `id`, `user_id (auth.users)`, `buyer_id (buyers.id)`, `company_name`, `contact_phone`, `default_shipping_address jsonb`, timestamps. Links a Supabase auth user to the existing `buyers` record.
-- Extend `buyer_orders`:
-  - `stripe_session_id text`, `stripe_payment_intent text`, `checkout_url text`, `paid_at timestamptz`, `dispatched_at timestamptz`, `completed_at timestamptz`, `buyer_account_id uuid`, `shipping_address jsonb`, `channel text default 'portal'` (portal | manual).
-- Extend `grain_listings`: `slug text unique`, `cover_image_url text`, `min_order_kg numeric`, `available_from date`.
-- New `buyer_notifications` view (or reuse `notifications` with `audience='buyer'`).
-- RLS:
-  - Public (anon): `SELECT` on `grain_listings` where `visibility='public' AND listing_status='published'` — projected columns only via a security-definer view `public_listings_v`.
-  - `buyer`: `SELECT/INSERT` on their own `buyer_orders`, `SELECT` on their `buyer_invoices` and `buyer_payments`.
-  - Grants: `authenticated` + `service_role` on new tables; `anon` on the `public_listings_v` view only.
+## UI
+- Seller (Sales cockpit): "Dispatch" drawer on paid orders — pick courier from settings, enter tracking number, expected date. Post-dispatch shows timeline editor + "Mark delivered" and "Report exception".
+- Buyer portal (`/buyer/orders/$orderId`): live tracking column (status pill, ETA, event timeline via Supabase realtime), invoice download, "Leave a review" CTA once delivered.
+- Public listing page (`/marketplace/$slug`): show aggregate rating + latest published reviews (settings-gated).
+- Super-admin `/platform/marketplace-settings`: add **Dispatch** and **Reviews** tabs (couriers table editor, SLA sliders, email templates, moderation toggles).
+- Super-admin `/platform/reviews` moderation queue with approve/reject actions.
 
-### Server functions (`src/lib/`)
+## Automation & realtime
+- Cron `/api/public/cron/dispatch-sla-sweep` reads SLA hours from settings, flags overdue shipments as `exception`, notifies seller + buyer.
+- Realtime subscription on `buyer_shipment_events` for the tracking page.
+- On `markDelivered`: transition order `dispatched → completed`, insert `grain_batch_events` note, enqueue `reviewPrompt` emails to both sides after settings-defined delay.
 
-- `marketplace.functions.ts`
-  - `listPublicListings({ commodity?, minKg?, maxPricePerKg?, region? })` — public read via server publishable client.
-  - `getPublicListing({ slug })` — detail + seller display name + warehouse city.
-- `buyer-portal.functions.ts` (auth: `requireSupabaseAuth`, role `buyer`)
-  - `createBuyerOrder({ listingId, quantityKg, shippingAddress })` — validates stock, creates `pending` order + audit event.
-  - `listMyOrders`, `getMyOrder`, `cancelMyOrder` (only while `pending`).
-  - `downloadMyInvoice({ invoiceId })` — reuses Phase 11 PDF generator.
-- `buyer-checkout.functions.ts`
-  - `startBuyerCheckout({ orderId })` — creates Stripe Checkout Session (`mode: payment`, line item from order), stores `stripe_session_id` + `checkout_url`, returns URL.
-- `src/routes/api/public/stripe/buyer-webhook.ts`
-  - Verifies signature with `STRIPE_WEBHOOK_SECRET`.
-  - Handles `checkout.session.completed` → transition order to `paid`, mark invoice paid, insert `buyer_payments`, emit seller notification + activity log.
-  - Idempotent via `stripe_events`.
-- Extend `buyer-orders.functions.ts` (Phase 11) with `markDispatched({ orderId, courier, tracking })` and `markCompleted` → notifies buyer via `dispatchNotification` (email/SMS from Phase 7).
+## Skeletons & routing
+- Register `ShipmentDrawerSkeleton`, `BuyerTrackingSkeleton`, `ReviewsModerationSkeleton` in `src/router.tsx` `PAGE_SKELETONS`.
+- New routes: `/platform/reviews`, existing `/buyer/orders/$orderId` extended, `/sales` drawer extended.
 
-### Routes (frontend)
+## Zero hardcoding checklist
+- Courier list, tracking URL patterns → settings.
+- SLA thresholds → settings.
+- Every email subject/body (dispatch, delivery, exception, review prompts) → settings.
+- Review moderation policy (auto-publish vs queue, min length, allow anonymous) → settings.
+- Storefront review display (show/hide, min count before showing average) → settings.
 
-- `src/routes/marketplace/index.tsx` — public grid of listings (SSR-friendly, uses public loader). Filters: commodity, price, region.
-- `src/routes/marketplace/$slug.tsx` — public detail page with cover, price, warehouse city, "Order now" CTA (redirects unauthenticated buyers to `/auth?role=buyer`).
-- `src/routes/_authenticated/buyer/orders.tsx` — buyer cockpit: order list, status chips, pay/cancel/download-invoice actions.
-- `src/routes/_authenticated/buyer/orders.$orderId.tsx` — detail + timeline of `buyer_order_events`.
-- Admin/Manager side: extend existing `/sales` order drawer with "Dispatch" + "Complete" actions and show Stripe payment metadata.
+## Acceptance
+- Seller can dispatch a paid order, buyer sees status change live without refresh.
+- Marking delivered auto-completes the order and unlocks reviews for both parties.
+- Super-admin edits a courier label or email template and the change is visible on next dispatch — no redeploy.
+- SLA cron flags an overdue shipment and both parties get the exception email using the current template.
 
-### Auth
-
-- Signup flow: `role=buyer` query param on `/auth` creates a `buyer_accounts` row post-signup (trigger or server fn on first login).
-- Sidebar: buyer-only nav ("Marketplace", "My Orders", "Invoices").
-
-### Notifications & activity
-
-- Emit `notifications` on: order created (seller), payment received (seller + buyer), dispatched (buyer), completed (both).
-- Log each transition into `activity_logs` with `entity='buyer_order'`.
-
-### Skeletons & UI
-
-- Register skeletons in `src/router.tsx`: `MarketplaceSkeleton`, `MarketplaceDetailSkeleton`, `BuyerOrdersSkeleton`.
-- Reuse `AdminPageShell`/`AdminDataCard` for buyer cockpit to stay on-theme; marketplace uses a lighter public shell (no sidebar).
-
-## Out of scope (later phases)
-
-- Escrow, split payouts, marketplace fees (Phase 13 candidates).
-- Buyer↔seller in-app chat (Phase 14 candidate).
-- Automated logistics/shipping label generation.
-
-## Deliverables checklist
-
-- [ ] Migration: `buyer` role, `buyer_accounts`, extended `buyer_orders`/`grain_listings`, RLS, grants, `public_listings_v` view.
-- [ ] Server functions: marketplace, buyer-portal, buyer-checkout, Stripe webhook route.
-- [ ] Routes: public marketplace (list + detail), buyer cockpit (list + detail), updated seller drawer.
-- [ ] Sidebar + role gating updated.
-- [ ] Skeletons registered for new routes.
-- [ ] Stripe webhook secret already configured (`STRIPE_WEBHOOK_SECRET` present) — wire endpoint URL after deploy.
-- [ ] Build passes; manual smoke via Playwright: browse → order → checkout (test mode) → webhook → paid.
-
-Reply **go** to execute Phase 12.
+Reply **go** to execute Phase 13.
