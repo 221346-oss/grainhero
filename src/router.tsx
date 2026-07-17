@@ -1,7 +1,12 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, useRouterState } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
-import { PageSkeleton } from "@/components/app/skeletons";
+import {
+  DashboardSkeleton,
+  TableSkeleton,
+  AnalyticsSkeleton,
+  FormSkeleton,
+} from "@/components/app/skeletons";
 
 // Route-shape mapping — keeps the pending state consistent with what the
 // page will actually render, so users don't see a dashboard skeleton on
@@ -21,17 +26,15 @@ const INSIGHT = new Set([
 ]);
 const FORM = new Set([
   "/settings", "/subscription", "/plans", "/insurance",
-  "/platform/plans",
+  "/platform/plans", "/checkout", "/theme-test",
 ]);
 
 function AutoPending() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const variant: "dashboard" | "table" | "insight" | "form" =
-    TABLE.has(pathname) ? "table"
-    : INSIGHT.has(pathname) ? "insight"
-    : FORM.has(pathname) ? "form"
-    : "dashboard";
-  return <PageSkeleton variant={variant} />;
+  if (TABLE.has(pathname)) return <TableSkeleton rows={6} cols={5} />;
+  if (INSIGHT.has(pathname)) return <AnalyticsSkeleton />;
+  if (FORM.has(pathname)) return <FormSkeleton fields={4} />;
+  return <DashboardSkeleton />;
 }
 
 export const getRouter = () => {

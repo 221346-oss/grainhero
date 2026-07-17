@@ -52,7 +52,7 @@ type Plan = {
 
 function NewHomePage() {
   return (
-    <main className="min-h-screen bg-[#EDE9D4] text-[#404F44]">
+    <main className="min-h-screen bg-[#EDE9D4] text-[#404F44] landing-bg dark:text-foreground">
       <NewGlassNav />
       <section id="hero" aria-label="Hero section">
         <NewHeroSection />
@@ -126,7 +126,7 @@ function PricingShowcase() {
   const plans = pricingData as Plan[]
 
   return (
-    <section id="pricing" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4]">
+    <section id="pricing" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4] dark:bg-background transition-colors">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -141,11 +141,11 @@ function PricingShowcase() {
               Flexible Pricing
             </span>
           </div>
-          <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#252d26] mb-4">
+          <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#252d26] dark:text-foreground mb-4">
             Pick the Plan That <br className="hidden sm:block" />
             <span className="text-[#2FAC0C]">Checks Your Boxes</span>
           </h3>
-          <p className="text-lg text-[#404F44] max-w-2xl mx-auto">
+          <p className="text-lg text-[#404F44] dark:text-muted-foreground max-w-2xl mx-auto">
             Choose the perfect plan for your operation. Scale up or down anytime.
           </p>
         </motion.div>
@@ -219,7 +219,7 @@ function PricingCard({
   const priceText = p.priceFrontend ?? `Rs. ${p.price?.toLocaleString()}${p.duration ?? ''}`
   return (
     <label
-      className={`cursor-pointer text-left w-full h-full max-w-sm rounded-2xl bg-white border-2 p-7 shadow-sm transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:scale-105 block ${
+      className={`cursor-pointer text-left w-full h-full max-w-sm rounded-2xl bg-card border-2 p-7 shadow-sm transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:scale-105 block ${
         isSelected
           ? 'border-[#2FAC0C] ring-2 ring-[#2FAC0C]/20 shadow-xl'
           : 'border-[#2FAC0C]/20 hover:border-[#2FAC0C]/60'
@@ -242,7 +242,7 @@ function PricingCard({
         className="sr-only"
       />
       <div className="relative z-10">
-        <h4 className="text-xl font-bold text-[#252d26] mb-2">{p.name}</h4>
+        <h4 className="text-xl font-bold text-foreground mb-2">{p.name}</h4>
         <p className="text-3xl font-black text-[#2FAC0C] mb-2">{priceText}</p>
         {p.iotChargeLabel && (
           <div className="flex items-center gap-1.5 text-xs font-medium text-[#2FAC0C] bg-[#2FAC0C]/10 border border-[#2FAC0C]/20 rounded-lg px-3 py-1.5 mb-4">
@@ -250,8 +250,8 @@ function PricingCard({
             <span>{p.iotChargeLabel}</span>
           </div>
         )}
-        <p className="text-[#404F44] text-sm mb-5">{p.description}</p>
-        <ul className="space-y-2.5 text-sm text-[#404F44] mb-6">
+        <p className="text-muted-foreground text-sm mb-5">{p.description}</p>
+        <ul className="space-y-2.5 text-sm text-muted-foreground mb-6">
           {p.features.map((f, idx) => (
             <li key={idx} className="flex items-start gap-2">
               <Check className="w-4 h-4 text-[#2FAC0C] flex-shrink-0 mt-0.5" />

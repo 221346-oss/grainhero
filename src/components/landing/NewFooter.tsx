@@ -63,29 +63,29 @@ export function NewFooter() {
             <h3 className="text-[#EDE9D4] font-bold text-lg mb-4">Product</h3>
             <ul className="space-y-3">
               <li>
-                <a href="/#features" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/" hash="features" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
                   Features
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#pricing" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/" hash="pricing" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
                   Pricing
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#how-it-works" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/" hash="how-it-works" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
                   How It Works
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#technology" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/" hash="technology" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
                   Technology
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/#faq" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/" hash="faq" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
                   FAQ
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -168,15 +168,15 @@ export function NewFooter() {
               © {new Date().getFullYear()} GrainHero. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
-              <a href="/privacy" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
+              <Link to="/privacy" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
                 Privacy
-              </a>
-              <a href="/terms" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
+              </Link>
+              <Link to="/terms" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
                 Terms
-              </a>
-              <a href="/cookies" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
+              </Link>
+              <Link to="/cookies" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
                 Cookies
-              </a>
+              </Link>
             </div>
           </div>
         </div>

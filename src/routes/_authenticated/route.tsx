@@ -1,15 +1,16 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
-import { Bell } from "lucide-react";
+import { Bell, Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { ThemeInit } from "@/components/app/ThemeInit";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
+import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -65,9 +66,21 @@ function AuthenticatedLayout() {
   const { data: profile } = useMyProfile();
   const avatar = profile?.avatar ?? null;
   const initials = initialsOf(profile?.name, profile?.email);
+  const [mode, setMode] = useState<ThemeMode>(() =>
+    typeof window !== "undefined" ? getStoredThemeMode() : "light"
+  );
+
+  useEffect(() => {
+    const stored = getStoredThemeMode();
+    setMode(stored);
+  }, []);
+
+  const handleToggle = () => {
+    const next = toggleThemeMode();
+    setMode(next);
+  };
   return (
     <SidebarProvider defaultOpen={false}>
-      <ThemeInit />
       <SessionGuard />
       <OnboardingTour />
       <div className="min-h-screen flex w-full bg-background">
@@ -81,6 +94,17 @@ function AuthenticatedLayout() {
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
+            {/* Dark / Light toggle */}
+            <button
+              type="button"
+              onClick={handleToggle}
+              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
+            >
+              {mode === "dark"
+                ? <Sun className="h-4 w-4" />
+                : <Moon className="h-4 w-4" />}
+            </button>
             <Link
               to="/notifications"
               aria-label="Notifications"

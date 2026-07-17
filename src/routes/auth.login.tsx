@@ -112,6 +112,15 @@ function LoginPage() {
             Choose a plan first
           </Link>
         </p>
+        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <Link to="/" className="hover:text-foreground transition-colors inline-flex items-center gap-1">
+            ← Go to home
+          </Link>
+          <span>·</span>
+          <Link to="/auth/forgot-password" className="hover:text-[#00a63e] hover:underline transition-colors">
+            Forgot password?
+          </Link>
+        </div>
       </div>
     </AuthShell>
   );

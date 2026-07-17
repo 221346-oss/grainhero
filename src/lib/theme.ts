@@ -175,3 +175,37 @@ export function getStoredTheme(): ThemeId {
   const v = localStorage.getItem(STORAGE_KEY) as ThemeId | null;
   return v && THEMES.some((t) => t.id === v) ? v : DEFAULT_THEME;
 }
+
+// Dark Mode Support
+export type ThemeMode = "light" | "dark";
+const MODE_STORAGE_KEY = "gh-theme-mode";
+
+export function getStoredThemeMode(): ThemeMode {
+  if (typeof localStorage === "undefined") return "light";
+  const mode = localStorage.getItem(MODE_STORAGE_KEY) as ThemeMode | null;
+  if (mode === "dark" || mode === "light") return mode;
+  // check system preference
+  if (typeof window !== "undefined" && window.matchMedia) {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return "light";
+}
+
+export function applyThemeMode(mode: ThemeMode) {
+  if (typeof document === "undefined") return;
+  if (mode === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+  try {
+    localStorage.setItem(MODE_STORAGE_KEY, mode);
+  } catch {}
+}
+
+export function toggleThemeMode(): ThemeMode {
+  const current = getStoredThemeMode();
+  const next = current === "dark" ? "light" : "dark";
+  applyThemeMode(next);
+  return next;
+}

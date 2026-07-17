@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Gauge,
   Brain,
@@ -16,7 +16,6 @@ const features = [
     description:
       'Track temperature, humidity, moisture, and CO₂ levels 24/7 with industrial IoT sensors providing second-by-second updates.',
     color: '#2FAC0C',
-    bgColor: '#EDE9D4',
     image: '/images/features/Real_time_monitoring.png',
   },
   {
@@ -25,7 +24,6 @@ const features = [
     description:
       'Machine learning algorithms analyze patterns to predict spoilage 24-48 hours in advance, preventing costly grain losses.',
     color: '#2FAC0C',
-    bgColor: '#EDE9D4',
     image: '/images/features/AI_Spoilage_Prediction.png',
   },
   {
@@ -34,7 +32,6 @@ const features = [
     description:
       'Receive immediate notifications via SMS, email, or push when conditions exceed safe thresholds. Never miss a critical event.',
     color: '#2FAC0C',
-    bgColor: '#EDE9D4',
     image: '/images/features/Mobile_Alert_Notification.png',
   },
   {
@@ -43,7 +40,6 @@ const features = [
     description:
       'Comprehensive insights with historical data visualization, trend analysis, and automated reports for informed decision-making.',
     color: '#2FAC0C',
-    bgColor: '#EDE9D4',
     image: '/images/features/Analytics_Dashboard.png',
   },
   {
@@ -52,7 +48,6 @@ const features = [
     description:
       'Integrate with ventilation, cooling, and aeration systems for automated climate control based on AI recommendations.',
     color: '#2FAC0C',
-    bgColor: '#EDE9D4',
     image: '/images/features/Remote_Control.png',
   },
   {
@@ -61,13 +56,36 @@ const features = [
     description:
       'Monitor unlimited silos across multiple locations from a single dashboard. Scale effortlessly as your operation grows.',
     color: '#2FAC0C',
-    bgColor: '#EDE9D4',
     image: '/images/features/Multi_Silo_Management.png',
   },
 ]
 
+/** Returns true when .dark class is on <html> — reacts to toggles in real time. */
+function useIsDark() {
+  const [dark, setDark] = useState(() =>
+    typeof document !== 'undefined'
+      ? document.documentElement.classList.contains('dark')
+      : false,
+  )
+  useEffect(() => {
+    const obs = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains('dark'))
+    })
+    obs.observe(document.documentElement, { attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return dark
+}
+
 function FlipCard({ feature, index }: { feature: typeof features[0]; index: number }) {
   const [isHovered, setIsHovered] = useState(false)
+  const isDark = useIsDark()
+
+  const cardFrontBg   = isDark ? '#1e2420' : '#ffffff'
+  const cardBackBg    = isDark ? '#252e27' : '#EDE9D4'
+  const titleBarBg    = isDark ? 'rgba(30, 36, 32, 0.95)' : 'rgba(255, 255, 255, 0.95)'
+  const titleColor    = isDark ? '#d1fae5' : '#252d26'
+  const descColor     = isDark ? '#a7f3d0' : '#252d26'
 
   return (
     <motion.div
@@ -76,11 +94,7 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
       className="flip-card-wrapper"
-      style={{
-        width: '100%',
-        maxWidth: '300px',
-        height: '226px',
-      }}
+      style={{ width: '100%', maxWidth: '300px', height: '226px' }}
     >
       <div
         className="flip-card"
@@ -98,14 +112,8 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div
-          className="flip-card-inner"
-          style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-          }}
-        >
+        <div className="flip-card-inner" style={{ position: 'relative', width: '100%', height: '100%' }}>
+
           {/* Front of card */}
           <div
             className="flip-card-front"
@@ -120,42 +128,34 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
               padding: '0',
               transition: 'opacity 0.4s ease-in-out',
               opacity: isHovered ? 0 : 1,
-              backgroundColor: 'white',
+              backgroundColor: cardFrontBg,
             }}
           >
             {/* Background Image */}
             <div
               style={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
+                top: 0, left: 0, width: '100%', height: '100%',
                 backgroundImage: `url(${feature.image})`,
                 backgroundSize: 'contain',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
               }}
             />
-            
-            {/* Grey overlay to dull the image */}
+            {/* Overlay */}
             <div
               style={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(128, 128, 128, 0.25)',
+                top: 0, left: 0, width: '100%', height: '100%',
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.40)' : 'rgba(128, 128, 128, 0.25)',
                 pointerEvents: 'none',
               }}
             />
-
-            {/* Title at bottom center with space and semi-transparent background */}
+            {/* Title bar */}
             <div
               style={{
                 width: '100%',
-                background: 'rgba(255, 255, 255, 0.95)',
+                background: titleBarBg,
                 padding: '1rem 1.2rem',
                 backdropFilter: 'blur(10px)',
                 borderBottomLeftRadius: '18px',
@@ -164,13 +164,7 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
                 zIndex: 1,
               }}
             >
-              <h3
-                className="text-base font-bold text-center"
-                style={{
-                  color: '#252d26',
-                  lineHeight: '1.3',
-                }}
-              >
+              <h3 className="text-base font-bold text-center" style={{ color: titleColor, lineHeight: '1.3' }}>
                 {feature.title}
               </h3>
             </div>
@@ -187,23 +181,18 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              backgroundColor: feature.bgColor,
+              backgroundColor: cardBackBg,
               padding: '1.5rem 1.2rem',
               transition: 'opacity 0.4s ease-in-out',
               opacity: isHovered ? 1 : 0,
               pointerEvents: isHovered ? 'auto' : 'none',
             }}
           >
-            <p
-              className="text-sm text-center leading-relaxed"
-              style={{
-                color: '#252d26',
-                fontWeight: 500,
-              }}
-            >
+            <p className="text-sm text-center leading-relaxed" style={{ color: descColor, fontWeight: 500 }}>
               {feature.description}
             </p>
           </div>
+
         </div>
       </div>
     </motion.div>
@@ -212,7 +201,7 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
 
 export function NewFeaturesSection() {
   return (
-    <section id="features" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4]">
+    <section id="features" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4] dark:bg-background transition-colors">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -220,35 +209,26 @@ export function NewFeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8 sm:mb-12 "
+          className="text-center mb-8 sm:mb-12"
         >
           <div className="inline-block bg-[#2FAC0C]/10 px-4 py-2 rounded-full mb-3">
             <span className="text-[#2FAC0C] text-sm font-semibold uppercase tracking-wider">
               Powerful Features
             </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#252d26] mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#252d26] dark:text-foreground mb-4">
             Everything You Need to <br className="hidden sm:block" />
             <span className="text-[#2FAC0C]">Protect Your Grain</span>
           </h2>
-          <p className="text-lg sm:text-xl text-[#404F44] max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-[#404F44] dark:text-muted-foreground max-w-3xl mx-auto">
             Comprehensive grain storage management with enterprise-grade monitoring and AI-powered insights
           </p>
         </motion.div>
 
-        {/* Features Grid - 3 columns */}
+        {/* Features Grid */}
         <div
           className="technologies-grid"
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '45px',
-            maxWidth: '1100px',
-            margin: '0 auto',
-            
-            
-          }}
+          style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '45px', maxWidth: '1100px', margin: '0 auto' }}
         >
           {features.map((feature, index) => (
             <FlipCard key={feature.title} feature={feature} index={index} />
@@ -263,23 +243,18 @@ export function NewFeaturesSection() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center mt-10 sm:mt-12"
         >
-          <p className="text-[#404F44] mb-6 text-lg">
+          <p className="text-[#404F44] dark:text-muted-foreground mb-6 text-lg">
             Ready to see GrainHero in action?
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => {
-                window.location.href = '/checkout'
-              }}
+              onClick={() => { window.location.href = '/checkout' }}
               className="bg-[#2FAC0C] text-white font-bold px-8 py-3.5 rounded-full hover:bg-[#2FAC0C]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
             >
               View Plans & Pricing
             </button>
             <button
-              onClick={() => {
-                const el = document.querySelector('#how-it-works')
-                el?.scrollIntoView({ behavior: 'smooth' })
-              }}
+              onClick={() => { document.querySelector('#how-it-works')?.scrollIntoView({ behavior: 'smooth' }) }}
               className="bg-transparent border-2 border-[#2FAC0C] text-[#2FAC0C] font-semibold px-8 py-3.5 rounded-full hover:bg-[#2FAC0C]/10 transition-all duration-300 hover:scale-105"
             >
               Learn More

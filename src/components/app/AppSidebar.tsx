@@ -54,7 +54,7 @@ const pinnedNav: NavItem[] = [
   { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin", "manager", "technician"] },
   { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"], badge: "AI" },
   { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
-  { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager"] },
+  { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
   { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
   { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
   { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
@@ -97,7 +97,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
       { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
       { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
-      { name: "platform-logs", label: "System Logs", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
+      { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
     ],
   },
 ];
@@ -289,9 +289,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       {!collapsed && (
         <SidebarHeader className="border-b border-sidebar-border/60">
-          <div className="px-2 py-2">
-            <span className="text-[10px] font-black text-sidebar-foreground/60 uppercase tracking-[0.24em]">
-              {role.replace("_", " ")}
+          <div className="px-2 py-3">
+            <span className="text-xl font-black tracking-tight select-none">
+              <span className="text-[#2FAC0C] text-2xl">G</span>
+              <span className="text-sidebar-foreground">rain</span>
+              <span className="text-[#2FAC0C] text-2xl">H</span>
+              <span className="text-sidebar-foreground">ero</span>
             </span>
           </div>
         </SidebarHeader>

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileBarChart, Download, TrendingUp, Package, AlertTriangle, DollarSign } from "lucide-react";
+import { FileBarChart, Download, TrendingUp, Package, AlertTriangle, DollarSign, ArrowLeft } from "lucide-react";
 import { getReportsData } from "@/lib/monitoring.functions";
+import { ReportsSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   component: ReportsPage,
@@ -33,9 +34,11 @@ function download(name: string, csv: string) {
 
 function ReportsPage() {
   const fn = useServerFn(getReportsData);
-  const { data } = useQuery({ queryKey: ["reports"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({ queryKey: ["reports"], queryFn: () => fn() });
 
   const [period, setPeriod] = useState<"7" | "30" | "90" | "all">("30");
+
+  if (isLoading) return <ReportsSkeleton />;
 
   const filtered = useMemo(() => {
     if (!data) return { batches: [], alerts: [], invoices: [], silos: [] };
@@ -59,6 +62,9 @@ function ReportsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><FileBarChart className="h-6 w-6 text-emerald-600" /> Reports</h1>

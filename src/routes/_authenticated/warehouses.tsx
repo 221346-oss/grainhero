@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ListSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -213,7 +213,7 @@ function WarehousesPage() {
 
       {/* Table */}
       {isLoading ? (
-        <ListSkeleton />
+        <DashboardSkeleton />
       ) : error ? (
         <Card className="border-rose-200"><CardContent className="py-8 text-center text-rose-600 text-sm">{(error as Error).message}</CardContent></Card>
       ) : rows.length === 0 ? (

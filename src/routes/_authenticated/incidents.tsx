@@ -1,3 +1,4 @@
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -40,7 +41,7 @@ function TenantIncidentsView() {
   const fn = useServerFn(getIncidents);
   const ackFn = useServerFn(acknowledgeIncident);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["incidents"], queryFn: () => fn(), refetchInterval: 30_000 });
+  const { data, isLoading } = useQuery({ queryKey: ["incidents"], queryFn: () => fn(), refetchInterval: 30_000 });
   useRealtimeInvalidate("grain_alerts", [["incidents"]]);
 
   const [q, setQ] = useState("");
@@ -63,6 +64,8 @@ function TenantIncidentsView() {
       return i.title?.toLowerCase().includes(term) || i.alert_id?.toLowerCase().includes(term) || i.message?.toLowerCase().includes(term);
     });
   }, [incidents, q, status]);
+
+  if (isLoading) return <DashboardSkeleton />;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">

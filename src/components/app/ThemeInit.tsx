@@ -1,7 +1,10 @@
 import { useEffect } from "react";
-import { applyTheme, getStoredTheme } from "@/lib/theme";
+import { applyTheme, getStoredTheme, applyThemeMode, getStoredThemeMode } from "@/lib/theme";
 
 export function ThemeInit() {
-  useEffect(() => { applyTheme(getStoredTheme()); }, []);
+  useEffect(() => {
+    applyTheme(getStoredTheme());
+    applyThemeMode(getStoredThemeMode()); // Respect stored preference
+  }, []);
   return null;
 }

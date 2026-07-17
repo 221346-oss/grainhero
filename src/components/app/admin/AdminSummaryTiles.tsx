@@ -31,8 +31,9 @@ export function AdminSummaryTiles({
             key={t.key}
             onClick={clickable ? () => onSelect!(t.key) : undefined}
             className={cn(
-              "transition-all",
-              clickable && "cursor-pointer hover:shadow-md",
+              "transition-all border-slate-200/70",
+              "hover:border-emerald-400 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_10px_20px_-12px_rgba(16,185,129,0.25)]",
+              clickable && "cursor-pointer",
               isActive && "ring-2 ring-emerald-400 shadow-md",
             )}
           >
