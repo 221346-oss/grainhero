@@ -272,16 +272,24 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
 
     if (req.requested_by) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await notify(
-        supabaseAdmin,
-        req.requested_by,
-        req.tenant_admin_id,
-        data.approve ? "Plan change approved" : "Plan change rejected",
-        data.approve
+      await emitNotification(supabaseAdmin, {
+        recipientId: req.requested_by,
+        tenantAdminId: req.tenant_admin_id,
+        category: "plan",
+        severity: data.approve ? "success" : "warning",
+        title: data.approve ? "Plan change approved" : "Plan change rejected",
+        body: data.approve
           ? `Your plan has been changed to ${req.requested_plan}.`
           : `Your request to switch to ${req.requested_plan} was rejected: ${decisionNote}`,
-        { request_id: data.id, from: req.current_plan, to: req.requested_plan, status: newStatus },
-      );
+        link: "/subscription",
+        entityType: "plan_change_request",
+        entityId: data.id,
+        metadata: {
+          from: req.current_plan,
+          to: req.requested_plan,
+          status: newStatus,
+        },
+      });
     }
 
     return { ok: true };
