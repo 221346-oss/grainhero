@@ -46,6 +46,15 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
       supabaseAdmin.from("buyer_invoices").select("total_amount, amount_paid, currency, created_at, payment_status"),
     ]);
 
+    // Logistics operating costs (Phase 17) — subtracted from gross profit.
+    const { data: logisticsRows } = await supabaseAdmin
+      .from("logistics_cost_entries")
+      .select("amount, category, incurred_at");
+    const logisticsCost = (logisticsRows ?? []).reduce(
+      (s: number, r: any) => s + Number(r.amount ?? 0),
+      0,
+    );
+
     // Normalise subscription rows from the subscriptions table.
     const activeSubsRaw = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
     const subRows = activeSubsRaw.map((s: any) => {
@@ -94,7 +103,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     const cogs = hardwareUnitCogs > 0 ? hardwareUnitCogs : iotRevenue * (iotCostPct / 100);
     const grossProfit = totalRevenue - cogs;
     // Opex simplification: configurable % of total revenue
-    const opex = totalRevenue * (opexPct / 100);
+    const opex = totalRevenue * (opexPct / 100) + logisticsCost;
     const otherIncome = 0;
     const netProfit = grossProfit - opex + otherIncome;
     const netProfitPct = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
@@ -152,6 +161,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
         cogs: Math.round(cogs),
         grossProfit: Math.round(grossProfit),
         opex: Math.round(opex),
+        logisticsCost: Math.round(logisticsCost),
         otherIncome: Math.round(otherIncome),
         netProfit: Math.round(netProfit),
         netProfitPct: Number(netProfitPct.toFixed(2)),

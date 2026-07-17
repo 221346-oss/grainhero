@@ -108,10 +108,16 @@ import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/pub
 import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api/public/cron/return-auto-approve'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
+import { Route as ApiPublicCronDriverLicenseExpiryRouteImport } from './routes/api/public/cron/driver-license-expiry'
 import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
+import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
+import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
+import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
+import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -656,10 +662,22 @@ const ApiPublicCronHeartbeatSweepRoute =
     path: '/api/public/cron/heartbeat-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronDriverLicenseExpiryRoute =
+  ApiPublicCronDriverLicenseExpiryRouteImport.update({
+    id: '/api/public/cron/driver-license-expiry',
+    path: '/api/public/cron/driver-license-expiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronDispatchSlaSweepRoute =
   ApiPublicCronDispatchSlaSweepRouteImport.update({
     id: '/api/public/cron/dispatch-sla-sweep',
     path: '/api/public/cron/dispatch-sla-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDeliveryDelayScanRoute =
+  ApiPublicCronDeliveryDelayScanRouteImport.update({
+    id: '/api/public/cron/delivery-delay-scan',
+    path: '/api/public/cron/delivery-delay-scan',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedTechnicianInstallsInstallIdRoute =
@@ -674,11 +692,35 @@ const AuthenticatedPlatformOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedPlatformOrdersRoute,
   } as any)
+const AuthenticatedPlatformLogisticsFleetRoute =
+  AuthenticatedPlatformLogisticsFleetRouteImport.update({
+    id: '/platform/logistics/fleet',
+    path: '/platform/logistics/fleet',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsCommandCenterRoute =
+  AuthenticatedPlatformLogisticsCommandCenterRouteImport.update({
+    id: '/platform/logistics/command-center',
+    path: '/platform/logistics/command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsCarriersRoute =
+  AuthenticatedPlatformLogisticsCarriersRouteImport.update({
+    id: '/platform/logistics/carriers',
+    path: '/platform/logistics/carriers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBuyerOrdersOrderIdRoute =
   AuthenticatedBuyerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
     path: '/$orderId',
     getParentRoute: () => AuthenticatedBuyerOrdersRoute,
+  } as any)
+const ApiPublicWebhooksCarrierCarrierCodeRoute =
+  ApiPublicWebhooksCarrierCarrierCodeRouteImport.update({
+    id: '/api/public/webhooks/carrier/$carrierCode',
+    path: '/api/public/webhooks/carrier/$carrierCode',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -771,9 +813,14 @@ export interface FileRoutesByFullPath {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
+  '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
@@ -784,6 +831,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -873,9 +921,14 @@ export interface FileRoutesByTo {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
+  '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
@@ -886,6 +939,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -979,9 +1033,14 @@ export interface FileRoutesById {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
+  '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
@@ -992,6 +1051,7 @@ export interface FileRoutesById {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1085,9 +1145,14 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
+    | '/platform/logistics/carriers'
+    | '/platform/logistics/command-center'
+    | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/return-auto-approve'
@@ -1098,6 +1163,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/carrier/$carrierCode'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1187,9 +1253,14 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
+    | '/platform/logistics/carriers'
+    | '/platform/logistics/command-center'
+    | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/return-auto-approve'
@@ -1200,6 +1271,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/carrier/$carrierCode'
   id:
     | '__root__'
     | '/'
@@ -1292,9 +1364,14 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/platform/logistics/carriers'
+    | '/_authenticated/platform/logistics/command-center'
+    | '/_authenticated/platform/logistics/fleet'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
+    | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/return-auto-approve'
@@ -1305,6 +1382,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/carrier/$carrierCode'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1327,7 +1405,9 @@ export interface RootRouteChildren {
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
+  ApiPublicCronDeliveryDelayScanRoute: typeof ApiPublicCronDeliveryDelayScanRoute
   ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
+  ApiPublicCronDriverLicenseExpiryRoute: typeof ApiPublicCronDriverLicenseExpiryRoute
   ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
   ApiPublicCronReturnAutoApproveRoute: typeof ApiPublicCronReturnAutoApproveRoute
@@ -1338,6 +1418,7 @@ export interface RootRouteChildren {
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiPublicWebhooksCarrierCarrierCodeRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2035,11 +2116,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronHeartbeatSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/driver-license-expiry': {
+      id: '/api/public/cron/driver-license-expiry'
+      path: '/api/public/cron/driver-license-expiry'
+      fullPath: '/api/public/cron/driver-license-expiry'
+      preLoaderRoute: typeof ApiPublicCronDriverLicenseExpiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/dispatch-sla-sweep': {
       id: '/api/public/cron/dispatch-sla-sweep'
       path: '/api/public/cron/dispatch-sla-sweep'
       fullPath: '/api/public/cron/dispatch-sla-sweep'
       preLoaderRoute: typeof ApiPublicCronDispatchSlaSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/delivery-delay-scan': {
+      id: '/api/public/cron/delivery-delay-scan'
+      path: '/api/public/cron/delivery-delay-scan'
+      fullPath: '/api/public/cron/delivery-delay-scan'
+      preLoaderRoute: typeof ApiPublicCronDeliveryDelayScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/technician/installs/$installId': {
@@ -2056,12 +2151,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersRoute
     }
+    '/_authenticated/platform/logistics/fleet': {
+      id: '/_authenticated/platform/logistics/fleet'
+      path: '/platform/logistics/fleet'
+      fullPath: '/platform/logistics/fleet'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsFleetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/logistics/command-center': {
+      id: '/_authenticated/platform/logistics/command-center'
+      path: '/platform/logistics/command-center'
+      fullPath: '/platform/logistics/command-center'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/logistics/carriers': {
+      id: '/_authenticated/platform/logistics/carriers'
+      path: '/platform/logistics/carriers'
+      fullPath: '/platform/logistics/carriers'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/buyer/orders/$orderId': {
       id: '/_authenticated/buyer/orders/$orderId'
       path: '/$orderId'
       fullPath: '/buyer/orders/$orderId'
       preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedBuyerOrdersRoute
+    }
+    '/api/public/webhooks/carrier/$carrierCode': {
+      id: '/api/public/webhooks/carrier/$carrierCode'
+      path: '/api/public/webhooks/carrier/$carrierCode'
+      fullPath: '/api/public/webhooks/carrier/$carrierCode'
+      preLoaderRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -2194,6 +2317,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+  AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
+  AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  AuthenticatedPlatformLogisticsFleetRoute: typeof AuthenticatedPlatformLogisticsFleetRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2261,6 +2387,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTechnicianInstallsRoute:
     AuthenticatedTechnicianInstallsRouteWithChildren,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+  AuthenticatedPlatformLogisticsCarriersRoute:
+    AuthenticatedPlatformLogisticsCarriersRoute,
+  AuthenticatedPlatformLogisticsCommandCenterRoute:
+    AuthenticatedPlatformLogisticsCommandCenterRoute,
+  AuthenticatedPlatformLogisticsFleetRoute:
+    AuthenticatedPlatformLogisticsFleetRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -2334,7 +2466,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
+  ApiPublicCronDeliveryDelayScanRoute: ApiPublicCronDeliveryDelayScanRoute,
   ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
+  ApiPublicCronDriverLicenseExpiryRoute: ApiPublicCronDriverLicenseExpiryRoute,
   ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
   ApiPublicCronReturnAutoApproveRoute: ApiPublicCronReturnAutoApproveRoute,
@@ -2346,6 +2480,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiPublicWebhooksCarrierCarrierCodeRoute:
+    ApiPublicWebhooksCarrierCarrierCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
