@@ -141,17 +141,25 @@ function OrderDetail() {
       {["delivered","completed","dispatched","paid"].includes(o.status) && (
         <BuyerDisputeCard orderId={o.id} />
       )}
-      {o.invoice_pdf_url && (
+      {(o.invoice_pdf_url || (o.buyer_invoices && (o.buyer_invoices as { id?: string; pdf_url?: string })?.id)) && (
         <div className="flex items-center gap-3">
-          <a href={o.invoice_pdf_url} target="_blank" rel="noopener noreferrer"
-             className="text-sm text-emerald-700 underline">
-            Download invoice (PDF)
-          </a>
-          {o.invoice_id && (
-            <Button variant="outline" size="sm" disabled={resend.isPending}
-              onClick={() => resend.mutate(o.invoice_id as string)}>
-              {resend.isPending ? "Sending…" : "Resend invoice email"}
-            </Button>
+          {(o.invoice_pdf_url || (o.buyer_invoices as { pdf_url?: string })?.pdf_url) && (
+            <a href={o.invoice_pdf_url ?? (o.buyer_invoices as { pdf_url?: string })?.pdf_url ?? "#"}
+               target="_blank" rel="noopener noreferrer"
+               className="text-sm text-emerald-700 underline">
+              Download invoice (PDF)
+            </a>
+          )}
+          {(o.buyer_invoices as { id?: string })?.id && (
+            <>
+              <Button variant="outline" size="sm" disabled={resend.isPending}
+                onClick={() => resend.mutate((o.buyer_invoices as { id: string }).id)}>
+                {resend.isPending ? "Sending…" : "Resend invoice email"}
+              </Button>
+              {(o.buyer_invoices as { email_status?: string })?.email_status === "failed" && (
+                <span className="text-xs text-rose-600">Last email failed</span>
+              )}
+            </>
           )}
         </div>
       )}
