@@ -63,7 +63,7 @@ export const sendTestNotification = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ channel: z.enum(CHANNELS) }).parse(d))
   .handler(async ({ data, context }) => {
     const rl = checkRateLimit(`notif-test:${context.userId}`, { limit: 3, windowMs: 60_000 });
-    if (!rl.allowed) throw new Error("Please wait a minute before sending another test");
+    if (!rl.ok) throw new Error("Please wait a minute before sending another test");
     const { emitNotification } = await import("@/lib/notify");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Temporarily flip the tested channel on for this one delivery via a stub
