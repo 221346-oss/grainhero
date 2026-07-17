@@ -76,6 +76,7 @@ import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
@@ -458,6 +459,12 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/platform/tenants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformSellersRoute =
+  AuthenticatedPlatformSellersRouteImport.update({
+    id: '/platform/sellers',
+    path: '/platform/sellers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformReviewsRoute =
   AuthenticatedPlatformReviewsRouteImport.update({
     id: '/platform/reviews',
@@ -691,6 +698,7 @@ export interface FileRoutesByFullPath {
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -784,6 +792,7 @@ export interface FileRoutesByTo {
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -881,6 +890,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -978,6 +988,7 @@ export interface FileRouteTypes {
     | '/platform/pipeline'
     | '/platform/plans'
     | '/platform/reviews'
+    | '/platform/sellers'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -1071,6 +1082,7 @@ export interface FileRouteTypes {
     | '/platform/pipeline'
     | '/platform/plans'
     | '/platform/reviews'
+    | '/platform/sellers'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -1167,6 +1179,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
     | '/_authenticated/platform/reviews'
+    | '/_authenticated/platform/sellers'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
@@ -1694,6 +1707,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/sellers': {
+      id: '/_authenticated/platform/sellers'
+      path: '/platform/sellers'
+      fullPath: '/platform/sellers'
+      preLoaderRoute: typeof AuthenticatedPlatformSellersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/reviews': {
       id: '/_authenticated/platform/reviews'
       path: '/platform/reviews'
@@ -2003,6 +2023,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
+  AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
@@ -2060,6 +2081,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
+  AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedTechnicianInstallsRoute:
