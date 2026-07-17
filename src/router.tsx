@@ -23,6 +23,9 @@ import {
   PlansSkeleton,
   TeamManagementSkeleton,
   SettingsSkeleton,
+  FinancialsSkeleton,
+  AdminProfileSkeleton,
+  PlatformOrdersSkeleton,
 } from "@/components/app/skeletons";
 
 // Route → matching page skeleton. Every page-level skeleton mirrors the real
@@ -58,11 +61,14 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/security-center": AnalyticsSkeleton,
   "/platform/pipeline": AnalyticsSkeleton,
   "/platform/health": AnalyticsSkeleton,
+  "/platform/financials": FinancialsSkeleton,
+  "/platform/orders": PlatformOrdersSkeleton,
 };
 
 function AutoPending() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const Skel = PAGE_SKELETONS[pathname];
+  let Skel = PAGE_SKELETONS[pathname];
+  if (!Skel && pathname.startsWith("/admins/")) Skel = AdminProfileSkeleton;
   if (Skel) return <Skel />;
   return <DashboardSkeleton />;
 }
