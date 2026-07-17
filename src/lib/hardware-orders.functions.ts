@@ -79,7 +79,7 @@ const updateInput = z.object({
 /** Super-admin: update status / assign technician / mark installed / cancel. */
 export const updateHardwareOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => updateInput.parse(d))
+  .validator((d) => updateInput.parse(d))
   .handler(async ({ data, context }) => {
     const { data: isSuper } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
@@ -130,7 +130,7 @@ const messageInput = z.object({
 /** Super-admin: send a message + optional email to the buyer for an order. */
 export const sendOrderMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => messageInput.parse(d))
+  .validator((d) => messageInput.parse(d))
   .handler(async ({ data, context }) => {
     const { data: isSuper } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,

@@ -19,6 +19,8 @@ dist-ssr
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+package-lock.json
+
 
 # Editor directories and files
 .vscode/*

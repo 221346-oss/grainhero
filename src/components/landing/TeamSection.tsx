@@ -165,6 +165,13 @@ export function TeamSection() {
 
 // Founder card component (shared between mobile carousel and desktop grid)
 function FounderCard({ founder }: { founder: { name: string; role: string; bounty: string; description: string; image: string } }) {
+  const [imageError, setImageError] = useState(false);
+  const initials = founder.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2);
+
   return (
     <div
       className="bg-gradient-to-b from-white to-gray-50 border-4 border-black relative shadow-lg"
@@ -187,13 +194,20 @@ function FounderCard({ founder }: { founder: { name: string; role: string; bount
         </div>
 
         {/* Photo */}
-        <div className="relative mb-3 sm:mb-4 mx-auto w-24 h-24 sm:w-32 sm:h-32 border-2 border-black bg-gray-100 rounded-sm overflow-hidden">
-          <img
-            src={founder.image}
-            alt={founder.name}
-            className="absolute inset-0 w-full h-full object-cover rounded-sm"
-            style={{ filter: 'sepia(10%) contrast(105%) brightness(100%) saturate(95%)' }}
-          />
+        <div className="relative mb-3 sm:mb-4 mx-auto w-24 h-24 sm:w-32 sm:h-32 border-2 border-black bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center">
+          {imageError ? (
+            <div className="w-full h-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-2xl uppercase select-none">
+              {initials}
+            </div>
+          ) : (
+            <img
+              src={founder.image}
+              alt={founder.name}
+              onError={() => setImageError(true)}
+              className="absolute inset-0 w-full h-full object-cover rounded-sm"
+              style={{ filter: 'sepia(10%) contrast(105%) brightness(100%) saturate(95%)' }}
+            />
+          )}
         </div>
 
         {/* Details */}

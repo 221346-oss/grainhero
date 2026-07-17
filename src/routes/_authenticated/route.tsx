@@ -69,7 +69,7 @@ function AuthenticatedLayout() {
               <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
             </Link>
           </header>
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <Outlet />
           </main>
         </div>
