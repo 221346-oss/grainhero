@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { assertPlanAllows } from "@/lib/plan-gate";
 
 // Turn ZodError into a readable one-liner so the client toast is helpful.
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
@@ -40,6 +41,9 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(warehouseInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_warehouses", sb: context.supabase, userId: context.userId });
+    }
     const location = {
       description: data.location_description ?? null,
       address: data.address ?? null,
@@ -110,6 +114,9 @@ export const upsertSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_silos", sb: context.supabase, userId: context.userId });
+    }
     const location = { description: data.location_description ?? null };
     if (data.id) {
       // Update: don't touch silo_id or name (immutable per original app)
@@ -213,6 +220,9 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_batches", sb: context.supabase, userId: context.userId });
+    }
     // resolve warehouse from silo
     const { data: silo, error: siloErr } = await context.supabase
       .from("silos").select("id, warehouse_id, capacity_kg, current_occupancy_kg").eq("id", data.silo_id).single();
@@ -495,6 +505,9 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(sensorInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_sensors", sb: context.supabase, userId: context.userId });
+    }
     const base = {
       device_name: data.device_name,
       mac_address: data.mac_address ?? null,
@@ -614,6 +627,9 @@ export const upsertActuator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(actuatorInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_actuators", sb: context.supabase, userId: context.userId });
+    }
     const payload = {
       actuator_id: data.actuator_id,
       name: data.name,
@@ -909,6 +925,9 @@ export const upsertBuyer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
+    }
     const payload = {
       name: data.name,
       contact_name: data.contact_name,
