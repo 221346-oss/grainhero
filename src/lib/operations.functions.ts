@@ -354,6 +354,7 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let buyerId = data.buyer_id ?? null;
     if (!buyerId && data.new_buyer?.name) {
+      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
       const { data: b, error: bErr } = await context.supabase.from("buyers").insert({
         admin_id: context.userId,
         name: data.new_buyer.name,
