@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { getAdminProfile, updateAdminContact, setAdminSuspended, getAdminOrderFrequency } from "@/lib/admin-profile.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
+import { AdminProfileSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/admins/$adminId")({
   component: AdminProfilePage,
