@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import { GrainBatchesSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Loader2, Inbox, QrCode,
@@ -26,6 +26,9 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-batches")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    status: (search.status as string) ?? "all",
+  }),
   component: GrainBatchesPage,
 });
 
@@ -145,6 +148,9 @@ function GrainBatchesPage() {
   const spoilageFn = useServerFn(logSpoilageEvent);
   const qc = useQueryClient();
 
+  // Seed statusFilter from ?status= URL search param (e.g. navigated from dashboard)
+  const { status: searchStatus } = useSearch({ from: "/_authenticated/grain-batches" });
+
   const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
   const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
@@ -152,7 +158,7 @@ function GrainBatchesPage() {
   const buyers = buyersData ?? [];
 
   const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(searchStatus ?? "all");
   const [grainFilter, setGrainFilter] = useState("all");
   const [selected, setSelected] = useState<Batch | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -160,6 +166,11 @@ function GrainBatchesPage() {
   const [qrOpen, setQrOpen] = useState(false);
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [spoilageOpen, setSpoilageOpen] = useState(false);
+
+  // Sync filter whenever the URL search param changes (back/forward navigation)
+  useEffect(() => {
+    setStatusFilter(searchStatus ?? "all");
+  }, [searchStatus]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
   const [dispatch, setDispatch] = useState<Dispatch>(emptyDispatch);

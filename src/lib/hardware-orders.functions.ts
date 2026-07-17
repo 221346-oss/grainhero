@@ -77,7 +77,7 @@ const updateInput = z.object({
 /** Super-admin: update status / assign technician / mark installed / cancel. */
 export const updateHardwareOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => updateInput.parse(d))
+  .validator((d) => updateInput.parse(d))
   .handler(async ({ data, context }) => {
     const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
     if (!isSuper) throw new Error("Forbidden");
@@ -125,7 +125,7 @@ const messageInput = z.object({
 /** Super-admin: send a message + optional email to the buyer for an order. */
 export const sendOrderMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => messageInput.parse(d))
+  .validator((d) => messageInput.parse(d))
   .handler(async ({ data, context }) => {
     const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
     if (!isSuper) throw new Error("Forbidden");
