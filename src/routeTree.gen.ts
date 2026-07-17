@@ -14,6 +14,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as CookiesRouteImport } from './routes/cookies'
@@ -115,6 +116,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -549,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
   '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
@@ -631,6 +638,7 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
   '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
@@ -716,6 +724,7 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
   '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
@@ -801,6 +810,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/docs'
     | '/help'
+    | '/marketplace'
     | '/privacy'
     | '/sitemap.xml'
     | '/team'
@@ -883,6 +893,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/docs'
     | '/help'
+    | '/marketplace'
     | '/privacy'
     | '/sitemap.xml'
     | '/team'
@@ -967,6 +978,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/docs'
     | '/help'
+    | '/marketplace'
     | '/privacy'
     | '/sitemap.xml'
     | '/team'
@@ -1052,6 +1064,7 @@ export interface RootRouteChildren {
   CookiesRoute: typeof CookiesRoute
   DocsRoute: typeof DocsRoute
   HelpRoute: typeof HelpRoute
+  MarketplaceRoute: typeof MarketplaceRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
@@ -1104,6 +1117,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -1849,6 +1869,7 @@ const rootRouteChildren: RootRouteChildren = {
   CookiesRoute: CookiesRoute,
   DocsRoute: DocsRoute,
   HelpRoute: HelpRoute,
+  MarketplaceRoute: MarketplaceRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
