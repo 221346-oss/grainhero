@@ -8,9 +8,6 @@ import {
   ArrowUpRight, Plus, TrendingUp, AlertTriangle, Layers, ShoppingCart,
   ChevronRight, Activity, Wrench, AlertOctagon, Building2, Smartphone, Zap, Brain, Shield, DollarSign, Cpu, CreditCard, ShieldCheck,
 } from "lucide-react";
-import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
-import { Badge } from "@/components/ui/badge";
 
 // ============================================================================
 // 1. DATA & TYPES
@@ -55,15 +52,36 @@ function useCountUp(target: number, duration = 1200) {
 // 3. HERO SECTION
 // ============================================================================
 
-function useManagerSubtitle() {
-  const [now, setNow] = useState(new Date());
+function HeroSection({ name }: { name?: string }) {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60_000);
+    const t = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-  const date = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-  const time = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-  return `${date} · ${time}`;
+
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+  const timeFmt = (d: Date) =>
+    d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+
+  return (
+    <div className="py-2">
+      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#111827] tracking-tight leading-tight">
+        Welcome, {name || "Manahil Malik"}
+      </h1>
+      <p className="text-base md:text-lg text-[#6B7280] mt-3 font-medium">
+        {fmt(currentTime)} &middot;{" "}
+        <span className="tabular-nums font-semibold text-[#111827]">{timeFmt(currentTime)}</span>
+      </p>
+    </div>
+  );
 }
 
 // ============================================================================
@@ -336,38 +354,47 @@ export function ManagerDashboard({ name }: { name?: string }) {
     },
   ];
 
-  const subtitle = useManagerSubtitle();
   return (
-    <AdminPageShell
-      title={`Manager${name ? ` — ${name}` : ""}`}
-      subtitle={subtitle}
-      actions={<Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Manager</Badge>}
-    >
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {statCards.map((sc) => (
-          <StatCard key={sc.label} {...sc} />
-        ))}
-      </div>
+    <div className="min-h-screen" style={{ background: "#F8FAFC" }}>
+      <div className="p-3 md:p-5 w-full space-y-10">
 
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full bg-white rounded-2xl shadow-sm border border-slate-200/70 p-4 sm:p-5"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+        {/* Hero */}
+        <HeroSection name={name} />
+
+        {/* Stats */}
+        <div>
+          <SectionHeader
+            title="Overview"
+            size="large"
+          />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {statCards.map((sc) => (
+              <StatCard key={sc.label} {...sc} />
+            ))}
+          </div>
+        </div>
+
+        {/* Overview & Analytics Parent Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="w-full bg-[#FFFFFF] rounded-[20px] shadow-sm border border-[#E5E7EB] p-6 mt-8"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Container 1: Operations */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.0, ease: "easeOut" }}
-              className="quad-panel"
+              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
             >
               <div className="flex items-center gap-2 text-emerald-600 mb-2">
 
-                <h3 className="font-bold text-slate-900 text-base">Operations</h3>
+                <h3 className="font-bold text-[#111827] text-lg">Operations</h3>
               </div>
-              <div className="quad-scroll">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
                 <ViewBatchesCard />
                 <ActionCard
                   icon={Wrench}
@@ -392,13 +419,14 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-              className="quad-panel"
+              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
             >
               <div className="flex items-center gap-2 text-emerald-600 mb-2">
 
-                <h3 className="font-bold text-slate-900 text-base">Inventory & Storage</h3>
+                <h3 className="font-bold text-[#111827] text-lg">Inventory & Storage</h3>
               </div>
-              <div className="quad-scroll">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
                 <ActionCard
                   icon={ThermometerSun}
                   title="Environmental Conditions"
@@ -427,12 +455,19 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-              className="quad-panel"
+              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
             >
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-                <h3 className="font-bold text-slate-900 text-base">Logistics</h3>
+              <div className="flex flex-col mb-2">
+                <div className="flex items-center gap-2 text-emerald-600">
+
+                  <h3 className="font-bold text-[#111827] text-lg">Logistics</h3>
+                </div>
+                <p className="text-xs text-[#6B7280] mt-1">
+                  Manage shipment tracking, dispatch traceability, insurance, and logistics notifications from one place.
+                </p>
               </div>
-              <div className="quad-scroll">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
                 <ActionCard
                   icon={MapPin}
                   title="Track Buyer Shipments"
@@ -461,13 +496,14 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
-              className="quad-panel"
+              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
             >
               <div className="flex items-center gap-2 text-emerald-600 mb-2">
 
-                <h3 className="font-bold text-slate-900 text-base">System & Financial Health</h3>
+                <h3 className="font-bold text-[#111827] text-lg">System & Financial Health</h3>
               </div>
-              <div className="quad-scroll">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
                 <ActionCard
                   icon={Activity}
                   title="System Health"
@@ -480,8 +516,11 @@ export function ManagerDashboard({ name }: { name?: string }) {
                 />
               </div>
             </motion.div>
-        </div>
-      </motion.div>
-    </AdminPageShell>
+          </div>
+        </motion.div>
+
+
+      </div>
+    </div>
   );
 }
