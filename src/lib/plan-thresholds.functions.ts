@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { z } from "zod";
+import { logActivity } from "./activity";
 
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
@@ -11,6 +12,32 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
 
 async function assertSuperAdmin(supabase: any, userId: string) {
   if ((await getEffectiveRole(supabase, userId)) !== "super_admin") throw new Error("Forbidden");
+}
+
+async function verifyAndLimit(
+  context: { supabase: any; userId: string },
+  bucket: string,
+  limit = 10,
+) {
+  const { getVerifiedUser } = await import("@/lib/session.server");
+  const { checkRateLimit } = await import("@/lib/rate-limit");
+  await getVerifiedUser(context.supabase);
+  const gate = checkRateLimit(`${bucket}:${context.userId}`, { limit, windowMs: 60_000 });
+  if (!gate.ok) throw new Error(`Too many requests. Try again in ${gate.retryAfter}s.`);
+}
+
+async function notify(sb: any, userId: string, title: string, body: string, meta: Record<string, unknown>) {
+  try {
+    await sb.from("notifications").insert({
+      user_id: userId,
+      type: "plan_change",
+      title,
+      message: body,
+      metadata: meta as never,
+    } as never);
+  } catch (err) {
+    console.warn("[notify] insert failed", err);
+  }
 }
 
 /* -------------------- list -------------------- */
