@@ -27,6 +27,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
+import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
@@ -182,6 +183,11 @@ const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CheckoutRoute,
+} as any)
+const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => MarketplaceRoute,
 } as any)
 const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
@@ -606,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -689,6 +696,7 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout': typeof CheckoutIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -776,6 +784,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -863,6 +872,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout/'
     | '/marketplace/'
     | '/admins/$adminId'
@@ -946,6 +956,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout'
     | '/marketplace'
     | '/admins/$adminId'
@@ -1032,6 +1043,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout/'
     | '/marketplace/'
     | '/_authenticated/admins/$adminId'
@@ -1219,6 +1231,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/checkout/'
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/marketplace/$slug': {
+      id: '/marketplace/$slug'
+      path: '/$slug'
+      fullPath: '/marketplace/$slug'
+      preLoaderRoute: typeof MarketplaceSlugRouteImport
+      parentRoute: typeof MarketplaceRoute
     }
     '/checkout/success': {
       id: '/checkout/success'
@@ -1876,10 +1895,12 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
 )
 
 interface MarketplaceRouteChildren {
+  MarketplaceSlugRoute: typeof MarketplaceSlugRoute
   MarketplaceIndexRoute: typeof MarketplaceIndexRoute
 }
 
 const MarketplaceRouteChildren: MarketplaceRouteChildren = {
+  MarketplaceSlugRoute: MarketplaceSlugRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
 }
 
