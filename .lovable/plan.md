@@ -1,72 +1,42 @@
-# Phase 1 — Baseline Audit & Guardrails
+# Phase 2 — Auth Hardening & Session Hygiene
 
-First phase of the Foundation block (Phases 1–5). Goal: lock down the current app so later phases can build on it without regressions. **Nothing user-visible changes** — this phase is instrumentation, safety rails, and a written contract for what "correct" means in every later phase.
+Tighten the auth boundary so every protected surface has a verified session, sign-out fully drains client state, and suspicious activity is observable. Strictly additive — no route removals, no schema breaks.
 
-## What we build
+## Scope
 
-### 1. Canonical role & route matrix (`docs/route-matrix.md`)
-A single source of truth mapping every route in `src/routes/` to:
-- allowed roles (`super_admin` / `admin` / `manager` / `technician` / public)
-- data scope (platform-wide / tenant / self)
-- plan gate (if any)
-- required server fns
+1. **Session verification on the server**
+   - Add `src/lib/session.server.ts` helper `getVerifiedUser()` that wraps `context.supabase.auth.getUser()` (re-validates the JWT with the Auth server) — used by any server fn that must trust identity beyond `context.userId`.
+   - Audit `requireSupabaseAuth` call sites that make privileged decisions (role changes, plan changes, admin subscription actions) and swap them to `getVerifiedUser()` before the write.
 
-Any later phase that adds a route must add a row here in the same PR.
+2. **Client sign-out drain**
+   - Centralize sign-out into `src/lib/auth/signOut.ts`:
+     `cancelQueries → clear → supabase.auth.signOut → navigate('/auth', { replace: true })`.
+   - Replace ad-hoc `supabase.auth.signOut()` calls in `AppSidebar`, `settings.tsx`, and any header menu to use the helper.
 
-### 2. Route audit script (`scripts/audit-routes.ts`)
-Node script (run via `bun scripts/audit-routes.ts`) that:
-- walks `src/routes/`, reads each file's `createFileRoute` + head/loader
-- verifies routes under `_authenticated/` don't call unauthenticated server fns in their loader
-- verifies public routes don't import `client.server` transitively
-- verifies every route with a `loader` defines `errorComponent` and `notFoundComponent`
-- prints a table and exits non-zero on violations
+3. **Session-aware header affordance**
+   - Ensure the marketing/landing header reflects session state (sign-in vs. account menu) driven by the existing root `onAuthStateChange` → `router.invalidate()` subscriber. No new listeners.
 
-### 3. Server-fn safety lint (`scripts/audit-server-fns.ts`)
-Scans `src/**/*.functions.ts` and asserts:
-- no top-level `import ... client.server` (must be dynamic inside handler)
-- every fn either has `.middleware([requireSupabaseAuth])` OR is documented in `docs/public-server-fns.md` as intentionally public
-- `process.env.*` reads only inside `.handler()` bodies
+4. **Security event logging (additive)**
+   - Reuse existing `security_events` table. Add `logSecurityEvent()` helper in `src/lib/security-events.ts` (client + server variants).
+   - Emit events for: `sign_in_success`, `sign_in_failed`, `sign_out`, `password_reset_requested`, `role_change`, `plan_change_request`, `admin_suspend_toggle`.
+   - No UI changes — feeds the existing Security Center page.
 
-### 4. Plan-gate helper (`src/lib/plan-gate.ts`)
-Thin wrapper around the existing `plan_thresholds` table:
-- `assertPlanAllows(adminId, feature)` — server-side, throws typed `PlanLimitError`
-- `usePlanGate(feature)` — client hook returning `{ allowed, limit, used, upgradeUrl }`
-- centralizes the check used by later Admin phases (silos cap, sensors cap, buyers cap, exports, etc.)
+5. **Password reset page sanity**
+   - Verify `/reset-password` exists and is a public route; if missing, add minimal page that handles `type=recovery` and calls `updateUser({ password })`.
 
-Migration: add missing feature keys to `plan_thresholds` seed if any (`max_silos`, `max_sensors`, `max_buyers`, `max_users`, `exports_enabled`, `api_access`, `alerts_sms`).
+6. **Rate-limit sensitive server fns (soft)**
+   - Add `src/lib/rate-limit.ts` in-memory token bucket (per-user, per-fn). Apply to `requestPlanChange`, `cancelSubscription`, admin mutation fns. Returns typed `{ error: 'rate_limited', retryAfter }` — no throws that break UI.
 
-### 5. Activity-log helper unification (`src/lib/activity.ts`)
-One `logActivity({ actorId, tenantId, action, target, meta })` used by every mutating server fn from Phase 2 onward. Existing scattered `activity_logs` inserts get wrapped (non-breaking).
+7. **Audit script**
+   - Extend `scripts/audit-server-fns.ts` to flag privileged fns (name matches `/promote|suspend|cancel|change|delete|admin/i` under `.middleware([requireSupabaseAuth])`) that don't call `getVerifiedUser()`.
 
-### 6. Error surface baseline
-- Add `defaultErrorComponent` to `src/router.tsx` if not already present.
-- Add `notFoundComponent` to `__root.tsx`.
-- Standard `<EmptyState>` and `<ErrorState>` primitives in `src/components/app/states.tsx` for later phases to reuse.
+## Out of scope
+- MFA, OAuth providers, session timeout UI, device management — later phase.
+- Any schema changes (security_events already exists).
 
-## DB migration
-Single additive migration:
-- Ensure `plan_thresholds` has rows for every feature key listed above (INSERT ... ON CONFLICT DO NOTHING).
-- Add `profiles.suspended boolean default false` and `profiles.notes text` if missing (needed by Phase 6 admin profile).
+## Deliverables
+- 5 new files, ~4 file edits, 1 audit script extension.
+- Both audit scripts stay green.
+- No visual regressions; sign-out flow verified via Playwright (localhost, then check no cached protected data on `/auth`).
 
-No table drops, no column type changes.
-
-## Deliverables checklist
-- [ ] `docs/route-matrix.md`
-- [ ] `docs/public-server-fns.md`
-- [ ] `scripts/audit-routes.ts` + `scripts/audit-server-fns.ts` (both green)
-- [ ] `src/lib/plan-gate.ts` + `src/lib/activity.ts`
-- [ ] `src/components/app/states.tsx`
-- [ ] Migration applied
-- [ ] `bun scripts/audit-routes.ts` and `bun scripts/audit-server-fns.ts` pass with 0 violations (or documented exceptions)
-
-## Out of scope for Phase 1
-- Any new user-facing page
-- Any UI restyle
-- Any Twilio / Expo / ML work (those are Phases 21+, 24+, and their own dedicated phases)
-
-## Why this order
-Every later phase (plan gating on Admin pages, SuperAdmin financial exports, mobile API surface) assumes the audit scripts + plan-gate helper exist. Building them now means later phases become small, safe diffs instead of sprawling refactors.
-
----
-
-Reply **approve** to build Phase 1, or tell me what to change. After Phase 1 lands I'll open Phase 2 (Auth hardening & session hygiene) as its own plan.
+Reply **approve** and I'll implement.

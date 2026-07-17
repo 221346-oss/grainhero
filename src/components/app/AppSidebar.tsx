@@ -29,7 +29,7 @@ import {
   Wrench, Server, ShieldCheck, MoreHorizontal,
   DollarSign, TrendingUp, UserPlus, ScrollText,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { performSignOut } from "@/lib/auth/signOut";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
 import { countPendingOrders } from "@/lib/hardware-orders.functions";
 import { useQueryClient } from "@tanstack/react-query";
@@ -278,10 +278,7 @@ export function AppSidebar() {
   void pending;
 
   async function handleSignOut() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+    await performSignOut({ queryClient, navigate, reason: "user" });
   }
 
   return (

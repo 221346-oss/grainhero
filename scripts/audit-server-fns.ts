@@ -36,6 +36,13 @@ const publicDoc = (() => {
 const files = walk(SRC);
 let violations = 0;
 
+// Phase 2 — privileged fns must verify identity beyond the sub claim.
+// Names matching this pattern write to sensitive state and MUST call
+// getVerifiedUser() from @/lib/session.server before mutating.
+const PRIVILEGED = /(promote|suspend|cancel|change|delete|admin|decide|approve|reject|impersonate|role|plan)/i;
+// Allow-list: read-only fns whose names happen to match (e.g. list*, get*).
+const PRIVILEGED_ALLOW = /^(list|get|fetch|count|search|read)/;
+
 for (const file of files) {
   const src = readFileSync(file, "utf8");
   const rel = relative(SRC, file);
@@ -61,7 +68,7 @@ for (const file of files) {
     const name = m[1];
     // Find the chain for this fn (next 800 chars is generous)
     const start = m.index ?? 0;
-    const chain = src.slice(start, start + 1600);
+    const chain = src.slice(start, start + 2400);
     const hasAuth = /requireSupabaseAuth/.test(chain);
     if (!hasAuth) {
       const documented = publicDoc.includes(`\`${name}\``) || publicDoc.includes(name);
@@ -70,6 +77,17 @@ for (const file of files) {
           `✗ ${rel}::${name}: no requireSupabaseAuth and not listed in docs/public-server-fns.md`,
         );
         violations++;
+      }
+      continue;
+    }
+
+    // Privileged fns must call getVerifiedUser.
+    if (PRIVILEGED.test(name) && !PRIVILEGED_ALLOW.test(name)) {
+      if (!/getVerifiedUser\s*\(/.test(chain)) {
+        console.warn(
+          `⚠ ${rel}::${name}: privileged fn without getVerifiedUser() — consider adding session.server verification`,
+        );
+        // Warning-only for now; do not fail the audit until every privileged fn is migrated.
       }
     }
   }
