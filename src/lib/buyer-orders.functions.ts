@@ -128,12 +128,6 @@ export const transitionOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // On cancel: release listing stock
-    if (data.toState === "cancelled" && from !== "paid" && from !== "dispatched") {
-      await context.supabase.rpc("noop"); // placeholder; skipping RPC — inline update below
-      // no-op: stock deducted only on payment; safe to skip
-    }
-
     await logActivity({
       actorId: context.userId, tenantAdminId: o.admin_id as string,
       action: `order.${data.toState}`, targetType: "buyer_order", targetId: data.orderId,
