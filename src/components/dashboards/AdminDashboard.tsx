@@ -8,7 +8,7 @@ export function AdminDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
   return (
     <AdminPageShell
-      title={`Admin${name ? ` — ${name}` : ""}`}
+      title={`Welcome back, ${name || "Admin"}`}
       subtitle="Tenant overview: team, silos, revenue and operations"
       actions={<Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Admin</Badge>}
     >

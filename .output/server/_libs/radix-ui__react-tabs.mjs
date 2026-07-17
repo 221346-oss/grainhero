@@ -3,7 +3,7 @@ import { u as require_react } from "./@floating-ui/react-dom+[...].mjs";
 import { I as require_jsx_runtime, O as Primitive, S as useId, b as Presence, k as createContextScope, y as useControllableState } from "./@radix-ui/react-alert-dialog+[...].mjs";
 import { t as composeEventHandlers } from "./radix-ui__primitive.mjs";
 import { t as useDirection } from "./radix-ui__react-direction.mjs";
-import { n as Root, r as createRovingFocusGroupScope, t as Item } from "./@radix-ui/react-roving-focus+[...].mjs";
+import { a as Root, i as Item, o as createRovingFocusGroupScope } from "./@radix-ui/react-radio-group+[...].mjs";
 //#region node_modules/@radix-ui/react-tabs/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();

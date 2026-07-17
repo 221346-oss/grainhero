@@ -1,1 +1,0 @@
-import{t as e}from"./createServerFn-CeOPk7TD.js";import{U as t}from"./index-DkKe3Xtm.js";e({method:`POST`}).handler(t(`a17b46b346ea3eb0149223cb10af4e6e4876c44eb919c580c30558d2b91f0293`));var n=e({method:`POST`}).handler(t(`66054a8b8bb6cbe12f9840de63872e3aa1be008f1b738f01a19041db959694d5`));export{n as t};

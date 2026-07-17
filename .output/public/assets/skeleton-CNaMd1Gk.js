@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-D8nDyRPw.js";import{s as t}from"./index-DkKe3Xtm.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`div`,{className:t(`skeleton-shimmer rounded-md`,e),...r})}export{r as t};

@@ -25,9 +25,9 @@ import {
   QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
   Brain, Cpu, BarChart3,
   CreditCard,
-  Activity, AlertOctagon, FileBarChart,
+  Activity,   AlertOctagon, FileBarChart,
   Wrench, Server, ShieldCheck, MoreHorizontal,
-  DollarSign, TrendingUp, UserPlus, ScrollText,
+  DollarSign, TrendingUp, UserPlus, ScrollText, MessageSquareWarning,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -96,6 +96,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
       { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
       { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
+      { name: "platform-reporting", label: "Reporting", to: "/platform/reporting", icon: MessageSquareWarning, roles: ["super_admin"] },
       { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
     ],

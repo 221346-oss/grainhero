@@ -8,7 +8,7 @@ export function TechnicianDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
   return (
     <AdminPageShell
-      title={`Technician${name ? ` — ${name}` : ""}`}
+      title={`Welcome back, ${name || "Technician"}`}
       subtitle="Sensor health, actuator status and open maintenance work"
       actions={<Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Technician</Badge>}
     >

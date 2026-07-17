@@ -1,1 +1,0 @@
-import{t as e}from"./useServerFn-D7mQ_Ipf.js";import{t}from"./useQuery-Dlf3xKyI.js";import{t as n}from"./roles.functions-C7jlUsqt.js";function r(){let r=e(n),i=t({queryKey:[`my-role`],queryFn:()=>r(),staleTime:6e4});return{isSuperAdmin:i.data?.role===`super_admin`,role:i.data?.role??null,isLoading:i.isLoading}}export{r as t};

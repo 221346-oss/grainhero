@@ -158,7 +158,22 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
-    const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes, ordersRes, leadsRes] = await Promise.all([
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Get HubSpot contacts count for leads
+    let leadsCount = 0;
+    if (process.env.HUBSPOT_API_KEY) {
+      try {
+        const { hubspotListContacts } = await import("./hubspot.server");
+        const hubspotContacts = await hubspotListContacts(1000);
+        leadsCount = hubspotContacts?.results?.length ?? 0;
+      } catch {
+        // If HubSpot fails, fall back to 0
+        leadsCount = 0;
+      }
+    }
+
+    const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes, ordersRes, hwOrdersRes, hwIssuesRes, errorLogsRes, supportQueriesRes] = await Promise.all([
       context.supabase
         .from("profiles")
         .select("id, name, email, business_type, subscription_plan, created_at")
@@ -173,7 +188,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
       context.supabase
         .from("profiles")
         .select("created_at")
-        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+        .gte("created_at", thirtyDaysAgo),
       context.supabase
         .from("subscriptions")
         .select("id, status, price_per_month, plan_name, created_at, cancellation_date"),
@@ -186,8 +201,27 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .from("hardware_orders" as never)
         .select("id, status", { count: "exact", head: true }),
       context.supabase
-        .from("waitlist_emails")
-        .select("id", { count: "exact", head: true }),
+        .from("hardware_orders" as never)
+        .select("id, status, customer_name, customer_email, created_at, cancel_reason")
+        .in("status", ["new", "approved", "tech_assigned", "cancelled"] as never)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      context.supabase
+        .from("grain_alerts")
+        .select("id, alert_type, priority, message, created_at, status")
+        .or("alert_type.ilike.%sensor%,alert_type.ilike.%hardware%,alert_type.ilike.%device%")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      context.supabase
+        .from("activity_logs")
+        .select("id", { count: "exact", head: true })
+        .in("severity", ["error", "critical"])
+        .gte("created_at", thirtyDaysAgo),
+      context.supabase
+        .from("activity_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("category", "platform_support")
+        .gte("created_at", thirtyDaysAgo),
     ]);
 
     // Build signups-per-day series (last 30 days).
@@ -220,6 +254,34 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
       pipeline[k] = (pipeline[k] ?? 0) + 1;
     }
 
+    const openHwOrders = (hwOrdersRes.data ?? []).filter(
+      (o: { status?: string }) => o.status !== "cancelled",
+    );
+    const hardwareIssues = openHwOrders.length + (hwIssuesRes.data ?? []).filter(
+      (a: { status?: string }) => a.status === "open" || a.status === "active",
+    ).length;
+    const bugReports = (errorLogsRes as { count?: number })?.count ?? 0;
+    const managerQueries = (supportQueriesRes as { count?: number })?.count ?? 0;
+
+    const hardwareIssuesList = [
+      ...(hwOrdersRes.data ?? []).map((o: Record<string, unknown>) => ({
+        id: String(o.id),
+        type: "order" as const,
+        title: String(o.customer_name ?? o.customer_email ?? "Hardware order"),
+        detail: String(o.status ?? "unknown").replace(/_/g, " "),
+        created_at: String(o.created_at ?? ""),
+      })),
+      ...(hwIssuesRes.data ?? []).map((a: Record<string, unknown>) => ({
+        id: String(a.id),
+        type: "alert" as const,
+        title: String(a.alert_type ?? "Sensor alert"),
+        detail: String(a.message ?? a.priority ?? ""),
+        created_at: String(a.created_at ?? ""),
+      })),
+    ]
+      .sort((a, b) => (b.created_at > a.created_at ? 1 : -1))
+      .slice(0, 5);
+
     return {
       recentSignups: signupsRes.data ?? [],
       systemAlerts: alertsRes.data ?? [],
@@ -233,8 +295,20 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
       },
       pipeline,
       ordersTotal: (ordersRes as any)?.count ?? 0,
-      leadsTotal: (leadsRes as any)?.count ?? 0,
+      leadsTotal: leadsCount,
       pipelineTotal: Object.values(pipeline).reduce((s, n) => s + n, 0),
+      reportingStats: {
+        hardwareIssues,
+        bugReports,
+        managerQueries,
+        totalTickets: hardwareIssues + bugReports + managerQueries,
+      },
+      reportingSeries: [
+        { category: "Hardware", count: hardwareIssues },
+        { category: "Bugs", count: bugReports },
+        { category: "Queries", count: managerQueries },
+      ],
+      hardwareIssuesList,
     };
   });
 
@@ -275,4 +349,87 @@ export const getAllSubscriptions = createServerFn({ method: "GET" })
         business_type: profile?.business_type ?? "N/A",
       };
     });
+  });
+
+export const getPlatformReportingDetails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
+    });
+    if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [hwOrdersRes, hwAlertsRes, errorLogsRes, supportQueriesRes] = await Promise.all([
+      context.supabase
+        .from("hardware_orders" as never)
+        .select("id, status, customer_name, customer_email, contact_phone, created_at, cancel_reason, notes")
+        .in("status", ["new", "approved", "tech_assigned", "pending_payment"] as never)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      context.supabase
+        .from("grain_alerts")
+        .select("id, alert_type, priority, message, created_at, status, admin_id")
+        .or("alert_type.ilike.%sensor%,alert_type.ilike.%hardware%,alert_type.ilike.%device%")
+        .order("created_at", { ascending: false })
+        .limit(50),
+      context.supabase
+        .from("activity_logs")
+        .select("id, user_name, user_role, action, description, severity, created_at, admin_id")
+        .in("severity", ["error", "critical"])
+        .gte("created_at", thirtyDaysAgo)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      context.supabase
+        .from("activity_logs")
+        .select("id, user_name, user_role, action, description, severity, created_at, admin_id, metadata")
+        .eq("category", "platform_support")
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+
+    return {
+      hardwareOrders: hwOrdersRes.data ?? [],
+      hardwareAlerts: hwAlertsRes.data ?? [],
+      bugReports: errorLogsRes.data ?? [],
+      managerQueries: supportQueriesRes.data ?? [],
+    };
+  });
+
+export const submitPlatformQuery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { subject: string; message: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    const role = roleRow?.role ?? "pending";
+    if (!["admin", "manager"].includes(role)) {
+      throw new Error("Only admins and managers can submit platform queries");
+    }
+
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, name, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const adminId = prof?.admin_id ?? context.userId;
+    const { error } = await context.supabase.from("activity_logs").insert({
+      admin_id: adminId,
+      user_id: context.userId,
+      user_name: prof?.name ?? null,
+      user_role: role,
+      action: data.subject.trim(),
+      category: "platform_support",
+      description: data.message.trim(),
+      severity: "info",
+      metadata: { type: "manager_query" } as never,
+    });
+    if (error) throw error;
+    return { ok: true };
   });

@@ -1,1 +1,0 @@
-import{c as e,i as t,n,r,s as i}from"./AreaChart-DoWjhWOR.js";var a=n({chartName:`BarChart`,GraphicalChild:e,defaultTooltipEventType:`axis`,validateTooltipEventTypes:[`axis`,`item`],axisComponents:[{axisType:`xAxis`,AxisComp:t},{axisType:`yAxis`,AxisComp:r}],formatAxisMap:i});export{a as t};

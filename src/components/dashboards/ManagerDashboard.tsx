@@ -2,13 +2,14 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { useDashboardStats } from "./useDashboardStats";
 import { RecentBatchesCard, RecentAlertsCard, SilosOccupancyCard, ActuatorsCard } from "./DashboardBlocks";
+import { PlatformQueryForm } from "./PlatformQueryForm";
 import { Badge } from "@/components/ui/badge";
 
 export function ManagerDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
   return (
     <AdminPageShell
-      title={`Manager${name ? ` — ${name}` : ""}`}
+      title={`Welcome back, ${name || "Manager"}`}
       subtitle="Operational overview of batches, dispatch and grain quality"
       actions={<Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Manager</Badge>}
     >
@@ -27,6 +28,7 @@ export function ManagerDashboard({ name }: { name?: string }) {
         <RecentAlertsCard />
         <SilosOccupancyCard />
         <ActuatorsCard />
+        <PlatformQueryForm />
       </div>
     </AdminPageShell>
   );
