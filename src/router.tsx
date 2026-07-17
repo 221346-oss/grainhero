@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, useRouterState } from "@tanstack/react-router";
+import type React from "react";
 import { routeTree } from "./routeTree.gen";
 import {
   DashboardSkeleton,
@@ -27,7 +28,7 @@ import {
 // Route → matching page skeleton. Every page-level skeleton mirrors the real
 // layout (container, grid, tile counts) so the pending state visually snaps
 // to the destination page instead of a generic table/insight block.
-const PAGE_SKELETONS: Record<string, () => JSX.Element> = {
+const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/grain-batches": GrainBatchesSkeleton,
   "/silos": SilosSkeleton,
   "/sensors": SensorsSkeleton,
