@@ -48,7 +48,7 @@ function TechnicianInstallDetailPage() {
   });
   const commission = useMutation({
     mutationFn: (v: { orderDeviceId: string; serialNumber: string; siloId: string; deviceType: string }) =>
-      commissionFn({ data: v as never & { installId: string } as never }),
+      commissionFn({ data: { installId, ...v } }),
     onSuccess: () => { toast.success("Device commissioned"); invalidate(); },
     onError: (e) => toast.error(String(e)),
   });
