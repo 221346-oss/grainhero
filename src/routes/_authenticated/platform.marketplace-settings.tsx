@@ -51,7 +51,7 @@ function MarketplaceSettingsPage() {
   return (
     <AdminPageShell
       title="Marketplace settings"
-      description="Control storefront branding, buyer email copy and checkout messaging. All values apply immediately across the buyer marketplace and transactional emails."
+      subtitle="Control storefront branding, buyer email copy and checkout messaging. Changes apply immediately across the buyer marketplace and transactional emails."
       actions={
         <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
           {mut.isPending ? "Saving…" : "Save changes"}
