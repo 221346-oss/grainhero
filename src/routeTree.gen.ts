@@ -45,6 +45,7 @@ import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
+import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
@@ -80,6 +81,7 @@ import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
 import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
+import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
@@ -102,6 +104,7 @@ import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
 import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/public/cron/review-prompts'
+import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api/public/cron/return-auto-approve'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
 import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
@@ -291,6 +294,11 @@ const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
 const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
   id: '/revenue',
   path: '/revenue',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReturnsRoute = AuthenticatedReturnsRouteImport.update({
+  id: '/returns',
+  path: '/returns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
@@ -487,6 +495,12 @@ const AuthenticatedPlatformReviewsRoute =
     path: '/platform/reviews',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformQualityRoute =
+  AuthenticatedPlatformQualityRouteImport.update({
+    id: '/platform/quality',
+    path: '/platform/quality',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformPlansRoute =
   AuthenticatedPlatformPlansRouteImport.update({
     id: '/platform/plans',
@@ -617,6 +631,12 @@ const ApiPublicCronReviewPromptsRoute =
     path: '/api/public/cron/review-prompts',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronReturnAutoApproveRoute =
+  ApiPublicCronReturnAutoApproveRouteImport.update({
+    id: '/api/public/cron/return-auto-approve',
+    path: '/api/public/cron/return-auto-approve',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLifecycleEmailsRoute =
   ApiPublicCronLifecycleEmailsRouteImport.update({
     id: '/api/public/cron/lifecycle-emails',
@@ -692,6 +712,7 @@ export interface FileRoutesByFullPath {
   '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/returns': typeof AuthenticatedReturnsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -727,6 +748,7 @@ export interface FileRoutesByFullPath {
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
+  '/platform/quality': typeof AuthenticatedPlatformQualityRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -746,6 +768,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
   '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
@@ -790,6 +813,7 @@ export interface FileRoutesByTo {
   '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/returns': typeof AuthenticatedReturnsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -825,6 +849,7 @@ export interface FileRoutesByTo {
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
+  '/platform/quality': typeof AuthenticatedPlatformQualityRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -844,6 +869,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
   '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
@@ -892,6 +918,7 @@ export interface FileRoutesById {
   '/_authenticated/plan-management': typeof AuthenticatedPlanManagementRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/returns': typeof AuthenticatedReturnsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -927,6 +954,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
+  '/_authenticated/platform/quality': typeof AuthenticatedPlatformQualityRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -946,6 +974,7 @@ export interface FileRoutesById {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
   '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
@@ -994,6 +1023,7 @@ export interface FileRouteTypes {
     | '/plan-management'
     | '/plans'
     | '/reports'
+    | '/returns'
     | '/revenue'
     | '/sales'
     | '/security-center'
@@ -1029,6 +1059,7 @@ export interface FileRouteTypes {
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
+    | '/platform/quality'
     | '/platform/reviews'
     | '/platform/sellers'
     | '/platform/sla-alerts'
@@ -1048,6 +1079,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/return-auto-approve'
     | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
@@ -1092,6 +1124,7 @@ export interface FileRouteTypes {
     | '/plan-management'
     | '/plans'
     | '/reports'
+    | '/returns'
     | '/revenue'
     | '/sales'
     | '/security-center'
@@ -1127,6 +1160,7 @@ export interface FileRouteTypes {
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
+    | '/platform/quality'
     | '/platform/reviews'
     | '/platform/sellers'
     | '/platform/sla-alerts'
@@ -1146,6 +1180,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/return-auto-approve'
     | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
@@ -1193,6 +1228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/plan-management'
     | '/_authenticated/plans'
     | '/_authenticated/reports'
+    | '/_authenticated/returns'
     | '/_authenticated/revenue'
     | '/_authenticated/sales'
     | '/_authenticated/security-center'
@@ -1228,6 +1264,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
+    | '/_authenticated/platform/quality'
     | '/_authenticated/platform/reviews'
     | '/_authenticated/platform/sellers'
     | '/_authenticated/platform/sla-alerts'
@@ -1247,6 +1284,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/return-auto-approve'
     | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
@@ -1279,6 +1317,7 @@ export interface RootRouteChildren {
   ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
   ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
+  ApiPublicCronReturnAutoApproveRoute: typeof ApiPublicCronReturnAutoApproveRoute
   ApiPublicCronReviewPromptsRoute: typeof ApiPublicCronReviewPromptsRoute
   ApiPublicCronSlaDigestRoute: typeof ApiPublicCronSlaDigestRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
@@ -1542,6 +1581,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRevenueRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/returns': {
+      id: '/_authenticated/returns'
+      path: '/returns'
+      fullPath: '/returns'
+      preLoaderRoute: typeof AuthenticatedReturnsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
       path: '/reports'
@@ -1787,6 +1833,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformReviewsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/quality': {
+      id: '/_authenticated/platform/quality'
+      path: '/platform/quality'
+      fullPath: '/platform/quality'
+      preLoaderRoute: typeof AuthenticatedPlatformQualityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/plans': {
       id: '/_authenticated/platform/plans'
       path: '/platform/plans'
@@ -1941,6 +1994,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronReviewPromptsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/return-auto-approve': {
+      id: '/api/public/cron/return-auto-approve'
+      path: '/api/public/cron/return-auto-approve'
+      fullPath: '/api/public/cron/return-auto-approve'
+      preLoaderRoute: typeof ApiPublicCronReturnAutoApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/lifecycle-emails': {
       id: '/api/public/cron/lifecycle-emails'
       path: '/api/public/cron/lifecycle-emails'
@@ -2078,6 +2138,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlanManagementRoute: typeof AuthenticatedPlanManagementRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedReturnsRoute: typeof AuthenticatedReturnsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSecurityCenterRoute: typeof AuthenticatedSecurityCenterRoute
@@ -2104,6 +2165,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
+  AuthenticatedPlatformQualityRoute: typeof AuthenticatedPlatformQualityRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
@@ -2136,6 +2198,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlanManagementRoute: AuthenticatedPlanManagementRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedReturnsRoute: AuthenticatedReturnsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSecurityCenterRoute: AuthenticatedSecurityCenterRoute,
@@ -2167,6 +2230,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
+  AuthenticatedPlatformQualityRoute: AuthenticatedPlatformQualityRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
@@ -2251,6 +2315,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
   ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
+  ApiPublicCronReturnAutoApproveRoute: ApiPublicCronReturnAutoApproveRoute,
   ApiPublicCronReviewPromptsRoute: ApiPublicCronReviewPromptsRoute,
   ApiPublicCronSlaDigestRoute: ApiPublicCronSlaDigestRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,

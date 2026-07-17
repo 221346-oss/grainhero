@@ -63,6 +63,25 @@ export interface MarketplaceSettings {
     bannedPhrases: string[];
     sellerResponseWindowDays: number;
   };
+  messaging: {
+    enabled: boolean;
+    attachmentsAllowed: boolean;
+    autoModerationKeywords: string[];
+    maxBodyChars: number;
+  };
+  returns: {
+    enabled: boolean;
+    windowDays: number;
+    autoApproveHours: number;
+    varianceThresholdPct: number;
+    reasons: Array<{ key: string; label: string; refundEligible: boolean }>;
+    resolutions: Array<{ key: string; label: string; refund: "none" | "partial" | "full" | "replace" }>;
+  };
+  quality: {
+    requiredForListings: boolean;
+    certificateValidityDays: number;
+    metrics: Array<{ key: string; label: string; unit: string; min?: number; max?: number }>;
+  };
 }
 
 export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
@@ -88,6 +107,12 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     disputeResolved: "Dispute resolved on order {{orderNumber}}",
     refundIssued: "Refund issued for order {{orderNumber}}",
     orderCancelled: "Order {{orderNumber}} cancelled",
+    messageReceived: "New message on order {{orderNumber}}",
+    returnRequested: "Return requested on order {{orderNumber}}",
+    returnApproved: "Return approved for order {{orderNumber}}",
+    returnDenied: "Return denied for order {{orderNumber}}",
+    returnRefunded: "Refund issued for return on order {{orderNumber}}",
+    qualityCertificateAdded: "Quality certificate added for batch {{batchId}}",
   },
   emailBodies: {
     placed:
@@ -118,6 +143,18 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       "A refund for order {{orderNumber}} has been issued. It should appear on your statement in a few business days.\n{{trackingUrl}}",
     orderCancelled:
       "Order {{orderNumber}} has been cancelled. If this was unexpected, contact support.\n{{trackingUrl}}",
+    messageReceived:
+      "You have a new message on order {{orderNumber}}. Read and reply here: {{trackingUrl}}",
+    returnRequested:
+      "A return has been requested on order {{orderNumber}} — reason: {{reason}}. Review it here: {{trackingUrl}}",
+    returnApproved:
+      "Your return request for order {{orderNumber}} was approved. Next steps: {{trackingUrl}}",
+    returnDenied:
+      "Your return request for order {{orderNumber}} was denied. Details: {{trackingUrl}}",
+    returnRefunded:
+      "A refund has been issued for your return on order {{orderNumber}}. It should appear in a few business days.\n{{trackingUrl}}",
+    qualityCertificateAdded:
+      "A new quality certificate was uploaded for batch {{batchId}}. View it here: {{trackingUrl}}",
   },
   dispatch: {
     couriers: [
@@ -190,6 +227,40 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     bannedPhrases: [],
     sellerResponseWindowDays: 30,
   },
+  messaging: {
+    enabled: true,
+    attachmentsAllowed: true,
+    autoModerationKeywords: [],
+    maxBodyChars: 4000,
+  },
+  returns: {
+    enabled: true,
+    windowDays: 14,
+    autoApproveHours: 72,
+    varianceThresholdPct: 5,
+    reasons: [
+      { key: "quality_issue", label: "Quality issue", refundEligible: true },
+      { key: "wrong_grain", label: "Wrong grain / grade", refundEligible: true },
+      { key: "short_weight", label: "Short weight", refundEligible: true },
+      { key: "damaged", label: "Damaged in transit", refundEligible: true },
+      { key: "other", label: "Other", refundEligible: false },
+    ],
+    resolutions: [
+      { key: "refund_full", label: "Full refund", refund: "full" },
+      { key: "refund_partial", label: "Partial refund", refund: "partial" },
+      { key: "replace", label: "Replace / redispatch", refund: "replace" },
+      { key: "reject", label: "Reject", refund: "none" },
+    ],
+  },
+  quality: {
+    requiredForListings: false,
+    certificateValidityDays: 90,
+    metrics: [
+      { key: "moisture", label: "Moisture", unit: "%", min: 0, max: 14 },
+      { key: "purity", label: "Purity", unit: "%", min: 95 },
+      { key: "foreign_matter", label: "Foreign matter", unit: "%", max: 2 },
+    ],
+  },
 };
 
 export function mergeSettings(raw: unknown): MarketplaceSettings {
@@ -232,6 +303,23 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
       ...DEFAULT_MARKETPLACE_SETTINGS.reviewsPolicy,
       ...(r.reviewsPolicy ?? {}),
       bannedPhrases: r.reviewsPolicy?.bannedPhrases ?? DEFAULT_MARKETPLACE_SETTINGS.reviewsPolicy.bannedPhrases,
+    },
+    messaging: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.messaging,
+      ...(r.messaging ?? {}),
+      autoModerationKeywords:
+        r.messaging?.autoModerationKeywords ?? DEFAULT_MARKETPLACE_SETTINGS.messaging.autoModerationKeywords,
+    },
+    returns: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.returns,
+      ...(r.returns ?? {}),
+      reasons: r.returns?.reasons ?? DEFAULT_MARKETPLACE_SETTINGS.returns.reasons,
+      resolutions: r.returns?.resolutions ?? DEFAULT_MARKETPLACE_SETTINGS.returns.resolutions,
+    },
+    quality: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.quality,
+      ...(r.quality ?? {}),
+      metrics: r.quality?.metrics ?? DEFAULT_MARKETPLACE_SETTINGS.quality.metrics,
     },
   };
 }
@@ -337,6 +425,36 @@ const SCHEMA = z.object({
     bannedPhrases: z.array(z.string()).max(200),
     sellerResponseWindowDays: z.number().int().min(0).max(365),
   }).optional().default({ autoPublishThreshold: 3, bannedPhrases: [], sellerResponseWindowDays: 30 }),
+  messaging: z.object({
+    enabled: z.boolean(),
+    attachmentsAllowed: z.boolean(),
+    autoModerationKeywords: z.array(z.string()).max(200),
+    maxBodyChars: z.number().int().min(100).max(20000),
+  }).optional().default({ enabled: true, attachmentsAllowed: true, autoModerationKeywords: [], maxBodyChars: 4000 }),
+  returns: z.object({
+    enabled: z.boolean(),
+    windowDays: z.number().int().min(0).max(365),
+    autoApproveHours: z.number().int().min(0).max(2000),
+    varianceThresholdPct: z.number().min(0).max(100),
+    reasons: z.array(z.object({
+      key: z.string().min(1), label: z.string().min(1), refundEligible: z.boolean(),
+    })).max(30),
+    resolutions: z.array(z.object({
+      key: z.string().min(1), label: z.string().min(1),
+      refund: z.enum(["none", "partial", "full", "replace"]),
+    })).max(30),
+  }).optional().default({
+    enabled: true, windowDays: 14, autoApproveHours: 72, varianceThresholdPct: 5,
+    reasons: [], resolutions: [],
+  }),
+  quality: z.object({
+    requiredForListings: z.boolean(),
+    certificateValidityDays: z.number().int().min(0).max(3650),
+    metrics: z.array(z.object({
+      key: z.string().min(1), label: z.string().min(1), unit: z.string().max(20),
+      min: z.number().optional(), max: z.number().optional(),
+    })).max(30),
+  }).optional().default({ requiredForListings: false, certificateValidityDays: 90, metrics: [] }),
 });
 
 export const updateMarketplaceSettings = createServerFn({ method: "POST" })
