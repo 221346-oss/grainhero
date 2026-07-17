@@ -10,7 +10,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -114,7 +114,7 @@ export const generateFinancialPdf = createServerFn({ method: "POST" })
   .inputValidator((d: { type: "pnl" | "revenue" | "mrr" }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
 
     const [subs, orders, policies] = await Promise.all([

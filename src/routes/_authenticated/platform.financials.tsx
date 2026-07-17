@@ -7,6 +7,7 @@ import { FileDown, TrendingUp, TrendingDown, DollarSign, Wallet, Package, Shield
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, BarChart, Bar } from "recharts";
 import { getFinancialSummary, generateFinancialPdf } from "@/lib/financials.functions";
 import { toast } from "sonner";
+import { FinancialsSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/platform/financials")({
   component: FinancialsPage,
@@ -31,7 +32,7 @@ function FinancialsPage() {
     } catch (e: any) { toast.error(e.message ?? "Failed to generate PDF"); }
   }
 
-  if (isLoading || !data) return <div className="p-8 text-sm text-muted-foreground">Loading financial dashboard…</div>;
+  if (isLoading || !data) return <FinancialsSkeleton />;
   const { kpis, pnl, mix, planSplit, trend } = data;
 
   return (

@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import { getAdminProfile, updateAdminContact, setAdminSuspended, getAdminOrderFrequency } from "@/lib/admin-profile.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
+import { AdminProfileSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/admins/$adminId")({
   component: AdminProfilePage,
@@ -65,7 +66,7 @@ function AdminProfilePage() {
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
-  if (profileQ.isLoading) return <div className="p-8 text-sm text-muted-foreground">Loading admin…</div>;
+  if (profileQ.isLoading) return <AdminProfileSkeleton />;
   const d = profileQ.data;
   if (!d || !d.profile) return <div className="p-8 text-sm text-muted-foreground">Admin not found.</div>;
   const p = d.profile as any;

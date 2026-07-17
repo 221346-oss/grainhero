@@ -35,7 +35,7 @@ export const upsertInstallation = createServerFn({ method: "POST" })
   }) => d)
   .handler(async ({ data, context }) => {
     if (!(await isSuperAdmin(context))) throw new Error("Forbidden: super_admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin
       .from("hardware_order_installations")
       .upsert({ order_id: data.orderId, ...data.patch }, { onConflict: "order_id" });
@@ -48,7 +48,7 @@ export const upsertDevices = createServerFn({ method: "POST" })
   .inputValidator((d: { orderId: string; devices: { serial: string; model?: string; status?: string }[] }) => d)
   .handler(async ({ data, context }) => {
     if (!(await isSuperAdmin(context))) throw new Error("Forbidden: super_admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     await supabaseAdmin.from("hardware_order_devices").delete().eq("order_id", data.orderId);
     if (data.devices.length > 0) {
       const { error } = await supabaseAdmin.from("hardware_order_devices").insert(
@@ -64,7 +64,7 @@ export const addVisitEvent = createServerFn({ method: "POST" })
   .inputValidator((d: { orderId: string; note: string; photo_url?: string }) => d)
   .handler(async ({ data, context }) => {
     if (!(await isSuperAdmin(context))) throw new Error("Forbidden: super_admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin
       .from("hardware_order_visit_events")
       .insert({ order_id: data.orderId, note: data.note, photo_url: data.photo_url ?? null, created_by: context.userId });

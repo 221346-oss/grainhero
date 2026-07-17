@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PlatformOrdersSkeleton } from "@/components/app/skeletons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
@@ -115,7 +116,7 @@ function PlatformOrdersPage() {
       </AdminFilterBar>
 
       {isLoading ? (
-        <div className="text-sm text-slate-500">Loading orders…</div>
+        <PlatformOrdersSkeleton />
       ) : orders.length === 0 ? (
         <Card><CardContent className="p-8 text-center text-sm text-slate-500">No orders match this filter</CardContent></Card>
       ) : (

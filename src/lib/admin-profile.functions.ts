@@ -50,7 +50,7 @@ export const updateAdminContact = createServerFn({ method: "POST" })
   .inputValidator((d: { adminId: string; patch: { name?: string; phone?: string; notes?: string } }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin.from("profiles").update(data.patch).eq("id", data.adminId);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -61,7 +61,7 @@ export const setAdminSuspended = createServerFn({ method: "POST" })
   .inputValidator((d: { adminId: string; suspended: boolean }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const { error } = await supabaseAdmin.from("profiles").update({ suspended: data.suspended }).eq("id", data.adminId);
     if (error) throw new Error(error.message);
     return { ok: true, suspended: data.suspended };
