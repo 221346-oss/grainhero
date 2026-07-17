@@ -133,6 +133,16 @@ export const transitionOrder = createServerFn({ method: "POST" })
       action: `order.${data.toState}`, targetType: "buyer_order", targetId: data.orderId,
       meta: { from, to: data.toState },
     });
+
+    if (data.toState === "dispatched") {
+      try {
+        const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+        await sendBuyerOrderEmail(context.supabase, data.orderId, "dispatched");
+      } catch (e) {
+        console.warn("[buyer-orders] dispatched email failed:", (e as Error).message);
+      }
+    }
+
     return { ok: true, from, to: data.toState };
   });
 
