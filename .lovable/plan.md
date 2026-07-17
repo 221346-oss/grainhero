@@ -1,168 +1,74 @@
-# Phase 10 — Silo Operations Cockpit & Grain Batch Lifecycle
+# Phase 11 — Buyer marketplace, invoicing & payment lifecycle
 
-Phase 9 delivered the telemetry/alert/actuator plumbing and the drawer/console primitives.
-Phase 10 turns that into a **per-silo operations cockpit** that Managers and Technicians actually work from all day, and closes the loop on the grain batch lifecycle (intake → storage → treatment → dispatch) that the earlier plans call out but is only half-wired today.
-
-This is the "make the operator's day feel calm" phase — one page per silo where every live number, alert, actuator, batch and rule is reachable in two clicks.
-
----
+Phases 1–10 covered platform hardening, telemetry, actuators, silo cockpit, batches, and automation. Phase 11 closes the **revenue loop for the tenant**: turn `ready` grain batches into buyer-facing listings, orders, invoices, and tracked payments. This is the "outbound" side of Grain Hero: everything after the grain leaves the silo.
 
 ## Goals
 
-1. A dedicated `/silos/$siloId` cockpit route with multi-metric live charts, threshold state, active alerts, actuator quick-controls, batch, and heartbeat health — all realtime.
-2. Grain batch lifecycle state machine wired end-to-end (intake → active → treatment → ready → dispatched) with audit trail.
-3. Actuator "auto mode" — when a silo threshold trips, an automation rule can queue an actuator command (ventilate on high humidity, cool on high temp). Manual override always wins.
-4. Technician "attention queue" — one screen showing every silo currently in warn/critical or with a stale device, ranked, so field staff know what to touch first.
-5. Fill in the last data gaps blocking Phase 11 (ML feedback, Phase 12 buyer flow, Phase 13 mobile parity): batch weights, quality snapshots on state transitions, and silo occupancy %.
+1. Every silo batch that reaches `ready` state is one click away from being listed to buyers.
+2. Buyers can be invited, browse a tenant-scoped catalog, place a reservation, and pay.
+3. Invoices generate deterministically from reservations; PDF + email dispatch via existing notify + Resend.
+4. Payments (Stripe + manual bank/cash) update invoice status, unlock batch `dispatched → sold` transitions, and feed the Financials dashboard already built in earlier phases.
+5. Manager gets a **Sales cockpit** page mirroring Phase 10's Silo cockpit style (KPIs, table, drawers).
 
----
+## Data model
 
-## Scope (what's in / out)
+Additive migration:
 
-**In**
-- New route `/_authenticated/silos/$siloId` (cockpit).
-- New route `/_authenticated/attention` (technician/manager triage queue).
-- Grain batch state machine + drawer on both `/grain-batches` and cockpit.
-- Automation rules table + evaluator hook inside `evaluateReadingThresholds`.
-- Silo occupancy computed field + tile.
-- Realtime everywhere it matters (readings, alerts, commands, batch state).
+- `grain_listings` — `batch_id` (unique), `admin_id`, `title`, `price_per_kg`, `available_kg`, `min_order_kg`, `visibility` (`private|buyer_network|public`), `status` (`draft|active|paused|sold_out|archived`), `expires_at`.
+- `buyer_orders` — `admin_id`, `buyer_id`, `listing_id`, `quantity_kg`, `unit_price`, `subtotal`, `status` (`pending|confirmed|invoiced|paid|dispatched|completed|cancelled|refunded`), `expected_delivery_date`, `notes`.
+- `buyer_order_events` — audit trail (`from_state`, `to_state`, `actor_user_id`, `note`).
+- Extend existing `buyer_invoices`: add `order_id` (FK), `pdf_url`, `stripe_payment_intent_id`, `paid_via` (`stripe|bank|cash|adjustment`).
+- Extend existing `buyer_payments`: add `invoice_id` FK if missing, `receipt_url`.
+- Enable Realtime on `grain_listings`, `buyer_orders`, `buyer_invoices`.
+- RLS: tenant scoped by `admin_id`; buyers see their own orders/invoices via `buyer_id` mapping already in `buyers`.
 
-**Out (deferred)**
-- ML model calls (Phase 11).
-- Buyer-facing marketplace/order flow (Phase 12).
-- Mobile app parity (Phase 13).
-- Multi-tenant plan gating for automation rules — reuses existing `max_active_alert_rules` for now.
+Every new table follows the required `CREATE → GRANT → RLS → POLICY` order with `authenticated` + `service_role` grants (no `anon`).
 
----
+## Server functions (`src/lib/`)
 
-## Data model changes
-
-Single migration:
-
-```text
-grain_batches
-  + state              text        -- intake|active|treatment|ready|dispatched|rejected
-  + state_changed_at   timestamptz
-  + net_weight_kg      numeric
-  + quality_snapshot   jsonb       -- {temp, humidity, moisture, co2} at last transition
-
-grain_batch_events                 -- new audit table
-  id, batch_id, from_state, to_state, actor_user_id,
-  note, snapshot jsonb, created_at
-
-automation_rules                   -- new
-  id, admin_id, silo_id, actuator_id,
-  trigger_metric text,             -- temperature|humidity|moisture|co2
-  trigger_op text,                 -- gt|lt
-  trigger_value numeric,
-  command text,                    -- on|off|pulse|set_level
-  command_params jsonb,
-  cooldown_seconds int default 900,
-  last_fired_at timestamptz,
-  enabled bool default true
-
-silos
-  + capacity_kg        numeric     -- for occupancy % (nullable, backfill later)
-```
-
-Grants + RLS follow existing tenant pattern (`admin_id = get_tenant_admin_id(auth.uid())`).
-Enable realtime on `grain_batches`, `grain_batch_events`, `automation_rules`.
-
----
-
-## Server functions (new files)
-
-- `src/lib/silo-cockpit.functions.ts`
-  - `getSiloCockpit({ siloId })` — one call returning silo, current readings for all 4 metrics, active alerts, actuators, current batch, heartbeat age, occupancy %.
-- `src/lib/grain-batch-lifecycle.functions.ts`
-  - `transitionBatch({ batchId, toState, note })` — validates transition, captures quality snapshot from latest reading, writes `grain_batch_events`, unified activity log.
-  - `listBatchEvents({ batchId })`.
-- `src/lib/automation-rules.functions.ts`
-  - `listAutomationRules({ siloId? })`, `saveAutomationRule(...)`, `deleteAutomationRule({ id })`, `toggleAutomationRule({ id, enabled })`.
-- `src/lib/attention-queue.functions.ts`
-  - `getAttentionQueue()` — silos ranked by (critical alerts desc, warn alerts desc, stale heartbeat, oldest unacknowledged).
-
-Extend `evaluateReadingThresholds` (Phase 9) to also load matching enabled `automation_rules` for the silo/metric and, when triggered and outside cooldown, call `issueCommand` internally + stamp `last_fired_at`. Manual commands within the last 5 min block auto-fire (operator override).
-
----
+- `listings.functions.ts` — `createListingFromBatch`, `updateListing`, `pauseListing`, `archiveListing`, `listListings` (tenant + buyer views), `getListingPublic`.
+- `buyer-orders.functions.ts` — `placeOrder` (buyer role), `confirmOrder` / `cancelOrder` / `markDispatched` / `markCompleted` (tenant), `listOrders`, `getOrder`. State machine mirrors Phase 10 (`ALLOWED` map + `buyer_order_events` insert + `logActivity`).
+- `invoicing.functions.ts` — `generateInvoiceForOrder` (idempotent by `order_id`), `sendInvoiceEmail` (Resend via existing `dispatchNotification`), `renderInvoicePdf` (server-side PDF via existing pdf util already used in Financials).
+- `buyer-payments.functions.ts` — `recordManualPayment`, `createStripeCheckout`, and webhook-driven `applyStripePayment` extension to the existing Stripe webhook route (idempotent via `stripe_events`).
+- Cross-links: on `buyer_orders` → `paid` transition, allow the matching `grain_batches` transition `ready → dispatched → sold` via Phase 10's `transitionBatch`, gated by an internal helper (not exposed as a public server fn).
 
 ## UI
 
-### `/_authenticated/silos/$siloId` cockpit
-Reuses shell/tokens from Phase 9. Layout:
+- `src/routes/_authenticated/sales.tsx` — Manager sales cockpit: KPI tiles (open orders, invoiced, paid this month, overdue), split table (Orders | Invoices | Payments) using `AdminDataCard` shell, drawers for status changes.
+- `src/routes/_authenticated/listings.tsx` — Listings CRUD, "Publish from ready batch" quick action showing eligible `ready` batches with their `quality_snapshot`.
+- `src/routes/_authenticated/buyers.$buyerId.tsx` — Buyer profile with order/invoice/payment history (mirrors `admins.$adminId.tsx` layout).
+- `src/routes/_authenticated/orders.$orderId.tsx` — Order detail: line items, event timeline (reuses `BatchLifecycleActions` timeline pattern), invoice download, payment history.
+- Buyer-facing (existing buyer role): `src/routes/_authenticated/marketplace.tsx` + `marketplace.$listingId.tsx` — catalog + reservation flow scoped to buyers the tenant has invited.
+- Skeletons registered in `src/router.tsx`: `SalesSkeleton`, `ListingsSkeleton`, `MarketplaceSkeleton`, `OrderDetailSkeleton` — each mirroring its page shell (max-w-7xl, tile row, table).
+- Sidebar: add **Sales** (manager+) and **Marketplace** (buyer role) using the existing role-aware nav.
 
-```text
-┌ Header: silo name · warehouse · occupancy % · [Rules] [Thresholds] [Edit] ┐
-│ Summary tiles: Temp · Humidity · Moisture · CO₂ (each = value + trend arrow, live badge)
-│ 2-col: LiveReadingChart(temperature) | LiveReadingChart(humidity)
-│ 2-col: LiveReadingChart(moisture)    | LiveReadingChart(co2)
-│ Active alerts (compact list, ack/resolve inline)
-│ Actuators (mini CommandConsole per actuator, auto-mode badge)
-│ Current batch card (state pill, transition button → BatchStateDrawer)
-│ Device health strip (heartbeat age, battery, signal, quality)
-└─────────────────────────────────────────────────────────────────────────┘
-```
+## Notifications & realtime
 
-Every chart, alert, command and batch event subscribes to Postgres changes and invalidates its own query key — no page reload.
+- New order → notify admin + manager (`ops`, `info`).
+- Invoice sent → notify buyer (`billing`, `info`) via email + in-app.
+- Payment received → notify manager + buyer.
+- Overdue invoice cron sweep: reuse `/api/public/cron/heartbeat-sweep` pattern — new route `/api/public/cron/invoice-sweep` marks overdue and emits notifications.
+- Realtime channels on `buyer_orders` and `buyer_invoices` invalidate `sales`, `orders`, `buyers.*` queries.
 
-### New components
-- `SiloCockpitHeader.tsx`
-- `MetricTile.tsx` (value + delta + QualityBadge)
-- `BatchStateDrawer.tsx` (state machine UI: allowed transitions, note field, snapshot preview, event timeline)
-- `AutomationRuleDrawer.tsx` (list + form: metric/op/value → actuator/command, cooldown, enabled toggle)
-- `AttentionRow.tsx` (silo, top issue, time in state, jump button)
+## Plan gating
 
-### Route additions
-- `/_authenticated/silos.$siloId.tsx` — cockpit
-- `/_authenticated/attention.tsx` — triage queue for technicians (also linked from Manager dashboard)
-- Add "Attention" nav item to sidebar for `manager` + `technician` roles only.
+Extend `plan-gate.ts` with:
+- `max_active_listings`
+- `max_monthly_orders`
+Enforced in `createListingFromBatch` and `placeOrder`.
 
-### Existing pages touched (minimal)
-- `silos.tsx` — each silo card gets an "Open cockpit" button linking to the new route.
-- `grain-batches.tsx` — replace the ad-hoc status dropdown with `BatchStateDrawer` trigger.
-- `PAGE_SKELETONS` in `src/router.tsx` — register `SiloCockpitSkeleton` and `AttentionSkeleton`.
+## Out of scope for Phase 11
 
----
+- Shipping/logistics tracking (Phase 12: dispatch & delivery).
+- ML price recommendation (Phase 13: analytics & predictions polish).
+- Multi-currency (single tenant currency from `platform_settings`).
 
-## Realtime channels used
+## Acceptance criteria
 
-| Channel | Table | Filter |
-|--------|-------|--------|
-| cockpit-readings-<siloId> | sensor_readings | silo_id=eq.<siloId> |
-| cockpit-alerts-<siloId> | grain_alerts | silo_id=eq.<siloId> |
-| cockpit-cmds-<siloId> | actuator_commands | silo_id=eq.<siloId> |
-| cockpit-batch-<siloId> | grain_batches | silo_id=eq.<siloId> |
+- Creating a listing from a `ready` batch requires zero re-entry of grain data.
+- Placing an order → invoice generated → payment recorded → batch auto-transitions to `sold` with full audit trail in both `buyer_order_events` and `grain_batch_events`.
+- Financials dashboard (built in earlier phase) shows the new revenue without code changes (reads `subscriptions` + `buyer_invoices`).
+- All state changes appear in unified `activity_logs`.
+- Every new page uses the emerald/slate `AdminPageShell` + registered skeleton.
 
-All wrapped in `useEffect` with `removeChannel` cleanup (per project rule).
-
----
-
-## Skeletons
-
-Add `SiloCockpitSkeleton` and `AttentionSkeleton` sized to their real layouts (`max-w-7xl`, matching tile/chart grid) so the loading state doesn't jump. Wire into `PAGE_SKELETONS` map — no global `AutoPending`.
-
----
-
-## Acceptance checks
-
-- Opening `/silos/$siloId` shows live values within 2s and updates without refresh when a new reading lands.
-- Transitioning a batch state creates a `grain_batch_events` row and a unified activity log entry; snapshot is populated from the latest reading.
-- Creating an automation rule "humidity > 70 → fan on" and inserting a reading of 75 causes an `actuator_commands` row with source=`automation` and honors the 15-min cooldown.
-- A manual `issueCommand` on the same actuator in the last 5 min prevents auto-fire.
-- `/attention` lists silos ordered by severity and updates realtime when an alert is acknowledged elsewhere.
-- Existing `/sensors`, `/actuators`, `/grain-alerts` pages continue to work unchanged.
-- `tsgo` clean; no Node-only deps introduced.
-
----
-
-## Rollout order (single phase, small commits)
-
-1. Migration (schema + grants + RLS + realtime publication).
-2. Server functions (cockpit, lifecycle, rules, attention).
-3. Extend threshold evaluator with automation rule dispatch + cooldown.
-4. Cockpit route + components + skeleton.
-5. Attention route + sidebar entry + skeleton.
-6. Batch drawer wired into `/grain-batches`.
-7. Verify with `tsgo` and a Playwright smoke on `/silos/$firstId` (chart renders, ack works).
-
-Reply **go** to execute Phase 10.
+Reply **go** to start Phase 11.
