@@ -68,6 +68,7 @@ import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
+import { Route as MarketplaceSellerAdminIdRouteImport } from './routes/marketplace.seller.$adminId'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
@@ -414,6 +415,12 @@ const AuthenticatedPlatformIndexRoute =
     path: '/platform/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const MarketplaceSellerAdminIdRoute =
+  MarketplaceSellerAdminIdRouteImport.update({
+    id: '/seller/$adminId',
+    path: '/seller/$adminId',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
 const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
   id: '/api/public/telemetry',
   path: '/api/public/telemetry',
@@ -707,6 +714,7 @@ export interface FileRoutesByFullPath {
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -801,6 +809,7 @@ export interface FileRoutesByTo {
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -899,6 +908,7 @@ export interface FileRoutesById {
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -997,6 +1007,7 @@ export interface FileRouteTypes {
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
@@ -1091,6 +1102,7 @@ export interface FileRouteTypes {
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
@@ -1188,6 +1200,7 @@ export interface FileRouteTypes {
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/platform/orders/$orderId'
@@ -1650,6 +1663,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/platform/'
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/marketplace/seller/$adminId': {
+      id: '/marketplace/seller/$adminId'
+      path: '/seller/$adminId'
+      fullPath: '/marketplace/seller/$adminId'
+      preLoaderRoute: typeof MarketplaceSellerAdminIdRouteImport
+      parentRoute: typeof MarketplaceRoute
     }
     '/api/public/telemetry': {
       id: '/api/public/telemetry'
@@ -2127,11 +2147,13 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
 interface MarketplaceRouteChildren {
   MarketplaceSlugRoute: typeof MarketplaceSlugRoute
   MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MarketplaceSellerAdminIdRoute: typeof MarketplaceSellerAdminIdRoute
 }
 
 const MarketplaceRouteChildren: MarketplaceRouteChildren = {
   MarketplaceSlugRoute: MarketplaceSlugRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MarketplaceSellerAdminIdRoute: MarketplaceSellerAdminIdRoute,
 }
 
 const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
