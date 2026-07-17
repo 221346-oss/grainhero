@@ -489,6 +489,25 @@ const SCHEMA = z.object({
       min: z.number().optional(), max: z.number().optional(),
     })).max(30),
   }).optional().default({ requiredForListings: false, certificateValidityDays: 90, metrics: [] }),
+  logistics: z.object({
+    carriersEnabled: z.boolean(),
+    defaultPickupWindowHours: z.number().int().min(0).max(720),
+    defaultDeliveryWindowHours: z.number().int().min(0).max(2000),
+    fuelCostPerLitre: z.number().min(0),
+    driverPayoutPerKm: z.number().min(0),
+    routeOptimizer: z.enum(["nearest_neighbour", "off"]),
+    distanceProvider: z.enum(["haversine", "osrm"]),
+    osrmBaseUrl: z.string().max(300),
+    pollingIntervalMinutes: z.number().int().min(5).max(1440),
+    autoCloseAfterDeliveryHours: z.number().int().min(0).max(2000),
+    deliveryDelayGraceMinutes: z.number().int().min(0).max(2000),
+    licenseExpiryWarnDays: z.array(z.number().int().min(0).max(365)).max(10),
+  }).optional().default({
+    carriersEnabled: true, defaultPickupWindowHours: 24, defaultDeliveryWindowHours: 72,
+    fuelCostPerLitre: 285, driverPayoutPerKm: 12, routeOptimizer: "nearest_neighbour",
+    distanceProvider: "haversine", osrmBaseUrl: "", pollingIntervalMinutes: 60,
+    autoCloseAfterDeliveryHours: 48, deliveryDelayGraceMinutes: 30, licenseExpiryWarnDays: [14,7,1],
+  }),
 });
 
 export const updateMarketplaceSettings = createServerFn({ method: "POST" })
