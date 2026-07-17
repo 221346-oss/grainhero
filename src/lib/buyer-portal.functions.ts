@@ -169,7 +169,7 @@ export const getMyOrder = createServerFn({ method: "GET" })
     const sb = context.supabase as any;
     const [oRes, eRes] = await Promise.all([
       sb.from("buyer_orders")
-        .select("*, grain_listings(title, cover_image_url, description)")
+        .select("*, grain_listings(title, cover_image_url, description), buyer_invoices(id, invoice_number, pdf_url, email_status)")
         .eq("id", data.orderId).eq("buyer_account_id", account.id).maybeSingle(),
       sb.from("buyer_order_events").select("*").eq("order_id", data.orderId)
         .order("created_at", { ascending: false }),
