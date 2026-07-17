@@ -62,7 +62,6 @@ import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
-import { Route as ApiReportsSplatRouteImport } from './routes/api/reports/$'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
@@ -361,11 +360,6 @@ const AuthenticatedPlatformIndexRoute =
     path: '/platform/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiReportsSplatRoute = ApiReportsSplatRouteImport.update({
-  id: '/api/reports/$',
-  path: '/api/reports/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   id: '/api/firebase/live-sensors',
   path: '/api/firebase/live-sensors',
@@ -537,7 +531,6 @@ export interface FileRoutesByFullPath {
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
-  '/api/reports/$': typeof ApiReportsSplatRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
@@ -609,7 +602,6 @@ export interface FileRoutesByTo {
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
-  '/api/reports/$': typeof ApiReportsSplatRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
@@ -684,7 +676,6 @@ export interface FileRoutesById {
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
-  '/api/reports/$': typeof ApiReportsSplatRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
@@ -759,7 +750,6 @@ export interface FileRouteTypes {
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
-    | '/api/reports/$'
     | '/platform/'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
@@ -831,7 +821,6 @@ export interface FileRouteTypes {
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
-    | '/api/reports/$'
     | '/platform'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
@@ -905,7 +894,6 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/api/firebase/live-sensors'
-    | '/api/reports/$'
     | '/_authenticated/platform/'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
@@ -932,7 +920,6 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ThemeTestRoute: typeof ThemeTestRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
-  ApiReportsSplatRoute: typeof ApiReportsSplatRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
@@ -1314,13 +1301,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/reports/$': {
-      id: '/api/reports/$'
-      path: '/api/reports/$'
-      fullPath: '/api/reports/$'
-      preLoaderRoute: typeof ApiReportsSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/firebase/live-sensors': {
       id: '/api/firebase/live-sensors'
       path: '/api/firebase/live-sensors'
@@ -1592,7 +1572,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ThemeTestRoute: ThemeTestRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
-  ApiReportsSplatRoute: ApiReportsSplatRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,

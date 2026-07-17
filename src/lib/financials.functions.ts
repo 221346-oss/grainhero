@@ -108,3 +108,65 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
       trend,
     };
   });
+
+export const generateFinancialPdf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { type: "pnl" | "revenue" | "mrr" }) => d)
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+
+    const [subs, orders, policies] = await Promise.all([
+      supabaseAdmin.from("subscriptions").select("price_per_month, status, plan_name"),
+      supabaseAdmin.from("hardware_orders").select("hardware_total, status"),
+      supabaseAdmin.from("insurance_policies").select("premium_amount, commission_rate"),
+    ]);
+    const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
+    const mrr = activeSubs.reduce((s: number, x: any) => s + Number(x.price_per_month ?? 0), 0);
+    const iot = (orders.data ?? []).filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
+      .reduce((s: number, x: any) => s + Number(x.hardware_total ?? 0), 0);
+    const ins = (policies.data ?? []).reduce((s: number, p: any) => s + Number(p.premium_amount ?? 0) * Number(p.commission_rate ?? 0) / 100, 0);
+    const total = mrr + iot + ins;
+    const cogs = iot * 0.55, gross = total - cogs, opex = total * 0.25, net = gross - opex;
+
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([595, 842]);
+    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+    const primary = rgb(0.22, 0.51, 0.34);
+    const muted = rgb(0.45, 0.45, 0.45);
+    const title = data.type === "mrr" ? "MRR Report" : data.type === "revenue" ? "Revenue Breakdown" : "Monthly P&L";
+    page.drawText("GrainHero", { x: 40, y: 800, font: bold, size: 12, color: primary });
+    page.drawText(title, { x: 40, y: 770, font: bold, size: 22 });
+    page.drawText(`Generated ${new Date().toLocaleString()}`, { x: 40, y: 750, font, size: 9, color: muted });
+    page.drawLine({ start: { x: 40, y: 740 }, end: { x: 555, y: 740 }, color: primary, thickness: 1.5 });
+    const fmt = (n: number) => `PKR ${Math.round(n).toLocaleString()}`;
+    const rows: [string, string][] = [
+      ["Subscription MRR", fmt(mrr)],
+      ["IoT Hardware Revenue", fmt(iot)],
+      ["Insurance Commission", fmt(ins)],
+      ["Total Revenue", fmt(total)],
+      ["Cost of Goods Sold", `- ${fmt(cogs)}`],
+      ["Gross Profit", fmt(gross)],
+      ["Operating Expenses", `- ${fmt(opex)}`],
+      ["Net Profit", fmt(net)],
+      ["Net Profit %", `${total > 0 ? ((net / total) * 100).toFixed(2) : "0.00"} %`],
+      ["Active subscriptions", String(activeSubs.length)],
+    ];
+    let y = 700;
+    rows.forEach(([k, v]) => {
+      page.drawText(k, { x: 40, y, font, size: 12, color: muted });
+      page.drawText(v, { x: 400, y, font: bold, size: 12 });
+      y -= 26;
+    });
+    page.drawText("Confidential — GrainHero platform financials", { x: 40, y: 40, font, size: 8, color: muted });
+
+    const bytes = await pdf.save();
+    // base64 for transport across RPC boundary
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    const base64 = btoa(bin);
+    return { filename: `grainhero-${data.type}-${new Date().toISOString().slice(0, 10)}.pdf`, base64 };
+  });
+
