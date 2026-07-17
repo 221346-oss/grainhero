@@ -4,9 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getDispatchAnalytics } from "@/lib/dispatch-analytics.functions";
+import { getDispatchAnalytics, exportDispatchCsv } from "@/lib/dispatch-analytics.functions";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/platform/dispatch-analytics")({
   component: DispatchAnalyticsPage,
@@ -14,25 +17,44 @@ export const Route = createFileRoute("/_authenticated/platform/dispatch-analytic
 
 function DispatchAnalyticsPage() {
   const load = useServerFn(getDispatchAnalytics);
+  const exportFn = useServerFn(exportDispatchCsv);
   const [days, setDays] = useState<number>(30);
   const { data, isLoading } = useQuery({
     queryKey: ["dispatch-analytics", days],
     queryFn: () => load({ data: { days } }),
   });
+  const download = async () => {
+    try {
+      const res = await exportFn({ data: { days } });
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `dispatch-analytics-${days}d-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${res.rows} rows`);
+    } catch (e) { toast.error((e as Error).message); }
+  };
   const totals = data?.totals;
   return (
     <AdminPageShell
       title="Dispatch analytics"
       subtitle="SLA compliance, delivery throughput, and courier performance."
       actions={
-        <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={download}>
+            <Download className="h-4 w-4 mr-1.5" /> Export CSV
+          </Button>
+        </div>
       }
     >
       {isLoading || !data ? (
