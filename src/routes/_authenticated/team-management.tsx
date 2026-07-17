@@ -98,6 +98,8 @@ function TeamPage() {
     : currentRole === "admin" ? ["manager", "technician"]
     : currentRole === "manager" ? ["technician"] : [];
 
+  if (isLoading) return <TeamManagementSkeleton />;
+
   return (
     <AdminPageShell
       title="Team management"
@@ -142,9 +144,7 @@ function TeamPage() {
       </Card>
 
       <AdminDataCard title="All members" description={`Showing ${filtered.length} of ${members.length}`}>
-        {isLoading ? (
-          <div className="p-4"><ListSkeleton rows={5} /></div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-slate-400">
             <p className="text-sm">No team members found</p>
           </div>
