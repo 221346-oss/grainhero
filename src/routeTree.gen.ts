@@ -63,6 +63,7 @@ import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
+import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
@@ -367,6 +368,12 @@ const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   path: '/api/firebase/live-sensors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTechnicianInstallsRoute =
+  AuthenticatedTechnicianInstallsRouteImport.update({
+    id: '/technician/installs',
+    path: '/technician/installs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsRouteImport.update({
     id: '/notifications',
@@ -545,6 +552,7 @@ export interface FileRoutesByFullPath {
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/technician/installs': typeof AuthenticatedTechnicianInstallsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -618,6 +626,7 @@ export interface FileRoutesByTo {
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/technician/installs': typeof AuthenticatedTechnicianInstallsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -694,6 +703,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/technician/installs': typeof AuthenticatedTechnicianInstallsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -770,6 +780,7 @@ export interface FileRouteTypes {
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
+    | '/technician/installs'
     | '/api/firebase/live-sensors'
     | '/platform/'
     | '/platform/orders/$orderId'
@@ -843,6 +854,7 @@ export interface FileRouteTypes {
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
+    | '/technician/installs'
     | '/api/firebase/live-sensors'
     | '/platform'
     | '/platform/orders/$orderId'
@@ -918,6 +930,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
+    | '/_authenticated/technician/installs'
     | '/api/firebase/live-sensors'
     | '/_authenticated/platform/'
     | '/_authenticated/platform/orders/$orderId'
@@ -1334,6 +1347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFirebaseLiveSensorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/technician/installs': {
+      id: '/_authenticated/technician/installs'
+      path: '/technician/installs'
+      fullPath: '/technician/installs'
+      preLoaderRoute: typeof AuthenticatedTechnicianInstallsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/notifications': {
       id: '/_authenticated/settings/notifications'
       path: '/notifications'
@@ -1541,6 +1561,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
+  AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRoute
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
@@ -1587,6 +1608,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
+  AuthenticatedTechnicianInstallsRoute: AuthenticatedTechnicianInstallsRoute,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
