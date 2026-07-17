@@ -324,19 +324,6 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               break;
             }
-            case "customer.subscription.created":
-            case "customer.subscription.updated": {
-              // handled below
-              void 0;
-            }
-            // fallthrough into the original block
-            /* eslint-disable no-fallthrough */
-            // eslint-disable-next-line no-labels
-            _sub_block: {
-              // no-op guard so the following block still executes
-            }
-            /* eslint-enable no-fallthrough */
-            // ------- restore original flow -------
             case "checkout.session.async_payment_failed":
             case "checkout.session.expired": {
               const s = event.data.object as {
@@ -364,7 +351,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               break;
             }
-            case "_subscription_updates_impossible_marker_": {
+            case "customer.subscription.created":
+            case "customer.subscription.updated": {
               const sub = event.data.object as {
                 id: string;
                 customer: string;
