@@ -73,6 +73,11 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     exception: "Delivery update needed for order {{orderNumber}}",
     reviewPromptBuyer: "How was your order {{orderNumber}}?",
     reviewPromptSeller: "Rate the buyer for order {{orderNumber}}",
+    invoiceReady: "Invoice for order {{orderNumber}}",
+    disputeOpened: "Dispute opened on order {{orderNumber}}",
+    disputeResolved: "Dispute resolved on order {{orderNumber}}",
+    refundIssued: "Refund issued for order {{orderNumber}}",
+    orderCancelled: "Order {{orderNumber}} cancelled",
   },
   emailBodies: {
     placed:
@@ -93,6 +98,16 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       "Order {{orderNumber}} is complete. Tell other buyers how it went — it takes a minute: {{trackingUrl}}",
     reviewPromptSeller:
       "Order {{orderNumber}} is complete. Rate the buyer to help future sellers: {{trackingUrl}}",
+    invoiceReady:
+      "Your invoice for order {{orderNumber}} is ready.\nDownload / view it here: {{trackingUrl}}",
+    disputeOpened:
+      "A dispute was opened on order {{orderNumber}}. We'll review and get back to you shortly.\n{{trackingUrl}}",
+    disputeResolved:
+      "The dispute on order {{orderNumber}} has been resolved. Details: {{trackingUrl}}",
+    refundIssued:
+      "A refund for order {{orderNumber}} has been issued. It should appear on your statement in a few business days.\n{{trackingUrl}}",
+    orderCancelled:
+      "Order {{orderNumber}} has been cancelled. If this was unexpected, contact support.\n{{trackingUrl}}",
   },
   dispatch: {
     couriers: [
