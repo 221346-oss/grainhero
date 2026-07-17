@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { z } from "zod";
 import { logActivity } from "./activity";
+import { emitNotification, emitToSuperAdmins } from "./notify";
 
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
@@ -26,28 +27,7 @@ async function verifyAndLimit(
   if (!gate.ok) throw new Error(`Too many requests. Try again in ${gate.retryAfter}s.`);
 }
 
-async function notify(
-  sb: any,
-  userId: string,
-  tenantAdminId: string,
-  title: string,
-  body: string,
-  meta: Record<string, unknown>,
-) {
-  try {
-    await sb.from("notifications").insert({
-      admin_id: tenantAdminId,
-      user_id: userId,
-      type: "plan_change",
-      category: "billing",
-      title,
-      message: body,
-      metadata: meta as never,
-    } as never);
-  } catch (err) {
-    console.warn("[notify] insert failed", err);
-  }
-}
+// Notification helpers now live in @/lib/notify.
 
 /* -------------------- list -------------------- */
 
