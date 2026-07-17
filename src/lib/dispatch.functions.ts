@@ -20,6 +20,21 @@ function resolveTrackingUrl(
   return renderTemplate(template, { trackingNumber });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveActor(sb: any, userId: string): Promise<{
+  actor_user_id: string; actor_name: string | null; actor_role: string | null;
+}> {
+  const [{ data: p }, { data: role }] = await Promise.all([
+    sb.from("profiles").select("name").eq("id", userId).maybeSingle(),
+    sb.rpc("get_my_role", { _user_id: userId }),
+  ]);
+  return {
+    actor_user_id: userId,
+    actor_name: (p as { name?: string } | null)?.name ?? null,
+    actor_role: (role as string | null) ?? null,
+  };
+}
+
 export const createShipment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({
@@ -68,6 +83,7 @@ export const createShipment = createServerFn({ method: "POST" })
     await sb.from("buyer_shipment_events").insert({
       shipment_id: shipmentId, code: "dispatched",
       label: `Dispatched via ${courier.label}`, source: "seller",
+      ...(await resolveActor(sb, context.userId)),
     } as never);
 
     await logActivity({
@@ -92,14 +108,17 @@ export const appendShipmentEvent = createServerFn({ method: "POST" })
     code: z.string().min(1).max(60),
     label: z.string().min(1).max(200),
     location: z.string().max(200).optional().nullable(),
+    note: z.string().max(1000).optional().nullable(),
     setStatus: z.enum(["queued","in_transit","out_for_delivery","delivered","exception"]).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
+    const actor = await resolveActor(sb, context.userId);
     const { error } = await sb.from("buyer_shipment_events").insert({
       shipment_id: data.shipmentId, code: data.code, label: data.label,
-      location: data.location ?? null, source: "seller",
+      location: data.location ?? null, note: data.note ?? null, source: "seller",
+      ...actor,
     } as never);
     if (error) throw error;
     if (data.setStatus) {
@@ -145,6 +164,8 @@ export const markDelivered = createServerFn({ method: "POST" })
     await sb.from("buyer_shipment_events").insert({
       shipment_id: data.shipmentId, code: "delivered",
       label: "Delivered", source: "seller",
+      ...(await resolveActor(sb, context.userId)),
+      note: data.note ?? null,
     } as never);
 
     // Advance order to completed and mark batch sold.

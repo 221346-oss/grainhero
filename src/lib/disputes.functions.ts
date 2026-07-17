@@ -19,6 +19,12 @@ export const openDispute = createServerFn({ method: "POST" })
       category: z.string().min(1).max(60),
       description: z.string().min(10).max(4000),
       evidenceUrls: z.array(z.string().url()).max(10).optional(),
+      attachments: z.array(z.object({
+        path: z.string().min(1).max(500),
+        name: z.string().min(1).max(200),
+        mime: z.string().max(120).optional(),
+        size: z.number().int().nonnegative().optional(),
+      })).max(10).optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -47,7 +53,11 @@ export const openDispute = createServerFn({ method: "POST" })
     const { data: disp, error } = await sb.from("buyer_disputes").insert({
       order_id: data.orderId, admin_id: o.admin_id, buyer_id: o.buyer_id,
       category: data.category, description: data.description,
-      evidence_urls: data.evidenceUrls ?? [], status: "open",
+      evidence_urls: data.evidenceUrls ?? [],
+      attachments: (data.attachments ?? []).map((a) => ({
+        ...a, uploaded_by: context.userId, uploaded_at: new Date().toISOString(),
+      })),
+      status: "open",
     } as never).select("id").single();
     if (error) throw error;
     const id = (disp as Row).id as string;
@@ -140,4 +150,24 @@ export const resolveDispute = createServerFn({ method: "POST" })
       await sendBuyerOrderEmail(context.supabase, d0.order_id as string, "disputeResolved");
     } catch { /* email best-effort */ }
     return { ok: true, refund: rez.refund };
+  });
+
+export const getDisputeAttachmentUrls = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    id: z.string().uuid(),
+    paths: z.array(z.string().min(1)).max(20),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // Moderator-only: verify role
+    const { data: role } = await context.supabase.rpc("get_my_role", { _user_id: context.userId });
+    if (role !== "super_admin" && role !== "admin") throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const results: Array<{ path: string; url: string | null }> = [];
+    for (const p of data.paths) {
+      const { data: signed } = await supabaseAdmin.storage
+        .from("dispute-attachments").createSignedUrl(p, 60 * 10);
+      results.push({ path: p, url: signed?.signedUrl ?? null });
+    }
+    return { urls: results };
   });

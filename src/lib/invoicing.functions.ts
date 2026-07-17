@@ -95,13 +95,61 @@ export const generateInvoice = createServerFn({ method: "POST" })
         pdfUrl = rendered.signedUrl;
       }
       if (settings.invoicing.emailInvoiceOnPaid) {
-        const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
-        await sendBuyerOrderEmail(context.supabase, o.id as string, "invoiceReady");
+        await sendInvoiceEmailAndTrack(context.supabase, (inv as Row).id as string, o.id as string);
       }
     } catch (e) {
       console.warn("[invoice-pdf] generation failed:", (e as Error).message);
     }
     return { id: (inv as Row).id as string, invoiceNumber, existed: false, pdfUrl };
+  });
+
+async function sendInvoiceEmailAndTrack(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sb: any, invoiceId: string, orderId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const nowIso = new Date().toISOString();
+  const { data: cur } = await sb.from("buyer_invoices")
+    .select("email_attempts").eq("id", invoiceId).maybeSingle();
+  const nextAttempts = ((cur as { email_attempts?: number } | null)?.email_attempts ?? 0) + 1;
+  try {
+    const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+    await sendBuyerOrderEmail(sb, orderId, "invoiceReady");
+    await sb.from("buyer_invoices").update({
+      email_status: "sent", email_error: null, emailed: true, emailed_at: nowIso,
+      email_last_attempt_at: nowIso, email_attempts: nextAttempts,
+    } as never).eq("id", invoiceId);
+    return { ok: true };
+  } catch (e) {
+    const msg = (e as Error).message;
+    await sb.from("buyer_invoices").update({
+      email_status: "failed", email_error: msg,
+      email_attempts: nextAttempts, email_last_attempt_at: nowIso,
+    } as never).eq("id", invoiceId);
+    return { ok: false, error: msg };
+  }
+}
+
+export const resendInvoiceEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ invoiceId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: inv } = await context.supabase
+      .from("buyer_invoices").select("id, order_id, admin_id").eq("id", data.invoiceId).maybeSingle();
+    const i = inv as Row | null;
+    if (!i || !i.order_id) throw new Error("Invoice / order not found");
+    // Authorize: caller must be the tenant admin, super_admin, or the buyer.
+    const { data: role } = await context.supabase.rpc("get_my_role", { _user_id: context.userId });
+    const isStaff = role === "super_admin" || role === "admin" || role === "manager";
+    if (!isStaff) {
+      const { data: order } = await context.supabase
+        .from("buyer_orders").select("buyer_account_id").eq("id", i.order_id).maybeSingle();
+      const buyerAccountId = (order as Row | null)?.buyer_account_id;
+      const { data: acc } = buyerAccountId
+        ? await context.supabase.from("buyer_accounts").select("user_id").eq("id", buyerAccountId).maybeSingle()
+        : { data: null };
+      if ((acc as Row | null)?.user_id !== context.userId) throw new Error("Forbidden");
+    }
+    return sendInvoiceEmailAndTrack(context.supabase, i.id as string, i.order_id as string);
   });
 
 export const recordPayment = createServerFn({ method: "POST" })

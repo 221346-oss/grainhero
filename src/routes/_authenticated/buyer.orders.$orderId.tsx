@@ -2,6 +2,8 @@ import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMyOrder, cancelMyOrder } from "@/lib/buyer-portal.functions";
 import { startBuyerCheckout } from "@/lib/buyer-checkout.functions";
+import { resendInvoiceEmail } from "@/lib/invoicing.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,13 @@ function OrderDetail() {
   const pay = useMutation({
     mutationFn: async () => startBuyerCheckout({ data: { orderId, origin: window.location.origin } }),
     onSuccess: ({ url }) => { if (url) window.location.href = url; },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const resendFn = useServerFn(resendInvoiceEmail);
+  const resend = useMutation({
+    mutationFn: (invoiceId: string) => resendFn({ data: { invoiceId } }),
+    onSuccess: (r) => r.ok ? toast.success("Invoice email sent") : toast.error(r.error ?? "Failed to send"),
     onError: (e) => toast.error((e as Error).message),
   });
 
@@ -132,11 +141,27 @@ function OrderDetail() {
       {["delivered","completed","dispatched","paid"].includes(o.status) && (
         <BuyerDisputeCard orderId={o.id} />
       )}
-      {o.invoice_pdf_url && (
-        <a href={o.invoice_pdf_url} target="_blank" rel="noopener noreferrer"
-           className="inline-block text-sm text-emerald-700 underline">
-          Download invoice (PDF)
-        </a>
+      {(o.invoice_pdf_url || (o.buyer_invoices && (o.buyer_invoices as { id?: string; pdf_url?: string })?.id)) && (
+        <div className="flex items-center gap-3">
+          {(o.invoice_pdf_url || (o.buyer_invoices as { pdf_url?: string })?.pdf_url) && (
+            <a href={o.invoice_pdf_url ?? (o.buyer_invoices as { pdf_url?: string })?.pdf_url ?? "#"}
+               target="_blank" rel="noopener noreferrer"
+               className="text-sm text-emerald-700 underline">
+              Download invoice (PDF)
+            </a>
+          )}
+          {(o.buyer_invoices as { id?: string })?.id && (
+            <>
+              <Button variant="outline" size="sm" disabled={resend.isPending}
+                onClick={() => resend.mutate((o.buyer_invoices as { id: string }).id)}>
+                {resend.isPending ? "Sending…" : "Resend invoice email"}
+              </Button>
+              {(o.buyer_invoices as { email_status?: string })?.email_status === "failed" && (
+                <span className="text-xs text-rose-600">Last email failed</span>
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   );

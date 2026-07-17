@@ -401,6 +401,7 @@ export type Database = {
       buyer_disputes: {
         Row: {
           admin_id: string
+          attachments: Json
           buyer_id: string
           category: string
           closed_at: string | null
@@ -419,6 +420,7 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          attachments?: Json
           buyer_id: string
           category: string
           closed_at?: string | null
@@ -437,6 +439,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          attachments?: Json
           buyer_id?: string
           category?: string
           closed_at?: string | null
@@ -477,6 +480,10 @@ export type Database = {
           created_by: string
           currency: string | null
           due_date: string | null
+          email_attempts: number
+          email_error: string | null
+          email_last_attempt_at: string | null
+          email_status: string | null
           emailed: boolean | null
           emailed_at: string | null
           id: string
@@ -507,6 +514,10 @@ export type Database = {
           created_by: string
           currency?: string | null
           due_date?: string | null
+          email_attempts?: number
+          email_error?: string | null
+          email_last_attempt_at?: string | null
+          email_status?: string | null
           emailed?: boolean | null
           emailed_at?: string | null
           id?: string
@@ -537,6 +548,10 @@ export type Database = {
           created_by?: string
           currency?: string | null
           due_date?: string | null
+          email_attempts?: number
+          email_error?: string | null
+          email_last_attempt_at?: string | null
+          email_status?: string | null
           emailed?: boolean | null
           emailed_at?: string | null
           id?: string
@@ -1012,32 +1027,44 @@ export type Database = {
       }
       buyer_shipment_events: {
         Row: {
+          actor_name: string | null
+          actor_role: string | null
+          actor_user_id: string | null
           at: string
           code: string
           created_at: string
           id: string
           label: string
           location: string | null
+          note: string | null
           shipment_id: string
           source: string
         }
         Insert: {
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
           at?: string
           code: string
           created_at?: string
           id?: string
           label: string
           location?: string | null
+          note?: string | null
           shipment_id: string
           source?: string
         }
         Update: {
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
           at?: string
           code?: string
           created_at?: string
           id?: string
           label?: string
           location?: string | null
+          note?: string | null
           shipment_id?: string
           source?: string
         }
@@ -2698,6 +2725,36 @@ export type Database = {
           price_cents?: number
           sort_order?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_email_digest_log: {
+        Row: {
+          created_at: string
+          digest_key: string
+          id: string
+          payload: Json
+          recipients_count: number
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          digest_key: string
+          id?: string
+          payload?: Json
+          recipients_count?: number
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          created_at?: string
+          digest_key?: string
+          id?: string
+          payload?: Json
+          recipients_count?: number
+          window_end?: string
+          window_start?: string
         }
         Relationships: []
       }
