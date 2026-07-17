@@ -1,59 +1,99 @@
+# Plan: Admin Profiles, Financial Dashboard & IoT Install Tracking
 
-## Problem
+Three self-contained feature blocks. All UI theme-aware (light/dark), aligned with existing PageHeader / StatBox conventions.
 
-1. Current skeleton on `/grain-batches` (and other pages) is a generic full-page `DashboardSkeleton` — it doesn't match the actual page composition (header + 5 KPI tiles + toolbar + card grid), it extends full-bleed and overflows the mobile viewport (uploaded screenshot shows skeleton bars running off the right edge and no page container padding).
-2. Empty-state text like "Create a silo first →" uses `text-emerald-700` on a nearly-black `bg-white/50` card → in dark mode the underline link fades out / stays on a white patch. Same class-based issues exist on Silos, Sensors, Actuators, Alerts, Settings, and Team pages.
-3. Skeletons for Silos, Sensors, Actuators, Alerts, Settings, Team pages don't exist (or reuse `DashboardSkeleton`) — they must mirror the real component layout of each page (same container width, same grid columns, same tile counts).
+---
 
-## Fix strategy
+## 1. Super-Admin → Admin Profile Page
 
-### A. Add page-specific skeletons in `src/components/app/skeletons.tsx`
+**New route:** `/_authenticated/admins/$adminId.tsx` (linked from existing admin list rows).
 
-Each new skeleton wraps in the same container the real page uses (`p-4 md:p-8 max-w-7xl mx-auto`) so it never bleeds edge-to-edge, and uses `bg-muted` tokens (theme-aware) instead of hardcoded slate.
+**Layout** (image 3 style):
+- Header card: avatar initials, name, email, phone, "Active/Suspended" pill, `Edit Profile` and kebab menu (Impersonate / Suspend / Reactivate).
+- KPI row: Last Login · Total Revenue · Silos · Warehouses · Batches · Open Alerts.
+- Two-column: Contact & Address card (editable inline) + Order Frequency bar chart (last 6 months of grain batches OR hardware orders — toggle).
+- Recent Activity list (last 10 activity_logs entries).
 
-- `GrainBatchesSkeleton` — header row (title block + count pill) → 5 KPI mini-tiles on `grid-cols-2 md:grid-cols-5` → toolbar (search + 2 selects + button) → responsive card grid `sm:grid-cols-2 lg:grid-cols-3` with 6 placeholder batch cards (icon, title, badge, 3 detail lines, action row).
-- `SilosSkeleton` — header + 4 KPI tiles + toolbar + card grid of silo tiles (round capacity meter + name + occupancy bar + 2 stats).
-- `SensorsSkeleton` — header + 4 KPI tiles + tab strip + table-like list of sensor rows (icon, name, silo, reading pill, status dot, actions).
-- `ActuatorsSkeleton` — header + 3 KPI tiles + toolbar + card grid with toggle-switch shaped placeholders and quick-action buttons.
-- `AlertsSkeleton` — header + severity filter pills + timeline list of alert cards (icon + title + description + timestamp + action button).
-- `SettingsSkeleton` — vertical tab list on the left (sm:col-span-1) + form panel on right with grouped field sections (label + input rows, 2-col on md).
-- `TeamSkeleton` — header + role filter row + card grid of member cards (avatar + name/email + role badge + action menu).
+**Server fns** (`src/lib/admin-profile.functions.ts`, `requireSupabaseAuth`, super_admin check):
+- `getAdminProfile({ adminId })` — profile + role + aggregated stats
+- `updateAdminContact({ adminId, patch })` — name/phone/address/notes
+- `impersonateAdmin({ adminId })` — returns short-lived magic-link URL via `supabaseAdmin.auth.admin.generateLink`
+- `setAdminSuspended({ adminId, suspended })` — writes `profiles.suspended` flag
+- `getAdminOrderFrequency({ adminId, source })` — 6-month buckets
 
-All new skeletons follow the same rules:
-- Root: `p-4 md:p-8 max-w-7xl mx-auto space-y-6` (never full-bleed).
-- Card surfaces: `rounded-xl border bg-card` (theme-aware).
-- Bars: `<Skeleton />` (shimmer class already token-based).
-- Grid breakpoints exactly match the real page's grid so widths align.
+**DB:** add `profiles.suspended boolean default false`, `profiles.notes text`. No new tables.
 
-### B. Wire each route to its matching skeleton
+---
 
-Replace `<DashboardSkeleton />` (or bare spinners) in these route files with the page-specific skeleton:
+## 2. Financial Dashboard (Revenue page upgrade)
 
-- `src/routes/_authenticated/grain-batches.tsx` → `GrainBatchesSkeleton`
-- `src/routes/_authenticated/silos.tsx` → `SilosSkeleton`
-- `src/routes/_authenticated/sensors.tsx` → `SensorsSkeleton`
-- `src/routes/_authenticated/actuators.tsx` → `ActuatorsSkeleton`
-- `src/routes/_authenticated/grain-alerts.tsx` → `AlertsSkeleton`
-- `src/routes/_authenticated/settings.tsx` → `SettingsSkeleton`
-- `src/routes/_authenticated/team-management.tsx` → `TeamSkeleton`
+Enhance existing `/_authenticated/revenue` (or add if missing).
 
-### C. Dark-mode empty-state cleanup
+**Widgets:**
+- KPI tiles: Total Revenue · Subscription MRR · IoT Hardware Revenue · Insurance Commission · Gross Profit · Net Profit % (each with MoM delta, numbers colored — cards neutral).
+- **P&L Summary card** — Sales, COGS, Gross Profit, Opex, Other Income, Net Profit, Net %.
+- **Revenue mix donut** — Subscriptions / IoT Hardware / Insurance Commission / Other.
+- **MRR trend line** — 12 months, plus churn %.
+- **Sales split by plan** — Starter/Pro/Enterprise horizontal bars.
+- **Reports section** — "Export PDF" buttons for: Monthly P&L, Revenue Breakdown, MRR Report. Generated server-side via a lightweight PDF (pdf-lib) server route `/api/reports/[type].pdf` gated to super_admin.
 
-For every empty-state block on the 7 pages above:
-- Replace `border-slate-300 bg-white/50` with `border-border bg-card/60`.
-- Replace `text-slate-500` with `text-muted-foreground`.
-- Replace `text-emerald-700` links with `text-primary hover:text-primary/80` and keep `underline underline-offset-4` so the link renders correctly under both themes.
-- Icon (`Inbox`, etc.) uses `text-muted-foreground` (drop hardcoded opacity that reads wrong on dark card).
+**Data sources** (existing tables):
+- `subscriptions` (MRR, plan mix)
+- `hardware_orders` (IoT revenue)
+- `insurance_policies` — add `commission_rate numeric` and computed `commission_amount`
+- `buyer_invoices` / `invoices` (sales)
 
-### D. Verification
+**DB migration:**
+- `insurance_policies.commission_rate numeric(5,2) default 0`
+- optional `platform_settings` rows for default commission rate & COGS overrides
 
-1. `bunx tsgo --noEmit` to confirm imports/exports line up.
-2. Playwright at 563px width (matches current viewport) on `/grain-batches`, `/silos`, `/sensors`, `/actuators`, `/grain-alerts`, `/settings`, `/team-management` in both light and dark mode; screenshot to confirm:
-   - No horizontal overflow (skeleton bars stay inside container).
-   - Skeleton block widths visually align with the real UI once loaded.
-   - Empty-state link is readable in dark mode.
+**Server fns** (`src/lib/financials.functions.ts`): `getFinancialSummary`, `getRevenueMix`, `getMrrTrend`, `getPlanSplit`, `generateReportPdf`.
+
+---
+
+## 3. IoT Installation Tracking (extends existing Orders page)
+
+**Where:** existing `/_authenticated/orders` — add **"Installation"** tab per order row (drawer or `/orders/$orderId` detail).
+
+**Fields super admin can add per hardware_order:**
+- Installer: name, phone, photo URL, company
+- Location: city, warehouse_id, silo_id, scheduled_visit_at, our_origin_address, customer_address (auto from tenant), lat/lng
+- Devices: array of `{ serial, model, status: shipped|en_route|installed|verified }`
+- Visit timeline: append-only notes with timestamp + optional photo
+
+**Map component** (image 1 style):
+- Mapbox GL JS (public token via connector) OR Google Maps if user prefers — we'll use Mapbox.
+- Shows origin marker (our warehouse) → destination marker (customer address) → directions polyline via Mapbox Directions API (server fn using secret token).
+- Purple styled route line, ETA/distance badge overlay.
+
+**Manager view:** same order detail is read-only for managers — they see installer profile, live status timeline, map, and device serials.
+
+**DB migration:** new table `hardware_order_installations`
+```
+id, order_id (fk hardware_orders), installer_name, installer_phone, installer_photo_url,
+installer_company, city, warehouse_id, silo_id, scheduled_visit_at,
+origin_address, origin_lat, origin_lng, destination_address, destination_lat, destination_lng,
+status, created_at, updated_at
+```
+Plus `hardware_order_devices` (serial, model, status, order_id) and `hardware_order_visit_events` (order_id, note, photo_url, event_at, created_by).
+
+RLS: super_admin full; tenant admin/manager SELECT where `hardware_orders.admin_id = get_tenant_admin_id(auth.uid())`.
+
+**Server fns** (`src/lib/installations.functions.ts`): `upsertInstallation`, `addVisitEvent`, `upsertDevices`, `getInstallation`, `getRouteGeometry` (Mapbox Directions via gateway).
+
+**Connector:** requires Mapbox connector (public + secret token). I'll prompt to link.
+
+---
+
+## Build order
+
+1. Migrations (admin fields, insurance commission, installation tables).
+2. Mapbox connector link.
+3. Admin profile page + server fns.
+4. Financial dashboard widgets + PDF report route.
+5. Orders page → Installation tab + map.
 
 ## Out of scope
-
-- No changes to business logic, server functions, or data queries.
-- No design-token or color-palette changes; only theme-aware replacements of hardcoded slate/emerald/white utilities on these 7 pages.
+- Live GPS tracking of installer (only static route line).
+- Multi-stop routes.
+- Real-time collaboration on visit notes.
