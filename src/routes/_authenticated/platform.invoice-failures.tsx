@@ -134,7 +134,7 @@ function HistorySheet({ orderId, onClose }: { orderId: string | null; onClose: (
             )}
             <div className="space-y-2">
               <div className="text-xs font-semibold uppercase text-muted-foreground">Order timeline</div>
-              {data.events.map((e, i) => {
+              {(data.events as unknown[]).map((e, i: number) => {
                 const ev = e as { id?: string; from_state?: string; to_state: string; note?: string; created_at: string };
                 return (
                   <div key={ev.id ?? i} className="text-xs border-l-2 border-emerald-500 pl-3 py-1">
