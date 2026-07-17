@@ -150,6 +150,27 @@ export const requestPlanChange = createServerFn({ method: "POST" })
       if (upErr) throw upErr;
     }
 
+    // Notify super-admins of the incoming request (or auto-applied change).
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await emitToSuperAdmins(supabaseAdmin, {
+        category: "plan",
+        severity: autoApply ? "info" : "warning",
+        title: autoApply
+          ? `Auto-upgrade: ${current} → ${data.requested_plan}`
+          : `Plan change requested: ${current} → ${data.requested_plan}`,
+        body: autoApply
+          ? `Tenant auto-upgraded to ${data.requested_plan}.`
+          : `A tenant requested to switch to ${data.requested_plan}. Review in Plan requests.`,
+        link: "/platform/plans",
+        entityType: "plan_change_request",
+        entityId: inserted?.id ?? null,
+        metadata: { tenant_admin_id: tenantAdminId, direction, from: current, to: data.requested_plan },
+      });
+    } catch (err) {
+      console.warn("[requestPlanChange] super-admin notify failed", err);
+    }
+
     return { ok: true, id: inserted?.id, auto_applied: autoApply };
   });
 
