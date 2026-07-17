@@ -89,7 +89,47 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const userId = s.metadata?.user_id ?? null;
               const planId = s.metadata?.plan_id ?? null;
               const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
+              const buyerOrderId = s.metadata?.buyer_order_id ?? null;
               const sessionId = (s as { id?: string }).id ?? null;
+
+              // Phase 12 — Buyer marketplace order paid via Stripe Checkout.
+              if (buyerOrderId) {
+                const { data: bo } = await supabaseAdmin
+                  .from("buyer_orders")
+                  .select("id, admin_id, status, subtotal, currency, order_number, batch_id")
+                  .eq("id", buyerOrderId).maybeSingle();
+                const bor = bo as Record<string, unknown> | null;
+                if (bor && bor.status !== "paid" && bor.status !== "completed") {
+                  await supabaseAdmin.from("buyer_orders").update({
+                    status: "paid",
+                    paid_at: new Date().toISOString(),
+                    stripe_payment_intent: s.payment_intent ?? null,
+                  } as never).eq("id", buyerOrderId);
+                  await supabaseAdmin.from("buyer_order_events").insert({
+                    order_id: buyerOrderId,
+                    admin_id: bor.admin_id,
+                    from_state: bor.status,
+                    to_state: "paid",
+                    actor_user_id: null,
+                    note: "Stripe checkout completed",
+                  } as never);
+                  try {
+                    const { emitToSuperAdmins } = await import("@/lib/notify");
+                    await emitToSuperAdmins(supabaseAdmin, {
+                      category: "billing",
+                      severity: "info",
+                      title: "Marketplace order paid",
+                      body: `Buyer order ${bor.order_number} was paid (${bor.currency} ${bor.subtotal}).`,
+                      link: `/sales`,
+                      entityType: "buyer_order",
+                      entityId: buyerOrderId,
+                    });
+                  } catch (e) {
+                    console.warn("[stripe-webhook] buyer notify failed:", (e as Error).message);
+                  }
+                }
+              }
+
               // Send buyer confirmation email (idempotent).
               if (sessionId) {
                 try {

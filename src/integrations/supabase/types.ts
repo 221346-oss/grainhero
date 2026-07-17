@@ -322,6 +322,47 @@ export type Database = {
           },
         ]
       }
+      buyer_accounts: {
+        Row: {
+          buyer_id: string | null
+          company_name: string | null
+          contact_phone: string | null
+          created_at: string
+          default_shipping_address: Json | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          buyer_id?: string | null
+          company_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          default_shipping_address?: Json | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          buyer_id?: string | null
+          company_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          default_shipping_address?: Json | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_accounts_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buyer_invoices: {
         Row: {
           admin_id: string
@@ -499,17 +540,26 @@ export type Database = {
         Row: {
           admin_id: string
           batch_id: string | null
+          buyer_account_id: string | null
           buyer_id: string
+          channel: string
+          checkout_url: string | null
+          completed_at: string | null
           created_at: string
           currency: string
+          dispatched_at: string | null
           expected_delivery_date: string | null
           id: string
           listing_id: string
           notes: string | null
           order_number: string
+          paid_at: string | null
           placed_by: string | null
           quantity_kg: number
+          shipping_address: Json | null
           status: Database["public"]["Enums"]["buyer_order_status"]
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
           subtotal: number
           unit_price: number
           updated_at: string
@@ -517,17 +567,26 @@ export type Database = {
         Insert: {
           admin_id: string
           batch_id?: string | null
+          buyer_account_id?: string | null
           buyer_id: string
+          channel?: string
+          checkout_url?: string | null
+          completed_at?: string | null
           created_at?: string
           currency?: string
+          dispatched_at?: string | null
           expected_delivery_date?: string | null
           id?: string
           listing_id: string
           notes?: string | null
           order_number: string
+          paid_at?: string | null
           placed_by?: string | null
           quantity_kg: number
+          shipping_address?: Json | null
           status?: Database["public"]["Enums"]["buyer_order_status"]
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           subtotal: number
           unit_price: number
           updated_at?: string
@@ -535,17 +594,26 @@ export type Database = {
         Update: {
           admin_id?: string
           batch_id?: string | null
+          buyer_account_id?: string | null
           buyer_id?: string
+          channel?: string
+          checkout_url?: string | null
+          completed_at?: string | null
           created_at?: string
           currency?: string
+          dispatched_at?: string | null
           expected_delivery_date?: string | null
           id?: string
           listing_id?: string
           notes?: string | null
           order_number?: string
+          paid_at?: string | null
           placed_by?: string | null
           quantity_kg?: number
+          shipping_address?: Json | null
           status?: Database["public"]["Enums"]["buyer_order_status"]
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           subtotal?: number
           unit_price?: number
           updated_at?: string
@@ -556,6 +624,13 @@ export type Database = {
             columns: ["batch_id"]
             isOneToOne: false
             referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_orders_buyer_account_id_fkey"
+            columns: ["buyer_account_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_accounts"
             referencedColumns: ["id"]
           },
           {
@@ -570,6 +645,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "grain_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings_v"
             referencedColumns: ["id"]
           },
         ]
@@ -1282,8 +1364,10 @@ export type Database = {
       grain_listings: {
         Row: {
           admin_id: string
+          available_from: string | null
           available_kg: number
           batch_id: string
+          cover_image_url: string | null
           created_at: string
           created_by: string
           currency: string
@@ -1292,6 +1376,7 @@ export type Database = {
           id: string
           min_order_kg: number
           price_per_kg: number
+          slug: string | null
           status: Database["public"]["Enums"]["listing_status"]
           title: string
           updated_at: string
@@ -1299,8 +1384,10 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          available_from?: string | null
           available_kg: number
           batch_id: string
+          cover_image_url?: string | null
           created_at?: string
           created_by: string
           currency?: string
@@ -1309,6 +1396,7 @@ export type Database = {
           id?: string
           min_order_kg?: number
           price_per_kg: number
+          slug?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
           title: string
           updated_at?: string
@@ -1316,8 +1404,10 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          available_from?: string | null
           available_kg?: number
           batch_id?: string
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string
           currency?: string
@@ -1326,6 +1416,7 @@ export type Database = {
           id?: string
           min_order_kg?: number
           price_per_kg?: number
+          slug?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
           title?: string
           updated_at?: string
@@ -3459,7 +3550,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_listings_v: {
+        Row: {
+          available_from: string | null
+          available_kg: number | null
+          cover_image_url: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          grade: string | null
+          grain_type: Database["public"]["Enums"]["grain_type"] | null
+          id: string | null
+          min_order_kg: number | null
+          price_per_kg: number | null
+          slug: string | null
+          title: string | null
+          variety: string | null
+          warehouse_location: Json | null
+          warehouse_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_my_role: {
@@ -3480,7 +3591,13 @@ export type Database = {
       actuator_type: "fan" | "vent" | "heater" | "cooler" | "alarm" | "light"
       alert_priority: "low" | "medium" | "high" | "critical"
       alert_status: "pending" | "acknowledged" | "resolved" | "escalated"
-      app_role: "super_admin" | "admin" | "manager" | "technician" | "pending"
+      app_role:
+        | "super_admin"
+        | "admin"
+        | "manager"
+        | "technician"
+        | "pending"
+        | "buyer"
       batch_status:
         | "stored"
         | "dispatched"
@@ -3677,7 +3794,14 @@ export const Constants = {
       actuator_type: ["fan", "vent", "heater", "cooler", "alarm", "light"],
       alert_priority: ["low", "medium", "high", "critical"],
       alert_status: ["pending", "acknowledged", "resolved", "escalated"],
-      app_role: ["super_admin", "admin", "manager", "technician", "pending"],
+      app_role: [
+        "super_admin",
+        "admin",
+        "manager",
+        "technician",
+        "pending",
+        "buyer",
+      ],
       batch_status: [
         "stored",
         "dispatched",

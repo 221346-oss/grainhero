@@ -92,6 +92,13 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
+    label: "Marketplace",
+    items: [
+      { name: "marketplace", label: "Browse Grain", to: "/marketplace", icon: ShoppingCart, roles: ["super_admin", "admin", "manager", "technician", "buyer"] },
+      { name: "buyer-orders", label: "My Orders", to: "/buyer/orders", icon: Package, roles: ["super_admin", "admin", "manager", "technician", "buyer"] },
+    ],
+  },
+  {
     label: "Platform",
     items: [
       { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },

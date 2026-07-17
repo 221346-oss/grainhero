@@ -14,6 +14,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as CookiesRouteImport } from './routes/cookies'
@@ -24,7 +25,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
+import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
@@ -81,6 +84,7 @@ import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
 import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
@@ -91,6 +95,7 @@ import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/p
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -115,6 +120,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -166,10 +176,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
 const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CheckoutRoute,
+} as any)
+const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => MarketplaceRoute,
 } as any)
 const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
@@ -479,6 +499,12 @@ const AuthenticatedPlatformAuditLogsRoute =
     path: '/platform/audit-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedBuyerOrdersRoute =
+  AuthenticatedBuyerOrdersRouteImport.update({
+    id: '/buyer/orders',
+    path: '/buyer/orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminsAdminIdRoute =
   AuthenticatedAdminsAdminIdRouteImport.update({
     id: '/admins/$adminId',
@@ -538,6 +564,12 @@ const AuthenticatedPlatformOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedPlatformOrdersRoute,
   } as any)
+const AuthenticatedBuyerOrdersOrderIdRoute =
+  AuthenticatedBuyerOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedBuyerOrdersRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -549,6 +581,7 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
   '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
@@ -593,8 +626,11 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
+  '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -612,6 +648,7 @@ export interface FileRoutesByFullPath {
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
@@ -675,8 +712,11 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
+  '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -694,6 +734,7 @@ export interface FileRoutesByTo {
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
+  '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
@@ -716,6 +757,7 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
   '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
@@ -760,8 +802,11 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
+  '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -779,6 +824,7 @@ export interface FileRoutesById {
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
@@ -801,6 +847,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/docs'
     | '/help'
+    | '/marketplace'
     | '/privacy'
     | '/sitemap.xml'
     | '/team'
@@ -845,8 +892,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout/'
+    | '/marketplace/'
     | '/admins/$adminId'
+    | '/buyer/orders'
     | '/platform/audit-logs'
     | '/platform/financials'
     | '/platform/health'
@@ -864,6 +914,7 @@ export interface FileRouteTypes {
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
     | '/platform/'
+    | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/heartbeat-sweep'
@@ -927,8 +978,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout'
+    | '/marketplace'
     | '/admins/$adminId'
+    | '/buyer/orders'
     | '/platform/audit-logs'
     | '/platform/financials'
     | '/platform/health'
@@ -946,6 +1000,7 @@ export interface FileRouteTypes {
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
     | '/platform'
+    | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/heartbeat-sweep'
@@ -967,6 +1022,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/docs'
     | '/help'
+    | '/marketplace'
     | '/privacy'
     | '/sitemap.xml'
     | '/team'
@@ -1011,8 +1067,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout/'
+    | '/marketplace/'
     | '/_authenticated/admins/$adminId'
+    | '/_authenticated/buyer/orders'
     | '/_authenticated/platform/audit-logs'
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
@@ -1030,6 +1089,7 @@ export interface FileRouteTypes {
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
     | '/_authenticated/platform/'
+    | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
     | '/api/public/cron/heartbeat-sweep'
@@ -1052,6 +1112,7 @@ export interface RootRouteChildren {
   CookiesRoute: typeof CookiesRoute
   DocsRoute: typeof DocsRoute
   HelpRoute: typeof HelpRoute
+  MarketplaceRoute: typeof MarketplaceRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
@@ -1104,6 +1165,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -1176,12 +1244,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
     '/checkout/': {
       id: '/checkout/'
       path: '/'
       fullPath: '/checkout/'
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/marketplace/$slug': {
+      id: '/marketplace/$slug'
+      path: '/$slug'
+      fullPath: '/marketplace/$slug'
+      preLoaderRoute: typeof MarketplaceSlugRouteImport
+      parentRoute: typeof MarketplaceRoute
     }
     '/checkout/success': {
       id: '/checkout/success'
@@ -1575,6 +1657,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/buyer/orders': {
+      id: '/_authenticated/buyer/orders'
+      path: '/buyer/orders'
+      fullPath: '/buyer/orders'
+      preLoaderRoute: typeof AuthenticatedBuyerOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admins/$adminId': {
       id: '/_authenticated/admins/$adminId'
       path: '/admins/$adminId'
@@ -1645,6 +1734,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersRoute
     }
+    '/_authenticated/buyer/orders/$orderId': {
+      id: '/_authenticated/buyer/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/buyer/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedBuyerOrdersRoute
+    }
   }
 }
 
@@ -1672,6 +1768,20 @@ const AuthenticatedSilosRouteChildren: AuthenticatedSilosRouteChildren = {
 
 const AuthenticatedSilosRouteWithChildren =
   AuthenticatedSilosRoute._addFileChildren(AuthenticatedSilosRouteChildren)
+
+interface AuthenticatedBuyerOrdersRouteChildren {
+  AuthenticatedBuyerOrdersOrderIdRoute: typeof AuthenticatedBuyerOrdersOrderIdRoute
+}
+
+const AuthenticatedBuyerOrdersRouteChildren: AuthenticatedBuyerOrdersRouteChildren =
+  {
+    AuthenticatedBuyerOrdersOrderIdRoute: AuthenticatedBuyerOrdersOrderIdRoute,
+  }
+
+const AuthenticatedBuyerOrdersRouteWithChildren =
+  AuthenticatedBuyerOrdersRoute._addFileChildren(
+    AuthenticatedBuyerOrdersRouteChildren,
+  )
 
 interface AuthenticatedPlatformOrdersRouteChildren {
   AuthenticatedPlatformOrdersOrderIdRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -1738,6 +1848,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
+  AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
@@ -1787,6 +1898,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
+  AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRouteWithChildren,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
   AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
@@ -1838,6 +1950,20 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
   CheckoutRouteChildren,
 )
 
+interface MarketplaceRouteChildren {
+  MarketplaceSlugRoute: typeof MarketplaceSlugRoute
+  MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+}
+
+const MarketplaceRouteChildren: MarketplaceRouteChildren = {
+  MarketplaceSlugRoute: MarketplaceSlugRoute,
+  MarketplaceIndexRoute: MarketplaceIndexRoute,
+}
+
+const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
+  MarketplaceRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1849,6 +1975,7 @@ const rootRouteChildren: RootRouteChildren = {
   CookiesRoute: CookiesRoute,
   DocsRoute: DocsRoute,
   HelpRoute: HelpRoute,
+  MarketplaceRoute: MarketplaceRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
