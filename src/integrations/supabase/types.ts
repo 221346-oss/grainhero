@@ -547,6 +547,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           currency: string
+          delivered_at: string | null
           dispatched_at: string | null
           expected_delivery_date: string | null
           id: string
@@ -556,6 +557,8 @@ export type Database = {
           paid_at: string | null
           placed_by: string | null
           quantity_kg: number
+          review_prompt_sent_at: string | null
+          shipment_id: string | null
           shipping_address: Json | null
           status: Database["public"]["Enums"]["buyer_order_status"]
           stripe_payment_intent: string | null
@@ -574,6 +577,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency?: string
+          delivered_at?: string | null
           dispatched_at?: string | null
           expected_delivery_date?: string | null
           id?: string
@@ -583,6 +587,8 @@ export type Database = {
           paid_at?: string | null
           placed_by?: string | null
           quantity_kg: number
+          review_prompt_sent_at?: string | null
+          shipment_id?: string | null
           shipping_address?: Json | null
           status?: Database["public"]["Enums"]["buyer_order_status"]
           stripe_payment_intent?: string | null
@@ -601,6 +607,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency?: string
+          delivered_at?: string | null
           dispatched_at?: string | null
           expected_delivery_date?: string | null
           id?: string
@@ -610,6 +617,8 @@ export type Database = {
           paid_at?: string | null
           placed_by?: string | null
           quantity_kg?: number
+          review_prompt_sent_at?: string | null
+          shipment_id?: string | null
           shipping_address?: Json | null
           status?: Database["public"]["Enums"]["buyer_order_status"]
           stripe_payment_intent?: string | null
@@ -652,6 +661,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "public_listings_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_orders_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_shipments"
             referencedColumns: ["id"]
           },
         ]
@@ -742,6 +758,172 @@ export type Database = {
             columns: ["recorded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_reviews: {
+        Row: {
+          admin_id: string
+          body: string | null
+          buyer_account_id: string | null
+          created_at: string
+          direction: Database["public"]["Enums"]["review_direction"]
+          id: string
+          moderated_at: string | null
+          moderated_by: string | null
+          order_id: string
+          rating: number
+          reviewer_user_id: string
+          status: Database["public"]["Enums"]["review_status"]
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          body?: string | null
+          buyer_account_id?: string | null
+          created_at?: string
+          direction: Database["public"]["Enums"]["review_direction"]
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          order_id: string
+          rating: number
+          reviewer_user_id: string
+          status?: Database["public"]["Enums"]["review_status"]
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          body?: string | null
+          buyer_account_id?: string | null
+          created_at?: string
+          direction?: Database["public"]["Enums"]["review_direction"]
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          order_id?: string
+          rating?: number
+          reviewer_user_id?: string
+          status?: Database["public"]["Enums"]["review_status"]
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_reviews_buyer_account_id_fkey"
+            columns: ["buyer_account_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_shipment_events: {
+        Row: {
+          at: string
+          code: string
+          created_at: string
+          id: string
+          label: string
+          location: string | null
+          shipment_id: string
+          source: string
+        }
+        Insert: {
+          at?: string
+          code: string
+          created_at?: string
+          id?: string
+          label: string
+          location?: string | null
+          shipment_id: string
+          source?: string
+        }
+        Update: {
+          at?: string
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
+          location?: string | null
+          shipment_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_shipment_events_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_shipments: {
+        Row: {
+          admin_id: string
+          courier_key: string
+          courier_label: string | null
+          created_at: string
+          delivered_at: string | null
+          dispatched_at: string | null
+          expected_delivery_at: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          status: Database["public"]["Enums"]["shipment_status"]
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          courier_key: string
+          courier_label?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          dispatched_at?: string | null
+          expected_delivery_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          courier_key?: string
+          courier_label?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          dispatched_at?: string | null
+          expected_delivery_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          status?: Database["public"]["Enums"]["shipment_status"]
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_shipments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -3647,6 +3829,8 @@ export type Database = {
         | "Grain Enterprise Plus"
         | "Custom"
       power_source: "solar" | "battery" | "direct" | "hybrid"
+      review_direction: "buyer_to_seller" | "seller_to_buyer"
+      review_status: "pending" | "published" | "rejected"
       sensor_type:
         | "temperature"
         | "humidity"
@@ -3656,6 +3840,12 @@ export type Database = {
         | "light"
         | "pressure"
         | "ph"
+      shipment_status:
+        | "queued"
+        | "in_transit"
+        | "out_for_delivery"
+        | "delivered"
+        | "exception"
       spoilage_label: "Safe" | "Risky" | "Spoiled"
       subscription_status:
         | "active"
@@ -3856,6 +4046,8 @@ export const Constants = {
         "Custom",
       ],
       power_source: ["solar", "battery", "direct", "hybrid"],
+      review_direction: ["buyer_to_seller", "seller_to_buyer"],
+      review_status: ["pending", "published", "rejected"],
       sensor_type: [
         "temperature",
         "humidity",
@@ -3865,6 +4057,13 @@ export const Constants = {
         "light",
         "pressure",
         "ph",
+      ],
+      shipment_status: [
+        "queued",
+        "in_transit",
+        "out_for_delivery",
+        "delivered",
+        "exception",
       ],
       spoilage_label: ["Safe", "Risky", "Spoiled"],
       subscription_status: [
