@@ -101,6 +101,13 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       { key: "leopards", label: "Leopards Courier", trackingUrlTemplate: "https://www.leopardscourier.com/tracking/{{trackingNumber}}" },
     ],
     slaHours: { inTransit: 48, outForDelivery: 12, delivered: 72 },
+    eventPresets: [
+      { code: "picked_up", label: "Picked up" },
+      { code: "in_transit", label: "In transit", setStatus: "in_transit" },
+      { code: "out_for_delivery", label: "Out for delivery", setStatus: "out_for_delivery" },
+      { code: "delivered", label: "Delivered", setStatus: "delivered" },
+      { code: "exception", label: "Exception", setStatus: "exception" },
+    ],
   },
   reviews: {
     enabled: true,
