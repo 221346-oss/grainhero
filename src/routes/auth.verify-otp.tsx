@@ -77,9 +77,6 @@ function VerifyOtpPage() {
 
     if (error) {
       setMsg({ type: "error", text: error.message });
-      void logSecurityEvent({
-        data: { event: "sign_in_failed", meta: { email, reason: error.message } },
-      }).catch(() => {});
       return;
     }
 
