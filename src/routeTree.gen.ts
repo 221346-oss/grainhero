@@ -63,6 +63,7 @@ import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
@@ -365,6 +366,12 @@ const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   path: '/api/firebase/live-sensors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedPlatformUsersRoute =
   AuthenticatedPlatformUsersRouteImport.update({
     id: '/platform/users',
@@ -506,7 +513,7 @@ export interface FileRoutesByFullPath {
   '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
-  '/settings': typeof AuthenticatedSettingsRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/silos': typeof AuthenticatedSilosRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team-management': typeof AuthenticatedTeamManagementRoute
@@ -530,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
@@ -577,7 +585,7 @@ export interface FileRoutesByTo {
   '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
-  '/settings': typeof AuthenticatedSettingsRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/silos': typeof AuthenticatedSilosRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team-management': typeof AuthenticatedTeamManagementRoute
@@ -601,6 +609,7 @@ export interface FileRoutesByTo {
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
@@ -651,7 +660,7 @@ export interface FileRoutesById {
   '/_authenticated/security-center': typeof AuthenticatedSecurityCenterRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/silos': typeof AuthenticatedSilosRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
@@ -675,6 +684,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
@@ -749,6 +759,7 @@ export interface FileRouteTypes {
     | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
+    | '/settings/notifications'
     | '/api/firebase/live-sensors'
     | '/platform/'
     | '/api/public/cron/lifecycle-emails'
@@ -820,6 +831,7 @@ export interface FileRouteTypes {
     | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
+    | '/settings/notifications'
     | '/api/firebase/live-sensors'
     | '/platform'
     | '/api/public/cron/lifecycle-emails'
@@ -893,6 +905,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/plans'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
+    | '/_authenticated/settings/notifications'
     | '/api/firebase/live-sensors'
     | '/_authenticated/platform/'
     | '/api/public/cron/lifecycle-emails'
@@ -1308,6 +1321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFirebaseLiveSensorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/platform/users': {
       id: '/_authenticated/platform/users'
       path: '/platform/users'
@@ -1430,6 +1450,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
@@ -1455,7 +1489,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSecurityCenterRoute: typeof AuthenticatedSecurityCenterRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
@@ -1500,7 +1534,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSecurityCenterRoute: AuthenticatedSecurityCenterRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSilosRoute: AuthenticatedSilosRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
