@@ -63,12 +63,15 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/health": AnalyticsSkeleton,
   "/platform/financials": FinancialsSkeleton,
   "/platform/orders": PlatformOrdersSkeleton,
+  "/technician/installs": OrdersSkeleton,
 };
 
 function AutoPending() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   let Skel = PAGE_SKELETONS[pathname];
   if (!Skel && pathname.startsWith("/admins/")) Skel = AdminProfileSkeleton;
+  if (!Skel && pathname.startsWith("/platform/orders/")) Skel = PlatformOrdersSkeleton;
+  if (!Skel && pathname.startsWith("/technician/installs/")) Skel = OrdersSkeleton;
   if (Skel) return <Skel />;
   return <DashboardSkeleton />;
 }

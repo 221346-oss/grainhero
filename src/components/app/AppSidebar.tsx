@@ -60,6 +60,7 @@ const pinnedNav: NavItem[] = [
   { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
   { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
   { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
+  { name: "technician-installs", label: "My Installs", to: "/technician/installs", icon: Wrench, roles: ["technician"] },
 ];
 
 // Everything else lives behind a "More" popover, grouped like Slack's overflow menu.
