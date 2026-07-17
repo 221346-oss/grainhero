@@ -8,9 +8,49 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity } from "@/lib/activity";
 import { loadMarketplaceSettings, renderTemplate } from "@/lib/marketplace-settings.functions";
+import { emitNotification } from "@/lib/notify";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
+
+/**
+ * Emit in-app notifications to the buyer (via buyer_accounts.user_id) and
+ * the seller admin whenever a shipment audit event lands. Fire-and-forget.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function notifyShipmentParties(sb: any, args: {
+  orderId: string; adminId: string; title: string; body: string; link: string;
+}) {
+  try {
+    // Seller / tenant admin
+    void emitNotification(sb, {
+      recipientId: args.adminId, tenantAdminId: args.adminId,
+      category: "order", severity: "info",
+      title: args.title, body: args.body, link: args.link,
+      entityType: "buyer_order", entityId: args.orderId,
+    });
+    // Buyer
+    const { data: order } = await sb.from("buyer_orders")
+      .select("buyer_account_id").eq("id", args.orderId).maybeSingle();
+    const acctId = (order as Row | null)?.buyer_account_id;
+    if (acctId) {
+      const { data: acc } = await sb.from("buyer_accounts")
+        .select("user_id").eq("id", acctId).maybeSingle();
+      const uid = (acc as Row | null)?.user_id;
+      if (uid) {
+        void emitNotification(sb, {
+          recipientId: uid, tenantAdminId: args.adminId,
+          category: "order", severity: "info",
+          title: args.title, body: args.body,
+          link: `/buyer/orders/${args.orderId}`,
+          entityType: "buyer_order", entityId: args.orderId,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("[dispatch] notify failed", (e as Error).message);
+  }
+}
 
 function resolveTrackingUrl(
   template: string,
@@ -98,6 +138,12 @@ export const createShipment = createServerFn({ method: "POST" })
     } catch (e) {
       console.warn("[dispatch] dispatched email failed:", (e as Error).message);
     }
+    await notifyShipmentParties(sb, {
+      orderId: data.orderId, adminId: o.admin_id as string,
+      title: `Order dispatched`,
+      body: `Shipment created via ${courier.label}${data.trackingNumber ? ` #${data.trackingNumber}` : ""}.`,
+      link: `/platform/orders/${data.orderId}`,
+    });
     return { shipmentId };
   });
 
@@ -140,6 +186,18 @@ export const appendShipmentEvent = createServerFn({ method: "POST" })
           }
         }
       }
+    }
+    // In-app fan-out for every audit event.
+    const { data: ship } = await sb.from("buyer_shipments")
+      .select("order_id, admin_id").eq("id", data.shipmentId).maybeSingle();
+    const s = ship as Row | null;
+    if (s?.order_id && s?.admin_id) {
+      await notifyShipmentParties(sb, {
+        orderId: s.order_id as string, adminId: s.admin_id as string,
+        title: `Shipment update: ${data.label}`,
+        body: [data.location, data.note].filter(Boolean).join(" — ") || data.code,
+        link: `/platform/orders/${s.order_id}`,
+      });
     }
     return { ok: true };
   });
@@ -194,6 +252,12 @@ export const markDelivered = createServerFn({ method: "POST" })
     } catch (e) {
       console.warn("[dispatch] delivered email failed:", (e as Error).message);
     }
+    await notifyShipmentParties(sb, {
+      orderId: s.order_id as string, adminId: s.admin_id as string,
+      title: `Order delivered`,
+      body: data.note ?? `Shipment marked delivered.`,
+      link: `/platform/orders/${s.order_id}`,
+    });
 
     await logActivity({
       actorId: context.userId, tenantAdminId: s.admin_id as string,
