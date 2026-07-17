@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { z } from "zod";
+import { logActivity } from "./activity";
 
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
@@ -11,6 +12,41 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
 
 async function assertSuperAdmin(supabase: any, userId: string) {
   if ((await getEffectiveRole(supabase, userId)) !== "super_admin") throw new Error("Forbidden");
+}
+
+async function verifyAndLimit(
+  context: { supabase: any; userId: string },
+  bucket: string,
+  limit = 10,
+) {
+  const { getVerifiedUser } = await import("@/lib/session.server");
+  const { checkRateLimit } = await import("@/lib/rate-limit");
+  await getVerifiedUser(context.supabase);
+  const gate = checkRateLimit(`${bucket}:${context.userId}`, { limit, windowMs: 60_000 });
+  if (!gate.ok) throw new Error(`Too many requests. Try again in ${gate.retryAfter}s.`);
+}
+
+async function notify(
+  sb: any,
+  userId: string,
+  tenantAdminId: string,
+  title: string,
+  body: string,
+  meta: Record<string, unknown>,
+) {
+  try {
+    await sb.from("notifications").insert({
+      admin_id: tenantAdminId,
+      user_id: userId,
+      type: "plan_change",
+      category: "billing",
+      title,
+      message: body,
+      metadata: meta as never,
+    } as never);
+  } catch (err) {
+    console.warn("[notify] insert failed", err);
+  }
 }
 
 /* -------------------- list -------------------- */
@@ -143,6 +179,7 @@ export const cancelPlanChangeRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
   .handler(async ({ data, context }) => {
+    await verifyAndLimit(context, "plan-change-cancel");
     const { error } = await context.supabase
       .from("tenant_plan_change_requests")
       .update({ status: "cancelled" } as never)
@@ -150,6 +187,14 @@ export const cancelPlanChangeRequest = createServerFn({ method: "POST" })
       .eq("requested_by", context.userId)
       .eq("status", "pending");
     if (error) throw error;
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: context.userId,
+      action: "plan_change_cancelled",
+      targetType: "plan_change_request",
+      targetId: data.id,
+      sb: context.supabase,
+    });
     return { ok: true };
   });
 
@@ -159,17 +204,24 @@ const decideInput = z.object({
   id: z.string().uuid(),
   approve: z.boolean(),
   note: z.string().max(500).optional().nullable(),
+  reason: z.string().max(500).optional().nullable(),
 });
 
 export const decidePlanChangeRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(decideInput, d))
   .handler(async ({ data, context }) => {
-    await assertSuperAdmin(context.supabase, context.userId);
+    const { requireRole } = await import("@/lib/session.server");
+    await requireRole(context.supabase, context.userId, ["super_admin"]);
+    await verifyAndLimit(context, "plan-change-decide");
+
+    if (!data.approve && !(data.reason && data.reason.trim().length > 0)) {
+      throw new Error("Rejection reason is required");
+    }
 
     const { data: req, error: e1 } = await context.supabase
       .from("tenant_plan_change_requests")
-      .select("id, tenant_admin_id, requested_plan, status")
+      .select("id, tenant_admin_id, requested_plan, current_plan, requested_by, status")
       .eq("id", data.id)
       .maybeSingle();
     if (e1) throw e1;
@@ -177,6 +229,7 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
     if (req.status !== "pending") throw new Error("Request already decided");
 
     const newStatus = data.approve ? "approved" : "rejected";
+    const decisionNote = data.approve ? (data.note ?? null) : (data.reason ?? null);
 
     const { error: e2 } = await context.supabase
       .from("tenant_plan_change_requests")
@@ -184,7 +237,7 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
         status: newStatus,
         decided_by: context.userId,
         decided_at: new Date().toISOString(),
-        note: data.note ?? null,
+        note: decisionNote,
       } as never)
       .eq("id", data.id);
     if (e2) throw e2;
@@ -195,6 +248,60 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
         .update({ subscription_plan: req.requested_plan } as never)
         .eq("id", req.tenant_admin_id);
       if (e3) throw e3;
+
+      // Best-effort: keep any live subscription row's plan_name in sync so
+      // financials + gates pick it up immediately. Skip if none exists.
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({ plan_name: req.requested_plan } as never)
+          .eq("admin_id", req.tenant_admin_id)
+          .in("status", ["active", "trial"]);
+      } catch (err) {
+        console.warn("[decide] subscription sync failed", err);
+      }
+    }
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: req.tenant_admin_id,
+      action: data.approve ? "plan_change_approved" : "plan_change_rejected",
+      targetType: "plan_change_request",
+      targetId: data.id,
+      meta: {
+        from: req.current_plan,
+        to: req.requested_plan,
+        note: decisionNote,
+      },
+      sb: context.supabase,
+    });
+
+    // Security event via admin client (RLS-free insert).
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.from("security_events").insert({
+        user_id: context.userId,
+        tenant_id: req.tenant_admin_id,
+        event: data.approve ? "plan_change.approved" : "plan_change.rejected",
+        meta: { request_id: data.id, from: req.current_plan, to: req.requested_plan } as never,
+      } as never);
+    } catch (err) {
+      console.warn("[decide] security event failed", err);
+    }
+
+    if (req.requested_by) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await notify(
+        supabaseAdmin,
+        req.requested_by,
+        req.tenant_admin_id,
+        data.approve ? "Plan change approved" : "Plan change rejected",
+        data.approve
+          ? `Your plan has been changed to ${req.requested_plan}.`
+          : `Your request to switch to ${req.requested_plan} was rejected: ${decisionNote}`,
+        { request_id: data.id, from: req.current_plan, to: req.requested_plan, status: newStatus },
+      );
     }
 
     return { ok: true };
