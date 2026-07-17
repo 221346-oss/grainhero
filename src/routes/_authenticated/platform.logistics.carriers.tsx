@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { listCarriers, upsertCarrier, rotateCarrierWebhookSecret } from "@/lib/logistics.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/logistics/carriers")({
@@ -27,14 +27,14 @@ function CarriersPage() {
 
   const upsert = useMutation({
     mutationFn: (payload: Record<string, unknown>) => upsertFn({ data: payload as any }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["carriers"] }); toast({ title: "Carrier saved" }); },
-    onError: (e: Error) => toast({ title: "Save failed", description: e.message, variant: "destructive" }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["carriers"] }); toast.success("Carrier saved"); },
+    onError: (e: Error) => toast.error(e.message),
   });
   const rotate = useMutation({
     mutationFn: (id: string) => rotateFn({ data: { id } }),
     onSuccess: (r: { secret: string }) => {
       qc.invalidateQueries({ queryKey: ["carriers"] });
-      toast({ title: "Webhook secret rotated", description: `Copy now: ${r.secret.slice(0, 12)}…` });
+      toast.success(`Webhook secret rotated: ${r.secret.slice(0, 12)}… (copied)`);
       navigator.clipboard?.writeText(r.secret).catch(() => {});
     },
   });
