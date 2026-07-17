@@ -314,6 +314,29 @@ const SCHEMA = z.object({
     reasonCodes: z.array(z.object({ key: z.string().min(1), label: z.string().min(1) })).max(30),
     autoCancelUnpaidAfterHours: z.number().int().min(0).max(720),
   }),
+  reputation: z.object({
+    weights: z.object({
+      rating: z.number().min(0).max(100),
+      onTime: z.number().min(0).max(100),
+      disputeFree: z.number().min(0).max(100),
+      transitSpeed: z.number().min(0).max(100),
+    }),
+    badges: z.array(z.object({
+      key: z.string().min(1),
+      label: z.string().min(1),
+      minScore: z.number().min(0).max(100),
+      colorToken: z.string().min(1),
+    })).max(20),
+    verifiedMinScore: z.number().min(0).max(100),
+  }).optional().default({
+    weights: { rating: 40, onTime: 30, disputeFree: 20, transitSpeed: 10 },
+    badges: [], verifiedMinScore: 75,
+  }),
+  reviewsPolicy: z.object({
+    autoPublishThreshold: z.number().int().min(1).max(5),
+    bannedPhrases: z.array(z.string()).max(200),
+    sellerResponseWindowDays: z.number().int().min(0).max(365),
+  }).optional().default({ autoPublishThreshold: 3, bannedPhrases: [], sellerResponseWindowDays: 30 }),
 });
 
 export const updateMarketplaceSettings = createServerFn({ method: "POST" })
