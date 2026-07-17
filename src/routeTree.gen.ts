@@ -113,6 +113,7 @@ import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/
 import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
@@ -691,6 +692,12 @@ const AuthenticatedPlatformOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedPlatformOrdersRoute,
   } as any)
+const AuthenticatedPlatformLogisticsFleetRoute =
+  AuthenticatedPlatformLogisticsFleetRouteImport.update({
+    id: '/platform/logistics/fleet',
+    path: '/platform/logistics/fleet',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformLogisticsCommandCenterRoute =
   AuthenticatedPlatformLogisticsCommandCenterRouteImport.update({
     id: '/platform/logistics/command-center',
@@ -808,6 +815,7 @@ export interface FileRoutesByFullPath {
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -915,6 +923,7 @@ export interface FileRoutesByTo {
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1026,6 +1035,7 @@ export interface FileRoutesById {
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1137,6 +1147,7 @@ export interface FileRouteTypes {
     | '/buyer/orders/$orderId'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
+    | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
@@ -1244,6 +1255,7 @@ export interface FileRouteTypes {
     | '/buyer/orders/$orderId'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
+    | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
@@ -1354,6 +1366,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/platform/logistics/carriers'
     | '/_authenticated/platform/logistics/command-center'
+    | '/_authenticated/platform/logistics/fleet'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
@@ -2138,6 +2151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersRoute
     }
+    '/_authenticated/platform/logistics/fleet': {
+      id: '/_authenticated/platform/logistics/fleet'
+      path: '/platform/logistics/fleet'
+      fullPath: '/platform/logistics/fleet'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsFleetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/logistics/command-center': {
       id: '/_authenticated/platform/logistics/command-center'
       path: '/platform/logistics/command-center'
@@ -2299,6 +2319,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
   AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
   AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  AuthenticatedPlatformLogisticsFleetRoute: typeof AuthenticatedPlatformLogisticsFleetRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2370,6 +2391,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformLogisticsCarriersRoute,
   AuthenticatedPlatformLogisticsCommandCenterRoute:
     AuthenticatedPlatformLogisticsCommandCenterRoute,
+  AuthenticatedPlatformLogisticsFleetRoute:
+    AuthenticatedPlatformLogisticsFleetRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
