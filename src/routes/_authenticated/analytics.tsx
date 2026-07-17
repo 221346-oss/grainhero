@@ -23,7 +23,7 @@ function fmtKg(n: number) {
   return `${Math.round(n)} kg`;
 }
 function fmtMoney(n: number) {
-  return n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  return n.toLocaleString(undefined, { style: "currency", currency: "PKR", maximumFractionDigits: 0 });
 }
 
 function AnalyticsPage() {

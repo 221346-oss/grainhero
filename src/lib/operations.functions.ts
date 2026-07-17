@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { blockIfImpersonating } from "./impersonation-guard";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -38,7 +37,7 @@ const warehouseInput = z.object({
 });
 
 export const upsertWarehouse = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(warehouseInput, d))
   .handler(async ({ data, context }) => {
     const location = {
@@ -76,7 +75,7 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
   });
 
 export const deleteWarehouse = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("warehouses").delete().eq("id", data.id);
@@ -108,7 +107,7 @@ const siloInput = z.object({
 });
 
 export const upsertSilo = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
     const location = { description: data.location_description ?? null };
@@ -153,7 +152,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
   });
 
 export const deleteSilo = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { count, error: countError } = await context.supabase
@@ -211,7 +210,7 @@ const batchInput = z.object({
 });
 
 export const upsertGrainBatch = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
     // resolve warehouse from silo
@@ -304,7 +303,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
   });
 
 export const deleteGrainBatch = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     // free up silo if this was the current batch
@@ -340,7 +339,7 @@ const dispatchInput = z.object({
 });
 
 export const dispatchGrainBatch = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(dispatchInput, d))
   .handler(async ({ data, context }) => {
     let buyerId = data.buyer_id ?? null;
@@ -421,7 +420,7 @@ const spoilageInput = z.object({
 });
 
 export const logSpoilageEvent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(spoilageInput, d))
   .handler(async ({ data, context }) => {
     const { data: batch, error: getErr } = await context.supabase
@@ -493,7 +492,7 @@ const sensorInput = z.object({
 });
 
 export const upsertSensorDevice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(sensorInput, d))
   .handler(async ({ data, context }) => {
     const base = {
@@ -533,7 +532,7 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
   });
 
 export const deleteSensorDevice = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("sensor_devices").delete().eq("id", data.id);
@@ -612,7 +611,7 @@ const actuatorInput = z.object({
 });
 
 export const upsertActuator = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(actuatorInput, d))
   .handler(async ({ data, context }) => {
     const payload = {
@@ -654,7 +653,7 @@ export const upsertActuator = createServerFn({ method: "POST" })
   });
 
 export const deleteActuator = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("actuators").delete().eq("id", data.id);
@@ -669,7 +668,7 @@ const controlInput = z.object({
 });
 
 export const controlActuator = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(controlInput, d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
@@ -762,7 +761,7 @@ const alertInput = z.object({
 });
 
 export const upsertGrainAlert = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(alertInput, d))
   .handler(async ({ data, context }) => {
     const payload = {
@@ -801,7 +800,7 @@ export const upsertGrainAlert = createServerFn({ method: "POST" })
   });
 
 export const deleteGrainAlert = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("grain_alerts").delete().eq("id", data.id);
@@ -819,7 +818,7 @@ const alertActionInput = z.object({
 });
 
 export const actionGrainAlert = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(alertActionInput, d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
@@ -907,7 +906,7 @@ const buyerInput = z.object({
 });
 
 export const upsertBuyer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
     const payload = {
@@ -950,7 +949,7 @@ export const upsertBuyer = createServerFn({ method: "POST" })
   });
 
 export const deleteBuyer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("buyers").delete().eq("id", data.id);

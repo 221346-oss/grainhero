@@ -105,7 +105,7 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
         id: i.id, admin_id: i.admin_id, amount: i.amount, currency: i.currency,
         status: i.status, billing_date: i.billing_date, invoice_number: i.invoice_number,
       })),
-      currency: "USD",
+      currency: "PKR",
     };
   });
 

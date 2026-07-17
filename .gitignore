@@ -7,7 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-
 node_modules
 dist
 dist-ssr
@@ -18,13 +17,19 @@ dist-ssr
 *.local
 
 # Environment variables — never commit secrets
-.env
 .env.*
 !.env.example
 
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+
+# Google Cloud / Firebase service account credentials
+smart-silo-service-account.json
+*-service-account.json
+
+# Preview helper script
+preview.js
 
 # Editor directories and files
 .vscode/*
@@ -41,3 +46,7 @@ dist-ssr
 # but continue ignoring local/secret environment variants.
 .env.*
 !.env.example
+
+**/package-lock.json
+
+frontend_code/package-lock.json

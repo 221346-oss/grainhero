@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Database, Server, Zap, AlertOctagon } from "lucide-react";
 
 const getHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -61,38 +60,100 @@ function StatusPill({ label, status }: { label: string; status: string }) {
 function PlatformHealthPage() {
   const fetchH = useServerFn(getHealth);
   const { data, isLoading } = useQuery({ queryKey: ["platform-health"], queryFn: () => fetchH(), refetchInterval: 30_000 });
-  if (isLoading || !data) return <div className="text-sm text-slate-500">Loading system health…</div>;
-  const m = data.metrics;
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-bold text-slate-900">System Health</h2>
-        <p className="text-xs text-slate-500 mt-1">Realtime status and error rates.</p>
+  
+  if (isLoading || !data) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="text-center py-8">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-600 border-r-transparent"></div>
+          <p className="mt-2 text-sm text-slate-500">Loading system health…</p>
+        </div>
       </div>
+    );
+  }
+
+  const m = data.metrics;
+  
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">System Health</h1>
+          <p className="text-sm text-slate-600 mt-1">Real-time status monitoring and error rates</p>
+        </div>
+      </div>
+
+      {/* Service Status */}
       <div className="grid gap-3 md:grid-cols-3">
         <StatusPill label="API" status={data.services.api} />
         <StatusPill label="Database" status={data.services.database} />
         <StatusPill label="Realtime" status={data.services.realtime} />
       </div>
-      <div className="grid gap-3 md:grid-cols-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><Activity className="h-3 w-3" /> Uptime</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-emerald-600">{m.uptimePct}%</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><Zap className="h-3 w-3" /> Active users (30d)</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-slate-900">{m.activeUsers}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><Database className="h-3 w-3" /> Total users</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-slate-900">{m.totalUsers}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><AlertOctagon className="h-3 w-3" /> Errors 24h</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-red-600">{m.errorsToday}</CardContent></Card>
+
+      {/* Metrics Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-l-4 border-l-emerald-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Uptime</p>
+            <p className="text-3xl font-bold mt-1 text-emerald-600">{m.uptimePct}%</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-blue-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Active (30d)</p>
+            <p className="text-3xl font-bold mt-1 text-slate-900">{m.activeUsers}</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-purple-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Total Users</p>
+            <p className="text-3xl font-bold mt-1 text-slate-900">{m.totalUsers}</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-red-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Errors 24h</p>
+            <p className="text-3xl font-bold mt-1 text-red-600">{m.errorsToday}</p>
+          </CardContent>
+        </Card>
       </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500">Errors 7d</CardTitle></CardHeader><CardContent className="text-xl font-bold text-slate-900">{m.errors7d}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500">Errors 30d</CardTitle></CardHeader><CardContent className="text-xl font-bold text-slate-900">{m.errors30d}</CardContent></Card>
+
+      {/* Error Stats */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-l-4 border-l-amber-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Errors (7 days)</p>
+            <p className="text-3xl font-bold mt-1 text-slate-900">{m.errors7d}</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-orange-500 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs font-semibold uppercase text-slate-500">Errors (30 days)</p>
+            <p className="text-3xl font-bold mt-1 text-slate-900">{m.errors30d}</p>
+          </CardContent>
+        </Card>
       </div>
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Server className="h-4 w-4" /> Recent incidents</CardTitle></CardHeader>
-        <CardContent>
+
+      {/* Recent Incidents */}
+      <Card className="shadow-md">
+        <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white">
+          <CardTitle className="text-base">Recent Incidents</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           {data.recentEvents.length === 0 ? (
-            <div className="text-sm text-slate-500">No incidents recorded.</div>
+            <div className="p-12 text-center">
+              <p className="text-slate-500 font-medium">No incidents recorded</p>
+              <p className="text-sm text-slate-400 mt-1">System is running smoothly</p>
+            </div>
           ) : (
             <ul className="divide-y divide-slate-100">
               {data.recentEvents.map((e) => (
-                <li key={e.id} className="py-2 flex items-center justify-between text-sm">
+                <li key={e.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <span className="font-medium text-slate-800">{e.event}</span>
                   <span className="text-xs text-slate-500">{new Date(e.created_at).toLocaleString()}</span>
                 </li>

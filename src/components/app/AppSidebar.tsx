@@ -21,9 +21,9 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Smartphone, LogOut,
   Package, OctagonAlert, Zap, Building2, Warehouse,
-  QrCode, Bell, ClipboardList, Shield, Settings, UserCog, Crown,
+  QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
   Brain, Cpu, BarChart3,
-  Wallet, CreditCard, Sparkles,
+  CreditCard,
   Activity, AlertOctagon, FileBarChart,
   Wrench, Server, ShieldCheck, MoreHorizontal,
   DollarSign, TrendingUp, UserPlus, ScrollText,
@@ -50,58 +50,49 @@ const pinnedNav: NavItem[] = [
   { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin", "manager", "technician"] },
   { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager", "technician"] },
   { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin", "manager", "technician"] },
-  { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["super_admin", "admin", "manager"], badge: "AI" },
-  { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
-  // Super-admin-only pins (platform ops)
-  { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
-  { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
-  { name: "platform-revenue", label: "Revenue", to: "/platform/revenue", icon: DollarSign, roles: ["super_admin"] },
-  { name: "platform-plans", label: "Plans", to: "/platform/plans", icon: Sparkles, roles: ["super_admin"] },
+  { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"], badge: "AI" },
+  { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
+  { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager"] },
+  { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
+  { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
+  { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
+  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
 ];
 
 // Everything else lives behind a "More" popover, grouped like Slack's overflow menu.
 const moreGroups: { label: string; items: NavItem[] }[] = [
   {
-    label: "Operations",
-    items: [
-      { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
-      { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["super_admin", "admin", "manager"] },
-      { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "maintenance", label: "Maintenance", to: "/maintenance", icon: Wrench, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "server-monitoring", label: "Device Health", to: "/server-monitoring", icon: Server, roles: ["super_admin", "admin", "manager", "technician"] },
-    ],
-  },
-  {
     label: "Insights",
     items: [
-      { name: "data-visualization", label: "Data Visualization", to: "/data-visualization", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "reports", label: "Reports", to: "/reports", icon: FileBarChart, roles: ["super_admin", "admin", "manager"] },
-      { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["super_admin", "admin"], badge: "ML" },
-      { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "notifications", label: "Notifications", to: "/notifications", icon: Bell, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager"] },
+      { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["admin", "manager", "technician"] },
+      { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["admin", "manager", "technician"] },
+      { name: "maintenance", label: "Maintenance", to: "/maintenance", icon: Wrench, roles: ["admin", "manager", "technician"] },
+      { name: "server-monitoring", label: "Device Health", to: "/server-monitoring", icon: Server, roles: ["admin", "manager", "technician"] },
+      { name: "data-visualization", label: "Data Visualization", to: "/data-visualization", icon: Activity, roles: ["admin", "manager", "technician"] },
+      { name: "reports", label: "Reports", to: "/reports", icon: FileBarChart, roles: ["admin", "manager"] },
+      { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["admin"], badge: "ML" },
+      { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"] },
+      { name: "notifications", label: "Notifications", to: "/notifications", icon: Bell, roles: ["admin", "manager", "technician"] },
     ],
   },
   {
     label: "Business",
     items: [
+      { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
       { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
-      { name: "revenue", label: "Revenue", to: "/revenue", icon: Wallet, roles: ["super_admin", "admin", "manager"] },
       { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
-      { name: "plans", label: "Plans", to: "/plans", icon: Sparkles, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "orders", label: "My Install Orders", to: "/orders", icon: Package, roles: ["admin"] },
     ],
   },
   {
     label: "Platform",
     items: [
+      { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
+      { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
       { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
       { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
       { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
       { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-logs", label: "System Logs", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
-      { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
     ],
   },
 ];
@@ -161,7 +152,7 @@ function Section({ label, items, role, currentPath, showLabel = true }: { label?
   const visible = items.filter((i) => i.roles.includes(role));
   if (visible.length === 0) return null;
   return (
-    <SidebarGroup className={cn(collapsed && "px-0 items-center")}> 
+    <SidebarGroup className={cn(collapsed && "px-0 items-center")}>
       {!collapsed && showLabel && label && (
         <SidebarGroupLabel className="text-[10px] font-black text-sidebar-foreground/55 uppercase tracking-[0.18em] px-2">
           {label}

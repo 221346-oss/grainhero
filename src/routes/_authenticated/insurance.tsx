@@ -180,9 +180,9 @@ function InsurancePage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="Active Policies" value={stats.active} icon={Shield} accent="emerald" />
-        <StatCard label="Total Coverage" value={`$${stats.totalCoverage.toLocaleString()}`} icon={DollarSign} accent="sky" />
+        <StatCard label="Total Coverage" value={`PKR ${stats.totalCoverage.toLocaleString()}`} icon={DollarSign} accent="sky" />
         <StatCard label="Open Claims" value={stats.openClaims} icon={AlertTriangle} accent="amber" />
-        <StatCard label="Claimed Amount" value={`$${stats.totalClaimed.toLocaleString()}`} icon={FileText} accent="violet" />
+        <StatCard label="Claimed Amount" value={`PKR ${stats.totalClaimed.toLocaleString()}`} icon={FileText} accent="violet" />
       </div>
 
       <Tabs defaultValue="policies">

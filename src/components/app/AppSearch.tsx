@@ -43,7 +43,7 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Platform · Tenants", to: "/platform/tenants", group: "Platform" },
   { label: "Platform · Users & roles", to: "/platform/users", group: "Platform" },
   { label: "Platform · Plans & pricing", to: "/platform/plans", group: "Platform" },
-  { label: "Platform · Revenue", to: "/platform/revenue", group: "Platform" },
+  { label: "Platform · Revenue", to: "/revenue", group: "Platform" },
   { label: "Platform · Pipeline", to: "/platform/pipeline", group: "Platform", keywords: "hubspot leads" },
   { label: "Platform · Leads", to: "/platform/leads", group: "Platform" },
   { label: "Platform · Install orders", to: "/platform/orders", group: "Platform", keywords: "hardware" },
@@ -196,7 +196,7 @@ export function AppSearch() {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onInputKeyDown}
-        placeholder={scope.global ? "Search silos, batches, sensors, or jump to a page…" : scope.label}
+        placeholder={scope.global ? "Search anything or jump to a page…" : scope.label}
         aria-label={scope.label}
         className={cn(
           "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-muted/60 hover:bg-muted focus:bg-background",
