@@ -1,71 +1,77 @@
-# Phase 5 — Notifications & Realtime Unification
+# Phase 8 — Hardware Order Lifecycle & Installation Workflow
 
-## Goal
-Single, reliable notification pipeline with realtime delivery, unified read/unread state, and consistent UI across roles.
+Turn the current hardware-order tables into an end-to-end operational flow: order placed → payment confirmed → warehouse packs → technician assigned → on-site install → device commissioned → subscription features unlocked. Every state change emits a notification (Phase 7) and an activity log (Phase 1).
 
-## Problems today
-- Notifications inserted from multiple call sites with inconsistent shape (`type`, `severity`, `link`, `metadata`).
-- No realtime subscription — users must refresh to see new notifications.
-- `activity_logs` vs `notifications` overlap; super-admin activity feed duplicates entries.
-- No unread badge in header; no "mark all read".
-- Email/SMS side-channel not wired to the same event source, so users get in-app-only alerts for critical events.
+## Goals
 
-## Deliverables
+1. Deterministic order state machine with server-enforced transitions.
+2. Super-admin: assign technicians, mark shipped, view whole pipeline.
+3. Technician: see assigned installs, log visit events, upload proof, mark installed.
+4. Admin (buyer): live tracker of their order + install progress + device serials.
+5. Devices auto-registered to the admin's tenant and linked to a silo on commissioning.
 
-### 1. Schema hardening (migration)
-- Add missing columns to `notifications` if absent: `category` (enum: `billing | plan | order | install | security | system | ops`), `severity` (`info | success | warning | critical`), `link`, `metadata jsonb`, `read_at timestamptz`.
-- Backfill defaults for existing rows.
-- Enable realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;`
-- RLS: recipient can `SELECT`/`UPDATE own`; service_role full; super_admin `SELECT` all.
-- Index: `(recipient_id, read_at, created_at desc)`.
+## Data (migration)
 
-### 2. Unified emitter — `src/lib/notify.ts` (server)
-- `emitNotification({ recipientId, category, severity, title, body, link?, metadata? })`
-- `emitToRole({ tenantAdminId, role, ... })` — fan-out to all users with a role under a tenant.
-- `emitToSuperAdmins(...)` — for platform-wide events (plan requests, new signups, churn).
-- Internally: insert row + optional email dispatch (via existing Resend helper) when `severity >= warning` and user has email opt-in.
-- All existing call sites in `plan-thresholds.functions.ts`, `billing.functions.ts`, `hardware-orders`, `installations`, `security_events` refactored to call this.
+- Extend `hardware_orders.status` enum semantics used by app code (no DB enum change; keep TEXT with a check constraint):
+  `pending_payment | paid | packing | shipped | in_transit | installing | completed | cancelled | refunded`.
+- Add columns: `assigned_technician_id uuid`, `shipped_at`, `expected_arrival_at`, `tracking_carrier`, `tracking_number`, `installed_at`, `cancelled_reason`.
+- `hardware_order_installations`: add `technician_id`, `silo_id`, `status` (`scheduled|en_route|onsite|completed|blocked`), `scheduled_for`, `completed_at`, `blocker_note`.
+- `hardware_order_visit_events`: already exists — add `photo_urls text[]`, `location jsonb` (lat/lng), `event_type` check (`arrived|inspection|install|test|handover|issue`).
+- `hardware_order_devices`: add `sensor_device_id uuid` (nullable, links to `sensor_devices` once commissioned), `commissioned_at`.
+- New table `hardware_order_status_history` (order_id, from_status, to_status, actor_id, note, created_at) with GRANTs + RLS (tenant admin read own, technician read assigned, super-admin all).
 
-### 3. Realtime hook — `src/hooks/useNotifications.ts` (client)
-- Subscribes to `postgres_changes` on `notifications` filtered by `recipient_id=eq.<me>`.
-- Merges into React Query cache (`['notifications', userId]`) — no refetch storm.
-- Returns `{ items, unreadCount, markRead, markAllRead }`.
-- Cleanup via `removeChannel` (per realtime rules).
+## Server functions (`src/lib/hardware-lifecycle.functions.ts`)
 
-### 4. Header notification bell
-- Reusable `<NotificationBell />` in `src/components/app/notifications/`.
-- Badge with unread count (99+ cap), popover list (last 20), severity color dot, click → navigate to `link` and mark read.
-- "Mark all read" and "View all" → `/notifications` page.
-- Mounted in `AppSidebar` header slot for all authenticated layouts.
+All protected via `requireSupabaseAuth`, role-checked, emitting notify + activity:
 
-### 5. `/notifications` page
-- Full list with filters (category, severity, unread only).
-- Uses shared `AdminPageShell` + `AdminDataCard` for consistency.
-- Pagination (20/page).
+- `superadminListOrdersPipeline({ status?, search? })` — grouped by status for kanban.
+- `superadminAssignTechnician({ orderId, technicianId, scheduledFor })`.
+- `superadminMarkShipped({ orderId, carrier, trackingNumber, expectedArrivalAt })`.
+- `superadminCancelOrder({ orderId, reason })` — refund path handled separately (Phase 6).
+- `technicianListMyInstalls()` — installs assigned to me, joined with order + admin contact.
+- `technicianUpdateInstallStatus({ installId, status, note? })`.
+- `technicianLogVisitEvent({ installId, eventType, note, photoUrls?, location? })`.
+- `technicianCommissionDevice({ installId, deviceId, serialNumber, siloId, sensorMetadata })` — inserts `sensor_devices`, links via `hardware_order_devices.sensor_device_id`, flips install to `completed` when all devices commissioned.
+- `adminGetMyOrderTracker({ orderId })` — timeline: status history, tracking, install events (sanitised — no technician PII beyond first name).
 
-### 6. Activity vs Notifications separation
-- `activity_logs` = immutable audit trail (who did what) — logged via `logActivity`.
-- `notifications` = actionable inbox for a specific recipient — via `emitNotification`.
-- Super-admin dashboard "Activity" feed reads from `activity_logs` only. Notification bell reads from `notifications` only. Remove the duplicate merge in `SuperAdminDashboard`.
+State machine enforced by a helper `assertTransition(from, to, actorRole)`; illegal transitions throw a typed error. Every transition writes to `hardware_order_status_history` + emits notification to admin (order updates) and super-admin (exception events).
 
-### 7. Wired events (Phase-5 scope)
-- Plan change requested → super-admins
-- Plan change approved/rejected → requester
-- Subscription created/canceled/renewed → tenant admin
-- Hardware order placed / status change → admin + assigned technician
-- Installation scheduled / completed → admin
-- Security event (`critical`) → tenant admin + super-admins
-- Plan limit hit (from `assertPlanAllows`) → tenant admin
+## UI
 
-### 8. Audit script
-Extend `audit-server-fns.ts` to flag direct `supabase.from('notifications').insert(...)` outside `src/lib/notify.ts`.
+### Super-admin
+- `/platform/orders` upgraded: filter chips per status, "Assign technician" and "Mark shipped" dialogs inline in the existing table, per-row link → `/platform/orders/$orderId`.
+- `/platform/orders/$orderId` — full detail: timeline, devices, install log, admin/tenant, actions.
 
-## Non-goals (deferred)
-- Push notifications (web-push / FCM) — Phase 12.
-- SMS via Twilio — Phase 8 (billing/critical only).
-- User-configurable notification preferences UI — Phase 9.
+### Technician
+- `/technician/installs` list (route already scoped under `_authenticated`).
+- `/technician/installs/$installId` — status stepper, event log form (photo upload via existing Cloudinary connector), commissioning wizard (add serial → pick silo → confirm).
 
-## Verification
-- `tsgo` + `audit-routes` + `audit-server-fns` green.
-- Manual: place a plan request → super-admin bell shows unread within 2s without refresh.
-- RLS: user A cannot select user B's notifications (verified via `supabase--read_query`).
+### Admin (buyer)
+- `/orders/$orderId` — public-to-tenant tracker (already partially exists; wire to `adminGetMyOrderTracker`). Shows ETA, carrier + tracking link, install schedule, current step badge, and a "Contact support" CTA.
+
+Shared components: `<OrderStatusStepper>`, `<InstallTimeline>`, `<DeviceCommissioningWizard>`.
+
+## Notifications (uses Phase 7 dispatcher)
+
+Category `order` / `install`, severity varies:
+- Admin: paid → packing → shipped (with tracking) → technician assigned (with ETA) → completed.
+- Technician: new assignment; schedule change; cancellation.
+- Super-admin: any `blocked` install event; any failed commissioning; cancellations.
+
+## Skeletons & loading
+
+- Add `OrderPipelineSkeleton`, `OrderDetailSkeleton`, `TechnicianInstallSkeleton` to `src/components/app/skeletons.tsx`; register in `PAGE_SKELETONS`.
+
+## Audits & docs
+
+- Extend `scripts/audit-server-fns.ts` warn-list acknowledging that all new lifecycle fns must call `getVerifiedUser()` (they will).
+- Update `docs/route-matrix.md` with new routes and role scope.
+- Update `docs/public-server-fns.md` — none of the new fns are public.
+
+## Non-goals
+
+- No refund automation (Phase 6 covers billing side; cancel just marks status).
+- No mobile technician app (Phase 15+ in master plan).
+- No GPS live tracking — just carrier tracking link + optional lat/lng snapshot on visit events.
+
+Reply **go** to build.
