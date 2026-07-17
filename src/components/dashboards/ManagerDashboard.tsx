@@ -291,13 +291,6 @@ function ViewBatchesCard() {
 export function ManagerDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
 
-  const sections: {
-    title: string;
-    description?: string;
-    items: { icon: React.ElementType; title: string; description?: string; to?: string }[];
-  }[] = [];
-
-
   const statCards = [
     {
       label: "Total Batches",
@@ -341,46 +334,31 @@ export function ManagerDashboard({ name }: { name?: string }) {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: "#F8FAFC" }}>
-      <div className="p-3 md:p-5 w-full space-y-10">
+    <AdminPageShell
+      title={`Manager${name ? ` — ${name}` : ""}`}
+      subtitle="Operations, inventory, logistics and health at a glance"
+      actions={<Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Manager</Badge>}
+    >
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        {statCards.map((sc) => (
+          <StatCard key={sc.label} {...sc} />
+        ))}
+      </div>
 
-        {/* Hero */}
-        <HeroSection name={name} />
-
-        {/* Stats */}
-        <div>
-          <SectionHeader
-            title="Overview"
-            size="large"
-          />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {statCards.map((sc) => (
-              <StatCard key={sc.label} {...sc} />
-            ))}
-          </div>
-        </div>
-
-        {/* Overview & Analytics Parent Container */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full bg-[#FFFFFF] rounded-[20px] shadow-sm border border-[#E5E7EB] p-6 mt-8"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Overview & Analytics */}
+      <div>
+        <SectionHeader title="Jump to insights" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {/* Container 1: Operations */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.0, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-
-                <h3 className="font-bold text-[#111827] text-lg">Operations</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">Operations</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ViewBatchesCard />
                 <ActionCard
                   icon={Wrench}
@@ -405,14 +383,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-
-                <h3 className="font-bold text-[#111827] text-lg">Inventory & Storage</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">Inventory & Storage</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ActionCard
                   icon={ThermometerSun}
                   title="Environmental Conditions"
@@ -441,19 +415,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex flex-col mb-2">
-                <div className="flex items-center gap-2 text-emerald-600">
-
-                  <h3 className="font-bold text-[#111827] text-lg">Logistics</h3>
-                </div>
-                <p className="text-xs text-[#6B7280] mt-1">
-                  Manage shipment tracking, dispatch traceability, insurance, and logistics notifications from one place.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">Logistics</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ActionCard
                   icon={MapPin}
                   title="Track Buyer Shipments"
@@ -482,14 +447,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }}
-              whileHover={{ y: -4, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              className="bg-white border border-[#EAEAEA] rounded-[16px] p-5 flex flex-col gap-3 transition-shadow duration-250 ease-out min-h-64 h-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
+              className="bg-card border border-border rounded-xl p-3 flex flex-col gap-2 shadow-sm"
             >
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-
-                <h3 className="font-bold text-[#111827] text-lg">System & Financial Health</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 flex-1">
+              <h3 className="text-sm font-black text-foreground px-1">System & Financial Health</h3>
+              <div className="grid grid-cols-1 gap-2 flex-1">
                 <ActionCard
                   icon={Activity}
                   title="System Health"
@@ -502,11 +463,8 @@ export function ManagerDashboard({ name }: { name?: string }) {
                 />
               </div>
             </motion.div>
-          </div>
-        </motion.div>
-
-
+        </div>
       </div>
-    </div>
+    </AdminPageShell>
   );
 }
