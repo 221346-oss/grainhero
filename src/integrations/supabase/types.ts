@@ -1150,6 +1150,7 @@ export type Database = {
           customer_name: string | null
           hardware_quantity: number
           hardware_total: number
+          hardware_unit_cost: number
           hardware_unit_price: number
           id: string
           install_address: string | null
@@ -1185,6 +1186,7 @@ export type Database = {
           customer_name?: string | null
           hardware_quantity?: number
           hardware_total?: number
+          hardware_unit_cost?: number
           hardware_unit_price?: number
           id?: string
           install_address?: string | null
@@ -1220,6 +1222,7 @@ export type Database = {
           customer_name?: string | null
           hardware_quantity?: number
           hardware_total?: number
+          hardware_unit_cost?: number
           hardware_unit_price?: number
           id?: string
           install_address?: string | null
@@ -2409,6 +2412,24 @@ export type Database = {
           },
         ]
       }
+      stripe_events: {
+        Row: {
+          id: string
+          received_at: string
+          type: string
+        }
+        Insert: {
+          id: string
+          received_at?: string
+          type: string
+        }
+        Update: {
+          id?: string
+          received_at?: string
+          type?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           admin_id: string
@@ -2416,6 +2437,8 @@ export type Database = {
           ai_features: boolean | null
           auto_renew: boolean | null
           billing_cycle: Database["public"]["Enums"]["billing_cycle"] | null
+          cancel_at: string | null
+          canceled_at: string | null
           cancellation_date: string | null
           cancellation_reason: string | null
           created_at: string | null
@@ -2428,6 +2451,8 @@ export type Database = {
           end_date: string
           id: string
           last_payment_date: string | null
+          last_synced_at: string | null
+          latest_invoice_id: string | null
           max_batches: number | null
           max_devices: number | null
           max_storage_gb: number | null
@@ -2461,6 +2486,8 @@ export type Database = {
           ai_features?: boolean | null
           auto_renew?: boolean | null
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"] | null
+          cancel_at?: string | null
+          canceled_at?: string | null
           cancellation_date?: string | null
           cancellation_reason?: string | null
           created_at?: string | null
@@ -2473,6 +2500,8 @@ export type Database = {
           end_date: string
           id?: string
           last_payment_date?: string | null
+          last_synced_at?: string | null
+          latest_invoice_id?: string | null
           max_batches?: number | null
           max_devices?: number | null
           max_storage_gb?: number | null
@@ -2506,6 +2535,8 @@ export type Database = {
           ai_features?: boolean | null
           auto_renew?: boolean | null
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"] | null
+          cancel_at?: string | null
+          canceled_at?: string | null
           cancellation_date?: string | null
           cancellation_reason?: string | null
           created_at?: string | null
@@ -2518,6 +2549,8 @@ export type Database = {
           end_date?: string
           id?: string
           last_payment_date?: string | null
+          last_synced_at?: string | null
+          latest_invoice_id?: string | null
           max_batches?: number | null
           max_devices?: number | null
           max_storage_gb?: number | null
