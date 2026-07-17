@@ -1598,6 +1598,108 @@ export type Database = {
           },
         ]
       }
+      carrier_tracking_events: {
+        Row: {
+          carrier_id: string
+          created_at: string
+          event_code: string | null
+          event_label: string | null
+          external_event_id: string | null
+          id: string
+          mapped_status: string | null
+          occurred_at: string
+          raw_payload: Json | null
+          shipment_id: string
+        }
+        Insert: {
+          carrier_id: string
+          created_at?: string
+          event_code?: string | null
+          event_label?: string | null
+          external_event_id?: string | null
+          id?: string
+          mapped_status?: string | null
+          occurred_at?: string
+          raw_payload?: Json | null
+          shipment_id: string
+        }
+        Update: {
+          carrier_id?: string
+          created_at?: string
+          event_code?: string | null
+          event_label?: string | null
+          external_event_id?: string | null
+          id?: string
+          mapped_status?: string | null
+          occurred_at?: string
+          raw_payload?: Json | null
+          shipment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carrier_tracking_events_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carrier_tracking_events_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carriers: {
+        Row: {
+          active: boolean
+          code: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          event_map: Json
+          id: string
+          logo_url: string | null
+          name: string
+          tracking_url_template: string | null
+          type: string
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          event_map?: Json
+          id?: string
+          logo_url?: string | null
+          name: string
+          tracking_url_template?: string | null
+          type?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          event_map?: Json
+          id?: string
+          logo_url?: string | null
+          name?: string
+          tracking_url_template?: string | null
+          type?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       device_heartbeats: {
         Row: {
           admin_id: string
@@ -1627,6 +1729,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      drivers: {
+        Row: {
+          active: boolean
+          carrier_id: string
+          created_at: string
+          full_name: string
+          id: string
+          license_expiry: string | null
+          license_no: string | null
+          phone: string | null
+          profile_id: string | null
+          rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          carrier_id: string
+          created_at?: string
+          full_name: string
+          id?: string
+          license_expiry?: string | null
+          license_no?: string | null
+          phone?: string | null
+          profile_id?: string | null
+          rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          carrier_id?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          license_expiry?: string | null
+          license_no?: string | null
+          phone?: string | null
+          profile_id?: string | null
+          rating?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_send_log: {
         Row: {
@@ -2911,6 +3070,63 @@ export type Database = {
           },
         ]
       }
+      logistics_cost_entries: {
+        Row: {
+          amount: number
+          assignment_id: string
+          category: string
+          created_at: string
+          currency: string
+          id: string
+          incurred_at: string
+          notes: string | null
+          receipt_url: string | null
+          recorded_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          assignment_id: string
+          category: string
+          created_at?: string
+          currency?: string
+          id?: string
+          incurred_at?: string
+          notes?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assignment_id?: string
+          category?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          incurred_at?: string
+          notes?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logistics_cost_entries_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "shipment_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logistics_cost_entries_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_channel_prefs: {
         Row: {
           categories: Json
@@ -3867,6 +4083,155 @@ export type Database = {
         }
         Relationships: []
       }
+      shipment_assignments: {
+        Row: {
+          actual_delivery_at: string | null
+          actual_pickup_at: string | null
+          assigned_at: string
+          assigned_by: string | null
+          carrier_id: string
+          created_at: string
+          distance_km: number | null
+          driver_id: string | null
+          id: string
+          planned_delivery_at: string | null
+          planned_pickup_at: string | null
+          route_polyline: string | null
+          shipment_id: string
+          status: string
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          actual_delivery_at?: string | null
+          actual_pickup_at?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          carrier_id: string
+          created_at?: string
+          distance_km?: number | null
+          driver_id?: string | null
+          id?: string
+          planned_delivery_at?: string | null
+          planned_pickup_at?: string | null
+          route_polyline?: string | null
+          shipment_id: string
+          status?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          actual_delivery_at?: string | null
+          actual_pickup_at?: string | null
+          assigned_at?: string
+          assigned_by?: string | null
+          carrier_id?: string
+          created_at?: string
+          distance_km?: number | null
+          driver_id?: string | null
+          id?: string
+          planned_delivery_at?: string | null
+          planned_pickup_at?: string | null
+          route_polyline?: string | null
+          shipment_id?: string
+          status?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipment_assignments_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipment_assignments_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipment_assignments_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: true
+            referencedRelation: "buyer_shipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipment_assignments_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipment_route_stops: {
+        Row: {
+          address: string | null
+          arrived_at: string | null
+          assignment_id: string
+          created_at: string
+          departed_at: string | null
+          eta: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          notes: string | null
+          sequence: number
+          stop_type: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          arrived_at?: string | null
+          assignment_id: string
+          created_at?: string
+          departed_at?: string | null
+          eta?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          sequence: number
+          stop_type?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          arrived_at?: string | null
+          assignment_id?: string
+          created_at?: string
+          departed_at?: string | null
+          eta?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          sequence?: number
+          stop_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_route_stops_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "shipment_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       silos: {
         Row: {
           admin_id: string
@@ -4271,6 +4636,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vehicles: {
+        Row: {
+          active: boolean
+          avg_kmpl: number | null
+          capacity_kg: number
+          carrier_id: string
+          created_at: string
+          current_status: string
+          fuel_type: string | null
+          id: string
+          notes: string | null
+          registration_no: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          avg_kmpl?: number | null
+          capacity_kg?: number
+          carrier_id: string
+          created_at?: string
+          current_status?: string
+          fuel_type?: string | null
+          id?: string
+          notes?: string | null
+          registration_no: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          avg_kmpl?: number | null
+          capacity_kg?: number
+          carrier_id?: string
+          created_at?: string
+          current_status?: string
+          fuel_type?: string | null
+          id?: string
+          notes?: string | null
+          registration_no?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waitlist_emails: {
         Row: {
