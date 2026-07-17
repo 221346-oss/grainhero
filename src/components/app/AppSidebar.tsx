@@ -28,6 +28,7 @@ import {
   Activity, AlertOctagon, FileBarChart,
   Wrench, Server, ShieldCheck, MoreHorizontal,
   DollarSign, TrendingUp, UserPlus, ScrollText,
+  Tag, ShoppingCart,
 } from "lucide-react";
 import { performSignOut } from "@/lib/auth/signOut";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -57,6 +58,8 @@ const pinnedNav: NavItem[] = [
   { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
   { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
   { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
+  { name: "listings", label: "Listings", to: "/listings", icon: Tag, roles: ["admin", "manager"] },
+  { name: "sales", label: "Sales", to: "/sales", icon: ShoppingCart, roles: ["admin", "manager"] },
   { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
   { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
   { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
