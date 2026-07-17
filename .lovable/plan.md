@@ -1,110 +1,142 @@
-# Phase 16 — Buyer↔Seller Messaging, Returns/RMA, and Post-Delivery Quality Loop
+# Phase 17 — Logistics Orchestration, Carrier Integrations & Route Optimization
 
-Builds on Phases 11–15.5 (marketplace, dispatch, disputes, refunds, reputation).
-Focus: closing the loop **after** the money has moved — direct communication,
-formal returns, and continuous quality signals feeding reputation.
-
-Everything configurable via Super-admin Marketplace Settings — zero hardcoded strings.
+## Why now
+Phases 13–16 covered dispatch tracking, disputes, refunds, messaging, returns, and quality. What's still missing is the **operational spine that plans the dispatch itself**: who drives, which vehicle, which route, how much fuel, and how carrier tracking events flow back automatically instead of being typed by the seller. Phase 17 turns dispatch from a manual log into a coordinated logistics workflow — while staying fully super-admin-configurable (no hardcoded carriers, vehicle types, or SLA rules).
 
 ## Goals
+1. Model **carriers, vehicles, and drivers** as first-class, super-admin-managed entities.
+2. Let sellers **assign a carrier + driver + vehicle** to a shipment and auto-generate expected pickup / delivery windows from marketplace settings.
+3. **Auto-ingest tracking events** from external carriers (webhook + polling fallback) and merge them into the existing shipment timeline.
+4. Provide **route optimization** for multi-stop dispatches (nearest-neighbour + distance matrix) with a map preview.
+5. Add a **logistics cost ledger** (fuel, driver payout, tolls) that feeds the financials dashboard and profit calc.
+6. Give super-admins a **Logistics Command Center** with fleet utilization, on-time %, and cost-per-kg analytics.
 
-1. **Order-scoped messaging** — buyer and seller can talk on the order, with
-   super-admin visibility and moderation.
-2. **Returns / RMA workflow** — buyers request returns on delivered orders;
-   sellers approve/deny; refunds tie into the existing Stripe flow.
-3. **Quality certificates** — sellers attach lab/moisture/purity certificates
-   per batch; buyers see them before ordering and on the order page.
-4. **Post-delivery quality loop** — buyer quality rating (separate from stars)
-   flows into a "quality score" on the seller storefront and reputation.
-5. **Weight / count reconciliation** — sellers log actual dispatched weight;
-   buyers confirm received weight; variance triggers automatic dispute draft.
+## Data model (new tables)
 
-## Data model (single migration)
+```text
+carriers                    (super-admin managed catalog)
+  ├─ code, name, type (in_house | third_party)
+  ├─ webhook_secret, tracking_url_template
+  └─ contact_email, contact_phone, active
 
-- `buyer_order_messages` — `order_id`, `sender_user_id`, `sender_role`, `body`,
-  `attachments jsonb`, `read_by_seller_at`, `read_by_buyer_at`,
-  `moderated_at`, `moderation_reason`.
-- `buyer_returns` — `order_id`, `admin_id`, `buyer_id`, `reason_key`,
-  `status` (`requested|approved|denied|received|refunded|closed`),
-  `requested_qty`, `resolution` (`refund_full|refund_partial|replace|reject`),
-  `refund_id nullable`, `notes`, `attachments jsonb`, timestamps.
-- `buyer_return_events` — audit trail with actor.
-- `batch_quality_certificates` — `batch_id`, `admin_id`, `issued_by`,
-  `issued_at`, `expires_at`, `moisture_pct`, `purity_pct`, `foreign_matter_pct`,
-  `lab_name`, `document_url`, `verified` (super-admin flag).
-- `buyer_order_weight_reconciliation` — `order_id`, `dispatched_weight_kg`,
-  `received_weight_kg`, `variance_pct`, `auto_flagged bool`.
-- Add columns: `grain_listings.certificate_id` (FK), `buyer_orders.messages_count`.
+vehicles
+  ├─ carrier_id → carriers
+  ├─ registration_no, type (truck|van|pickup), capacity_kg
+  ├─ fuel_type, avg_kmpl, active
+  └─ current_status (idle|assigned|in_transit|maintenance)
 
-All tables: GRANT to authenticated + service_role, RLS by
-`admin_id = auth.uid()` OR buyer via `buyer_accounts.user_id`, super-admin
-via `has_role`.
+drivers
+  ├─ carrier_id → carriers
+  ├─ profile_id (nullable — optional link to app user)
+  ├─ full_name, phone, license_no, license_expiry
+  └─ active, rating (denormalized)
 
-## Marketplace settings additions
+shipment_assignments
+  ├─ shipment_id → buyer_shipments (1-1)
+  ├─ carrier_id, vehicle_id, driver_id
+  ├─ planned_pickup_at, planned_delivery_at
+  ├─ actual_pickup_at, actual_delivery_at
+  ├─ distance_km, route_polyline (text)
+  └─ status, assigned_by, assigned_at
 
-- `messaging.enabled`, `messaging.autoModerationKeywords[]`, `messaging.attachmentsAllowed`
-- `returns.reasons[]` (key/label/refundEligible)
-- `returns.autoApproveHours` (auto-approve if seller doesn't respond)
-- `returns.varianceThresholdPct` (weight variance auto-drafts return)
-- `quality.requiredForListings` (bool), `quality.certificateValidityDays`
-- `quality.metrics[]` (metric key, label, unit, min/max acceptable)
-- Email templates: `returnRequested`, `returnApproved`, `returnDenied`,
-  `returnRefunded`, `messageReceived`, `qualityCertificateAdded`
+shipment_route_stops        (multi-stop support)
+  ├─ assignment_id, sequence
+  ├─ stop_type (pickup|dropoff|waypoint)
+  ├─ address, lat, lng
+  └─ eta, arrived_at, departed_at
 
-## Server functions
+logistics_cost_entries
+  ├─ assignment_id, category (fuel|driver_payout|toll|misc)
+  ├─ amount, currency, incurred_at
+  └─ recorded_by, receipt_url
 
-- `messaging.functions.ts` — `sendMessage`, `listMessages`, `markRead`, admin `moderateMessage`
-- `returns.functions.ts` — `requestReturn` (buyer), `approveReturn`, `denyReturn`,
-  `markReceived`, `finalizeReturn` (triggers `createRefund` from Phase 14)
-- `quality-certificates.functions.ts` — `uploadCertificate`, `attachToListing`,
-  `verifyCertificate` (super-admin), `listCertificates`
-- `weight-reconciliation.functions.ts` — `logDispatchedWeight`,
-  `logReceivedWeight` → auto-draft return if variance > threshold
-- Extend `reputation.functions.ts` — include quality score, response time to
-  messages, return rate
+carrier_tracking_events     (raw carrier payloads)
+  ├─ shipment_id, carrier_id
+  ├─ external_event_id (unique per carrier)
+  ├─ event_code, event_label, occurred_at
+  └─ raw_payload jsonb, mapped_status
+```
 
-## UI pages / components
+All tables: RLS on, GRANTs to `authenticated` + `service_role`, updated_at triggers.
 
-- **Buyer**
-  - `/buyer/orders/$orderId` → new tabs: Messages, Returns, Quality certs, Weight
-  - `<ReturnRequestDialog>` with reason dropdown + attachment upload
-- **Seller**
-  - `/orders/$orderId` → matching Messages panel with unread badge
-  - `/returns` — inbox of pending return requests
-  - `/quality-certificates` — upload/manage per batch
-  - `/listings/$id/edit` — attach certificate before publishing
-- **Super-admin**
-  - `/platform/messaging-moderation` — flagged messages queue
-  - `/platform/returns` — cross-tenant returns overview + intervention
-  - `/platform/quality-verifications` — certificates awaiting verify
-- **Marketplace public**
-  - Seller storefront gains "Quality verified" badge when >X% listings have valid certs
-  - Listing detail shows certificate summary + download link
-- **Notifications** — reuse `emitNotification` + `dispatchNotification` for
-  every message, return state change, and certificate verification
+## Super-admin settings (extend marketplace_settings JSON)
 
-## Automation / cron
+```text
+logistics: {
+  carriers_enabled: true,
+  default_pickup_window_hours: 24,
+  default_delivery_window_hours: 72,
+  fuel_cost_per_litre: 285,
+  driver_payout_per_km: 12,
+  route_optimizer: "nearest_neighbour" | "off",
+  distance_provider: "haversine" | "osrm",
+  osrm_base_url: "",
+  polling_interval_minutes: 15,
+  auto_close_after_delivery_hours: 48
+}
+```
 
-- `/api/public/cron/returns-auto-approve` — hourly; auto-approves returns older
-  than `autoApproveHours` when seller silent
-- `/api/public/cron/certificates-expiring` — daily; warns sellers 14/7/1 days
-  before expiry, hides listing when expired if `requiredForListings=true`
+## Server functions (`src/lib/logistics.functions.ts`)
+- `listCarriers`, `upsertCarrier`, `deactivateCarrier` (super-admin only)
+- `listVehicles`, `upsertVehicle`, `listDrivers`, `upsertDriver`
+- `assignShipment({shipmentId, carrierId, vehicleId, driverId, stops[]})`
+  - validates capacity, driver license expiry, active flags
+  - computes distance via haversine or OSRM (settings driven)
+  - writes `shipment_assignments` + `shipment_route_stops`
+  - appends a `buyer_shipment_events` row ("Carrier assigned")
+- `optimizeRoute({assignmentId})` → nearest-neighbour reordering of stops
+- `recordLogisticsCost({assignmentId, category, amount, receiptFile})`
+- `getFleetUtilization({from,to})`, `getOnTimeStats`, `getCostPerKg`
 
-## Backfill / migration hygiene
+## Public endpoints (external, signed)
+- `POST /api/public/carrier-webhook/$carrierCode`
+  - HMAC verify against `carriers.webhook_secret`
+  - upsert `carrier_tracking_events` (dedupe on `external_event_id`)
+  - map `event_code` → shipment status via a super-admin mapping table field on `carriers.event_map` (JSONB)
+  - append normalized `buyer_shipment_events` row (actor = "carrier:<code>")
+- Cron `GET /api/public/cron/carrier-poll` (hourly)
+  - for carriers without webhooks, poll `tracking_url_template` and reconcile
 
-- Backfill `messages_count = 0` on `buyer_orders`.
-- Create `dispute-attachments`-style private bucket `return-attachments`
-  and `quality-certificates` (private, seller+buyer+super_admin read via signed URLs).
+## UI
+
+### Seller side
+- **Dispatch drawer** gains a "Logistics" tab: pick carrier → vehicle → driver → auto-suggest pickup/delivery windows → optional multi-stop editor with drag-to-reorder + "Optimize route" button → live map preview (Leaflet via `<ClientOnly>` + dynamic import) → cost estimate.
+- Cost ledger: add fuel/tolls with receipt upload after delivery.
+
+### Super-admin
+- `/platform/logistics/carriers` — CRUD carriers, webhook secret rotation, event-map JSON editor with schema hints.
+- `/platform/logistics/fleet` — vehicles + drivers tabs, utilization sparklines, license-expiry warnings.
+- `/platform/logistics/command-center` — KPIs (on-time %, avg cost/kg, active shipments), map of live shipments, filters by carrier/date/silo.
+- `marketplace-settings` gets a "Logistics" section for the JSON knobs above.
+
+### Buyer side
+- Order tracking page shows carrier logo, driver first name, vehicle reg (masked last 3 chars), external tracking URL when available, and the merged timeline.
+
+## Notifications
+Reuse existing `dispatchNotification`. New templates (all editable in marketplace settings):
+- `logistics.carrier_assigned` (buyer + seller)
+- `logistics.eta_updated` (buyer)
+- `logistics.delivery_delayed` (buyer + super-admin, triggered when now > planned_delivery_at and status ≠ delivered)
+
+## Financials integration
+- `financials.functions.ts` extended: subtract `logistics_cost_entries.amount` from gross when computing per-order profit.
+- New "Logistics costs" line item on the financial PDF report.
+
+## Cron / automation
+- `carrier-poll` — hourly
+- `delivery-delay-scan` — every 30 min, fires the delayed notification once per shipment
+- `driver-license-expiry-scan` — daily, notifies super-admin 14/7/1 days before expiry
 
 ## Zero-hardcoding checklist
+- Carrier list, event-code mappings, cost rates, polling interval, optimizer choice, distance provider, notification templates → all in `marketplace_settings` or per-carrier rows.
+- No literal carrier names or vehicle types anywhere in components.
 
-- Return reasons, variance threshold, auto-approve window, quality metrics,
-  every email subject/body, moderation keywords — all from `platform_settings`.
+## Rollout order in this phase
+1. Migration (all tables + settings extension + storage bucket `logistics-receipts`).
+2. `logistics.functions.ts` + carrier webhook route + cron routes.
+3. Super-admin carriers/fleet/settings UI.
+4. Seller dispatch-drawer logistics tab + map + optimizer.
+5. Buyer tracking enhancements + notification templates.
+6. Command Center analytics + financials integration.
 
-## Out of scope (deferred to later phases)
-
-- Chat-style realtime typing indicators (Phase 17)
-- ML-based fraud detection on returns (Phase 20)
-- Third-party lab API integrations (Phase 21)
-
-Reply **go** to execute Phase 16.
+Reply **go** to execute Phase 17.
