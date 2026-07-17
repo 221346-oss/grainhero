@@ -20,31 +20,12 @@ export interface MarketplaceSettings {
   currency: string;
   storefrontEnabled: boolean;
   showBrandBanner: boolean;
-  emailSubjects: {
-    placed: string;
-    paymentSucceeded: string;
-    paymentFailed: string;
-    dispatched: string;
-    outForDelivery: string;
-    delivered: string;
-    exception: string;
-    reviewPromptBuyer: string;
-    reviewPromptSeller: string;
-  };
-  emailBodies: {
-    placed: string;
-    paymentSucceeded: string;
-    paymentFailed: string;
-    dispatched: string;
-    outForDelivery: string;
-    delivered: string;
-    exception: string;
-    reviewPromptBuyer: string;
-    reviewPromptSeller: string;
-  };
+  emailSubjects: Record<string, string>;
+  emailBodies: Record<string, string>;
   dispatch: {
     couriers: Array<{ key: string; label: string; trackingUrlTemplate: string }>;
     slaHours: { inTransit: number; outForDelivery: number; delivered: number };
+    eventPresets: Array<{ code: string; label: string; setStatus?: string }>;
   };
   reviews: {
     enabled: boolean;
@@ -53,6 +34,24 @@ export interface MarketplaceSettings {
     promptDelayHours: number;
     showOnStorefront: boolean;
     minCountForAverage: number;
+  };
+  invoicing: {
+    numberPrefix: string;
+    footerNote: string;
+    autoGenerateOnPaid: boolean;
+    emailInvoiceOnPaid: boolean;
+  };
+  disputes: {
+    enabled: boolean;
+    windowDays: number;
+    categories: Array<{ key: string; label: string }>;
+    resolutions: Array<{ key: string; label: string; refund: "none" | "partial" | "full" }>;
+  };
+  refunds: {
+    allowSellerInitiated: boolean;
+    allowBuyerRequest: boolean;
+    reasonCodes: Array<{ key: string; label: string }>;
+    autoCancelUnpaidAfterHours: number;
   };
 }
 
@@ -74,6 +73,11 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     exception: "Delivery update needed for order {{orderNumber}}",
     reviewPromptBuyer: "How was your order {{orderNumber}}?",
     reviewPromptSeller: "Rate the buyer for order {{orderNumber}}",
+    invoiceReady: "Invoice for order {{orderNumber}}",
+    disputeOpened: "Dispute opened on order {{orderNumber}}",
+    disputeResolved: "Dispute resolved on order {{orderNumber}}",
+    refundIssued: "Refund issued for order {{orderNumber}}",
+    orderCancelled: "Order {{orderNumber}} cancelled",
   },
   emailBodies: {
     placed:
@@ -94,6 +98,16 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       "Order {{orderNumber}} is complete. Tell other buyers how it went — it takes a minute: {{trackingUrl}}",
     reviewPromptSeller:
       "Order {{orderNumber}} is complete. Rate the buyer to help future sellers: {{trackingUrl}}",
+    invoiceReady:
+      "Your invoice for order {{orderNumber}} is ready.\nDownload / view it here: {{trackingUrl}}",
+    disputeOpened:
+      "A dispute was opened on order {{orderNumber}}. We'll review and get back to you shortly.\n{{trackingUrl}}",
+    disputeResolved:
+      "The dispute on order {{orderNumber}} has been resolved. Details: {{trackingUrl}}",
+    refundIssued:
+      "A refund for order {{orderNumber}} has been issued. It should appear on your statement in a few business days.\n{{trackingUrl}}",
+    orderCancelled:
+      "Order {{orderNumber}} has been cancelled. If this was unexpected, contact support.\n{{trackingUrl}}",
   },
   dispatch: {
     couriers: [
@@ -102,6 +116,13 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       { key: "leopards", label: "Leopards Courier", trackingUrlTemplate: "https://www.leopardscourier.com/tracking/{{trackingNumber}}" },
     ],
     slaHours: { inTransit: 48, outForDelivery: 12, delivered: 72 },
+    eventPresets: [
+      { code: "picked_up", label: "Picked up" },
+      { code: "in_transit", label: "In transit", setStatus: "in_transit" },
+      { code: "out_for_delivery", label: "Out for delivery", setStatus: "out_for_delivery" },
+      { code: "delivered", label: "Delivered", setStatus: "delivered" },
+      { code: "exception", label: "Exception", setStatus: "exception" },
+    ],
   },
   reviews: {
     enabled: true,
@@ -110,6 +131,40 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     promptDelayHours: 24,
     showOnStorefront: true,
     minCountForAverage: 3,
+  },
+  invoicing: {
+    numberPrefix: "INV",
+    footerNote: "Thank you for your business.",
+    autoGenerateOnPaid: true,
+    emailInvoiceOnPaid: true,
+  },
+  disputes: {
+    enabled: true,
+    windowDays: 14,
+    categories: [
+      { key: "not_received", label: "Not received" },
+      { key: "damaged", label: "Damaged on arrival" },
+      { key: "quality", label: "Quality issue" },
+      { key: "wrong_item", label: "Wrong item / quantity" },
+      { key: "other", label: "Other" },
+    ],
+    resolutions: [
+      { key: "refund_full", label: "Full refund", refund: "full" },
+      { key: "refund_partial", label: "Partial refund", refund: "partial" },
+      { key: "replacement", label: "Replacement / redispatch", refund: "none" },
+      { key: "reject", label: "Reject claim", refund: "none" },
+    ],
+  },
+  refunds: {
+    allowSellerInitiated: true,
+    allowBuyerRequest: true,
+    reasonCodes: [
+      { key: "requested_by_customer", label: "Requested by customer" },
+      { key: "duplicate", label: "Duplicate charge" },
+      { key: "fraudulent", label: "Fraudulent" },
+      { key: "quality", label: "Quality issue" },
+    ],
+    autoCancelUnpaidAfterHours: 48,
   },
 };
 
@@ -128,8 +183,21 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
         ...((r.dispatch?.slaHours) ?? {}),
       },
       couriers: r.dispatch?.couriers ?? DEFAULT_MARKETPLACE_SETTINGS.dispatch.couriers,
+      eventPresets: r.dispatch?.eventPresets ?? DEFAULT_MARKETPLACE_SETTINGS.dispatch.eventPresets,
     },
     reviews: { ...DEFAULT_MARKETPLACE_SETTINGS.reviews, ...(r.reviews ?? {}) },
+    invoicing: { ...DEFAULT_MARKETPLACE_SETTINGS.invoicing, ...(r.invoicing ?? {}) },
+    disputes: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.disputes,
+      ...(r.disputes ?? {}),
+      categories: r.disputes?.categories ?? DEFAULT_MARKETPLACE_SETTINGS.disputes.categories,
+      resolutions: r.disputes?.resolutions ?? DEFAULT_MARKETPLACE_SETTINGS.disputes.resolutions,
+    },
+    refunds: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.refunds,
+      ...(r.refunds ?? {}),
+      reasonCodes: r.refunds?.reasonCodes ?? DEFAULT_MARKETPLACE_SETTINGS.refunds.reasonCodes,
+    },
   };
 }
 
@@ -175,6 +243,11 @@ const SCHEMA = z.object({
       outForDelivery: z.number().min(0).max(1000),
       delivered: z.number().min(0).max(2000),
     }),
+    eventPresets: z.array(z.object({
+      code: z.string().min(1),
+      label: z.string().min(1),
+      setStatus: z.string().optional(),
+    })).max(20).optional().default([]),
   }),
   reviews: z.object({
     enabled: z.boolean(),
@@ -183,6 +256,28 @@ const SCHEMA = z.object({
     promptDelayHours: z.number().int().min(0).max(720),
     showOnStorefront: z.boolean(),
     minCountForAverage: z.number().int().min(0).max(100),
+  }),
+  invoicing: z.object({
+    numberPrefix: z.string().min(1).max(10),
+    footerNote: z.string().max(500),
+    autoGenerateOnPaid: z.boolean(),
+    emailInvoiceOnPaid: z.boolean(),
+  }),
+  disputes: z.object({
+    enabled: z.boolean(),
+    windowDays: z.number().int().min(0).max(365),
+    categories: z.array(z.object({ key: z.string().min(1), label: z.string().min(1) })).max(30),
+    resolutions: z.array(z.object({
+      key: z.string().min(1),
+      label: z.string().min(1),
+      refund: z.enum(["none", "partial", "full"]),
+    })).max(30),
+  }),
+  refunds: z.object({
+    allowSellerInitiated: z.boolean(),
+    allowBuyerRequest: z.boolean(),
+    reasonCodes: z.array(z.object({ key: z.string().min(1), label: z.string().min(1) })).max(30),
+    autoCancelUnpaidAfterHours: z.number().int().min(0).max(720),
   }),
 });
 

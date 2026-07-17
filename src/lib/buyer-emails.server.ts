@@ -19,7 +19,12 @@ type Kind =
   | "delivered"
   | "exception"
   | "reviewPromptBuyer"
-  | "reviewPromptSeller";
+  | "reviewPromptSeller"
+  | "invoiceReady"
+  | "disputeOpened"
+  | "disputeResolved"
+  | "refundIssued"
+  | "orderCancelled";
 
 async function fetchOrderCtx(sb: SupabaseClient<Database>, orderId: string): Promise<{
   to: string | null;
@@ -75,8 +80,9 @@ export async function sendBuyerOrderEmail(
     const settings = await loadMarketplaceSettings(sb);
     const ctx = await fetchOrderCtx(sb, orderId);
     if (!ctx || !ctx.to) return;
-    const subject = renderTemplate(settings.emailSubjects[kind], ctx.vars);
-    const body = renderTemplate(settings.emailBodies[kind], ctx.vars);
+    const subject = renderTemplate(settings.emailSubjects[kind] ?? "", ctx.vars);
+    const body = renderTemplate(settings.emailBodies[kind] ?? "", ctx.vars);
+    if (!subject || !body) return;
     await sendEmailViaResend({
       to: ctx.to,
       subject,

@@ -43,9 +43,9 @@ function MarketplaceSettingsPage() {
   });
 
   const patch = (p: Partial<MarketplaceSettings>) => setS((prev) => ({ ...prev, ...p }));
-  const patchSub = (p: Partial<MarketplaceSettings["emailSubjects"]>) =>
+  const patchSub = (p: Record<string, string>) =>
     setS((prev) => ({ ...prev, emailSubjects: { ...prev.emailSubjects, ...p } }));
-  const patchBody = (p: Partial<MarketplaceSettings["emailBodies"]>) =>
+  const patchBody = (p: Record<string, string>) =>
     setS((prev) => ({ ...prev, emailBodies: { ...prev.emailBodies, ...p } }));
 
   return (

@@ -82,7 +82,26 @@ export const generateInvoice = createServerFn({ method: "POST" })
       targetId: (inv as Row).id as string,
       meta: { orderId: o.id, invoiceNumber, total: o.subtotal },
     });
-    return { id: (inv as Row).id as string, invoiceNumber, existed: false };
+    // Try to render PDF + email — best effort, tolerate failures.
+    let pdfUrl: string | null = null;
+    try {
+      const [{ loadMarketplaceSettings }, { renderInvoicePdf }] = await Promise.all([
+        import("@/lib/marketplace-settings.functions"),
+        import("@/lib/invoicing-pdf.server"),
+      ]);
+      const settings = await loadMarketplaceSettings(context.supabase);
+      if (settings.invoicing.autoGenerateOnPaid) {
+        const rendered = await renderInvoicePdf(context.supabase, (inv as Row).id as string);
+        pdfUrl = rendered.signedUrl;
+      }
+      if (settings.invoicing.emailInvoiceOnPaid) {
+        const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+        await sendBuyerOrderEmail(context.supabase, o.id as string, "invoiceReady");
+      }
+    } catch (e) {
+      console.warn("[invoice-pdf] generation failed:", (e as Error).message);
+    }
+    return { id: (inv as Row).id as string, invoiceNumber, existed: false, pdfUrl };
   });
 
 export const recordPayment = createServerFn({ method: "POST" })

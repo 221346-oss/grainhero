@@ -110,6 +110,8 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
       { name: "platform-marketplace", label: "Marketplace Settings", to: "/platform/marketplace-settings", icon: ShoppingCart, roles: ["super_admin"] },
       { name: "platform-reviews", label: "Review Moderation", to: "/platform/reviews", icon: ShoppingCart, roles: ["super_admin"] },
+      { name: "platform-disputes", label: "Disputes", to: "/platform/disputes", icon: ScrollText, roles: ["super_admin"] },
+      { name: "platform-dispatch-analytics", label: "Dispatch Analytics", to: "/platform/dispatch-analytics", icon: Activity, roles: ["super_admin"] },
     ],
   },
 ];
