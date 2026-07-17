@@ -81,13 +81,16 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
       { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
       { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
+      { name: "plan-management", label: "Plan Management", to: "/plan-management", icon: CreditCard, roles: ["admin"] },
     ],
   },
   {
     label: "Platform",
     items: [
+      { name: "platform-overview", label: "Overview", to: "/platform", icon: Activity, roles: ["super_admin"] },
       { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
       { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
+      { name: "platform-plans", label: "Plans & Thresholds", to: "/platform/plans", icon: CreditCard, roles: ["super_admin"] },
       { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
       { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
       { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
