@@ -68,6 +68,7 @@ import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
+import { Route as MarketplaceSellerAdminIdRouteImport } from './routes/marketplace.seller.$adminId'
 import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
@@ -76,11 +77,13 @@ import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
+import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
@@ -96,6 +99,7 @@ import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
+import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/public/cron/review-prompts'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
 import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
@@ -412,6 +416,12 @@ const AuthenticatedPlatformIndexRoute =
     path: '/platform/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const MarketplaceSellerAdminIdRoute =
+  MarketplaceSellerAdminIdRouteImport.update({
+    id: '/seller/$adminId',
+    path: '/seller/$adminId',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
 const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
   id: '/api/public/telemetry',
   path: '/api/public/telemetry',
@@ -457,6 +467,12 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/platform/tenants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformSellersRoute =
+  AuthenticatedPlatformSellersRouteImport.update({
+    id: '/platform/sellers',
+    path: '/platform/sellers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformReviewsRoute =
   AuthenticatedPlatformReviewsRouteImport.update({
     id: '/platform/reviews',
@@ -485,6 +501,12 @@ const AuthenticatedPlatformMarketplaceSettingsRoute =
   AuthenticatedPlatformMarketplaceSettingsRouteImport.update({
     id: '/platform/marketplace-settings',
     path: '/platform/marketplace-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMarketplaceHealthRoute =
+  AuthenticatedPlatformMarketplaceHealthRouteImport.update({
+    id: '/platform/marketplace-health',
+    path: '/platform/marketplace-health',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformLogsRoute =
@@ -575,6 +597,12 @@ const ApiPublicCronSlaDigestRoute = ApiPublicCronSlaDigestRouteImport.update({
   path: '/api/public/cron/sla-digest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronReviewPromptsRoute =
+  ApiPublicCronReviewPromptsRouteImport.update({
+    id: '/api/public/cron/review-prompts',
+    path: '/api/public/cron/review-prompts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLifecycleEmailsRoute =
   ApiPublicCronLifecycleEmailsRouteImport.update({
     id: '/api/public/cron/lifecycle-emails',
@@ -679,11 +707,13 @@ export interface FileRoutesByFullPath {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -692,6 +722,7 @@ export interface FileRoutesByFullPath {
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -699,6 +730,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -771,11 +803,13 @@ export interface FileRoutesByTo {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -784,6 +818,7 @@ export interface FileRoutesByTo {
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -791,6 +826,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -867,11 +903,13 @@ export interface FileRoutesById {
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/_authenticated/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -880,6 +918,7 @@ export interface FileRoutesById {
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
   '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
@@ -887,6 +926,7 @@ export interface FileRoutesById {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -963,11 +1003,13 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/leads'
     | '/platform/logs'
+    | '/platform/marketplace-health'
     | '/platform/marketplace-settings'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
     | '/platform/reviews'
+    | '/platform/sellers'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -976,6 +1018,7 @@ export interface FileRouteTypes {
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
@@ -983,6 +1026,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1055,11 +1099,13 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/leads'
     | '/platform/logs'
+    | '/platform/marketplace-health'
     | '/platform/marketplace-settings'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
     | '/platform/reviews'
+    | '/platform/sellers'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -1068,6 +1114,7 @@ export interface FileRouteTypes {
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
     | '/platform/orders/$orderId'
@@ -1075,6 +1122,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1150,11 +1198,13 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
+    | '/_authenticated/platform/marketplace-health'
     | '/_authenticated/platform/marketplace-settings'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
     | '/_authenticated/platform/reviews'
+    | '/_authenticated/platform/sellers'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
@@ -1163,6 +1213,7 @@ export interface FileRouteTypes {
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
     | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/platform/orders/$orderId'
@@ -1170,6 +1221,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1201,6 +1253,7 @@ export interface RootRouteChildren {
   ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
   ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
+  ApiPublicCronReviewPromptsRoute: typeof ApiPublicCronReviewPromptsRoute
   ApiPublicCronSlaDigestRoute: typeof ApiPublicCronSlaDigestRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
@@ -1624,6 +1677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/marketplace/seller/$adminId': {
+      id: '/marketplace/seller/$adminId'
+      path: '/seller/$adminId'
+      fullPath: '/marketplace/seller/$adminId'
+      preLoaderRoute: typeof MarketplaceSellerAdminIdRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
     '/api/public/telemetry': {
       id: '/api/public/telemetry'
       path: '/api/public/telemetry'
@@ -1680,6 +1740,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/sellers': {
+      id: '/_authenticated/platform/sellers'
+      path: '/platform/sellers'
+      fullPath: '/platform/sellers'
+      preLoaderRoute: typeof AuthenticatedPlatformSellersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/reviews': {
       id: '/_authenticated/platform/reviews'
       path: '/platform/reviews'
@@ -1713,6 +1780,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/marketplace-settings'
       fullPath: '/platform/marketplace-settings'
       preLoaderRoute: typeof AuthenticatedPlatformMarketplaceSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/marketplace-health': {
+      id: '/_authenticated/platform/marketplace-health'
+      path: '/platform/marketplace-health'
+      fullPath: '/platform/marketplace-health'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/logs': {
@@ -1818,6 +1892,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/sla-digest'
       fullPath: '/api/public/cron/sla-digest'
       preLoaderRoute: typeof ApiPublicCronSlaDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/review-prompts': {
+      id: '/api/public/cron/review-prompts'
+      path: '/api/public/cron/review-prompts'
+      fullPath: '/api/public/cron/review-prompts'
+      preLoaderRoute: typeof ApiPublicCronReviewPromptsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/lifecycle-emails': {
@@ -1977,11 +2058,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
   AuthenticatedPlatformMarketplaceSettingsRoute: typeof AuthenticatedPlatformMarketplaceSettingsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
+  AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
@@ -2032,6 +2115,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformMarketplaceHealthRoute:
+    AuthenticatedPlatformMarketplaceHealthRoute,
   AuthenticatedPlatformMarketplaceSettingsRoute:
     AuthenticatedPlatformMarketplaceSettingsRoute,
   AuthenticatedPlatformOrdersRoute:
@@ -2039,6 +2124,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
+  AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedTechnicianInstallsRoute:
@@ -2084,11 +2170,13 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
 interface MarketplaceRouteChildren {
   MarketplaceSlugRoute: typeof MarketplaceSlugRoute
   MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MarketplaceSellerAdminIdRoute: typeof MarketplaceSellerAdminIdRoute
 }
 
 const MarketplaceRouteChildren: MarketplaceRouteChildren = {
   MarketplaceSlugRoute: MarketplaceSlugRoute,
   MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MarketplaceSellerAdminIdRoute: MarketplaceSellerAdminIdRoute,
 }
 
 const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
@@ -2118,6 +2206,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
   ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
+  ApiPublicCronReviewPromptsRoute: ApiPublicCronReviewPromptsRoute,
   ApiPublicCronSlaDigestRoute: ApiPublicCronSlaDigestRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,

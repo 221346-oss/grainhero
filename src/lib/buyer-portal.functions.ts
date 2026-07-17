@@ -200,3 +200,78 @@ export const cancelMyOrder = createServerFn({ method: "POST" })
     } as never);
     return { ok: true };
   });
+
+/* -------------------------------------------------------------
+ * Phase 15 — favourites + reorder
+ * ----------------------------------------------------------- */
+
+export const listMyFavorites = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const account = await ensureBuyerAccount(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { data } = await sb.from("favorite_listings")
+      .select("listing_id, created_at, grain_listings(id, title, slug, cover_image_url, price_per_kg, available_kg, currency, status)")
+      .eq("buyer_account_id", account.id)
+      .order("created_at", { ascending: false });
+    return { favorites: (data ?? []) as Row[] };
+  });
+
+export const toggleFavoriteListing = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ listingId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const account = await ensureBuyerAccount(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { data: existing } = await sb.from("favorite_listings")
+      .select("id").eq("buyer_account_id", account.id).eq("listing_id", data.listingId).maybeSingle();
+    if (existing) {
+      await sb.from("favorite_listings").delete().eq("id", (existing as Row).id);
+      return { ok: true, favorited: false };
+    }
+    const { error } = await sb.from("favorite_listings").insert({
+      buyer_account_id: account.id, listing_id: data.listingId,
+    } as never);
+    if (error && !String(error.message).match(/duplicate|unique/i)) throw error;
+    return { ok: true, favorited: true };
+  });
+
+export const duplicateOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const account = await ensureBuyerAccount(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { data: prev } = await sb.from("buyer_orders")
+      .select("id, admin_id, buyer_id, listing_id, batch_id, quantity_kg, unit_price, subtotal, currency, shipping_address, channel")
+      .eq("id", data.orderId).eq("buyer_account_id", account.id).maybeSingle();
+    const p = prev as Row | null;
+    if (!p) throw new Error("Order not found");
+    // Ensure listing still active and enough stock
+    const { data: listing } = await sb.from("grain_listings")
+      .select("id, status, available_kg, price_per_kg, currency").eq("id", p.listing_id).maybeSingle();
+    const l = listing as Row | null;
+    if (!l || l.status !== "active") throw new Error("Listing no longer available");
+    const qty = Math.min(Number(p.quantity_kg), Number(l.available_kg));
+    const unit = Number(l.price_per_kg);
+    const orderNumber = `ORD-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const { data: created, error } = await sb.from("buyer_orders").insert({
+      admin_id: p.admin_id, buyer_id: p.buyer_id, buyer_account_id: account.id,
+      listing_id: p.listing_id, batch_id: p.batch_id,
+      quantity_kg: qty, unit_price: unit, subtotal: qty * unit,
+      currency: l.currency ?? p.currency, status: "pending",
+      channel: p.channel ?? "marketplace",
+      shipping_address: p.shipping_address,
+      order_number: orderNumber, placed_by: context.userId,
+    } as never).select("id").single();
+    if (error) throw error;
+    await logActivity({
+      actorId: context.userId, tenantAdminId: p.admin_id as string,
+      action: "order.duplicated", targetType: "buyer_order",
+      targetId: (created as Row).id as string, meta: { sourceOrderId: p.id },
+    });
+    return { ok: true, orderId: (created as Row).id as string };
+  });

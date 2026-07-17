@@ -46,7 +46,14 @@ export const submitReview = createServerFn({ method: "POST" })
       if (tenantId !== o.admin_id) throw new Error("Forbidden");
     }
 
-    const status = settings.reviews.autoPublish ? "published" : "pending";
+    // Auto-moderation: banned phrases + rating threshold.
+    const bodyLc = data.body.toLowerCase();
+    const banned = (settings.reviewsPolicy?.bannedPhrases ?? [])
+      .some((p) => p && bodyLc.includes(p.toLowerCase()));
+    const belowThreshold = data.rating < (settings.reviewsPolicy?.autoPublishThreshold ?? 3);
+    const status = banned || belowThreshold
+      ? "pending"
+      : (settings.reviews.autoPublish ? "published" : "pending");
     const { error } = await sb.from("buyer_reviews").upsert({
       order_id: data.orderId, admin_id: o.admin_id,
       buyer_account_id: o.buyer_account_id,
@@ -122,4 +129,87 @@ export const listPublishedReviewsForSeller = createServerFn({ method: "GET" })
     const list = (rows ?? []) as Row[];
     const avg = list.length ? list.reduce((a, r) => a + Number(r.rating), 0) / list.length : null;
     return { reviews: list, average: avg, count: list.length };
+  });
+
+/** Seller responds to a review (once, within the configured window). */
+export const respondToReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    reviewId: z.string().uuid(),
+    response: z.string().min(1).max(2000),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const settings = await loadMarketplaceSettings(context.supabase);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { data: r } = await sb.from("buyer_reviews")
+      .select("id, admin_id, seller_response, seller_response_at, created_at")
+      .eq("id", data.reviewId).maybeSingle();
+    const row = r as Row | null;
+    if (!row) throw new Error("Review not found");
+    // Caller must be tenant admin of the review.
+    const { data: prof } = await sb.from("profiles")
+      .select("id, admin_id").eq("id", context.userId).maybeSingle();
+    const tenantId = (prof as Row | null)?.admin_id ?? context.userId;
+    if (tenantId !== row.admin_id) throw new Error("Forbidden");
+    if (row.seller_response) throw new Error("Response already posted");
+    const windowMs = (settings.reviewsPolicy?.sellerResponseWindowDays ?? 30) * 86400000;
+    if (Date.now() - new Date(row.created_at as string).getTime() > windowMs) {
+      throw new Error("Response window closed");
+    }
+    const { error } = await sb.from("buyer_reviews").update({
+      seller_response: data.response,
+      seller_response_at: new Date().toISOString(),
+    } as never).eq("id", data.reviewId);
+    if (error) throw error;
+    await logActivity({
+      actorId: context.userId, tenantAdminId: row.admin_id as string,
+      action: "review.responded", targetType: "buyer_review", targetId: row.id as string,
+    });
+    return { ok: true };
+  });
+
+/** Buyer marks a review as helpful (idempotent). */
+export const markReviewHelpful = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ reviewId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { data: acc } = await sb.from("buyer_accounts")
+      .select("id").eq("user_id", context.userId).maybeSingle();
+    const account = acc as Row | null;
+    if (!account) throw new Error("Buyer account required");
+    const { error } = await sb.from("buyer_review_helpful").insert({
+      review_id: data.reviewId, buyer_account_id: account.id,
+    } as never);
+    // ignore unique-violation as idempotent
+    if (error && !String(error.message).match(/duplicate|unique/i)) throw error;
+    // Recount and stamp
+    const { count } = await sb.from("buyer_review_helpful")
+      .select("id", { count: "exact", head: true }).eq("review_id", data.reviewId);
+    await sb.from("buyer_reviews").update({ helpful_count: count ?? 0 } as never).eq("id", data.reviewId);
+    return { ok: true, helpful: count ?? 0 };
+  });
+
+/** Anyone signed in can report a review; flags it for super-admin. */
+export const reportReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    reviewId: z.string().uuid(),
+    reason: z.string().min(3).max(500),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { error } = await sb.from("buyer_reviews").update({
+      reported_at: new Date().toISOString(),
+      reported_reason: data.reason,
+    } as never).eq("id", data.reviewId);
+    if (error) throw error;
+    await logActivity({
+      actorId: context.userId, action: "review.reported",
+      targetType: "buyer_review", targetId: data.reviewId, meta: { reason: data.reason },
+    });
+    return { ok: true };
   });
