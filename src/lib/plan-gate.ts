@@ -14,11 +14,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activity";
 
 export type PlanNumericFeature =
   | "max_users"
+  | "max_warehouses"
   | "max_silos"
   | "max_batches"
   | "max_sensors"
@@ -36,6 +40,7 @@ export type PlanFeature = PlanNumericFeature | PlanBooleanFeature;
 
 const NUMERIC: readonly PlanNumericFeature[] = [
   "max_users",
+  "max_warehouses",
   "max_silos",
   "max_batches",
   "max_sensors",
@@ -58,10 +63,103 @@ function isNumeric(f: PlanFeature): f is PlanNumericFeature {
   return (NUMERIC as readonly string[]).includes(f);
 }
 
+type Sb = SupabaseClient<Database>;
+
+/** Server-only: resolve tenant admin id + plan id for a caller. */
+async function resolvePlan(sb: Sb, userId: string): Promise<{
+  tenantAdminId: string;
+  planId: string;
+  isSuper: boolean;
+}> {
+  const { data: profile } = await sb
+    .from("profiles")
+    .select("admin_id, subscription_plan")
+    .eq("id", userId)
+    .maybeSingle();
+  const tenantAdminId = profile?.admin_id ?? userId;
+
+  const { data: roles } = await sb
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  const isSuper = (roles ?? []).some((r) => r.role === "super_admin");
+
+  let planId = profile?.subscription_plan ?? null;
+  if (!planId && tenantAdminId !== userId) {
+    const { data: owner } = await sb
+      .from("profiles")
+      .select("subscription_plan")
+      .eq("id", tenantAdminId)
+      .maybeSingle();
+    planId = owner?.subscription_plan ?? null;
+  }
+  return { tenantAdminId, planId: planId ?? "starter", isSuper };
+}
+
+/** Server-only: count current usage for a numeric feature. */
+export async function getTenantUsage(
+  sb: Sb,
+  tenantAdminId: string,
+  feature: PlanNumericFeature,
+): Promise<number> {
+  const table =
+    feature === "max_warehouses" ? "warehouses" :
+    feature === "max_silos" ? "silos" :
+    feature === "max_batches" ? "grain_batches" :
+    feature === "max_sensors" ? "sensor_devices" :
+    feature === "max_actuators" ? "actuators" :
+    feature === "max_buyers" ? "buyers" :
+    "profiles"; // max_users
+  if (feature === "max_users") {
+    const { count } = await sb
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .or(`admin_id.eq.${tenantAdminId},id.eq.${tenantAdminId}`);
+    return count ?? 0;
+  }
+  const { count } = await sb
+    .from(table as "warehouses")
+    .select("id", { count: "exact", head: true })
+    .eq("admin_id", tenantAdminId);
+  return count ?? 0;
+}
+
+/** Core gate resolver used by both the serverFn and server-side assertions. */
+export async function computePlanGate(
+  sb: Sb,
+  userId: string,
+  feature: PlanFeature,
+  currentUsage?: number,
+): Promise<{ allowed: boolean; limit: number | boolean; used?: number; planId: string; isSuper: boolean; tenantAdminId: string }> {
+  const { tenantAdminId, planId, isSuper } = await resolvePlan(sb, userId);
+  if (isSuper) {
+    return { allowed: true, limit: -1, used: currentUsage, planId, isSuper, tenantAdminId };
+  }
+  const { data: plan } = await sb
+    .from("plan_thresholds")
+    .select("*")
+    .eq("plan_id", planId)
+    .maybeSingle();
+  if (!plan) {
+    // Unknown plan → deny writes, but never block reads (caller decides).
+    return { allowed: false, limit: 0, used: currentUsage, planId, isSuper, tenantAdminId };
+  }
+  if (isNumeric(feature)) {
+    const limit = Number((plan as unknown as Record<string, number>)[feature] ?? 0);
+    const used = currentUsage ?? (await getTenantUsage(sb, tenantAdminId, feature));
+    // limit <= 0 → treat as blocked (explicit zero cap); 9999+ acts as unlimited via cap.
+    const allowed = limit > 0 && used < limit;
+    return { allowed, limit, used, planId, isSuper, tenantAdminId };
+  }
+  const features = (plan.features ?? {}) as Record<string, unknown>;
+  const raw = features[feature];
+  const allowed = raw === true || raw === "true";
+  return { allowed, limit: allowed, used: undefined, planId, isSuper, tenantAdminId };
+}
+
 /**
  * Server: fetch the effective plan gate for a given admin (tenant owner).
- * Returns `{ allowed, limit, used }`. `used` is only defined for numeric
- * caps when the caller supplied `currentUsage`.
+ * Client-callable wrapper around `computePlanGate` for `usePlanGate`.
  */
 export const getPlanGate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -74,57 +172,50 @@ export const getPlanGate = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase: sb, userId } = context;
-    const { data: profile } = await sb
-      .from("profiles")
-      .select("admin_id, subscription_plan")
-      .eq("id", userId)
-      .maybeSingle();
-    const tenantAdminId = profile?.admin_id ?? userId;
-
-    let planId = profile?.subscription_plan ?? null;
-    if (!planId && tenantAdminId !== userId) {
-      const { data: owner } = await sb
-        .from("profiles")
-        .select("subscription_plan")
-        .eq("id", tenantAdminId)
-        .maybeSingle();
-      planId = owner?.subscription_plan ?? null;
-    }
-    planId = planId ?? "starter";
-
-    const { data: plan } = await sb
-      .from("plan_thresholds")
-      .select("*")
-      .eq("plan_id", planId)
-      .maybeSingle();
-
-    if (!plan) {
-      return { allowed: false, limit: 0, used: data.currentUsage, planId };
-    }
-
-    if (isNumeric(data.feature)) {
-      const limit = (plan as unknown as Record<string, number>)[data.feature] ?? 0;
-      const used = data.currentUsage ?? 0;
-      return { allowed: used < limit, limit, used, planId };
-    }
-    const features = (plan.features ?? {}) as Record<string, unknown>;
-    const raw = features[data.feature];
-    const allowed = raw === true || raw === "true" || (typeof raw === "string" && raw !== "basic" && raw !== "false");
-    return { allowed, limit: allowed, used: undefined, planId };
+    const gate = await computePlanGate(context.supabase, context.userId, data.feature, data.currentUsage);
+    return { allowed: gate.allowed, limit: gate.limit, used: gate.used, planId: gate.planId };
   });
 
 /**
- * Server-only assertion helper. Call inside mutating server fns before
- * inserting a new silo/sensor/etc.
+ * Server-only assertion helper. Call inside mutating server fn handlers
+ * before inserting a new silo/sensor/etc. Pass the request-scoped
+ * `context.supabase` and `context.userId`.
  */
 export async function assertPlanAllows(args: {
   feature: PlanFeature;
+  sb: Sb;
+  userId: string;
   currentUsage?: number;
-}) {
-  const gate = await getPlanGate({ data: args });
-  if (!gate.allowed) throw new PlanLimitError(args.feature, gate.limit, gate.used);
+}): Promise<ReturnType<typeof computePlanGate> extends Promise<infer R> ? R : never> {
+  const gate = await computePlanGate(args.sb, args.userId, args.feature, args.currentUsage);
+  if (!gate.allowed) {
+    // Log the hit for SuperAdmin insights; never let logging fail the caller.
+    logActivity({
+      actorId: args.userId,
+      tenantAdminId: gate.tenantAdminId,
+      action: "plan_limit_hit",
+      targetType: "plan",
+      severity: "warning",
+      meta: { feature: args.feature, used: gate.used, limit: gate.limit, plan: gate.planId },
+    }).catch(() => undefined);
+    // Standardized wire format so the client can parse and CTA.
+    const used = gate.used ?? 0;
+    const limit = typeof gate.limit === "number" ? gate.limit : 0;
+    throw new Error(`PLAN_LIMIT:${args.feature}:${used}/${limit}`);
+  }
   return gate;
+}
+
+/** Client helper: parse `PLAN_LIMIT:<feature>:<used>/<limit>` out of a thrown error. */
+export function parsePlanLimitError(err: unknown): {
+  feature: PlanFeature;
+  used: number;
+  limit: number;
+} | null {
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  const m = /PLAN_LIMIT:([a-z_]+):(\d+)\/(\d+)/.exec(msg);
+  if (!m) return null;
+  return { feature: m[1] as PlanFeature, used: Number(m[2]), limit: Number(m[3]) };
 }
 
 /**
