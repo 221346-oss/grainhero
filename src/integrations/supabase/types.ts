@@ -939,28 +939,34 @@ export type Database = {
       }
       hardware_order_devices: {
         Row: {
+          commissioned_at: string | null
           created_at: string
           id: string
           model: string | null
           order_id: string
+          sensor_device_id: string | null
           serial: string
           status: string
           updated_at: string
         }
         Insert: {
+          commissioned_at?: string | null
           created_at?: string
           id?: string
           model?: string | null
           order_id: string
+          sensor_device_id?: string | null
           serial: string
           status?: string
           updated_at?: string
         }
         Update: {
+          commissioned_at?: string | null
           created_at?: string
           id?: string
           model?: string | null
           order_id?: string
+          sensor_device_id?: string | null
           serial?: string
           status?: string
           updated_at?: string
@@ -973,11 +979,20 @@ export type Database = {
             referencedRelation: "hardware_orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "hardware_order_devices_sensor_device_id_fkey"
+            columns: ["sensor_device_id"]
+            isOneToOne: false
+            referencedRelation: "sensor_devices"
+            referencedColumns: ["id"]
+          },
         ]
       }
       hardware_order_installations: {
         Row: {
+          blocker_note: string | null
           city: string | null
+          completed_at: string | null
           created_at: string
           destination_address: string | null
           destination_lat: number | null
@@ -991,14 +1006,18 @@ export type Database = {
           origin_address: string | null
           origin_lat: number | null
           origin_lng: number | null
+          scheduled_for: string | null
           scheduled_visit_at: string | null
           silo_id: string | null
           status: string
+          technician_id: string | null
           updated_at: string
           warehouse_id: string | null
         }
         Insert: {
+          blocker_note?: string | null
           city?: string | null
+          completed_at?: string | null
           created_at?: string
           destination_address?: string | null
           destination_lat?: number | null
@@ -1012,14 +1031,18 @@ export type Database = {
           origin_address?: string | null
           origin_lat?: number | null
           origin_lng?: number | null
+          scheduled_for?: string | null
           scheduled_visit_at?: string | null
           silo_id?: string | null
           status?: string
+          technician_id?: string | null
           updated_at?: string
           warehouse_id?: string | null
         }
         Update: {
+          blocker_note?: string | null
           city?: string | null
+          completed_at?: string | null
           created_at?: string
           destination_address?: string | null
           destination_lat?: number | null
@@ -1033,9 +1056,11 @@ export type Database = {
           origin_address?: string | null
           origin_lat?: number | null
           origin_lng?: number | null
+          scheduled_for?: string | null
           scheduled_visit_at?: string | null
           silo_id?: string | null
           status?: string
+          technician_id?: string | null
           updated_at?: string
           warehouse_id?: string | null
         }
@@ -1052,6 +1077,13 @@ export type Database = {
             columns: ["silo_id"]
             isOneToOne: false
             referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hardware_order_installations_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1098,33 +1130,90 @@ export type Database = {
           },
         ]
       }
+      hardware_order_status_history: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          order_id: string
+          to_status: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id: string
+          to_status: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_order_status_history_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hardware_order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hardware_order_visit_events: {
         Row: {
           created_at: string
           created_by: string | null
           event_at: string
+          event_type: string | null
           id: string
+          location: Json | null
           note: string
           order_id: string
           photo_url: string | null
+          photo_urls: string[] | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           event_at?: string
+          event_type?: string | null
           id?: string
+          location?: Json | null
           note: string
           order_id: string
           photo_url?: string | null
+          photo_urls?: string[] | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           event_at?: string
+          event_type?: string | null
           id?: string
+          location?: Json | null
           note?: string
           order_id?: string
           photo_url?: string | null
+          photo_urls?: string[] | null
         }
         Relationships: [
           {
@@ -1139,15 +1228,18 @@ export type Database = {
       hardware_orders: {
         Row: {
           admin_id: string | null
+          assigned_technician_id: string | null
           business_name: string | null
           cancel_reason: string | null
           cancelled_at: string | null
+          cancelled_reason: string | null
           confirmation_email_sent_at: string | null
           contact_phone: string | null
           created_at: string
           currency: string
           customer_email: string | null
           customer_name: string | null
+          expected_arrival_at: string | null
           hardware_quantity: number
           hardware_total: number
           hardware_unit_cost: number
@@ -1163,6 +1255,7 @@ export type Database = {
           preferred_install_date: string | null
           refunded: boolean
           scheduled_install_date: string | null
+          shipped_at: string | null
           status: string
           stripe_customer_id: string | null
           stripe_payment_intent: string | null
@@ -1171,19 +1264,24 @@ export type Database = {
           tax_id: string | null
           technician_name: string | null
           technician_phone: string | null
+          tracking_carrier: string | null
+          tracking_number: string | null
           updated_at: string
         }
         Insert: {
           admin_id?: string | null
+          assigned_technician_id?: string | null
           business_name?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
+          cancelled_reason?: string | null
           confirmation_email_sent_at?: string | null
           contact_phone?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
           customer_name?: string | null
+          expected_arrival_at?: string | null
           hardware_quantity?: number
           hardware_total?: number
           hardware_unit_cost?: number
@@ -1199,6 +1297,7 @@ export type Database = {
           preferred_install_date?: string | null
           refunded?: boolean
           scheduled_install_date?: string | null
+          shipped_at?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent?: string | null
@@ -1207,19 +1306,24 @@ export type Database = {
           tax_id?: string | null
           technician_name?: string | null
           technician_phone?: string | null
+          tracking_carrier?: string | null
+          tracking_number?: string | null
           updated_at?: string
         }
         Update: {
           admin_id?: string | null
+          assigned_technician_id?: string | null
           business_name?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
+          cancelled_reason?: string | null
           confirmation_email_sent_at?: string | null
           contact_phone?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
           customer_name?: string | null
+          expected_arrival_at?: string | null
           hardware_quantity?: number
           hardware_total?: number
           hardware_unit_cost?: number
@@ -1235,6 +1339,7 @@ export type Database = {
           preferred_install_date?: string | null
           refunded?: boolean
           scheduled_install_date?: string | null
+          shipped_at?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent?: string | null
@@ -1243,9 +1348,19 @@ export type Database = {
           tax_id?: string | null
           technician_name?: string | null
           technician_phone?: string | null
+          tracking_carrier?: string | null
+          tracking_number?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hardware_orders_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hubspot_sync_log: {
         Row: {
