@@ -120,8 +120,56 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     stripe_customer_id: s.customer ?? null,
                     stripe_subscription_id: s.subscription ?? null,
                     stripe_payment_intent: s.payment_intent ?? null,
+                    ...(userId ? { admin_id: userId } : {}),
                   } as never)
                   .eq("id", hardwareOrderId);
+
+                // Ensure the buyer has an active subscription row so revenue analytics
+                // pick this up immediately, without waiting for customer.subscription.created.
+                if (userId) {
+                  const planNameMap: Record<string, string> = {
+                    starter: "Grain Starter",
+                    basic: "Grain Starter",
+                    growth: "Grain Professional",
+                    intermediate: "Grain Professional",
+                    professional: "Grain Professional",
+                    scale: "Grain Enterprise",
+                    enterprise: "Grain Enterprise",
+                    pro: "Grain Enterprise",
+                  };
+                  const planKey = String(planId ?? "").toLowerCase();
+                  const planName = planNameMap[planKey] ?? "Custom";
+                  const amount = typeof s.amount_total === "number" ? s.amount_total / 100 : 0;
+                  const { data: existingSub } = await supabaseAdmin
+                    .from("subscriptions")
+                    .select("id")
+                    .eq("admin_id", userId)
+                    .maybeSingle();
+                  if (!existingSub) {
+                    await supabaseAdmin.from("subscriptions").insert({
+                      admin_id: userId,
+                      plan_name: planName as never,
+                      plan_description: "Auto-created on checkout",
+                      status: "active" as never,
+                      billing_cycle: "monthly" as never,
+                      price_per_month: amount || 99,
+                      currency: (s.currency ?? "usd").toUpperCase(),
+                      start_date: new Date().toISOString(),
+                      end_date: new Date(Date.now() + 30 * 86400_000).toISOString(),
+                      next_payment_date: new Date(Date.now() + 30 * 86400_000).toISOString(),
+                      auto_renew: true,
+                      stripe_subscription_id: s.subscription ?? null,
+                      stripe_customer_id: s.customer ?? null,
+                    } as never);
+                  }
+                  await supabaseAdmin
+                    .from("profiles")
+                    .update({
+                      has_access: "full",
+                      subscription_plan: planKey || null,
+                    } as never)
+                    .eq("id", userId);
+                }
 
                 // In-app notification for every super admin.
                 const { data: supers } = await supabaseAdmin
@@ -142,31 +190,21 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   );
                 }
 
-                // Email SUPPORT_EMAIL via Resend gateway.
+                // Email SUPPORT_EMAIL via Resend gateway or direct API.
                 try {
                   const gatewayKey = process.env.LOVABLE_API_KEY;
                   const resendKey = process.env.RESEND_API_KEY;
                   const to = process.env.SUPPORT_EMAIL;
-                  const from = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
-                  if (gatewayKey && resendKey && to) {
+                  const configFrom = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
+                  if (resendKey && to) {
                     const { data: order } = await supabaseAdmin
                       .from("hardware_orders" as never)
                       .select("id,plan_name,hardware_quantity,hardware_total,install_address,install_city,install_country,contact_phone,preferred_install_date,notes")
                       .eq("id", hardwareOrderId)
                       .maybeSingle();
                     const o = (order as Record<string, unknown> | null) ?? {};
-                    await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${gatewayKey}`,
-                        "X-Connection-Api-Key": resendKey,
-                      },
-                      body: JSON.stringify({
-                        from,
-                        to: [to],
-                        subject: `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`,
-                        html: `<h2>New install order</h2>
+                    const subject = `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`;
+                    const html = `<h2>New install order</h2>
 <p><b>Order:</b> ${o.id ?? hardwareOrderId}</p>
 <p><b>Plan:</b> ${o.plan_name ?? planId ?? "-"}</p>
 <p><b>Hardware units:</b> ${o.hardware_quantity ?? 0} × Rs. 7,000 = Rs. ${Number(o.hardware_total ?? 0).toLocaleString()}</p>
@@ -174,9 +212,56 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 <p><b>Contact phone:</b> ${o.contact_phone ?? "-"}</p>
 <p><b>Preferred date:</b> ${o.preferred_install_date ?? "-"}</p>
 <p><b>Notes:</b> ${o.notes ?? "-"}</p>
-<p>Open the Platform → Orders console to assign a technician.</p>`,
-                      }),
-                    }).catch((e) => console.warn("[order email] failed:", e));
+<p>Open the Platform → Orders console to assign a technician.</p>`;
+
+                    const trySendWebhookEmail = async (fromAddress: string) => {
+                      if (gatewayKey) {
+                        try {
+                          const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${gatewayKey}`,
+                              "X-Connection-Api-Key": resendKey,
+                            },
+                            body: JSON.stringify({
+                              from: fromAddress,
+                              to: [to],
+                              subject,
+                              html,
+                            }),
+                          });
+                          if (res.ok) return true;
+                        } catch (e) {
+                          console.warn("[webhook email] gateway send failed:", e);
+                        }
+                      }
+                      try {
+                        const res = await fetch("https://api.resend.com/emails", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${resendKey}`,
+                          },
+                          body: JSON.stringify({
+                            from: fromAddress,
+                            to: [to],
+                            subject,
+                            html,
+                          }),
+                        });
+                        return res.ok;
+                      } catch (e) {
+                        console.warn("[webhook email] direct send failed:", e);
+                        return false;
+                      }
+                    };
+
+                    let ok = await trySendWebhookEmail(configFrom);
+                    if (!ok && !configFrom.includes("resend.dev")) {
+                      console.log("[webhook email] Retrying with sandbox onboarding@resend.dev sender");
+                      await trySendWebhookEmail("GrainHero <onboarding@resend.dev>");
+                    }
                   }
                 } catch (e) {
                   console.warn("[order email] error:", e);
@@ -281,6 +366,19 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   cancellation_date: new Date().toISOString(),
                 } as never)
                 .eq("stripe_subscription_id", sub.id);
+              try {
+                const { notifyPlatformEvent } = await import("@/lib/platform-notify.server");
+                const { data: subRow } = await supabaseAdmin
+                  .from("subscriptions")
+                  .select("customer_id, plan_name")
+                  .eq("stripe_subscription_id", sub.id)
+                  .maybeSingle();
+                await notifyPlatformEvent({
+                  type: "churn",
+                  customerId: (subRow as any)?.customer_id ?? sub.id,
+                  plan: (subRow as any)?.plan_name ?? null,
+                });
+              } catch { /* webhook telemetry only */ }
               break;
             }
             case "invoice.payment_failed":
@@ -298,6 +396,17 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   event: `billing.${event.type}`,
                   meta: { amount: inv.amount_paid, currency: inv.currency } as never,
                 });
+              }
+              if (event.type === "invoice.payment_failed") {
+                try {
+                  const { notifyPlatformEvent } = await import("@/lib/platform-notify.server");
+                  await notifyPlatformEvent({
+                    type: "stripe_payment_failed",
+                    customerId: inv.customer ?? "unknown",
+                    amount: inv.amount_paid,
+                    currency: inv.currency,
+                  });
+                } catch { /* telemetry only */ }
               }
               break;
             }

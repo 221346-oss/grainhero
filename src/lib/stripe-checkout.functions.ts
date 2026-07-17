@@ -12,7 +12,7 @@ const checkoutInput = z.object({
   }),
   install: z.object({
     address: z.string().trim().min(3).max(300),
-    city: z.string().trim().min(1).max(120),
+    city: z.string().trim().max(120).optional().nullable(),
     country: z.string().trim().min(1).max(120),
     phone: z.string().trim().min(4).max(40),
     preferredDate: z.string().trim().max(40).optional().nullable(),
@@ -155,14 +155,62 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
       "line_items[0][price_data][recurring][interval]": plan.interval ?? "month",
     });
 
-    if (data.iotQuantity > 0 && plan.iotCharge) {
-      params.append("line_items[1][quantity]", String(data.iotQuantity));
+    // IoT one-time charge strategy:
+    // Stripe subscription mode does NOT support mixing one-time line_items
+    // with recurring ones in older API versions. We try the clean way first
+    // (separate line item with no [recurring] = one-time on first invoice).
+    // If Stripe rejects it (400), we fall back to bundling IoT cost into the
+    // subscription unit_amount so the total is still correct.
+    const iotStripeTotal = data.iotQuantity > 0 && plan.iotCharge
+      ? Math.round(Number(plan.iotCharge) * data.iotQuantity * 100)
+      : 0;
+    const subscriptionUnitAmount = Math.round(Number(plan.price) * 100);
+
+    // Try with separate IoT line item first
+    if (iotStripeTotal > 0) {
+      params.append("line_items[1][quantity]", "1");
       params.append("line_items[1][price_data][currency]", currency);
-      params.append("line_items[1][price_data][product_data][name]", "IoT Sensor Setup (one-time)");
-      params.append("line_items[1][price_data][unit_amount]", String(Math.round(Number(plan.iotCharge) * 100)));
+      params.append("line_items[1][price_data][product_data][name]", `IoT Sensor Setup × ${data.iotQuantity}`);
+      params.append("line_items[1][price_data][product_data][description]", `One-time hardware installation for ${data.iotQuantity} sensor(s)`);
+      params.append("line_items[1][price_data][unit_amount]", String(iotStripeTotal));
+      // No [recurring] = treated as one-time on first invoice
     }
 
-    const session = await stripeFetch("/checkout/sessions", params);
+    let session: { url: string; id: string };
+    try {
+      session = await stripeFetch("/checkout/sessions", params) as { url: string; id: string };
+    } catch (e) {
+      // Stripe rejected mixed line items — bundle IoT into subscription amount
+      console.warn("[checkout] separate IoT line item rejected, bundling into subscription:", (e as Error).message);
+
+      const fallbackParams = stripeForm({
+        mode: "subscription",
+        customer: customerId ?? undefined,
+        client_reference_id: orderId ?? undefined,
+        success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/checkout?plan=${plan.id}&canceled=1`,
+        "metadata[user_id]": existingUserId ?? undefined,
+        "metadata[customer_email]": customerEmail,
+        "metadata[customer_name]": customerName,
+        "metadata[plan_id]": plan.id,
+        "metadata[iot_quantity]": String(data.iotQuantity),
+        "metadata[hardware_order_id]": orderId ?? "",
+        "metadata[iot_bundled]": "true",
+        allow_promotion_codes: "true",
+        "subscription_data[metadata][user_id]": existingUserId ?? undefined,
+        "subscription_data[metadata][customer_email]": customerEmail,
+        "subscription_data[metadata][hardware_order_id]": orderId ?? "",
+        "subscription_data[metadata][plan_id]": plan.id,
+        "line_items[0][quantity]": "1",
+        "line_items[0][price_data][currency]": currency,
+        "line_items[0][price_data][product_data][name]": `GrainHero ${plan.name} + IoT Setup`,
+        "line_items[0][price_data][product_data][description]":
+          `${plan.description} · Includes ${data.iotQuantity} sensor installation(s) (Rs. ${(data.iotQuantity * Number(plan.iotCharge)).toLocaleString()} one-time)`,
+        "line_items[0][price_data][unit_amount]": String(subscriptionUnitAmount + iotStripeTotal),
+        "line_items[0][price_data][recurring][interval]": plan.interval ?? "month",
+      });
+      session = await stripeFetch("/checkout/sessions", fallbackParams) as { url: string; id: string };
+    }
     // Stash the session id on the order so the webhook can look it up.
     if (orderId && admin) {
       try {
@@ -263,12 +311,19 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       pro: { users: 999999, devices: 15, storage: 999999, batches: 999999 },
     };
     const limits = planLimits[planId] ?? planLimits.basic;
+    const planPrice = Number((pricingData.find((p: { id: string }) => p.id === planId) as { price?: number } | undefined)?.price ?? 0);
+
+    // Always upsert a subscription record so the success page can detect
+    // subscriptionActive immediately — even before the Stripe webhook fires.
+    // If we already have a stripeSubscriptionId we fetch live status from Stripe,
+    // otherwise we fall back to plan defaults and let the webhook update later.
+    let stripeStatus = "active";
+    let currentPeriodEnd: number | null = null;
+    let unitAmount = planPrice;
+    let currency = "pkr";
+    let interval = "month";
+
     if (stripeSubscriptionId) {
-      let stripeStatus = "active";
-      let currentPeriodEnd: number | null = null;
-      let unitAmount = 0;
-      let currency = "pkr";
-      let interval = "month";
       try {
         const sub = await stripeFetch(`/subscriptions/${encodeURIComponent(stripeSubscriptionId)}`, null, "GET") as {
           status?: string;
@@ -278,15 +333,21 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
         stripeStatus = sub.status ?? stripeStatus;
         currentPeriodEnd = sub.current_period_end ?? null;
         const price = sub.items?.data?.[0]?.price;
-        unitAmount = Number(price?.unit_amount ?? 0);
-        currency = price?.currency ?? currency;
-        interval = price?.recurring?.interval ?? interval;
+        if (price?.unit_amount) unitAmount = Number(price.unit_amount) / 100;
+        if (price?.currency) currency = price.currency;
+        if (price?.recurring?.interval) interval = price.recurring.interval;
       } catch (e) {
-        console.warn("could not fetch subscription during claim", e);
+        console.warn("could not fetch subscription during claim, using plan defaults:", (e as Error).message);
       }
-      const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial"]);
-      const status = validStatuses.has(stripeStatus) ? stripeStatus : "active";
-      const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
+    }
+
+    const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial"]);
+    const status = validStatuses.has(stripeStatus) ? stripeStatus : "active";
+    const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
+
+    // Use stripe_subscription_id as conflict key when available,
+    // otherwise fall back to admin_id so we still upsert a single row.
+    if (stripeSubscriptionId) {
       await supabaseAdmin.from("subscriptions").upsert(
         {
           admin_id: context.userId,
@@ -299,7 +360,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
             ? new Date(currentPeriodEnd * 1000).toISOString()
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           next_payment_date: currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null,
-          price_per_month: unitAmount ? unitAmount / 100 : Number((pricingData.find((p: { id: string }) => p.id === planId) as { price?: number } | undefined)?.price ?? 0),
+          price_per_month: unitAmount,
           currency: currency.toUpperCase(),
           billing_cycle: billingCycle as never,
           stripe_subscription_id: stripeSubscriptionId,
@@ -311,6 +372,51 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
         } as never,
         { onConflict: "stripe_subscription_id" },
       );
+    } else {
+      // Webhook hasn't fired yet — upsert by admin_id so the success page
+      // sees subscriptionActive = true immediately.
+      const { data: existingSub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id")
+        .eq("admin_id", context.userId)
+        .maybeSingle();
+
+      if (existingSub) {
+        await supabaseAdmin.from("subscriptions").update({
+          plan_name: (planNameMap[planId] ?? "Custom") as never,
+          status: "active" as never,
+          auto_renew: true,
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          price_per_month: planPrice,
+          currency: "PKR",
+          billing_cycle: "monthly" as never,
+          stripe_customer_id: stripeCustomerId || null,
+          max_users: limits.users,
+          max_devices: limits.devices,
+          max_storage_gb: limits.storage,
+          max_batches: limits.batches,
+        } as never).eq("admin_id", context.userId);
+      } else {
+        await supabaseAdmin.from("subscriptions").insert({
+          admin_id: context.userId,
+          plan_name: (planNameMap[planId] ?? "Custom") as never,
+          plan_description: `Stripe subscription (${planId})`,
+          status: "active" as never,
+          auto_renew: true,
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          next_payment_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          price_per_month: planPrice,
+          currency: "PKR",
+          billing_cycle: "monthly" as never,
+          stripe_customer_id: stripeCustomerId || null,
+          max_users: limits.users,
+          max_devices: limits.devices,
+          max_storage_gb: limits.storage,
+          max_batches: limits.batches,
+        } as never);
+      }
     }
 
     return { claimed: orders.length };

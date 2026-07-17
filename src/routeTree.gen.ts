@@ -9,13 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ThemeTestRouteImport } from './routes/theme-test'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as DocsRouteImport } from './routes/docs'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
+import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
@@ -31,8 +42,8 @@ import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
-import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
+import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
@@ -54,18 +65,63 @@ import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authen
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
-import { Route as AuthenticatedPlatformRevenueRouteImport } from './routes/_authenticated/platform.revenue'
+import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
+import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
+import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
+import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
+import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 
+const ThemeTestRoute = ThemeTestRouteImport.update({
+  id: '/theme-test',
+  path: '/theme-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -73,9 +129,19 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -96,6 +162,11 @@ const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
   path: '/success',
   getParentRoute: () => CheckoutRoute,
+} as any)
+const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
@@ -177,16 +248,17 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
-  id: '/platform',
-  path: '/platform',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanManagementRoute =
+  AuthenticatedPlanManagementRouteImport.update({
+    id: '/plan-management',
+    path: '/plan-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -282,9 +354,9 @@ const AuthenticatedActivityLogsRoute =
   } as any)
 const AuthenticatedPlatformIndexRoute =
   AuthenticatedPlatformIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedPlatformRoute,
+    id: '/platform/',
+    path: '/platform/',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   id: '/api/firebase/live-sensors',
@@ -293,33 +365,57 @@ const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
 } as any)
 const AuthenticatedPlatformUsersRoute =
   AuthenticatedPlatformUsersRouteImport.update({
-    id: '/users',
-    path: '/users',
-    getParentRoute: () => AuthenticatedPlatformRoute,
+    id: '/platform/users',
+    path: '/platform/users',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformTenantsRoute =
   AuthenticatedPlatformTenantsRouteImport.update({
-    id: '/tenants',
-    path: '/tenants',
-    getParentRoute: () => AuthenticatedPlatformRoute,
+    id: '/platform/tenants',
+    path: '/platform/tenants',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformRevenueRoute =
-  AuthenticatedPlatformRevenueRouteImport.update({
-    id: '/revenue',
-    path: '/revenue',
-    getParentRoute: () => AuthenticatedPlatformRoute,
+const AuthenticatedPlatformPlansRoute =
+  AuthenticatedPlatformPlansRouteImport.update({
+    id: '/platform/plans',
+    path: '/platform/plans',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformPipelineRoute =
+  AuthenticatedPlatformPipelineRouteImport.update({
+    id: '/platform/pipeline',
+    path: '/platform/pipeline',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformOrdersRoute =
   AuthenticatedPlatformOrdersRouteImport.update({
-    id: '/orders',
-    path: '/orders',
-    getParentRoute: () => AuthenticatedPlatformRoute,
+    id: '/platform/orders',
+    path: '/platform/orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
-    id: '/logs',
-    path: '/logs',
-    getParentRoute: () => AuthenticatedPlatformRoute,
+    id: '/platform/logs',
+    path: '/platform/logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLeadsRoute =
+  AuthenticatedPlatformLeadsRouteImport.update({
+    id: '/platform/leads',
+    path: '/platform/leads',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformHealthRoute =
+  AuthenticatedPlatformHealthRouteImport.update({
+    id: '/platform/health',
+    path: '/platform/health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformAuditLogsRoute =
+  AuthenticatedPlatformAuditLogsRouteImport.update({
+    id: '/platform/audit-logs',
+    path: '/platform/audit-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
@@ -350,12 +446,28 @@ const ApiPublicCronSyncFirebaseRoute =
     path: '/api/public/cron/sync-firebase',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronLifecycleEmailsRoute =
+  ApiPublicCronLifecycleEmailsRouteImport.update({
+    id: '/api/public/cron/lifecycle-emails',
+    path: '/api/public/cron/lifecycle-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRouteWithChildren
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/docs': typeof DocsRoute
+  '/help': typeof HelpRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/team': typeof TeamRoute
+  '/terms': typeof TermsRoute
+  '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
@@ -373,8 +485,8 @@ export interface FileRoutesByFullPath {
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
-  '/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -390,15 +502,21 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
-  '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
+  '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
@@ -407,8 +525,18 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRouteWithChildren
+  '/blog': typeof BlogRoute
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/docs': typeof DocsRoute
+  '/help': typeof HelpRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/team': typeof TeamRoute
+  '/terms': typeof TermsRoute
+  '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
@@ -426,6 +554,7 @@ export interface FileRoutesByTo {
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
@@ -442,15 +571,21 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
-  '/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
+  '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
+  '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
@@ -461,9 +596,19 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRouteWithChildren
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
+  '/docs': typeof DocsRoute
+  '/help': typeof HelpRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/team': typeof TeamRoute
+  '/terms': typeof TermsRoute
+  '/theme-test': typeof ThemeTestRoute
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
@@ -481,8 +626,8 @@ export interface FileRoutesById {
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/plan-management': typeof AuthenticatedPlanManagementRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
-  '/_authenticated/platform': typeof AuthenticatedPlatformRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
   '/_authenticated/security-center': typeof AuthenticatedSecurityCenterRoute
@@ -498,15 +643,21 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
-  '/_authenticated/platform/revenue': typeof AuthenticatedPlatformRevenueRoute
+  '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
@@ -517,9 +668,19 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/auth'
+    | '/blog'
     | '/checkout'
+    | '/contact'
+    | '/cookies'
+    | '/docs'
+    | '/help'
+    | '/privacy'
     | '/sitemap.xml'
+    | '/team'
+    | '/terms'
+    | '/theme-test'
     | '/activity-logs'
     | '/actuators'
     | '/ai-predictions'
@@ -537,8 +698,8 @@ export interface FileRouteTypes {
     | '/not-allowed'
     | '/notifications'
     | '/orders'
+    | '/plan-management'
     | '/plans'
-    | '/platform'
     | '/reports'
     | '/revenue'
     | '/security-center'
@@ -554,15 +715,21 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/platform/audit-logs'
+    | '/platform/health'
+    | '/platform/leads'
     | '/platform/logs'
     | '/platform/orders'
-    | '/platform/revenue'
+    | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
     | '/platform/'
+    | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/expiry-reminders'
@@ -571,8 +738,18 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/auth'
+    | '/blog'
+    | '/contact'
+    | '/cookies'
+    | '/docs'
+    | '/help'
+    | '/privacy'
     | '/sitemap.xml'
+    | '/team'
+    | '/terms'
+    | '/theme-test'
     | '/activity-logs'
     | '/actuators'
     | '/ai-predictions'
@@ -590,6 +767,7 @@ export interface FileRouteTypes {
     | '/not-allowed'
     | '/notifications'
     | '/orders'
+    | '/plan-management'
     | '/plans'
     | '/reports'
     | '/revenue'
@@ -606,15 +784,21 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout'
+    | '/platform/audit-logs'
+    | '/platform/health'
+    | '/platform/leads'
     | '/platform/logs'
     | '/platform/orders'
-    | '/platform/revenue'
+    | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
     | '/platform'
+    | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/expiry-reminders'
@@ -624,9 +808,19 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/auth'
+    | '/blog'
     | '/checkout'
+    | '/contact'
+    | '/cookies'
+    | '/docs'
+    | '/help'
+    | '/privacy'
     | '/sitemap.xml'
+    | '/team'
+    | '/terms'
+    | '/theme-test'
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
     | '/_authenticated/ai-predictions'
@@ -644,8 +838,8 @@ export interface FileRouteTypes {
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
+    | '/_authenticated/plan-management'
     | '/_authenticated/plans'
-    | '/_authenticated/platform'
     | '/_authenticated/reports'
     | '/_authenticated/revenue'
     | '/_authenticated/security-center'
@@ -661,15 +855,21 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
+    | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/health'
+    | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/orders'
-    | '/_authenticated/platform/revenue'
+    | '/_authenticated/platform/pipeline'
+    | '/_authenticated/platform/plans'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/api/firebase/live-sensors'
     | '/_authenticated/platform/'
+    | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
     | '/api/public/hooks/expiry-reminders'
@@ -680,10 +880,21 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRouteWithChildren
+  BlogRoute: typeof BlogRoute
   CheckoutRoute: typeof CheckoutRouteWithChildren
+  ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
+  DocsRoute: typeof DocsRoute
+  HelpRoute: typeof HelpRoute
+  PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TeamRoute: typeof TeamRoute
+  TermsRoute: typeof TermsRoute
+  ThemeTestRoute: typeof ThemeTestRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
+  ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
@@ -693,11 +904,67 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/theme-test': {
+      id: '/theme-test'
+      path: '/theme-test'
+      fullPath: '/theme-test'
+      preLoaderRoute: typeof ThemeTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -707,11 +974,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -741,6 +1022,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/checkout/success'
       preLoaderRoute: typeof CheckoutSuccessRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/auth/verify-otp': {
+      id: '/auth/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/auth/verify-otp'
+      preLoaderRoute: typeof AuthVerifyOtpRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/auth/signup': {
       id: '/auth/signup'
@@ -847,18 +1135,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform': {
-      id: '/_authenticated/platform'
-      path: '/platform'
-      fullPath: '/platform'
-      preLoaderRoute: typeof AuthenticatedPlatformRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/plans': {
       id: '/_authenticated/plans'
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof AuthenticatedPlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plan-management': {
+      id: '/_authenticated/plan-management'
+      path: '/plan-management'
+      fullPath: '/plan-management'
+      preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/orders': {
@@ -982,10 +1270,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/platform/': {
       id: '/_authenticated/platform/'
-      path: '/'
+      path: '/platform'
       fullPath: '/platform/'
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
-      parentRoute: typeof AuthenticatedPlatformRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/firebase/live-sensors': {
       id: '/api/firebase/live-sensors'
@@ -996,38 +1284,66 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/platform/users': {
       id: '/_authenticated/platform/users'
-      path: '/users'
+      path: '/platform/users'
       fullPath: '/platform/users'
       preLoaderRoute: typeof AuthenticatedPlatformUsersRouteImport
-      parentRoute: typeof AuthenticatedPlatformRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/tenants': {
       id: '/_authenticated/platform/tenants'
-      path: '/tenants'
+      path: '/platform/tenants'
       fullPath: '/platform/tenants'
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
-      parentRoute: typeof AuthenticatedPlatformRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/revenue': {
-      id: '/_authenticated/platform/revenue'
-      path: '/revenue'
-      fullPath: '/platform/revenue'
-      preLoaderRoute: typeof AuthenticatedPlatformRevenueRouteImport
-      parentRoute: typeof AuthenticatedPlatformRoute
+    '/_authenticated/platform/plans': {
+      id: '/_authenticated/platform/plans'
+      path: '/platform/plans'
+      fullPath: '/platform/plans'
+      preLoaderRoute: typeof AuthenticatedPlatformPlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/pipeline': {
+      id: '/_authenticated/platform/pipeline'
+      path: '/platform/pipeline'
+      fullPath: '/platform/pipeline'
+      preLoaderRoute: typeof AuthenticatedPlatformPipelineRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/orders': {
       id: '/_authenticated/platform/orders'
-      path: '/orders'
+      path: '/platform/orders'
       fullPath: '/platform/orders'
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
-      parentRoute: typeof AuthenticatedPlatformRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/logs': {
       id: '/_authenticated/platform/logs'
-      path: '/logs'
+      path: '/platform/logs'
       fullPath: '/platform/logs'
       preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
-      parentRoute: typeof AuthenticatedPlatformRoute
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/leads': {
+      id: '/_authenticated/platform/leads'
+      path: '/platform/leads'
+      fullPath: '/platform/leads'
+      preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/health': {
+      id: '/_authenticated/platform/health'
+      path: '/platform/health'
+      fullPath: '/platform/health'
+      preLoaderRoute: typeof AuthenticatedPlatformHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/audit-logs': {
+      id: '/_authenticated/platform/audit-logs'
+      path: '/platform/audit-logs'
+      fullPath: '/platform/audit-logs'
+      preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/webhooks/stripe': {
       id: '/api/public/webhooks/stripe'
@@ -1064,31 +1380,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronSyncFirebaseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/lifecycle-emails': {
+      id: '/api/public/cron/lifecycle-emails'
+      path: '/api/public/cron/lifecycle-emails'
+      fullPath: '/api/public/cron/lifecycle-emails'
+      preLoaderRoute: typeof ApiPublicCronLifecycleEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
-
-interface AuthenticatedPlatformRouteChildren {
-  AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
-  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
-  AuthenticatedPlatformRevenueRoute: typeof AuthenticatedPlatformRevenueRoute
-  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
-  AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
-  AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
-}
-
-const AuthenticatedPlatformRouteChildren: AuthenticatedPlatformRouteChildren = {
-  AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
-  AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
-  AuthenticatedPlatformRevenueRoute: AuthenticatedPlatformRevenueRoute,
-  AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
-  AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
-  AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
-}
-
-const AuthenticatedPlatformRouteWithChildren =
-  AuthenticatedPlatformRoute._addFileChildren(
-    AuthenticatedPlatformRouteChildren,
-  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
@@ -1108,8 +1408,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedPlanManagementRoute: typeof AuthenticatedPlanManagementRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
-  AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
   AuthenticatedSecurityCenterRoute: typeof AuthenticatedSecurityCenterRoute
@@ -1121,6 +1421,16 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
+  AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
+  AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
+  AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
+  AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
+  AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
+  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
+  AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
+  AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1141,8 +1451,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedPlanManagementRoute: AuthenticatedPlanManagementRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
-  AuthenticatedPlatformRoute: AuthenticatedPlatformRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
   AuthenticatedSecurityCenterRoute: AuthenticatedSecurityCenterRoute,
@@ -1154,6 +1464,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
+  AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
+  AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
+  AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
+  AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
+  AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
+  AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
+  AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
+  AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1164,6 +1484,7 @@ interface AuthRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  AuthVerifyOtpRoute: typeof AuthVerifyOtpRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -1171,6 +1492,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSignupRoute: AuthSignupRoute,
+  AuthVerifyOtpRoute: AuthVerifyOtpRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -1192,10 +1514,21 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRouteWithChildren,
+  BlogRoute: BlogRoute,
   CheckoutRoute: CheckoutRouteWithChildren,
+  ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
+  DocsRoute: DocsRoute,
+  HelpRoute: HelpRoute,
+  PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TeamRoute: TeamRoute,
+  TermsRoute: TermsRoute,
+  ThemeTestRoute: ThemeTestRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
+  ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
   ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
@@ -1206,13 +1539,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

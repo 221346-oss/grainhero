@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,8 +29,6 @@ function LoginPage() {
   const navigate = useNavigate();
   const { prefill, redirect, reason } = Route.useSearch();
   const [email, setEmail] = useState(prefill ?? "");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(
     reason === "idle"
@@ -42,9 +40,12 @@ function LoginPage() {
           : null,
   );
 
+  // If already signed in, go straight to dashboard
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: redirect ?? "/dashboard", replace: true });
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        navigate({ to: redirect ?? "/dashboard", replace: true });
+      }
     });
   }, [navigate, redirect]);
 
@@ -52,17 +53,17 @@ function LoginPage() {
     e.preventDefault();
     setMsg(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
+    const normalizedEmail = email.trim().toLowerCase();
+    const { error } = await supabase.auth.signInWithOtp({
+      email: normalizedEmail,
+      options: { shouldCreateUser: false },
     });
     setLoading(false);
     if (error) {
       setMsg({ type: "error", text: error.message });
       return;
     }
-    setMsg({ type: "success", text: "Signed in! Redirecting…" });
-    setTimeout(() => navigate({ to: redirect ?? "/dashboard", replace: true }), 400);
+    navigate({ to: "/auth/verify-otp", search: { email: normalizedEmail } });
   };
 
   return (
@@ -70,50 +71,56 @@ function LoginPage() {
       <div className="space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-semibold">Welcome back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your GrainHero account</p>
+          <p className="text-sm text-muted-foreground">
+            Enter your email — we'll send a 6-digit code
+          </p>
         </div>
+
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="li-email">Email</Label>
-            <Input id="li-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="li-password">Password</Label>
             <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
-                id="li-password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="li-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                autoComplete="email"
+                className="pl-9"
                 required
-                className="pr-10"
+                autoFocus
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
             </div>
           </div>
-          <div className="flex justify-end">
-            <Link to="/auth/forgot-password" className="text-xs text-[#00a63e] hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+
           <Message msg={msg} />
-          <Button type="submit" disabled={loading} className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send code"}
           </Button>
         </form>
+
         <p className="text-sm text-center text-muted-foreground">
           New to GrainHero?{" "}
           <Link to="/checkout" className="text-[#00a63e] font-medium hover:underline">
             Choose a plan first
           </Link>
         </p>
+        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <Link to="/" className="hover:text-foreground transition-colors inline-flex items-center gap-1">
+            ← Go to home
+          </Link>
+          <span>·</span>
+          <Link to="/auth/forgot-password" className="hover:text-[#00a63e] hover:underline transition-colors">
+            Forgot password?
+          </Link>
+        </div>
       </div>
     </AuthShell>
   );

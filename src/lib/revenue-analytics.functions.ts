@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 async function assertSuperAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
-  if (!data) throw new Error("Forbidden: super admin only");
+  if ((await getEffectiveRole(supabase, userId)) !== "super_admin") throw new Error("Forbidden: super admin only");
 }
 
 export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
@@ -105,7 +105,7 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
         id: i.id, admin_id: i.admin_id, amount: i.amount, currency: i.currency,
         status: i.status, billing_date: i.billing_date, invoice_number: i.invoice_number,
       })),
-      currency: "USD",
+      currency: "PKR",
     };
   });
 

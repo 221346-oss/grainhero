@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ListSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 export const Route = createFileRoute("/_authenticated/silos")({
   component: SilosPage,
@@ -72,6 +73,9 @@ function SilosPage() {
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
   const qc = useQueryClient();
+  
+  // Plan limits check
+  const { canAddSilo, siloLimitMessage } = usePlanLimits();
 
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
@@ -200,12 +204,34 @@ function SilosPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openCreate} className="gap-2 whitespace-nowrap"><Plus className="w-4 h-4" /> New silo</Button>
+        <Button 
+          onClick={openCreate} 
+          className="gap-2 whitespace-nowrap"
+          disabled={!canAddSilo}
+          title={siloLimitMessage ?? "Create new silo"}
+        >
+          <Plus className="w-4 h-4" /> New silo
+        </Button>
       </div>
+
+      {/* Plan limit warning banner */}
+      {siloLimitMessage && (
+        <Card className="border-amber-300 bg-amber-50 mb-4">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Package className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-medium text-amber-900">{siloLimitMessage}</p>
+              <Link to="/subscription" className="text-amber-700 underline text-xs">
+                View plans →
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Grid */}
       {isLoading ? (
-        <ListSkeleton />
+        <DashboardSkeleton />
       ) : rows.length === 0 ? (
         <Card className="border-dashed border-slate-300 bg-white/50">
           <CardContent className="py-16 flex flex-col items-center text-slate-500">

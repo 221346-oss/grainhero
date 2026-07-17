@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
-import { ListSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -366,7 +366,7 @@ function GrainBatchesPage() {
       </div>
 
       {isLoading ? (
-        <ListSkeleton />
+        <DashboardSkeleton />
       ) : rows.length === 0 ? (
         <Card className="border-dashed border-slate-300 bg-white/50">
           <CardContent className="py-16 flex flex-col items-center text-slate-500">
@@ -557,8 +557,8 @@ function GrainBatchesPage() {
                 <Row label="Intake">{selected.intake_date ? new Date(selected.intake_date).toLocaleDateString() : "—"}</Row>
                 <Row label="Moisture">{selected.moisture_content != null ? `${selected.moisture_content}%` : "—"}</Row>
                 <Row label="Protein">{selected.protein_content != null ? `${selected.protein_content}%` : "—"}</Row>
-                {selected.purchase_price_per_kg && <Row label="Purchase">${selected.purchase_price_per_kg}/kg · Total ${Number(selected.total_purchase_value ?? 0).toLocaleString()}</Row>}
-                {selected.sell_price_per_kg && <Row label="Sell">${selected.sell_price_per_kg}/kg · Rev ${Number(selected.revenue ?? 0).toLocaleString()}</Row>}
+                {selected.purchase_price_per_kg && <Row label="Purchase">PKR {selected.purchase_price_per_kg}/kg · Total PKR {Number(selected.total_purchase_value ?? 0).toLocaleString()}</Row>}
+                {selected.sell_price_per_kg && <Row label="Sell">PKR {selected.sell_price_per_kg}/kg · Rev PKR {Number(selected.revenue ?? 0).toLocaleString()}</Row>}
                 {selected.buyers && (
                   <Row label="Buyer">
                     <Link to="/buyers" className="text-emerald-700 underline">{selected.buyers.name}</Link>

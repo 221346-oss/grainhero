@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,16 +22,18 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, Smartphone, LogOut,
   Package, OctagonAlert, Zap, Building2, Warehouse,
-  QrCode, Bell, ClipboardList, Shield, Settings, UserCog, Crown,
+  QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
   Brain, Cpu, BarChart3,
-  Wallet, CreditCard, Sparkles,
+  CreditCard,
   Activity, AlertOctagon, FileBarChart,
   Wrench, Server, ShieldCheck, MoreHorizontal,
+  DollarSign, TrendingUp, UserPlus, ScrollText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
 import { countPendingOrders } from "@/lib/hardware-orders.functions";
 import { useQueryClient } from "@tanstack/react-query";
+import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 
 type NavItem = {
   name: string;
@@ -44,47 +47,57 @@ type NavItem = {
 // Pinned = the ~8 items always visible in the sidebar (Slack-style "starred/channels").
 const pinnedNav: NavItem[] = [
   { name: "dashboard", label: "Home", to: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "silos", label: "Silos", to: "/silos", icon: Warehouse, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["super_admin", "admin", "manager"], badge: "AI" },
-  { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["super_admin", "admin", "manager"] },
+  { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["admin", "manager", "technician"] },
+  { name: "silos", label: "Silos", to: "/silos", icon: Warehouse, roles: ["admin", "manager", "technician"] },
+  { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin", "manager", "technician"] },
+  { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager", "technician"] },
+  { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin", "manager", "technician"] },
+  { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"], badge: "AI" },
+  { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
+  { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
+  { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
+  { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
+  { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
+  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
 ];
 
 // Everything else lives behind a "More" popover, grouped like Slack's overflow menu.
 const moreGroups: { label: string; items: NavItem[] }[] = [
   {
-    label: "Operations",
-    items: [
-      { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["super_admin", "admin", "manager"] },
-      { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "maintenance", label: "Maintenance", to: "/maintenance", icon: Wrench, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "server-monitoring", label: "Device Health", to: "/server-monitoring", icon: Server, roles: ["super_admin", "admin", "manager", "technician"] },
-    ],
-  },
-  {
     label: "Insights",
     items: [
-      { name: "data-visualization", label: "Data Visualization", to: "/data-visualization", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "reports", label: "Reports", to: "/reports", icon: FileBarChart, roles: ["super_admin", "admin", "manager"] },
-      { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["super_admin", "admin"], badge: "ML" },
-      { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "notifications", label: "Notifications", to: "/notifications", icon: Bell, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager"] },
+      { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["admin", "manager", "technician"] },
+      { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["admin", "manager", "technician"] },
+      { name: "maintenance", label: "Maintenance", to: "/maintenance", icon: Wrench, roles: ["admin", "manager", "technician"] },
+      { name: "server-monitoring", label: "Device Health", to: "/server-monitoring", icon: Server, roles: ["admin", "manager", "technician"] },
+      { name: "data-visualization", label: "Data Visualization", to: "/data-visualization", icon: Activity, roles: ["admin", "manager", "technician"] },
+      { name: "reports", label: "Reports", to: "/reports", icon: FileBarChart, roles: ["admin", "manager"] },
+      { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["admin"], badge: "ML" },
+      { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"] },
+      { name: "notifications", label: "Notifications", to: "/notifications", icon: Bell, roles: ["admin", "manager", "technician"] },
     ],
   },
   {
     label: "Business",
     items: [
+      { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
       { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
-      { name: "revenue", label: "Revenue", to: "/revenue", icon: Wallet, roles: ["super_admin", "admin", "manager"] },
       { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
-      { name: "plans", label: "Plans", to: "/plans", icon: Sparkles, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "orders", label: "My Install Orders", to: "/orders", icon: Package, roles: ["admin"] },
+      { name: "plan-management", label: "Plan Management", to: "/plan-management", icon: CreditCard, roles: ["admin"] },
+    ],
+  },
+  {
+    label: "Platform",
+    items: [
+      { name: "platform-overview", label: "Overview", to: "/platform", icon: Activity, roles: ["super_admin"] },
+      { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
+      { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
+      { name: "platform-plans", label: "Plans & Thresholds", to: "/platform/plans", icon: CreditCard, roles: ["super_admin"] },
+      { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
+      { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
+      { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
+      { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
+      { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
     ],
   },
 ];
@@ -94,7 +107,6 @@ const bottomNav: NavItem[] = [
   { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
   { name: "security-center", label: "Security", to: "/security-center", icon: ShieldCheck, roles: ["super_admin", "admin"] },
   { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "platform", label: "Platform", to: "/platform", icon: Crown, roles: ["super_admin"], badge: "SU" },
 ];
 
 function NavRow({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
@@ -145,7 +157,7 @@ function Section({ label, items, role, currentPath, showLabel = true }: { label?
   const visible = items.filter((i) => i.roles.includes(role));
   if (visible.length === 0) return null;
   return (
-    <SidebarGroup className={cn(collapsed && "px-0 items-center")}> 
+    <SidebarGroup className={cn(collapsed && "px-0 items-center")}>
       {!collapsed && showLabel && label && (
         <SidebarGroupLabel className="text-[10px] font-black text-sidebar-foreground/55 uppercase tracking-[0.18em] px-2">
           {label}
@@ -239,15 +251,32 @@ export function AppSidebar() {
     queryKey: ["my-role"],
     queryFn: () => fetchRole(),
   });
-  const role: AppRole = data?.role ?? "pending";
+  const realRole: AppRole = data?.role ?? "pending";
+
+  // Track impersonation session reactively
+  const [impersonating, setImpersonating] = React.useState(() => getImpersonationSession());
+  React.useEffect(() => {
+    const sync = () => setImpersonating(getImpersonationSession());
+    window.addEventListener("storage", sync);
+    window.addEventListener("gh_impersonation_changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("gh_impersonation_changed", sync);
+    };
+  }, []);
+
+  // When super_admin is impersonating, show admin-level navigation
+  const role: AppRole = realRole === "super_admin" && impersonating ? "admin" : realRole;
+
   const fetchPending = useServerFn(countPendingOrders);
   const { data: pending } = useQuery({
     queryKey: ["pending-order-count"],
     queryFn: () => fetchPending(),
-    enabled: role === "super_admin",
+    enabled: realRole === "super_admin",
     refetchInterval: 60_000,
   });
-  const pendingCount = pending?.count ?? 0;
+  // pending count kept available for future badge on Install Orders
+  void pending;
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -260,9 +289,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       {!collapsed && (
         <SidebarHeader className="border-b border-sidebar-border/60">
-          <div className="px-2 py-2">
-            <span className="text-[10px] font-black text-sidebar-foreground/60 uppercase tracking-[0.24em]">
-              {role.replace("_", " ")}
+          <div className="px-2 py-3">
+            <span className="text-xl font-black tracking-tight select-none">
+              <span className="text-[#2FAC0C] text-2xl">G</span>
+              <span className="text-sidebar-foreground">rain</span>
+              <span className="text-[#2FAC0C] text-2xl">H</span>
+              <span className="text-sidebar-foreground">ero</span>
             </span>
           </div>
         </SidebarHeader>
@@ -272,16 +304,7 @@ export function AppSidebar() {
         <MoreButton role={role} currentPath={currentPath} />
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border/60 gap-0">
-        <Section
-          items={bottomNav.map((n) =>
-            n.name === "platform" && pendingCount > 0
-              ? { ...n, badge: String(pendingCount) }
-              : n,
-          )}
-          role={role}
-          currentPath={currentPath}
-          showLabel={false}
-        />
+        <Section items={bottomNav} role={role} currentPath={currentPath} showLabel={false} />
         <Button
           variant="ghost"
           size="sm"

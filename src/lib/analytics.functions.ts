@@ -1,16 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 // ---------- helpers ----------
 
 async function assertAllowed(supabase: any, userId: string) {
-  const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
-  if (data) return true;
-  const { data: admin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (admin) return true;
-  const { data: mgr } = await supabase.rpc("has_role", { _user_id: userId, _role: "manager" });
-  if (mgr) return true;
-  throw new Error("Forbidden");
+  const r = await getEffectiveRole(supabase, userId);
+  if (!["super_admin", "admin", "manager"].includes(r)) throw new Error("Forbidden");
+  return true;
 }
 
 type Reading = {
@@ -123,6 +120,90 @@ export const getBatchPredictions = createServerFn({ method: "GET" })
     });
 
     return { predictions };
+  });
+
+// Platform-lens: aggregate spoilage risk across all tenants for super_admin.
+// Read-only; returns per-tenant risk distribution + worst offenders.
+export const getPlatformSpoilageOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if ((await getEffectiveRole(context.supabase, context.userId)) !== "super_admin") {
+      throw new Error("Forbidden: super admin only");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ data: batches }, { data: profiles }] = await Promise.all([
+      supabaseAdmin
+        .from("grain_batches")
+        .select("id, admin_id, batch_id, grain_type, quantity_kg, moisture_content, risk_score, status, silo_id")
+        .is("deleted_at", null)
+        .limit(5000),
+      supabaseAdmin
+        .from("profiles")
+        .select("id, name, email, business_type")
+        .is("admin_id", null),
+    ]);
+
+    const b = (batches ?? []) as any[];
+    if (b.length === 0) {
+      return { tenants: [], distribution: { low: 0, moderate: 0, high: 0, critical: 0 }, totalBatches: 0, totalTenants: 0 };
+    }
+
+    const batchIds = b.map((x) => x.id);
+    const { data: readings } = await supabaseAdmin
+      .from("sensor_readings")
+      .select("batch_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ml_risk_score, ml_risk_class, reading_timestamp")
+      .in("batch_id", batchIds)
+      .order("reading_timestamp", { ascending: false })
+      .limit(10000);
+
+    const latestByBatch = new Map<string, Reading>();
+    for (const r of (readings ?? []) as any[]) {
+      if (r.batch_id && !latestByBatch.has(r.batch_id)) latestByBatch.set(r.batch_id, r);
+    }
+
+    const profileMap = new Map<string, any>();
+    for (const p of (profiles ?? []) as any[]) profileMap.set(p.id, p);
+
+    const distribution = { low: 0, moderate: 0, high: 0, critical: 0 };
+    const tenantAgg = new Map<string, { admin_id: string; batches: number; totalKg: number; scoreSum: number; critical: number; high: number; moderate: number; low: number }>();
+
+    for (const batch of b) {
+      const r = latestByBatch.get(batch.id) ?? null;
+      const risk = r?.ml_risk_score != null && r?.ml_risk_class != null
+        ? { score: r.ml_risk_score as number, level: r.ml_risk_class as "low" | "moderate" | "high" | "critical" }
+        : computeFallbackRisk(batch, r);
+      distribution[risk.level]++;
+
+      const key = batch.admin_id ?? "unknown";
+      const cur = tenantAgg.get(key) ?? { admin_id: key, batches: 0, totalKg: 0, scoreSum: 0, critical: 0, high: 0, moderate: 0, low: 0 };
+      cur.batches++;
+      cur.totalKg += Number(batch.quantity_kg ?? 0);
+      cur.scoreSum += Number(risk.score ?? 0);
+      cur[risk.level]++;
+      tenantAgg.set(key, cur);
+    }
+
+    const tenants = Array.from(tenantAgg.values())
+      .map((t) => {
+        const p = profileMap.get(t.admin_id);
+        return {
+          admin_id: t.admin_id,
+          name: p?.name ?? p?.email ?? "Unknown tenant",
+          email: p?.email ?? null,
+          business_type: p?.business_type ?? null,
+          batches: t.batches,
+          totalKg: t.totalKg,
+          avgRisk: t.batches > 0 ? Math.round(t.scoreSum / t.batches) : 0,
+          critical: t.critical,
+          high: t.high,
+          moderate: t.moderate,
+          low: t.low,
+        };
+      })
+      .sort((x, y) => (y.critical * 1000 + y.high * 100 + y.avgRisk) - (x.critical * 1000 + x.high * 100 + x.avgRisk));
+
+    return { tenants, distribution, totalBatches: b.length, totalTenants: tenants.length };
   });
 
 export const getMLModels = createServerFn({ method: "GET" })

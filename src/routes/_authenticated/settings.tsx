@@ -1,38 +1,74 @@
-import { FormSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton, FormSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Save, User, Bell, MapPin, Loader2, Palette, Check, Camera, Trash2 } from "lucide-react";
+import { Save, User, Bell, MapPin, Loader2, Palette, Check, Camera, Trash2, ShieldAlert, Plus, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/dashboards/_shared";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
 import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { initialsOf } from "@/hooks/useMyProfile";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { getPlatformSettings, updatePlatformSettings, type PlatformConfig } from "@/lib/platform-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
 type Prefs = { email_alerts?: boolean; sms_alerts?: boolean; push_notifications?: boolean; weekly_reports?: boolean; expiry_email_alerts?: boolean; expiry_push_alerts?: boolean };
 
+function DefaultAvatar({ initials }: { initials: string }) {
+  return (
+    <svg viewBox="0 0 80 80" className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="url(#avatar-grad)" />
+      <defs>
+        <linearGradient id="avatar-grad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#00a63e" />
+          <stop offset="1" stopColor="#22c55e" />
+        </linearGradient>
+      </defs>
+      <text
+        x="40" y="40"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontSize="28"
+        fontWeight="700"
+        fontFamily="system-ui, sans-serif"
+        fill="white"
+      >
+        {initials}
+      </text>
+    </svg>
+  );
+}
+
 function SettingsPage() {
   const qc = useQueryClient();
   const getFn = useServerFn(getMySettings);
   const saveFn = useServerFn(updateMySettings);
+  const isSuperAdmin = useIsSuperAdmin();
 
   const { data, isLoading } = useQuery({ queryKey: ["my-settings"], queryFn: () => getFn() });
+
+  // Get auth email — profile.email may be empty for some users
+  const [authEmail, setAuthEmail] = useState<string>("");
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: u }) => {
+      if (u?.user?.email) setAuthEmail(u.user.email);
+    });
+  }, []);
   const [theme, setTheme] = useState<ThemeId>(() => getStoredTheme());
   function selectTheme(id: ThemeId) { setTheme(id); applyTheme(id); }
 
   const [form, setForm] = useState({
-    name: "", phone: "", business_type: "farm", avatar: null as string | null,
+    name: "", phone: "", avatar: null as string | null,
     address: "", city: "", country: "",
     prefs: { email_alerts: true, sms_alerts: false, push_notifications: true, weekly_reports: true, expiry_email_alerts: true, expiry_push_alerts: true } as Prefs,
   });
@@ -43,16 +79,18 @@ function SettingsPage() {
     const addr = (data.address ?? {}) as any;
     const prefs = (data.preferences ?? {}) as any;
     setForm({
-      name: data.name ?? "", phone: data.phone ?? "", business_type: data.business_type ?? "farm",
+      name: data.name ?? "", phone: data.phone ?? "",
       avatar: (data as any).avatar ?? null,
       address: addr.address ?? "", city: addr.city ?? "", country: addr.country ?? "",
       prefs: { email_alerts: prefs.email_alerts ?? true, sms_alerts: prefs.sms_alerts ?? false, push_notifications: prefs.push_notifications ?? true, weekly_reports: prefs.weekly_reports ?? true, expiry_email_alerts: prefs.expiry_email_alerts ?? true, expiry_push_alerts: prefs.expiry_push_alerts ?? true },
     });
-  }, [data]);
+    // Also use profile email as fallback if auth email not loaded yet
+    if (!authEmail && data.email) setAuthEmail(data.email);
+  }, [data, authEmail]);
 
   const save = useMutation({
     mutationFn: () => saveFn({ data: {
-      name: form.name, phone: form.phone, business_type: form.business_type, avatar: form.avatar,
+      name: form.name, phone: form.phone, avatar: form.avatar,
       address: { address: form.address, city: form.city, country: form.country },
       preferences: form.prefs as Record<string, unknown>,
     } }),
@@ -87,20 +125,30 @@ function SettingsPage() {
     setForm((f) => ({ ...f, avatar: resized }));
   }
 
-  const initials = initialsOf(form.name, data?.email ?? "");
+  const initials = initialsOf(form.name, authEmail || data?.email || "");
 
-  if (isLoading) return <div className="p-6 md:p-8 max-w-4xl mx-auto"><FormSkeleton fields={6} /></div>;
+  if (isLoading) return <AdminPageShell title="Settings"><FormSkeleton fields={6} /></AdminPageShell>;
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto">
-      <PageHeader title="Settings" subtitle="Manage your profile, location and notification preferences" />
-
+    <AdminPageShell
+      title="Settings"
+      subtitle="Manage your profile, location and notification preferences"
+      actions={
+        <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
+          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          Save changes
+        </Button>
+      }
+    >
       <Tabs defaultValue="profile">
         <TabsList className="mb-6">
           <TabsTrigger value="profile"><User className="h-4 w-4 mr-2" />Profile</TabsTrigger>
           <TabsTrigger value="location"><MapPin className="h-4 w-4 mr-2" />Location</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notifications</TabsTrigger>
           <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-2" />Appearance</TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="platform"><ShieldAlert className="h-4 w-4 mr-2" />Platform</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="profile">
@@ -111,16 +159,15 @@ function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="relative h-20 w-20 rounded-full overflow-hidden ring-1 ring-black/10 grid place-items-center text-lg font-bold text-[--fusion-ink] shadow-sm group"
-                  style={form.avatar ? undefined : { background: "var(--gradient-fusion)" }}
+                  className="relative h-20 w-20 rounded-full overflow-hidden ring-2 ring-border shadow-sm group flex-shrink-0"
                   aria-label="Change profile picture"
                 >
                   {form.avatar ? (
                     <img src={form.avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
                   ) : (
-                    <span>{initials}</span>
+                    <DefaultAvatar initials={initials} />
                   )}
-                  <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
+                  <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white rounded-full">
                     <Camera className="h-5 w-5" />
                   </span>
                 </button>
@@ -147,21 +194,12 @@ function SettingsPage() {
                 />
               </div>
               <div className="grid md:grid-cols-2 gap-4">
-                <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                <div><Label>Email</Label><Input value={data?.email ?? ""} disabled /></div>
-                <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                <div><Label>Full name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></div>
                 <div>
-                  <Label>Business Type</Label>
-                  <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="farm">Farm</SelectItem>
-                      <SelectItem value="warehouse">Warehouse</SelectItem>
-                      <SelectItem value="cooperative">Cooperative</SelectItem>
-                      <SelectItem value="trader">Trader</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Email</Label>
+                  <Input value={authEmail || data?.email || ""} disabled className="bg-muted/50 cursor-not-allowed" />
                 </div>
+                <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+92 300 0000000" /></div>
               </div>
             </CardContent>
           </Card>
@@ -207,8 +245,8 @@ function SettingsPage() {
                 { key: "expiry_email_alerts", label: "Email me when my plan is about to expire (7 / 3 / 1 days)" },
                 { key: "expiry_push_alerts", label: "In-app notification when my plan is about to expire" },
               ].map((row) => (
-                <div key={row.key} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
-                  <span className="text-sm font-medium text-slate-700">{row.label}</span>
+                <div key={row.key} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <span className="text-sm font-medium text-foreground">{row.label}</span>
                   <Switch
                     checked={!!form.prefs[row.key as keyof Prefs]}
                     onCheckedChange={(v) => setForm({ ...form, prefs: { ...form.prefs, [row.key]: v } })}
@@ -263,12 +301,126 @@ function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
-      <div className="mt-6 flex justify-end">
+        {isSuperAdmin && (
+          <TabsContent value="platform">
+            <PlatformSettingsSection />
+          </TabsContent>
+        )}
+      </Tabs>
+    </AdminPageShell>
+  );
+}
+
+function PlatformSettingsSection() {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getPlatformSettings);
+  const saveFn = useServerFn(updatePlatformSettings);
+  const { data, isLoading } = useQuery({ queryKey: ["platform-settings"], queryFn: () => getFn() });
+  const [cfg, setCfg] = useState<PlatformConfig | null>(null);
+  useEffect(() => { if (data) setCfg(data); }, [data]);
+  const [flagKey, setFlagKey] = useState("");
+  const [thresholdKey, setThresholdKey] = useState("");
+  const [thresholdVal, setThresholdVal] = useState("");
+
+  const save = useMutation({
+    mutationFn: () => saveFn({ data: cfg! }),
+    onSuccess: () => { toast.success("Platform settings saved"); qc.invalidateQueries({ queryKey: ["platform-settings"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading || !cfg) return <FormSkeleton fields={4} />;
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Maintenance mode</CardTitle>
+          <CardDescription>When on, tenant apps can display a maintenance notice. Reads platform_settings.config.maintenance_mode.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+            <span className="text-sm font-medium text-slate-700">Enable maintenance mode</span>
+            <Switch checked={cfg.maintenance_mode} onCheckedChange={(v) => setCfg({ ...cfg, maintenance_mode: v })} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Feature flags</CardTitle>
+          <CardDescription>Boolean flags any part of the app can read. Toggle to enable or disable a feature platform-wide.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Object.entries(cfg.feature_flags).length === 0 && (
+            <p className="text-sm text-muted-foreground">No feature flags yet.</p>
+          )}
+          {Object.entries(cfg.feature_flags).map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+              <code className="text-sm font-mono">{k}</code>
+              <div className="flex items-center gap-2">
+                <Switch checked={v} onCheckedChange={(next) => setCfg({ ...cfg, feature_flags: { ...cfg.feature_flags, [k]: next } })} />
+                <Button size="icon" variant="ghost" onClick={() => {
+                  const { [k]: _drop, ...rest } = cfg.feature_flags;
+                  setCfg({ ...cfg, feature_flags: rest });
+                }}><X className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          ))}
+          <div className="flex gap-2 pt-2">
+            <Input placeholder="new_flag_key" value={flagKey} onChange={(e) => setFlagKey(e.target.value)} />
+            <Button type="button" variant="outline" onClick={() => {
+              const k = flagKey.trim();
+              if (!k) return;
+              setCfg({ ...cfg, feature_flags: { ...cfg.feature_flags, [k]: false } });
+              setFlagKey("");
+            }}><Plus className="h-4 w-4 mr-1" />Add</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Default thresholds</CardTitle>
+          <CardDescription>Baseline numeric thresholds (e.g. spoilage_risk, humidity_alert). Tenants can override in their own settings.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Object.entries(cfg.default_thresholds).length === 0 && (
+            <p className="text-sm text-muted-foreground">No default thresholds yet.</p>
+          )}
+          {Object.entries(cfg.default_thresholds).map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3">
+              <code className="text-sm font-mono flex-1 truncate">{k}</code>
+              <Input
+                type="number"
+                value={v}
+                onChange={(e) => setCfg({ ...cfg, default_thresholds: { ...cfg.default_thresholds, [k]: Number(e.target.value) } })}
+                className="w-32"
+              />
+              <Button size="icon" variant="ghost" onClick={() => {
+                const { [k]: _drop, ...rest } = cfg.default_thresholds;
+                setCfg({ ...cfg, default_thresholds: rest });
+              }}><X className="h-4 w-4" /></Button>
+            </div>
+          ))}
+          <div className="flex gap-2 pt-2">
+            <Input placeholder="threshold_key" value={thresholdKey} onChange={(e) => setThresholdKey(e.target.value)} />
+            <Input placeholder="value" type="number" value={thresholdVal} onChange={(e) => setThresholdVal(e.target.value)} className="w-32" />
+            <Button type="button" variant="outline" onClick={() => {
+              const k = thresholdKey.trim();
+              const n = Number(thresholdVal);
+              if (!k || Number.isNaN(n)) return;
+              setCfg({ ...cfg, default_thresholds: { ...cfg.default_thresholds, [k]: n } });
+              setThresholdKey(""); setThresholdVal("");
+            }}><Plus className="h-4 w-4 mr-1" />Add</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
         <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Save changes
+          Save platform settings
         </Button>
       </div>
     </div>

@@ -500,6 +500,47 @@ export type Database = {
           },
         ]
       }
+      email_send_log: {
+        Row: {
+          email_type: string
+          error_message: string | null
+          id: string
+          provider_message_id: string | null
+          recipient_email: string
+          sent_at: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          email_type: string
+          error_message?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_email: string
+          sent_at?: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          provider_message_id?: string | null
+          recipient_email?: string
+          sent_at?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_send_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grain_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -1039,6 +1080,50 @@ export type Database = {
         }
         Relationships: []
       }
+      hubspot_sync_log: {
+        Row: {
+          action: string
+          created_at: string
+          error_message: string | null
+          hubspot_object_id: string | null
+          hubspot_object_type: string
+          id: string
+          payload: Json | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_message?: string | null
+          hubspot_object_id?: string | null
+          hubspot_object_type: string
+          id?: string
+          payload?: Json | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          hubspot_object_id?: string | null
+          hubspot_object_type?: string
+          id?: string
+          payload?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hubspot_sync_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_claims: {
         Row: {
           admin_id: string
@@ -1289,28 +1374,121 @@ export type Database = {
       }
       plan_prices: {
         Row: {
+          annual_price_cents: number | null
           currency: string
+          features: Json
+          is_active: boolean
           plan_id: string
           product_id: string
           setup_price_id: string | null
+          stripe_price_id_annual: string | null
+          stripe_price_id_monthly: string | null
           subscription_price_id: string
           updated_at: string
         }
         Insert: {
+          annual_price_cents?: number | null
           currency?: string
+          features?: Json
+          is_active?: boolean
           plan_id: string
           product_id: string
           setup_price_id?: string | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
           subscription_price_id: string
           updated_at?: string
         }
         Update: {
+          annual_price_cents?: number | null
           currency?: string
+          features?: Json
+          is_active?: boolean
           plan_id?: string
           product_id?: string
           setup_price_id?: string | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
           subscription_price_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_thresholds: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json
+          is_active: boolean
+          is_popular: boolean
+          max_actuators: number
+          max_batches: number
+          max_sensors: number
+          max_silos: number
+          max_users: number
+          name: string
+          plan_id: string
+          price_cents: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          is_active?: boolean
+          is_popular?: boolean
+          max_actuators?: number
+          max_batches?: number
+          max_sensors?: number
+          max_silos?: number
+          max_users?: number
+          name: string
+          plan_id: string
+          price_cents?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          is_active?: boolean
+          is_popular?: boolean
+          max_actuators?: number
+          max_batches?: number
+          max_sensors?: number
+          max_silos?: number
+          max_users?: number
+          name?: string
+          plan_id?: string
+          price_cents?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          config: Json
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config?: Json
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config?: Json
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -1318,6 +1496,7 @@ export type Database = {
         Row: {
           address: Json | null
           admin_id: string | null
+          auto_upgrade_enabled: boolean
           avatar: string | null
           blocked: boolean | null
           business_type: string | null
@@ -1333,6 +1512,8 @@ export type Database = {
           fcm_tokens: Json | null
           first_login: boolean | null
           has_access: string | null
+          hubspot_contact_id: string | null
+          hubspot_deal_id: string | null
           id: string
           invitation_expires: string | null
           invitation_role: string | null
@@ -1340,6 +1521,7 @@ export type Database = {
           invited_by: string | null
           last_login: string | null
           location: Json | null
+          login_count: number
           name: string
           phone: string | null
           preferences: Json | null
@@ -1348,6 +1530,7 @@ export type Database = {
           status: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id: string | null
           subscription_plan: string | null
+          trial_ends_at: string | null
           updated_at: string | null
           updated_by: string | null
           warehouse_id: string | null
@@ -1355,6 +1538,7 @@ export type Database = {
         Insert: {
           address?: Json | null
           admin_id?: string | null
+          auto_upgrade_enabled?: boolean
           avatar?: string | null
           blocked?: boolean | null
           business_type?: string | null
@@ -1370,6 +1554,8 @@ export type Database = {
           fcm_tokens?: Json | null
           first_login?: boolean | null
           has_access?: string | null
+          hubspot_contact_id?: string | null
+          hubspot_deal_id?: string | null
           id: string
           invitation_expires?: string | null
           invitation_role?: string | null
@@ -1377,6 +1563,7 @@ export type Database = {
           invited_by?: string | null
           last_login?: string | null
           location?: Json | null
+          login_count?: number
           name?: string
           phone?: string | null
           preferences?: Json | null
@@ -1385,6 +1572,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
           subscription_plan?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
           warehouse_id?: string | null
@@ -1392,6 +1580,7 @@ export type Database = {
         Update: {
           address?: Json | null
           admin_id?: string | null
+          auto_upgrade_enabled?: boolean
           avatar?: string | null
           blocked?: boolean | null
           business_type?: string | null
@@ -1407,6 +1596,8 @@ export type Database = {
           fcm_tokens?: Json | null
           first_login?: boolean | null
           has_access?: string | null
+          hubspot_contact_id?: string | null
+          hubspot_deal_id?: string | null
           id?: string
           invitation_expires?: string | null
           invitation_role?: string | null
@@ -1414,6 +1605,7 @@ export type Database = {
           invited_by?: string | null
           last_login?: string | null
           location?: Json | null
+          login_count?: number
           name?: string
           phone?: string | null
           preferences?: Json | null
@@ -1422,6 +1614,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
           subscription_plan?: string | null
+          trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
           warehouse_id?: string | null
@@ -1526,7 +1719,6 @@ export type Database = {
           last_calibration_date: string | null
           last_heartbeat: string | null
           last_maintenance_date: string | null
-          last_ping_at: string | null
           mac_address: string | null
           manufacturer: string | null
           ml_decision: string | null
@@ -1578,7 +1770,6 @@ export type Database = {
           last_calibration_date?: string | null
           last_heartbeat?: string | null
           last_maintenance_date?: string | null
-          last_ping_at?: string | null
           mac_address?: string | null
           manufacturer?: string | null
           ml_decision?: string | null
@@ -1630,7 +1821,6 @@ export type Database = {
           last_calibration_date?: string | null
           last_heartbeat?: string | null
           last_maintenance_date?: string | null
-          last_ping_at?: string | null
           mac_address?: string | null
           manufacturer?: string | null
           ml_decision?: string | null
@@ -2193,6 +2383,66 @@ export type Database = {
           },
         ]
       }
+      tenant_plan_change_requests: {
+        Row: {
+          created_at: string
+          current_plan: string | null
+          decided_at: string | null
+          decided_by: string | null
+          direction: string
+          id: string
+          note: string | null
+          requested_by: string
+          requested_plan: string
+          status: string
+          tenant_admin_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_plan?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          direction: string
+          id?: string
+          note?: string | null
+          requested_by: string
+          requested_plan: string
+          status?: string
+          tenant_admin_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_plan?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          direction?: string
+          id?: string
+          note?: string | null
+          requested_by?: string
+          requested_plan?: string
+          status?: string
+          tenant_admin_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_plan_change_requests_requested_plan_fkey"
+            columns: ["requested_plan"]
+            isOneToOne: false
+            referencedRelation: "plan_thresholds"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_change_requests_tenant_admin_id_fkey"
+            columns: ["tenant_admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2338,6 +2588,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_tenant_admin_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -2346,6 +2600,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       actuator_type: "fan" | "vent" | "heater" | "cooler" | "alarm" | "light"

@@ -1,10 +1,10 @@
-import { ListSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton, ListSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Users, Plus, Search, Edit2, Trash2, UserCheck, Clock, AlertCircle, Mail, Loader2 } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Mail, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { PageHeader, StatCard } from "@/components/dashboards/_shared";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers, inviteTeamMember, updateTeamMember, removeTeamMember } from "@/lib/team-settings-insurance.functions";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
+import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
 export const Route = createFileRoute("/_authenticated/team-management")({ component: TeamPage });
 
@@ -97,80 +99,88 @@ function TeamPage() {
     : currentRole === "manager" ? ["technician"] : [];
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader title="Team Management" subtitle="Invite teammates and manage roles across your tenant" />
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total" value={stats.total} icon={Users} accent="sky" />
-        <StatCard label="Active" value={stats.active} icon={UserCheck} accent="emerald" />
-        <StatCard label="Pending" value={stats.pending} icon={Clock} accent="amber" />
-        <StatCard label="Blocked" value={stats.blocked} icon={AlertCircle} accent="rose" />
-      </div>
-
-      <Card className="mb-6">
-        <CardContent className="p-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or email" className="pl-9" />
-          </div>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-full md:w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All roles</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="technician">Technician</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-          {canInvite && (
-            <Button onClick={() => setInviteOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="h-4 w-4 mr-2" /> Invite member
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+    <AdminPageShell
+      title="Team management"
+      subtitle="Invite teammates and manage roles across your tenant"
+      actions={canInvite ? (
+        <Button onClick={() => setInviteOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+          <Plus className="h-4 w-4 mr-2" /> Invite member
+        </Button>
+      ) : undefined}
+    >
+      <AdminSummaryTiles
+        columns={4}
+        tiles={[
+          { key: "t", label: "Total", value: stats.total },
+          { key: "a", label: "Active", value: stats.active },
+          { key: "p", label: "Pending", value: stats.pending },
+          { key: "b", label: "Blocked", value: stats.blocked },
+        ]}
+      />
 
       <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-4"><ListSkeleton rows={5} /></div>
-          ) : filtered.length === 0 ? (
-            <div className="p-10 text-center text-slate-500">No team members found</div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {filtered.map((m) => (
-                <div key={m.id} className="flex flex-wrap items-center gap-3 p-4 hover:bg-slate-50">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">
-                    {(m.name ?? m.email ?? "?").slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-slate-900 truncate">{m.name ?? "—"}</div>
-                    <div className="text-xs text-slate-500 truncate">{m.email}</div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={ROLE_BADGE[m.role] ?? ROLE_BADGE.pending} variant="outline">{m.role}</Badge>
-                    {m.blocked && <Badge className="bg-red-100 text-red-700 border-red-200" variant="outline">Blocked</Badge>}
-                    {!m.email_verified && m.role !== "pending" && (
-                      <Badge className="bg-orange-100 text-orange-700 border-orange-200" variant="outline">Unverified</Badge>
-                    )}
-                  </div>
-                  {canManage && (
-                    <div className="flex items-center gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => { setEditing(m); setEditForm({ name: m.name ?? "", phone: m.phone ?? "", role: (m.role as Role) }); }}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleting(m)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+        <CardContent className="p-3 flex flex-col md:flex-row gap-3 items-stretch md:items-end">
+          <div className="relative flex-1">
+            <Label className="text-xs font-medium text-slate-500 mb-1 block">Search</Label>
+            <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or email" className="pl-9" />
+          </div>
+          <div className="w-full md:w-48">
+            <Label className="text-xs font-medium text-slate-500 mb-1 block">Role</Label>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="manager">Manager</SelectItem>
+                <SelectItem value="technician">Technician</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
+
+      <AdminDataCard title="All members" description={`Showing ${filtered.length} of ${members.length}`}>
+        {isLoading ? (
+          <div className="p-4"><ListSkeleton rows={5} /></div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+            <p className="text-sm">No team members found</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {filtered.map((m) => (
+              <div key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">
+                  {(m.name ?? m.email ?? "?").slice(0, 1).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-slate-900 truncate">{m.name ?? "—"}</div>
+                  <div className="text-xs text-slate-500 truncate">{m.email}</div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className={ROLE_BADGE[m.role] ?? ROLE_BADGE.pending} variant="outline">{m.role}</Badge>
+                  {m.blocked && <Badge className="bg-red-100 text-red-700 border-red-200" variant="outline">Blocked</Badge>}
+                  {!m.email_verified && m.role !== "pending" && (
+                    <Badge className="bg-orange-100 text-orange-700 border-orange-200" variant="outline">Unverified</Badge>
+                  )}
+                </div>
+                {canManage && (
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditing(m); setEditForm({ name: m.name ?? "", phone: m.phone ?? "", role: (m.role as Role) }); }}>
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setDeleting(m)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </AdminDataCard>
 
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>
@@ -242,6 +252,6 @@ function TeamPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminPageShell>
   );
 }

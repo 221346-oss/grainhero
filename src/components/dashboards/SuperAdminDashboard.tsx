@@ -1,89 +1,188 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, DollarSign, Server, Activity, Globe2 } from "lucide-react";
-import { PageHeader, StatCard, Placeholder } from "./_shared";
-import { useDashboardStats } from "./useDashboardStats";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { sendAdminTestEmail } from "@/lib/admin-test-email.functions";
-import { toast } from "sonner";
-import { Mail, Loader2 } from "lucide-react";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
+import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from "recharts";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { cn } from "@/lib/utils";
 
-export function SuperAdminDashboard({ name }: { name?: string }) {
-  const { data: s } = useDashboardStats();
-  const profile = useMyProfile();
-  const fn = useServerFn(sendAdminTestEmail);
-  const [to, setTo] = useState<string>("");
-  const initial = to || profile.data?.email || "";
-  const mut = useMutation({
-    mutationFn: (email: string) => fn({ data: { to: email } }),
-    onSuccess: (r) => toast.success(`Test email sent to ${r.to}`),
-    onError: (e: Error) => toast.error(e.message || "Failed to send"),
-  });
+function InsightTile({
+  to, label, value, hint,
+}: { to: string; label: string; value: string | number; hint?: string }) {
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        title={`Super Admin${name ? ` — ${name}` : ""}`}
-        subtitle="Platform-wide health, tenants, subscriptions and revenue"
-        badge="Super Admin"
-      />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <StatCard label="Warehouses" value={s?.warehouses ?? "—"} icon={Building2} accent="emerald" />
-        <StatCard label="Silos" value={s?.silos ?? "—"} icon={Users} accent="sky" />
-        <StatCard label="Batches" value={s?.batches.total ?? "—"} icon={DollarSign} accent="violet" />
-        <StatCard label="Sensors" value={s?.sensors.total ?? "—"} icon={Server} accent="amber" />
-        <StatCard label="Actuators" value={s?.actuators.total ?? "—"} icon={Activity} accent="emerald" />
-        <StatCard label="Alerts" value={s?.alerts.open ?? "—"} icon={Globe2} accent="rose" />
-      </div>
-      <Card className="mb-6 border-emerald-200/70 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="h-4 w-4 text-emerald-600" /> Send test email (Resend)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={initial}
-              onChange={(e) => setTo(e.target.value)}
-              className="flex-1"
-            />
-            <Button
-              onClick={() => {
-                const email = (to || profile.data?.email || "").trim();
-                if (!email) return toast.error("Enter an email");
-                mut.mutate(email);
-              }}
-              disabled={mut.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send test"}
-            </Button>
-          </div>
-          <p className="text-xs text-slate-500 mt-2">
-            Sends a plain test email via the Resend connector using RESEND_FROM_EMAIL.
-          </p>
+    <Link to={to} className="group block">
+      <Card
+        className={cn(
+          "transition-all border-slate-200/70",
+          "group-hover:border-emerald-400 group-hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_10px_20px_-12px_rgba(16,185,129,0.25)]",
+          "cursor-pointer",
+        )}
+      >
+        <CardContent className="p-3 sm:p-4">
+          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
+          <div className="mt-1 text-xl sm:text-2xl font-black text-slate-900 leading-tight">{value}</div>
+          {hint && <div className="text-[10px] text-emerald-600 mt-0.5">{hint}</div>}
         </CardContent>
       </Card>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Recent Signups</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
+    </Link>
+  );
+}
+
+export function SuperAdminDashboard({ name }: { name?: string }) {
+  const metricsFn = useServerFn(getPlatformMetrics);
+  const widgetsFn = useServerFn(getPlatformOverviewWidgets);
+  const revenueFn = useServerFn(getSaasRevenueAnalytics);
+
+  const { data: m, isLoading: loadingMetrics } = useQuery({
+    queryKey: ["platform-metrics"],
+    queryFn: () => metricsFn(),
+    refetchInterval: 30000
+  });
+  const { data: w } = useQuery({ queryKey: ["platform-widgets"], queryFn: () => widgetsFn() });
+  const { data: revenueData } = useQuery({
+    queryKey: ["saas-revenue-dashboard"],
+    queryFn: () => revenueFn()
+  });
+
+  const usersGrowth = w?.wowDelta ?? 0;
+  const mrrValue = (m as any)?.mrr ?? 0;
+
+  return (
+    <AdminPageShell
+      title={`Super admin${name ? ` — ${name}` : ""}`}
+      subtitle="Platform management console"
+      actions={usersGrowth !== 0 ? (
+        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+          {usersGrowth > 0 ? "+" : ""}{usersGrowth}% growth
+        </Badge>
+      ) : undefined}
+    >
+      {/* Primary KPIs — each click deep-links to its insight page */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <InsightTile to="/platform/tenants" label="Tenants" value={m?.totalTenants ?? 0} />
+        <InsightTile to="/platform/users" label="Users" value={m?.totalUsers ?? 0} />
+        <InsightTile to="/platform/plans" label="Active subs" value={m?.activeSubscriptions ?? 0} />
+        <InsightTile to="/revenue" label="MRR" value={`PKR ${mrrValue.toLocaleString()}`} hint="Live" />
+        <InsightTile to="/platform/health" label="Critical alerts" value={m?.criticalAlerts ?? 0} />
+      </div>
+
+      {/* Charts — 3 up */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-slate-800">User signups (30d)</CardTitle>
+          </CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {w?.signupsSeries && w.signupsSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={w.signupsSeries}>
+                  <defs>
+                    <linearGradient id="userGrowth" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.15} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: 6, color: "white", fontSize: 11 }} />
+                  <Area type="monotone" dataKey="count" stroke="#10b981" fillOpacity={1} fill="url(#userGrowth)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : <div className="h-full flex items-center justify-center text-xs text-slate-400">No data</div>}
+          </CardContent>
         </Card>
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">System Alerts</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-slate-800">Revenue by plan</CardTitle></CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {revenueData?.planSeries && revenueData.planSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={revenueData.planSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.15} />
+                  <XAxis dataKey="plan" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: 6, color: "white", fontSize: 11 }} />
+                  <Bar dataKey="mrr" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <div className="h-full flex items-center justify-center text-xs text-slate-400">No data</div>}
+          </CardContent>
         </Card>
-        <Card className="md:col-span-2 border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Global Analytics</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
+
+        <Card className="md:col-span-2 xl:col-span-1">
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-slate-800">Revenue trend (12m)</CardTitle></CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {revenueData?.revenueSeries && revenueData.revenueSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData.revenueSeries}>
+                  <defs>
+                    <linearGradient id="revenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.15} />
+                  <XAxis dataKey="month" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: 6, color: "white", fontSize: 11 }} />
+                  <Area type="monotone" dataKey="revenue" stroke="#10b981" fillOpacity={1} fill="url(#revenue)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : <div className="h-full flex items-center justify-center text-xs text-slate-400">No data</div>}
+          </CardContent>
         </Card>
       </div>
-    </div>
+
+      {/* Deep-link grid + recent signups side by side to reduce scroll */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4">
+        <div>
+          <h2 className="text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-2">Jump to insights</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <InsightTile to="/platform/tenants" label="Tenants" value={m?.totalTenants ?? "—"} />
+            <InsightTile to="/platform/users" label="Users" value={m?.totalUsers ?? "—"} />
+            <InsightTile to="/platform/pipeline" label="Pipeline" value={(w as any)?.pipelineTotal ?? "—"} />
+            <InsightTile to="/platform/leads" label="Leads" value={(w as any)?.leadsTotal ?? "—"} />
+            <InsightTile to="/platform/health" label="Health" value={(m as any)?.totalAlerts ?? "—"} />
+            <InsightTile to="/platform/audit-logs" label="Audit logs" value={(m as any)?.totalLogs ?? "—"} />
+            <InsightTile to="/platform/orders" label="Install orders" value={(w as any)?.ordersTotal ?? "—"} />
+            <InsightTile to="/revenue" label="Revenue" value={`PKR ${mrrValue.toLocaleString()}`} />
+          </div>
+        </div>
+
+        {w && (w as any).recentSignups && (w as any).recentSignups.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm text-slate-800">Recent signups</CardTitle>
+              <Link to="/platform/users" className="text-[11px] text-emerald-700 hover:underline">View all →</Link>
+            </CardHeader>
+            <CardContent className="pt-0 pb-2">
+              <div className="divide-y divide-slate-100 max-h-[220px] overflow-auto">
+                {((w as any).recentSignups || []).slice(0, 5).map((s: any) => (
+                  <Link
+                    key={s.id}
+                    to="/platform/users"
+                    className="flex items-center gap-2 py-1.5 text-sm hover:bg-emerald-50/60 rounded px-1 transition-colors"
+                  >
+                    <div className="h-7 w-7 shrink-0 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[11px] font-bold">
+                      {(s.name || s.email || "?").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 truncate leading-tight">{s.name || s.email}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{s.email}</p>
+                    </div>
+                    <p className="text-[10px] text-slate-400 whitespace-nowrap">{new Date(s.created_at).toLocaleDateString()}</p>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+    </AdminPageShell>
   );
 }

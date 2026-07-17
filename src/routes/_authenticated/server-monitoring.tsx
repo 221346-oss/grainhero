@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Server, Wifi, WifiOff, Battery, Signal } from "lucide-react";
 import { getDeviceHealth } from "@/lib/operations2.functions";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/server-monitoring")({
   component: ServerMonitoringPage,
@@ -21,12 +23,16 @@ function fmtGap(s: number | null) {
 function ServerMonitoringPage() {
   const fn = useServerFn(getDeviceHealth);
   const { data } = useQuery({ queryKey: ["device-health"], queryFn: () => fn(), refetchInterval: 15_000 });
+  const { isSuperAdmin } = useIsSuperAdmin();
   const devices = data?.devices ?? [];
   const totals = data?.totals ?? { total: 0, online: 0, offline: 0, lowBattery: 0, weakSignal: 0 };
   const uptime = totals.total ? (totals.online / totals.total) * 100 : 100;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Fleet health across every tenant. Read-only." />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Server className="h-6 w-6 text-emerald-600" /> Device Health</h1>
         <p className="text-sm text-slate-500 mt-1">Live connectivity and hardware status across all sensor devices.</p>
