@@ -112,6 +112,8 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-reviews", label: "Review Moderation", to: "/platform/reviews", icon: ShoppingCart, roles: ["super_admin"] },
       { name: "platform-disputes", label: "Disputes", to: "/platform/disputes", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-dispatch-analytics", label: "Dispatch Analytics", to: "/platform/dispatch-analytics", icon: Activity, roles: ["super_admin"] },
+      { name: "platform-sellers", label: "Sellers", to: "/platform/sellers", icon: Users, roles: ["super_admin"] },
+      { name: "platform-marketplace-health", label: "Marketplace Health", to: "/platform/marketplace-health", icon: TrendingUp, roles: ["super_admin"] },
     ],
   },
 ];
