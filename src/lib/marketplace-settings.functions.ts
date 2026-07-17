@@ -275,6 +275,20 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       { key: "foreign_matter", label: "Foreign matter", unit: "%", max: 2 },
     ],
   },
+  logistics: {
+    carriersEnabled: true,
+    defaultPickupWindowHours: 24,
+    defaultDeliveryWindowHours: 72,
+    fuelCostPerLitre: 285,
+    driverPayoutPerKm: 12,
+    routeOptimizer: "nearest_neighbour",
+    distanceProvider: "haversine",
+    osrmBaseUrl: "",
+    pollingIntervalMinutes: 60,
+    autoCloseAfterDeliveryHours: 48,
+    deliveryDelayGraceMinutes: 30,
+    licenseExpiryWarnDays: [14, 7, 1],
+  },
 };
 
 export function mergeSettings(raw: unknown): MarketplaceSettings {
