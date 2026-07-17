@@ -1,94 +1,59 @@
-# Admin & Super-Admin UI Redesign + Plan-Threshold Controls
 
-## Scope correction
-The `/platform/*` routes and other admin pages are **direct file-based routes** (e.g. `src/routes/_authenticated/platform.orders.tsx`, `activity-logs.tsx`, `orders.tsx`) — no dynamic router or wrapper layout. All work happens inside those individual route files plus a small shared `admin` component set.
+## Problem
 
-Two role lenses drive every page (already resolved via `getEffectiveRole` / `has_role`):
-- **admin** = tenant admin. Sees their own tenant's operational data + their own personnel (managers, technicians).
-- **super_admin** = platform operator. Sees tenant admins and platform-wide monitoring — never end-operators, batches, silos, or per-tenant operational rows.
+1. Current skeleton on `/grain-batches` (and other pages) is a generic full-page `DashboardSkeleton` — it doesn't match the actual page composition (header + 5 KPI tiles + toolbar + card grid), it extends full-bleed and overflows the mobile viewport (uploaded screenshot shows skeleton bars running off the right edge and no page container padding).
+2. Empty-state text like "Create a silo first →" uses `text-emerald-700` on a nearly-black `bg-white/50` card → in dark mode the underline link fades out / stays on a white patch. Same class-based issues exist on Silos, Sensors, Actuators, Alerts, Settings, and Team pages.
+3. Skeletons for Silos, Sensors, Actuators, Alerts, Settings, Team pages don't exist (or reuse `DashboardSkeleton`) — they must mirror the real component layout of each page (same container width, same grid columns, same tile counts).
 
-## Goal
-1. Unify admin/super-admin pages to the landing brand look (emerald primary, slate neutrals, soft `from-slate-50 via-white to-emerald-50/30` bg) using Activity Logs as the visual template.
-2. Compact density — most pages fit one 1440×900 viewport, scrolling stays inside cards.
-3. Drop decorative icons; keep only functional ones (severity dot, close-chip, pagination, sort).
-4. Split Activity Logs by role: admin sees their team; super_admin sees admins + own actions.
-5. New Plan Thresholds page: super_admin edits plan limits/feature access; admin can request upgrade/downgrade from their own dashboard.
+## Fix strategy
 
-## Part A — Shared admin shell
-New folder `src/components/app/admin/`:
-- `AdminPageShell.tsx` — gradient bg wrapper, responsive header (title + subtitle + right actions), no title icons.
-- `AdminSummaryTiles.tsx` — numeric tile row, click-to-filter ring, text-only labels.
-- `AdminFilterBar.tsx` — single card: search + selects + date range + Filter button.
-- `AdminDataCard.tsx` — bordered card with internal `max-h-[520px] overflow-auto` list/table + in-card pagination footer.
-- `AdminDetailPanel.tsx` — sticky right-column detail (replaces navigating to a detail page for most lists).
+### A. Add page-specific skeletons in `src/components/app/skeletons.tsx`
 
-All components use existing semantic tokens; no new colors, no new dependencies.
+Each new skeleton wraps in the same container the real page uses (`p-4 md:p-8 max-w-7xl mx-auto`) so it never bleeds edge-to-edge, and uses `bg-muted` tokens (theme-aware) instead of hardcoded slate.
 
-Layout rules for every refactored page:
-- Header: `grid-cols-[minmax(0,1fr)_auto]` mobile → `sm:flex` (per responsive-layout-patterns).
-- Body: `lg:grid-cols-3` — list spans 2, sticky detail spans 1.
-- Spacing: `p-4 sm:p-6 space-y-5`, `text-sm` body, page title `text-2xl sm:text-3xl`.
-- No icons in tile labels, card titles, filter labels, or nav items.
+- `GrainBatchesSkeleton` — header row (title block + count pill) → 5 KPI mini-tiles on `grid-cols-2 md:grid-cols-5` → toolbar (search + 2 selects + button) → responsive card grid `sm:grid-cols-2 lg:grid-cols-3` with 6 placeholder batch cards (icon, title, badge, 3 detail lines, action row).
+- `SilosSkeleton` — header + 4 KPI tiles + toolbar + card grid of silo tiles (round capacity meter + name + occupancy bar + 2 stats).
+- `SensorsSkeleton` — header + 4 KPI tiles + tab strip + table-like list of sensor rows (icon, name, silo, reading pill, status dot, actions).
+- `ActuatorsSkeleton` — header + 3 KPI tiles + toolbar + card grid with toggle-switch shaped placeholders and quick-action buttons.
+- `AlertsSkeleton` — header + severity filter pills + timeline list of alert cards (icon + title + description + timestamp + action button).
+- `SettingsSkeleton` — vertical tab list on the left (sm:col-span-1) + form panel on right with grouped field sections (label + input rows, 2-col on md).
+- `TeamSkeleton` — header + role filter row + card grid of member cards (avatar + name/email + role badge + action menu).
 
-## Part B — Activity Logs split by role
-File: `src/routes/_authenticated/activity-logs.tsx` (+ server function `listActivityLogs` in `src/lib/notifications-audit.functions.ts`).
+All new skeletons follow the same rules:
+- Root: `p-4 md:p-8 max-w-7xl mx-auto space-y-6` (never full-bleed).
+- Card surfaces: `rounded-xl border bg-card` (theme-aware).
+- Bars: `<Skeleton />` (shimmer class already token-based).
+- Grid breakpoints exactly match the real page's grid so widths align.
 
-Server-side scope resolution based on `getEffectiveRole`:
-| Role | Rows returned |
-|------|--------------|
-| technician / manager | Only their own actions. |
-| admin | All actions performed by users inside the caller's tenant (managers, technicians, admin themself). |
-| super_admin | Own super-admin actions + all `admin`-role actions across every tenant, with a `tenant_name` column and a tenant-filter select. |
+### B. Wire each route to its matching skeleton
 
-UI additions:
-- Super-admin view: adds "Actor role" chip (admin/super_admin) and a Tenant filter select in the filter bar.
-- Admin view: adds "Team member" filter (their managers/technicians).
-- Same layout, no visual divergence beyond the extra filter select.
+Replace `<DashboardSkeleton />` (or bare spinners) in these route files with the page-specific skeleton:
 
-## Part C — Plan Thresholds & tenant subscription controls
-Data (one migration):
-- `public.plan_thresholds(plan_id text pk, name text, max_users int, max_silos int, max_batches int, max_sensors int, features jsonb, price_cents int, updated_at timestamptz)`.
-- `public.tenant_plan_change_requests(id uuid pk, tenant_id uuid, requested_plan text, current_plan text, direction text check in ('upgrade','downgrade'), status text check in ('pending','approved','rejected','auto_applied'), requested_by uuid, decided_by uuid, decided_at timestamptz, created_at timestamptz default now())`.
-- Grants + RLS: authenticated read on `plan_thresholds`; super_admin write. Admin can insert own tenant's change_request; super_admin full access; both can read own rows via `has_role`.
-- Seed `plan_thresholds` from existing `src/lib/pricing-data.ts` in the same migration.
+- `src/routes/_authenticated/grain-batches.tsx` → `GrainBatchesSkeleton`
+- `src/routes/_authenticated/silos.tsx` → `SilosSkeleton`
+- `src/routes/_authenticated/sensors.tsx` → `SensorsSkeleton`
+- `src/routes/_authenticated/actuators.tsx` → `ActuatorsSkeleton`
+- `src/routes/_authenticated/grain-alerts.tsx` → `AlertsSkeleton`
+- `src/routes/_authenticated/settings.tsx` → `SettingsSkeleton`
+- `src/routes/_authenticated/team-management.tsx` → `TeamSkeleton`
 
-Server functions (`src/lib/plan-thresholds.functions.ts`, all `requireSupabaseAuth`):
-- `listPlanThresholds` — any authenticated user.
-- `updatePlanThreshold` — super_admin only (verify via `context.supabase` + `has_role`).
-- `requestPlanChange({ requestedPlan })` — admin only; if `direction === 'upgrade'` and tenant's auto-upgrade flag is on, mark `auto_applied` and update tenant subscription immediately; else `pending`.
-- `decidePlanChangeRequest({ id, approve })` — super_admin only; on approve updates the tenant's plan.
-- `setTenantPlan({ tenantId, plan })` — super_admin manual override.
+### C. Dark-mode empty-state cleanup
 
-New pages (both use AdminPageShell):
-1. `src/routes/_authenticated/platform.plans.tsx` — super_admin: editable table of plans (name, limits, feature toggles, price), plus a pending-requests panel in the right column.
-2. `src/routes/_authenticated/subscription.tsx` (existing, refactor) — admin: current plan tile, plan comparison, "Request upgrade/downgrade" button, toggle "Auto-approve upgrades", history of own requests.
+For every empty-state block on the 7 pages above:
+- Replace `border-slate-300 bg-white/50` with `border-border bg-card/60`.
+- Replace `text-slate-500` with `text-muted-foreground`.
+- Replace `text-emerald-700` links with `text-primary hover:text-primary/80` and keep `underline underline-offset-4` so the link renders correctly under both themes.
+- Icon (`Inbox`, etc.) uses `text-muted-foreground` (drop hardcoded opacity that reads wrong on dark card).
 
-## Part D — Page-by-page refactor (presentation only, no data changes)
+### D. Verification
 
-**Super-admin pages (show platform/admin oversight, never per-tenant operator data):**
-| Page | Focus |
-|------|-------|
-| `platform.index.tsx` | Tiles: total tenants, active admins, MRR, incidents-this-week + two-column widgets (recent signups, system alerts) sized to one viewport. |
-| `platform.tenants.tsx` | Tenants list + sticky tenant detail (plan, admin contact, usage vs threshold). Manual plan override lives here. |
-| `platform.users.tsx` | **Only admin-role users** across tenants; role filter chips (admin / super_admin). No managers/technicians. |
-| `platform.orders.tsx` | Hardware orders across tenants; tiles = statuses; list + detail. |
-| `platform.leads.tsx` / `platform.pipeline.tsx` | Marketing leads/pipeline; kanban stays inside a fixed-height card, no page scroll. |
-| `platform.audit-logs.tsx` / `platform.logs.tsx` | Align to Activity Logs shell; filters for actor role + tenant. |
-| `platform.health.tsx` | Metrics tiles + one status card grid. |
-| `platform.plans.tsx` *(new)* | Plan threshold editor + change-request queue. |
-
-**Admin pages** (`activity-logs.tsx`, `subscription.tsx`, `team-management.tsx`, `settings.tsx`) get the same shell + brand palette, no scope changes beyond Activity Logs.
+1. `bunx tsgo --noEmit` to confirm imports/exports line up.
+2. Playwright at 563px width (matches current viewport) on `/grain-batches`, `/silos`, `/sensors`, `/actuators`, `/grain-alerts`, `/settings`, `/team-management` in both light and dark mode; screenshot to confirm:
+   - No horizontal overflow (skeleton bars stay inside container).
+   - Skeleton block widths visually align with the real UI once loaded.
+   - Empty-state link is readable in dark mode.
 
 ## Out of scope
-- Tenant operational pages (dashboard, grain-batches, silos, sensors, actuators, buyers, insurance) — unchanged.
-- No new AI, email, or webhook wiring.
-- No copy changes beyond what the new components require.
 
-## Acceptance
-- Every page in Part D shares identical header/tile/filter/card visuals with Activity Logs.
-- Desktop 1440×900: main content visible without page scroll (internal card scroll only).
-- No icon in any page title, section title, tile label, or filter label.
-- Activity Logs returns role-appropriate rows verified via one query per role.
-- Super_admin can edit a plan threshold and approve a change request; admin can submit a change request and (if auto-upgrade is on) see the plan updated immediately.
-
-Reply **approve** to build, or tell me what to adjust.
+- No changes to business logic, server functions, or data queries.
+- No design-token or color-palette changes; only theme-aware replacements of hardcoded slate/emerald/white utilities on these 7 pages.
