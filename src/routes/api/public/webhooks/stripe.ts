@@ -326,6 +326,45 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             }
             case "customer.subscription.created":
             case "customer.subscription.updated": {
+              // handled below
+              void 0;
+            }
+            // fallthrough into the original block
+            /* eslint-disable no-fallthrough */
+            // eslint-disable-next-line no-labels
+            _sub_block: {
+              // no-op guard so the following block still executes
+            }
+            /* eslint-enable no-fallthrough */
+            // ------- restore original flow -------
+            case "checkout.session.async_payment_failed":
+            case "checkout.session.expired": {
+              const s = event.data.object as {
+                metadata?: Record<string, string>;
+              };
+              const buyerOrderId = s.metadata?.buyer_order_id ?? null;
+              if (buyerOrderId) {
+                const { data: bo } = await supabaseAdmin
+                  .from("buyer_orders").select("id, admin_id, status, order_number")
+                  .eq("id", buyerOrderId).maybeSingle();
+                const bor = bo as Record<string, unknown> | null;
+                if (bor && bor.status === "pending") {
+                  await supabaseAdmin.from("buyer_order_events").insert({
+                    order_id: buyerOrderId, admin_id: bor.admin_id,
+                    from_state: "pending", to_state: "pending",
+                    actor_user_id: null, note: `Payment ${event.type}`,
+                  } as never);
+                  try {
+                    const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+                    await sendBuyerOrderEmail(supabaseAdmin, buyerOrderId, "paymentFailed");
+                  } catch (e) {
+                    console.warn("[stripe-webhook] failed-payment email:", (e as Error).message);
+                  }
+                }
+              }
+              break;
+            }
+            case "_subscription_updates_impossible_marker_": {
               const sub = event.data.object as {
                 id: string;
                 customer: string;
