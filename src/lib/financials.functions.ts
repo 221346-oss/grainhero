@@ -41,7 +41,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
 
     const [subs, orders, policies, invoices] = await Promise.all([
       supabaseAdmin.from("subscriptions").select("price_per_month, status, plan_name, created_at"),
-      supabaseAdmin.from("hardware_orders").select("hardware_total, status, created_at"),
+      supabaseAdmin.from("hardware_orders").select("hardware_total, hardware_quantity, hardware_unit_cost, status, created_at"),
       supabaseAdmin.from("insurance_policies").select("premium_amount, commission_rate, created_at"),
       supabaseAdmin.from("buyer_invoices").select("total_amount, amount_paid, currency, created_at, payment_status"),
     ]);
@@ -71,9 +71,15 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     const activeSubs = [...subRows, ...profileRows];
     const mrr = activeSubs.reduce((sum: number, s: any) => sum + Number(s.price ?? 0), 0);
 
-    const iotRevenue = (orders.data ?? [])
-      .filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
-      .reduce((s: number, o: any) => s + Number(o.hardware_total ?? 0), 0);
+    const activeOrders = (orders.data ?? []).filter(
+      (o: any) => o.status !== "cancelled" && o.status !== "pending_payment",
+    );
+    const iotRevenue = activeOrders.reduce((s: number, o: any) => s + Number(o.hardware_total ?? 0), 0);
+    // Precise hardware COGS from recorded unit cost × quantity.
+    const hardwareUnitCogs = activeOrders.reduce(
+      (s: number, o: any) => s + Number(o.hardware_unit_cost ?? 0) * Number(o.hardware_quantity ?? 0),
+      0,
+    );
 
     const insuranceCommission = (policies.data ?? []).reduce(
       (s: number, p: any) => s + (Number(p.premium_amount ?? 0) * Number(p.commission_rate ?? 0)) / 100,
@@ -84,8 +90,8 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     const collectedTotal = (invoices.data ?? []).reduce((s: number, i: any) => s + Number(i.amount_paid ?? 0), 0);
 
     const totalRevenue = mrr + iotRevenue + insuranceCommission;
-    // COGS: configurable IoT hardware cost as % of iot revenue
-    const cogs = iotRevenue * (iotCostPct / 100);
+    // Prefer per-unit recorded cost when we have it; fall back to iotCostPct assumption.
+    const cogs = hardwareUnitCogs > 0 ? hardwareUnitCogs : iotRevenue * (iotCostPct / 100);
     const grossProfit = totalRevenue - cogs;
     // Opex simplification: configurable % of total revenue
     const opex = totalRevenue * (opexPct / 100);

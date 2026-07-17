@@ -57,9 +57,22 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
         for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ v1.charCodeAt(i);
         if (diff !== 0) return new Response("bad signature", { status: 400 });
 
-        const event = JSON.parse(rawBody) as { type: string; data: { object: Record<string, unknown> } };
+        const event = JSON.parse(rawBody) as {
+          id: string;
+          type: string;
+          data: { object: Record<string, unknown> };
+        };
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { sendCheckoutConfirmationEmail } = await import("@/lib/checkout-emails.functions");
+        const { stripeEventAlreadyProcessed, syncSubscriptionFromStripe } = await import(
+          "@/lib/billing-sync.server"
+        );
+
+        // Idempotency — Stripe retries deliver the same event id.
+        if (event.id) {
+          const seen = await stripeEventAlreadyProcessed(supabaseAdmin, event.id, event.type);
+          if (seen) return new Response("duplicate", { status: 200 });
+        }
 
         try {
           switch (event.type) {
@@ -276,12 +289,6 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 metadata?: Record<string, string>;
                 items?: { data: Array<{ price: { unit_amount: number; currency: string; recurring?: { interval: string } } }> };
               };
-              const { data: prof } = await supabaseAdmin
-                .from("profiles")
-                .select("id")
-                .eq("stripe_customer_id", sub.customer)
-                .maybeSingle();
-              const adminId = prof?.id ?? sub.metadata?.user_id ?? null;
               const hardwareOrderId = sub.metadata?.hardware_order_id ?? null;
               if (hardwareOrderId) {
                 await supabaseAdmin
@@ -289,67 +296,26 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   .update({ stripe_subscription_id: sub.id, stripe_customer_id: sub.customer } as never)
                   .eq("id", hardwareOrderId);
               }
-              if (!adminId) break;
-              const price = sub.items?.data[0]?.price;
-              const planId = sub.metadata?.plan_id ?? "";
-              const planNameMap: Record<string, string> = {
-                basic: "Grain Starter",
-                intermediate: "Grain Professional",
-                pro: "Grain Enterprise",
-              };
-              const planLimits: Record<string, { users: number; devices: number; storage: number; batches: number }> = {
-                basic: { users: 5, devices: 3, storage: 10, batches: 100 },
-                intermediate: { users: 10, devices: 6, storage: 50, batches: 500 },
-                pro: { users: 999999, devices: 15, storage: 999999, batches: 999999 },
-              };
-              const limits = planLimits[planId] ?? planLimits.basic;
-              const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial"]);
-              const status = validStatuses.has(sub.status) ? sub.status : "active";
-              const interval = price?.recurring?.interval ?? "month";
-              const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
-              // Ensure purchaser has admin role (idempotent)
-              if (adminId) {
-                await supabaseAdmin.from("user_roles").delete().eq("user_id", adminId);
+              try {
+                const synced = await syncSubscriptionFromStripe(supabaseAdmin, sub.id);
+                // Ensure purchaser has admin role (idempotent).
+                await supabaseAdmin.from("user_roles").delete().eq("user_id", synced.adminId);
                 await supabaseAdmin
                   .from("user_roles")
-                  .insert({ user_id: adminId, role: "admin" } as never);
+                  .insert({ user_id: synced.adminId, role: "admin" } as never);
                 await supabaseAdmin
                   .from("profiles")
-                  .update({ admin_id: adminId } as never)
-                  .eq("id", adminId);
+                  .update({ admin_id: synced.adminId } as never)
+                  .eq("id", synced.adminId);
+                await supabaseAdmin.from("security_events").insert({
+                  user_id: synced.adminId,
+                  tenant_id: synced.adminId,
+                  event: `billing.${event.type}`,
+                  meta: { status: sub.status, plan_id: synced.planId } as never,
+                });
+              } catch (e) {
+                console.warn("[stripe-webhook] sub sync failed", (e as Error).message);
               }
-              await supabaseAdmin.from("subscriptions").upsert(
-                {
-                  admin_id: adminId,
-                  plan_name: (planNameMap[planId] ?? "Custom") as never,
-                  plan_description: `Stripe subscription (${planId})`,
-                  status: status as never,
-                  auto_renew: !(sub.cancel_at_period_end ?? false),
-                  start_date: new Date().toISOString(),
-                  end_date: sub.current_period_end
-                    ? new Date(sub.current_period_end * 1000).toISOString()
-                    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                  next_payment_date: sub.current_period_end
-                    ? new Date(sub.current_period_end * 1000).toISOString()
-                    : null,
-                  price_per_month: price ? Number(price.unit_amount) / 100 : 0,
-                  currency: (price?.currency ?? "usd").toUpperCase(),
-                  billing_cycle: billingCycle as never,
-                  stripe_subscription_id: sub.id,
-                  stripe_customer_id: sub.customer,
-                  max_users: limits.users,
-                  max_devices: limits.devices,
-                  max_storage_gb: limits.storage,
-                  max_batches: limits.batches,
-                } as never,
-                { onConflict: "stripe_subscription_id" },
-              );
-              await supabaseAdmin.from("security_events").insert({
-                user_id: adminId,
-                tenant_id: adminId,
-                event: `billing.${event.type}`,
-                meta: { status: sub.status } as never,
-              });
               break;
             }
             case "customer.subscription.deleted": {
@@ -360,6 +326,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   status: "cancelled",
                   auto_renew: false,
                   cancellation_date: new Date().toISOString(),
+                  canceled_at: new Date().toISOString(),
                 } as never)
                 .eq("stripe_subscription_id", sub.id);
               try {
@@ -379,7 +346,21 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             }
             case "invoice.payment_failed":
             case "invoice.paid": {
-              const inv = event.data.object as { customer?: string; amount_paid?: number; currency?: string };
+              const inv = event.data.object as {
+                id?: string;
+                customer?: string;
+                amount_paid?: number;
+                currency?: string;
+                subscription?: string;
+              };
+              // Refresh the linked subscription so latest_invoice_id + period dates roll forward.
+              if (inv.subscription) {
+                try {
+                  await syncSubscriptionFromStripe(supabaseAdmin, inv.subscription);
+                } catch (e) {
+                  console.warn("[stripe-webhook] invoice sync failed", (e as Error).message);
+                }
+              }
               const { data: prof } = await supabaseAdmin
                 .from("profiles")
                 .select("id")
