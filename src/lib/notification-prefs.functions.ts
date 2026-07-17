@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { checkRate } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const CATEGORIES = ["billing", "plan", "order", "install", "security", "system", "ops"] as const;
 const CHANNELS = ["email", "sms", "push"] as const;
@@ -62,8 +62,8 @@ export const sendTestNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ channel: z.enum(CHANNELS) }).parse(d))
   .handler(async ({ data, context }) => {
-    const rl = checkRate(`notif-test:${context.userId}`, 3, 60_000);
-    if (!rl.ok) throw new Error("Please wait a minute before sending another test");
+    const rl = checkRateLimit(`notif-test:${context.userId}`, { limit: 3, windowMs: 60_000 });
+    if (!rl.allowed) throw new Error("Please wait a minute before sending another test");
     const { emitNotification } = await import("@/lib/notify");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Temporarily flip the tested channel on for this one delivery via a stub
