@@ -41,6 +41,7 @@ import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authe
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
+import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
@@ -239,6 +240,12 @@ const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
   path: '/plans',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanManagementRoute =
+  AuthenticatedPlanManagementRouteImport.update({
+    id: '/plan-management',
+    path: '/plan-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -457,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
@@ -522,6 +530,7 @@ export interface FileRoutesByTo {
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
@@ -590,6 +599,7 @@ export interface FileRoutesById {
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/plan-management': typeof AuthenticatedPlanManagementRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
@@ -658,6 +668,7 @@ export interface FileRouteTypes {
     | '/not-allowed'
     | '/notifications'
     | '/orders'
+    | '/plan-management'
     | '/plans'
     | '/reports'
     | '/revenue'
@@ -723,6 +734,7 @@ export interface FileRouteTypes {
     | '/not-allowed'
     | '/notifications'
     | '/orders'
+    | '/plan-management'
     | '/plans'
     | '/reports'
     | '/revenue'
@@ -790,6 +802,7 @@ export interface FileRouteTypes {
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
+    | '/_authenticated/plan-management'
     | '/_authenticated/plans'
     | '/_authenticated/reports'
     | '/_authenticated/revenue'
@@ -1076,6 +1089,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/plan-management': {
+      id: '/_authenticated/plan-management'
+      path: '/plan-management'
+      fullPath: '/plan-management'
+      preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders': {
       id: '/_authenticated/orders'
       path: '/orders'
@@ -1328,6 +1348,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedPlanManagementRoute: typeof AuthenticatedPlanManagementRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
@@ -1369,6 +1390,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedPlanManagementRoute: AuthenticatedPlanManagementRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
