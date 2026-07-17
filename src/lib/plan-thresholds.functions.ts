@@ -257,7 +257,7 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
           .from("subscriptions")
           .update({ plan_name: req.requested_plan } as never)
           .eq("admin_id", req.tenant_admin_id)
-          .in("status", ["active", "trialing", "past_due"]);
+          .in("status", ["active", "trial"]);
       } catch (err) {
         console.warn("[decide] subscription sync failed", err);
       }
