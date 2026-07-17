@@ -66,6 +66,7 @@ import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/tele
 import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
+import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenticated/silos.$siloId'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
@@ -388,6 +389,12 @@ const AuthenticatedTechnicianInstallsRoute =
     path: '/technician/installs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSilosSiloIdRoute =
+  AuthenticatedSilosSiloIdRouteImport.update({
+    id: '/$siloId',
+    path: '/$siloId',
+    getParentRoute: () => AuthenticatedSilosRoute,
+  } as any)
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsRouteImport.update({
     id: '/notifications',
@@ -554,7 +561,7 @@ export interface FileRoutesByFullPath {
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
-  '/silos': typeof AuthenticatedSilosRoute
+  '/silos': typeof AuthenticatedSilosRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
@@ -578,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
   '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
@@ -632,7 +640,7 @@ export interface FileRoutesByTo {
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
-  '/silos': typeof AuthenticatedSilosRoute
+  '/silos': typeof AuthenticatedSilosRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
@@ -656,6 +664,7 @@ export interface FileRoutesByTo {
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
   '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
@@ -713,7 +722,7 @@ export interface FileRoutesById {
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
-  '/_authenticated/silos': typeof AuthenticatedSilosRoute
+  '/_authenticated/silos': typeof AuthenticatedSilosRouteWithChildren
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
@@ -737,6 +746,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
   '/_authenticated/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
@@ -818,6 +828,7 @@ export interface FileRouteTypes {
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
+    | '/silos/$siloId'
     | '/technician/installs'
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
@@ -896,6 +907,7 @@ export interface FileRouteTypes {
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
+    | '/silos/$siloId'
     | '/technician/installs'
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
@@ -976,6 +988,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
+    | '/_authenticated/silos/$siloId'
     | '/_authenticated/technician/installs'
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
@@ -1421,6 +1434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTechnicianInstallsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/silos/$siloId': {
+      id: '/_authenticated/silos/$siloId'
+      path: '/$siloId'
+      fullPath: '/silos/$siloId'
+      preLoaderRoute: typeof AuthenticatedSilosSiloIdRouteImport
+      parentRoute: typeof AuthenticatedSilosRoute
+    }
     '/_authenticated/settings/notifications': {
       id: '/_authenticated/settings/notifications'
       path: '/notifications'
@@ -1585,6 +1605,17 @@ const AuthenticatedSettingsRouteWithChildren =
     AuthenticatedSettingsRouteChildren,
   )
 
+interface AuthenticatedSilosRouteChildren {
+  AuthenticatedSilosSiloIdRoute: typeof AuthenticatedSilosSiloIdRoute
+}
+
+const AuthenticatedSilosRouteChildren: AuthenticatedSilosRouteChildren = {
+  AuthenticatedSilosSiloIdRoute: AuthenticatedSilosSiloIdRoute,
+}
+
+const AuthenticatedSilosRouteWithChildren =
+  AuthenticatedSilosRoute._addFileChildren(AuthenticatedSilosRouteChildren)
+
 interface AuthenticatedPlatformOrdersRouteChildren {
   AuthenticatedPlatformOrdersOrderIdRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
 }
@@ -1641,7 +1672,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
-  AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
+  AuthenticatedSilosRoute: typeof AuthenticatedSilosRouteWithChildren
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
@@ -1687,7 +1718,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
-  AuthenticatedSilosRoute: AuthenticatedSilosRoute,
+  AuthenticatedSilosRoute: AuthenticatedSilosRouteWithChildren,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
