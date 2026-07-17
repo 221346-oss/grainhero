@@ -67,7 +67,7 @@ export const adminChangeUserPlan = createServerFn({ method: "POST" })
       plan_name: plan.name,
       price_per_month: Number(plan.price),
       currency: plan.currency ?? "PKR",
-    }).eq("id", data.subscriptionId);
+    } as any).eq("id", data.subscriptionId);
     return { ok: true };
   });
 
@@ -86,9 +86,8 @@ export const adminCancelSubscription = createServerFn({ method: "POST" })
     }
     await context.supabase.from("subscriptions").update({
       status: data.immediate ? "cancelled" : sub.status,
-      cancel_at_period_end: !data.immediate,
       cancellation_date: data.immediate ? new Date().toISOString() : sub.cancellation_date,
-    }).eq("id", data.subscriptionId);
+    } as any).eq("id", data.subscriptionId);
     return { ok: true };
   });
 
@@ -101,6 +100,6 @@ export const adminResumeSubscription = createServerFn({ method: "POST" })
     if (sub.stripe_subscription_id) {
       await stripeFetch(`/subscriptions/${sub.stripe_subscription_id}`, form({ cancel_at_period_end: "false" }));
     }
-    await context.supabase.from("subscriptions").update({ cancel_at_period_end: false }).eq("id", data.subscriptionId);
+    // No cancel_at_period_end column locally; Stripe is source of truth.
     return { ok: true };
   });
