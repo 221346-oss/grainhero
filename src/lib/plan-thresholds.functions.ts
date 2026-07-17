@@ -221,7 +221,8 @@ export const listPlanChangeRequests = createServerFn({ method: "POST" })
       .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
-    if (data.status !== "all") q = q.eq("status", data.status);
+    const status = data.status ?? "all";
+    if (status !== "all") q = q.eq("status", status);
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];
