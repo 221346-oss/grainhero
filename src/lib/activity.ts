@@ -29,18 +29,15 @@ export async function logActivity(input: ActivityLogInput): Promise<void> {
     input.sb ??
     (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   try {
-    // activity_logs schema is tenant-agnostic; we store the tenant admin
-    // id under `metadata.tenant_admin_id` so scoped queries are cheap.
     await sb.from("activity_logs").insert({
+      admin_id: input.tenantAdminId ?? input.actorId ?? "",
       user_id: input.actorId,
       action: input.action,
-      resource_type: input.targetType ?? null,
-      resource_id: input.targetId ?? null,
+      description: input.action,
+      entity_type: input.targetType ?? null,
+      entity_id: input.targetId ?? null,
       severity: input.severity ?? "info",
-      metadata: {
-        ...(input.meta ?? {}),
-        tenant_admin_id: input.tenantAdminId ?? null,
-      } as unknown as Database["public"]["Tables"]["activity_logs"]["Insert"]["metadata"],
+      metadata: (input.meta ?? {}) as unknown as Database["public"]["Tables"]["activity_logs"]["Insert"]["metadata"],
     });
   } catch (err) {
     // Never let logging fail the primary operation.
