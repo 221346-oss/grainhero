@@ -349,6 +349,12 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
       ...(r.quality ?? {}),
       metrics: r.quality?.metrics ?? DEFAULT_MARKETPLACE_SETTINGS.quality.metrics,
     },
+    logistics: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.logistics,
+      ...(r.logistics ?? {}),
+      licenseExpiryWarnDays:
+        r.logistics?.licenseExpiryWarnDays ?? DEFAULT_MARKETPLACE_SETTINGS.logistics.licenseExpiryWarnDays,
+    },
   };
 }
 
