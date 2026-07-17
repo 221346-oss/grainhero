@@ -108,6 +108,7 @@ import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/pub
 import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api/public/cron/return-auto-approve'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
+import { Route as ApiPublicCronDriverLicenseExpiryRouteImport } from './routes/api/public/cron/driver-license-expiry'
 import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
 import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
@@ -658,6 +659,12 @@ const ApiPublicCronHeartbeatSweepRoute =
     path: '/api/public/cron/heartbeat-sweep',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronDriverLicenseExpiryRoute =
+  ApiPublicCronDriverLicenseExpiryRouteImport.update({
+    id: '/api/public/cron/driver-license-expiry',
+    path: '/api/public/cron/driver-license-expiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronDispatchSlaSweepRoute =
   ApiPublicCronDispatchSlaSweepRouteImport.update({
     id: '/api/public/cron/dispatch-sla-sweep',
@@ -789,6 +796,7 @@ export interface FileRoutesByFullPath {
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
@@ -893,6 +901,7 @@ export interface FileRoutesByTo {
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
@@ -1001,6 +1010,7 @@ export interface FileRoutesById {
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
@@ -1109,6 +1119,7 @@ export interface FileRouteTypes {
     | '/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/return-auto-approve'
@@ -1213,6 +1224,7 @@ export interface FileRouteTypes {
     | '/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/return-auto-approve'
@@ -1320,6 +1332,7 @@ export interface FileRouteTypes {
     | '/_authenticated/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/return-auto-approve'
@@ -1355,6 +1368,7 @@ export interface RootRouteChildren {
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
   ApiPublicCronDeliveryDelayScanRoute: typeof ApiPublicCronDeliveryDelayScanRoute
   ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
+  ApiPublicCronDriverLicenseExpiryRoute: typeof ApiPublicCronDriverLicenseExpiryRoute
   ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
   ApiPublicCronReturnAutoApproveRoute: typeof ApiPublicCronReturnAutoApproveRoute
@@ -2063,6 +2077,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronHeartbeatSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/driver-license-expiry': {
+      id: '/api/public/cron/driver-license-expiry'
+      path: '/api/public/cron/driver-license-expiry'
+      fullPath: '/api/public/cron/driver-license-expiry'
+      preLoaderRoute: typeof ApiPublicCronDriverLicenseExpiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/dispatch-sla-sweep': {
       id: '/api/public/cron/dispatch-sla-sweep'
       path: '/api/public/cron/dispatch-sla-sweep'
@@ -2378,6 +2399,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
   ApiPublicCronDeliveryDelayScanRoute: ApiPublicCronDeliveryDelayScanRoute,
   ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
+  ApiPublicCronDriverLicenseExpiryRoute: ApiPublicCronDriverLicenseExpiryRoute,
   ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
   ApiPublicCronReturnAutoApproveRoute: ApiPublicCronReturnAutoApproveRoute,
