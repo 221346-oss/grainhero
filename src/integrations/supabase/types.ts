@@ -322,6 +322,74 @@ export type Database = {
           },
         ]
       }
+      batch_quality_certificates: {
+        Row: {
+          admin_id: string
+          batch_id: string | null
+          created_at: string
+          document_url: string | null
+          expires_at: string | null
+          foreign_matter_pct: number | null
+          id: string
+          issued_at: string | null
+          issued_by: string | null
+          lab_name: string | null
+          metrics: Json
+          moisture_pct: number | null
+          purity_pct: number | null
+          updated_at: string
+          verified: boolean
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          admin_id: string
+          batch_id?: string | null
+          created_at?: string
+          document_url?: string | null
+          expires_at?: string | null
+          foreign_matter_pct?: number | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          lab_name?: string | null
+          metrics?: Json
+          moisture_pct?: number | null
+          purity_pct?: number | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          admin_id?: string
+          batch_id?: string | null
+          created_at?: string
+          document_url?: string | null
+          expires_at?: string | null
+          foreign_matter_pct?: number | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          lab_name?: string | null
+          metrics?: Json
+          moisture_pct?: number | null
+          purity_pct?: number | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_quality_certificates_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buyer_accounts: {
         Row: {
           buyer_id: string | null
@@ -651,6 +719,128 @@ export type Database = {
           },
         ]
       }
+      buyer_order_messages: {
+        Row: {
+          admin_id: string
+          attachments: Json
+          body: string
+          created_at: string
+          id: string
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
+          order_id: string
+          read_by_buyer_at: string | null
+          read_by_seller_at: string | null
+          sender_role: string
+          sender_user_id: string
+        }
+        Insert: {
+          admin_id: string
+          attachments?: Json
+          body: string
+          created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          order_id: string
+          read_by_buyer_at?: string | null
+          read_by_seller_at?: string | null
+          sender_role: string
+          sender_user_id: string
+        }
+        Update: {
+          admin_id?: string
+          attachments?: Json
+          body?: string
+          created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          order_id?: string
+          read_by_buyer_at?: string | null
+          read_by_seller_at?: string | null
+          sender_role?: string
+          sender_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_order_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_order_weight_reconciliation: {
+        Row: {
+          admin_id: string
+          auto_flagged: boolean
+          created_at: string
+          dispatched_at: string | null
+          dispatched_by: string | null
+          dispatched_weight_kg: number | null
+          id: string
+          order_id: string
+          received_at: string | null
+          received_by: string | null
+          received_weight_kg: number | null
+          return_id: string | null
+          updated_at: string
+          variance_pct: number | null
+        }
+        Insert: {
+          admin_id: string
+          auto_flagged?: boolean
+          created_at?: string
+          dispatched_at?: string | null
+          dispatched_by?: string | null
+          dispatched_weight_kg?: number | null
+          id?: string
+          order_id: string
+          received_at?: string | null
+          received_by?: string | null
+          received_weight_kg?: number | null
+          return_id?: string | null
+          updated_at?: string
+          variance_pct?: number | null
+        }
+        Update: {
+          admin_id?: string
+          auto_flagged?: boolean
+          created_at?: string
+          dispatched_at?: string | null
+          dispatched_by?: string | null
+          dispatched_weight_kg?: number | null
+          id?: string
+          order_id?: string
+          received_at?: string | null
+          received_by?: string | null
+          received_weight_kg?: number | null
+          return_id?: string | null
+          updated_at?: string
+          variance_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_order_weight_reconciliation_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_order_weight_reconciliation_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buyer_orders: {
         Row: {
           admin_id: string
@@ -670,6 +860,7 @@ export type Database = {
           id: string
           invoice_pdf_url: string | null
           listing_id: string
+          messages_count: number
           notes: string | null
           order_number: string
           paid_at: string | null
@@ -684,6 +875,8 @@ export type Database = {
           stripe_session_id: string | null
           subtotal: number
           unit_price: number
+          unread_buyer_messages: number
+          unread_seller_messages: number
           updated_at: string
         }
         Insert: {
@@ -704,6 +897,7 @@ export type Database = {
           id?: string
           invoice_pdf_url?: string | null
           listing_id: string
+          messages_count?: number
           notes?: string | null
           order_number: string
           paid_at?: string | null
@@ -718,6 +912,8 @@ export type Database = {
           stripe_session_id?: string | null
           subtotal: number
           unit_price: number
+          unread_buyer_messages?: number
+          unread_seller_messages?: number
           updated_at?: string
         }
         Update: {
@@ -738,6 +934,7 @@ export type Database = {
           id?: string
           invoice_pdf_url?: string | null
           listing_id?: string
+          messages_count?: number
           notes?: string | null
           order_number?: string
           paid_at?: string | null
@@ -752,6 +949,8 @@ export type Database = {
           stripe_session_id?: string | null
           subtotal?: number
           unit_price?: number
+          unread_buyer_messages?: number
+          unread_seller_messages?: number
           updated_at?: string
         }
         Relationships: [
@@ -955,6 +1154,122 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_return_events: {
+        Row: {
+          actor_role: string | null
+          actor_user_id: string | null
+          created_at: string
+          from_state: string | null
+          id: string
+          note: string | null
+          return_id: string
+          to_state: string
+        }
+        Insert: {
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          from_state?: string | null
+          id?: string
+          note?: string | null
+          return_id: string
+          to_state: string
+        }
+        Update: {
+          actor_role?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          from_state?: string | null
+          id?: string
+          note?: string | null
+          return_id?: string
+          to_state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_return_events_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_returns: {
+        Row: {
+          admin_id: string
+          attachments: Json
+          auto_flagged: boolean
+          buyer_user_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string
+          reason_key: string
+          reason_label: string | null
+          refund_id: string | null
+          requested_at: string
+          requested_qty: number | null
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          attachments?: Json
+          auto_flagged?: boolean
+          buyer_user_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          reason_key: string
+          reason_label?: string | null
+          refund_id?: string | null
+          requested_at?: string
+          requested_qty?: number | null
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          attachments?: Json
+          auto_flagged?: boolean
+          buyer_user_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          reason_key?: string
+          reason_label?: string | null
+          refund_id?: string | null
+          requested_at?: string
+          requested_qty?: number | null
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_returns_refund_id_fkey"
+            columns: ["refund_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_refunds"
             referencedColumns: ["id"]
           },
         ]
@@ -1852,6 +2167,7 @@ export type Database = {
           available_from: string | null
           available_kg: number
           batch_id: string
+          certificate_id: string | null
           cover_image_url: string | null
           created_at: string
           created_by: string
@@ -1872,6 +2188,7 @@ export type Database = {
           available_from?: string | null
           available_kg: number
           batch_id: string
+          certificate_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           created_by: string
@@ -1892,6 +2209,7 @@ export type Database = {
           available_from?: string | null
           available_kg?: number
           batch_id?: string
+          certificate_id?: string | null
           cover_image_url?: string | null
           created_at?: string
           created_by?: string
@@ -1913,6 +2231,13 @@ export type Database = {
             columns: ["batch_id"]
             isOneToOne: true
             referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_listings_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "batch_quality_certificates"
             referencedColumns: ["id"]
           },
         ]
