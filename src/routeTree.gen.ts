@@ -61,6 +61,7 @@ import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authent
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
@@ -348,6 +349,12 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/platform/tenants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformPlansRoute =
+  AuthenticatedPlatformPlansRouteImport.update({
+    id: '/platform/plans',
+    path: '/platform/plans',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformPipelineRoute =
   AuthenticatedPlatformPipelineRouteImport.update({
     id: '/platform/pipeline',
@@ -475,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
@@ -539,6 +547,7 @@ export interface FileRoutesByTo {
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
@@ -606,6 +615,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
@@ -673,6 +683,7 @@ export interface FileRouteTypes {
     | '/platform/logs'
     | '/platform/orders'
     | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
@@ -737,6 +748,7 @@ export interface FileRouteTypes {
     | '/platform/logs'
     | '/platform/orders'
     | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
@@ -803,6 +815,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
+    | '/_authenticated/platform/plans'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/api/firebase/live-sensors'
@@ -1203,6 +1216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/plans': {
+      id: '/_authenticated/platform/plans'
+      path: '/platform/plans'
+      fullPath: '/platform/plans'
+      preLoaderRoute: typeof AuthenticatedPlatformPlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/pipeline': {
       id: '/_authenticated/platform/pipeline'
       path: '/platform/pipeline'
@@ -1326,6 +1346,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
+  AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
 }
@@ -1366,6 +1387,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
   AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
+  AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
 }
