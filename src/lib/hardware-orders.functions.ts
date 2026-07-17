@@ -103,14 +103,19 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
     // Notify the buyer in-app.
     const o = updated as HardwareOrder;
     if (o.admin_id) {
-      await supabaseAdmin.from("notifications").insert({
-        user_id: o.admin_id as string,
-        tenant_id: o.admin_id as string,
-        type: `order.${data.status ?? "update"}`,
-        subject: `Your install order was updated`,
+      const { emitNotification } = await import("@/lib/notify");
+      await emitNotification(supabaseAdmin, {
+        recipientId: o.admin_id as string,
+        tenantAdminId: o.admin_id as string,
+        category: "install",
+        severity: data.status === "cancelled" ? "warning" : "info",
+        title: "Your install order was updated",
         body: `Status: ${o.status}${o.technician_name ? ` · Tech: ${o.technician_name}` : ""}${o.scheduled_install_date ? ` · Scheduled: ${new Date(o.scheduled_install_date as string).toLocaleString()}` : ""}`,
-        is_read: false,
-      } as never);
+        link: "/orders",
+        entityType: "hardware_order",
+        entityId: o.id as string,
+        metadata: { status: o.status },
+      });
     }
 
     return { order: o as HardwareOrder };
@@ -179,14 +184,18 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
     } as never);
 
     if (buyerId) {
-      await supabaseAdmin.from("notifications").insert({
-        user_id: buyerId,
-        tenant_id: buyerId,
-        type: "order.message",
-        subject: "New message about your install order",
+      const { emitNotification } = await import("@/lib/notify");
+      await emitNotification(supabaseAdmin, {
+        recipientId: buyerId,
+        tenantAdminId: buyerId,
+        category: "install",
+        severity: "info",
+        title: "New message about your install order",
         body: data.message,
-        is_read: false,
-      } as never);
+        link: "/orders",
+        entityType: "hardware_order",
+        entityId: data.orderId,
+      });
     }
 
     return { ok: true, emailed };
