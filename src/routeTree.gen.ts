@@ -81,6 +81,7 @@ import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
+import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -473,6 +474,12 @@ const ApiPublicCronLifecycleEmailsRoute =
     path: '/api/public/cron/lifecycle-emails',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedPlatformOrdersOrderIdRoute =
+  AuthenticatedPlatformOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedPlatformOrdersRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -532,7 +539,7 @@ export interface FileRoutesByFullPath {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
-  '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
@@ -540,6 +547,7 @@ export interface FileRoutesByFullPath {
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -604,7 +612,7 @@ export interface FileRoutesByTo {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
-  '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
@@ -612,6 +620,7 @@ export interface FileRoutesByTo {
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
+  '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -679,7 +688,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
-  '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
@@ -687,6 +696,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -762,6 +772,7 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/api/firebase/live-sensors'
     | '/platform/'
+    | '/platform/orders/$orderId'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -834,6 +845,7 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/api/firebase/live-sensors'
     | '/platform'
+    | '/platform/orders/$orderId'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -908,6 +920,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/notifications'
     | '/api/firebase/live-sensors'
     | '/_authenticated/platform/'
+    | '/_authenticated/platform/orders/$orderId'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1447,6 +1460,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronLifecycleEmailsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/platform/orders/$orderId': {
+      id: '/_authenticated/platform/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/platform/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformOrdersRoute
+    }
   }
 }
 
@@ -1462,6 +1482,21 @@ const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
 const AuthenticatedSettingsRouteWithChildren =
   AuthenticatedSettingsRoute._addFileChildren(
     AuthenticatedSettingsRouteChildren,
+  )
+
+interface AuthenticatedPlatformOrdersRouteChildren {
+  AuthenticatedPlatformOrdersOrderIdRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
+}
+
+const AuthenticatedPlatformOrdersRouteChildren: AuthenticatedPlatformOrdersRouteChildren =
+  {
+    AuthenticatedPlatformOrdersOrderIdRoute:
+      AuthenticatedPlatformOrdersOrderIdRoute,
+  }
+
+const AuthenticatedPlatformOrdersRouteWithChildren =
+  AuthenticatedPlatformOrdersRoute._addFileChildren(
+    AuthenticatedPlatformOrdersRouteChildren,
   )
 
 interface AuthenticatedRouteRouteChildren {
@@ -1501,7 +1536,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
-  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
+  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
@@ -1546,7 +1581,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
-  AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
+  AuthenticatedPlatformOrdersRoute:
+    AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
