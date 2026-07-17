@@ -460,9 +460,6 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               break;
             }
-            default:
-              // Unhandled event types are OK — Stripe will not retry once we 2xx.
-              break;
             case "charge.refunded": {
               const ch = event.data.object as {
                 payment_intent?: string;
@@ -490,6 +487,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               break;
             }
+            default:
+              // Unhandled event types are OK — Stripe will not retry once we 2xx.
+              break;
           }
         } catch (err) {
           console.error("[stripe-webhook] handler error:", err);
