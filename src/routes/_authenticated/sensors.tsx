@@ -508,7 +508,7 @@ function SensorsPage() {
   );
 }
 
-function SensorCard({ device, reading, onView, onEdit, onDelete }: { device: Device; reading: Reading | null; onView: () => void; onEdit: () => void; onDelete: () => void }) {
+function SensorCard({ device, reading, onView, onEdit, onDelete, onThresholds }: { device: Device; reading: Reading | null; onView: () => void; onEdit: () => void; onDelete: () => void; onThresholds?: () => void }) {
   const heartbeatAge = device.last_heartbeat ? Math.round((Date.now() - new Date(device.last_heartbeat).getTime()) / 60000) : null;
   const live = reading ? (Date.now() - new Date(reading.reading_timestamp).getTime()) < 5 * 60_000 : false;
   const batt = reading?.battery_level ?? device.battery_level;
@@ -576,9 +576,10 @@ function SensorCard({ device, reading, onView, onEdit, onDelete }: { device: Dev
           <span>{heartbeatAge != null ? `${heartbeatAge}m ago` : "no beat"}</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           <Button variant="outline" size="sm" onClick={onView} className="h-8"><Eye className="w-3.5 h-3.5 mr-1" />View</Button>
           <Button variant="outline" size="sm" onClick={onEdit} className="h-8"><Edit2 className="w-3.5 h-3.5 mr-1" />Edit</Button>
+          <Button variant="outline" size="sm" onClick={onThresholds} disabled={!onThresholds} className="h-8"><AlertTriangle className="w-3.5 h-3.5 mr-1" />Rules</Button>
           <Button variant="outline" size="sm" onClick={onDelete} className="h-8 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </CardContent>
