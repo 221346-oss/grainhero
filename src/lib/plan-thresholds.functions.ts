@@ -26,11 +26,20 @@ async function verifyAndLimit(
   if (!gate.ok) throw new Error(`Too many requests. Try again in ${gate.retryAfter}s.`);
 }
 
-async function notify(sb: any, userId: string, title: string, body: string, meta: Record<string, unknown>) {
+async function notify(
+  sb: any,
+  userId: string,
+  tenantAdminId: string,
+  title: string,
+  body: string,
+  meta: Record<string, unknown>,
+) {
   try {
     await sb.from("notifications").insert({
+      admin_id: tenantAdminId,
       user_id: userId,
       type: "plan_change",
+      category: "billing",
       title,
       message: body,
       metadata: meta as never,
