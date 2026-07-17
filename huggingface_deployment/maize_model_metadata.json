@@ -1,0 +1,139 @@
+{
+  "model_type": "Soft Voting Ensemble (XGBoost + RandomForest + LightGBM)",
+  "version": "3.0.0",
+  "grain_type": "maize",
+  "features": [
+    "Temperature",
+    "Humidity",
+    "Storage_Days",
+    "Airflow",
+    "Dew_Point",
+    "Ambient_Light",
+    "Pest_Presence",
+    "Grain_Moisture",
+    "Rainfall"
+  ],
+  "label_classes": [
+    "Risky",
+    "Safe",
+    "Spoiled"
+  ],
+  "best_params": {
+    "XGBoost": {
+      "max_depth": 5,
+      "n_estimators": 113,
+      "learning_rate": 0.20655707359392106,
+      "subsample": 0.7909974615660031,
+      "colsample_bytree": 0.7899710964670363,
+      "gamma": 0.2313602489097849,
+      "reg_alpha": 1.6308916136092098,
+      "reg_lambda": 3.073592519155868
+    },
+    "RandomForest": {
+      "n_estimators": 388,
+      "max_depth": 17,
+      "min_samples_split": 6,
+      "min_samples_leaf": 1,
+      "max_features": "log2"
+    },
+    "LightGBM": {
+      "n_estimators": 466,
+      "max_depth": 5,
+      "learning_rate": 0.28998490880718664,
+      "num_leaves": 51,
+      "subsample": 0.922315438237184,
+      "colsample_bytree": 0.7738866765215557,
+      "reg_alpha": 2.4052697516527037,
+      "reg_lambda": 0.016879197178716776
+    }
+  },
+  "metrics": {
+    "XGBoost": {
+      "accuracy": 0.974,
+      "precision": 0.9742,
+      "recall": 0.974,
+      "f1_score": 0.974,
+      "cv_mean": 0.9772,
+      "cv_std": 0.0039
+    },
+    "RandomForest": {
+      "accuracy": 0.962,
+      "precision": 0.9622,
+      "recall": 0.962,
+      "f1_score": 0.962,
+      "cv_mean": 0.9716,
+      "cv_std": 0.0046
+    },
+    "LightGBM": {
+      "accuracy": 0.9735,
+      "precision": 0.9735,
+      "recall": 0.9735,
+      "f1_score": 0.9735,
+      "cv_mean": 0.9805,
+      "cv_std": 0.0046
+    },
+    "Ensemble": {
+      "accuracy": 0.973,
+      "precision": 0.9732,
+      "recall": 0.973,
+      "f1_score": 0.973,
+      "cv_mean": 0.9796,
+      "cv_std": 0.0042
+    }
+  },
+  "feature_importance": [
+    [
+      "Storage_Days",
+      637.4729713408434
+    ],
+    [
+      "Grain_Moisture",
+      591.8111097781846
+    ],
+    [
+      "Humidity",
+      539.4104230343418
+    ],
+    [
+      "Temperature",
+      483.73457567514873
+    ],
+    [
+      "Dew_Point",
+      441.1462794863464
+    ],
+    [
+      "Airflow",
+      396.3476289193017
+    ],
+    [
+      "Rainfall",
+      252.0061441322055
+    ],
+    [
+      "Ambient_Light",
+      248.67439857891648
+    ],
+    [
+      "Pest_Presence",
+      138.39646906774988
+    ]
+  ],
+  "training_date": "2026-07-15T13:07:11.553515",
+  "dataset": "F:\\grainhero\\Grainhero-sharjeel_working\\farmHomeBackend-main\\ml\\maize_spoilage_10k.csv",
+  "dataset_rows": 10000,
+  "weka_comparison": {
+    "Random Forest (Weka)": {
+      "accuracy": 0.9726,
+      "f1": 0.973
+    },
+    "J48 (Weka)": {
+      "accuracy": 0.9644,
+      "f1": 0.964
+    },
+    "Stacking (Weka)": {
+      "accuracy": 0.9716,
+      "f1": 0.972
+    }
+  }
+}

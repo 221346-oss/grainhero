@@ -1,0 +1,342 @@
+"use client"
+
+import { useAuth } from "@/app/[locale]/providers"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { WheatIcon as Sheep, Users, TrendingUp, AlertTriangle, Plus, Download } from "lucide-react"
+import Link from "next/link"
+import { useTranslations } from "next-intl"
+import { useLanguage } from "@/app/[locale]/providers"
+import { Bar, BarChart, XAxis, YAxis, Pie, PieChart } from "recharts"
+import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
+import { useRef } from "react"
+
+export default function DashboardPage() {
+  const { user } = useAuth()
+  const t = useTranslations("Dashboard")
+  const { currentLanguage } = useLanguage()
+  const dashboardRef = useRef<HTMLDivElement>(null)
+
+  if (!user) {
+    return <div>Loading...</div>
+  }
+
+  const stats = [
+    {
+      title: t("totalAnimals"),
+      value: "247",
+      change: "+12 this month",
+      icon: Sheep,
+      color: "text-green-600",
+    },
+    {
+      title: t("breedingSuccessRate"),
+      value: "87%",
+      change: "+5% from last quarter",
+      icon: TrendingUp,
+      color: "text-blue-600",
+    },
+    {
+      title: t("healthIncidents"),
+      value: "3",
+      change: "-2 from last month",
+      icon: AlertTriangle,
+      color: "text-red-600",
+    },
+    {
+      title: t("activeUsers"),
+      value: "12",
+      change: "+2 this week",
+      icon: Users,
+      color: "text-purple-600",
+    },
+  ]
+
+  // Chart data
+  const ageDistributionData = [
+    { ageGroup: "0-6 months", count: 45, fill: "#22c55e" },  // green-500
+    { ageGroup: "6-12 months", count: 67, fill: "#3b82f6" }, // blue-500
+    { ageGroup: "1-2 years", count: 89, fill: "#6366f1" },   // indigo-500
+    { ageGroup: "2-4 years", count: 34, fill: "#f59e0b" },   // amber-500
+    { ageGroup: "4+ years", count: 12, fill: "#ef4444" },    // red-500
+  ]
+
+  const sexDistributionData = [
+    { sex: "Female", count: 156, fill: "#ec4899" }, // pink-500
+    { sex: "Male", count: 91, fill: "#0ea5e9" },    // sky-500
+  ]
+
+  const breedDistributionData = [
+    { breed: "Boer", count: 89, fill: "#8b5cf6" },     // violet-500
+    { breed: "Nubian", count: 67, fill: "#14b8a6" },   // teal-500
+    { breed: "Kiko", count: 45, fill: "#f97316" },     // orange-500
+    { breed: "Spanish", count: 46, fill: "#10b981" },  // emerald-500
+  ]
+
+
+  const chartConfig = {
+    count: {
+      label: "Count",
+    },
+    ageGroup: {
+      label: "Age Group",
+    },
+    sex: {
+      label: "Sex",
+    },
+    breed: {
+      label: "Breed",
+    },
+  }
+
+  const handleDownloadPDF = async () => {
+    if (!dashboardRef.current) return
+    const canvas = await html2canvas(dashboardRef.current, { scale: 2 })
+    const imgData = canvas.toDataURL("image/png")
+    const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" })
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    // Calculate image dimensions to fit A4
+    const imgWidth = pageWidth
+    const imgHeight = (canvas.height * pageWidth) / canvas.width
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight)
+    pdf.save("dashboard.pdf")
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">{t("dashboard")}</h1>
+          <p className="text-gray-600">
+            {t("welcomeBack")}, {user.name}
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <Link href={/${currentLanguage}/animals/new}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              {t("addAnimal")}
+            </Button>
+          </Link>
+          <Button variant="outline" onClick={handleDownloadPDF} title="Download PDF">
+            <Download className="h-4 w-4 mr-2" /> Download PDF
+          </Button>
+        </div>
+      </div>
+      <div ref={dashboardRef} className="space-y-6" style={{ background: "#fff", color: "#111" }}>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, index) => (
+            <Card key={index} style={{ background: "#fff", color: "#111" }}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                <stat.icon className={h-4 w-4 ${stat.color}} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">{stat.change}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Population Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Age Distribution Chart */}
+          <Card style={{ background: "#fff", color: "#111" }}>
+            <CardHeader>
+              <CardTitle>Population by Age</CardTitle>
+              <CardDescription>Age distribution of livestock</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto flex justify-center items-center">
+                <ChartContainer config={chartConfig} className="min-w-[250px] w-[300px] min-h-[200px]">
+                  <BarChart data={ageDistributionData}>
+                    <XAxis dataKey="ageGroup" tickLine={false} tickMargin={10} axisLine={false} fontSize={12} />
+                    <YAxis hide />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sex Distribution Chart */}
+          <Card style={{ background: "#fff", color: "#111" }}>
+            <CardHeader>
+              <CardTitle>Population by Sex</CardTitle>
+              <CardDescription>Gender distribution of livestock</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="min-h-[200px]">
+                <PieChart>
+                  <Pie
+                    data={sexDistributionData}
+                    dataKey="count"
+                    nameKey="sex"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={2}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </PieChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          {/* Breed Distribution Chart */}
+          <Card style={{ background: "#fff", color: "#111" }}>
+            <CardHeader>
+              <CardTitle>Population by Breed</CardTitle>
+              <CardDescription>Breed distribution of livestock</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto flex justify-center items-center">
+                <ChartContainer config={chartConfig} className="min-w-[250px] w-[300px] min-h-[200px]">
+                  <BarChart data={breedDistributionData} layout="vertical">
+                    <XAxis type="number" />
+                    <YAxis
+                      dataKey="breed"
+                      type="category"
+                      tickLine={false}
+                      tickMargin={10}
+                      axisLine={true}
+                      fontSize={12}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              </div>
+            </CardContent>
+          </Card>
+          <Card style={{ background: "#fff", color: "#111" }}>
+            <CardHeader>
+              <CardTitle>Breeding Success Rate</CardTitle>
+              <CardDescription>Successful vs Unsuccessful breeding attempts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="w-full flex justify-center">
+                <ChartContainer config={chartConfig} className="min-w-[250px] w-[300px] min-h-[200px]">
+                  <PieChart width={200} height={200}>
+                    <Pie
+                      data={[
+                        { name: "Successful", value: 87, fill: "#22c55e" }, // green
+                        { name: "Unsuccessful", value: 13, fill: "#d1d5db" } // gray-300
+                      ]}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={1}
+                      label
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ChartContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Suggested Animals for Culling or Breeding */}
+        <Card style={{ background: "#fff", color: "#111" }}>
+          <CardHeader>
+            <CardTitle>Suggested Animals for Culling or Breeding</CardTitle>
+            <CardDescription>These animals are recommended based on current data (dummy data shown)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Culling Suggestions */}
+              <div>
+                <h4 className="font-semibold text-red-600 mb-2" style={{ color: "#dc2626" }}>Culling</h4>
+                <ul className="space-y-2">
+                  <li className="border rounded p-2 flex flex-col">
+                    <span className="font-medium">Tag: G123</span>
+                    <span className="text-xs text-gray-500">Reason: Low productivity, age 6+ years</span>
+                  </li>
+                  <li className="border rounded p-2 flex flex-col">
+                    <span className="font-medium">Tag: G145</span>
+                    <span className="text-xs text-gray-500">Reason: Chronic health issues</span>
+                  </li>
+                </ul>
+              </div>
+              {/* Breeding Suggestions */}
+              <div>
+                <h4 className="font-semibold text-green-600 mb-2" style={{ color: "#16a34a" }}>Breeding</h4>
+                <ul className="space-y-2">
+                  <li className="border rounded p-2 flex flex-col">
+                    <span className="font-medium">Tag: G201</span>
+                    <span className="text-xs text-gray-500">Reason: Optimal age, high genetic value</span>
+                  </li>
+                  <li className="border rounded p-2 flex flex-col">
+                    <span className="font-medium">Tag: G222</span>
+                    <span className="text-xs text-gray-500">Reason: Excellent health, proven fertility</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card style={{ background: "#fff", color: "#111" }}>
+          <CardHeader>
+            <CardTitle>{t("recentActivities")}</CardTitle>
+            <CardDescription>{t("latestFarmActivities")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { action: "New animal added", details: "Boer goat #G247", time: "2 hours ago" },
+                { action: "Vaccination completed", details: "15 animals vaccinated", time: "1 day ago" },
+                { action: "Health incident reported", details: "Animal #G234 - Minor injury", time: "2 days ago" },
+                { action: "Breeding record updated", details: "Successful mating recorded", time: "3 days ago" },
+              ].map((activity, index) => (
+                <div key={index} className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium">{activity.action}</p>
+                    <p className="text-xs text-gray-600">{activity.details}</p>
+                  </div>
+                  <span className="text-xs text-gray-500">{activity.time}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Recommendations */}
+        <Card style={{ background: "#fff", color: "#111" }}>
+          <CardHeader>
+            <CardTitle>{t("aiRecommendations")}</CardTitle>
+            <CardDescription>{t("suggestedActions")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium text-green-600" style={{ color: "#16a34a" }}>{t("breedingOpportunity")}</h4>
+                <p className="text-sm text-gray-600 mt-1">{t("optimalForBreeding")}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium text-blue-600" style={{ color: "#2563eb" }}>{t("healthCheckDue")}</h4>
+                <p className="text-sm text-gray-600 mt-1">{t("animalsDueForCheckups")}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium text-orange-600" style={{ color: "#ea580c" }}>{t("cullingSuggestion")}</h4>
+                <p className="text-sm text-gray-600 mt-1">{t("considerCulling")}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,2 @@
+tagId,breed,gender,dob,weight,condition,status,location,sireId,damId,acquisitionType,acquisitionDate,origin,images,notes
+B001,Angus,Male,2021-04-12,650,Healthy,Active,Barn1,S100,D200,Birth,2021-04-12,FarmA,image1.jpg,Calm temperament
