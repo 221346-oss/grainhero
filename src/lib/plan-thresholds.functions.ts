@@ -77,7 +77,7 @@ export const requestPlanChange = createServerFn({ method: "POST" })
       windowMs: 60_000,
     });
     if (!gate.ok) {
-      return { ok: false as const, error: "rate_limited", retryAfter: gate.retryAfter };
+      throw new Error(`Too many plan change requests. Try again in ${gate.retryAfter}s.`);
     }
 
     // Only tenant admins may request
