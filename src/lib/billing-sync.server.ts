@@ -169,13 +169,14 @@ export async function changeStripePlan(
   // Activity + notification (best-effort; do not fail the plan change on these).
   try {
     const { logActivity } = await import("@/lib/activity");
-    await logActivity(supabaseAdmin, {
+    await logActivity({
+      sb: supabaseAdmin,
       tenantAdminId: synced.adminId,
       actorId: args.actorId,
       action: "billing.plan_changed",
-      entityType: "subscription",
-      entityId: args.stripeSubscriptionId,
-      metadata: { plan_id: args.planId, reason: args.reason ?? null },
+      targetType: "subscription",
+      targetId: args.stripeSubscriptionId,
+      meta: { plan_id: args.planId, reason: args.reason ?? null },
     });
   } catch (e) {
     console.warn("[billing-sync] logActivity failed", (e as Error).message);
