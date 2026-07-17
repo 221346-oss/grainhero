@@ -260,7 +260,7 @@ function GrainAlertsPage() {
 
       {/* List */}
       {isLoading ? (
-        <DashboardSkeleton />
+        <GrainAlertsSkeleton />
       ) : filtered.length === 0 ? (
         <Card><CardContent className="py-16 text-center text-muted-foreground">
           <Inbox className="h-8 w-8 mx-auto mb-3 opacity-50" />

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { DashboardSkeleton } from "@/components/app/skeletons";
+import { SilosSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -163,6 +163,8 @@ function SilosPage() {
     setEditOpen(true);
   }
 
+  if (isLoading) return <SilosSkeleton />;
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <PageHeader
@@ -230,15 +232,13 @@ function SilosPage() {
       )}
 
       {/* Grid */}
-      {isLoading ? (
-        <DashboardSkeleton />
-      ) : rows.length === 0 ? (
-        <Card className="border-dashed border-slate-300 bg-white/50">
-          <CardContent className="py-16 flex flex-col items-center text-slate-500">
-            <Inbox className="w-10 h-10 mb-3 opacity-40" />
+      {rows.length === 0 ? (
+        <Card className="border-dashed border-border bg-card/60">
+          <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
+            <Inbox className="w-10 h-10 mb-3 opacity-60" />
             <p className="text-sm mb-4">No silos match your filters.</p>
             {warehouses.length === 0 ? (
-              <Link to="/warehouses" className="text-sm text-emerald-700 underline">Create a warehouse first →</Link>
+              <Link to="/warehouses" className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a warehouse first →</Link>
             ) : (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add silo</Button>
             )}
