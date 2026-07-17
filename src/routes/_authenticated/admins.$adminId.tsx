@@ -66,7 +66,7 @@ function AdminProfilePage() {
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
-  if (profileQ.isLoading) return <div className="p-8 text-sm text-muted-foreground">Loading admin…</div>;
+  if (profileQ.isLoading) return <AdminProfileSkeleton />;
   const d = profileQ.data;
   if (!d || !d.profile) return <div className="p-8 text-sm text-muted-foreground">Admin not found.</div>;
   const p = d.profile as any;

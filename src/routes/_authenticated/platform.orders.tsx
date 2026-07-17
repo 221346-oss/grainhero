@@ -115,7 +115,7 @@ function PlatformOrdersPage() {
       </AdminFilterBar>
 
       {isLoading ? (
-        <div className="text-sm text-slate-500">Loading orders…</div>
+        <PlatformOrdersSkeleton />
       ) : orders.length === 0 ? (
         <Card><CardContent className="p-8 text-center text-sm text-slate-500">No orders match this filter</CardContent></Card>
       ) : (
