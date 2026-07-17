@@ -1491,6 +1491,83 @@ export type Database = {
           },
         ]
       }
+      notification_channel_prefs: {
+        Row: {
+          categories: Json
+          created_at: string
+          email_enabled: boolean
+          push_enabled: boolean
+          sms_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categories?: Json
+          created_at?: string
+          email_enabled?: boolean
+          push_enabled?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categories?: Json
+          created_at?: string
+          email_enabled?: boolean
+          push_enabled?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_deliveries: {
+        Row: {
+          attempts: number
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          notification_id: string
+          provider: string | null
+          provider_message_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          notification_id: string
+          provider?: string | null
+          provider_message_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          notification_id?: string
+          provider?: string | null
+          provider_message_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -1701,6 +1778,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          phone_e164: string | null
           preferences: Json | null
           price_id: string | null
           shift_pattern: string | null
@@ -1745,6 +1823,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          phone_e164?: string | null
           preferences?: Json | null
           price_id?: string | null
           shift_pattern?: string | null
@@ -1789,6 +1868,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          phone_e164?: string | null
           preferences?: Json | null
           price_id?: string | null
           shift_pattern?: string | null

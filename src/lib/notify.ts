@@ -55,8 +55,14 @@ function row(input: NotifInput) {
 /** Emit a single notification. Never throws — logs and swallows. */
 export async function emitNotification(sb: SB, input: NotifInput): Promise<void> {
   try {
-    const { error } = await sb.from("notifications").insert(row(input) as never);
+    const { data, error } = await sb
+      .from("notifications")
+      .insert(row(input) as never)
+      .select("id")
+      .maybeSingle();
     if (error) console.warn("[notify] insert failed", error.message);
+    const id = (data as { id?: string } | null)?.id;
+    if (id) void fanOut([id]);
   } catch (err) {
     console.warn("[notify] exception", err);
   }
@@ -72,8 +78,10 @@ export async function emitBulk(
   if (!unique.length) return;
   try {
     const rows = unique.map((r) => row({ ...base, recipientId: r }));
-    const { error } = await sb.from("notifications").insert(rows as never);
+    const { data, error } = await sb.from("notifications").insert(rows as never).select("id");
     if (error) console.warn("[notify] bulk insert failed", error.message);
+    const ids = (data as Array<{ id: string }> | null)?.map((r) => r.id) ?? [];
+    if (ids.length) void fanOut(ids);
   } catch (err) {
     console.warn("[notify] bulk exception", err);
   }
@@ -120,9 +128,27 @@ export async function emitToSuperAdmins(
     row({ ...base, recipientId: id, tenantAdminId: id }),
   );
   try {
-    const { error } = await sb.from("notifications").insert(rows as never);
+    const { data, error } = await sb.from("notifications").insert(rows as never).select("id");
     if (error) console.warn("[notify] super-admin fan-out failed", error.message);
+    const ids = (data as Array<{ id: string }> | null)?.map((r) => r.id) ?? [];
+    if (ids.length) void fanOut(ids);
   } catch (err) {
     console.warn("[notify] super-admin exception", err);
+  }
+}
+
+/**
+ * Fire-and-forget delivery fan-out. Loads server-only modules lazily so this
+ * file remains safe to import from client-reachable server-fn modules.
+ */
+async function fanOut(ids: string[]) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { dispatchNotification } = await import("@/lib/notify-dispatch.server");
+    await Promise.all(ids.map((id) => dispatchNotification(supabaseAdmin, id).catch((e) => {
+      console.warn("[notify] dispatch failed", id, (e as Error).message);
+    })));
+  } catch (e) {
+    console.warn("[notify] fanOut init failed", (e as Error).message);
   }
 }
