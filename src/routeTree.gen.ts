@@ -41,6 +41,7 @@ import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authe
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
+import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
@@ -58,9 +59,11 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
+import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
@@ -238,6 +241,12 @@ const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
   path: '/plans',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanManagementRoute =
+  AuthenticatedPlanManagementRouteImport.update({
+    id: '/plan-management',
+    path: '/plan-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -331,6 +340,12 @@ const AuthenticatedActivityLogsRoute =
     path: '/activity-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformIndexRoute =
+  AuthenticatedPlatformIndexRouteImport.update({
+    id: '/platform/',
+    path: '/platform/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   id: '/api/firebase/live-sensors',
   path: '/api/firebase/live-sensors',
@@ -346,6 +361,12 @@ const AuthenticatedPlatformTenantsRoute =
   AuthenticatedPlatformTenantsRouteImport.update({
     id: '/platform/tenants',
     path: '/platform/tenants',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformPlansRoute =
+  AuthenticatedPlatformPlansRouteImport.update({
+    id: '/platform/plans',
+    path: '/platform/plans',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformPipelineRoute =
@@ -450,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
@@ -475,9 +497,11 @@ export interface FileRoutesByFullPath {
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -514,6 +538,7 @@ export interface FileRoutesByTo {
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
+  '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
@@ -539,9 +564,11 @@ export interface FileRoutesByTo {
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/platform': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -581,6 +608,7 @@ export interface FileRoutesById {
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
+  '/_authenticated/plan-management': typeof AuthenticatedPlanManagementRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
@@ -606,9 +634,11 @@ export interface FileRoutesById {
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
+  '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -648,6 +678,7 @@ export interface FileRouteTypes {
     | '/not-allowed'
     | '/notifications'
     | '/orders'
+    | '/plan-management'
     | '/plans'
     | '/reports'
     | '/revenue'
@@ -673,9 +704,11 @@ export interface FileRouteTypes {
     | '/platform/logs'
     | '/platform/orders'
     | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
+    | '/platform/'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -712,6 +745,7 @@ export interface FileRouteTypes {
     | '/not-allowed'
     | '/notifications'
     | '/orders'
+    | '/plan-management'
     | '/plans'
     | '/reports'
     | '/revenue'
@@ -737,9 +771,11 @@ export interface FileRouteTypes {
     | '/platform/logs'
     | '/platform/orders'
     | '/platform/pipeline'
+    | '/platform/plans'
     | '/platform/tenants'
     | '/platform/users'
     | '/api/firebase/live-sensors'
+    | '/platform'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -778,6 +814,7 @@ export interface FileRouteTypes {
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
+    | '/_authenticated/plan-management'
     | '/_authenticated/plans'
     | '/_authenticated/reports'
     | '/_authenticated/revenue'
@@ -803,9 +840,11 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
+    | '/_authenticated/platform/plans'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/api/firebase/live-sensors'
+    | '/_authenticated/platform/'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1063,6 +1102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/plan-management': {
+      id: '/_authenticated/plan-management'
+      path: '/plan-management'
+      fullPath: '/plan-management'
+      preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders': {
       id: '/_authenticated/orders'
       path: '/orders'
@@ -1182,6 +1228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/': {
+      id: '/_authenticated/platform/'
+      path: '/platform'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/firebase/live-sensors': {
       id: '/api/firebase/live-sensors'
       path: '/api/firebase/live-sensors'
@@ -1201,6 +1254,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/tenants'
       fullPath: '/platform/tenants'
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/plans': {
+      id: '/_authenticated/platform/plans'
+      path: '/platform/plans'
+      fullPath: '/platform/plans'
+      preLoaderRoute: typeof AuthenticatedPlatformPlansRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/pipeline': {
@@ -1308,6 +1368,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
+  AuthenticatedPlanManagementRoute: typeof AuthenticatedPlanManagementRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
@@ -1326,8 +1387,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
+  AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
+  AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1348,6 +1411,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
+  AuthenticatedPlanManagementRoute: AuthenticatedPlanManagementRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
@@ -1366,8 +1430,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
   AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
+  AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
+  AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1431,13 +1497,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

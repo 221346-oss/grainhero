@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { CreditCard, Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2, User as UserIcon, Mail, Building2 } from "lucide-react";
+import { Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2 } from "lucide-react";
 import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions";
 import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
 import { changeMyPlan, cancelAtPeriodEnd, resumeSubscription } from "@/lib/subscription-management.functions";
@@ -17,6 +17,8 @@ import { getAllSubscriptions } from "@/lib/platform-no-admin.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import pricingData from "@/lib/pricing-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   component: SubscriptionPage,
@@ -109,26 +111,25 @@ function SubscriptionPage() {
   const canManage = ["super_admin", "admin"].includes(role);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600" /> My Subscription</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage your plan, usage and billing history.</p>
-        </div>
-        <div className="flex gap-2">
+    <AdminPageShell
+      title="My subscription"
+      subtitle="Manage your plan, usage and billing history"
+      actions={
+        <>
           {sub && (
-            <Button variant="outline" onClick={() => portalM.mutate()} disabled={portalM.isPending}>
+            <Button variant="outline" size="sm" onClick={() => portalM.mutate()} disabled={portalM.isPending}>
               {portalM.isPending ? "Opening…" : "Manage billing"}
             </Button>
           )}
           {sub && canManage && sub.status !== "cancelled" && (
-            <Button variant="outline" onClick={() => { setNewPlan((sub.plan_name?.toLowerCase().includes("pro") ? "pro" : sub.plan_name?.toLowerCase().includes("inter") ? "intermediate" : "basic") as any); setChangeOpen(true); }}>
-              <ArrowUpRight className="h-4 w-4 mr-2" /> Upgrade / Downgrade
+            <Button variant="outline" size="sm" onClick={() => { setNewPlan((sub.plan_name?.toLowerCase().includes("pro") ? "pro" : sub.plan_name?.toLowerCase().includes("inter") ? "intermediate" : "basic") as any); setChangeOpen(true); }}>
+              <ArrowUpRight className="h-4 w-4 mr-2" /> Change plan
             </Button>
           )}
-          <Button asChild variant="outline"><Link to="/plans">Browse plans</Link></Button>
-        </div>
-      </div>
+          <Button asChild variant="outline" size="sm"><Link to="/plans">Browse plans</Link></Button>
+        </>
+      }
+    >
 
       {!sub && (
         <Card>
@@ -232,55 +233,29 @@ function SubscriptionPage() {
 
       {/* Super Admin: Show all subscriptions */}
       {isSuperAdmin && allSubs.length > 0 && (
-        <Card className="shadow-md border-2 border-purple-200">
-          <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-white">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-600" />
-              All Platform Subscriptions
-            </CardTitle>
-            <CardDescription>View all user subscriptions across the platform</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-slate-100">
-              {allSubs.map((s: any) => {
-                const daysLeft = s.next_payment_date ? Math.ceil((new Date(s.next_payment_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
-                const expiryText = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";
-                const expiryColor = daysLeft !== null && daysLeft <= 7 ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-slate-500";
-                return (
-                  <div key={s.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50 transition-colors">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center shrink-0">
-                      <UserIcon className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-slate-900 truncate">{s.user_name}</div>
-                      <div className="text-sm text-slate-500 truncate flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {s.user_email}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {s.business_type}
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-start gap-1">
-                      <Badge variant="outline" className={statusBadge(s.status)}>
-                        {s.status}
-                      </Badge>
-                      <span className="text-sm font-semibold text-slate-700">{s.plan_name}</span>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 min-w-[120px]">
-                      <span className="text-lg font-bold text-purple-600">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-slate-500">/mo</span></span>
-                      <div className={`text-xs font-medium flex items-center gap-1 ${expiryColor}`}>
-                        <Calendar className="h-3 w-3" />
-                        Expires: {expiryText}
-                      </div>
-                    </div>
+        <AdminDataCard title="All platform subscriptions" description={`${allSubs.length} subscriptions`}>
+          <div className="divide-y divide-slate-100">
+            {allSubs.map((s: any) => {
+              const daysLeft = s.next_payment_date ? Math.ceil((new Date(s.next_payment_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+              const expiryText = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";
+              const expiryColor = daysLeft !== null && daysLeft <= 7 ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-slate-500";
+              return (
+                <div key={s.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-slate-900 truncate">{s.user_name}</div>
+                    <div className="text-xs text-slate-500 truncate">{s.user_email} · {s.business_type}</div>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                  <Badge variant="outline" className={statusBadge(s.status)}>{s.status}</Badge>
+                  <span className="text-sm font-medium text-slate-700">{s.plan_name}</span>
+                  <div className="flex flex-col items-end gap-0.5 min-w-[110px]">
+                    <span className="text-sm font-bold text-slate-900">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-slate-500">/mo</span></span>
+                    <div className={`text-[10px] font-medium ${expiryColor}`}>Expires: {expiryText}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AdminDataCard>
       )}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -322,6 +297,6 @@ function SubscriptionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminPageShell>
   );
 }

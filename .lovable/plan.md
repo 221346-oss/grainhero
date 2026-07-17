@@ -1,132 +1,94 @@
-# GrainHero — Role-Aware Pages Plan
+# Admin & Super-Admin UI Redesign + Plan-Threshold Controls
 
-Goal: every shared route renders one of two lenses based on role.
-- Tenant lens (admin/manager/technician): existing behavior, filtered by `admin_id`, full CRUD.
-- Platform lens (super_admin): aggregated across all tenants, read-only, no operational write-actions.
+## Scope correction
+The `/platform/*` routes and other admin pages are **direct file-based routes** (e.g. `src/routes/_authenticated/platform.orders.tsx`, `activity-logs.tsx`, `orders.tsx`) — no dynamic router or wrapper layout. All work happens inside those individual route files plus a small shared `admin` component set.
 
-No new pages. We modify existing routes/server functions and add one shared helper.
+Two role lenses drive every page (already resolved via `getEffectiveRole` / `has_role`):
+- **admin** = tenant admin. Sees their own tenant's operational data + their own personnel (managers, technicians).
+- **super_admin** = platform operator. Sees tenant admins and platform-wide monitoring — never end-operators, batches, silos, or per-tenant operational rows.
 
----
+## Goal
+1. Unify admin/super-admin pages to the landing brand look (emerald primary, slate neutrals, soft `from-slate-50 via-white to-emerald-50/30` bg) using Activity Logs as the visual template.
+2. Compact density — most pages fit one 1440×900 viewport, scrolling stays inside cards.
+3. Drop decorative icons; keep only functional ones (severity dot, close-chip, pagination, sort).
+4. Split Activity Logs by role: admin sees their team; super_admin sees admins + own actions.
+5. New Plan Thresholds page: super_admin edits plan limits/feature access; admin can request upgrade/downgrade from their own dashboard.
 
-## 1. Foundation — shared RBAC + scope helper
+## Part A — Shared admin shell
+New folder `src/components/app/admin/`:
+- `AdminPageShell.tsx` — gradient bg wrapper, responsive header (title + subtitle + right actions), no title icons.
+- `AdminSummaryTiles.tsx` — numeric tile row, click-to-filter ring, text-only labels.
+- `AdminFilterBar.tsx` — single card: search + selects + date range + Filter button.
+- `AdminDataCard.tsx` — bordered card with internal `max-h-[520px] overflow-auto` list/table + in-card pagination footer.
+- `AdminDetailPanel.tsx` — sticky right-column detail (replaces navigating to a detail page for most lists).
 
-**New SQL migration**
-- `public.get_my_role(_user_id uuid) returns app_role` — SECURITY DEFINER, returns highest-priority role from `user_roles` (super_admin > admin > manager > technician > pending).
+All components use existing semantic tokens; no new colors, no new dependencies.
 
-**New files**
-- `src/lib/rbac.server.ts`
-  - `getEffectiveRole(supabase, userId)` — single RPC call.
-  - `requireRole(supabase, userId, allowed[])` — throws Forbidden.
-- `src/lib/page-scope.server.ts`
-  - `resolvePageScope(supabase, userId) → { scope: "tenant"|"platform", adminId, role }`.
+Layout rules for every refactored page:
+- Header: `grid-cols-[minmax(0,1fr)_auto]` mobile → `sm:flex` (per responsive-layout-patterns).
+- Body: `lg:grid-cols-3` — list spans 2, sticky detail spans 1.
+- Spacing: `p-4 sm:p-6 space-y-5`, `text-sm` body, page title `text-2xl sm:text-3xl`.
+- No icons in tile labels, card titles, filter labels, or nav items.
 
-**Refactor (replace ad-hoc `has_role` loops)**
-`roles.functions.ts`, `platform.functions.ts`, `monitoring.functions.ts`, `operations2.functions.ts`, `billing.functions.ts`, `revenue-analytics.functions.ts`, `team-settings-insurance.functions.ts`.
+## Part B — Activity Logs split by role
+File: `src/routes/_authenticated/activity-logs.tsx` (+ server function `listActivityLogs` in `src/lib/notifications-audit.functions.ts`).
 
----
+Server-side scope resolution based on `getEffectiveRole`:
+| Role | Rows returned |
+|------|--------------|
+| technician / manager | Only their own actions. |
+| admin | All actions performed by users inside the caller's tenant (managers, technicians, admin themself). |
+| super_admin | Own super-admin actions + all `admin`-role actions across every tenant, with a `tenant_name` column and a tenant-filter select. |
 
-## 2. Route guard + redirects
+UI additions:
+- Super-admin view: adds "Actor role" chip (admin/super_admin) and a Tenant filter select in the filter bar.
+- Admin view: adds "Team member" filter (their managers/technicians).
+- Same layout, no visual divergence beyond the extra filter select.
 
-**Wire `not-allowed.tsx`.** Add `beforeLoad` role guard on operational and `/platform/*` routes that redirects unauthorized users there instead of hanging.
+## Part C — Plan Thresholds & tenant subscription controls
+Data (one migration):
+- `public.plan_thresholds(plan_id text pk, name text, max_users int, max_silos int, max_batches int, max_sensors int, features jsonb, price_cents int, updated_at timestamptz)`.
+- `public.tenant_plan_change_requests(id uuid pk, tenant_id uuid, requested_plan text, current_plan text, direction text check in ('upgrade','downgrade'), status text check in ('pending','approved','rejected','auto_applied'), requested_by uuid, decided_by uuid, decided_at timestamptz, created_at timestamptz default now())`.
+- Grants + RLS: authenticated read on `plan_thresholds`; super_admin write. Admin can insert own tenant's change_request; super_admin full access; both can read own rows via `has_role`.
+- Seed `plan_thresholds` from existing `src/lib/pricing-data.ts` in the same migration.
 
-**Redirect super_admin (no dual view) on:**
-- `plans.tsx` → `/platform/plans`
-- `team-management.tsx` → `/platform/users`
-- `activity-logs.tsx` → `/platform/audit-logs`
-- `revenue.tsx` → `/platform/revenue`
-- `data-visualization.tsx` → hide from nav + redirect to `/analytics`
-- `traceability.tsx` → only reachable via impersonation (else redirect)
+Server functions (`src/lib/plan-thresholds.functions.ts`, all `requireSupabaseAuth`):
+- `listPlanThresholds` — any authenticated user.
+- `updatePlanThreshold` — super_admin only (verify via `context.supabase` + `has_role`).
+- `requestPlanChange({ requestedPlan })` — admin only; if `direction === 'upgrade'` and tenant's auto-upgrade flag is on, mark `auto_applied` and update tenant subscription immediately; else `pending`.
+- `decidePlanChangeRequest({ id, approve })` — super_admin only; on approve updates the tenant's plan.
+- `setTenantPlan({ tenantId, plan })` — super_admin manual override.
 
----
+New pages (both use AdminPageShell):
+1. `src/routes/_authenticated/platform.plans.tsx` — super_admin: editable table of plans (name, limits, feature toggles, price), plus a pending-requests panel in the right column.
+2. `src/routes/_authenticated/subscription.tsx` (existing, refactor) — admin: current plan tile, plan comparison, "Request upgrade/downgrade" button, toggle "Auto-approve upgrades", history of own requests.
 
-## 3. Add tenant/platform branch to shared pages
+## Part D — Page-by-page refactor (presentation only, no data changes)
 
-For each: one server fn branches on `scope`; component renders `<TenantView />` or `<PlatformView />`.
+**Super-admin pages (show platform/admin oversight, never per-tenant operator data):**
+| Page | Focus |
+|------|-------|
+| `platform.index.tsx` | Tiles: total tenants, active admins, MRR, incidents-this-week + two-column widgets (recent signups, system alerts) sized to one viewport. |
+| `platform.tenants.tsx` | Tenants list + sticky tenant detail (plan, admin contact, usage vs threshold). Manual plan override lives here. |
+| `platform.users.tsx` | **Only admin-role users** across tenants; role filter chips (admin / super_admin). No managers/technicians. |
+| `platform.orders.tsx` | Hardware orders across tenants; tiles = statuses; list + detail. |
+| `platform.leads.tsx` / `platform.pipeline.tsx` | Marketing leads/pipeline; kanban stays inside a fixed-height card, no page scroll. |
+| `platform.audit-logs.tsx` / `platform.logs.tsx` | Align to Activity Logs shell; filters for actor role + tenant. |
+| `platform.health.tsx` | Metrics tiles + one status card grid. |
+| `platform.plans.tsx` *(new)* | Plan threshold editor + change-request queue. |
 
-| Page | Platform view spec |
-|---|---|
-| AI Predictions | Risk distribution + worst-offender tenants. No "run" button. |
-| Analytics | Spoilage-by-tenant, engagement ranking, benchmarks. |
-| Environmental | Tenants currently out-of-threshold. Read-only. |
-| Incidents | Cross-tenant feed, filterable, read-only. |
-| Maintenance | Overdue devices across tenants. No log entry. |
-| Server Monitoring (Device Health) | Fleet online/offline %, stale-hardware-by-tenant. |
-| Buyers | Buyer/dispatch activity ranking. No CRUD. |
-| Reports | Different catalog: MRR/churn, tenant activity, hardware fulfillment. |
-| Insurance | Total insured value + claim rate. Read-only. |
-| ML Models | Inference volume, error rate, latency by tenant. No trigger. |
-| Subscription | All tenants: plan, MRR, churn, failed payments. Read-only. |
-| Security Center | Anomalous logins, blocked users across tenants. |
-| Settings | Append platform-config section (default thresholds, feature flags, maintenance mode) beneath personal settings. |
+**Admin pages** (`activity-logs.tsx`, `subscription.tsx`, `team-management.tsx`, `settings.tsx`) get the same shell + brand palette, no scope changes beyond Activity Logs.
 
-**Every `<PlatformView />` implements:**
-- Explicit empty state ("nothing to show" vs loading vs error).
-- Its own skeleton (heavier queries, different layout).
-- Partial-failure resilience: render tenants that loaded, flag ones that didn't.
+## Out of scope
+- Tenant operational pages (dashboard, grain-batches, silos, sensors, actuators, buyers, insurance) — unchanged.
+- No new AI, email, or webhook wiring.
+- No copy changes beyond what the new components require.
 
-**File shape per page:**
-```
-routes/_authenticated/<page>.tsx           → reads scope, picks view
-components/pages/<page>/TenantView.tsx     → existing UI, extracted
-components/pages/<page>/PlatformView.tsx   → new aggregate UI
-lib/<page>.functions.ts                     → single fn, branches on scope
-```
+## Acceptance
+- Every page in Part D shares identical header/tile/filter/card visuals with Activity Logs.
+- Desktop 1440×900: main content visible without page scroll (internal card scroll only).
+- No icon in any page title, section title, tile label, or filter label.
+- Activity Logs returns role-appropriate rows verified via one query per role.
+- Super_admin can edit a plan threshold and approve a change request; admin can submit a change request and (if auto-upgrade is on) see the plan updated immediately.
 
----
-
-## 4. Tenant impersonation (super_admin)
-
-- "View as tenant" button on `platform.tenants.tsx` and `platform.users.tsx`.
-- Sets impersonation context (cookie or context table) with impersonated `admin_id`.
-- While active:
-  - Super admin sees tenant's Dashboard/Batches/Silos/Traceability as their Admin would.
-  - All writes disabled server-side + UI-disabled (create/edit/delete/threshold/resolve).
-  - Persistent banner shows tenant name + "Exit impersonation".
-
----
-
-## 5. `notifyPlatformEvent()` webhook connector
-
-- New fn in `src/lib/platform-notify.functions.ts` posting to Slack/Discord webhook (secret: `PLATFORM_EVENT_WEBHOOK_URL`).
-- Fires on: new signup, blocked user, critical tenant alert, failed Stripe payment, churn.
-- Called from same points as existing `syncSignupToHubspot` + Stripe webhook + user-block action.
-
----
-
-## 6. Out of scope (do not touch)
-
-Grain Batches, Silos, Sensors, Actuators, Grain Alerts, Warehouses, Notifications — already correct.
-
----
-
-## Execution order
-
-1. ✅ Migration `get_my_role` + `rbac.server.ts` + `page-scope.server.ts`.
-2. ✅ Super_admin redirects (plans, team-management, activity-logs, revenue, data-visualization, traceability) + operational routes now redirect to `/not-allowed` instead of `/dashboard`.
-3. ✅ `notifyPlatformEvent()` scaffold + wired into `toggleUserBlocked` and Stripe `invoice.payment_failed` + `customer.subscription.deleted`. Set secret `PLATFORM_EVENT_WEBHOOK_URL` to activate.
-4. ✅ Refactor 10 files off direct `has_role` onto `getEffectiveRole()` (roles, platform, revenue-analytics, monitoring, operations2, billing, analytics, team-settings-insurance, hardware-orders, firebase-sync, admin-test-email).
-5. ⏳ Per-page tenant/platform branching (13 pages — one component split per page).
-   - ✅ AI Predictions: added `getPlatformSpoilageOverview` + `PlatformView` (worst-offender tenants, risk distribution, read-only).
-   - ✅ Subscription / Reports / Orders: redirected super_admin to `/platform/revenue` / `/platform/orders` (existing platform equivalents — no dual view needed).
-   - ✅ Shared `PlatformScopeBanner` + `useIsSuperAdmin` hook: pages already returning cross-tenant data via super_admin RLS now announce platform scope and hide tenant-write actions.
-   - ✅ Incidents: banner + acknowledge/resolve buttons hidden for super_admin.
-   - ✅ Maintenance: banner + "Mark serviced" hidden for super_admin.
-   - ✅ Server Monitoring: banner (read-only page — no writes to hide).
-   - ✅ Security Center: banner (page is already read-only).
-   - ✅ Insurance: banner (server RLS still enforces per-tenant writes).
-   - ✅ Analytics, ML Models, Buyers: platform scope banner added.
-   - Skipped: Environmental (weather-only, not tenant-scoped) and Settings (personal settings page — platform-config section deferred until impersonation lands).
-6. ✅ Tenant impersonation: cookie-based (`gh_impersonate`) via `src/lib/impersonation.functions.ts` + `impersonation.server.ts`. `resolvePageScope` returns tenant scope while impersonating. Amber `ImpersonationBanner` in authenticated layout with Exit button. "View as" buttons on `platform/tenants` and admins in `platform/users`. `_authenticated/route.tsx` skips SUPER_ADMIN_REDIRECTS while the cookie is present so tenant pages are reachable.
-   - ✅ Write-lock: `blockIfImpersonating` server-fn middleware in `src/lib/impersonation-guard.ts` refuses mutations while a super_admin is impersonating. Attached to 34 tenant mutation fns across `operations`, `operations2`, `monitoring`, `hardware-orders`, `team-settings-insurance`, and `notifications-audit`.
-7. ✅ Settings platform-config section: new `public.platform_settings` singleton row (jsonb config) + `getPlatformSettings`/`updatePlatformSettings` in `src/lib/platform-settings.functions.ts`. Settings page shows a super_admin-only **Platform** tab for maintenance mode, feature flags, and default thresholds. Update guarded by `blockIfImpersonating` + server-side `isSuperAdmin` check + RLS.
-8. ✅ Rich `<PlatformView />` on Incidents and Maintenance:
-   - `getPlatformIncidentsOverview` — cross-tenant alert totals, MTTA/MTTR, worst-offender ranking by open + critical.
-   - `getPlatformMaintenanceOverview` — cross-tenant device totals, overdue/due-soon/low-battery ranking.
-   - Both pages now branch: tenant users see the operational view, super_admin sees the aggregate ranking (no per-row actions).
-9. ✅ Rich per-tenant platform tables on Analytics, ML Models, Insurance, Buyers via new `src/lib/platform-overviews.functions.ts`:
-    - `getPlatformAnalyticsBreakdown` — revenue / volume / margin / spoilage ranking per tenant.
-    - `getPlatformMLInference` — 7-day inference volume, critical count, anomaly rate, avg confidence per tenant.
-    - `getPlatformInsuranceOverview` — coverage, premium, open claims, claim rate per tenant.
-    - `getPlatformBuyersOverview` — buyer count / rating / invoices / revenue / outstanding per tenant.
-    - Shared `<PlatformOverviewTable />` renders a compact top-N leaderboard on each page above the tenant UI.
-10. ⏳ Webhook activation (`PLATFORM_EVENT_WEBHOOK_URL`): scaffold is live in `notifyPlatformEvent()` and wired to signups, blocked users, and Stripe failures. Awaiting the user to add the Slack/Discord webhook URL as a secret to enable delivery.
+Reply **approve** to build, or tell me what to adjust.

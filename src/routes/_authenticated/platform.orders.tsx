@@ -18,6 +18,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
+import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 
 export const Route = createFileRoute("/_authenticated/platform/orders")({
   head: () => ({ meta: [{ title: "Install orders — Platform" }] }),
@@ -84,68 +87,34 @@ function PlatformOrdersPage() {
     .reduce((sum, o) => sum + (Number(o.hardware_total) || 0), 0);
 
   return (
-    <div className="p-4 max-w-7xl mx-auto space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Install Orders</h1>
-          <p className="text-xs text-slate-600 mt-1">Manage hardware installation requests from customers</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs font-semibold">Filter</Label>
+    <AdminPageShell title="Install orders" subtitle="Hardware installation requests from customers">
+      <AdminSummaryTiles
+        columns={3}
+        tiles={[
+          { key: "t", label: "Total revenue", value: `PKR ${totalRevenue.toLocaleString()}`, hint: `${data?.orders.length ?? 0} orders` },
+          { key: "c", label: "Completed", value: `PKR ${completedRevenue.toLocaleString()}`, hint: `${(data?.orders ?? []).filter((o) => o.status === "installed" || o.status === "live").length} installed` },
+          { key: "p", label: "Pending", value: `PKR ${pendingRevenue.toLocaleString()}`, hint: `${(data?.orders ?? []).filter((o) => o.status !== "cancelled" && o.status !== "installed" && o.status !== "live").length} in progress` },
+        ]}
+      />
+
+      <AdminFilterBar onSubmit={() => { /* client-side */ }}>
+        <AdminFilterField label="Status" width="w-56">
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="h-9 w-52"><SelectValue /></SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Orders ({data?.orders.length ?? 0})</SelectItem>
+              <SelectItem value="all">All orders ({data?.orders.length ?? 0})</SelectItem>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>{s.replace("_", " ")} ({counts[s] ?? 0})</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        </AdminFilterField>
+      </AdminFilterBar>
 
-      {/* Revenue Stats - Compact */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Card className="border-l-4 border-l-emerald-500 shadow-sm">
-          <CardContent className="p-3">
-            <p className="text-xs font-semibold uppercase text-slate-500">Total Revenue</p>
-            <p className="text-2xl font-bold mt-1 text-slate-900">PKR {totalRevenue.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">{data?.orders.length ?? 0} orders</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500 shadow-sm">
-          <CardContent className="p-3">
-            <p className="text-xs font-semibold uppercase text-slate-500">Completed</p>
-            <p className="text-2xl font-bold mt-1 text-green-700">PKR {completedRevenue.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">
-              {(data?.orders ?? []).filter((o) => o.status === "installed" || o.status === "live").length} installed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500 shadow-sm">
-          <CardContent className="p-3">
-            <p className="text-xs font-semibold uppercase text-slate-500">Pending</p>
-            <p className="text-2xl font-bold mt-1 text-amber-700">PKR {pendingRevenue.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-1">
-              {(data?.orders ?? []).filter((o) => o.status !== "cancelled" && o.status !== "installed" && o.status !== "live").length} in progress
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Orders List */}
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500">Loading orders…</div>
+        <div className="text-sm text-slate-500">Loading orders…</div>
       ) : orders.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-slate-500 font-medium">No orders match this filter</p>
-            <p className="text-sm text-slate-400 mt-1">Orders will appear here when customers purchase hardware</p>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="p-8 text-center text-sm text-slate-500">No orders match this filter</CardContent></Card>
       ) : (
         <div className="grid gap-3">
           {orders.map((o) => (
@@ -157,7 +126,7 @@ function PlatformOrdersPage() {
           ))}
         </div>
       )}
-    </div>
+    </AdminPageShell>
   );
 }
 

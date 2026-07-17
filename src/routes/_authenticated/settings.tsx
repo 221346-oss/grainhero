@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/dashboards/_shared";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
 import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -92,12 +92,19 @@ function SettingsPage() {
 
   const initials = initialsOf(form.name, data?.email ?? "");
 
-  if (isLoading) return <div className="p-6 md:p-8 max-w-4xl mx-auto"><FormSkeleton fields={6} /></div>;
+  if (isLoading) return <AdminPageShell title="Settings"><FormSkeleton fields={6} /></AdminPageShell>;
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto">
-      <PageHeader title="Settings" subtitle="Manage your profile, location and notification preferences" />
-
+    <AdminPageShell
+      title="Settings"
+      subtitle="Manage your profile, location and notification preferences"
+      actions={
+        <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
+          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          Save changes
+        </Button>
+      }
+    >
       <Tabs defaultValue="profile">
         <TabsList className="mb-6">
           <TabsTrigger value="profile"><User className="h-4 w-4 mr-2" />Profile</TabsTrigger>
@@ -276,14 +283,7 @@ function SettingsPage() {
           </TabsContent>
         )}
       </Tabs>
-
-      <div className="mt-6 flex justify-end">
-        <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
-          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Save changes
-        </Button>
-      </div>
-    </div>
+    </AdminPageShell>
   );
 }
 

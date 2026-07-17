@@ -1,31 +1,33 @@
-import { Package, Truck, AlertTriangle, TrendingUp, Activity, BarChart3 } from "lucide-react";
-import { PageHeader, StatCard } from "./_shared";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { useDashboardStats } from "./useDashboardStats";
 import { RecentBatchesCard, RecentAlertsCard, SilosOccupancyCard, ActuatorsCard } from "./DashboardBlocks";
+import { Badge } from "@/components/ui/badge";
 
 export function ManagerDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        title={`Manager Dashboard${name ? ` — ${name}` : ""}`}
-        subtitle="Operational overview of batches, dispatch and grain quality"
-        badge="Manager"
+    <AdminPageShell
+      title={`Manager${name ? ` — ${name}` : ""}`}
+      subtitle="Operational overview of batches, dispatch and grain quality"
+      actions={<Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Manager</Badge>}
+    >
+      <AdminSummaryTiles
+        columns={5}
+        tiles={[
+          { key: "t", label: "Total batches", value: s?.batches.total ?? "—" },
+          { key: "a", label: "Active", value: s?.batches.active ?? "—" },
+          { key: "s", label: "Silos", value: s?.silos ?? "—" },
+          { key: "b", label: "Buyers", value: s?.buyers ?? "—" },
+          { key: "o", label: "Open alerts", value: s?.alerts.open ?? "—" },
+        ]}
       />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <StatCard label="Total Batches" value={s?.batches.total ?? "—"} icon={Package} accent="emerald" />
-        <StatCard label="Active" value={s?.batches.active ?? "—"} icon={Activity} accent="sky" />
-        <StatCard label="Silos" value={s?.silos ?? "—"} icon={Truck} accent="violet" />
-        <StatCard label="Buyers" value={s?.buyers ?? "—"} icon={TrendingUp} accent="emerald" />
-        <StatCard label="Open Alerts" value={s?.alerts.open ?? "—"} icon={AlertTriangle} accent="rose" />
-        <StatCard label="Critical" value={s?.alerts.critical ?? "—"} icon={BarChart3} accent="amber" />
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         <RecentBatchesCard />
         <RecentAlertsCard />
         <SilosOccupancyCard />
         <ActuatorsCard />
       </div>
-    </div>
+    </AdminPageShell>
   );
 }
