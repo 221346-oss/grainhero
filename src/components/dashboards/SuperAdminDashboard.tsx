@@ -7,7 +7,29 @@ import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-n
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from "recharts";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
+import { cn } from "@/lib/utils";
+
+function InsightTile({
+  to, label, value, hint,
+}: { to: string; label: string; value: string | number; hint?: string }) {
+  return (
+    <Link to={to} className="group block">
+      <Card
+        className={cn(
+          "transition-all border-slate-200/70",
+          "group-hover:border-emerald-400 group-hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_10px_20px_-12px_rgba(16,185,129,0.25)]",
+          "cursor-pointer",
+        )}
+      >
+        <CardContent className="p-3 sm:p-4">
+          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
+          <div className="mt-1 text-xl sm:text-2xl font-black text-slate-900 leading-tight">{value}</div>
+          {hint && <div className="text-[10px] text-emerald-600 mt-0.5">{hint}</div>}
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
 
 export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
@@ -26,6 +48,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   });
 
   const usersGrowth = w?.wowDelta ?? 0;
+  const mrrValue = (m as any)?.mrr ?? 0;
 
   return (
     <AdminPageShell
@@ -37,18 +60,17 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         </Badge>
       ) : undefined}
     >
-      <AdminSummaryTiles
-        columns={5}
-        tiles={[
-          { key: "t", label: "Tenants", value: m?.totalTenants ?? 0 },
-          { key: "u", label: "Users", value: m?.totalUsers ?? 0 },
-          { key: "s", label: "Active subs", value: m?.activeSubscriptions ?? 0 },
-          { key: "mrr", label: "MRR", value: `PKR ${((m as any)?.mrr ?? 0).toLocaleString()}` },
-          { key: "ca", label: "Critical alerts", value: m?.criticalAlerts ?? 0 },
-        ]}
-      />
+      {/* Primary KPIs — each click deep-links to its insight page */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <InsightTile to="/platform/tenants" label="Tenants" value={m?.totalTenants ?? 0} />
+        <InsightTile to="/platform/users" label="Users" value={m?.totalUsers ?? 0} />
+        <InsightTile to="/platform/plans" label="Active subs" value={m?.activeSubscriptions ?? 0} />
+        <InsightTile to="/revenue" label="MRR" value={`PKR ${mrrValue.toLocaleString()}`} hint="Live" />
+        <InsightTile to="/platform/health" label="Critical alerts" value={m?.criticalAlerts ?? 0} />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Charts — 3 up */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-slate-800">User signups (30d)</CardTitle>
@@ -91,7 +113,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="md:col-span-2 xl:col-span-1">
           <CardHeader className="pb-2"><CardTitle className="text-sm text-slate-800">Revenue trend (12m)</CardTitle></CardHeader>
           <CardContent className="h-40 px-2 pt-0 pb-2">
             {revenueData?.revenueSeries && revenueData.revenueSeries.length > 0 ? (
@@ -115,49 +137,52 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         </Card>
       </div>
 
-      <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-2">Platform sections</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {[
-            { to: "/platform/tenants", label: "Tenants", value: m?.totalTenants ?? "—" },
-            { to: "/platform/users", label: "Users", value: m?.totalUsers ?? "—" },
-            { to: "/platform/pipeline", label: "Pipeline", value: "—" },
-            { to: "/platform/leads", label: "Leads", value: "—" },
-            { to: "/platform/health", label: "System health", value: "—" },
-            { to: "/platform/audit-logs", label: "Audit logs", value: (m as any)?.totalLogs ?? "—" },
-            { to: "/platform/orders", label: "Install orders", value: "—" },
-            { to: "/revenue", label: "Revenue", value: m ? `PKR ${((m as any).mrr ?? 0).toLocaleString()}` : "—" },
-          ].map((item) => (
-            <Link key={item.to} to={item.to}>
-              <Card className="hover:shadow-md transition-all cursor-pointer">
-                <CardContent className="p-3">
-                  <p className="text-xs font-medium text-slate-500 mb-0.5">{item.label}</p>
-                  <p className="text-base font-bold text-slate-900">{item.value}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+      {/* Deep-link grid + recent signups side by side to reduce scroll */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4">
+        <div>
+          <h2 className="text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-2">Jump to insights</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <InsightTile to="/platform/tenants" label="Tenants" value={m?.totalTenants ?? "—"} />
+            <InsightTile to="/platform/users" label="Users" value={m?.totalUsers ?? "—"} />
+            <InsightTile to="/platform/pipeline" label="Pipeline" value={(w as any)?.pipelineTotal ?? "—"} />
+            <InsightTile to="/platform/leads" label="Leads" value={(w as any)?.leadsTotal ?? "—"} />
+            <InsightTile to="/platform/health" label="Health" value={(m as any)?.totalAlerts ?? "—"} />
+            <InsightTile to="/platform/audit-logs" label="Audit logs" value={(m as any)?.totalLogs ?? "—"} />
+            <InsightTile to="/platform/orders" label="Install orders" value={(w as any)?.ordersTotal ?? "—"} />
+            <InsightTile to="/revenue" label="Revenue" value={`PKR ${mrrValue.toLocaleString()}`} />
+          </div>
         </div>
+
+        {w && (w as any).recentSignups && (w as any).recentSignups.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm text-slate-800">Recent signups</CardTitle>
+              <Link to="/platform/users" className="text-[11px] text-emerald-700 hover:underline">View all →</Link>
+            </CardHeader>
+            <CardContent className="pt-0 pb-2">
+              <div className="divide-y divide-slate-100 max-h-[220px] overflow-auto">
+                {((w as any).recentSignups || []).slice(0, 5).map((s: any) => (
+                  <Link
+                    key={s.id}
+                    to="/platform/users"
+                    className="flex items-center gap-2 py-1.5 text-sm hover:bg-emerald-50/60 rounded px-1 transition-colors"
+                  >
+                    <div className="h-7 w-7 shrink-0 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[11px] font-bold">
+                      {(s.name || s.email || "?").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 truncate leading-tight">{s.name || s.email}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{s.email}</p>
+                    </div>
+                    <p className="text-[10px] text-slate-400 whitespace-nowrap">{new Date(s.created_at).toLocaleDateString()}</p>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {w && (w as any).recentSignups && (w as any).recentSignups.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-slate-800">Recent signups</CardTitle></CardHeader>
-          <CardContent className="pt-0">
-            <div className="divide-y divide-slate-100">
-              {((w as any).recentSignups || []).slice(0, 5).map((s: any) => (
-                <div key={s.id} className="flex items-center justify-between py-2 text-sm">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 truncate">{s.name || s.email}</p>
-                    <p className="text-xs text-slate-500 truncate">{s.email}</p>
-                  </div>
-                  <p className="text-xs text-slate-400 whitespace-nowrap ml-2">{new Date(s.created_at).toLocaleDateString()}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </AdminPageShell>
   );
 }

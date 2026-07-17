@@ -54,7 +54,7 @@ const pinnedNav: NavItem[] = [
   { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin", "manager", "technician"] },
   { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"], badge: "AI" },
   { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
-  { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["super_admin", "admin", "manager"] },
+  { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
   { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
   { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
   { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
@@ -97,7 +97,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
       { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
       { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
-      { name: "platform-logs", label: "System Logs", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
+      { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
     ],
   },
 ];

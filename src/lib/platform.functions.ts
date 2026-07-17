@@ -17,13 +17,13 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("grain_batches").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("silos").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("grain_alerts").select("id, priority", { count: "exact" }),
-      supabaseAdmin.from("subscriptions").select("id, status, plan_name, monthly_price"),
+      supabaseAdmin.from("subscriptions").select("id, status, plan_name, price_per_month"),
       supabaseAdmin.from("activity_logs").select("id, severity", { count: "exact" }),
     ]);
     const tenants = new Set((profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id));
     const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.priority === "critical").length;
     const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active");
-    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.monthly_price) || 0), 0);
+    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.price_per_month) || 0), 0);
     const roleDist: Record<string, number> = {};
     for (const r of roles.data ?? []) roleDist[r.role] = (roleDist[r.role] ?? 0) + 1;
     return {
@@ -152,7 +152,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
       supabaseAdmin
         .from("subscriptions")
-        .select("id, status, monthly_price, plan_name, created_at, cancelled_at"),
+        .select("id, status, price_per_month, plan_name, created_at, cancellation_date"),
       supabaseAdmin
         .from("hubspot_sync_log")
         .select("id, action, status, hubspot_object_type, created_at")
@@ -180,8 +180,8 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     // Revenue snapshot.
     const subs = subsRes.data ?? [];
     const activeSubs = subs.filter((s: any) => s.status === "active");
-    const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancelled_at);
-    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.monthly_price) || 0), 0);
+    const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancellation_date);
+    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.price_per_month) || 0), 0);
 
     // Pipeline snapshot — aggregate HubSpot sync activity by status.
     const pipeline: Record<string, number> = {};
