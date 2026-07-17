@@ -1,99 +1,72 @@
-# Plan: Admin Profiles, Financial Dashboard & IoT Install Tracking
+# Phase 1 — Baseline Audit & Guardrails
 
-Three self-contained feature blocks. All UI theme-aware (light/dark), aligned with existing PageHeader / StatBox conventions.
+First phase of the Foundation block (Phases 1–5). Goal: lock down the current app so later phases can build on it without regressions. **Nothing user-visible changes** — this phase is instrumentation, safety rails, and a written contract for what "correct" means in every later phase.
 
----
+## What we build
 
-## 1. Super-Admin → Admin Profile Page
+### 1. Canonical role & route matrix (`docs/route-matrix.md`)
+A single source of truth mapping every route in `src/routes/` to:
+- allowed roles (`super_admin` / `admin` / `manager` / `technician` / public)
+- data scope (platform-wide / tenant / self)
+- plan gate (if any)
+- required server fns
 
-**New route:** `/_authenticated/admins/$adminId.tsx` (linked from existing admin list rows).
+Any later phase that adds a route must add a row here in the same PR.
 
-**Layout** (image 3 style):
-- Header card: avatar initials, name, email, phone, "Active/Suspended" pill, `Edit Profile` and kebab menu (Impersonate / Suspend / Reactivate).
-- KPI row: Last Login · Total Revenue · Silos · Warehouses · Batches · Open Alerts.
-- Two-column: Contact & Address card (editable inline) + Order Frequency bar chart (last 6 months of grain batches OR hardware orders — toggle).
-- Recent Activity list (last 10 activity_logs entries).
+### 2. Route audit script (`scripts/audit-routes.ts`)
+Node script (run via `bun scripts/audit-routes.ts`) that:
+- walks `src/routes/`, reads each file's `createFileRoute` + head/loader
+- verifies routes under `_authenticated/` don't call unauthenticated server fns in their loader
+- verifies public routes don't import `client.server` transitively
+- verifies every route with a `loader` defines `errorComponent` and `notFoundComponent`
+- prints a table and exits non-zero on violations
 
-**Server fns** (`src/lib/admin-profile.functions.ts`, `requireSupabaseAuth`, super_admin check):
-- `getAdminProfile({ adminId })` — profile + role + aggregated stats
-- `updateAdminContact({ adminId, patch })` — name/phone/address/notes
-- `impersonateAdmin({ adminId })` — returns short-lived magic-link URL via `supabaseAdmin.auth.admin.generateLink`
-- `setAdminSuspended({ adminId, suspended })` — writes `profiles.suspended` flag
-- `getAdminOrderFrequency({ adminId, source })` — 6-month buckets
+### 3. Server-fn safety lint (`scripts/audit-server-fns.ts`)
+Scans `src/**/*.functions.ts` and asserts:
+- no top-level `import ... client.server` (must be dynamic inside handler)
+- every fn either has `.middleware([requireSupabaseAuth])` OR is documented in `docs/public-server-fns.md` as intentionally public
+- `process.env.*` reads only inside `.handler()` bodies
 
-**DB:** add `profiles.suspended boolean default false`, `profiles.notes text`. No new tables.
+### 4. Plan-gate helper (`src/lib/plan-gate.ts`)
+Thin wrapper around the existing `plan_thresholds` table:
+- `assertPlanAllows(adminId, feature)` — server-side, throws typed `PlanLimitError`
+- `usePlanGate(feature)` — client hook returning `{ allowed, limit, used, upgradeUrl }`
+- centralizes the check used by later Admin phases (silos cap, sensors cap, buyers cap, exports, etc.)
 
----
+Migration: add missing feature keys to `plan_thresholds` seed if any (`max_silos`, `max_sensors`, `max_buyers`, `max_users`, `exports_enabled`, `api_access`, `alerts_sms`).
 
-## 2. Financial Dashboard (Revenue page upgrade)
+### 5. Activity-log helper unification (`src/lib/activity.ts`)
+One `logActivity({ actorId, tenantId, action, target, meta })` used by every mutating server fn from Phase 2 onward. Existing scattered `activity_logs` inserts get wrapped (non-breaking).
 
-Enhance existing `/_authenticated/revenue` (or add if missing).
+### 6. Error surface baseline
+- Add `defaultErrorComponent` to `src/router.tsx` if not already present.
+- Add `notFoundComponent` to `__root.tsx`.
+- Standard `<EmptyState>` and `<ErrorState>` primitives in `src/components/app/states.tsx` for later phases to reuse.
 
-**Widgets:**
-- KPI tiles: Total Revenue · Subscription MRR · IoT Hardware Revenue · Insurance Commission · Gross Profit · Net Profit % (each with MoM delta, numbers colored — cards neutral).
-- **P&L Summary card** — Sales, COGS, Gross Profit, Opex, Other Income, Net Profit, Net %.
-- **Revenue mix donut** — Subscriptions / IoT Hardware / Insurance Commission / Other.
-- **MRR trend line** — 12 months, plus churn %.
-- **Sales split by plan** — Starter/Pro/Enterprise horizontal bars.
-- **Reports section** — "Export PDF" buttons for: Monthly P&L, Revenue Breakdown, MRR Report. Generated server-side via a lightweight PDF (pdf-lib) server route `/api/reports/[type].pdf` gated to super_admin.
+## DB migration
+Single additive migration:
+- Ensure `plan_thresholds` has rows for every feature key listed above (INSERT ... ON CONFLICT DO NOTHING).
+- Add `profiles.suspended boolean default false` and `profiles.notes text` if missing (needed by Phase 6 admin profile).
 
-**Data sources** (existing tables):
-- `subscriptions` (MRR, plan mix)
-- `hardware_orders` (IoT revenue)
-- `insurance_policies` — add `commission_rate numeric` and computed `commission_amount`
-- `buyer_invoices` / `invoices` (sales)
+No table drops, no column type changes.
 
-**DB migration:**
-- `insurance_policies.commission_rate numeric(5,2) default 0`
-- optional `platform_settings` rows for default commission rate & COGS overrides
+## Deliverables checklist
+- [ ] `docs/route-matrix.md`
+- [ ] `docs/public-server-fns.md`
+- [ ] `scripts/audit-routes.ts` + `scripts/audit-server-fns.ts` (both green)
+- [ ] `src/lib/plan-gate.ts` + `src/lib/activity.ts`
+- [ ] `src/components/app/states.tsx`
+- [ ] Migration applied
+- [ ] `bun scripts/audit-routes.ts` and `bun scripts/audit-server-fns.ts` pass with 0 violations (or documented exceptions)
 
-**Server fns** (`src/lib/financials.functions.ts`): `getFinancialSummary`, `getRevenueMix`, `getMrrTrend`, `getPlanSplit`, `generateReportPdf`.
+## Out of scope for Phase 1
+- Any new user-facing page
+- Any UI restyle
+- Any Twilio / Expo / ML work (those are Phases 21+, 24+, and their own dedicated phases)
 
----
-
-## 3. IoT Installation Tracking (extends existing Orders page)
-
-**Where:** existing `/_authenticated/orders` — add **"Installation"** tab per order row (drawer or `/orders/$orderId` detail).
-
-**Fields super admin can add per hardware_order:**
-- Installer: name, phone, photo URL, company
-- Location: city, warehouse_id, silo_id, scheduled_visit_at, our_origin_address, customer_address (auto from tenant), lat/lng
-- Devices: array of `{ serial, model, status: shipped|en_route|installed|verified }`
-- Visit timeline: append-only notes with timestamp + optional photo
-
-**Map component** (image 1 style):
-- Mapbox GL JS (public token via connector) OR Google Maps if user prefers — we'll use Mapbox.
-- Shows origin marker (our warehouse) → destination marker (customer address) → directions polyline via Mapbox Directions API (server fn using secret token).
-- Purple styled route line, ETA/distance badge overlay.
-
-**Manager view:** same order detail is read-only for managers — they see installer profile, live status timeline, map, and device serials.
-
-**DB migration:** new table `hardware_order_installations`
-```
-id, order_id (fk hardware_orders), installer_name, installer_phone, installer_photo_url,
-installer_company, city, warehouse_id, silo_id, scheduled_visit_at,
-origin_address, origin_lat, origin_lng, destination_address, destination_lat, destination_lng,
-status, created_at, updated_at
-```
-Plus `hardware_order_devices` (serial, model, status, order_id) and `hardware_order_visit_events` (order_id, note, photo_url, event_at, created_by).
-
-RLS: super_admin full; tenant admin/manager SELECT where `hardware_orders.admin_id = get_tenant_admin_id(auth.uid())`.
-
-**Server fns** (`src/lib/installations.functions.ts`): `upsertInstallation`, `addVisitEvent`, `upsertDevices`, `getInstallation`, `getRouteGeometry` (Mapbox Directions via gateway).
-
-**Connector:** requires Mapbox connector (public + secret token). I'll prompt to link.
+## Why this order
+Every later phase (plan gating on Admin pages, SuperAdmin financial exports, mobile API surface) assumes the audit scripts + plan-gate helper exist. Building them now means later phases become small, safe diffs instead of sprawling refactors.
 
 ---
 
-## Build order
-
-1. Migrations (admin fields, insurance commission, installation tables).
-2. Mapbox connector link.
-3. Admin profile page + server fns.
-4. Financial dashboard widgets + PDF report route.
-5. Orders page → Installation tab + map.
-
-## Out of scope
-- Live GPS tracking of installer (only static route line).
-- Multi-stop routes.
-- Real-time collaboration on visit notes.
+Reply **approve** to build Phase 1, or tell me what to change. After Phase 1 lands I'll open Phase 2 (Auth hardening & session hygiene) as its own plan.
