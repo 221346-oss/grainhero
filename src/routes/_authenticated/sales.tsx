@@ -291,6 +291,8 @@ function OrderDrawer({ orderId, onClose, onChanged }: { orderId: string; onClose
                 ))}
               </CardContent>
             </Card>
+
+            <ShipmentPanel orderId={o.id} canManage orderStatus={o.status} />
           </div>
         )}
         <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
