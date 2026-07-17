@@ -82,6 +82,7 @@ export type Database = {
           issued_by: string | null
           params: Json
           sent_at: string | null
+          source: string
           status: string
           updated_at: string
         }
@@ -98,6 +99,7 @@ export type Database = {
           issued_by?: string | null
           params?: Json
           sent_at?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
@@ -114,6 +116,7 @@ export type Database = {
           issued_by?: string | null
           params?: Json
           sent_at?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
@@ -249,6 +252,72 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          actuator_id: string
+          admin_id: string
+          command: string
+          command_params: Json
+          cooldown_seconds: number
+          created_at: string
+          enabled: boolean
+          id: string
+          last_fired_at: string | null
+          silo_id: string
+          trigger_metric: string
+          trigger_op: string
+          trigger_value: number
+          updated_at: string
+        }
+        Insert: {
+          actuator_id: string
+          admin_id: string
+          command: string
+          command_params?: Json
+          cooldown_seconds?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_fired_at?: string | null
+          silo_id: string
+          trigger_metric: string
+          trigger_op: string
+          trigger_value: number
+          updated_at?: string
+        }
+        Update: {
+          actuator_id?: string
+          admin_id?: string
+          command?: string
+          command_params?: Json
+          cooldown_seconds?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_fired_at?: string | null
+          silo_id?: string
+          trigger_metric?: string
+          trigger_op?: string
+          trigger_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_actuator_id_fkey"
+            columns: ["actuator_id"]
+            isOneToOne: false
+            referencedRelation: "actuators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_rules_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
             referencedColumns: ["id"]
           },
         ]
@@ -822,6 +891,50 @@ export type Database = {
           },
         ]
       }
+      grain_batch_events: {
+        Row: {
+          actor_user_id: string | null
+          admin_id: string | null
+          batch_id: string
+          created_at: string
+          from_state: string | null
+          id: string
+          note: string | null
+          snapshot: Json | null
+          to_state: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          admin_id?: string | null
+          batch_id: string
+          created_at?: string
+          from_state?: string | null
+          id?: string
+          note?: string | null
+          snapshot?: Json | null
+          to_state: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          admin_id?: string | null
+          batch_id?: string
+          created_at?: string
+          from_state?: string | null
+          id?: string
+          note?: string | null
+          snapshot?: Json | null
+          to_state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_batch_events_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grain_batches: {
         Row: {
           actual_dispatch_date: string | null
@@ -848,12 +961,14 @@ export type Database = {
           intake_date: string | null
           last_risk_assessment: string | null
           moisture_content: number | null
+          net_weight_kg: number | null
           notes: string | null
           origin_coordinates: Json | null
           profit: number | null
           protein_content: number | null
           purchase_price_per_kg: number | null
           qr_code: string | null
+          quality_snapshot: Json | null
           quality_tests: Json | null
           quantity_kg: number
           revenue: number | null
@@ -864,6 +979,7 @@ export type Database = {
           source_location: string | null
           spoilage_events: Json | null
           spoilage_label: Database["public"]["Enums"]["spoilage_label"] | null
+          state_changed_at: string | null
           status: Database["public"]["Enums"]["batch_status"] | null
           tags: string[] | null
           test_weight: number | null
@@ -898,12 +1014,14 @@ export type Database = {
           intake_date?: string | null
           last_risk_assessment?: string | null
           moisture_content?: number | null
+          net_weight_kg?: number | null
           notes?: string | null
           origin_coordinates?: Json | null
           profit?: number | null
           protein_content?: number | null
           purchase_price_per_kg?: number | null
           qr_code?: string | null
+          quality_snapshot?: Json | null
           quality_tests?: Json | null
           quantity_kg: number
           revenue?: number | null
@@ -914,6 +1032,7 @@ export type Database = {
           source_location?: string | null
           spoilage_events?: Json | null
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
+          state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
           tags?: string[] | null
           test_weight?: number | null
@@ -948,12 +1067,14 @@ export type Database = {
           intake_date?: string | null
           last_risk_assessment?: string | null
           moisture_content?: number | null
+          net_weight_kg?: number | null
           notes?: string | null
           origin_coordinates?: Json | null
           profit?: number | null
           protein_content?: number | null
           purchase_price_per_kg?: number | null
           qr_code?: string | null
+          quality_snapshot?: Json | null
           quality_tests?: Json | null
           quantity_kg?: number
           revenue?: number | null
@@ -964,6 +1085,7 @@ export type Database = {
           source_location?: string | null
           spoilage_events?: Json | null
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
+          state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
           tags?: string[] | null
           test_weight?: number | null
@@ -3166,6 +3288,10 @@ export type Database = {
         | "expired"
         | "on_hold"
         | "processing"
+        | "intake"
+        | "treatment"
+        | "ready"
+        | "rejected"
       billing_cycle: "monthly" | "yearly" | "quarterly"
       buyer_status: "active" | "paused" | "inactive"
       buyer_type:
@@ -3348,6 +3474,10 @@ export const Constants = {
         "expired",
         "on_hold",
         "processing",
+        "intake",
+        "treatment",
+        "ready",
+        "rejected",
       ],
       billing_cycle: ["monthly", "yearly", "quarterly"],
       buyer_status: ["active", "paused", "inactive"],

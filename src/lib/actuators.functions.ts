@@ -47,6 +47,7 @@ export const issueCommand = createServerFn({ method: "POST" })
         command: data.command,
         params: data.params,
         status: "queued",
+        source: "manual",
       } as never)
       .select("id, correlation_id")
       .single();
