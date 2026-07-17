@@ -1,28 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import pricingData from "@/lib/pricing-data";
-
-const STRIPE_API = "https://api.stripe.com/v1";
-
-function form(params: Record<string, string | number | undefined>) {
-  const body = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) body.append(k, String(v));
-  return body;
-}
-
-async function stripeFetch(path: string, body: URLSearchParams | null, method: "GET" | "POST" | "DELETE" = "POST") {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("Stripe not configured");
-  const res = await fetch(`${STRIPE_API}${path}`, {
-    method,
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: body ?? undefined,
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`Stripe error ${res.status}: ${text.slice(0, 300)}`);
-  return JSON.parse(text);
-}
 
 async function getMyStripeSubscription(supabase: any, userId: string) {
   const { data: sub } = await supabase
@@ -41,27 +19,15 @@ export const changeMyPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ planId: z.enum(["basic", "intermediate", "pro"]) }).parse(d))
   .handler(async ({ data, context }) => {
-    const plan = pricingData.find((p: { id: string }) => p.id === data.planId);
-    if (!plan) throw new Error("Unknown plan");
     const sub = await getMyStripeSubscription(context.supabase, context.userId);
-
-    // Fetch the subscription to get the current item ID
-    const stripeSub = await stripeFetch(`/subscriptions/${sub.stripe_subscription_id}`, null, "GET");
-    const itemId = stripeSub.items?.data?.[0]?.id;
-    if (!itemId) throw new Error("Stripe subscription item missing");
-
-    const currency = String(plan.currency ?? "usd").toLowerCase();
-    const params = form({
-      "items[0][id]": itemId,
-      "items[0][price_data][currency]": currency,
-      "items[0][price_data][product_data][name]": `GrainHero ${plan.name}`,
-      "items[0][price_data][unit_amount]": String(Math.round(Number(plan.price) * 100)),
-      "items[0][price_data][recurring][interval]": plan.interval ?? "month",
-      proration_behavior: "create_prorations",
-      cancel_at_period_end: "false",
-      "metadata[plan_id]": plan.id,
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { changeStripePlan } = await import("@/lib/billing-sync.server");
+    await changeStripePlan(supabaseAdmin, {
+      stripeSubscriptionId: sub.stripe_subscription_id,
+      planId: data.planId,
+      actorId: context.userId,
+      reason: "self-serve upgrade/downgrade",
     });
-    await stripeFetch(`/subscriptions/${sub.stripe_subscription_id}`, params);
     return { ok: true };
   });
 
@@ -69,7 +35,30 @@ export const cancelAtPeriodEnd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sub = await getMyStripeSubscription(context.supabase, context.userId);
-    await stripeFetch(`/subscriptions/${sub.stripe_subscription_id}`, form({ cancel_at_period_end: "true" }));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { setCancelAtPeriodEnd } = await import("@/lib/billing-sync.server");
+    await setCancelAtPeriodEnd(supabaseAdmin, sub.stripe_subscription_id, true);
+    const { logActivity } = await import("@/lib/activity");
+    await logActivity({
+      sb: supabaseAdmin,
+      tenantAdminId: context.userId,
+      actorId: context.userId,
+      action: "billing.cancel_scheduled",
+      targetType: "subscription",
+      targetId: sub.stripe_subscription_id,
+    });
+    const { emitNotification } = await import("@/lib/notify");
+    await emitNotification(supabaseAdmin, {
+      recipientId: context.userId,
+      tenantAdminId: context.userId,
+      category: "billing",
+      severity: "warning",
+      title: "Subscription set to cancel",
+      body: "Your subscription will end at the current period end. You can resume anytime before then.",
+      link: "/subscription",
+      entityType: "subscription",
+      entityId: sub.stripe_subscription_id,
+    });
     return { ok: true };
   });
 
@@ -77,6 +66,17 @@ export const resumeSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sub = await getMyStripeSubscription(context.supabase, context.userId);
-    await stripeFetch(`/subscriptions/${sub.stripe_subscription_id}`, form({ cancel_at_period_end: "false" }));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { setCancelAtPeriodEnd } = await import("@/lib/billing-sync.server");
+    await setCancelAtPeriodEnd(supabaseAdmin, sub.stripe_subscription_id, false);
+    const { logActivity } = await import("@/lib/activity");
+    await logActivity({
+      sb: supabaseAdmin,
+      tenantAdminId: context.userId,
+      actorId: context.userId,
+      action: "billing.resumed",
+      targetType: "subscription",
+      targetId: sub.stripe_subscription_id,
+    });
     return { ok: true };
   });
