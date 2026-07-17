@@ -35,6 +35,20 @@ const publicDoc = (() => {
 
 const files = walk(SRC);
 let violations = 0;
+let warnings = 0;
+
+// Phase 3 — gated table → feature key mapping. An `.insert(` into any of
+// these tables inside a createServerFn handler must be preceded by
+// `assertPlanAllows({ feature: "<key>" ... })` in the same handler.
+const GATED_TABLES: Record<string, string> = {
+  warehouses: "max_warehouses",
+  silos: "max_silos",
+  grain_batches: "max_batches",
+  sensor_devices: "max_sensors",
+  actuators: "max_actuators",
+  buyers: "max_buyers",
+  insurance_policies: "insurance",
+};
 
 // Phase 2 — privileged fns must verify identity beyond the sub claim.
 // Names matching this pattern write to sensitive state and MUST call
@@ -90,6 +104,19 @@ for (const file of files) {
         // Warning-only for now; do not fail the audit until every privileged fn is migrated.
       }
     }
+
+    // Phase 3 — gated .insert must be preceded by an assertPlanAllows in the same handler.
+    for (const [table, feature] of Object.entries(GATED_TABLES)) {
+      const insertRe = new RegExp(`\\.from\\(['"]${table}['"]\\)[\\s\\S]{0,200}\\.insert\\(`);
+      if (!insertRe.test(chain)) continue;
+      const gateRe = new RegExp(`assertPlanAllows\\s*\\([^)]*['"]${feature}['"]`);
+      if (!gateRe.test(chain)) {
+        console.warn(
+          `⚠ ${rel}::${name}: .insert into '${table}' without assertPlanAllows({ feature: '${feature}' })`,
+        );
+        warnings++;
+      }
+    }
   }
 }
 
@@ -97,4 +124,4 @@ if (violations > 0) {
   console.error(`\n${violations} server-fn violation(s)`);
   process.exit(1);
 }
-console.log(`✓ ${files.length} server-fn files audited, no violations`);
+console.log(`✓ ${files.length} server-fn files audited, no violations${warnings ? ` (${warnings} warning(s))` : ""}`);
