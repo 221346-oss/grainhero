@@ -937,6 +937,132 @@ export type Database = {
           },
         ]
       }
+      hardware_order_devices: {
+        Row: {
+          created_at: string
+          id: string
+          model: string | null
+          order_id: string
+          serial: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model?: string | null
+          order_id: string
+          serial: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model?: string | null
+          order_id?: string
+          serial?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_order_devices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hardware_order_installations: {
+        Row: {
+          city: string | null
+          created_at: string
+          destination_address: string | null
+          destination_lat: number | null
+          destination_lng: number | null
+          id: string
+          installer_company: string | null
+          installer_name: string | null
+          installer_phone: string | null
+          installer_photo_url: string | null
+          order_id: string
+          origin_address: string | null
+          origin_lat: number | null
+          origin_lng: number | null
+          scheduled_visit_at: string | null
+          silo_id: string | null
+          status: string
+          updated_at: string
+          warehouse_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          destination_address?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          id?: string
+          installer_company?: string | null
+          installer_name?: string | null
+          installer_phone?: string | null
+          installer_photo_url?: string | null
+          order_id: string
+          origin_address?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
+          scheduled_visit_at?: string | null
+          silo_id?: string | null
+          status?: string
+          updated_at?: string
+          warehouse_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          destination_address?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          id?: string
+          installer_company?: string | null
+          installer_name?: string | null
+          installer_phone?: string | null
+          installer_photo_url?: string | null
+          order_id?: string
+          origin_address?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
+          scheduled_visit_at?: string | null
+          silo_id?: string | null
+          status?: string
+          updated_at?: string
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_order_installations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "hardware_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hardware_order_installations_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hardware_order_installations_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hardware_order_messages: {
         Row: {
           created_at: string
@@ -965,6 +1091,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "hardware_order_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hardware_order_visit_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_at: string
+          id: string
+          note: string
+          order_id: string
+          photo_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_at?: string
+          id?: string
+          note: string
+          order_id: string
+          photo_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_at?: string
+          id?: string
+          note?: string
+          order_id?: string
+          photo_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_order_visit_events_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "hardware_orders"
@@ -1198,6 +1362,7 @@ export type Database = {
       insurance_policies: {
         Row: {
           admin_id: string
+          commission_rate: number
           coverage_amount: number
           coverage_type: string
           covered_batches: Json
@@ -1218,6 +1383,7 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          commission_rate?: number
           coverage_amount?: number
           coverage_type?: string
           covered_batches?: Json
@@ -1238,6 +1404,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          commission_rate?: number
           coverage_amount?: number
           coverage_type?: string
           covered_batches?: Json
@@ -1523,6 +1690,7 @@ export type Database = {
           location: Json | null
           login_count: number
           name: string
+          notes: string | null
           phone: string | null
           preferences: Json | null
           price_id: string | null
@@ -1530,6 +1698,7 @@ export type Database = {
           status: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id: string | null
           subscription_plan: string | null
+          suspended: boolean
           trial_ends_at: string | null
           updated_at: string | null
           updated_by: string | null
@@ -1565,6 +1734,7 @@ export type Database = {
           location?: Json | null
           login_count?: number
           name?: string
+          notes?: string | null
           phone?: string | null
           preferences?: Json | null
           price_id?: string | null
@@ -1572,6 +1742,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
           subscription_plan?: string | null
+          suspended?: boolean
           trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -1607,6 +1778,7 @@ export type Database = {
           location?: Json | null
           login_count?: number
           name?: string
+          notes?: string | null
           phone?: string | null
           preferences?: Json | null
           price_id?: string | null
@@ -1614,6 +1786,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
           subscription_plan?: string | null
+          suspended?: boolean
           trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
