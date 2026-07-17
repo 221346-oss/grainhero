@@ -77,6 +77,7 @@ import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
 import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
@@ -86,6 +87,7 @@ import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './
 import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
@@ -467,6 +469,12 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/platform/tenants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformSlaAlertsRoute =
+  AuthenticatedPlatformSlaAlertsRouteImport.update({
+    id: '/platform/sla-alerts',
+    path: '/platform/sla-alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformSellersRoute =
   AuthenticatedPlatformSellersRouteImport.update({
     id: '/platform/sellers',
@@ -519,6 +527,12 @@ const AuthenticatedPlatformLeadsRoute =
   AuthenticatedPlatformLeadsRouteImport.update({
     id: '/platform/leads',
     path: '/platform/leads',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformInvoiceFailuresRoute =
+  AuthenticatedPlatformInvoiceFailuresRouteImport.update({
+    id: '/platform/invoice-failures',
+    path: '/platform/invoice-failures',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformHealthRoute =
@@ -705,6 +719,7 @@ export interface FileRoutesByFullPath {
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -714,6 +729,7 @@ export interface FileRoutesByFullPath {
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -801,6 +817,7 @@ export interface FileRoutesByTo {
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -810,6 +827,7 @@ export interface FileRoutesByTo {
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -901,6 +919,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -910,6 +929,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -1001,6 +1021,7 @@ export interface FileRouteTypes {
     | '/platform/disputes'
     | '/platform/financials'
     | '/platform/health'
+    | '/platform/invoice-failures'
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
@@ -1010,6 +1031,7 @@ export interface FileRouteTypes {
     | '/platform/plans'
     | '/platform/reviews'
     | '/platform/sellers'
+    | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -1097,6 +1119,7 @@ export interface FileRouteTypes {
     | '/platform/disputes'
     | '/platform/financials'
     | '/platform/health'
+    | '/platform/invoice-failures'
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
@@ -1106,6 +1129,7 @@ export interface FileRouteTypes {
     | '/platform/plans'
     | '/platform/reviews'
     | '/platform/sellers'
+    | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -1196,6 +1220,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/disputes'
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
+    | '/_authenticated/platform/invoice-failures'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/marketplace-health'
@@ -1205,6 +1230,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/plans'
     | '/_authenticated/platform/reviews'
     | '/_authenticated/platform/sellers'
+    | '/_authenticated/platform/sla-alerts'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
@@ -1740,6 +1766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/sla-alerts': {
+      id: '/_authenticated/platform/sla-alerts'
+      path: '/platform/sla-alerts'
+      fullPath: '/platform/sla-alerts'
+      preLoaderRoute: typeof AuthenticatedPlatformSlaAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/sellers': {
       id: '/_authenticated/platform/sellers'
       path: '/platform/sellers'
@@ -1801,6 +1834,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/leads'
       fullPath: '/platform/leads'
       preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/invoice-failures': {
+      id: '/_authenticated/platform/invoice-failures'
+      path: '/platform/invoice-failures'
+      fullPath: '/platform/invoice-failures'
+      preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/health': {
@@ -2056,6 +2096,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
+  AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
   AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -2065,6 +2106,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
+  AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
@@ -2113,6 +2155,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
   AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
+  AuthenticatedPlatformInvoiceFailuresRoute:
+    AuthenticatedPlatformInvoiceFailuresRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
   AuthenticatedPlatformMarketplaceHealthRoute:
@@ -2125,6 +2169,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
+  AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedTechnicianInstallsRoute:
