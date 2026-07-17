@@ -152,17 +152,27 @@ const SCHEMA = z.object({
   currency: z.string().length(3),
   storefrontEnabled: z.boolean(),
   showBrandBanner: z.boolean(),
-  emailSubjects: z.object({
-    placed: z.string().min(1),
-    paymentSucceeded: z.string().min(1),
-    paymentFailed: z.string().min(1),
-    dispatched: z.string().min(1),
+  emailSubjects: z.record(z.string(), z.string().min(1)),
+  emailBodies: z.record(z.string(), z.string().min(1)),
+  dispatch: z.object({
+    couriers: z.array(z.object({
+      key: z.string().min(1),
+      label: z.string().min(1),
+      trackingUrlTemplate: z.string(),
+    })).max(20),
+    slaHours: z.object({
+      inTransit: z.number().min(0).max(1000),
+      outForDelivery: z.number().min(0).max(1000),
+      delivered: z.number().min(0).max(2000),
+    }),
   }),
-  emailBodies: z.object({
-    placed: z.string().min(1),
-    paymentSucceeded: z.string().min(1),
-    paymentFailed: z.string().min(1),
-    dispatched: z.string().min(1),
+  reviews: z.object({
+    enabled: z.boolean(),
+    autoPublish: z.boolean(),
+    minChars: z.number().int().min(0).max(2000),
+    promptDelayHours: z.number().int().min(0).max(720),
+    showOnStorefront: z.boolean(),
+    minCountForAverage: z.number().int().min(0).max(100),
   }),
 });
 
