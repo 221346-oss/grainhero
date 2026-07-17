@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BarChart3, TrendingUp, Package, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle } from "lucide-react";
+import { BarChart3, TrendingUp, Package, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle, ArrowLeft } from "lucide-react";
 import { getAnalyticsOverview } from "@/lib/analytics.functions";
 import { getPlatformAnalyticsBreakdown } from "@/lib/platform-overviews.functions";
 import { getMyRole } from "@/lib/roles.functions";

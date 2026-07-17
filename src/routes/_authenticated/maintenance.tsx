@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -36,7 +37,7 @@ function TenantMaintenanceView() {
   const fn = useServerFn(getMaintenanceOverview);
   const doneFn = useServerFn(markMaintenanceDone);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["maintenance"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({ queryKey: ["maintenance"], queryFn: () => fn() });
   const [q, setQ] = useState("");
 
   const doneM = useMutation({
@@ -57,6 +58,8 @@ function TenantMaintenanceView() {
     ];
     return term ? items.filter((i) => i.name?.toLowerCase().includes(term) || i.id_str?.toLowerCase().includes(term)) : items;
   }, [devices, actuators, q]);
+
+  if (isLoading) return <DashboardSkeleton />;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">

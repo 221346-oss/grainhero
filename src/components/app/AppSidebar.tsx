@@ -289,9 +289,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       {!collapsed && (
         <SidebarHeader className="border-b border-sidebar-border/60">
-          <div className="px-2 py-2">
-            <span className="text-[10px] font-black text-sidebar-foreground/60 uppercase tracking-[0.24em]">
-              {role.replace("_", " ")}
+          <div className="px-2 py-3">
+            <span className="text-xl font-black tracking-tight select-none">
+              <span className="text-[#2FAC0C] text-2xl">G</span>
+              <span className="text-sidebar-foreground">rain</span>
+              <span className="text-[#2FAC0C] text-2xl">H</span>
+              <span className="text-sidebar-foreground">ero</span>
             </span>
           </div>
         </SidebarHeader>

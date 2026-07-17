@@ -1,5 +1,5 @@
-import { ListSkeleton } from "@/components/app/skeletons";
-import { createFileRoute } from "@tanstack/react-router";
+import { ListSkeleton, NotificationsSkeleton } from "@/components/app/skeletons";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Bell, BellOff, CheckCircle2, AlertTriangle, Info, XCircle, Clock,
-  Package, Truck, DollarSign, Shield, FileText, Settings, Check, RefreshCw, Trash2,
+  Package, Truck, DollarSign, Shield, FileText, Settings, Check, RefreshCw, Trash2, ArrowLeft,
 } from "lucide-react";
 import {
   listNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification,
@@ -82,8 +82,13 @@ function NotificationsPage() {
   const notifications = data?.notifications ?? [];
   const unread = data?.unread_count ?? 0;
 
+  if (isLoading) return <NotificationsSkeleton />;
+
   return (
     <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Notifications</h1>

@@ -1,4 +1,4 @@
-import { TableSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -216,21 +216,34 @@ function ActivityLogsPage() {
               <div className="flex flex-col items-center justify-center py-14 text-slate-400">
                 <p className="text-sm">No activity logs found</p>
               </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {logs.map((log) => {
-                  const isSel = selected?.id === log.id;
-                  return (
-                    <div
-                      key={log.id}
-                      className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${isSel ? "bg-emerald-50/60" : "hover:bg-slate-50"}`}
-                      onClick={() => setSelected(log)}
-                    >
-                      <div className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${SEVERITY_DOT[log.severity] ?? SEVERITY_DOT.info}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-slate-900 leading-snug truncate">{log.description}</p>
-                          <span className="text-xs text-slate-400 whitespace-nowrap">{fmtRel(log.created_at)}</span>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <DashboardSkeleton />
+              ) : logs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                  <FileText className="h-12 w-12 mb-3" />
+                  <p className="text-lg font-medium">No activity logs found</p>
+                  <p className="text-sm mt-1">Logs will appear as actions are performed</p>
+                </div>
+              ) : (
+                <div className="relative pl-8 pr-4 py-4 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-slate-300 before:to-slate-100 space-y-4">
+                  {logs.map((log) => {
+                    const cc = CATEGORY[log.category] ?? CATEGORY.system;
+                    const sc = SEVERITY[log.severity] ?? SEVERITY.info;
+                    const isSel = selected?.id === log.id;
+                    let node = "bg-blue-400 border-blue-100";
+                    if (log.severity === "critical") node = "bg-red-500 border-red-100";
+                    else if (log.severity === "warning") node = "bg-amber-400 border-amber-100";
+                    return (
+                      <div
+                        key={log.id}
+                        className={`relative flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${isSel ? "bg-slate-50 ring-1 ring-slate-200" : "hover:bg-slate-50/60"}`}
+                        onClick={() => setSelected(log)}
+                      >
+                        <div className={`absolute -left-5 top-4 w-3 h-3 rounded-full border-2 ${node} z-10 shadow-sm`} />
+                        <div className={`mt-0.5 flex items-center justify-center w-8 h-8 rounded border ${cc.bg}`}>
+                          <span className={cc.color}>{cc.icon}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${SEVERITY_STYLE[log.severity] ?? ""}`}>

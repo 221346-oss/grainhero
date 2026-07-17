@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { ThemeInit } from "@/components/app/ThemeInit";
 
 function NotFoundComponent() {
   return (
@@ -115,6 +116,15 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Apply dark mode before paint to prevent flash */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            var m = localStorage.getItem('gh-theme-mode');
+            if (m === 'dark' || (!m && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              document.documentElement.classList.add('dark');
+            }
+          } catch(e) {}
+        `}} />
       </head>
       <body>
         {children}
@@ -129,6 +139,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeInit />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

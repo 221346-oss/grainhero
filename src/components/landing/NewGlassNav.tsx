@@ -1,20 +1,34 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wheat, Menu, X } from 'lucide-react'
+import { Wheat, Menu, X, Sun, Moon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
+import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from '@/lib/theme'
 
 const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
-  { href: '/team', label: 'Team' },
-  { href: '/contact', label: 'Contact' },
-  { href: '/blog', label: 'Blog' },
+  { to: '/', label: 'Home' },
+  { to: '/', hash: 'features', label: 'Features' },
+  { to: '/', hash: 'pricing', label: 'Pricing' },
+  { to: '/about', label: 'About' },
+  { to: '/team', label: 'Team' },
+  { to: '/blog', label: 'Blog' },
+  { to: '/contact', label: 'Contact' },
+  { to: '/theme-test', label: 'Theme Test' },
 ]
 
 export function NewGlassNav() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [mode, setMode] = useState<ThemeMode>("light")
+
+  useEffect(() => {
+    setMode(getStoredThemeMode())
+  }, [])
+
+  const handleToggle = () => {
+    const next = toggleThemeMode()
+    setMode(next)
+  }
 
   useEffect(() => {
     let lastScrollY = window.scrollY
@@ -42,20 +56,6 @@ export function NewGlassNav() {
       document.body.style.overflow = ''
     }
   }, [isMobileMenuOpen])
-
-  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith('#')) {
-      e.preventDefault()
-      setIsMobileMenuOpen(false)
-      setTimeout(() => {
-        const el = document.querySelector(href)
-        el?.scrollIntoView({ behavior: 'smooth' })
-      }, 100)
-    } else {
-      // Regular link, let it navigate normally
-      setIsMobileMenuOpen(false)
-    }
-  }
 
   return (
     <>
@@ -99,15 +99,15 @@ export function NewGlassNav() {
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
               {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={(e) => handleAnchorClick(e, link.href)}
-                  className="text-[#EDE9D4]/90 hover:text-[#EDE9D4] font-medium transition-all duration-300 hover:scale-105 text-sm tracking-wide relative group"
+                <Link
+                  key={`${link.to}-${link.hash || ''}`}
+                  to={link.to}
+                  hash={link.hash}
+                  className="text-[#EDE9D4]/90 hover:text-[#EDE9D4] font-medium transition-all duration-300 hover:scale-105 text-sm tracking-wide relative group cursor-pointer"
                 >
                   {link.label}
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#2FAC0C] group-hover:w-full transition-all duration-300" />
-                </a>
+                </Link>
               ))}
             </div>
 
@@ -125,6 +125,16 @@ export function NewGlassNav() {
               >
                 Get Started
               </Link>
+
+              {/* Theme toggle */}
+              <button
+                type="button"
+                onClick={handleToggle}
+                aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="hidden sm:grid h-9 w-9 place-items-center rounded-full bg-white/10 text-[#EDE9D4] hover:bg-white/20 transition-colors"
+              >
+                {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
 
               {/* Mobile: MENU Button */}
               <button
@@ -161,7 +171,7 @@ export function NewGlassNav() {
             </div>
 
             {/* Logo */}
-            <Link to="/" className="absolute top-6 left-6 flex items-center gap-2">
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 left-6 flex items-center gap-2">
               <Wheat className="w-7 h-7 text-[#2FAC0C]" />
               <span className="text-[#EDE9D4] text-xl font-bold">GrainHero</span>
             </Link>
@@ -169,20 +179,21 @@ export function NewGlassNav() {
             {/* Nav Links */}
             <div className="flex flex-col items-center justify-center h-full space-y-6">
               {navLinks.map((link, i) => (
-                <motion.a
-                  key={link.href}
-                  href={link.href}
+                <motion.div
+                  key={`${link.to}-${link.hash || ''}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.08 }}
-                  onClick={(e) => {
-                    handleAnchorClick(e, link.href)
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className="text-[#EDE9D4] text-2xl font-medium hover:text-[#2FAC0C] transition-colors"
                 >
-                  {link.label}
-                </motion.a>
+                  <Link
+                    to={link.to}
+                    hash={link.hash}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-[#EDE9D4] text-2xl font-medium hover:text-[#2FAC0C] transition-colors cursor-pointer"
+                  >
+                    {link.label}
+                  </Link>
+                </motion.div>
               ))}
 
               <motion.div
@@ -213,3 +224,4 @@ export function NewGlassNav() {
     </>
   )
 }
+

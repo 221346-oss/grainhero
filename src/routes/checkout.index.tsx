@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Sparkles, Package, Eye, EyeOff } from "lucide-react";
+import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Sparkles, Package, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,11 @@ function CheckoutPage() {
   const [businessName, setBusinessName] = useState("");
   const [taxId, setTaxId] = useState("");
   const draftLoaded = useRef(false);
+
+  // Theme toggle
+  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
+  useEffect(() => { setThemeMode(getStoredThemeMode()); }, []);
+  const handleThemeToggle = () => { setThemeMode(toggleThemeMode()); };
 
   // Field validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -313,26 +319,36 @@ function CheckoutPage() {
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
   return (
-    <div className="min-h-screen py-10 px-4" style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)" }}>
+    <div className="min-h-screen py-10 px-4 checkout-bg checkout-inline-bg bg-background transition-colors">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-1">
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" /> Back to home
           </Link>
-          <Link to="/auth/login" className="text-sm text-slate-600 hover:text-slate-900">
-            Already have an account? Sign in
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/auth/login" className="text-sm text-muted-foreground hover:text-foreground">
+              Already have an account? Sign in
+            </Link>
+            <button
+              type="button"
+              onClick={handleThemeToggle}
+              aria-label="Toggle theme"
+              className="h-8 w-8 grid place-items-center rounded-full border border-border bg-card/80 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {themeMode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 shadow-sm border border-border">
             <Sparkles className="h-3.5 w-3.5" /> Set up in under 3 minutes
           </div>
-          <h1 className="mt-3 text-3xl md:text-4xl font-bold text-slate-900">{stepMeta[step].label}</h1>
-          <p className="text-slate-600 mt-2">Step {step + 1} of 4 — {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.</p>
+          <h1 className="mt-3 text-3xl md:text-4xl font-bold text-foreground">{stepMeta[step].label}</h1>
+          <p className="text-muted-foreground mt-2">Step {step + 1} of 4 — {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.</p>
         </div>
 
-        <div className="rounded-2xl border border-white/70 bg-white/70 backdrop-blur p-3 shadow-sm">
+        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur p-3 shadow-sm">
           <div className="grid grid-cols-4 gap-2">
             {stepMeta.map((s, i) => {
               const Icon = s.icon;
@@ -343,9 +359,9 @@ function CheckoutPage() {
                   key={s.label}
                   type="button"
                   onClick={() => { if (i < step || stepValid.slice(0, i).every(Boolean)) setStep(i); }}
-                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition ${active ? "bg-emerald-600 text-white shadow" : done ? "bg-emerald-100 text-emerald-800" : "text-slate-500 hover:bg-slate-100"}`}
+                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition ${active ? "bg-emerald-600 text-white shadow" : done ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300" : "text-muted-foreground hover:bg-muted"}`}
                 >
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-full ${active ? "bg-white text-emerald-600" : done ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"} text-xs font-bold`}>
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-full ${active ? "bg-white text-emerald-600" : done ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"} text-xs font-bold`}>
                     {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                   </div>
                   <span className="text-[11px] font-semibold leading-tight">{s.label}</span>
@@ -353,7 +369,7 @@ function CheckoutPage() {
               );
             })}
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div className="h-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all" style={{ width: `${((step + 1) / 4) * 100}%` }} />
           </div>
         </div>
@@ -448,7 +464,7 @@ function CheckoutPage() {
                       <input
                         type="number" min={1} max={50} value={iotQuantity}
                         onChange={(e) => setIotQuantity(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
-                        className="w-20 h-9 px-2 rounded border border-slate-200 text-sm text-center"
+                        className="w-20 h-9 px-2 rounded border border-input bg-background text-foreground text-sm text-center"
                       />
                       <Button type="button" variant="outline" size="sm" onClick={() => setIotQuantity(Math.min(50, iotQuantity + 1))}>+</Button>
                       <span className="text-xs text-slate-500">
@@ -649,54 +665,54 @@ function CheckoutPage() {
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   {/* Plan */}
-                  <div className="rounded-lg bg-emerald-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold mb-1">Plan</p>
-                    <p className="font-medium text-slate-900">{planData?.name} — {planData?.priceFrontend}</p>
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-400 font-semibold mb-1">Plan</p>
+                    <p className="font-medium text-foreground">{planData?.name} — {planData?.priceFrontend}</p>
                   </div>
 
                   {/* Buyer */}
-                  <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">Buyer</p>
-                    <p className="text-slate-900">{customerName}</p>
-                    <p className="text-slate-600 text-xs">{customerEmail}</p>
-                    {businessName && <p className="text-slate-600 text-xs mt-0.5">Business: {businessName}</p>}
-                    {taxId && <p className="text-slate-600 text-xs">GST / Tax ID: {taxId}</p>}
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-1">Buyer</p>
+                    <p className="text-foreground">{customerName}</p>
+                    <p className="text-muted-foreground text-xs">{customerEmail}</p>
+                    {businessName && <p className="text-muted-foreground text-xs mt-0.5">Business: {businessName}</p>}
+                    {taxId && <p className="text-muted-foreground text-xs">GST / Tax ID: {taxId}</p>}
                   </div>
 
                   {/* Install site */}
-                  <div className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Install site</p>
-                    <p className="text-slate-900">{address}, {country}</p>
-                    <p className="text-slate-600 text-xs">Phone: {phone}{preferredDate ? ` · Preferred: ${preferredDate}` : ""}</p>
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Install site</p>
+                    <p className="text-foreground">{address}, {country}</p>
+                    <p className="text-muted-foreground text-xs">Phone: {phone}{preferredDate ? ` · Preferred: ${preferredDate}` : ""}</p>
                   </div>
 
                   {/* IoT setup */}
-                  <div className="rounded-lg bg-amber-50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">IoT setup</p>
-                    <p className="text-slate-900">
+                  <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-400 font-semibold">IoT setup</p>
+                    <p className="text-foreground">
                       {iotQuantity} sensor(s) × Rs. {(checkoutTotals?.iotUnit ?? 7000).toLocaleString()} = Rs. {(checkoutTotals?.iotTotal ?? iotQuantity * 7000).toLocaleString()}
                     </p>
                   </div>
                   {notes.trim() && (
-                    <div className="rounded-lg bg-slate-50 p-3">
-                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Notes for technician</p>
-                      <p className="text-slate-900 text-sm mt-1 whitespace-pre-wrap">{notes.trim()}</p>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Notes for technician</p>
+                      <p className="text-foreground text-sm mt-1 whitespace-pre-wrap">{notes.trim()}</p>
                     </div>
                   )}
                   {checkoutTotals && (
-                    <div className="rounded-lg border border-emerald-300 bg-white p-3">
+                    <div className="rounded-lg border border-emerald-300 dark:border-emerald-800 bg-card p-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Plan (first month)</span>
+                        <span className="text-muted-foreground">Plan (first month)</span>
                         <span className="font-medium">Rs. {checkoutTotals.monthlyPrice.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-sm mt-1">
-                        <span className="text-slate-600">Sensor setup</span>
+                        <span className="text-muted-foreground">Sensor setup</span>
                         <span className="font-medium">Rs. {checkoutTotals.iotTotal.toLocaleString()}</span>
                       </div>
                       <Separator className="my-2" />
-                      <div className="flex justify-between font-semibold text-slate-900">
+                      <div className="flex justify-between font-semibold text-foreground">
                         <span>Total due today</span>
-                        <span className="text-emerald-700">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
                       </div>
                     </div>
                   )}
@@ -707,9 +723,9 @@ function CheckoutPage() {
                   >
                     {start.isPending ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Redirecting to Stripe…</>) : (<><Shield className="h-4 w-4 mr-2" /> Pay securely with Stripe</>)}
                   </Button>
-                  <p className="text-[11px] text-slate-500 text-center">You'll be redirected to Stripe's secure checkout. No charges until you confirm.</p>
+                  <p className="text-[11px] text-muted-foreground text-center">You'll be redirected to Stripe's secure checkout. No charges until you confirm.</p>
                   {!canPay && missingReasons.length > 0 && (
-                    <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                    <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-900 dark:text-amber-300">
                       <p className="font-semibold mb-1">Complete these to enable payment:</p>
                       <ul className="list-disc pl-4 space-y-0.5">
                         {missingReasons.map((r) => (<li key={r}>{r}</li>))}
@@ -735,7 +751,7 @@ function CheckoutPage() {
 
           {/* Sticky summary */}
           <aside className="lg:sticky lg:top-6 h-fit">
-            <Card className="border-white/70 bg-white/80 backdrop-blur shadow-md">
+            <Card className="border-border bg-card/90 backdrop-blur shadow-md">
               <CardHeader>
                 <CardTitle className="text-base">Order summary</CardTitle>
               </CardHeader>
@@ -743,24 +759,24 @@ function CheckoutPage() {
                 {checkoutTotals && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">{checkoutTotals.plan.name} (1st month)</span>
+                      <span className="text-muted-foreground">{checkoutTotals.plan.name} (1st month)</span>
                       <span className="font-medium">Rs. {checkoutTotals.monthlyPrice.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">IoT sensors × {checkoutTotals.iotQuantity}</span>
+                      <span className="text-muted-foreground">IoT sensors × {checkoutTotals.iotQuantity}</span>
                       <span className="font-medium">Rs. {checkoutTotals.iotTotal.toLocaleString()}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-sm font-semibold">
                       <span>Total due today</span>
-                      <span className="text-emerald-700">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-xs text-slate-500">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Then monthly</span>
                       <span>Rs. {checkoutTotals.monthlyPrice.toLocaleString()}/mo</span>
                     </div>
                     <Separator />
-                    <ul className="space-y-1.5 text-xs text-slate-600">
+                    <ul className="space-y-1.5 text-xs text-muted-foreground">
                       <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-emerald-600" /> Secure Stripe checkout</li>
                       <li className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-emerald-600" /> Technician visit after payment</li>
                       <li className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Cancel anytime</li>

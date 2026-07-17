@@ -146,10 +146,7 @@ function SuccessPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)" }}
-    >
+    <div className="min-h-screen flex items-center justify-center px-4 bg-background checkout-inline-bg transition-colors">
       <Card className="max-w-sm w-full shadow-xl">
         <CardContent className="p-8 text-center space-y-4">
           {status === "error" ? (

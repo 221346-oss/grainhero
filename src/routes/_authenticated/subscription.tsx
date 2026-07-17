@@ -110,6 +110,8 @@ function SubscriptionPage() {
 
   const canManage = ["super_admin", "admin"].includes(role);
 
+  if (isLoading) return <SubscriptionSkeleton />;
+
   return (
     <AdminPageShell
       title="My subscription"
