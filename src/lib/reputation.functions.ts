@@ -105,7 +105,7 @@ export const listSellerRankings = createServerFn({ method: "GET" })
       .select("id, name, email, company_name, city, country").in("id", ids);
     const pMap = new Map<string, Row>();
     ((profs ?? []) as Row[]).forEach((p) => pMap.set(p.id, p));
-    const sellers = list.map((r) => {
+    const sellers: Row[] = list.map((r) => {
       const score = computeScore(r, settings.reputation.weights);
       return {
         ...r,
@@ -115,7 +115,7 @@ export const listSellerRankings = createServerFn({ method: "GET" })
         profile: pMap.get(r.admin_id) ?? null,
       };
     });
-    sellers.sort((a, b) => b.score - a.score);
+    sellers.sort((a, b) => (b.score as number) - (a.score as number));
     return { sellers };
   });
 
