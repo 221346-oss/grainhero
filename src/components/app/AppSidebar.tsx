@@ -109,6 +109,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
       { name: "platform-marketplace", label: "Marketplace Settings", to: "/platform/marketplace-settings", icon: ShoppingCart, roles: ["super_admin"] },
+      { name: "platform-reviews", label: "Review Moderation", to: "/platform/reviews", icon: ShoppingCart, roles: ["super_admin"] },
     ],
   },
 ];
