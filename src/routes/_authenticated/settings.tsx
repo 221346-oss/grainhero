@@ -127,7 +127,7 @@ function SettingsPage() {
 
   const initials = initialsOf(form.name, authEmail || data?.email || "");
 
-  if (isLoading) return <AdminPageShell title="Settings"><FormSkeleton fields={6} /></AdminPageShell>;
+  if (isLoading) return <SettingsSkeleton />;
 
   return (
     <AdminPageShell
