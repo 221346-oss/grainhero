@@ -96,6 +96,7 @@ import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
+import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/public/cron/review-prompts'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
 import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
 import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
@@ -575,6 +576,12 @@ const ApiPublicCronSlaDigestRoute = ApiPublicCronSlaDigestRouteImport.update({
   path: '/api/public/cron/sla-digest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronReviewPromptsRoute =
+  ApiPublicCronReviewPromptsRouteImport.update({
+    id: '/api/public/cron/review-prompts',
+    path: '/api/public/cron/review-prompts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLifecycleEmailsRoute =
   ApiPublicCronLifecycleEmailsRouteImport.update({
     id: '/api/public/cron/lifecycle-emails',
@@ -699,6 +706,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -791,6 +799,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -887,6 +896,7 @@ export interface FileRoutesById {
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -983,6 +993,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1075,6 +1086,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1170,6 +1182,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/review-prompts'
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -1201,6 +1214,7 @@ export interface RootRouteChildren {
   ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
   ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
+  ApiPublicCronReviewPromptsRoute: typeof ApiPublicCronReviewPromptsRoute
   ApiPublicCronSlaDigestRoute: typeof ApiPublicCronSlaDigestRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
@@ -1820,6 +1834,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronSlaDigestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/review-prompts': {
+      id: '/api/public/cron/review-prompts'
+      path: '/api/public/cron/review-prompts'
+      fullPath: '/api/public/cron/review-prompts'
+      preLoaderRoute: typeof ApiPublicCronReviewPromptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/lifecycle-emails': {
       id: '/api/public/cron/lifecycle-emails'
       path: '/api/public/cron/lifecycle-emails'
@@ -2118,6 +2139,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
   ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
+  ApiPublicCronReviewPromptsRoute: ApiPublicCronReviewPromptsRoute,
   ApiPublicCronSlaDigestRoute: ApiPublicCronSlaDigestRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
