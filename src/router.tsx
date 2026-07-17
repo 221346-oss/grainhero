@@ -64,6 +64,8 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/financials": FinancialsSkeleton,
   "/platform/orders": PlatformOrdersSkeleton,
   "/technician/installs": OrdersSkeleton,
+  "/sales": OrdersSkeleton,
+  "/listings": GrainBatchesSkeleton,
 };
 
 function AutoPending() {
