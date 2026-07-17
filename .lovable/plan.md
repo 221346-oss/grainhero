@@ -1,77 +1,42 @@
-# Phase 8 — Hardware Order Lifecycle & Installation Workflow
+## Phase 9 — Finish UI on top of the telemetry / actuator / alerts backend
 
-Turn the current hardware-order tables into an end-to-end operational flow: order placed → payment confirmed → warehouse packs → technician assigned → on-site install → device commissioned → subscription features unlocked. Every state change emits a notification (Phase 7) and an activity log (Phase 1).
+The Phase 9 backend (telemetry ingest, threshold evaluation with hysteresis, actuator command queue, bridge endpoints, heartbeat sweep) is already shipped. This plan closes Phase 9 by wiring the four user-facing surfaces to that backend, plus one small server-fn addition and the pg_cron hookup.
 
-## Goals
+### 1. Small server-fn addition
+- Add `src/lib/alerts.functions.ts` with `listAlerts({ siloId?, severity?, status?, from?, to? })`, `acknowledgeAlert(id)`, `assignAlert(id, userId)`. Each writes `logActivity` + `emitNotification` where relevant. RLS via `requireSupabaseAuth`.
 
-1. Deterministic order state machine with server-enforced transitions.
-2. Super-admin: assign technicians, mark shipped, view whole pipeline.
-3. Technician: see assigned installs, log visit events, upload proof, mark installed.
-4. Admin (buyer): live tracker of their order + install progress + device serials.
-5. Devices auto-registered to the admin's tenant and linked to a silo on commissioning.
+### 2. Shared UI primitives (under `src/components/app/`)
+- `sensors/QualityBadge.tsx` — chip for `ok | stale | out_of_range | missing`.
+- `sensors/LiveReadingChart.tsx` — Recharts line, `useEffect` realtime subscription to `sensor_readings` filtered by `device_id`, cleanup on unmount, rolling 100-point buffer, "Live paused" badge after 3 subscribe failures (falls back to 15 s poll of `getSiloReadings`).
+- `sensors/ThresholdDrawer.tsx` — CRUD via `listThresholds` / `saveThreshold` / `deleteThreshold`; surfaces `PLAN_LIMIT` errors from `assertPlanAllows("max_active_alert_rules")` via existing `PlanLimitBanner`.
+- `actuators/CommandStatusBadge.tsx` — `queued | sent | ack | failed | expired`.
+- `actuators/CommandConsole.tsx` — form (command + params), calls `issueCommand`, lists recent via `listCommands`, realtime subscribe to `actuator_commands`, disables submit while an in-flight command exists for the same actuator (client-side dedupe on top of server rate-limit).
+- `alerts/AlertsFilterBar.tsx` and `alerts/AlertRow.tsx` — filters (silo, severity, status, date) + row with acknowledge/assign actions.
 
-## Data (migration)
+### 3. Route edits
+- `src/routes/_authenticated/sensors.tsx` — keep grid; each card gets a "Live" button that opens a drawer with `LiveReadingChart` + `ThresholdDrawer` trigger.
+- `src/routes/_authenticated/actuators.tsx` — attach `CommandConsole` inline per actuator card.
+- `src/routes/_authenticated/grain-alerts.tsx` — replace static list with `AlertsFilterBar` + `AlertRow` grid + realtime subscription on `grain_alerts` (filtered by tenant `admin_id`).
+- Device offline banner on `sensors.tsx` derived from `device_heartbeats.status`.
 
-- Extend `hardware_orders.status` enum semantics used by app code (no DB enum change; keep TEXT with a check constraint):
-  `pending_payment | paid | packing | shipped | in_transit | installing | completed | cancelled | refunded`.
-- Add columns: `assigned_technician_id uuid`, `shipped_at`, `expected_arrival_at`, `tracking_carrier`, `tracking_number`, `installed_at`, `cancelled_reason`.
-- `hardware_order_installations`: add `technician_id`, `silo_id`, `status` (`scheduled|en_route|onsite|completed|blocked`), `scheduled_for`, `completed_at`, `blocker_note`.
-- `hardware_order_visit_events`: already exists — add `photo_urls text[]`, `location jsonb` (lat/lng), `event_type` check (`arrived|inspection|install|test|handover|issue`).
-- `hardware_order_devices`: add `sensor_device_id uuid` (nullable, links to `sensor_devices` once commissioned), `commissioned_at`.
-- New table `hardware_order_status_history` (order_id, from_status, to_status, actor_id, note, created_at) with GRANTs + RLS (tenant admin read own, technician read assigned, super-admin all).
+### 4. Skeletons (in `src/components/app/skeletons.tsx`, registered in `src/router.tsx > PAGE_SKELETONS`)
+- `SensorsSkeleton` (already exists — extend if needed for drawer trigger)
+- `ActuatorsSkeleton` (grid of console cards)
+- `AlertsSkeleton` (filter bar + rows)
 
-## Server functions (`src/lib/hardware-lifecycle.functions.ts`)
+### 5. Cron wiring (uses `supabase--insert`, not migration)
+- Schedule `heartbeat-sweep` every 2 minutes calling `POST https://project--08a93ae3-e513-4d21-8fb9-bf6979e71541.lovable.app/api/public/cron/heartbeat-sweep` with `apikey` header set to the anon key.
 
-All protected via `requireSupabaseAuth`, role-checked, emitting notify + activity:
+### 6. Verification (must pass before Phase 10)
+1. `bunx tsgo --noEmit` — 0 errors.
+2. `bun scripts/audit-server-fns.ts` + `audit-routes.ts` — 0 violations.
+3. Playwright: open a sensor → live chart renders → set a threshold → over-cap attempt shows `PlanLimitBanner`.
+4. Issue actuator command → `queued` row appears → simulate ack via `/api/public/actuator-ack` (HMAC-signed) → row flips to `ack` without reload.
+5. Backdate a heartbeat + hit cron endpoint → offline alert appears in `grain-alerts` within 2 s.
 
-- `superadminListOrdersPipeline({ status?, search? })` — grouped by status for kanban.
-- `superadminAssignTechnician({ orderId, technicianId, scheduledFor })`.
-- `superadminMarkShipped({ orderId, carrier, trackingNumber, expectedArrivalAt })`.
-- `superadminCancelOrder({ orderId, reason })` — refund path handled separately (Phase 6).
-- `technicianListMyInstalls()` — installs assigned to me, joined with order + admin contact.
-- `technicianUpdateInstallStatus({ installId, status, note? })`.
-- `technicianLogVisitEvent({ installId, eventType, note, photoUrls?, location? })`.
-- `technicianCommissionDevice({ installId, deviceId, serialNumber, siloId, sensorMetadata })` — inserts `sensor_devices`, links via `hardware_order_devices.sensor_device_id`, flips install to `completed` when all devices commissioned.
-- `adminGetMyOrderTracker({ orderId })` — timeline: status history, tracking, install events (sanitised — no technician PII beyond first name).
+### Out of scope (deferred to later phases)
+- Mobile push for alerts → Phase 12 (Expo).
+- ML anomaly overlay on chart → Phase 14 (ML feedback loop).
+- Bulk threshold CSV import → Phase 20 (Enterprise polish).
 
-State machine enforced by a helper `assertTransition(from, to, actorRole)`; illegal transitions throw a typed error. Every transition writes to `hardware_order_status_history` + emits notification to admin (order updates) and super-admin (exception events).
-
-## UI
-
-### Super-admin
-- `/platform/orders` upgraded: filter chips per status, "Assign technician" and "Mark shipped" dialogs inline in the existing table, per-row link → `/platform/orders/$orderId`.
-- `/platform/orders/$orderId` — full detail: timeline, devices, install log, admin/tenant, actions.
-
-### Technician
-- `/technician/installs` list (route already scoped under `_authenticated`).
-- `/technician/installs/$installId` — status stepper, event log form (photo upload via existing Cloudinary connector), commissioning wizard (add serial → pick silo → confirm).
-
-### Admin (buyer)
-- `/orders/$orderId` — public-to-tenant tracker (already partially exists; wire to `adminGetMyOrderTracker`). Shows ETA, carrier + tracking link, install schedule, current step badge, and a "Contact support" CTA.
-
-Shared components: `<OrderStatusStepper>`, `<InstallTimeline>`, `<DeviceCommissioningWizard>`.
-
-## Notifications (uses Phase 7 dispatcher)
-
-Category `order` / `install`, severity varies:
-- Admin: paid → packing → shipped (with tracking) → technician assigned (with ETA) → completed.
-- Technician: new assignment; schedule change; cancellation.
-- Super-admin: any `blocked` install event; any failed commissioning; cancellations.
-
-## Skeletons & loading
-
-- Add `OrderPipelineSkeleton`, `OrderDetailSkeleton`, `TechnicianInstallSkeleton` to `src/components/app/skeletons.tsx`; register in `PAGE_SKELETONS`.
-
-## Audits & docs
-
-- Extend `scripts/audit-server-fns.ts` warn-list acknowledging that all new lifecycle fns must call `getVerifiedUser()` (they will).
-- Update `docs/route-matrix.md` with new routes and role scope.
-- Update `docs/public-server-fns.md` — none of the new fns are public.
-
-## Non-goals
-
-- No refund automation (Phase 6 covers billing side; cancel just marks status).
-- No mobile technician app (Phase 15+ in master plan).
-- No GPS live tracking — just carrier tracking link + optional lat/lng snapshot on visit events.
-
-Reply **go** to build.
+Reply **approve** to build, or send edits.
