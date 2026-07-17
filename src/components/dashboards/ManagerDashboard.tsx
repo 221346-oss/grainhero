@@ -49,42 +49,6 @@ function useCountUp(target: number, duration = 1200) {
 }
 
 // ============================================================================
-// 3. HERO SECTION
-// ============================================================================
-
-function HeroSection({ name }: { name?: string }) {
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const t = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const fmt = (d: Date) =>
-    d.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-  const timeFmt = (d: Date) =>
-    d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-
-  return (
-    <div className="py-2">
-      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#111827] tracking-tight leading-tight">
-        Welcome, {name || "Manahil Malik"}
-      </h1>
-      <p className="text-base md:text-lg text-[#6B7280] mt-3 font-medium">
-        {fmt(currentTime)} &middot;{" "}
-        <span className="tabular-nums font-semibold text-[#111827]">{timeFmt(currentTime)}</span>
-      </p>
-    </div>
-  );
-}
-
-// ============================================================================
 // 4. STAT CARD
 // ============================================================================
 
