@@ -157,21 +157,27 @@ export const getOrder = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const [orderRes, eventsRes, invoiceRes, paymentsRes] = await Promise.all([
+    const [orderRes, eventsRes, invoiceRes] = await Promise.all([
       context.supabase.from("buyer_orders")
         .select("*, buyers(*), grain_listings(*, grain_batches(id, batch_number, grain_type, quality_grade))")
         .eq("id", data.orderId).single(),
       context.supabase.from("buyer_order_events").select("*").eq("order_id", data.orderId)
         .order("created_at", { ascending: false }),
       context.supabase.from("buyer_invoices").select("*").eq("order_id", data.orderId).maybeSingle(),
-      context.supabase.from("buyer_payments").select("*").eq("invoice_id", data.orderId).order("created_at", { ascending: false }),
     ]);
     if (orderRes.error) throw orderRes.error;
+    const invoice = (invoiceRes.data as Row | null) ?? null;
+    let payments: Row[] = [];
+    if (invoice?.id) {
+      const { data: pays } = await context.supabase.from("buyer_payments")
+        .select("*").eq("invoice_id", invoice.id).order("created_at", { ascending: false });
+      payments = (pays ?? []) as Row[];
+    }
     return {
       order: orderRes.data as Row,
       events: (eventsRes.data ?? []) as Row[],
-      invoice: (invoiceRes.data as Row | null) ?? null,
-      payments: (paymentsRes.data ?? []) as Row[],
+      invoice,
+      payments,
     };
   });
 
