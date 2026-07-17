@@ -57,6 +57,7 @@ import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authen
 import { Route as AuthenticatedDataVisualizationRouteImport } from './routes/_authenticated/data-visualization'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
+import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
@@ -340,6 +341,11 @@ const AuthenticatedBuyersRoute = AuthenticatedBuyersRouteImport.update({
   path: '/buyers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAttentionRoute = AuthenticatedAttentionRouteImport.update({
+  id: '/attention',
+  path: '/attention',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -540,6 +546,7 @@ export interface FileRoutesByFullPath {
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/attention': typeof AuthenticatedAttentionRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/data-visualization': typeof AuthenticatedDataVisualizationRoute
@@ -619,6 +626,7 @@ export interface FileRoutesByTo {
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/attention': typeof AuthenticatedAttentionRoute
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/data-visualization': typeof AuthenticatedDataVisualizationRoute
@@ -701,6 +709,7 @@ export interface FileRoutesById {
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/attention': typeof AuthenticatedAttentionRoute
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/data-visualization': typeof AuthenticatedDataVisualizationRoute
@@ -783,6 +792,7 @@ export interface FileRouteTypes {
     | '/actuators'
     | '/ai-predictions'
     | '/analytics'
+    | '/attention'
     | '/buyers'
     | '/dashboard'
     | '/data-visualization'
@@ -862,6 +872,7 @@ export interface FileRouteTypes {
     | '/actuators'
     | '/ai-predictions'
     | '/analytics'
+    | '/attention'
     | '/buyers'
     | '/dashboard'
     | '/data-visualization'
@@ -943,6 +954,7 @@ export interface FileRouteTypes {
     | '/_authenticated/actuators'
     | '/_authenticated/ai-predictions'
     | '/_authenticated/analytics'
+    | '/_authenticated/attention'
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
     | '/_authenticated/data-visualization'
@@ -1371,6 +1383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuyersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/attention': {
+      id: '/_authenticated/attention'
+      path: '/attention'
+      fullPath: '/attention'
+      preLoaderRoute: typeof AuthenticatedAttentionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
       path: '/analytics'
@@ -1651,6 +1670,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedAiPredictionsRoute: typeof AuthenticatedAiPredictionsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedAttentionRoute: typeof AuthenticatedAttentionRoute
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDataVisualizationRoute: typeof AuthenticatedDataVisualizationRoute
@@ -1697,6 +1717,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedAiPredictionsRoute: AuthenticatedAiPredictionsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedAttentionRoute: AuthenticatedAttentionRoute,
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDataVisualizationRoute: AuthenticatedDataVisualizationRoute,
