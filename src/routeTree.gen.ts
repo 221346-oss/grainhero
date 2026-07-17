@@ -112,6 +112,7 @@ import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
+import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -680,6 +681,12 @@ const AuthenticatedBuyerOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedBuyerOrdersRoute,
   } as any)
+const ApiPublicWebhooksCarrierCarrierCodeRoute =
+  ApiPublicWebhooksCarrierCarrierCodeRouteImport.update({
+    id: '/api/public/webhooks/carrier/$carrierCode',
+    path: '/api/public/webhooks/carrier/$carrierCode',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -784,6 +791,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -886,6 +894,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -992,6 +1001,7 @@ export interface FileRoutesById {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1098,6 +1108,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/carrier/$carrierCode'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1200,6 +1211,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/carrier/$carrierCode'
   id:
     | '__root__'
     | '/'
@@ -1305,6 +1317,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/carrier/$carrierCode'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1338,6 +1351,7 @@ export interface RootRouteChildren {
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiPublicWebhooksCarrierCarrierCodeRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2063,6 +2077,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedBuyerOrdersRoute
     }
+    '/api/public/webhooks/carrier/$carrierCode': {
+      id: '/api/public/webhooks/carrier/$carrierCode'
+      path: '/api/public/webhooks/carrier/$carrierCode'
+      fullPath: '/api/public/webhooks/carrier/$carrierCode'
+      preLoaderRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -2346,6 +2367,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiPublicWebhooksCarrierCarrierCodeRoute:
+    ApiPublicWebhooksCarrierCarrierCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
