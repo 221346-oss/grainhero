@@ -7,7 +7,7 @@ const input = z.object({ to: z.string().trim().email().max(200) });
 
 export const sendAdminTestEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => input.parse(d))
+  .validator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
     // Authorize: only super_admin or admin
     const isAdmin = (await getEffectiveRole(context.supabase, context.userId)) === "admin";

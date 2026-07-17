@@ -25,9 +25,9 @@ import {
   QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
   Brain, Cpu, BarChart3,
   CreditCard,
-  Activity,   AlertOctagon, FileBarChart,
+  Activity, AlertOctagon, FileBarChart,
   Wrench, Server, ShieldCheck, MoreHorizontal,
-  DollarSign, TrendingUp, UserPlus, ScrollText, MessageSquareWarning,
+  DollarSign, TrendingUp, UserPlus, ScrollText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -57,7 +57,8 @@ const pinnedNav: NavItem[] = [
   { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
   { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
   { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
-  { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
+  { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
+  { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
   { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
 ];
 
@@ -80,7 +81,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Business",
     items: [
-      { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["super_admin", "admin", "manager"] },
+      { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
       { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
       { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
       { name: "plan-management", label: "Plan Management", to: "/plan-management", icon: CreditCard, roles: ["admin"] },
@@ -89,14 +90,11 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Platform",
     items: [
-      { name: "platform-overview", label: "Overview", to: "/platform", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-tenants", label: "Tenants", to: "/platform/tenants", icon: Building2, roles: ["super_admin"] },
       { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
       { name: "platform-plans", label: "Plans & Thresholds", to: "/platform/plans", icon: CreditCard, roles: ["super_admin"] },
       { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
       { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
       { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-reporting", label: "Reporting", to: "/platform/reporting", icon: MessageSquareWarning, roles: ["super_admin"] },
       { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
     ],
@@ -118,26 +116,26 @@ function NavRow({ item, active, collapsed }: { item: NavItem; active: boolean; c
         isActive={active}
         tooltip={item.label}
         className={cn(
-          "h-9 rounded-lg transition-all",
+          "h-14 rounded-lg transition-all",
           collapsed && "justify-center px-0",
           active
-            ? "bg-[--fusion-mint] text-[--fusion-ink] font-semibold shadow-sm hover:bg-[--fusion-mint] hover:text-[--fusion-ink]"
+            ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm hover:bg-emerald-50 hover:text-emerald-700"
             : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
         )}
       >
-        <Link to={item.to} data-tour={`nav-${item.name}`} className="flex items-center gap-3">
+        <Link to={item.to} data-tour={`nav-${item.name}`} className="flex items-center gap-3.5">
           <item.icon
             className={cn(
               "shrink-0 transition-transform duration-200",
-              active ? "h-[18px] w-[18px] scale-110" : "h-4 w-4 group-hover/menu-item:scale-110",
+              active ? "h-6 w-6 scale-110" : "h-[22px] w-[22px] group-hover/menu-item:scale-110",
             )}
             strokeWidth={active ? 2.6 : 2}
           />
-          {!collapsed && <span className="truncate text-[13px]">{item.label}</span>}
+          {!collapsed && <span className="truncate text-lg">{item.label}</span>}
           {!collapsed && item.badge && (
             <Badge
               className={cn(
-                "ml-auto text-[9px] px-1.5 py-0 h-4 font-black tracking-wide border-0",
+                "ml-auto text-xs px-2.5 py-0.5 h-5 font-black tracking-wide border-0",
                 item.badge === "AI" || item.badge === "ML"
                   ? "bg-[--fusion-grape] text-white"
                   : "bg-[--fusion-ink]/10 text-[--fusion-ink]",
@@ -160,7 +158,7 @@ function Section({ label, items, role, currentPath, showLabel = true }: { label?
   return (
     <SidebarGroup className={cn(collapsed && "px-0 items-center")}>
       {!collapsed && showLabel && label && (
-        <SidebarGroupLabel className="text-[10px] font-black text-sidebar-foreground/55 uppercase tracking-[0.18em] px-2">
+        <SidebarGroupLabel className="text-base font-black text-sidebar-foreground/55 uppercase tracking-[0.18em] px-2">
           {label}
         </SidebarGroupLabel>
       )}
@@ -195,18 +193,18 @@ function MoreButton({ role, currentPath }: { role: AppRole; currentPath: string 
                 <SidebarMenuButton
                   tooltip="More"
                   className={cn(
-                    "h-9 rounded-lg text-sidebar-foreground/85 hover:bg-sidebar-accent",
+                    "h-14 rounded-lg text-sidebar-foreground/85 hover:bg-sidebar-accent",
                     collapsed && "justify-center px-0",
                   )}
                 >
-                  <MoreHorizontal className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span className="text-[13px]">More</span>}
+                  <MoreHorizontal className="h-[22px] w-[22px] shrink-0" />
+                  {!collapsed && <span className="text-lg">More</span>}
                 </SidebarMenuButton>
               </PopoverTrigger>
-              <PopoverContent side="right" align="start" sideOffset={8} className="w-64 p-2 max-h-[70vh] overflow-y-auto no-scrollbar">
+              <PopoverContent side="right" align="start" sideOffset={8} className="w-72 p-3 max-h-[70vh] overflow-y-auto no-scrollbar">
                 {visibleGroups.map((g) => (
                   <div key={g.label} className="mb-2 last:mb-0">
-                    <div className="px-2 py-1 text-[10px] font-black text-muted-foreground uppercase tracking-[0.18em]">{g.label}</div>
+                    <div className="px-2 py-2 text-sm font-black text-muted-foreground uppercase tracking-[0.18em]">{g.label}</div>
                     <div className="flex flex-col">
                       {g.items.map((item) => {
                         const active = currentPath === item.to;
@@ -215,16 +213,16 @@ function MoreButton({ role, currentPath }: { role: AppRole; currentPath: string 
                             key={item.name}
                             to={item.to}
                             className={cn(
-                              "flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors",
+                              "flex items-center gap-3.5 rounded-md px-3 py-2.5 text-lg transition-colors",
                               active
-                                ? "bg-[--fusion-mint] text-[--fusion-ink] font-semibold"
+                                ? "bg-emerald-50 text-emerald-700 font-semibold"
                                 : "text-foreground hover:bg-muted",
                             )}
                           >
-                            <item.icon className="h-4 w-4 shrink-0" />
-                            <span className="truncate flex-1">{item.label}</span>
+                            <item.icon className="h-[22px] w-[22px] shrink-0" />
+                            <span className="truncate flex-1 text-lg">{item.label}</span>
                             {item.badge && (
-                              <Badge className="text-[9px] px-1.5 h-4 border-0 bg-[--fusion-grape] text-white">{item.badge}</Badge>
+                              <Badge className="text-xs px-2.5 h-5 border-0 bg-[--fusion-grape] text-white">{item.badge}</Badge>
                             )}
                           </Link>
                         );
@@ -290,12 +288,9 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       {!collapsed && (
         <SidebarHeader className="border-b border-sidebar-border/60">
-          <div className="px-2 py-3">
-            <span className="text-xl font-black tracking-tight select-none">
-              <span className="text-[#2FAC0C] text-2xl">G</span>
-              <span className="text-sidebar-foreground">rain</span>
-              <span className="text-[#2FAC0C] text-2xl">H</span>
-              <span className="text-sidebar-foreground">ero</span>
+          <div className="px-2 py-2">
+            <span className="text-base font-black text-sidebar-foreground/60 uppercase tracking-[0.24em]">
+              {role.replace("_", " ")}
             </span>
           </div>
         </SidebarHeader>
@@ -311,12 +306,12 @@ export function AppSidebar() {
           size="sm"
           onClick={handleSignOut}
           className={cn(
-            "h-9 text-sidebar-foreground/80 hover:text-red-600 hover:bg-red-500/10",
+            "h-14 text-sidebar-foreground/80 hover:text-red-600 hover:bg-red-500/10",
             collapsed ? "justify-center px-0 w-9 mx-auto" : "justify-start",
           )}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span className="ml-2">Sign out</span>}
+          <LogOut className="h-[22px] w-[22px] shrink-0" />
+          {!collapsed && <span className="ml-2 text-lg">Sign out</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>

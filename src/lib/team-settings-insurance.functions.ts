@@ -48,7 +48,7 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
 export const inviteTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
+  .validator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
@@ -98,7 +98,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
 
 export const updateTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
+  .validator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
@@ -121,7 +121,7 @@ export const updateTeamMember = createServerFn({ method: "POST" })
 
 export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin) throw new Error("Forbidden");
@@ -148,7 +148,7 @@ export const getMySettings = createServerFn({ method: "GET" })
 
 export const updateMySettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
+  .validator((d: {
     name?: string; phone?: string; business_type?: string; avatar?: string | null;
     address?: Record<string, unknown>; location?: Record<string, unknown>;
     preferences?: Record<string, unknown>;
@@ -195,7 +195,7 @@ export const listPolicies = createServerFn({ method: "GET" })
 
 export const upsertPolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
+  .validator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
@@ -227,7 +227,7 @@ export const upsertPolicy = createServerFn({ method: "POST" })
 
 export const deletePolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("insurance_policies").delete().eq("id", data.id);
     if (error) throw error;
@@ -245,7 +245,7 @@ export const listClaims = createServerFn({ method: "GET" })
 
 export const upsertClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: Partial<InsuranceClaimRow> & { id?: string }) => d)
+  .validator((d: Partial<InsuranceClaimRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
@@ -277,7 +277,7 @@ export const upsertClaim = createServerFn({ method: "POST" })
 
 export const deleteClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("insurance_claims").delete().eq("id", data.id);
     if (error) throw error;

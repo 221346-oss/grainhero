@@ -96,14 +96,14 @@
   --gradient-fusion: linear-gradient(135deg, #DCF095 0%, #ADFFBC 100%);
   --gradient-fusion-soft: linear-gradient(135deg, #EEF7C6 0%, #D7FFDF 100%);
 
-  --sidebar: #DCF095;
+  --sidebar: #ffffff;
   --sidebar-foreground: oklch(0.18 0.02 150);
-  --sidebar-primary: #ADFFBC;
-  --sidebar-primary-foreground: oklch(0.18 0.02 150);
-  --sidebar-accent: color-mix(in oklab, #ADFFBC 55%, transparent);
-  --sidebar-accent-foreground: oklch(0.15 0.02 150);
-  --sidebar-border: color-mix(in oklab, #0a0f00 8%, transparent);
-  --sidebar-ring: #C674F2;
+  --sidebar-primary: oklch(0.68 0.22 145);
+  --sidebar-primary-foreground: oklch(0.15 0.02 150);
+  --sidebar-accent: oklch(0.95 0.02 130);
+  --sidebar-accent-foreground: oklch(0.18 0.02 150);
+  --sidebar-border: oklch(0.91 0.03 130);
+  --sidebar-ring: oklch(0.68 0.22 145);
 }
 
 .dark {
@@ -133,14 +133,14 @@
   --chart-4: oklch(0.75 0.18 90);
   --chart-5: oklch(0.65 0.22 25);
 
-  --sidebar: oklch(0.22 0.02 150);
-  --sidebar-foreground: #DCF095;
-  --sidebar-primary: #2b6b3a;
-  --sidebar-primary-foreground: #ADFFBC;
-  --sidebar-accent: color-mix(in oklab, #ADFFBC 15%, transparent);
-  --sidebar-accent-foreground: #ADFFBC;
-  --sidebar-border: color-mix(in oklab, #ADFFBC 10%, transparent);
-  --sidebar-ring: #C674F2;
+  --sidebar: oklch(0.17 0.02 150);
+  --sidebar-foreground: oklch(0.92 0.02 130);
+  --sidebar-primary: oklch(0.68 0.22 145);
+  --sidebar-primary-foreground: oklch(0.15 0.02 150);
+  --sidebar-accent: oklch(0.22 0.02 150);
+  --sidebar-accent-foreground: oklch(0.92 0.02 130);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.68 0.22 145);
 }
 
 @layer base {
@@ -304,3 +304,30 @@ html { scroll-behavior: smooth; }
   50%  { width: 70%;  margin-left: 15%; }
   100% { width: 0%;   margin-left: 100%; }
 }
+
+/* Manager dashboard quadrant panels — consistent size, hidden scroll when overflow */
+@utility quad-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #EAEAEA;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.02);
+  aspect-ratio: 1 / 1;
+  min-height: 260px;
+  max-height: 340px;
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+@utility quad-scroll {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-right: 2px;
+}
+.quad-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }

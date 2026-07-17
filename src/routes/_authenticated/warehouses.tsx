@@ -173,7 +173,7 @@ function WarehousesPage() {
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row gap-3 mb-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, ID, or location…" className="pl-9" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -198,12 +198,12 @@ function WarehousesPage() {
 
       {/* Plan limit warning banner */}
       {warehouseLimitMessage && (
-        <Card className="border-amber-300 bg-amber-50 mb-4">
+        <Card className="border-amber-300 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 mb-4">
           <CardContent className="p-4 flex items-start gap-3">
-            <Building2 className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <Building2 className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div className="flex-1 text-sm">
-              <p className="font-medium text-amber-900">{warehouseLimitMessage}</p>
-              <Link to="/subscription" className="text-amber-700 underline text-xs">
+              <p className="font-medium text-amber-900 dark:text-amber-200">{warehouseLimitMessage}</p>
+              <Link to="/subscription" className="text-amber-700 dark:text-amber-300 underline text-xs">
                 View plans →
               </Link>
             </div>
@@ -217,18 +217,18 @@ function WarehousesPage() {
       ) : error ? (
         <Card className="border-rose-200"><CardContent className="py-8 text-center text-rose-600 text-sm">{(error as Error).message}</CardContent></Card>
       ) : rows.length === 0 ? (
-        <Card className="border-dashed border-slate-300 bg-white/50">
-          <CardContent className="py-16 flex flex-col items-center text-slate-500">
+        <Card className="border-dashed border-border bg-card/60">
+          <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
             <Inbox className="w-10 h-10 mb-3 opacity-40" />
             <p className="text-sm mb-4">No warehouses yet.</p>
             <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add your first warehouse</Button>
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-slate-200/70 shadow-sm overflow-hidden">
+        <Card className="shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-600">
+              <thead className="bg-muted/50 border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold">Warehouse</th>
                   <th className="px-4 py-3 text-left font-semibold">Location</th>
@@ -238,29 +238,29 @@ function WarehousesPage() {
                   <th className="px-4 py-3 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border">
                 {rows.map((w) => (
-                  <tr key={w.id} className="hover:bg-slate-50/50">
+                  <tr key={w.id} className="hover:bg-muted/40">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{w.name}</div>
-                      <div className="text-xs text-slate-500">{w.warehouse_id}</div>
+                      <div className="font-medium text-foreground">{w.name}</div>
+                      <div className="text-xs text-muted-foreground">{w.warehouse_id}</div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-4 py-3 text-foreground/80">
                       <div className="flex items-start gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 mt-0.5 text-muted-foreground shrink-0" />
                         <div>
                           <div>{w.location?.description ?? "—"}</div>
-                          {w.location?.address && <div className="text-xs text-slate-500">{w.location.address}</div>}
+                          {w.location?.address && <div className="text-xs text-muted-foreground">{w.location.address}</div>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-4 py-3 text-foreground/80">
                       {w.total_capacity_kg ? `${(w.total_capacity_kg / 1000).toLocaleString()} t` : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <Link
                         to="/silos"
-                        className="inline-flex items-center gap-1 text-sm text-emerald-700 hover:text-emerald-900 hover:underline"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:text-primary/80 hover:underline"
                       >
                         <Package className="w-3.5 h-3.5" /> {w.silos?.length ?? 0}
                       </Link>
@@ -362,9 +362,9 @@ function WarehousesPage() {
               <Row label="Silos"><Badge variant="secondary">{selected.silos?.length ?? 0}</Badge></Row>
               <Row label="Created">{selected.created_at ? new Date(selected.created_at).toLocaleString() : "—"}</Row>
               {selected.notes && (
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="text-xs uppercase tracking-wider text-slate-500 mb-1">Notes</div>
-                  <p className="text-slate-700 whitespace-pre-wrap">{selected.notes}</p>
+                <div className="pt-2 border-t border-border">
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Notes</div>
+                  <p className="text-foreground/80 whitespace-pre-wrap">{selected.notes}</p>
                 </div>
               )}
             </div>
@@ -405,27 +405,32 @@ function WarehousesPage() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 items-start">
-      <span className="text-xs uppercase tracking-wider text-slate-500 pt-0.5">{label}</span>
-      <span className="text-slate-800 text-right">{children}</span>
+      <span className="text-xs uppercase tracking-wider text-muted-foreground pt-0.5">{label}</span>
+      <span className="text-foreground text-right">{children}</span>
     </div>
   );
 }
 
 function StatBox({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: React.ReactNode; accent: "emerald" | "sky" | "violet" }) {
-  const colors = {
-    emerald: "from-emerald-500/10 to-emerald-500/0 text-emerald-700",
-    sky: "from-sky-500/10 to-sky-500/0 text-sky-700",
-    violet: "from-violet-500/10 to-violet-500/0 text-violet-700",
-  };
+  const valueTone = {
+    emerald: "text-emerald-600 dark:text-emerald-400",
+    sky: "text-sky-600 dark:text-sky-400",
+    violet: "text-violet-600 dark:text-violet-400",
+  } as const;
+  const iconTone = {
+    emerald: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
+    sky: "text-sky-600 dark:text-sky-400 bg-sky-500/10",
+    violet: "text-violet-600 dark:text-violet-400 bg-violet-500/10",
+  } as const;
   return (
-    <Card className={`border-slate-200/70 bg-gradient-to-br ${colors[accent]} shadow-sm`}>
+    <Card className="shadow-sm">
       <CardContent className="p-4 flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg bg-white/70 flex items-center justify-center`}>
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconTone[accent]}`}>
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wider opacity-70">{label}</div>
-          <div className="text-xl font-semibold">{value}</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+          <div className={`text-xl font-semibold ${valueTone[accent]}`}>{value}</div>
         </div>
       </CardContent>
     </Card>

@@ -1,4 +1,4 @@
-import { DashboardSkeleton, FormSkeleton } from "@/components/app/skeletons";
+import { SettingsSkeleton, FormSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -127,7 +127,7 @@ function SettingsPage() {
 
   const initials = initialsOf(form.name, authEmail || data?.email || "");
 
-  if (isLoading) return <AdminPageShell title="Settings"><FormSkeleton fields={6} /></AdminPageShell>;
+  if (isLoading) return <SettingsSkeleton />;
 
   return (
     <AdminPageShell

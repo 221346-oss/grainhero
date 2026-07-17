@@ -1,4 +1,4 @@
-import { DashboardSkeleton } from "@/components/app/skeletons";
+import { ActuatorsSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -262,7 +262,7 @@ function ActuatorsPage() {
 
       {/* Grid of actuator cards */}
       {isLoading ? (
-        <DashboardSkeleton />
+        <ActuatorsSkeleton />
       ) : filtered.length === 0 ? (
         <Card><CardContent className="py-16 text-center text-muted-foreground">
           <Inbox className="h-8 w-8 mx-auto mb-3 opacity-50" />
@@ -530,19 +530,25 @@ function ActuatorsPage() {
 }
 
 function StatCard({ label, value, icon, tone }: { label: string; value: number; icon: React.ReactNode; tone: "indigo"|"emerald"|"blue"|"rose" }) {
-  const tones: Record<string, string> = {
-    indigo: "from-indigo-500/10 to-indigo-500/5 text-indigo-600 border-indigo-200/60",
-    emerald: "from-emerald-500/10 to-emerald-500/5 text-emerald-600 border-emerald-200/60",
-    blue: "from-blue-500/10 to-blue-500/5 text-blue-600 border-blue-200/60",
-    rose: "from-rose-500/10 to-rose-500/5 text-rose-600 border-rose-200/60",
+  const valueTone: Record<string, string> = {
+    indigo: "text-indigo-600 dark:text-indigo-400",
+    emerald: "text-emerald-600 dark:text-emerald-400",
+    blue: "text-blue-600 dark:text-blue-400",
+    rose: "text-rose-600 dark:text-rose-400",
+  };
+  const iconTone: Record<string, string> = {
+    indigo: "text-indigo-500/70 dark:text-indigo-400/70",
+    emerald: "text-emerald-500/70 dark:text-emerald-400/70",
+    blue: "text-blue-500/70 dark:text-blue-400/70",
+    rose: "text-rose-500/70 dark:text-rose-400/70",
   };
   return (
-    <div className={`rounded-xl border p-3 bg-gradient-to-br ${tones[tone]}`}>
+    <div className="rounded-xl border border-border bg-card p-3">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-wider font-medium opacity-80">{label}</div>
-        {icon}
+        <div className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">{label}</div>
+        <span className={iconTone[tone]}>{icon}</span>
       </div>
-      <div className="text-2xl font-bold mt-1">{value}</div>
+      <div className={`text-2xl font-bold mt-1 ${valueTone[tone]}`}>{value}</div>
     </div>
   );
 }
