@@ -71,7 +71,9 @@ import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authe
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
+import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
@@ -411,10 +413,22 @@ const AuthenticatedPlatformHealthRoute =
     path: '/platform/health',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformFinancialsRoute =
+  AuthenticatedPlatformFinancialsRouteImport.update({
+    id: '/platform/financials',
+    path: '/platform/financials',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformAuditLogsRoute =
   AuthenticatedPlatformAuditLogsRouteImport.update({
     id: '/platform/audit-logs',
     path: '/platform/audit-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminsAdminIdRoute =
+  AuthenticatedAdminsAdminIdRouteImport.update({
+    id: '/admins/$adminId',
+    path: '/admins/$adminId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
@@ -505,7 +519,9 @@ export interface FileRoutesByFullPath {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -574,7 +590,9 @@ export interface FileRoutesByTo {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -646,7 +664,9 @@ export interface FileRoutesById {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -718,7 +738,9 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/admins/$adminId'
     | '/platform/audit-logs'
+    | '/platform/financials'
     | '/platform/health'
     | '/platform/leads'
     | '/platform/logs'
@@ -787,7 +809,9 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout'
+    | '/admins/$adminId'
     | '/platform/audit-logs'
+    | '/platform/financials'
     | '/platform/health'
     | '/platform/leads'
     | '/platform/logs'
@@ -858,7 +882,9 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/checkout/'
+    | '/_authenticated/admins/$adminId'
     | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
@@ -1338,11 +1364,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/financials': {
+      id: '/_authenticated/platform/financials'
+      path: '/platform/financials'
+      fullPath: '/platform/financials'
+      preLoaderRoute: typeof AuthenticatedPlatformFinancialsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/audit-logs': {
       id: '/_authenticated/platform/audit-logs'
       path: '/platform/audit-logs'
       fullPath: '/platform/audit-logs'
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admins/$adminId': {
+      id: '/_authenticated/admins/$adminId'
+      path: '/admins/$adminId'
+      fullPath: '/admins/$adminId'
+      preLoaderRoute: typeof AuthenticatedAdminsAdminIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/webhooks/stripe': {
@@ -1421,7 +1461,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
+  AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
@@ -1464,7 +1506,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
+  AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,

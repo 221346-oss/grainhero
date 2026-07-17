@@ -4,8 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Phone, Wrench, Calendar, ArrowLeft } from "lucide-react";
+import { Package, MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck } from "lucide-react";
 import { OrdersSkeleton } from "@/components/app/skeletons";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({ meta: [{ title: "My install orders — GrainHero" }] }),
@@ -29,6 +32,7 @@ function MyOrdersPage() {
     queryFn: () => fetchFn(),
   });
   const orders = data?.orders ?? [];
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
@@ -96,11 +100,22 @@ function MyOrdersPage() {
                 <div className="md:col-span-2 text-xs text-slate-500 border-t border-slate-100 pt-2">
                   Rs. {Number(o.hardware_total ?? 0).toLocaleString()} in hardware · order id: {o.id}
                 </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <Button size="sm" variant="outline" onClick={() => setOpenOrderId(o.id as string)}>
+                    <Truck className="h-3.5 w-3.5 mr-1.5" /> Track installation
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+      <InstallationDrawer
+        orderId={openOrderId}
+        open={!!openOrderId}
+        onOpenChange={(v) => !v && setOpenOrderId(null)}
+        canEdit={false}
+      />
     </div>
   );
 }

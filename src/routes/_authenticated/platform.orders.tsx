@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
+import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
+import { Truck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/orders")({
   head: () => ({ meta: [{ title: "Install orders — Platform" }] }),
@@ -47,6 +49,7 @@ function PlatformOrdersPage() {
   const updateFn = useServerFn(updateHardwareOrder);
   const messageFn = useServerFn(sendOrderMessage);
   const [filter, setFilter] = useState<string>("all");
+  const [installOrderId, setInstallOrderId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["platform-orders"],
@@ -122,22 +125,30 @@ function PlatformOrdersPage() {
               onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
               onMessage={(v) => sendMsg.mutate({ orderId: o.id as string, ...v })}
               busy={update.isPending || sendMsg.isPending}
+              onOpenInstall={() => setInstallOrderId(o.id as string)}
             />
           ))}
         </div>
       )}
+      <InstallationDrawer
+        orderId={installOrderId}
+        open={!!installOrderId}
+        onOpenChange={(v) => !v && setInstallOrderId(null)}
+        canEdit
+      />
     </AdminPageShell>
   );
 }
 
 function OrderRow({
-  order, onUpdate, onMessage, busy,
+  order, onUpdate, onMessage, busy, onOpenInstall,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   order: any;
   onUpdate: (v: { status?: (typeof STATUSES)[number]; technicianName?: string; technicianPhone?: string; scheduledInstallDate?: string; cancelReason?: string; refunded?: boolean }) => void;
   onMessage: (v: { message: string; emailBuyer: boolean }) => void;
   busy: boolean;
+  onOpenInstall: () => void;
 }) {
   const [status, setStatus] = useState<(typeof STATUSES)[number]>(order.status);
   const [techName, setTechName] = useState<string>(order.technician_name ?? "");
@@ -200,6 +211,9 @@ function OrderRow({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={onOpenInstall}>
+            <Truck className="h-3.5 w-3.5 mr-1.5" /> Installation
+          </Button>
           <Button size="sm" disabled={busy} onClick={() => onUpdate({
             status,
             technicianName: techName,
