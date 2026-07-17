@@ -1,69 +1,39 @@
-# Phase 3 — Plan Gating Enforcement
+# Phase 4 — Plan Change Lifecycle & Billing Sync
 
-Goal: make `plan_thresholds` the single source of truth for every "can this tenant add another X / use feature Y" decision. Today the checks live only in `usePlanLimits` (client-side, based on `pricing-data`) and are trivially bypassed by calling the server fn directly.
+Goal: turn `tenant_plan_change_requests` into a real, auditable workflow. Today admins can file a request but there is no super-admin review path, no Stripe sync, no activity trail, and no way for the requester to see status. Phase 4 closes that loop end-to-end while staying additive.
 
 ## Scope
 
-Server-side enforcement on every create/insert of a gated resource, plus consistent client UX (disabled buttons + upgrade nudges) reading the same gate.
+1. **Server functions** (`src/lib/plan-thresholds.functions.ts`)
+   - `listPlanChangeRequests({ status?, tenantId? })` — super-admin sees all; admin sees own tenant only. Ordered newest first, joined with requester profile + plan labels.
+   - `approvePlanChangeRequest({ requestId, note? })` — super-admin only (`requireRole('super_admin')` via `session.server.ts`). Updates request to `approved`, writes `profiles.subscription_plan` for tenant admin, upserts `subscriptions` row (status `active`, `current_period_end` = now + 30d), logs `plan_change_approved` activity + `security_events`.
+   - `rejectPlanChangeRequest({ requestId, reason })` — same guard, marks `rejected`, requires reason, logs activity.
+   - `cancelPlanChangeRequest({ requestId })` — requester or super-admin, only while `pending`.
+   - All mutations wrapped in `checkRateLimit` (10/min) and use `getVerifiedUser()`.
 
-### Gated resources → server fns
+2. **Client hook** (`src/hooks/usePlanChangeRequests.ts`)
+   - `useQuery` for list; `useMutation` for approve/reject/cancel with `queryClient.invalidateQueries(['plan-change-requests'])` and `['plan-gate']`.
 
-| Feature key         | Table            | Server fn (insert path)           |
-| ------------------- | ---------------- | --------------------------------- |
-| `max_warehouses`*   | warehouses       | `upsertWarehouse` (insert branch) |
-| `max_silos`         | silos            | `upsertSilo` (insert branch)      |
-| `max_batches`       | grain_batches    | `upsertGrainBatch` (insert)       |
-| `max_sensors`       | sensor_devices   | `upsertSensorDevice` (insert)     |
-| `max_actuators`     | actuators        | `upsertActuator` (insert)         |
-| `max_buyers`        | buyers           | `upsertBuyer` (insert)            |
-| `max_users`         | user_roles       | `inviteTeamMember` (team-settings)|
+3. **UI**
+   - Super-admin: new tab on `/platform/plans` — "Pending requests" table (tenant, current → requested plan, reason, filed at, Approve/Reject buttons). Reuses `AdminDataCard` in table density.
+   - Admin: on `/plan-management`, add "Your requests" section showing status timeline (pending → approved/rejected with note).
+   - Both surfaces show empty/error via `<EmptyState>` / `<ErrorState>`.
 
-*Add `max_warehouses` to `plan_gate.ts` `PlanNumericFeature` union — currently missing.
+4. **Notifications** (additive, best-effort)
+   - On approve/reject, insert a row in `notifications` for the requester (`type='plan_change'`). Silent failure — never blocks the mutation.
 
-### Feature toggles (boolean)
+5. **Audit script**
+   - Extend `scripts/audit-server-fns.ts`: any fn matching `/plan.*change.*request/i` that mutates must call `requireRole` or `getVerifiedUser` — warn otherwise.
 
-- `exports` → gate `exportSensorCSV`, buyer/orders CSV exports
-- `alerts_sms` → gate SMS send path (future Twilio integration; add gate now so Phase later just plugs provider)
-- `api` → gate any `/api/public/*` tenant-scoped token issuance (placeholder assertion for now)
-- `insurance` → gate `insurance_policies` insert in `team-settings-insurance.functions.ts`
+## Non-goals
 
-## Work items
+- No real Stripe API call yet (that lands with the billing phase). We only stamp the local `subscriptions` row so downstream gates/financials pick it up immediately.
+- No email/SMS — just in-app `notifications`.
+- No schema migration; `tenant_plan_change_requests` already has `status`, `reviewer_id`, `reviewer_note`, `reviewed_at`.
 
-1. **`src/lib/plan-gate.ts`**
-   - Add `max_warehouses` to `PlanNumericFeature` + `NUMERIC` list.
-   - Add helper `getTenantUsage(sb, tenantAdminId, feature)` that computes the current count for the gate's table (single switch), so callers don't have to pass `currentUsage`.
-   - Change `assertPlanAllows` signature to accept optional `context` + auto-compute usage when not supplied.
-   - Treat missing `plan_thresholds` row as "unlimited for super_admin, denied for others" (fix current `{allowed:false}` false-negative that would brick starter tenants if the row is missing).
+## Acceptance
 
-2. **`src/lib/operations.functions.ts`** — insert `await assertPlanAllows({ feature, context })` at the top of the insert branch of each upsert fn (Warehouse, Silo, Batch, Sensor, Actuator, Buyer). Skip when `id` present (update path).
-
-3. **`src/lib/team-settings-insurance.functions.ts`**
-   - `inviteTeamMember` → `assertPlanAllows({ feature: "max_users" })`.
-   - `insurance_policies` insert → `assertPlanAllows({ feature: "insurance" })`.
-
-4. **Error surface**: standardize response — catch `PlanLimitError` in a small `withPlanErrors()` wrapper (or inline) and rethrow as `throw new Error(\`PLAN_LIMIT:\${feature}:\${used}/\${limit}\`)` so the client toast can parse and show "Upgrade" CTA. Add `parsePlanLimitError(err)` helper in `plan-gate.ts` for the client.
-
-5. **Client hooks/UI**
-   - Deprecate `usePlanLimits` in favor of `usePlanGate` per feature. Keep a thin shim so existing Silo/Warehouse pages don't break; internally call `usePlanGate`.
-   - Add `<PlanLimitBanner feature="..." used=... />` (in `src/components/app/states.tsx`) that renders "X of Y used — Upgrade" with a link to `/plan-management`.
-   - Wire disabled state + banner into: silos, warehouses, sensors, actuators, buyers, batches, team pages. (Already-shipped disable logic on silos/warehouses gets migrated to the new hook.)
-
-6. **Activity logging**: on every `PlanLimitError`, `logActivity({ action: "plan_limit_hit", metadata: { feature, used, limit } })` server-side before rethrowing — feeds SuperAdmin insights on which caps bite.
-
-7. **Audit script**
-   - Extend `scripts/audit-server-fns.ts` with a new rule: any `.insert(` into a gated table inside a `createServerFn` handler must be preceded (in the same handler body) by `assertPlanAllows(` referencing that feature. Emit a warning listing the file:line so future inserts can't skip the gate silently.
-
-8. **No DB migration needed** — Phase 1 already added `max_buyers` and normalized `features`.
-
-## Verification
-
-- `bun run scripts/audit-routes.ts` and `bun run scripts/audit-server-fns.ts` both exit 0.
-- Manual: as a starter-plan admin, attempt to create silo #4 (starter cap is 3) → server rejects with `PLAN_LIMIT:max_silos:3/3`, UI shows upgrade banner, activity log entry appears in `activity_logs`.
-- Super-admin (no subscription row) is never blocked.
-
-## Out of scope (deferred)
-
-- Twilio wiring, Stripe upgrade CTA button navigation (Phase 6+).
-- Retroactive enforcement for tenants already over-cap — for now, block new inserts only.
-
-Reply **approve** to execute.
+- `bun scripts/audit-routes.ts` and `bun scripts/audit-server-fns.ts` both green.
+- `tsgo` clean.
+- Super-admin can approve a request → tenant's `plan_gate` immediately reflects new caps; activity + security events written.
+- Admin sees status update on their `/plan-management` page after refetch.
