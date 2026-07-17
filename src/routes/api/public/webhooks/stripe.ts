@@ -346,7 +346,21 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             }
             case "invoice.payment_failed":
             case "invoice.paid": {
-              const inv = event.data.object as { customer?: string; amount_paid?: number; currency?: string };
+              const inv = event.data.object as {
+                id?: string;
+                customer?: string;
+                amount_paid?: number;
+                currency?: string;
+                subscription?: string;
+              };
+              // Refresh the linked subscription so latest_invoice_id + period dates roll forward.
+              if (inv.subscription) {
+                try {
+                  await syncSubscriptionFromStripe(supabaseAdmin, inv.subscription);
+                } catch (e) {
+                  console.warn("[stripe-webhook] invoice sync failed", (e as Error).message);
+                }
+              }
               const { data: prof } = await supabaseAdmin
                 .from("profiles")
                 .select("id")
