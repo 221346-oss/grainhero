@@ -479,7 +479,8 @@ export const commissionDevice = createServerFn({ method: "POST" })
       .select("id, admin_id")
       .eq("id", inst.order_id)
       .single();
-    const adminId = (order as Row).admin_id as string;
+    const adminId = (order as Row | null)?.admin_id as string | undefined;
+    if (!adminId) throw new Error("Order missing admin");
 
     const { data: sensor, error: sErr } = await supabaseAdmin
       .from("sensor_devices" as never)
