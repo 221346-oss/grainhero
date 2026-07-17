@@ -5,11 +5,13 @@
  * consistent across the app. Colors come from theme tokens; nothing
  * hardcoded.
  */
-import { AlertCircle, Inbox, Loader2 } from "lucide-react";
+import { AlertCircle, Inbox, Loader2, Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
+import type { PlanFeature } from "@/lib/plan-gate";
 
 interface StateProps {
   title: string;
@@ -70,6 +72,46 @@ export function InlineLoader({ label = "Loading..." }: { label?: string }) {
     <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
       {label}
+    </div>
+  );
+}
+
+/**
+ * Compact banner shown when a tenant has hit or is close to a plan cap.
+ * Reads from `usePlanGate` in the caller; this component is purely visual.
+ */
+export function PlanLimitBanner({
+  feature,
+  used,
+  limit,
+  className,
+  message,
+}: {
+  feature: PlanFeature;
+  used?: number;
+  limit?: number | boolean;
+  className?: string;
+  message?: string;
+}) {
+  const numericLimit = typeof limit === "number" ? limit : undefined;
+  const label = message
+    ?? (numericLimit != null && used != null
+      ? `${feature.replace(/^max_/, "")} limit reached (${used}/${numericLimit}).`
+      : `${feature.replace(/^max_/, "")} not included in your plan.`);
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+        <Lock className="h-4 w-4" />
+        <span>{label}</span>
+      </div>
+      <Button asChild size="sm" variant="outline">
+        <Link to="/plan-management">Upgrade</Link>
+      </Button>
     </div>
   );
 }
