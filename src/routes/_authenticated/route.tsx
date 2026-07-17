@@ -8,6 +8,7 @@ import { Bell, Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
+import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 
@@ -17,12 +18,26 @@ export const Route = createFileRoute("/_authenticated")({
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth/login" });
 
-    // Super admins are blocked from operational routes (silos, warehouses,
-    // grain batches, sensors, actuators). They belong on /platform.
+    // Role-aware guardrails: block super_admins from tenant-operational
+    // routes, and redirect them off tenant pages that have a canonical
+    // platform equivalent (avoid two lenses on the same data).
     const OPERATIONAL_PREFIXES = [
       "/silos", "/warehouses", "/grain-batches", "/sensors", "/actuators",
     ];
-    if (OPERATIONAL_PREFIXES.some((p) => location.pathname.startsWith(p))) {
+    // super_admin → platform equivalent. Keep in sync with plan §2.
+    const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
+      "/team-management": "/platform/users",
+      "/data-visualization": "/analytics",
+      "/traceability": "/dashboard",
+      "/orders": "/platform/orders",
+    };
+
+    const path = location.pathname;
+    const needsRoleCheck =
+      OPERATIONAL_PREFIXES.some((p) => path.startsWith(p)) ||
+      Object.keys(SUPER_ADMIN_REDIRECTS).some((p) => path === p || path.startsWith(p + "/"));
+
+    if (needsRoleCheck) {
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
@@ -30,7 +45,16 @@ export const Route = createFileRoute("/_authenticated")({
       const rs = (roles ?? []).map((r) => r.role as string);
       const isSuperAdmin = rs.includes("super_admin");
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
-      if (isSuperAdmin && !alsoOperational) throw redirect({ to: "/dashboard" });
+      if (isSuperAdmin && !alsoOperational) {
+        if (OPERATIONAL_PREFIXES.some((p) => path.startsWith(p))) {
+          throw redirect({ to: "/not-allowed" });
+        }
+        for (const [from, to] of Object.entries(SUPER_ADMIN_REDIRECTS)) {
+          if (path === from || path.startsWith(from + "/")) {
+            throw redirect({ to });
+          }
+        }
+      }
     }
 
     return { user: data.user };
@@ -64,6 +88,7 @@ function AuthenticatedLayout() {
           <AppSidebar />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
+          <ImpersonationBanner />
           <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
             <SidebarTrigger className="shrink-0" />
             <div className="flex-1 max-w-2xl mx-auto w-full">

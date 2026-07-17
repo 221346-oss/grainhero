@@ -19,6 +19,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { listBuyers, upsertBuyer, deleteBuyer } from "@/lib/operations.functions";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
+import { getPlatformBuyersOverview } from "@/lib/platform-overviews.functions";
 
 export const Route = createFileRoute("/_authenticated/buyers")({
   component: BuyersPage,
@@ -72,6 +76,7 @@ const STATUS_CLASS: Record<Status, string> = {
 
 function BuyersPage() {
   const qc = useQueryClient();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const listFn = useServerFn(listBuyers);
   const saveFn = useServerFn(upsertBuyer);
   const delFn = useServerFn(deleteBuyer);
@@ -79,6 +84,13 @@ function BuyersPage() {
   const { data: buyers = [], isLoading } = useQuery({
     queryKey: ["buyers"],
     queryFn: () => listFn() as Promise<Buyer[]>,
+  });
+
+  const fetchPlatformBuyers = useServerFn(getPlatformBuyersOverview);
+  const platformBuyersQ = useQuery({
+    queryKey: ["platform-buyers-overview"],
+    queryFn: () => fetchPlatformBuyers(),
+    enabled: isSuperAdmin,
   });
 
   const [query, setQuery] = useState("");
@@ -190,6 +202,25 @@ function BuyersPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 md:space-y-6">
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Buyers across every tenant. New Buyer and edit actions still apply to your own tenant." />
+      )}
+      {isSuperAdmin && platformBuyersQ.data && (
+        <PlatformOverviewTable
+          title="Per-tenant buyer activity"
+          description={`${platformBuyersQ.data.totals.buyers} buyers · ${platformBuyersQ.data.totals.invoices} invoices · $${platformBuyersQ.data.totals.revenue.toLocaleString()} invoiced`}
+          rows={platformBuyersQ.data.rows}
+          columns={[
+            { key: "active", label: "Active", align: "right", render: (r) => `${r.active}/${r.buyers}` },
+            { key: "avgRating", label: "Rating", align: "right", render: (r) => r.avgRating > 0 ? r.avgRating.toFixed(1) : "—" },
+            { key: "invoices", label: "Invoices", align: "right", render: (r) => r.invoices },
+            { key: "revenue", label: "Revenue", align: "right", render: (r) => `$${r.revenue.toLocaleString()}` },
+            { key: "outstanding", label: "Outstanding", align: "right", render: (r) => (
+                <span className={r.outstanding > 0 ? "text-amber-700 font-medium" : ""}>${r.outstanding.toLocaleString()}</span>
+              ) },
+          ]}
+        />
+      )}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <PageHeader title="Buyers" subtitle="Customers purchasing your grain — contacts, ratings & preferences" />
         <Button size="sm" onClick={openCreate} className="gap-1.5 self-start md:self-auto">

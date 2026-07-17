@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router'
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -18,7 +18,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Mail, Wrench, XCircle, CheckCircle2, PackageCheck, MessageSquare } from "lucide-react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
+import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 
 export const Route = createFileRoute("/_authenticated/platform/orders")({
   head: () => ({ meta: [{ title: "Install orders — Platform" }] }),
@@ -75,33 +77,46 @@ function PlatformOrdersPage() {
     return acc;
   }, {});
 
+  // Calculate total revenue from hardware orders
+  const totalRevenue = (data?.orders ?? []).reduce((sum, o) => sum + (Number(o.hardware_total) || 0), 0);
+  const completedRevenue = (data?.orders ?? [])
+    .filter((o) => o.status === "installed" || o.status === "live")
+    .reduce((sum, o) => sum + (Number(o.hardware_total) || 0), 0);
+  const pendingRevenue = (data?.orders ?? [])
+    .filter((o) => o.status !== "cancelled" && o.status !== "installed" && o.status !== "live")
+    .reduce((sum, o) => sum + (Number(o.hardware_total) || 0), 0);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Install orders</h2>
-          <p className="text-xs text-slate-500">Manage every hardware install request placed by customers.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs">Filter</Label>
+    <AdminPageShell title="Install orders" subtitle="Hardware installation requests from customers">
+      <AdminSummaryTiles
+        columns={3}
+        tiles={[
+          { key: "t", label: "Total revenue", value: `PKR ${totalRevenue.toLocaleString()}`, hint: `${data?.orders.length ?? 0} orders` },
+          { key: "c", label: "Completed", value: `PKR ${completedRevenue.toLocaleString()}`, hint: `${(data?.orders ?? []).filter((o) => o.status === "installed" || o.status === "live").length} installed` },
+          { key: "p", label: "Pending", value: `PKR ${pendingRevenue.toLocaleString()}`, hint: `${(data?.orders ?? []).filter((o) => o.status !== "cancelled" && o.status !== "installed" && o.status !== "live").length} in progress` },
+        ]}
+      />
+
+      <AdminFilterBar onSubmit={() => { /* client-side */ }}>
+        <AdminFilterField label="Status" width="w-56">
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="h-8 w-44 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All ({data?.orders.length ?? 0})</SelectItem>
+              <SelectItem value="all">All orders ({data?.orders.length ?? 0})</SelectItem>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>{s.replace("_", " ")} ({counts[s] ?? 0})</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        </AdminFilterField>
+      </AdminFilterBar>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading orders…</div>
+        <div className="text-sm text-slate-500">Loading orders…</div>
       ) : orders.length === 0 ? (
-        <Card><CardContent className="p-10 text-center text-sm text-slate-500">No orders match this filter.</CardContent></Card>
+        <Card><CardContent className="p-8 text-center text-sm text-slate-500">No orders match this filter</CardContent></Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {orders.map((o) => (
             <OrderRow key={o.id as string} order={o}
               onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
@@ -111,7 +126,7 @@ function PlatformOrdersPage() {
           ))}
         </div>
       )}
-    </div>
+    </AdminPageShell>
   );
 }
 
@@ -136,7 +151,7 @@ function OrderRow({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <CardTitle className="text-base">
@@ -149,7 +164,7 @@ function OrderRow({
           <Badge className={STATUS_STYLE[order.status] ?? ""}>{String(order.status).replace("_", " ")}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm">
+      <CardContent className="space-y-3 text-sm">
         <div className="grid gap-2 md:grid-cols-2 text-slate-700">
           <div><b>Address:</b> {order.install_address}, {order.install_city}, {order.install_country}</div>
           <div><b>Phone:</b> {order.contact_phone ?? "—"}</div>
@@ -160,7 +175,7 @@ function OrderRow({
           {order.notes && <div className="md:col-span-2"><b>Notes:</b> {order.notes}</div>}
         </div>
 
-        <div className="grid gap-3 md:grid-cols-4 border-t border-slate-100 pt-4">
+        <div className="grid gap-2 md:grid-cols-4 border-t border-slate-100 pt-3">
           <div>
             <Label className="text-xs">Status</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as (typeof STATUSES)[number])}>
@@ -191,18 +206,18 @@ function OrderRow({
             technicianPhone: techPhone,
             scheduledInstallDate: scheduled ? new Date(scheduled).toISOString() : null as unknown as string,
           })}>
-            <Wrench className="h-3.5 w-3.5 mr-1" /> Save assignment
+            Save assignment
           </Button>
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => onUpdate({ status: "installed" })}>
-            <PackageCheck className="h-3.5 w-3.5 mr-1" /> Mark installed
+            Mark installed
           </Button>
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => onUpdate({ status: "live" })}>
-            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark live
+            Mark live
           </Button>
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline"><MessageSquare className="h-3.5 w-3.5 mr-1" /> Message buyer</Button>
+              <Button size="sm" variant="outline">Message buyer</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -216,7 +231,7 @@ function OrderRow({
               </label>
               <DialogFooter>
                 <Button disabled={busy || message.trim().length === 0} onClick={() => onMessage({ message: message.trim(), emailBuyer })}>
-                  <Mail className="h-3.5 w-3.5 mr-1" /> Send
+                  Send
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -225,7 +240,7 @@ function OrderRow({
           {order.status !== "cancelled" && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="sm" variant="destructive"><XCircle className="h-3.5 w-3.5 mr-1" /> Cancel</Button>
+                <Button size="sm" variant="destructive">Cancel</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>

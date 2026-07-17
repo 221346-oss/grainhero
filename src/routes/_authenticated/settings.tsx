@@ -4,19 +4,20 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Save, User, Bell, MapPin, Loader2, Palette, Check, Camera, Trash2 } from "lucide-react";
+import { Save, User, Bell, MapPin, Loader2, Palette, Check, Camera, Trash2, ShieldAlert, Plus, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/dashboards/_shared";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
 import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { initialsOf } from "@/hooks/useMyProfile";
-import { supabase } from "@/integrations/supabase/client";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { getPlatformSettings, updatePlatformSettings, type PlatformConfig } from "@/lib/platform-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -51,6 +52,7 @@ function SettingsPage() {
   const qc = useQueryClient();
   const getFn = useServerFn(getMySettings);
   const saveFn = useServerFn(updateMySettings);
+  const isSuperAdmin = useIsSuperAdmin();
 
   const { data, isLoading } = useQuery({ queryKey: ["my-settings"], queryFn: () => getFn() });
 
@@ -124,18 +126,28 @@ function SettingsPage() {
 
   const initials = initialsOf(form.name, authEmail || data?.email || "");
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <AdminPageShell title="Settings"><FormSkeleton fields={6} /></AdminPageShell>;
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl mx-auto">
-      <PageHeader title="Settings" subtitle="Manage your profile, location and notification preferences" />
-
+    <AdminPageShell
+      title="Settings"
+      subtitle="Manage your profile, location and notification preferences"
+      actions={
+        <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
+          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          Save changes
+        </Button>
+      }
+    >
       <Tabs defaultValue="profile">
         <TabsList className="mb-6">
           <TabsTrigger value="profile"><User className="h-4 w-4 mr-2" />Profile</TabsTrigger>
           <TabsTrigger value="location"><MapPin className="h-4 w-4 mr-2" />Location</TabsTrigger>
           <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notifications</TabsTrigger>
           <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-2" />Appearance</TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="platform"><ShieldAlert className="h-4 w-4 mr-2" />Platform</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="profile">
@@ -288,12 +300,126 @@ function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
-      <div className="mt-6 flex justify-end">
+        {isSuperAdmin && (
+          <TabsContent value="platform">
+            <PlatformSettingsSection />
+          </TabsContent>
+        )}
+      </Tabs>
+    </AdminPageShell>
+  );
+}
+
+function PlatformSettingsSection() {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getPlatformSettings);
+  const saveFn = useServerFn(updatePlatformSettings);
+  const { data, isLoading } = useQuery({ queryKey: ["platform-settings"], queryFn: () => getFn() });
+  const [cfg, setCfg] = useState<PlatformConfig | null>(null);
+  useEffect(() => { if (data) setCfg(data); }, [data]);
+  const [flagKey, setFlagKey] = useState("");
+  const [thresholdKey, setThresholdKey] = useState("");
+  const [thresholdVal, setThresholdVal] = useState("");
+
+  const save = useMutation({
+    mutationFn: () => saveFn({ data: cfg! }),
+    onSuccess: () => { toast.success("Platform settings saved"); qc.invalidateQueries({ queryKey: ["platform-settings"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (isLoading || !cfg) return <FormSkeleton fields={4} />;
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Maintenance mode</CardTitle>
+          <CardDescription>When on, tenant apps can display a maintenance notice. Reads platform_settings.config.maintenance_mode.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+            <span className="text-sm font-medium text-slate-700">Enable maintenance mode</span>
+            <Switch checked={cfg.maintenance_mode} onCheckedChange={(v) => setCfg({ ...cfg, maintenance_mode: v })} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Feature flags</CardTitle>
+          <CardDescription>Boolean flags any part of the app can read. Toggle to enable or disable a feature platform-wide.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Object.entries(cfg.feature_flags).length === 0 && (
+            <p className="text-sm text-muted-foreground">No feature flags yet.</p>
+          )}
+          {Object.entries(cfg.feature_flags).map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+              <code className="text-sm font-mono">{k}</code>
+              <div className="flex items-center gap-2">
+                <Switch checked={v} onCheckedChange={(next) => setCfg({ ...cfg, feature_flags: { ...cfg.feature_flags, [k]: next } })} />
+                <Button size="icon" variant="ghost" onClick={() => {
+                  const { [k]: _drop, ...rest } = cfg.feature_flags;
+                  setCfg({ ...cfg, feature_flags: rest });
+                }}><X className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          ))}
+          <div className="flex gap-2 pt-2">
+            <Input placeholder="new_flag_key" value={flagKey} onChange={(e) => setFlagKey(e.target.value)} />
+            <Button type="button" variant="outline" onClick={() => {
+              const k = flagKey.trim();
+              if (!k) return;
+              setCfg({ ...cfg, feature_flags: { ...cfg.feature_flags, [k]: false } });
+              setFlagKey("");
+            }}><Plus className="h-4 w-4 mr-1" />Add</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Default thresholds</CardTitle>
+          <CardDescription>Baseline numeric thresholds (e.g. spoilage_risk, humidity_alert). Tenants can override in their own settings.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Object.entries(cfg.default_thresholds).length === 0 && (
+            <p className="text-sm text-muted-foreground">No default thresholds yet.</p>
+          )}
+          {Object.entries(cfg.default_thresholds).map(([k, v]) => (
+            <div key={k} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3">
+              <code className="text-sm font-mono flex-1 truncate">{k}</code>
+              <Input
+                type="number"
+                value={v}
+                onChange={(e) => setCfg({ ...cfg, default_thresholds: { ...cfg.default_thresholds, [k]: Number(e.target.value) } })}
+                className="w-32"
+              />
+              <Button size="icon" variant="ghost" onClick={() => {
+                const { [k]: _drop, ...rest } = cfg.default_thresholds;
+                setCfg({ ...cfg, default_thresholds: rest });
+              }}><X className="h-4 w-4" /></Button>
+            </div>
+          ))}
+          <div className="flex gap-2 pt-2">
+            <Input placeholder="threshold_key" value={thresholdKey} onChange={(e) => setThresholdKey(e.target.value)} />
+            <Input placeholder="value" type="number" value={thresholdVal} onChange={(e) => setThresholdVal(e.target.value)} className="w-32" />
+            <Button type="button" variant="outline" onClick={() => {
+              const k = thresholdKey.trim();
+              const n = Number(thresholdVal);
+              if (!k || Number.isNaN(n)) return;
+              setCfg({ ...cfg, default_thresholds: { ...cfg.default_thresholds, [k]: n } });
+              setThresholdKey(""); setThresholdVal("");
+            }}><Plus className="h-4 w-4 mr-1" />Add</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
         <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Save changes
+          Save platform settings
         </Button>
       </div>
     </div>

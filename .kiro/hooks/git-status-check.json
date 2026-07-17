@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Git Status Check",
+      "trigger": "SessionStart",
+      "description": "Check Git status and clean up repository on session start",
+      "action": {
+        "type": "command",
+        "command": "cd \"d:/Project/grainhero 2\" && git status && git gc --quiet",
+        "timeout": 30
+      }
+    }
+  ]
+}

@@ -1,29 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 async function assertSuperAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
-  if (!data) throw new Error("Forbidden");
+  if ((await getEffectiveRole(supabase, userId)) !== "super_admin") throw new Error("Forbidden");
 }
 
 export const getPlatformMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
     const [profiles, roles, batches, silos, alerts, subs, logs] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, admin_id, created_at, business_type, blocked", { count: "exact" }),
       supabaseAdmin.from("user_roles").select("role, user_id"),
       supabaseAdmin.from("grain_batches").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("silos").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("grain_alerts").select("id, priority", { count: "exact" }),
-      supabaseAdmin.from("subscriptions").select("id, status, plan_name, monthly_price"),
+      supabaseAdmin.from("subscriptions").select("id, status, plan_name, price_per_month"),
       supabaseAdmin.from("activity_logs").select("id, severity", { count: "exact" }),
     ]);
     const tenants = new Set((profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id));
     const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.priority === "critical").length;
     const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active");
-    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.monthly_price) || 0), 0);
+    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.price_per_month) || 0), 0);
     const roleDist: Record<string, number> = {};
     for (const r of roles.data ?? []) roleDist[r.role] = (roleDist[r.role] ?? 0) + 1;
     return {
@@ -98,6 +98,17 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("profiles").update({ blocked: data.blocked }).eq("id", data.id);
     if (error) throw error;
+    // Fire-and-forget platform event webhook.
+    try {
+      const { notifyPlatformEvent } = await import("./platform-notify.server");
+      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", data.id).maybeSingle();
+      await notifyPlatformEvent({
+        type: data.blocked ? "user_blocked" : "user_unblocked",
+        userId: data.id,
+        email: prof?.email ?? null,
+        by: context.userId,
+      });
+    } catch { /* never fail the action on webhook error */ }
     return { ok: true };
   });
 
@@ -121,7 +132,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = context.supabase;
 
     const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes] = await Promise.all([
       supabaseAdmin
@@ -141,7 +152,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
       supabaseAdmin
         .from("subscriptions")
-        .select("id, status, monthly_price, plan_name, created_at, cancelled_at"),
+        .select("id, status, price_per_month, plan_name, created_at, cancellation_date"),
       supabaseAdmin
         .from("hubspot_sync_log")
         .select("id, action, status, hubspot_object_type, created_at")
@@ -169,8 +180,8 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     // Revenue snapshot.
     const subs = subsRes.data ?? [];
     const activeSubs = subs.filter((s: any) => s.status === "active");
-    const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancelled_at);
-    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.monthly_price) || 0), 0);
+    const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancellation_date);
+    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.price_per_month) || 0), 0);
 
     // Pipeline snapshot — aggregate HubSpot sync activity by status.
     const pipeline: Record<string, number> = {};

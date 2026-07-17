@@ -1,267 +1,188 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { formatDistanceToNow } from "date-fns";
-import {
-  Building2, Users, Package, Warehouse, OctagonAlert, CreditCard, DollarSign,
-  ClipboardList, UserPlus, AlertTriangle, TrendingUp, Sparkles, ScrollText,
-  Activity, ArrowRight, Crown,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatCard } from "./_shared";
-import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform.functions";
+import { Badge } from "@/components/ui/badge";
+import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
+import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from "recharts";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { cn } from "@/lib/utils";
 
-const QUICK_ACTIONS: { to: string; label: string; icon: LucideIcon; tone: string }[] = [
-  { to: "/platform/tenants", label: "Tenants", icon: Building2, tone: "from-sky-500 to-sky-700" },
-  { to: "/platform/users", label: "Users & roles", icon: Users, tone: "from-violet-500 to-violet-700" },
-  { to: "/platform/plans", label: "Plans & pricing", icon: Sparkles, tone: "from-emerald-500 to-emerald-700" },
-  { to: "/platform/revenue", label: "Revenue", icon: DollarSign, tone: "from-amber-500 to-amber-700" },
-  { to: "/platform/pipeline", label: "Pipeline", icon: TrendingUp, tone: "from-rose-500 to-rose-700" },
-  { to: "/platform/leads", label: "Leads", icon: UserPlus, tone: "from-fuchsia-500 to-fuchsia-700" },
-  { to: "/platform/health", label: "Health", icon: Activity, tone: "from-teal-500 to-teal-700" },
-  { to: "/platform/audit-logs", label: "Audit logs", icon: ScrollText, tone: "from-slate-500 to-slate-700" },
-  { to: "/platform/orders", label: "Install orders", icon: Package, tone: "from-indigo-500 to-indigo-700" },
-  { to: "/platform/logs", label: "System logs", icon: ClipboardList, tone: "from-neutral-500 to-neutral-700" },
-];
+function InsightTile({
+  to, label, value, hint,
+}: { to: string; label: string; value: string | number; hint?: string }) {
+  return (
+    <Link to={to} className="group block">
+      <Card
+        className={cn(
+          "transition-all border-slate-200/70",
+          "group-hover:border-emerald-400 group-hover:shadow-[0_0_0_1px_rgba(16,185,129,0.35),0_10px_20px_-12px_rgba(16,185,129,0.25)]",
+          "cursor-pointer",
+        )}
+      >
+        <CardContent className="p-3 sm:p-4">
+          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
+          <div className="mt-1 text-xl sm:text-2xl font-black text-slate-900 leading-tight">{value}</div>
+          {hint && <div className="text-[10px] text-emerald-600 mt-0.5">{hint}</div>}
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
 
 export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
-  const { data: m } = useQuery({ queryKey: ["platform-metrics"], queryFn: () => metricsFn() });
-  const { data: w } = useQuery({ queryKey: ["platform-widgets"], queryFn: () => widgetsFn() });
+  const revenueFn = useServerFn(getSaasRevenueAnalytics);
 
-  const maxCount = Math.max(1, ...(w?.signupsSeries.map((p) => p.count) ?? [1]));
+  const { data: m, isLoading: loadingMetrics } = useQuery({
+    queryKey: ["platform-metrics"],
+    queryFn: () => metricsFn(),
+    refetchInterval: 30000
+  });
+  const { data: w } = useQuery({ queryKey: ["platform-widgets"], queryFn: () => widgetsFn() });
+  const { data: revenueData } = useQuery({
+    queryKey: ["saas-revenue-dashboard"],
+    queryFn: () => revenueFn()
+  });
+
+  const usersGrowth = w?.wowDelta ?? 0;
+  const mrrValue = (m as any)?.mrr ?? 0;
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      {/* Compact header + primary CTAs */}
-      <header className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-red-500 to-red-700 grid place-items-center shadow-sm">
-          <Crown className="h-4 w-4 text-white" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg md:text-xl font-black tracking-tight truncate">
-            Super Admin{name ? ` — ${name}` : ""}
-          </h1>
-          <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
-            Platform owner console
-          </p>
-        </div>
-        <Link to="/platform/users" className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold hover:bg-muted transition">
-          <UserPlus className="h-3.5 w-3.5" /> Invite user
-        </Link>
-        <Link to="/platform/plans" className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-gradient-to-br from-emerald-500 to-emerald-700 text-white px-2.5 py-1.5 text-xs font-semibold shadow-sm">
-          <Sparkles className="h-3.5 w-3.5" /> New plan
-        </Link>
-      </header>
-
-      {/* Metrics — dense 4/6 grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
-        <StatCard label="Tenants" value={m?.totalTenants ?? "—"} icon={Building2} accent="sky" />
-        <StatCard label="Users" value={m?.totalUsers ?? "—"} icon={Users} accent="violet" />
-        <StatCard label="Active Subs" value={m?.activeSubscriptions ?? "—"} icon={CreditCard} accent="emerald" />
-        <StatCard label="MRR" value={m ? `$${m.mrr.toLocaleString()}` : "—"} icon={DollarSign} accent="emerald" />
-        <StatCard label="Batches" value={m?.totalBatches ?? "—"} icon={Package} accent="amber" />
-        <StatCard label="Silos" value={m?.totalSilos ?? "—"} icon={Warehouse} accent="sky" />
-        <StatCard label="Critical Alerts" value={m?.criticalAlerts ?? "—"} icon={OctagonAlert} accent="rose" trend={m ? `${m.totalAlerts} total` : undefined} />
-        <StatCard label="Activity Logs" value={m?.totalLogs ?? "—"} icon={ClipboardList} accent="violet" />
+    <AdminPageShell
+      title={`Super admin${name ? ` — ${name}` : ""}`}
+      subtitle="Platform management console"
+      actions={usersGrowth !== 0 ? (
+        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+          {usersGrowth > 0 ? "+" : ""}{usersGrowth}% growth
+        </Badge>
+      ) : undefined}
+    >
+      {/* Primary KPIs — each click deep-links to its insight page */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <InsightTile to="/platform/tenants" label="Tenants" value={m?.totalTenants ?? 0} />
+        <InsightTile to="/platform/users" label="Users" value={m?.totalUsers ?? 0} />
+        <InsightTile to="/platform/plans" label="Active subs" value={m?.activeSubscriptions ?? 0} />
+        <InsightTile to="/revenue" label="MRR" value={`PKR ${mrrValue.toLocaleString()}`} hint="Live" />
+        <InsightTile to="/platform/health" label="Critical alerts" value={m?.criticalAlerts ?? 0} />
       </div>
 
-      {/* Quick actions */}
-      <div>
-        <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">Manage</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-          {QUICK_ACTIONS.map((a) => {
-            const Icon = a.icon;
-            return (
-              <Link
-                key={a.to}
-                to={a.to}
-                className="group flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 hover:shadow-sm transition"
-              >
-                <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${a.tone} text-white`}>
-                  <Icon className="h-3.5 w-3.5" />
-                </span>
-                <span className="text-xs font-semibold text-foreground truncate flex-1">{a.label}</span>
-                <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition" />
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Role distribution — inline compact */}
-      {m && (
+      {/* Charts — 3 up */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Role distribution</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-slate-800">User signups (30d)</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(m.roleDistribution).map(([role, n]) => (
-                <div key={role} className="rounded-md border border-border bg-muted/40 px-2.5 py-1">
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{role.replace("_", " ")}</div>
-                  <div className="text-sm font-bold">{n as number}</div>
-                </div>
-              ))}
-              {m.blockedUsers > 0 && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1">
-                  <div className="text-[10px] uppercase tracking-widest text-red-600 font-semibold">Blocked</div>
-                  <div className="text-sm font-bold text-red-700">{m.blockedUsers}</div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Widgets: signups + alerts + trend */}
-      <div className="grid gap-3 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <UserPlus className="h-4 w-4 text-emerald-600" /> Recent signups
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-              w.recentSignups.length === 0 ? <div className="text-xs text-muted-foreground">No signups yet.</div> :
-              <ul className="divide-y divide-border">
-                {w.recentSignups.slice(0, 6).map((s: any) => (
-                  <li key={s.id}>
-                    <Link to="/platform/users" className="py-1.5 flex items-center justify-between gap-2 hover:bg-muted/40 rounded px-1 -mx-1">
-                      <div className="min-w-0">
-                        <div className="text-xs font-medium truncate">{s.name || s.email}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{s.email}</div>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                        {formatDistanceToNow(new Date(s.created_at), { addSuffix: true })}
-                        <ArrowRight className="h-3 w-3" />
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            }
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {w?.signupsSeries && w.signupsSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={w.signupsSeries}>
+                  <defs>
+                    <linearGradient id="userGrowth" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.15} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: 6, color: "white", fontSize: 11 }} />
+                  <Area type="monotone" dataKey="count" stroke="#10b981" fillOpacity={1} fill="url(#userGrowth)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : <div className="h-full flex items-center justify-center text-xs text-slate-400">No data</div>}
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-1">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-rose-600" /> System alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-              w.systemAlerts.length === 0 ? <div className="text-xs text-muted-foreground">No critical alerts.</div> :
-              <ul className="divide-y divide-border">
-                {w.systemAlerts.slice(0, 6).map((a: any) => (
-                  <li key={a.id}>
-                    <Link to="/platform/health" className="py-1.5 flex items-center justify-between gap-2 hover:bg-muted/40 rounded px-1 -mx-1">
-                      <div className="min-w-0">
-                        <div className="text-xs font-medium truncate">{a.alert_type ?? "Alert"}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{a.message ?? ""}</div>
-                      </div>
-                      <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${a.priority === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                        {a.priority}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            }
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-slate-800">Revenue by plan</CardTitle></CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {revenueData?.planSeries && revenueData.planSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={revenueData.planSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.15} />
+                  <XAxis dataKey="plan" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: 6, color: "white", fontSize: 11 }} />
+                  <Bar dataKey="mrr" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <div className="h-full flex items-center justify-center text-xs text-slate-400">No data</div>}
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-1">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-violet-600" /> Signups · 30d
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-              <>
-                <div className="flex items-baseline justify-between mb-1">
-                  <div className="text-lg font-black tracking-tight">{w.signupsTotal ?? 0}</div>
-                  <div className={`text-[10px] font-semibold ${((w.wowDelta ?? 0) >= 0) ? "text-emerald-600" : "text-rose-600"}`}>
-                    {(w.wowDelta ?? 0) >= 0 ? "▲" : "▼"} {Math.abs(w.wowDelta ?? 0)}% WoW
-                  </div>
-                </div>
-                <div className="flex items-end gap-0.5 h-20">
-                  {w.signupsSeries.map((p) => (
-                    <div key={p.date} className="flex-1">
-                      <div
-                        className="bg-gradient-to-t from-emerald-500 to-emerald-300 rounded-t"
-                        style={{ height: `${(p.count / maxCount) * 100}%`, minHeight: 2 }}
-                        title={`${p.date}: ${p.count}`}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
-                  <span>{w.signupsSeries[0]?.date}</span>
-                  <span>{w.signupsSeries[w.signupsSeries.length - 1]?.date}</span>
-                </div>
-              </>
-            }
+        <Card className="md:col-span-2 xl:col-span-1">
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-slate-800">Revenue trend (12m)</CardTitle></CardHeader>
+          <CardContent className="h-40 px-2 pt-0 pb-2">
+            {revenueData?.revenueSeries && revenueData.revenueSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData.revenueSeries}>
+                  <defs>
+                    <linearGradient id="revenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.15} />
+                  <XAxis dataKey="month" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={10} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: 6, color: "white", fontSize: 11 }} />
+                  <Area type="monotone" dataKey="revenue" stroke="#10b981" fillOpacity={1} fill="url(#revenue)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : <div className="h-full flex items-center justify-center text-xs text-slate-400">No data</div>}
           </CardContent>
         </Card>
       </div>
 
-      {/* Revenue + Pipeline snapshots */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Link to="/platform/revenue" className="group">
-          <Card className="hover:shadow-md transition">
-            <CardHeader className="py-3 flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-emerald-600" /> Revenue snapshot
-              </CardTitle>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
-            </CardHeader>
-            <CardContent className="pt-0 grid grid-cols-3 gap-3">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">MRR</div>
-                <div className="text-lg font-black">${w ? w.revenue.mrr.toLocaleString() : "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Active</div>
-                <div className="text-lg font-black">{w?.revenue.activeSubs ?? "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Churned</div>
-                <div className="text-lg font-black text-rose-700">{w?.revenue.churnedSubs ?? "—"}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+      {/* Deep-link grid + recent signups side by side to reduce scroll */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4">
+        <div>
+          <h2 className="text-xs font-black text-slate-600 uppercase tracking-[0.15em] mb-2">Jump to insights</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <InsightTile to="/platform/tenants" label="Tenants" value={m?.totalTenants ?? "—"} />
+            <InsightTile to="/platform/users" label="Users" value={m?.totalUsers ?? "—"} />
+            <InsightTile to="/platform/pipeline" label="Pipeline" value={(w as any)?.pipelineTotal ?? "—"} />
+            <InsightTile to="/platform/leads" label="Leads" value={(w as any)?.leadsTotal ?? "—"} />
+            <InsightTile to="/platform/health" label="Health" value={(m as any)?.totalAlerts ?? "—"} />
+            <InsightTile to="/platform/audit-logs" label="Audit logs" value={(m as any)?.totalLogs ?? "—"} />
+            <InsightTile to="/platform/orders" label="Install orders" value={(w as any)?.ordersTotal ?? "—"} />
+            <InsightTile to="/revenue" label="Revenue" value={`PKR ${mrrValue.toLocaleString()}`} />
+          </div>
+        </div>
 
-        <Link to="/platform/pipeline" className="group">
-          <Card className="hover:shadow-md transition">
-            <CardHeader className="py-3 flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-rose-600" /> Pipeline snapshot
-              </CardTitle>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
+        {w && (w as any).recentSignups && (w as any).recentSignups.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm text-slate-800">Recent signups</CardTitle>
+              <Link to="/platform/users" className="text-[11px] text-emerald-700 hover:underline">View all →</Link>
             </CardHeader>
-            <CardContent className="pt-0">
-              {!w ? <div className="text-xs text-muted-foreground">Loading…</div> :
-                Object.keys(w.pipeline).length === 0 ? <div className="text-xs text-muted-foreground">No pipeline activity yet.</div> :
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(w.pipeline).map(([status, n]) => (
-                    <div key={status} className="rounded-md border border-border bg-muted/40 px-2.5 py-1">
-                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">{status}</div>
-                      <div className="text-sm font-bold">{n}</div>
+            <CardContent className="pt-0 pb-2">
+              <div className="divide-y divide-slate-100 max-h-[220px] overflow-auto">
+                {((w as any).recentSignups || []).slice(0, 5).map((s: any) => (
+                  <Link
+                    key={s.id}
+                    to="/platform/users"
+                    className="flex items-center gap-2 py-1.5 text-sm hover:bg-emerald-50/60 rounded px-1 transition-colors"
+                  >
+                    <div className="h-7 w-7 shrink-0 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[11px] font-bold">
+                      {(s.name || s.email || "?").slice(0, 1).toUpperCase()}
                     </div>
-                  ))}
-                </div>
-              }
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 truncate leading-tight">{s.name || s.email}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{s.email}</p>
+                    </div>
+                    <p className="text-[10px] text-slate-400 whitespace-nowrap">{new Date(s.created_at).toLocaleDateString()}</p>
+                  </Link>
+                ))}
+              </div>
             </CardContent>
           </Card>
-        </Link>
+        )}
       </div>
-    </div>
+
+    </AdminPageShell>
   );
 }

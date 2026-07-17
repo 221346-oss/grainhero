@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, TrendingUp, Package, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle, ArrowLeft } from "lucide-react";
 import { getAnalyticsOverview } from "@/lib/analytics.functions";
+import { getPlatformAnalyticsBreakdown } from "@/lib/platform-overviews.functions";
 import { getMyRole } from "@/lib/roles.functions";
-import { AnalyticsSkeleton } from "@/components/app/skeletons";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   component: AnalyticsPage,
@@ -21,7 +23,7 @@ function fmtKg(n: number) {
   return `${Math.round(n)} kg`;
 }
 function fmtMoney(n: number) {
-  return n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  return n.toLocaleString(undefined, { style: "currency", currency: "PKR", maximumFractionDigits: 0 });
 }
 
 function AnalyticsPage() {
@@ -30,6 +32,7 @@ function AnalyticsPage() {
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin", "manager"].includes(role);
+  const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
     queryKey: ["analytics-overview"],
@@ -38,7 +41,13 @@ function AnalyticsPage() {
     refetchInterval: 60_000,
   });
 
-  if (roleQ.isLoading) return <AnalyticsSkeleton />;
+  const fetchPlatform = useServerFn(getPlatformAnalyticsBreakdown);
+  const platformQ = useQuery({
+    queryKey: ["platform-analytics-breakdown"],
+    queryFn: () => fetchPlatform(),
+    enabled: isSuperAdmin,
+    refetchInterval: 60_000,
+  });
 
   if (!roleQ.isLoading && !allowed) {
     return (
@@ -59,9 +68,25 @@ function AnalyticsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-        <ArrowLeft className="h-4 w-4" /> Dashboard
-      </Link>
+      {isSuperAdmin && (
+        <PlatformScopeBanner label="Aggregated operational and financial metrics across every tenant." />
+      )}
+      {isSuperAdmin && platformQ.data && (
+        <PlatformOverviewTable
+          title="Per-tenant performance"
+          description={`${platformQ.data.totalTenants} tenants · ${fmtKg(platformQ.data.totals.kg)} · ${fmtMoney(platformQ.data.totals.revenue)}`}
+          rows={platformQ.data.rows}
+          columns={[
+            { key: "batches", label: "Batches", align: "right", render: (r) => r.batches },
+            { key: "kg", label: "Volume", align: "right", render: (r) => fmtKg(r.kg) },
+            { key: "revenue", label: "Revenue", align: "right", render: (r) => fmtMoney(r.revenue) },
+            { key: "margin", label: "Margin", align: "right", render: (r) => `${(r.margin * 100).toFixed(1)}%` },
+            { key: "spoilageRate", label: "Spoilage", align: "right", render: (r) => (
+                <span className={r.spoilageRate > 0.1 ? "text-red-600 font-medium" : ""}>{(r.spoilageRate * 100).toFixed(1)}%</span>
+              ) },
+          ]}
+        />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><BarChart3 className="h-6 w-6 text-emerald-600" /> Business Analytics</h1>
         <p className="text-sm text-slate-500 mt-1">Operational and financial performance across your grain operations.</p>

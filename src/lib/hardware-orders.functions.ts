@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
 
 // Order rows contain arbitrary column values; return them as a JSON-safe map.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,10 +34,7 @@ export const listMyHardwareOrders = createServerFn({ method: "GET" })
 export const listAllHardwareOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "super_admin",
-    });
+    const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
     if (!isSuper) throw new Error("Forbidden");
     const { data, error } = await context.supabase
       .from("hardware_orders" as never)
@@ -81,10 +79,7 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => updateInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "super_admin",
-    });
+    const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
     if (!isSuper) throw new Error("Forbidden");
     const patch: Record<string, unknown> = {};
     if (data.status) patch.status = data.status;
@@ -132,10 +127,7 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => messageInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "super_admin",
-    });
+    const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
     if (!isSuper) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -204,10 +196,7 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
 export const countPendingOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "super_admin",
-    });
+    const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
     if (!isSuper) return { count: 0 };
     const { count } = await context.supabase
       .from("hardware_orders" as never)

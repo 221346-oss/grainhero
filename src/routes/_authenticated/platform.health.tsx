@@ -3,8 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Database, Server, Zap, AlertOctagon } from "lucide-react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
+import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
 const getHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -61,46 +62,54 @@ function StatusPill({ label, status }: { label: string; status: string }) {
 function PlatformHealthPage() {
   const fetchH = useServerFn(getHealth);
   const { data, isLoading } = useQuery({ queryKey: ["platform-health"], queryFn: () => fetchH(), refetchInterval: 30_000 });
-  if (isLoading || !data) return <div className="text-sm text-slate-500">Loading system health…</div>;
-  const m = data.metrics;
+
+  const m = data?.metrics;
+  const services = data?.services;
+  const events = data?.recentEvents ?? [];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-bold text-slate-900">System Health</h2>
-        <p className="text-xs text-slate-500 mt-1">Realtime status and error rates.</p>
-      </div>
+    <AdminPageShell title="System health" subtitle="Real-time status monitoring and error rates">
       <div className="grid gap-3 md:grid-cols-3">
-        <StatusPill label="API" status={data.services.api} />
-        <StatusPill label="Database" status={data.services.database} />
-        <StatusPill label="Realtime" status={data.services.realtime} />
+        <StatusPill label="API" status={services?.api ?? "…"} />
+        <StatusPill label="Database" status={services?.database ?? "…"} />
+        <StatusPill label="Realtime" status={services?.realtime ?? "…"} />
       </div>
-      <div className="grid gap-3 md:grid-cols-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><Activity className="h-3 w-3" /> Uptime</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-emerald-600">{m.uptimePct}%</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><Zap className="h-3 w-3" /> Active users (30d)</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-slate-900">{m.activeUsers}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><Database className="h-3 w-3" /> Total users</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-slate-900">{m.totalUsers}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500 flex items-center gap-1"><AlertOctagon className="h-3 w-3" /> Errors 24h</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-red-600">{m.errorsToday}</CardContent></Card>
-      </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500">Errors 7d</CardTitle></CardHeader><CardContent className="text-xl font-bold text-slate-900">{m.errors7d}</CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-slate-500">Errors 30d</CardTitle></CardHeader><CardContent className="text-xl font-bold text-slate-900">{m.errors30d}</CardContent></Card>
-      </div>
-      <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Server className="h-4 w-4" /> Recent incidents</CardTitle></CardHeader>
-        <CardContent>
-          {data.recentEvents.length === 0 ? (
-            <div className="text-sm text-slate-500">No incidents recorded.</div>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {data.recentEvents.map((e) => (
-                <li key={e.id} className="py-2 flex items-center justify-between text-sm">
-                  <span className="font-medium text-slate-800">{e.event}</span>
-                  <span className="text-xs text-slate-500">{new Date(e.created_at).toLocaleString()}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+
+      <AdminSummaryTiles
+        columns={4}
+        tiles={[
+          { key: "up", label: "Uptime", value: m ? `${m.uptimePct}%` : "—" },
+          { key: "act", label: "Active (30d)", value: m?.activeUsers ?? "—" },
+          { key: "tot", label: "Total users", value: m?.totalUsers ?? "—" },
+          { key: "err", label: "Errors 24h", value: m?.errorsToday ?? "—" },
+        ]}
+      />
+
+      <AdminSummaryTiles
+        columns={3}
+        tiles={[
+          { key: "e7", label: "Errors 7 days", value: m?.errors7d ?? "—" },
+          { key: "e30", label: "Errors 30 days", value: m?.errors30d ?? "—" },
+          { key: "sp", label: "Status", value: isLoading ? "Loading" : "Live" },
+        ]}
+      />
+
+      <AdminDataCard title="Recent incidents" description={`${events.length} events`}>
+        {events.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+            <p className="text-sm">No incidents recorded</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {events.map((e) => (
+              <li key={e.id} className="px-4 py-3 flex items-center justify-between hover:bg-slate-50">
+                <span className="text-sm font-medium text-slate-800">{e.event}</span>
+                <span className="text-xs text-slate-500">{new Date(e.created_at).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </AdminDataCard>
+    </AdminPageShell>
   );
 }

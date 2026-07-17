@@ -1,74 +1,94 @@
-# Plan
+# Admin & Super-Admin UI Redesign + Plan-Threshold Controls
 
-## 1. AppSearch — consistent across all authenticated pages
+## Scope correction
+The `/platform/*` routes and other admin pages are **direct file-based routes** (e.g. `src/routes/_authenticated/platform.orders.tsx`, `activity-logs.tsx`, `orders.tsx`) — no dynamic router or wrapper layout. All work happens inside those individual route files plus a small shared `admin` component set.
 
-- Expand `NAV_TARGETS` in `src/components/app/AppSearch.tsx` to include every authenticated route (all `/platform/*`, ops, insights, business, admin) with proper groups + short keywords so global-jump works everywhere.
-- Broaden `scopeFor()`:
-  - **Global scope** on `/dashboard` and every `/platform*` path.
-  - **Page scope** on all other authenticated routes; label derived from the route (e.g. "Search silos on this page"). Add missing entries in `PAGE_LABELS` (activity-logs, orders, buyers, insurance, subscription, team, reports, plans, etc.).
-- Keep the `useAppSearchQuery()` broadcast; wire it into the main list/table pages that don't yet consume it (silos, warehouses, sensors, actuators, batches, buyers, alerts, incidents, notifications, activity-logs, orders, team-management, platform.tenants, platform.users, platform.leads, platform.orders, platform.audit-logs, platform.logs) as a simple `.filter()` on their fetched arrays. No backend changes.
-- Placeholder + `aria-label` become dynamic per page.
+Two role lenses drive every page (already resolved via `getEffectiveRole` / `has_role`):
+- **admin** = tenant admin. Sees their own tenant's operational data + their own personnel (managers, technicians).
+- **super_admin** = platform operator. Sees tenant admins and platform-wide monitoring — never end-operators, batches, silos, or per-tenant operational rows.
 
-## 2. Keyboard shortcuts (app-wide)
+## Goal
+1. Unify admin/super-admin pages to the landing brand look (emerald primary, slate neutrals, soft `from-slate-50 via-white to-emerald-50/30` bg) using Activity Logs as the visual template.
+2. Compact density — most pages fit one 1440×900 viewport, scrolling stays inside cards.
+3. Drop decorative icons; keep only functional ones (severity dot, close-chip, pagination, sort).
+4. Split Activity Logs by role: admin sees their team; super_admin sees admins + own actions.
+5. New Plan Thresholds page: super_admin edits plan limits/feature access; admin can request upgrade/downgrade from their own dashboard.
 
-In `AppSearch.tsx`:
-- `/` and `⌘K` / `Ctrl+K` → focus search (already present; keep + ignore when typing in inputs/contentEditable).
-- `Esc` → clear + blur + close (already present).
-- `↑ / ↓` → move highlight through the global results list.
-- `Enter` → navigate to highlighted result (or first result if none).
-- Visible kbd hints in the dropdown footer ("↑↓ navigate · ↵ open · esc close").
+## Part A — Shared admin shell
+New folder `src/components/app/admin/`:
+- `AdminPageShell.tsx` — gradient bg wrapper, responsive header (title + subtitle + right actions), no title icons.
+- `AdminSummaryTiles.tsx` — numeric tile row, click-to-filter ring, text-only labels.
+- `AdminFilterBar.tsx` — single card: search + selects + date range + Filter button.
+- `AdminDataCard.tsx` — bordered card with internal `max-h-[520px] overflow-auto` list/table + in-card pagination footer.
+- `AdminDetailPanel.tsx` — sticky right-column detail (replaces navigating to a detail page for most lists).
 
-## 3. Remove "pending" everywhere; default new users to admin
+All components use existing semantic tokens; no new colors, no new dependencies.
 
-- `src/lib/roles.functions.ts`: drop `"pending"` from `AppRole` union + priority `order`; default fallback becomes `"admin"`.
-- `src/routes/_authenticated/dashboard.tsx`: remove the "pending" comment/branch; unknown/no-role → `AdminDashboard`.
-- `src/routes/auth.signup.tsx`: on signup, insert `user_roles` row with `role: 'admin'` (instead of pending). No new migration required — `admin` already exists in the enum.
-- Grep and remove any remaining `PendingDashboard` references (component file already deleted per earlier turn — verify import list clean in `AdminDashboard` / `dashboard.tsx` / sidebar).
-- Keep operational (grain-batches/silos/etc.) restrictions unchanged for `super_admin`.
+Layout rules for every refactored page:
+- Header: `grid-cols-[minmax(0,1fr)_auto]` mobile → `sm:flex` (per responsive-layout-patterns).
+- Body: `lg:grid-cols-3` — list spans 2, sticky detail spans 1.
+- Spacing: `p-4 sm:p-6 space-y-5`, `text-sm` body, page title `text-2xl sm:text-3xl`.
+- No icons in tile labels, card titles, filter labels, or nav items.
 
-## 4. `/platform` insights & quick actions
+## Part B — Activity Logs split by role
+File: `src/routes/_authenticated/activity-logs.tsx` (+ server function `listActivityLogs` in `src/lib/notifications-audit.functions.ts`).
 
-Note: standalone `/platform` route was removed; Super Admin lands on `/dashboard` which renders `SuperAdminDashboard`. Upgrades happen there.
+Server-side scope resolution based on `getEffectiveRole`:
+| Role | Rows returned |
+|------|--------------|
+| technician / manager | Only their own actions. |
+| admin | All actions performed by users inside the caller's tenant (managers, technicians, admin themself). |
+| super_admin | Own super-admin actions + all `admin`-role actions across every tenant, with a `tenant_name` column and a tenant-filter select. |
 
-- Ensure every `QUICK_ACTIONS` link in `SuperAdminDashboard.tsx` resolves to an existing route (`/platform/tenants`, `/platform/users`, `/platform/plans`, `/platform/revenue`, `/platform/pipeline`, `/platform/leads`, `/platform/health`, `/platform/audit-logs`, `/platform/orders`, `/platform/logs`). Confirmed present in `src/routes/_authenticated/`.
-- Widget upgrades in `SuperAdminDashboard.tsx`:
-  - **Recent signups**: each row becomes a `<Link to="/platform/users">` with an inline "View" chevron.
-  - **System alerts**: link to `/platform/health` (or `/grain-alerts` for op alerts); show tenant name when available.
-  - **Signups · 30d**: keep sparkline; add total + WoW delta beneath.
-  - Add two new compact tiles:
-    - **Revenue snapshot** (MRR + active subs + churned) → links to `/platform/revenue`.
-    - **Pipeline snapshot** (leads by stage counts) → links to `/platform/pipeline`.
-  - Both fed by extending `getPlatformOverviewWidgets` in `src/lib/platform.functions.ts` (aggregate from `subscriptions` + hubspot pipeline table already used by `/platform/pipeline`).
-- Header now includes primary CTA buttons: "Invite user" (→ `/platform/users`), "New plan" (→ `/platform/plans`).
+UI additions:
+- Super-admin view: adds "Actor role" chip (admin/super_admin) and a Tenant filter select in the filter bar.
+- Admin view: adds "Team member" filter (their managers/technicians).
+- Same layout, no visual divergence beyond the extra filter select.
 
-## 5. Consistent per-page skeletons
+## Part C — Plan Thresholds & tenant subscription controls
+Data (one migration):
+- `public.plan_thresholds(plan_id text pk, name text, max_users int, max_silos int, max_batches int, max_sensors int, features jsonb, price_cents int, updated_at timestamptz)`.
+- `public.tenant_plan_change_requests(id uuid pk, tenant_id uuid, requested_plan text, current_plan text, direction text check in ('upgrade','downgrade'), status text check in ('pending','approved','rejected','auto_applied'), requested_by uuid, decided_by uuid, decided_at timestamptz, created_at timestamptz default now())`.
+- Grants + RLS: authenticated read on `plan_thresholds`; super_admin write. Admin can insert own tenant's change_request; super_admin full access; both can read own rows via `has_role`.
+- Seed `plan_thresholds` from existing `src/lib/pricing-data.ts` in the same migration.
 
-Establish one pattern per page-type using existing helpers in `src/components/app/skeletons.tsx`:
+Server functions (`src/lib/plan-thresholds.functions.ts`, all `requireSupabaseAuth`):
+- `listPlanThresholds` — any authenticated user.
+- `updatePlanThreshold` — super_admin only (verify via `context.supabase` + `has_role`).
+- `requestPlanChange({ requestedPlan })` — admin only; if `direction === 'upgrade'` and tenant's auto-upgrade flag is on, mark `auto_applied` and update tenant subscription immediately; else `pending`.
+- `decidePlanChangeRequest({ id, approve })` — super_admin only; on approve updates the tenant's plan.
+- `setTenantPlan({ tenantId, plan })` — super_admin manual override.
 
-| Page type | Skeleton composition |
-|---|---|
-| Dashboards (admin/super/manager/technician) | header bar + `StatsSkeleton count=6` + `CardsSkeleton count=3` |
-| List/table pages (silos, warehouses, sensors, actuators, batches, buyers, orders, alerts, incidents, maintenance, notifications, activity-logs, team, platform.tenants/users/leads/orders/audit-logs/logs) | filter-bar bar + `TableSkeleton rows=8 cols=5` |
-| Insight/graph pages (analytics, ai-predictions, reports, data-visualization, revenue, platform.revenue, platform.pipeline, platform.health) | `StatsSkeleton count=4` + a new `ChartSkeleton` (add to skeletons.tsx: tall rounded card with animated bars) ×2 |
-| Detail/form pages (settings, subscription, plans, platform.plans, insurance, security-center) | `FormSkeleton fields=6` + `CardsSkeleton count=2` |
+New pages (both use AdminPageShell):
+1. `src/routes/_authenticated/platform.plans.tsx` — super_admin: editable table of plans (name, limits, feature toggles, price), plus a pending-requests panel in the right column.
+2. `src/routes/_authenticated/subscription.tsx` (existing, refactor) — admin: current plan tile, plan comparison, "Request upgrade/downgrade" button, toggle "Auto-approve upgrades", history of own requests.
 
-Add a small `PageSkeleton({ variant })` wrapper exporting `"dashboard" \| "table" \| "insight" \| "form"` in `skeletons.tsx` so each route file's `pendingComponent` is a single line. Update every authenticated route's `pendingComponent` accordingly (batched edit).
+## Part D — Page-by-page refactor (presentation only, no data changes)
 
-## Technical notes
+**Super-admin pages (show platform/admin oversight, never per-tenant operator data):**
+| Page | Focus |
+|------|-------|
+| `platform.index.tsx` | Tiles: total tenants, active admins, MRR, incidents-this-week + two-column widgets (recent signups, system alerts) sized to one viewport. |
+| `platform.tenants.tsx` | Tenants list + sticky tenant detail (plan, admin contact, usage vs threshold). Manual plan override lives here. |
+| `platform.users.tsx` | **Only admin-role users** across tenants; role filter chips (admin / super_admin). No managers/technicians. |
+| `platform.orders.tsx` | Hardware orders across tenants; tiles = statuses; list + detail. |
+| `platform.leads.tsx` / `platform.pipeline.tsx` | Marketing leads/pipeline; kanban stays inside a fixed-height card, no page scroll. |
+| `platform.audit-logs.tsx` / `platform.logs.tsx` | Align to Activity Logs shell; filters for actor role + tenant. |
+| `platform.health.tsx` | Metrics tiles + one status card grid. |
+| `platform.plans.tsx` *(new)* | Plan threshold editor + change-request queue. |
 
-- No DB schema changes. Signup insert uses the existing `admin` enum value.
-- `getPlatformOverviewWidgets` extension reads from tables already granted; no new grants.
-- Keyboard handling uses a single window listener with a shared ref to the results list; no external libs.
-- `useAppSearchQuery()` remains the sole contract for page-scoped filtering — pages that don't opt in still get the URL/search bar UX without changes.
+**Admin pages** (`activity-logs.tsx`, `subscription.tsx`, `team-management.tsx`, `settings.tsx`) get the same shell + brand palette, no scope changes beyond Activity Logs.
 
-## Files touched (approx.)
+## Out of scope
+- Tenant operational pages (dashboard, grain-batches, silos, sensors, actuators, buyers, insurance) — unchanged.
+- No new AI, email, or webhook wiring.
+- No copy changes beyond what the new components require.
 
-- `src/components/app/AppSearch.tsx` — full rewrite of NAV + keyboard nav.
-- `src/components/app/skeletons.tsx` — add `ChartSkeleton`, `PageSkeleton`.
-- `src/components/dashboards/SuperAdminDashboard.tsx` — widget links + new tiles + CTAs.
-- `src/lib/platform.functions.ts` — extend `getPlatformOverviewWidgets` (revenue + pipeline snapshots).
-- `src/lib/roles.functions.ts` — drop `pending`.
-- `src/routes/_authenticated/dashboard.tsx` — default admin.
-- `src/routes/auth.signup.tsx` — insert admin role on signup.
-- ~15–20 list/table route files — wire `useAppSearchQuery()` into their filter step + swap `pendingComponent` to `PageSkeleton`.
-- All other authenticated route files — swap `pendingComponent` to appropriate `PageSkeleton` variant.
+## Acceptance
+- Every page in Part D shares identical header/tile/filter/card visuals with Activity Logs.
+- Desktop 1440×900: main content visible without page scroll (internal card scroll only).
+- No icon in any page title, section title, tile label, or filter label.
+- Activity Logs returns role-appropriate rows verified via one query per role.
+- Super_admin can edit a plan threshold and approve a change request; admin can submit a change request and (if auto-upgrade is on) see the plan updated immediately.
+
+Reply **approve** to build, or tell me what to adjust.

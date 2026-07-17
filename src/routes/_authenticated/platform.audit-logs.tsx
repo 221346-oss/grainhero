@@ -3,8 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollText } from "lucide-react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
 const getAudit = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -26,49 +26,55 @@ export const Route = createFileRoute("/_authenticated/platform/audit-logs")({
 function AuditLogsPage() {
   const fetchAudit = useServerFn(getAudit);
   const { data, isLoading } = useQuery({ queryKey: ["platform-audit-logs"], queryFn: () => fetchAudit() });
-  if (isLoading || !data) return <div className="text-sm text-slate-500">Loading audit logs…</div>;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2"><ScrollText className="h-4 w-4" /> Audit Logs</h2>
-        <p className="text-xs text-slate-500 mt-1">Configuration changes, access events, security events.</p>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Activity ({data.activity.length})</CardTitle></CardHeader>
-          <CardContent className="max-h-[500px] overflow-y-auto">
-            <ul className="divide-y divide-slate-100 text-xs">
-              {data.activity.map((row) => {
+    <AdminPageShell title="Audit logs" subtitle="Configuration changes, access events, and security events">
+      <div className="grid gap-5 md:grid-cols-2">
+        <AdminDataCard
+          title="Activity"
+          description={isLoading ? "Loading…" : `${data?.activity.length ?? 0} events`}
+        >
+          {!isLoading && (data?.activity.length ?? 0) === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+              <p className="text-sm">No activity logs yet</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {(data?.activity ?? []).map((row) => {
                 const r = row as Record<string, unknown>;
                 return (
-                  <li key={String(r.id)} className="py-1.5">
-                    <div className="font-mono text-slate-700">{String(r.action ?? r.event ?? "activity")}</div>
-                    <div className="text-slate-400 text-[10px]">{new Date(String(r.created_at)).toLocaleString()}</div>
+                  <li key={String(r.id)} className="px-4 py-3 hover:bg-slate-50">
+                    <div className="text-sm font-medium text-slate-800">{String(r.action ?? r.event ?? "activity")}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
                   </li>
                 );
               })}
-              {data.activity.length === 0 && <li className="py-2 text-slate-500">No activity yet.</li>}
             </ul>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-base text-red-700">Security ({data.security.length})</CardTitle></CardHeader>
-          <CardContent className="max-h-[500px] overflow-y-auto">
-            <ul className="divide-y divide-slate-100 text-xs">
-              {data.security.map((row) => {
+          )}
+        </AdminDataCard>
+        <AdminDataCard
+          title="Security events"
+          description={isLoading ? "Loading…" : `${data?.security.length ?? 0} events`}
+        >
+          {!isLoading && (data?.security.length ?? 0) === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+              <p className="text-sm">No security events</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {(data?.security ?? []).map((row) => {
                 const r = row as Record<string, unknown>;
                 return (
-                  <li key={String(r.id)} className="py-1.5">
-                    <div className="font-mono text-slate-700">{String(r.event)}</div>
-                    <div className="text-slate-400 text-[10px]">{new Date(String(r.created_at)).toLocaleString()}</div>
+                  <li key={String(r.id)} className="px-4 py-3 hover:bg-red-50/40">
+                    <div className="text-sm font-medium text-slate-800">{String(r.event)}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
                   </li>
                 );
               })}
-              {data.security.length === 0 && <li className="py-2 text-slate-500">No security events.</li>}
             </ul>
-          </CardContent>
-        </Card>
+          )}
+        </AdminDataCard>
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

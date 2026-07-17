@@ -120,8 +120,56 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     stripe_customer_id: s.customer ?? null,
                     stripe_subscription_id: s.subscription ?? null,
                     stripe_payment_intent: s.payment_intent ?? null,
+                    ...(userId ? { admin_id: userId } : {}),
                   } as never)
                   .eq("id", hardwareOrderId);
+
+                // Ensure the buyer has an active subscription row so revenue analytics
+                // pick this up immediately, without waiting for customer.subscription.created.
+                if (userId) {
+                  const planNameMap: Record<string, string> = {
+                    starter: "Grain Starter",
+                    basic: "Grain Starter",
+                    growth: "Grain Professional",
+                    intermediate: "Grain Professional",
+                    professional: "Grain Professional",
+                    scale: "Grain Enterprise",
+                    enterprise: "Grain Enterprise",
+                    pro: "Grain Enterprise",
+                  };
+                  const planKey = String(planId ?? "").toLowerCase();
+                  const planName = planNameMap[planKey] ?? "Custom";
+                  const amount = typeof s.amount_total === "number" ? s.amount_total / 100 : 0;
+                  const { data: existingSub } = await supabaseAdmin
+                    .from("subscriptions")
+                    .select("id")
+                    .eq("admin_id", userId)
+                    .maybeSingle();
+                  if (!existingSub) {
+                    await supabaseAdmin.from("subscriptions").insert({
+                      admin_id: userId,
+                      plan_name: planName as never,
+                      plan_description: "Auto-created on checkout",
+                      status: "active" as never,
+                      billing_cycle: "monthly" as never,
+                      price_per_month: amount || 99,
+                      currency: (s.currency ?? "usd").toUpperCase(),
+                      start_date: new Date().toISOString(),
+                      end_date: new Date(Date.now() + 30 * 86400_000).toISOString(),
+                      next_payment_date: new Date(Date.now() + 30 * 86400_000).toISOString(),
+                      auto_renew: true,
+                      stripe_subscription_id: s.subscription ?? null,
+                      stripe_customer_id: s.customer ?? null,
+                    } as never);
+                  }
+                  await supabaseAdmin
+                    .from("profiles")
+                    .update({
+                      has_access: "full",
+                      subscription_plan: planKey || null,
+                    } as never)
+                    .eq("id", userId);
+                }
 
                 // In-app notification for every super admin.
                 const { data: supers } = await supabaseAdmin
@@ -318,6 +366,19 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   cancellation_date: new Date().toISOString(),
                 } as never)
                 .eq("stripe_subscription_id", sub.id);
+              try {
+                const { notifyPlatformEvent } = await import("@/lib/platform-notify.server");
+                const { data: subRow } = await supabaseAdmin
+                  .from("subscriptions")
+                  .select("customer_id, plan_name")
+                  .eq("stripe_subscription_id", sub.id)
+                  .maybeSingle();
+                await notifyPlatformEvent({
+                  type: "churn",
+                  customerId: (subRow as any)?.customer_id ?? sub.id,
+                  plan: (subRow as any)?.plan_name ?? null,
+                });
+              } catch { /* webhook telemetry only */ }
               break;
             }
             case "invoice.payment_failed":
@@ -335,6 +396,17 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   event: `billing.${event.type}`,
                   meta: { amount: inv.amount_paid, currency: inv.currency } as never,
                 });
+              }
+              if (event.type === "invoice.payment_failed") {
+                try {
+                  const { notifyPlatformEvent } = await import("@/lib/platform-notify.server");
+                  await notifyPlatformEvent({
+                    type: "stripe_payment_failed",
+                    customerId: inv.customer ?? "unknown",
+                    amount: inv.amount_paid,
+                    currency: inv.currency,
+                  });
+                } catch { /* telemetry only */ }
               }
               break;
             }

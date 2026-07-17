@@ -1414,10 +1414,89 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_thresholds: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json
+          is_active: boolean
+          is_popular: boolean
+          max_actuators: number
+          max_batches: number
+          max_sensors: number
+          max_silos: number
+          max_users: number
+          name: string
+          plan_id: string
+          price_cents: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          is_active?: boolean
+          is_popular?: boolean
+          max_actuators?: number
+          max_batches?: number
+          max_sensors?: number
+          max_silos?: number
+          max_users?: number
+          name: string
+          plan_id: string
+          price_cents?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          is_active?: boolean
+          is_popular?: boolean
+          max_actuators?: number
+          max_batches?: number
+          max_sensors?: number
+          max_silos?: number
+          max_users?: number
+          name?: string
+          plan_id?: string
+          price_cents?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          config: Json
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config?: Json
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config?: Json
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: Json | null
           admin_id: string | null
+          auto_upgrade_enabled: boolean
           avatar: string | null
           blocked: boolean | null
           business_type: string | null
@@ -1459,6 +1538,7 @@ export type Database = {
         Insert: {
           address?: Json | null
           admin_id?: string | null
+          auto_upgrade_enabled?: boolean
           avatar?: string | null
           blocked?: boolean | null
           business_type?: string | null
@@ -1500,6 +1580,7 @@ export type Database = {
         Update: {
           address?: Json | null
           admin_id?: string | null
+          auto_upgrade_enabled?: boolean
           avatar?: string | null
           blocked?: boolean | null
           business_type?: string | null
@@ -2302,6 +2383,66 @@ export type Database = {
           },
         ]
       }
+      tenant_plan_change_requests: {
+        Row: {
+          created_at: string
+          current_plan: string | null
+          decided_at: string | null
+          decided_by: string | null
+          direction: string
+          id: string
+          note: string | null
+          requested_by: string
+          requested_plan: string
+          status: string
+          tenant_admin_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_plan?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          direction: string
+          id?: string
+          note?: string | null
+          requested_by: string
+          requested_plan: string
+          status?: string
+          tenant_admin_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_plan?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          direction?: string
+          id?: string
+          note?: string | null
+          requested_by?: string
+          requested_plan?: string
+          status?: string
+          tenant_admin_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_plan_change_requests_requested_plan_fkey"
+            columns: ["requested_plan"]
+            isOneToOne: false
+            referencedRelation: "plan_thresholds"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_change_requests_tenant_admin_id_fkey"
+            columns: ["tenant_admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2447,6 +2588,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_tenant_admin_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
