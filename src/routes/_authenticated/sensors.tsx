@@ -21,6 +21,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
+import { LiveReadingChart } from "@/components/app/sensors/LiveReadingChart";
+import { ThresholdDrawer } from "@/components/app/sensors/ThresholdDrawer";
+import { QualityBadge } from "@/components/app/sensors/QualityBadge";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listSensorDevices, upsertSensorDevice, deleteSensorDevice,
@@ -143,6 +146,7 @@ function SensorsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [thresholdSilo, setThresholdSilo] = useState<{ id: string; name: string } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Device | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
@@ -300,6 +304,7 @@ function SensorsPage() {
               onView={() => { setSelected(d); setViewOpen(true); }}
               onEdit={() => openEdit(d)}
               onDelete={() => setDeleteId(d.id)}
+              onThresholds={d.silos ? () => setThresholdSilo({ id: d.silos!.id, name: d.silos!.name }) : undefined}
             />
           ))}
         </div>
@@ -455,15 +460,35 @@ function SensorsPage() {
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
           {selected && (
-            <DeviceDetail
-              device={selected}
-              reading={readingByDevice.get(selected.id) ?? null}
-              historyFn={historyFn as (arg: { data: { device_id: string; limit: number } }) => Promise<Reading[]>}
-              onEdit={() => { setViewOpen(false); openEdit(selected); }}
-            />
+            <>
+              <DeviceDetail
+                device={selected}
+                reading={readingByDevice.get(selected.id) ?? null}
+                historyFn={historyFn as (arg: { data: { device_id: string; limit: number } }) => Promise<Reading[]>}
+                onEdit={() => { setViewOpen(false); openEdit(selected); }}
+              />
+              {selected.silo_id && (
+                <div className="mt-4 rounded-lg border p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">Live readings</div>
+                    <QualityBadge flag={readingByDevice.get(selected.id) ? "ok" : "missing"} />
+                  </div>
+                  <LiveReadingChart siloId={selected.silo_id} deviceId={selected.id} metric="temperature" />
+                </div>
+              )}
+            </>
           )}
         </DialogContent>
       </Dialog>
+
+      {thresholdSilo && (
+        <ThresholdDrawer
+          open={!!thresholdSilo}
+          onOpenChange={(o) => { if (!o) setThresholdSilo(null); }}
+          siloId={thresholdSilo.id}
+          siloName={thresholdSilo.name}
+        />
+      )}
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
