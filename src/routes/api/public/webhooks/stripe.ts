@@ -127,6 +127,12 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   } catch (e) {
                     console.warn("[stripe-webhook] buyer notify failed:", (e as Error).message);
                   }
+                  try {
+                    const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+                    await sendBuyerOrderEmail(supabaseAdmin, buyerOrderId, "paymentSucceeded");
+                  } catch (e) {
+                    console.warn("[stripe-webhook] buyer paid email failed:", (e as Error).message);
+                  }
                 }
               }
 
