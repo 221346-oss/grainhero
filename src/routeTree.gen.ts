@@ -83,6 +83,7 @@ import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
+import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
@@ -502,6 +503,12 @@ const AuthenticatedPlatformMarketplaceSettingsRoute =
     path: '/platform/marketplace-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMarketplaceHealthRoute =
+  AuthenticatedPlatformMarketplaceHealthRouteImport.update({
+    id: '/platform/marketplace-health',
+    path: '/platform/marketplace-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
     id: '/platform/logs',
@@ -700,6 +707,7 @@ export interface FileRoutesByFullPath {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
@@ -795,6 +803,7 @@ export interface FileRoutesByTo {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
@@ -894,6 +903,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
+  '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/_authenticated/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
@@ -993,6 +1003,7 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/leads'
     | '/platform/logs'
+    | '/platform/marketplace-health'
     | '/platform/marketplace-settings'
     | '/platform/orders'
     | '/platform/pipeline'
@@ -1088,6 +1099,7 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/leads'
     | '/platform/logs'
+    | '/platform/marketplace-health'
     | '/platform/marketplace-settings'
     | '/platform/orders'
     | '/platform/pipeline'
@@ -1186,6 +1198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
+    | '/_authenticated/platform/marketplace-health'
     | '/_authenticated/platform/marketplace-settings'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
@@ -1769,6 +1782,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformMarketplaceSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/marketplace-health': {
+      id: '/_authenticated/platform/marketplace-health'
+      path: '/platform/marketplace-health'
+      fullPath: '/platform/marketplace-health'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/logs': {
       id: '/_authenticated/platform/logs'
       path: '/platform/logs'
@@ -2038,6 +2058,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
+  AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
   AuthenticatedPlatformMarketplaceSettingsRoute: typeof AuthenticatedPlatformMarketplaceSettingsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
@@ -2094,6 +2115,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
+  AuthenticatedPlatformMarketplaceHealthRoute:
+    AuthenticatedPlatformMarketplaceHealthRoute,
   AuthenticatedPlatformMarketplaceSettingsRoute:
     AuthenticatedPlatformMarketplaceSettingsRoute,
   AuthenticatedPlatformOrdersRoute:
