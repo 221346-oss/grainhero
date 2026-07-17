@@ -1,5 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+
+const AssumptionSchema = z
+  .object({
+    iotCostPct: z.number().min(0).max(100).optional(),
+    opexPct: z.number().min(0).max(100).optional(),
+  })
+  .optional();
 
 async function assertSuperAdmin(ctx: { supabase: any; userId: string }) {
   const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" });
@@ -8,9 +16,12 @@ async function assertSuperAdmin(ctx: { supabase: any; userId: string }) {
 
 export const getFinancialSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => AssumptionSchema.parse(d) ?? {})
+  .handler(async ({ context, data }) => {
     await assertSuperAdmin(context);
     const supabaseAdmin = context.supabase;
+    const iotCostPct = Number(data?.iotCostPct ?? 55);
+    const opexPct = Number(data?.opexPct ?? 25);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -38,11 +49,11 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     const collectedTotal = (invoices.data ?? []).reduce((s: number, i: any) => s + Number(i.amount_paid ?? 0), 0);
 
     const totalRevenue = mrr + iotRevenue + insuranceCommission;
-    // Simple COGS assumption: hardware cost = 55% of iot revenue
-    const cogs = iotRevenue * 0.55;
+    // COGS: configurable IoT hardware cost as % of iot revenue
+    const cogs = iotRevenue * (iotCostPct / 100);
     const grossProfit = totalRevenue - cogs;
-    // Opex simplification: 25% of revenue
-    const opex = totalRevenue * 0.25;
+    // Opex simplification: configurable % of total revenue
+    const opex = totalRevenue * (opexPct / 100);
     const otherIncome = 0;
     const netProfit = grossProfit - opex + otherIncome;
     const netProfitPct = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
@@ -94,6 +105,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
         totalOrders: (orders.data ?? []).length,
         totalPolicies: (policies.data ?? []).length,
       },
+      assumptions: { iotCostPct, opexPct },
       pnl: {
         sales: Math.round(totalRevenue),
         cogs: Math.round(cogs),
@@ -111,11 +123,13 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
 
 export const generateFinancialPdf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { type: "pnl" | "revenue" | "mrr" }) => d)
+  .inputValidator((d: { type: "pnl" | "revenue" | "mrr"; iotCostPct?: number; opexPct?: number }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const supabaseAdmin = context.supabase;
     const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+    const iotCostPct = Number(data.iotCostPct ?? 55);
+    const opexPct = Number(data.opexPct ?? 25);
 
     const [subs, orders, policies] = await Promise.all([
       supabaseAdmin.from("subscriptions").select("price_per_month, status, plan_name"),
@@ -128,7 +142,7 @@ export const generateFinancialPdf = createServerFn({ method: "POST" })
       .reduce((s: number, x: any) => s + Number(x.hardware_total ?? 0), 0);
     const ins = (policies.data ?? []).reduce((s: number, p: any) => s + Number(p.premium_amount ?? 0) * Number(p.commission_rate ?? 0) / 100, 0);
     const total = mrr + iot + ins;
-    const cogs = iot * 0.55, gross = total - cogs, opex = total * 0.25, net = gross - opex;
+    const cogs = iot * (iotCostPct / 100), gross = total - cogs, opex = total * (opexPct / 100), net = gross - opex;
 
     const pdf = await PDFDocument.create();
     const page = pdf.addPage([595, 842]);
@@ -147,9 +161,9 @@ export const generateFinancialPdf = createServerFn({ method: "POST" })
       ["IoT Hardware Revenue", fmt(iot)],
       ["Insurance Commission", fmt(ins)],
       ["Total Revenue", fmt(total)],
-      ["Cost of Goods Sold", `- ${fmt(cogs)}`],
+      [`Cost of Goods Sold (${iotCostPct}% of IoT)`, `- ${fmt(cogs)}`],
       ["Gross Profit", fmt(gross)],
-      ["Operating Expenses", `- ${fmt(opex)}`],
+      [`Operating Expenses (${opexPct}% of revenue)`, `- ${fmt(opex)}`],
       ["Net Profit", fmt(net)],
       ["Net Profit %", `${total > 0 ? ((net / total) * 100).toFixed(2) : "0.00"} %`],
       ["Active subscriptions", String(activeSubs.length)],
