@@ -135,6 +135,14 @@ export const createBuyerOrder = createServerFn({ method: "POST" })
       meta: { orderNumber, quantityKg: data.quantityKg, subtotal, channel: "portal" },
     });
 
+    // Fire-and-forget confirmation email (fully templated in super-admin settings).
+    try {
+      const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
+      await sendBuyerOrderEmail(sb, (order as Row).id as string, "placed");
+    } catch (e) {
+      console.warn("[buyer-portal] placed email failed:", (e as Error).message);
+    }
+
     return { id: (order as Row).id as string, orderNumber };
   });
 
