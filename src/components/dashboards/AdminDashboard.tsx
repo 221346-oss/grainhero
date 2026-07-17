@@ -1,32 +1,34 @@
-import { Users, Building2, DollarSign, TrendingUp, Package, Activity } from "lucide-react";
-import { PageHeader, StatCard } from "./_shared";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { useDashboardStats } from "./useDashboardStats";
 import { RecentBatchesCard, RecentAlertsCard, TeamCard, ActuatorsCard, SilosOccupancyCard } from "./DashboardBlocks";
+import { Badge } from "@/components/ui/badge";
 
 export function AdminDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
-      <PageHeader
-        title={`Admin${name ? ` — ${name}` : ""}`}
-        subtitle="Tenant overview: team, silos, revenue and operations"
-        badge="Admin"
+    <AdminPageShell
+      title={`Admin${name ? ` — ${name}` : ""}`}
+      subtitle="Tenant overview: team, silos, revenue and operations"
+      actions={<Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Admin</Badge>}
+    >
+      <AdminSummaryTiles
+        columns={5}
+        tiles={[
+          { key: "buyers", label: "Buyers", value: s?.buyers ?? "—" },
+          { key: "wh", label: "Warehouses", value: s?.warehouses ?? "—" },
+          { key: "batches", label: "Active batches", value: s?.batches.active ?? "—" },
+          { key: "silos", label: "Silos", value: s?.silos ?? "—" },
+          { key: "sensors", label: "Sensors online", value: s?.sensors.online ?? "—" },
+        ]}
       />
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <StatCard label="Buyers" value={s?.buyers ?? "—"} icon={Users} accent="emerald" />
-        <StatCard label="Warehouses" value={s?.warehouses ?? "—"} icon={Building2} accent="sky" />
-        <StatCard label="Active Batches" value={s?.batches.active ?? "—"} icon={Package} accent="violet" />
-        <StatCard label="Silos" value={s?.silos ?? "—"} icon={DollarSign} accent="emerald" />
-        <StatCard label="Sensors Online" value={s?.sensors.online ?? "—"} icon={TrendingUp} accent="amber" />
-        <StatCard label="Open Alerts" value={s?.alerts.open ?? "—"} icon={Activity} accent="rose" />
-      </div>
-      <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <RecentBatchesCard />
         <RecentAlertsCard />
         <TeamCard />
         <ActuatorsCard />
         <SilosOccupancyCard />
       </div>
-    </div>
+    </AdminPageShell>
   );
 }
