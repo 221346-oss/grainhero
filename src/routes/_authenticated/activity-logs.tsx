@@ -1,4 +1,4 @@
-import { DashboardSkeleton } from "@/components/app/skeletons";
+import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, RefreshCw, X } from "lucide-react";
+import { Download, RefreshCw, X, FileText } from "lucide-react";
 import { listActivityLogs } from "@/lib/notifications-audit.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
@@ -213,24 +213,14 @@ function ActivityLogsPage() {
             {isLoading ? (
               <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
             ) : logs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-14 text-slate-400">
-                <p className="text-sm">No activity logs found</p>
+              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                <FileText className="h-12 w-12 mb-3" />
+                <p className="text-lg font-medium">No activity logs found</p>
+                <p className="text-sm mt-1">Logs will appear as actions are performed</p>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {isLoading ? (
-                <DashboardSkeleton />
-              ) : logs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                  <FileText className="h-12 w-12 mb-3" />
-                  <p className="text-lg font-medium">No activity logs found</p>
-                  <p className="text-sm mt-1">Logs will appear as actions are performed</p>
-                </div>
-              ) : (
-                <div className="relative pl-8 pr-4 py-4 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-slate-300 before:to-slate-100 space-y-4">
-                  {logs.map((log) => {
-                    const cc = CATEGORY[log.category] ?? CATEGORY.system;
-                    const sc = SEVERITY[log.severity] ?? SEVERITY.info;
+            ) : (
+              <div className="relative pl-8 pr-4 py-4 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-slate-300 before:to-slate-100 space-y-4">
+                {logs.map((log) => {
                     const isSel = selected?.id === log.id;
                     let node = "bg-blue-400 border-blue-100";
                     if (log.severity === "critical") node = "bg-red-500 border-red-100";
@@ -242,10 +232,10 @@ function ActivityLogsPage() {
                         onClick={() => setSelected(log)}
                       >
                         <div className={`absolute -left-5 top-4 w-3 h-3 rounded-full border-2 ${node} z-10 shadow-sm`} />
-                        <div className={`mt-0.5 flex items-center justify-center w-8 h-8 rounded border ${cc.bg}`}>
-                          <span className={cc.color}>{cc.icon}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap flex-1">
+                          <span className="text-xs font-medium text-slate-700">
+                            {log.action.replace(/_/g, " ")}
+                          </span>
                           <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${SEVERITY_STYLE[log.severity] ?? ""}`}>
                             {log.severity}
                           </Badge>
@@ -262,11 +252,10 @@ function ActivityLogsPage() {
                             </Badge>
                           )}
                           <span className="text-[10px] text-slate-400">
-                            {log.user_name ?? "System"} · {log.user_role ?? "—"}
+                            {log.user_name ?? "System"} · {log.user_role ?? "—"} · {fmtRel(log.created_at)}
                           </span>
                         </div>
                       </div>
-                    </div>
                   );
                 })}
               </div>

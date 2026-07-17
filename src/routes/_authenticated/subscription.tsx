@@ -19,6 +19,7 @@ import pricingData from "@/lib/pricing-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { SubscriptionSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   component: SubscriptionPage,
@@ -58,7 +59,7 @@ function SubscriptionPage() {
   const roleFn = useServerFn(getMyRole);
   const allSubsFn = useServerFn(getAllSubscriptions);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
   
   const isSuperAdmin = (roleData?.role ?? data?.role ?? "pending") === "super_admin";
