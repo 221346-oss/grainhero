@@ -463,6 +463,33 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             default:
               // Unhandled event types are OK — Stripe will not retry once we 2xx.
               break;
+            case "charge.refunded": {
+              const ch = event.data.object as {
+                payment_intent?: string;
+                amount_refunded?: number;
+                currency?: string;
+              };
+              if (ch.payment_intent) {
+                const { data: order } = await supabaseAdmin
+                  .from("buyer_orders")
+                  .select("id, admin_id, status, subtotal")
+                  .eq("stripe_payment_intent", ch.payment_intent)
+                  .maybeSingle();
+                if (order) {
+                  const fully = (ch.amount_refunded ?? 0) / 100 >= Number(order.subtotal ?? 0) - 0.01;
+                  await supabaseAdmin.from("buyer_orders").update({
+                    refund_status: "succeeded",
+                    status: fully ? "refunded" : order.status,
+                  }).eq("id", order.id);
+                  await supabaseAdmin.from("buyer_order_events").insert({
+                    order_id: order.id, admin_id: order.admin_id,
+                    from_state: order.status, to_state: fully ? "refunded" : order.status,
+                    note: `Stripe refund confirmed (${(ch.amount_refunded ?? 0) / 100} ${ch.currency ?? ""})`,
+                  });
+                }
+              }
+              break;
+            }
           }
         } catch (err) {
           console.error("[stripe-webhook] handler error:", err);
