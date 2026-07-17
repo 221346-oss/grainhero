@@ -1,5 +1,5 @@
 import { TableSkeleton } from "@/components/app/skeletons";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -9,9 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
+import { startImpersonation } from "@/lib/impersonation.functions";
+import { saveImpersonationSession } from "@/components/app/ImpersonationBanner";
+import { UserCog } from "lucide-react";
+import { AdminFilterBar } from "@/components/app/admin/AdminFilterBar";
+
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
-import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
+import { AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
 export const Route = createFileRoute("/_authenticated/platform/users")({ component: UsersPage });
@@ -27,9 +32,11 @@ const ROLE_BADGE: Record<string, string> = {
 };
 
 function UsersPage() {
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
+  const impersonateFn = useServerFn(startImpersonation);
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
   const [q, setQ] = useState("");
   const [qInput, setQInput] = useState("");
@@ -46,7 +53,30 @@ function UsersPage() {
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["platform-users"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
- 
+
+  const impersonate = useMutation({
+    mutationFn: (adminId: string) => {
+      console.log("Starting impersonation for adminId:", adminId);
+      return impersonateFn({ data: { adminId } });
+    },
+    onSuccess: (data) => {
+      console.log("Impersonation success:", data);
+      // Persist session to localStorage so the banner picks it up
+      saveImpersonationSession({
+        adminId: data.adminId,
+        adminName: data.adminName ?? "",
+        adminEmail: data.adminEmail ?? null,
+        businessType: data.businessType ?? null,
+      });
+      toast.success(`Now viewing as ${data.adminName}`);
+      navigate({ to: "/dashboard" });
+    },
+    onError: (e: Error) => {
+      console.error("Impersonation error:", e);
+      toast.error(e.message);
+    },
+  });
+
   const totalUsers = data.length;
   const blockedUsers = data.filter((u) => u.blocked).length;
   const thisMonth = data.filter((u) => {
@@ -107,7 +137,36 @@ function UsersPage() {
                     {u.email}
                     {u.created_at && <span className="ml-2 text-slate-400">• Joined {new Date(u.created_at).toLocaleDateString()}</span>}
                   </div>
-                </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className={ROLE_BADGE[u.role] ?? ROLE_BADGE.pending}>
+                      {u.role.replace("_", " ")}
+                    </Badge>
+                    {u.blocked && <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Blocked</Badge>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {u.role === "admin" && !u.blocked && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={impersonate.isPending}
+                        onClick={() => impersonate.mutate(u.id)}
+                        className="text-blue-600 hover:bg-blue-50 border-blue-200"
+                      >
+                        <UserCog className="h-3 w-3 mr-1" />
+                        View as
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={u.blocked ? "default" : "outline"}
+                      disabled={toggle.isPending}
+                      onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
+                      className={u.blocked ? "bg-emerald-600 hover:bg-emerald-700" : "text-red-600 hover:bg-red-50 border-red-200"}
+                    >
+                      {u.blocked ? "Unblock" : "Block"}
+                    </Button>
+                  </div>
+                </div >
                 <Badge variant="outline" className={ROLE_BADGE[u.role] ?? ROLE_BADGE.pending}>
                   {u.role.replace("_", " ")}
                 </Badge>
@@ -121,11 +180,12 @@ function UsersPage() {
                 >
                   {u.blocked ? "Unblock" : "Block"}
                 </Button>
-              </div>
-            ))}
-          </div>
+              </div >
+            ))
+            }
+          </div >
         )}
-      </AdminDataCard>
-    </AdminPageShell>
+      </AdminDataCard >
+    </AdminPageShell >
   );
 }
