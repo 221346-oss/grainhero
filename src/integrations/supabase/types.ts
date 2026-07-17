@@ -342,10 +342,13 @@ export type Database = {
           invoice_number: string
           items: Json | null
           notes: string | null
+          order_id: string | null
           paid_at: string | null
+          paid_via: string | null
           payment_method: string | null
           payment_status: string | null
           pdf_url: string | null
+          stripe_payment_intent_id: string | null
           subtotal: number
           total_amount: number
           updated_at: string | null
@@ -369,10 +372,13 @@ export type Database = {
           invoice_number: string
           items?: Json | null
           notes?: string | null
+          order_id?: string | null
           paid_at?: string | null
+          paid_via?: string | null
           payment_method?: string | null
           payment_status?: string | null
           pdf_url?: string | null
+          stripe_payment_intent_id?: string | null
           subtotal?: number
           total_amount?: number
           updated_at?: string | null
@@ -396,10 +402,13 @@ export type Database = {
           invoice_number?: string
           items?: Json | null
           notes?: string | null
+          order_id?: string | null
           paid_at?: string | null
+          paid_via?: string | null
           payment_method?: string | null
           payment_status?: string | null
           pdf_url?: string | null
+          stripe_payment_intent_id?: string | null
           subtotal?: number
           total_amount?: number
           updated_at?: string | null
@@ -431,6 +440,136 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_order_events: {
+        Row: {
+          actor_user_id: string | null
+          admin_id: string
+          created_at: string
+          from_state: Database["public"]["Enums"]["buyer_order_status"] | null
+          id: string
+          meta: Json | null
+          note: string | null
+          order_id: string
+          to_state: Database["public"]["Enums"]["buyer_order_status"]
+        }
+        Insert: {
+          actor_user_id?: string | null
+          admin_id: string
+          created_at?: string
+          from_state?: Database["public"]["Enums"]["buyer_order_status"] | null
+          id?: string
+          meta?: Json | null
+          note?: string | null
+          order_id: string
+          to_state: Database["public"]["Enums"]["buyer_order_status"]
+        }
+        Update: {
+          actor_user_id?: string | null
+          admin_id?: string
+          created_at?: string
+          from_state?: Database["public"]["Enums"]["buyer_order_status"] | null
+          id?: string
+          meta?: Json | null
+          note?: string | null
+          order_id?: string
+          to_state?: Database["public"]["Enums"]["buyer_order_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_orders: {
+        Row: {
+          admin_id: string
+          batch_id: string | null
+          buyer_id: string
+          created_at: string
+          currency: string
+          expected_delivery_date: string | null
+          id: string
+          listing_id: string
+          notes: string | null
+          order_number: string
+          placed_by: string | null
+          quantity_kg: number
+          status: Database["public"]["Enums"]["buyer_order_status"]
+          subtotal: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          batch_id?: string | null
+          buyer_id: string
+          created_at?: string
+          currency?: string
+          expected_delivery_date?: string | null
+          id?: string
+          listing_id: string
+          notes?: string | null
+          order_number: string
+          placed_by?: string | null
+          quantity_kg: number
+          status?: Database["public"]["Enums"]["buyer_order_status"]
+          subtotal: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          batch_id?: string | null
+          buyer_id?: string
+          created_at?: string
+          currency?: string
+          expected_delivery_date?: string | null
+          id?: string
+          listing_id?: string
+          notes?: string | null
+          order_number?: string
+          placed_by?: string | null
+          quantity_kg?: number
+          status?: Database["public"]["Enums"]["buyer_order_status"]
+          subtotal?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_orders_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_orders_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "grain_listings"
             referencedColumns: ["id"]
           },
         ]
@@ -1136,6 +1275,68 @@ export type Database = {
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grain_listings: {
+        Row: {
+          admin_id: string
+          available_kg: number
+          batch_id: string
+          created_at: string
+          created_by: string
+          currency: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          min_order_kg: number
+          price_per_kg: number
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at: string
+          visibility: Database["public"]["Enums"]["listing_visibility"]
+        }
+        Insert: {
+          admin_id: string
+          available_kg: number
+          batch_id: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          min_order_kg?: number
+          price_per_kg: number
+          status?: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["listing_visibility"]
+        }
+        Update: {
+          admin_id?: string
+          available_kg?: number
+          batch_id?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          min_order_kg?: number
+          price_per_kg?: number
+          status?: Database["public"]["Enums"]["listing_status"]
+          title?: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["listing_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_listings_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: true
+            referencedRelation: "grain_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -3293,6 +3494,15 @@ export type Database = {
         | "ready"
         | "rejected"
       billing_cycle: "monthly" | "yearly" | "quarterly"
+      buyer_order_status:
+        | "pending"
+        | "confirmed"
+        | "invoiced"
+        | "paid"
+        | "dispatched"
+        | "completed"
+        | "cancelled"
+        | "refunded"
       buyer_status: "active" | "paused" | "inactive"
       buyer_type:
         | "local_mill"
@@ -3302,6 +3512,8 @@ export type Database = {
         | "government"
       device_status: "active" | "offline" | "error" | "maintenance"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
+      listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
+      listing_visibility: "private" | "buyer_network" | "public"
       notification_cat:
         | "batch"
         | "spoilage"
@@ -3480,6 +3692,16 @@ export const Constants = {
         "rejected",
       ],
       billing_cycle: ["monthly", "yearly", "quarterly"],
+      buyer_order_status: [
+        "pending",
+        "confirmed",
+        "invoiced",
+        "paid",
+        "dispatched",
+        "completed",
+        "cancelled",
+        "refunded",
+      ],
       buyer_status: ["active", "paused", "inactive"],
       buyer_type: [
         "local_mill",
@@ -3490,6 +3712,8 @@ export const Constants = {
       ],
       device_status: ["active", "offline", "error", "maintenance"],
       grain_type: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
+      listing_status: ["draft", "active", "paused", "sold_out", "archived"],
+      listing_visibility: ["private", "buyer_network", "public"],
       notification_cat: [
         "batch",
         "spoilage",
