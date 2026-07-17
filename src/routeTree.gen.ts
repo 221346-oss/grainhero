@@ -113,6 +113,7 @@ import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/
 import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 
@@ -689,6 +690,12 @@ const AuthenticatedPlatformOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedPlatformOrdersRoute,
   } as any)
+const AuthenticatedPlatformLogisticsCommandCenterRoute =
+  AuthenticatedPlatformLogisticsCommandCenterRouteImport.update({
+    id: '/platform/logistics/command-center',
+    path: '/platform/logistics/command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBuyerOrdersOrderIdRoute =
   AuthenticatedBuyerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
@@ -792,6 +799,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -897,6 +905,7 @@ export interface FileRoutesByTo {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1006,6 +1015,7 @@ export interface FileRoutesById {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1115,6 +1125,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
+    | '/platform/logistics/command-center'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
@@ -1220,6 +1231,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
+    | '/platform/logistics/command-center'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
@@ -1328,6 +1340,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
     | '/api/public/cron/delivery-delay-scan'
@@ -2112,6 +2125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersRoute
     }
+    '/_authenticated/platform/logistics/command-center': {
+      id: '/_authenticated/platform/logistics/command-center'
+      path: '/platform/logistics/command-center'
+      fullPath: '/platform/logistics/command-center'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/buyer/orders/$orderId': {
       id: '/_authenticated/buyer/orders/$orderId'
       path: '/$orderId'
@@ -2257,6 +2277,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+  AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -2324,6 +2345,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTechnicianInstallsRoute:
     AuthenticatedTechnicianInstallsRouteWithChildren,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+  AuthenticatedPlatformLogisticsCommandCenterRoute:
+    AuthenticatedPlatformLogisticsCommandCenterRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
