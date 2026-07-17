@@ -43,7 +43,7 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Platform · Tenants", to: "/platform/tenants", group: "Platform" },
   { label: "Platform · Users & roles", to: "/platform/users", group: "Platform" },
   { label: "Platform · Plans & pricing", to: "/platform/plans", group: "Platform" },
-  { label: "Platform · Revenue", to: "/platform/revenue", group: "Platform" },
+  { label: "Platform · Revenue", to: "/revenue", group: "Platform" },
   { label: "Platform · Pipeline", to: "/platform/pipeline", group: "Platform", keywords: "hubspot leads" },
   { label: "Platform · Leads", to: "/platform/leads", group: "Platform" },
   { label: "Platform · Install orders", to: "/platform/orders", group: "Platform", keywords: "hardware" },

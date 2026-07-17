@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { adminListHubspotContacts } from "@/lib/hubspot.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Mail, Phone, Building2, Calendar, TrendingUp, Users } from "lucide-react";
+import { TrendingUp, Users, Building2, UserPlus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/leads")({
   component: LeadsPage,
@@ -21,10 +21,7 @@ function LeadsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 grid place-items-center shadow-md">
-              <UserPlus className="h-5 w-5 text-white" />
-            </div>
+          <h1 className="text-2xl font-bold text-slate-900">
             Leads
           </h1>
           <p className="text-sm text-slate-600 mt-1">HubSpot contacts synced from GrainHero signups</p>
@@ -104,19 +101,19 @@ function LeadsPage() {
                 <thead className="bg-slate-50 border-b-2 border-slate-200">
                   <tr>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase text-slate-600">
-                      <div className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Name</div>
+                      Name
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase text-slate-600">
-                      <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> Email</div>
+                      Email
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase text-slate-600">
-                      <div className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Company</div>
+                      Company
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase text-slate-600">
-                      <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> Phone</div>
+                      Phone
                     </th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase text-slate-600">
-                      <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /> Created</div>
+                      Created
                     </th>
                   </tr>
                 </thead>

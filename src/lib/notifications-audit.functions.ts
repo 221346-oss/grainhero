@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { blockIfImpersonating } from "./impersonation-guard";
 import { z } from "zod";
 
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
@@ -45,7 +44,7 @@ export const listNotifications = createServerFn({ method: "POST" })
   });
 
 export const markNotificationRead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -58,7 +57,7 @@ export const markNotificationRead = createServerFn({ method: "POST" })
   });
 
 export const markAllNotificationsRead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { error } = await context.supabase
       .from("notifications")
@@ -70,7 +69,7 @@ export const markAllNotificationsRead = createServerFn({ method: "POST" })
   });
 
 export const deleteNotification = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -156,7 +155,7 @@ const createLogInput = z.object({
 });
 
 export const createActivityLog = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(createLogInput, d))
   .handler(async ({ data, context }) => {
     const { data: prof } = await context.supabase

@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { blockIfImpersonating } from "./impersonation-guard";
 import { getEffectiveRole } from "./rbac.server";
 
 // Order rows contain arbitrary column values; return them as a JSON-safe map.
@@ -77,7 +76,7 @@ const updateInput = z.object({
 
 /** Super-admin: update status / assign technician / mark installed / cancel. */
 export const updateHardwareOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => updateInput.parse(d))
   .handler(async ({ data, context }) => {
     const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
@@ -125,7 +124,7 @@ const messageInput = z.object({
 
 /** Super-admin: send a message + optional email to the buyer for an order. */
 export const sendOrderMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => messageInput.parse(d))
   .handler(async ({ data, context }) => {
     const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";

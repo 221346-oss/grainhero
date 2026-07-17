@@ -1,5 +1,5 @@
 import { TableSkeleton } from "@/components/app/skeletons";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
-import { UserCog } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/users")({ component: UsersPage });
 
@@ -26,10 +25,9 @@ const ROLE_BADGE: Record<string, string> = {
 
 function UsersPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
-  const impersonateFn = useServerFn(startImpersonation);
-  const router = useRouter();
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
@@ -45,19 +43,9 @@ function UsersPage() {
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["platform-users"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
-  const impersonate = useMutation({
-    mutationFn: (targetAdminId: string) => impersonateFn({ data: { targetAdminId } }),
-    onSuccess: async (res) => {
-      toast.success(`Viewing as ${res.tenantName}`);
-      await qc.invalidateQueries();
-      router.navigate({ to: "/dashboard" });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
+ 
   const totalUsers = data.length;
   const blockedUsers = data.filter((u) => u.blocked).length;
-  const unverifiedUsers = data.filter((u) => !u.email_verified).length;
   const thisMonth = data.filter((u) => {
     if (!u.created_at) return false;
     const created = new Date(u.created_at);
@@ -77,7 +65,7 @@ function UsersPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-l-4 border-l-purple-500 shadow-sm">
           <CardContent className="p-4">
             <p className="text-xs font-semibold uppercase text-slate-500">Total Users</p>
@@ -96,13 +84,6 @@ function UsersPage() {
           <CardContent className="p-4">
             <p className="text-xs font-semibold uppercase text-slate-500">Blocked</p>
             <p className="text-3xl font-bold mt-1 text-red-600">{blockedUsers}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500 shadow-sm">
-          <CardContent className="p-4">
-            <p className="text-xs font-semibold uppercase text-slate-500">Unverified</p>
-            <p className="text-3xl font-bold mt-1 text-amber-600">{unverifiedUsers}</p>
           </CardContent>
         </Card>
       </div>
@@ -172,17 +153,6 @@ function UsersPage() {
                   >
                     {u.blocked ? "Unblock" : "Block"}
                   </Button>
-                  {u.role === "admin" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={impersonate.isPending}
-                      onClick={() => impersonate.mutate(u.id)}
-                      className="gap-1.5"
-                    >
-                      <UserCog className="h-3.5 w-3.5" /> View as
-                    </Button>
-                  )}
                 </div>
               ))}
             </div>

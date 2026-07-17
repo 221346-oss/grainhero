@@ -17,7 +17,7 @@ const INSIGHT = new Set([
   "/analytics", "/ai-predictions", "/reports", "/data-visualization",
   "/traceability", "/ml-models", "/revenue", "/environmental",
   "/server-monitoring", "/security-center",
-  "/platform/revenue", "/platform/pipeline", "/platform/health",
+  "/revenue", "/platform/pipeline", "/platform/health",
 ]);
 const FORM = new Set([
   "/settings", "/subscription", "/plans", "/insurance",

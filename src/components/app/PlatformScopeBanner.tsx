@@ -12,7 +12,7 @@ export function PlatformScopeBanner({ label }: { label?: string }) {
       <div className="text-sm">
         <div className="font-semibold text-amber-900">Platform view — all tenants</div>
         <div className="text-amber-800/80 text-xs mt-0.5">
-          {label ?? "Showing data across every tenant. Write actions are disabled; use tenant impersonation to make changes."}
+          {label ?? "Showing data across every tenant. Write actions are disabled."}
         </div>
       </div>
     </div>

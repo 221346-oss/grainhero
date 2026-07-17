@@ -152,7 +152,7 @@ function Section({ label, items, role, currentPath, showLabel = true }: { label?
   const visible = items.filter((i) => i.roles.includes(role));
   if (visible.length === 0) return null;
   return (
-    <SidebarGroup className={cn(collapsed && "px-0 items-center")}> 
+    <SidebarGroup className={cn(collapsed && "px-0 items-center")}>
       {!collapsed && showLabel && label && (
         <SidebarGroupLabel className="text-[10px] font-black text-sidebar-foreground/55 uppercase tracking-[0.18em] px-2">
           {label}

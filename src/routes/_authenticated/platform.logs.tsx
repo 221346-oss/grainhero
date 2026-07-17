@@ -30,10 +30,7 @@ function LogsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-slate-500 to-slate-600 grid place-items-center shadow-md">
-              <ClipboardList className="h-5 w-5 text-white" />
-            </div>
+          <h1 className="text-2xl font-bold text-slate-900">
             Platform Logs
           </h1>
           <p className="text-sm text-slate-600 mt-1">Global activity across all tenants and users</p>

@@ -11,16 +11,16 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
-  
-  const { data: m, isLoading: loadingMetrics } = useQuery({ 
-    queryKey: ["platform-metrics"], 
+
+  const { data: m, isLoading: loadingMetrics } = useQuery({
+    queryKey: ["platform-metrics"],
     queryFn: () => metricsFn(),
     refetchInterval: 30000
   });
   const { data: w } = useQuery({ queryKey: ["platform-widgets"], queryFn: () => widgetsFn() });
-  const { data: revenueData } = useQuery({ 
-    queryKey: ["saas-revenue-dashboard"], 
-    queryFn: () => revenueFn() 
+  const { data: revenueData } = useQuery({
+    queryKey: ["saas-revenue-dashboard"],
+    queryFn: () => revenueFn()
   });
 
   const usersGrowth = w?.wowDelta ?? 0;
@@ -106,8 +106,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
                 <AreaChart data={w.signupsSeries}>
                   <defs>
                     <linearGradient id="userGrowth" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2FAC0C" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#2FAC0C" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#2FAC0C" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#2FAC0C" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#404F44" opacity={0.1} />
@@ -154,8 +154,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
                 <AreaChart data={revenueData.revenueSeries}>
                   <defs>
                     <linearGradient id="revenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2FAC0C" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#2FAC0C" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#2FAC0C" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#2FAC0C" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#404F44" opacity={0.1} />
@@ -188,8 +188,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
           ].map((item) => {
             return (
               <Link key={item.to} to={item.to} className="group">
-                <Card 
-                  className="hover:shadow-md transition-all cursor-pointer" 
+                <Card
+                  className="hover:shadow-md transition-all cursor-pointer"
                   style={{ backgroundColor: "#FFFFFF", borderColor: "#2FAC0C", borderWidth: "1px" }}
                 >
                   <CardContent className="p-2.5">

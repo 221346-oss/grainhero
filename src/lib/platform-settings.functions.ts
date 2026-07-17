@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { blockIfImpersonating } from "./impersonation-guard";
 
 export type PlatformConfig = {
   maintenance_mode: boolean;
@@ -39,7 +38,7 @@ const configSchema = z.object({
 });
 
 export const updatePlatformSettings = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth, blockIfImpersonating])
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => configSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");

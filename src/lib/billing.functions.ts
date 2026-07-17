@@ -101,7 +101,26 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const r = await role(context.supabase, context.userId);
     if (!["super_admin", "admin", "manager"].includes(r)) throw new Error("Forbidden");
-    const adminId = await tenantAdminId(context.supabase, context.userId);
+
+    let adminId: string | null = null;
+    try {
+      adminId = await tenantAdminId(context.supabase, context.userId);
+    } catch (e) {
+      if (r !== "super_admin") throw e;
+    }
+
+    let invQuery = context.supabase
+      .from("buyer_invoices")
+      .select("id, invoice_number, buyer_name, buyer_company, batch_ref, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at");
+
+    let payQuery = context.supabase
+      .from("buyer_payments")
+      .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, created_at");
+
+    if (adminId) {
+      invQuery = invQuery.eq("admin_id", adminId);
+      payQuery = payQuery.eq("admin_id", adminId);
+    }
 
     const [invRes, payRes] = await Promise.all([
       context.supabase
