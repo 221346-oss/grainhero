@@ -68,6 +68,18 @@ export const requestPlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(requestChangeInput, d))
   .handler(async ({ data, context }) => {
+    // Phase 2 — verify identity (JWT still valid) + soft rate-limit
+    const { getVerifiedUser } = await import("@/lib/session.server");
+    const { checkRateLimit } = await import("@/lib/rate-limit");
+    await getVerifiedUser(context.supabase);
+    const gate = checkRateLimit(`plan-change:${context.userId}`, {
+      limit: 5,
+      windowMs: 60_000,
+    });
+    if (!gate.ok) {
+      return { ok: false as const, error: "rate_limited", retryAfter: gate.retryAfter };
+    }
+
     // Only tenant admins may request
     const role = await getEffectiveRole(context.supabase, context.userId);
     if (role !== "admin") throw new Error("Only tenant admins can request plan changes");
