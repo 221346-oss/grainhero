@@ -1,6 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import pricingData, { resolvePlanId } from "@/lib/pricing-data";
+
+// Map any raw plan string coming from subscriptions.plan_name or
+// profiles.subscription_plan to a canonical { id, name, price } entry.
+function planFor(raw?: string | null): { id: string; name: string; price: number } {
+  const id = resolvePlanId(raw ?? "") ?? (raw ?? "unknown");
+  const match = pricingData.find((p) => p.id === id);
+  return {
+    id,
+    name: match?.name ?? (raw ?? "Unknown"),
+    price: Number(match?.price ?? 0),
+  };
+}
 
 const AssumptionSchema = z
   .object({
@@ -33,8 +46,30 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
       supabaseAdmin.from("buyer_invoices").select("total_amount, amount_paid, currency, created_at, payment_status"),
     ]);
 
-    const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
-    const mrr = activeSubs.reduce((sum: number, s: any) => sum + Number(s.price_per_month ?? 0), 0);
+    // Normalise subscription rows from the subscriptions table.
+    const activeSubsRaw = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
+    const subRows = activeSubsRaw.map((s: any) => {
+      const p = planFor(s.plan_name);
+      const price = Number(s.price_per_month ?? 0) || p.price;
+      return { plan_id: p.id, plan_name: p.name, price, created_at: s.created_at };
+    });
+
+    // Fallback / supplement: profiles.subscription_plan is the source of
+    // truth in this project (Stripe checkout hasn't populated the
+    // subscriptions table yet). Fetch tenants that carry a plan and
+    // synthesise "active subscription" rows for them.
+    const { data: planProfiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, subscription_plan, created_at")
+      .not("subscription_plan", "is", null);
+    const profileRows = (planProfiles ?? []).map((row: any) => {
+      const p = planFor(row.subscription_plan);
+      return { plan_id: p.id, plan_name: p.name, price: p.price, created_at: row.created_at };
+    });
+
+    // Merge — prefer subscription table rows, fill the rest from profiles.
+    const activeSubs = [...subRows, ...profileRows];
+    const mrr = activeSubs.reduce((sum: number, s: any) => sum + Number(s.price ?? 0), 0);
 
     const iotRevenue = (orders.data ?? [])
       .filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
@@ -61,8 +96,8 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     // MoM deltas — MRR
     const thisMonthSubs = activeSubs.filter((s: any) => s.created_at && new Date(s.created_at) >= startOfMonth);
     const lastMonthSubs = activeSubs.filter((s: any) => s.created_at && new Date(s.created_at) >= startOfPrev && new Date(s.created_at) < startOfMonth);
-    const mrrDelta = thisMonthSubs.reduce((s: number, x: any) => s + Number(x.price_per_month ?? 0), 0) -
-                     lastMonthSubs.reduce((s: number, x: any) => s + Number(x.price_per_month ?? 0), 0);
+    const mrrDelta = thisMonthSubs.reduce((s: number, x: any) => s + Number(x.price ?? 0), 0) -
+                     lastMonthSubs.reduce((s: number, x: any) => s + Number(x.price ?? 0), 0);
 
     // Revenue mix
     const mix = [
@@ -74,7 +109,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
 
     // Plan split
     const planMap: Record<string, number> = {};
-    activeSubs.forEach((s: any) => { const k = s.plan_name ?? "unknown"; planMap[k] = (planMap[k] ?? 0) + Number(s.price_per_month ?? 0); });
+    activeSubs.forEach((s: any) => { const k = s.plan_name ?? "Unknown"; planMap[k] = (planMap[k] ?? 0) + Number(s.price ?? 0); });
     const planSplit = Object.entries(planMap).map(([plan, mrr]) => ({ plan, mrr: Math.round(mrr as number) }));
 
     // 12-month MRR trend (based on cumulative active subs created)
@@ -82,11 +117,11 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const dEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      const activeAt = (subs.data ?? []).filter((s: any) => s.created_at && new Date(s.created_at) < dEnd && (s.status === "active" || s.status === "trialing"));
-      const newInMonth = (subs.data ?? []).filter((s: any) => s.created_at && new Date(s.created_at) >= d && new Date(s.created_at) < dEnd);
+      const activeAt = activeSubs.filter((s: any) => s.created_at && new Date(s.created_at) < dEnd);
+      const newInMonth = activeSubs.filter((s: any) => s.created_at && new Date(s.created_at) >= d && new Date(s.created_at) < dEnd);
       trend.push({
         month: d.toLocaleString("default", { month: "short" }),
-        mrr: Math.round(activeAt.reduce((sum: number, s: any) => sum + Number(s.price_per_month ?? 0), 0)),
+        mrr: Math.round(activeAt.reduce((sum: number, s: any) => sum + Number(s.price ?? 0), 0)),
         new: newInMonth.length,
       });
     }
@@ -136,8 +171,18 @@ export const generateFinancialPdf = createServerFn({ method: "POST" })
       supabaseAdmin.from("hardware_orders").select("hardware_total, status"),
       supabaseAdmin.from("insurance_policies").select("premium_amount, commission_rate"),
     ]);
-    const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
-    const mrr = activeSubs.reduce((s: number, x: any) => s + Number(x.price_per_month ?? 0), 0);
+    const activeSubsRaw = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
+    const subRows = activeSubsRaw.map((s: any) => {
+      const p = planFor(s.plan_name);
+      return { price: Number(s.price_per_month ?? 0) || p.price };
+    });
+    const { data: planProfiles } = await supabaseAdmin
+      .from("profiles")
+      .select("subscription_plan")
+      .not("subscription_plan", "is", null);
+    const profileRows = (planProfiles ?? []).map((row: any) => ({ price: planFor(row.subscription_plan).price }));
+    const activeSubs = [...subRows, ...profileRows];
+    const mrr = activeSubs.reduce((s: number, x: any) => s + Number(x.price ?? 0), 0);
     const iot = (orders.data ?? []).filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
       .reduce((s: number, x: any) => s + Number(x.hardware_total ?? 0), 0);
     const ins = (policies.data ?? []).reduce((s: number, p: any) => s + Number(p.premium_amount ?? 0) * Number(p.commission_rate ?? 0) / 100, 0);
