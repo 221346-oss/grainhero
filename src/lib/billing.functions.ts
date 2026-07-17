@@ -123,18 +123,8 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
     }
 
     const [invRes, payRes] = await Promise.all([
-      context.supabase
-        .from("buyer_invoices")
-        .select("id, invoice_number, buyer_name, buyer_company, batch_ref, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at")
-        .eq("admin_id", adminId)
-        .order("created_at", { ascending: false })
-        .limit(200),
-      context.supabase
-        .from("buyer_payments")
-        .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, created_at")
-        .eq("admin_id", adminId)
-        .order("payment_date", { ascending: false })
-        .limit(200),
+      invQuery.order("created_at", { ascending: false }).limit(200),
+      payQuery.order("payment_date", { ascending: false }).limit(200),
     ]);
 
     const invoices = (invRes.data ?? []) as any[];
