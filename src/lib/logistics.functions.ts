@@ -28,14 +28,14 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
-function routeDistanceKm(stops: Array<{ lat: number | null; lng: number | null }>): number {
+function routeDistanceKm(stops: Array<{ lat?: number | null; lng?: number | null }>): number {
   let total = 0;
   const pts = stops.filter((s) => s.lat != null && s.lng != null) as Array<{ lat: number; lng: number }>;
   for (let i = 1; i < pts.length; i++) total += haversineKm(pts[i - 1], pts[i]);
   return Math.round(total * 10) / 10;
 }
 
-function nearestNeighbourOrder<T extends { lat: number | null; lng: number | null }>(stops: T[]): T[] {
+function nearestNeighbourOrder<T extends { lat?: number | null; lng?: number | null }>(stops: T[]): T[] {
   if (stops.length < 3) return stops;
   const remaining = [...stops];
   const ordered: T[] = [remaining.shift()!];
