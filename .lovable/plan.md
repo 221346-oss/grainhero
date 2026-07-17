@@ -1,61 +1,134 @@
-# Phase 14 — Dispatch Ops, Invoicing PDFs, Disputes & Refunds
 
-Phase 13 gave sellers a dispatch drawer and buyers a live tracking column. Phase 14 closes the post-sale surface: a real seller event console, a super-admin analytics view for dispatch SLA, downloadable branded invoices emailed on payment, a buyer dispute flow with a moderation queue, and a Stripe-backed cancel/refund path. Every policy, template, and outcome remains editable in Super-admin → Marketplace Settings — zero hardcoding.
+## Phase 15 — Buyer trust, seller reputation, and post-sale intelligence
 
-## Goals
-1. Seller "Add event" console on `ShipmentPanel` with a preset library (`picked_up`, `in_transit`, `out_for_delivery`, `delivered`, `exception`), each preset mapped to a status transition; timeline + order events update live.
-2. `/platform/dispatch-analytics` — SLA compliance %, overdue shipments, on-time delivery rate, avg time in each state, with silo/batch/courier/date filters and CSV export.
-3. Real PDF invoices stored in Supabase Storage; auto-generated on `paid` and attached (link) to the payment-success email using the super-admin's template.
-4. Buyer dispute flow: post-delivery "Report an issue" with category + evidence; super-admin moderation queue with configurable resolution outcomes (refund, replacement, partial credit, reject).
-5. Cancel/refund flow: buyer self-cancel window + seller cancel, driving Stripe refund (full/partial) — window, allowed reasons, refund policy all in settings.
+Builds on Phases 11–14 (marketplace, dispatch, disputes, refunds). Goal:
+close the loop after every sale so buyers can trust listings, sellers can
+compete on quality, and super-admins get an at-a-glance health score. No
+hardcoded copy — everything is driven from `platform_settings.marketplace`.
 
-## Data model (one migration)
-- Extend `platform_settings.config`:
-  - `dispatch.eventPresets[]` (code, label, sets_status?, requires_location?, requires_note?) — seeded defaults.
-  - `dispatch.analytics` (retentionDays, includedStatuses, exportEnabled).
-  - `invoicing` (storageBucket, numberPrefix, brandingLogoUrl, footerNote, emailAttachmentMode: `link`|`none`).
-  - `disputes` (enabled, windowHours, categories[], evidenceRequired, autoAckHours, resolutionOutcomes[] with `key,label,requiresRefundPct?`).
-  - `refunds` (buyerCancelWindowHours, sellerCancelAllowedStates[], reasons[], allowPartial, autoRefundOnCancel).
-- New tables (all with GRANT + RLS + realtime where noted):
-  - `buyer_disputes` (order_id, buyer_id, admin_id, category, description, evidence_urls[], status: `open|under_review|resolved|rejected`, resolution_key, resolution_note, refund_amount, opened_at, closed_at, moderated_by).
-  - `buyer_dispute_events` (dispute_id, at, actor_user_id, action, note) — realtime.
-  - `buyer_refunds` (order_id, invoice_id, dispute_id?, amount, currency, reason_key, stripe_refund_id, status: `pending|succeeded|failed`, created_by).
-- Extend `buyer_orders`: `cancelled_at`, `cancellation_reason`, `refund_status`, `invoice_pdf_url`.
-- Create private Storage bucket `invoices` with authenticated-read policy scoped to buyer_id / admin_id.
+### 15.1 Seller reputation & badges (backend)
 
-## Server functions
-- `dispatch.functions.ts` (extend): `getEventPresets`, harden `appendShipmentEvent` to validate against preset list and drive status transitions atomically.
-- `dispatch-analytics.functions.ts`: aggregate queries (SLA %, overdue counts, avg dwell time per state) with filters; `exportDispatchCsv`.
-- `invoicing-pdf.server.ts`: build PDF via `pdf-lib` (Worker-safe), upload to `invoices/` bucket, return signed URL; called from Stripe webhook + retryable `regenerateInvoicePdf` fn.
-- Extend `buyer-emails.server.ts` `paymentSucceeded` kind to include `{{invoice_url}}` placeholder; template edited in settings.
-- `disputes.functions.ts`: `openDispute` (buyer, gated by settings window + delivered state), `listMyDisputes`, `listModerationQueue` (super-admin), `resolveDispute` (applies outcome; if outcome carries `requiresRefundPct`, calls refund helper).
-- `refunds.functions.ts`: `cancelOrder` (buyer/seller, state-machine gated), `issueRefund` (super-admin or auto from dispute); loads `supabaseAdmin` inside handler, calls Stripe `refunds.create` with `payment_intent` from `buyer_orders.stripe_payment_intent_id`, records `buyer_refunds`, updates order `status='refunded'` or `cancelled`.
-- Extend Stripe webhook: handle `charge.refunded` / `refund.updated` → sync `buyer_refunds.status`, emit buyer + seller notification via templated email.
+- New view `seller_reputation` derived on-read from
+  `buyer_reviews`, `buyer_disputes`, `buyer_shipments`:
+  - `avg_rating`, `review_count` (last 90d + all-time)
+  - `dispute_rate` = disputes ÷ delivered orders
+  - `on_time_rate`, `avg_transit_hours`
+  - `fulfillment_score` (0–100) computed from the above with weights
+    editable in marketplace settings.
+- New settings block `marketplace.reputation`:
+  - `weights: { rating, onTime, disputeFree, transitSpeed }` (sum = 100)
+  - `badges: [{ key, label, minScore, colorToken }]` — fully editable.
+- Server fn `getSellerReputation({ adminId })` returning score + badges.
 
-## UI
-- `ShipmentPanel.tsx`: replace freeform input with a Preset select (from settings) + optional location/note fields; disable delivered button until required prior states exist per settings.
-- `/platform/dispatch-analytics`: `AdminPageShell` with summary tiles (SLA %, overdue, avg transit hrs), Recharts line + bar, filter bar (silo, batch, courier, date range), "Export CSV" button.
-- Buyer `/buyer/orders/$orderId`: after delivered → "Report an issue" button opens `DisputeDialog` (category from settings, description, evidence upload to `invoices/disputes/`). Cancel button visible during buyer window.
-- Sales cockpit: cancel button on paid orders (seller policy), refund action opens `RefundDialog` (full/partial per settings).
-- `/platform/disputes`: moderation queue table (open first), drawer with timeline, resolution outcome dropdown (from settings), optional refund amount input, resolve/reject actions.
-- `/platform/marketplace-settings`: add **Dispatch presets**, **Invoicing**, **Disputes**, **Refunds** tabs (list editors + toggles); no code deploys needed to change categories, outcomes, windows, or copy.
+### 15.2 Public seller storefront
 
-## Skeletons & routing
-Register `DispatchAnalyticsSkeleton`, `DisputesQueueSkeleton`, `BuyerDisputeDialogSkeleton` in `PAGE_SKELETONS`. Sidebar: add "Dispatch analytics" and "Disputes" under Super-admin.
+- Route `marketplace.seller.$slug.tsx` (public):
+  - Seller name, city, badges, reputation score, review histogram.
+  - Recent listings from that seller.
+  - "Report seller" link → opens a general (non-order) dispute flow.
+- Route `_authenticated/platform.sellers.tsx` (super-admin):
+  - Sortable table of every tenant admin ranked by fulfillment score.
+  - Drill-in reuses `/platform/admins/$adminId` with a new
+    "Reputation" tab.
 
-## Automation
-- Extend `/api/public/cron/dispatch-sla-sweep` to also expire buyer cancel windows and auto-acknowledge stale disputes based on `disputes.autoAckHours`.
-- On successful Stripe refund webhook: update order + refund row, email both parties with settings-driven templates, emit notification, insert `buyer_order_events` entry.
+### 15.3 Post-purchase review loop
 
-## Zero-hardcoding checklist
-- Event presets, SLA analytics filters, invoice branding/footer, dispute categories + outcomes, refund reasons + windows — all in `platform_settings.config`.
-- Every email (payment success w/ invoice, dispute opened/resolved, refund issued, cancellation) reads subject/body from settings with placeholder substitution.
+- Extend `buyer_reviews`:
+  - `seller_response text`, `seller_response_at timestamptz`,
+    `helpful_count int default 0`, `reported_at timestamptz`.
+- Server fns:
+  - `respondToReview({ reviewId, response })` — seller-only, one edit.
+  - `markReviewHelpful({ reviewId })` — buyer-only, deduped per user.
+  - `reportReview({ reviewId, reason })` → super-admin moderation queue.
+- Buyer prompt: 24h after delivery, `sendBuyerOrderEmail` fires
+  `reviewPromptBuyer` if not already reviewed (cron: reuse
+  `sla-digest` handler pattern, new endpoint `cron/review-prompts`).
 
-## Acceptance
-- Seller picks "Out for delivery" from the preset list → shipment status flips, buyer sees the event within seconds via realtime.
-- Super-admin loads `/platform/dispatch-analytics` and filters by silo → tiles + chart + CSV export all reflect the filter.
-- A paid order automatically has `invoice_pdf_url` set within a few seconds of the Stripe webhook; the buyer's payment-success email contains a working link.
-- Buyer opens a dispute inside the configured window; super-admin resolves with a "50% refund" outcome and Stripe processes the refund automatically; both parties get the resolution email.
-- Buyer cancels within window → Stripe refund fires, order transitions to `cancelled`, batch returns to `ready`, and the audit trail (`buyer_order_events` + `buyer_refunds`) is complete.
+### 15.4 Repeat-buy accelerators
 
-Reply **go** to execute Phase 14.
+- On buyer order tracking page, when order status = `completed` and the
+  listing is still active, show "Reorder" that pre-fills a new order.
+- Server fn `duplicateOrder({ orderId })` returns a draft in `pending`.
+- Add `favorite_listings` (buyer_account_id, listing_id, unique).
+  - Heart button on marketplace + storefront.
+  - Buyer profile page shows "Favourites" list.
+
+### 15.5 Super-admin marketplace health
+
+- New page `/platform/marketplace-health`:
+  - GMV (30d/90d), take-rate, gross vs net revenue.
+  - Funnel: listings → orders → paid → delivered → reviewed.
+  - Top 10 sellers by score, bottom 10 by dispute rate.
+  - Reasons breakdown for cancellations, refunds, disputes.
+- All chart config (period, thresholds, funnel steps) editable in
+  marketplace settings.
+
+### 15.6 Configurable review policies & auto-moderation
+
+- Extend `marketplace.reviews`:
+  - `autoPublishThreshold` (star rating below which review is held).
+  - `bannedPhrases string[]` — auto-flag on submit.
+  - `sellerResponseWindowDays`.
+- Update `submitReview` to apply threshold + phrase check.
+- Super-admin queue reused (Reviews page).
+
+### 15.7 Buyer trust surfaces on public listings
+
+- Listing card + detail page shows:
+  - Seller badge, rating snapshot (`4.7 · 128 reviews`).
+  - "Delivered in ~X days on average" pill from `seller_reputation`.
+  - Verified-seller checkmark when `fulfillment_score >= threshold`.
+
+### Data model summary
+
+```text
+marketplace.reputation (JSON in platform_settings)
+  weights: { rating, onTime, disputeFree, transitSpeed }
+  badges:  [{ key, label, minScore, colorToken }]
+  verifiedMinScore: number
+
+buyer_reviews
+  + seller_response text
+  + seller_response_at timestamptz
+  + helpful_count int default 0
+  + reported_at timestamptz
+
+buyer_review_helpful
+  buyer_account_id + review_id (unique)
+
+favorite_listings
+  buyer_account_id + listing_id (unique)
+
+seller_reputation  (view or materialized)
+  admin_id, avg_rating, review_count_90d, dispute_rate,
+  on_time_rate, avg_transit_hours, fulfillment_score
+```
+
+### Cron additions
+
+- `/api/public/cron/review-prompts` — 24h after delivery, send
+  `reviewPromptBuyer` email if no review yet. Bearer-authed with
+  `CRON_SECRET`.
+- Weekly `/api/public/cron/reputation-refresh` — refresh cached scores
+  if we go materialized.
+
+### Zero-hardcoding checklist (must-hold)
+
+- Badge labels, thresholds, colors → `platform_settings.marketplace`.
+- Reputation weights → same.
+- Review policies (auto-publish, banned phrases, response window) → same.
+- Email subjects/bodies for review prompt & seller response → existing
+  email template system.
+- All UI copy on health/storefront pulls from settings, no literals.
+
+### Rollout order
+
+1. Schema + settings shape (one migration).
+2. Reputation view + server fns.
+3. Public seller storefront + listing trust pills.
+4. Review response/helpful/report + auto-moderation.
+5. Reorder + favourites.
+6. Super-admin marketplace-health page.
+7. Crons (review prompts, optional reputation refresh).
+
+Reply **go** to execute Phase 15.
