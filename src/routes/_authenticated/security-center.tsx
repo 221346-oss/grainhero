@@ -16,10 +16,10 @@ export const Route = createFileRoute("/_authenticated/security-center")({
 
 function sevBadge(s: string | null) {
   switch (s) {
-    case "critical": return "bg-red-100 text-red-800";
-    case "error": return "bg-orange-100 text-orange-800";
-    case "warning": return "bg-amber-100 text-amber-800";
-    default: return "bg-slate-100 text-slate-700";
+    case "critical": return "bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300";
+    case "error":    return "bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-300";
+    case "warning":  return "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300";
+    default:         return "bg-muted text-muted-foreground";
   }
 }
 
@@ -72,10 +72,12 @@ function SecurityCenterPage() {
   const logs = data?.logs ?? [];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6" style={{ backgroundColor: "#EDE9D4", minHeight: "100vh" }}>
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: "#252d26" }}><ShieldCheck className="h-6 w-6" style={{ color: "#2FAC0C" }} /> Security Center</h1>
-        <p className="text-sm mt-1" style={{ color: "#404F44" }}>User access, privilege overview and recent security events.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground">
+          <ShieldCheck className="h-6 w-6 text-primary" /> Security Center
+        </h1>
+        <p className="text-sm mt-1 text-muted-foreground">User access, privilege overview and recent security events.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
