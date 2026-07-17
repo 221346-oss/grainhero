@@ -27,7 +27,8 @@ export type PlanNumericFeature =
   | "max_batches"
   | "max_sensors"
   | "max_actuators"
-  | "max_buyers";
+  | "max_buyers"
+  | "max_active_alert_rules";
 
 export type PlanBooleanFeature =
   | "exports"
@@ -46,6 +47,7 @@ const NUMERIC: readonly PlanNumericFeature[] = [
   "max_sensors",
   "max_actuators",
   "max_buyers",
+  "max_active_alert_rules",
 ];
 
 export class PlanLimitError extends Error {

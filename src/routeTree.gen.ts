@@ -62,6 +62,8 @@ import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
+import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
@@ -82,6 +84,7 @@ import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
+import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
 
@@ -364,6 +367,16 @@ const AuthenticatedPlatformIndexRoute =
     path: '/platform/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
+  id: '/api/public/telemetry',
+  path: '/api/public/telemetry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicActuatorAckRoute = ApiPublicActuatorAckRouteImport.update({
+  id: '/api/public/actuator-ack',
+  path: '/api/public/actuator-ack',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   id: '/api/firebase/live-sensors',
   path: '/api/firebase/live-sensors',
@@ -482,6 +495,12 @@ const ApiPublicCronLifecycleEmailsRoute =
     path: '/api/public/cron/lifecycle-emails',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronHeartbeatSweepRoute =
+  ApiPublicCronHeartbeatSweepRouteImport.update({
+    id: '/api/public/cron/heartbeat-sweep',
+    path: '/api/public/cron/heartbeat-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedTechnicianInstallsInstallIdRoute =
   AuthenticatedTechnicianInstallsInstallIdRouteImport.update({
     id: '/$installId',
@@ -561,9 +580,12 @@ export interface FileRoutesByFullPath {
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -636,9 +658,12 @@ export interface FileRoutesByTo {
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -714,9 +739,12 @@ export interface FileRoutesById {
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
@@ -792,9 +820,12 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/technician/installs'
     | '/api/firebase/live-sensors'
+    | '/api/public/actuator-ack'
+    | '/api/public/telemetry'
     | '/platform/'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -867,9 +898,12 @@ export interface FileRouteTypes {
     | '/settings/notifications'
     | '/technician/installs'
     | '/api/firebase/live-sensors'
+    | '/api/public/actuator-ack'
+    | '/api/public/telemetry'
     | '/platform'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -944,9 +978,12 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/notifications'
     | '/_authenticated/technician/installs'
     | '/api/firebase/live-sensors'
+    | '/api/public/actuator-ack'
+    | '/api/public/telemetry'
     | '/_authenticated/platform/'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
+    | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
@@ -972,6 +1009,9 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ThemeTestRoute: typeof ThemeTestRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
+  ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
+  ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
+  ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
@@ -1353,6 +1393,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/telemetry': {
+      id: '/api/public/telemetry'
+      path: '/api/public/telemetry'
+      fullPath: '/api/public/telemetry'
+      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/actuator-ack': {
+      id: '/api/public/actuator-ack'
+      path: '/api/public/actuator-ack'
+      fullPath: '/api/public/actuator-ack'
+      preLoaderRoute: typeof ApiPublicActuatorAckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/firebase/live-sensors': {
       id: '/api/firebase/live-sensors'
       path: '/api/firebase/live-sensors'
@@ -1491,6 +1545,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/lifecycle-emails'
       fullPath: '/api/public/cron/lifecycle-emails'
       preLoaderRoute: typeof ApiPublicCronLifecycleEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/heartbeat-sweep': {
+      id: '/api/public/cron/heartbeat-sweep'
+      path: '/api/public/cron/heartbeat-sweep'
+      fullPath: '/api/public/cron/heartbeat-sweep'
+      preLoaderRoute: typeof ApiPublicCronHeartbeatSweepRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/technician/installs/$installId': {
@@ -1700,6 +1761,9 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ThemeTestRoute: ThemeTestRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
+  ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
+  ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
+  ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
