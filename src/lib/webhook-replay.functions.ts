@@ -40,14 +40,14 @@ export const safeReplayWebhook = createServerFn({ method: "POST" })
     const now = Date.now();
     if (ev.next_replay_allowed_at && new Date(ev.next_replay_allowed_at).getTime() > now) {
       const wait = Math.ceil((new Date(ev.next_replay_allowed_at).getTime() - now) / 1000);
-      return { ok: false as const, error: `Cooldown active. Retry in ${wait}s`, cooldown_seconds: wait, history: [] as unknown[] };
+      return { ok: false as const, error: `Cooldown active. Retry in ${wait}s`, cooldown_seconds: wait, history: [] as any[] };
     }
 
     const history: Array<{ at: string; ok: boolean; actor?: string; error?: string | null }> = Array.isArray(ev.replay_history) ? ev.replay_history : [];
     const oneHourAgo = now - 3600_000;
     const recentCount = history.filter((h) => new Date(h.at).getTime() > oneHourAgo).length;
     if (recentCount >= cfg.webhook_max_replays_per_hour) {
-      return { ok: false as const, error: `Hourly replay cap reached (${cfg.webhook_max_replays_per_hour}/h)`, cooldown_seconds: 0, history: history as unknown[] };
+      return { ok: false as const, error: `Hourly replay cap reached (${cfg.webhook_max_replays_per_hour}/h)`, cooldown_seconds: 0, history: history as any[] };
     }
 
     const { replayInsuranceWebhookEvent } = await import("@/lib/insurance.functions");
@@ -69,7 +69,7 @@ export const safeReplayWebhook = createServerFn({ method: "POST" })
       replay_history: newHistory,
     }).eq("id", data.event_id);
 
-    return { ok: success, next_replay_allowed_at: nextAllowed, history: newHistory as unknown[], cooldown_seconds: 0 };
+    return { ok: success, next_replay_allowed_at: nextAllowed, history: newHistory as any[], cooldown_seconds: 0 };
   });
 
 export const getReplayHistory = createServerFn({ method: "POST" })
