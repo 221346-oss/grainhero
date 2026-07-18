@@ -1474,3 +1474,5 @@ export function PayoutsSkeleton() { return <PlatformOrdersSkeleton />; }
 export function LedgerSkeleton() { return <PlatformOrdersSkeleton />; }
 export function TaxRulesSkeleton() { return <PlatformOrdersSkeleton />; }
 export function EarningsSkeleton() { return <FinanceCommandSkeleton />; }
+export function InsuranceCommandSkeleton() { return <FinanceCommandSkeleton />; }
+export function ClaimsQueueSkeleton() { return <PlatformOrdersSkeleton />; }
