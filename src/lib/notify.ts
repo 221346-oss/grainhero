@@ -18,7 +18,9 @@ export type NotifCategory =
   | "install"
   | "security"
   | "system"
-  | "ops";
+  | "ops"
+  | "insurance"
+  | "webhook";
 
 export type NotifInput = {
   recipientId: string;
