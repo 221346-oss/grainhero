@@ -1,174 +1,88 @@
-# Phases 25 & 26 — Mobile Surface Contracts
+# Plan — Phase 26.5 (Hardening) + Phase 27 (Mobile Commerce & Payments)
 
-Both phases add server APIs, super-admin config, and web-side parity for the
-external Flutter app. No mobile UI is built here — Flutter consumes the
-contracts.
+Runs both tracks in the same pass. Every setting stays super-admin configurable — no hardcoded thresholds, keys, or copy.
 
 ---
 
-## Phase 25 — Field Ops Mobile Surface (technician + manager)
+## Track A — Phase 26.5 Hardening
 
-Goal: give the Flutter app everything a technician or on-site manager needs
-to run installs, silo checks, actuator overrides, and incident intake from
-the field — offline-tolerant, deep-linkable, admin-configurable.
+### A1. Sync monitoring & manual replay
+New table `mobile_sync_runs`:
+- `endpoint` (text: `field-tasks | field-incidents | marketplace | buyer-summary | …`)
+- `actor_user_id` (nullable — null for anonymous marketplace)
+- `status` (`ok | error`)
+- `duration_ms`, `row_count`, `error_message`, `request_meta jsonb`
+- `started_at`, `finished_at`
 
-### 25.1 Data & schema
+Wire every `/api/public/v1/sync/*` handler through a shared `withSyncLogging(endpoint, handler)` wrapper in `src/lib/mobile-sync.server.ts` that inserts one row per call via `supabaseAdmin` (fire-and-forget, never blocks the response).
 
-- Migration `mobile_field_task_v` (view): unifies technician's queue —
-hardware install steps + open grain alerts + overdue maintenance +
-actuator attention items, keyed by `updated_at` cursor.
-- Migration `mobile_field_settings` (table, singleton row) — super-admin
-configurable: default sync page size, max attachment MB, allowed offline
-hours, geofence enforcement toggle, required photo steps per install
-event type (JSON), incident categories (JSON).
-- Extend `mobile_action_registry` (server module) with:
-`field.report-incident`, `field.upload-photo`, `field.override-actuator`,
-`field.silo-inspection`, `field.geofence-checkin`.
-- New table `field_incidents` (id, tenant_id, silo_id?, reporter_user_id,
-category, severity, notes, attachments[], location_lat, location_lng,
-status, created_at, resolved_at, resolved_by, resolution_notes) with RLS
-by tenant + super-admin read-all, plus GRANTs.
+New page `/platform/mobile-sync-monitor`:
+- KPI tiles (last 24h): total runs, error rate, p95 duration.
+- Table grouped by endpoint: last run, success count, failure count, last error.
+- "Run now" button per endpoint → calls a new `runMobileSyncManually` server fn (super-admin gated) that invokes the sync endpoint server-to-server with an internal `x-internal-run: <CRON_SECRET>` header and records the result.
+- Row-level drill-down drawer with recent 50 runs.
 
-### 25.2 Server endpoints (`/api/public/v1/field/*`)
+### A2. RBAC hardening + 401/403 UX
+- Add `requireSuperAdmin` middleware (composes `requireSupabaseAuth` + `has_role(uid,'super_admin')`); apply to every `platform.*` server fn touched this phase (field-settings, field-incidents, marketplace-mobile-settings, sync monitor, audit reads).
+- Sync endpoints (`/api/public/v1/sync/*`): authenticated ones already run through mobile bearer; add explicit 401 JSON `{ error: "unauthorized" }` shape and a role guard for endpoints that must be super-admin (manual re-run only).
+- New shared `<UnauthorizedState>` component; new route `/403` and `/401` with retry + sign-in CTAs.
+- Root error boundary maps `status===401|403` responses to those routes instead of the generic error component.
 
-- `GET /sync/field-tasks` — delta sync of `mobile_field_task_v`.
-- `GET /sync/incidents` — my/tenant incidents, cursor by `updated_at`.
-- `POST /field/incidents` — idempotent create (uses `mobile_idempotency_keys`).
-- `POST /field/incidents/:id/resolve` — manager/tech scoped by RLS.
-- `POST /field/silo-inspection` — writes `grain_batch_events` +
-auto-creates alert if thresholds exceeded (reuses existing alert logic).
-- `POST /field/actuator-override` — thin wrapper around
-`actuators.functions.ts` command dispatch with reason field, subject to
-role check and settings toggle.
-- All routes: `authenticateMobile` + idempotency + zod input + audit log
-entry in `activity_logs`.
+### A3. Settings audit trail
+New table `platform_settings_audit`:
+- `actor_user_id`, `settings_key` (`mobile_field | mobile_marketplace | …`), `action` (`update`), `before jsonb`, `after jsonb`, `created_at`.
 
-### 25.3 Field settings (super-admin)
+Update `updateFieldSettings` / `updateMarketplaceMobileSettings` server fns to:
+1. Read current row.
+2. Compute diff.
+3. Update.
+4. Insert audit row.
 
-- `src/lib/field-settings.functions.ts` — `getFieldSettings`,
-`updateFieldSettings` (super-admin gate; publishes to
-`mobile_field_settings`; snapshot mirrored into `mobile_settings` cache).
-- `/platform/field-settings` page — Attachment limits, required-photo
-rules, incident categories, geofence toggle, actuator override policy.
-
-### 25.4 Web parity + moderation
-
-- `/platform/field-incidents` — Super-admin queue: filters (silo, severity,
-status), reassign, resolve, export CSV.
-- `/incidents` (existing) gains a "Field-reported" filter tab and pulls
-from `field_incidents` in addition to legacy incidents.
-- Notification categories: `field.incident.new`, `field.override.executed`
-wired through `dispatchNotification` (email/push based on prefs).
-
-### 25.5 Skeletons + sidebar
-
-- `FieldIncidentsSkeleton`, `FieldSettingsSkeleton` in `skeletons.tsx`,
-registered in `PAGE_SKELETONS`.
-- Sidebar (super_admin): Field Incidents, Field Settings.
+Expose read-only "Change history" panel on both settings pages (last 20 entries with expandable diff).
 
 ---
 
-## Phase 26 — Marketplace Mobile Surface (buyer + seller)
+## Track B — Phase 27 Mobile Commerce & Payments
 
-Goal: expose the storefront, buyer order lifecycle, seller listing
-management, messaging, and dispute intake to the Flutter app with the
-same server rules as the web experience — nothing hardcoded, all
-customization goes through super-admin.
+Goal: mobile app can complete a buyer checkout end-to-end and sellers get paid, without duplicating any web logic. All commerce knobs (fees, currencies, allowed methods, min/max order value, copy) come from super-admin settings.
 
-### 26.1 Data & schema
+### B1. Schema
+- `mobile_commerce_settings` (singleton): `checkout_enabled`, `allowed_payment_methods jsonb`, `min_order_cents`, `max_order_cents`, `platform_fee_bps`, `currency_default`, `terms_url`, `refund_policy_url`, `stripe_publishable_key_override` (nullable, else env).
+- `buyer_payment_intents`: mirrors Stripe PaymentIntent lifecycle for mobile-initiated checkouts. `order_id`, `stripe_pi_id`, `client_secret_hash`, `amount_cents`, `currency`, `status`, `platform_fee_cents`, `raw jsonb`, `created_by`, timestamps.
+- Add `payment_channel` (`web|mobile`) to `buyer_orders` if missing.
 
-- Migration `mobile_marketplace_v` (view): public listing feed (id, slug,
-seller, commodity, grade, price, min qty, hero image, badges,
-reputation snapshot, updated_at) — reads honor existing
-`grain_listings` public RLS; no PII.
-- Migration `mobile_marketplace_settings` (table, singleton): super-admin
-configurable — featured category order, hero copy, min mobile app
-version, disabled-flag, moderation banners.
-- `mobile_buyer_summary_v` view: buyer's active orders, unread messages,
-pending disputes, invoice status — keyed by buyer_user_id.
-- Extend `mobile_action_registry` with:
-`market.favorite-listing`, `market.unfavorite`,
-`market.checkout-intent`, `market.confirm-delivery`,
-`market.open-dispute`, `market.send-message`,
-`seller.publish-listing`, `seller.pause-listing`,
-`seller.mark-dispatched`.
+### B2. Server surface
+- `createServerFn` `mobile.checkout.createIntent` (auth): validates listing + qty against `mobile_commerce_settings` and existing pricing, creates Stripe PaymentIntent with `automatic_payment_methods`, returns `client_secret` + `publishable_key`.
+- `mobile.checkout.confirmOrder` (auth): idempotency-keyed; after Stripe confirms, promotes `buyer_orders` to `paid`, writes `buyer_order_events`, notifies seller.
+- Extend Stripe webhook `/api/public/hooks/stripe` handler to update `buyer_payment_intents` and orders for mobile intents (event types: `payment_intent.succeeded|failed|canceled`).
+- New sync endpoint `/api/public/v1/sync/commerce-config` returning safe subset of `mobile_commerce_settings` (public — no secrets).
 
-### 26.2 Server endpoints (`/api/public/v1/market/*`)
+### B3. Mobile action registry additions
+- `commerce.start-checkout` → calls `createIntent`.
+- `commerce.cancel-order` (buyer, pre-dispatch only).
+- `commerce.request-refund` → creates `buyer_refunds` row via existing refund flow.
+- `commerce.save-payment-method` (stores Stripe PM id under buyer_account for future one-tap; no raw PAN ever stored).
 
-- `GET /market/listings` — cursor + filters (commodity, min_price,
-max_distance, grade) — anonymous allowed (no auth), rate-limited via
-IP header count in `mobile_settings`.
-- `GET /market/listings/:slug` — full listing detail + seller reputation
-snapshot + recent reviews (anonymous ok).
-- `GET /sync/buyer-orders` (auth) — delta sync of buyer's orders.
-- `GET /sync/seller-orders` (auth) — delta sync of seller's orders.
-- `POST /market/checkout-intent` — returns Stripe Checkout URL from
-existing `buyer-checkout.functions.ts` logic; idempotent.
-- `POST /market/messages` — thin wrapper around `messaging.functions.ts`
-with moderation flag check.
-- `POST /market/disputes` — thin wrapper around `disputes.functions.ts`,
-supports pre-signed attachment references.
-- `POST /seller/listings/:id/publish|pause` — wraps existing seller
-actions with idempotency.
+### B4. Super-admin pages
+- `/platform/commerce-mobile` — toggle checkout, payment methods, fees, min/max, currency, copy, links; live preview of the resulting mobile config JSON.
+- Every save flows through the Track A audit trail (`settings_key = 'mobile_commerce'`).
 
-### 26.3 Marketplace mobile settings (super-admin)
-
-- `src/lib/marketplace-mobile-settings.functions.ts` — get/update.
-- `/platform/marketplace-mobile` page: feed ordering, featured categories,
-hero copy per language, min build, kill-switch banner, allowed
-attachment types, max message length.
-
-### 26.4 Web parity
-
-- Existing `/marketplace` public storefront: add feed order + hero banner
-driven by `mobile_marketplace_settings` so web + mobile share the
-configuration.
-- `/platform/marketplace-mobile-analytics` — small tile page: mobile
-listing views (from ip-audit log), mobile checkouts, mobile-originated
-disputes vs. web (source column added to `buyer_orders.source`).
-
-### 26.5 Notifications & deep links
-
-- Seed `mobile_deep_link_routes`: `market.listing`, `market.order`,
-`market.message`, `market.dispute`, `seller.listing`, `seller.order`,
-`field.incident`, `field.task`. Each row has native route + web
-fallback so `/api/public/v1/deeplink/:key` resolves both.
-- Add `field.*` and `market.*` categories to
-`notification_channel_prefs.categories` default JSON so users can
-toggle per-channel granularly.
-
-### 26.6 Skeletons + sidebar
-
-- `MarketplaceMobileSkeleton`, `MarketplaceMobileAnalyticsSkeleton` in
-`skeletons.tsx`; registered in `PAGE_SKELETONS`.
-- Sidebar (super_admin): Marketplace Mobile, Marketplace Mobile Analytics.
+### B5. Docs & deep links
+- Seed `mobile_deep_link_routes` with `commerce.checkout`, `commerce.order-status`, `commerce.refund-status` mapped to their web equivalents.
+- Update `GrainHero_Finalized_Plan.md` phase log with Phase 26.5 + 27 outcomes.
 
 ---
 
-## Delivery order
+## Non-Goals (deferred to Phase 28)
+- Marketplace search personalization, saved carts, promo codes.
+- Apple Pay / Google Pay domain verification (needs live domain).
+- Multi-currency FX (Stripe handles single presentment currency for now).
 
-1. **Phase 25 migration** (view + settings table + `field_incidents` +
-  GRANTs/RLS).
-2. **Phase 26 migration** (views + settings + `buyer_orders.source`
-  column + deep-link seed).
-3. Server endpoints for Phase 25 + registry entries.
-4. Server endpoints for Phase 26 + registry entries.
-5. `field-settings.functions.ts`, `marketplace-mobile-settings.functions.ts`.
-6. Super-admin pages: `/platform/field-settings`,
-  `/platform/field-incidents`, `/platform/marketplace-mobile`,
-   `/platform/marketplace-mobile-analytics`.
-7. Skeletons + `router.tsx` map + sidebar entries.
-8. Web-side pulls of `field_incidents` into `/incidents`, and
-  marketplace hero/feed order into `/marketplace`.
+## Rollout order
+1. Migrations (A1 + A3 + B1) in a single migration file.
+2. Server functions + endpoints + wrappers.
+3. Super-admin pages + audit UI + sync monitor.
+4. Register routes + sidebar entries + skeletons.
+5. Typecheck.
 
-## Non-goals (explicit)
-
-- No Flutter code. No native project scaffolding.
-- No new payment providers. Stripe reused as-is.
-- No changes to auth model — reuses `authenticateMobile`.
-- No hardcoded copy — every user-visible string in these surfaces reads
-from a settings table owned by super-admin.  
-  
-
-
-## Ready to implement on approval.
+Approve to proceed.
