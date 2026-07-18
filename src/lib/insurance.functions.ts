@@ -312,6 +312,7 @@ export const openClaim = createServerFn({ method: "POST" })
       claim_id: claimId, actor_id: context.userId, event_type: "submitted",
       payload: { loss_amount_cents: data.loss_amount_cents },
     });
+    await audit(context, { action: "claim.open", subject_type: "claim", subject_id: claimId, admin_id: admin, claim_id: claimId, policy_id: data.policy_id, payload: { claim_type: data.claim_type, requested_payout_cents: data.requested_payout_cents } });
     return { id: claimId };
   });
 
@@ -371,6 +372,7 @@ export const moderateClaim = createServerFn({ method: "POST" })
       event_type: `decision_${data.decision}`,
       payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null },
     });
+    await audit(context, { action: `claim.${data.decision}`, subject_type: "claim", subject_id: data.id, claim_id: data.id, payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null } });
     return { ok: true };
   });
 
