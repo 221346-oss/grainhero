@@ -127,6 +127,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-payouts", label: "Payouts", to: "/platform/finance/payouts", icon: Wallet, roles: ["super_admin"] },
       { name: "platform-ledger", label: "Ledger", to: "/platform/finance/ledger", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-tax", label: "Tax Rules", to: "/platform/finance/tax-rules", icon: DollarSign, roles: ["super_admin"] },
+      { name: "platform-insurance", label: "Insurance Center", to: "/platform/insurance", icon: Shield, roles: ["super_admin"] },
     ],
   },
 ];
