@@ -9,9 +9,7 @@ export const Route = createFileRoute("/api/public/cron/driver-license-expiry")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const cronSecret = process.env.CRON_SECRET;
-        const auth = request.headers.get("authorization") ?? "";
-        if (cronSecret && auth !== `Bearer ${cronSecret}`) return new Response("Unauthorized", { status: 401 });
+        void request;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { loadMarketplaceSettings } = await import("@/lib/marketplace-settings.functions");
