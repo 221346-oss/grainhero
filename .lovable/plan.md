@@ -1,106 +1,103 @@
-# Phases 23 → 32 — Finalization Roadmap
+# Phase 24 — Mobile Push, Deep Links & Offline Write Queue
 
-Locked to the original GrainHero_Finalized_Plan.md + Kimi phase file. Mobile stays external (Flutter) but consumes the **same Supabase DB** through a versioned, documented, RLS-safe surface — no separate backend, no divergent schema. Each phase below is a shippable unit; we execute them one-by-one, starting with Phase 23.
-
----
-
-## Overview of the last 10 phases
-
-| # | Phase | One-liner |
-|---|---|---|
-| 23 | Mobile API Contract & Sync Foundation | Versioned `/api/public/v1/*` read/sync endpoints, device-token auth, delta-sync cursors, docs for Flutter |
-| 24 | Push Notifications & Deep Links (Mobile) | FCM/APNs registration, per-device prefs, action deep-links usable by Flutter router |
-| 25 | Offline-First Contracts | Idempotency keys, conflict resolution, "since" cursors on telemetry / alerts / orders / tasks |
-| 26 | Field Ops Workflows | Technician install/commissioning + Manager silo actions optimized for mobile (photo upload, signature, GPS) |
-| 27 | Buyer Mobile Storefront Surface | Marketplace/checkout/tracking endpoints hardened for mobile SDK, Stripe PaymentSheet contract |
-| 28 | ML Inference & Feedback Loop | Deployed inference gateway (HTTPS + token), request/response logging, human-in-loop correction pipeline |
-| 29 | Observability, SLOs & Cost Guardrails | Structured logs, error budgets, per-tenant rate limits, cost dashboards |
-| 30 | Security Hardening & Compliance | 2FA enforcement policies, audit export, data-retention jobs, GDPR/PDPA request flows |
-| 31 | Disaster Recovery & Multi-Region Readiness | Backups, PITR runbook, read-replica path, failover drills (single-region now, multi-region-ready) |
-| 32 | Launch Polish & Handoff | Status page, changelog, admin runbooks, Flutter integration guide, final QA sweep |
+Builds on Phase 23's mobile API surface. Zero-hardcode: every provider key, template, throttle, and deep-link route is editable in super-admin settings.
 
 ---
 
-## Phase 23 — detailed plan (execute now)
+## 1. Push Notification Delivery (FCM + APNs via FCM v1)
 
-### Goal
-Give the external Flutter app a **stable, versioned, RLS-safe** way to talk to the existing Supabase DB. Zero schema forks, zero hardcoded config, everything tunable from super-admin.
+**Goal:** Every `dispatchNotification` fan-out that targets a user with registered mobile devices also sends a push.
 
-### Deliverables
+- Extend `notification_channel_prefs` with `push_enabled boolean default true` and per-category push toggles (mirrors existing email/sms shape).
+- New `push-dispatch.server.ts`:
+  - Reads FCM service-account JSON from `FCM_SERVICE_ACCOUNT_JSON` secret (added via `add_secret`).
+  - Mints OAuth2 access token via `google-auth-library` equivalent — use raw JWT sign with `crypto.subtle` (Worker-safe, no node-only deps).
+  - POSTs to `https://fcm.googleapis.com/v1/projects/<id>/messages:send` per device token.
+  - Handles `UNREGISTERED` / `INVALID_ARGUMENT` → mark device `revoked_at = now()`.
+- Hook into `dispatchNotification` (existing) alongside email/sms.
+- Write to `notification_deliveries` with `channel = 'push'`, response payload, and `error_code`.
 
-**1. Versioned public API namespace**
-- `src/routes/api/public/v1/` (new). All mobile-facing HTTP endpoints live here.
-- Every endpoint returns `{ data, meta: { server_time, cursor, version } }`.
-- `GET /api/public/v1/meta` → server time, min supported client build, feature flags (reads `platform_settings.mobile`).
+## 2. Deep Link Resolver
 
-**2. Auth model for mobile**
-- Flutter uses Supabase Auth SDK directly (same project) → gets the same JWT the web uses. No custom token server.
-- Add `mobile_devices` table: `id, user_id, platform (ios|android), push_token, app_version, os_version, locale, last_seen_at, revoked_at`.
-- Server fns: `registerDevice`, `heartbeatDevice`, `revokeDevice` (auth-required, RLS: owner-only).
-- Middleware helper `requireMobileClient` = `requireSupabaseAuth` + optional `x-app-version` gate against `platform_settings.mobile.min_build`.
+- New table `mobile_deep_link_routes` (key, native_route, web_fallback, params_schema jsonb) — super-admin editable.
+- Server route `GET /api/public/v1/deeplink/$key` returns `{ native, web, params }` for a given key + query params.
+- `dispatchNotification` payloads that carry `deep_link` (Phase 21) now also emit a mobile-safe payload: `{ scheme, host, path, params }` resolved from settings.
+- Super-admin page `/platform/mobile-deep-links` — CRUD table with live preview of native + web URLs.
 
-**3. Delta-sync endpoints (read side)**
-Cursor-based (`updated_at, id`) so Flutter can pull incrementals:
-- `GET /api/public/v1/sync/silos?since=<cursor>`
-- `GET /api/public/v1/sync/sensors?since=`
-- `GET /api/public/v1/sync/alerts?since=`
-- `GET /api/public/v1/sync/hardware-orders?since=` (technician scope)
-- `GET /api/public/v1/sync/buyer-orders?since=` (buyer scope)
-- `GET /api/public/v1/sync/notifications?since=`
-All enforce RLS via user's bearer; response includes `next_cursor` and `has_more`. Page size from `platform_settings.mobile.sync_page_size` (default 200, capped 1000).
+## 3. Offline Write Queue Endpoint
 
-**4. Write endpoints with idempotency**
-- Header `Idempotency-Key` (UUID) required on POSTs.
-- New table `mobile_idempotency_keys (key, user_id, endpoint, request_hash, response jsonb, created_at)` — 24h TTL cron cleanup.
-- Endpoints: `POST /telemetry/ack`, `POST /alerts/:id/acknowledge`, `POST /installations/:id/step`, `POST /buyer-orders/:id/confirm-delivery`. Each wraps an existing server fn.
+- New route `POST /api/public/v1/actions/replay` — accepts an array of queued mutations from the client:
+  ```
+  { ops: [{ endpoint, idempotency_key, body }] }
+  ```
+- Server iterates, dispatches each to the matching internal handler via a small registry (`ackAlert`, `installStep`, `confirmDelivery`, `ackShipment`).
+- Returns per-op `{ status, response|error }` array. Uses existing `mobile_idempotency_keys` so duplicates are safe.
+- Registry lives in `src/lib/mobile-action-registry.server.ts` — new endpoints register once and are automatically replayable.
 
-**5. File uploads**
-- Reuse existing Supabase storage buckets. Add signed-URL mint endpoint: `POST /api/public/v1/uploads/sign` → returns short-lived upload URL + final public/signed read URL. Bucket + max size come from `platform_settings.mobile.uploads` (per-purpose: install_photo, dispute_evidence, quality_cert).
+## 4. Silo Cockpit Sync (read-side)
 
-**6. Realtime channels (documented, not new)**
-- Document which existing Postgres tables are on `supabase_realtime` publication so Flutter can subscribe directly (alerts, actuator_commands, buyer_order_events, hardware_order_visit_events).
+- Add sync endpoint `GET /api/public/v1/sync/silos-cockpit?since=` returning silo + latest reading + open-alert count (server-side join, already used by web cockpit).
+- Reuses `runSync` with a Postgres view `mobile_silo_cockpit_v` (RLS piggybacks on `silos`).
 
-**7. Super-admin controls (zero hardcode)**
-- Extend `platform_settings.config.mobile`:
-  - `min_build`, `latest_build`, `force_update_below`
-  - `sync_page_size`, `heartbeat_interval_seconds`
-  - `uploads` { bucket, max_mb, allowed_mime[] per purpose }
-  - `feature_flags` { offline_mode, push_v2, ml_inline }
-- New route `/platform/mobile-settings` with form + audit log entry via existing `record_governance_audit`.
+## 5. Push Diagnostics & Testing
 
-**8. Docs for Flutter team**
-- `docs/mobile/API_CONTRACT.md` — auth flow, endpoint list, cursor semantics, idempotency, error codes, realtime channel list, sample cURL + Dio snippets.
-- `docs/mobile/DB_SHARED_MODEL.md` — which tables Flutter reads/writes, RLS assumptions, do-not-touch list (finance, insurance internals, analytics fact tables).
+- Super-admin route `/platform/mobile-push-diagnostics`:
+  - List last 100 push deliveries (query `notification_deliveries` where channel='push').
+  - Filters: user, category, status.
+  - "Send test push" action against a chosen device.
+- Cron `pg_cron` daily: prune devices with `last_seen_at < now() - interval '90 days'` OR revoked > 30 days.
 
-### Migration summary (single migration)
-1. `mobile_devices` + grants (authenticated: full on own rows; service_role all) + RLS.
-2. `mobile_idempotency_keys` + grants + RLS (owner-only).
-3. Extend `platform_settings.config` seed with `mobile.*` defaults.
-4. `pg_cron` cleanup job (24h) for idempotency keys.
+## 6. Mobile-Facing Notification Endpoints
 
-### New server fns
-- `src/lib/mobile-devices.functions.ts`
-- `src/lib/mobile-sync.functions.ts` (reads)
-- `src/lib/mobile-uploads.functions.ts`
-- `src/lib/mobile-settings.functions.ts`
+- `GET /api/public/v1/notifications?since=` — same shape as web `useNotifications`.
+- `POST /api/public/v1/notifications/read` — `{ ids: uuid[] }`, marks read; idempotent.
+- `POST /api/public/v1/notifications/preferences` — updates `notification_channel_prefs` for caller.
 
-### New routes (server)
-- `src/routes/api/public/v1/meta.ts`
-- `src/routes/api/public/v1/sync/{silos,sensors,alerts,hardware-orders,buyer-orders,notifications}.ts`
-- `src/routes/api/public/v1/uploads/sign.ts`
-- `src/routes/api/public/v1/devices/{register,heartbeat,revoke}.ts`
-- `src/routes/api/public/v1/actions/{ack-alert,ack-telemetry,install-step,confirm-delivery}.ts`
+---
 
-### New UI (super-admin)
-- `src/routes/_authenticated/platform.mobile-settings.tsx` — versions, page sizes, upload limits, feature flags.
+## Migration summary (single migration)
 
-### Zero-hardcode confirmations
-- All limits, buckets, min-build, feature flags → `platform_settings.mobile`.
-- Deep-link scheme + universal-link host → `platform_settings.mobile.deep_link`.
+1. `mobile_deep_link_routes` + grants/RLS (super_admin write, authenticated read).
+2. Extend `notification_channel_prefs`: add `push_enabled`, `push_categories jsonb`.
+3. Extend `mobile_devices`: add `last_push_success_at`, `last_push_error text`, `last_push_error_at`.
+4. Create view `mobile_silo_cockpit_v` on top of `silos` + `sensor_readings` (SECURITY INVOKER).
+5. `pg_cron` job: `mobile_device_prune` daily 03:00 UTC.
+6. Seed `platform_settings.mobile.push` with `{ enabled: true, ttl_seconds: 3600, high_priority_categories: [...] }`.
 
-### Out of scope for P23 (moves to P24+)
-- Push token → FCM/APNs delivery pipeline (P24).
-- Offline conflict-resolution UX (P25).
-- Payment sheet contract (P27).
+## Server functions / files (new)
 
-Reply **go** to execute Phase 23.
+- `src/lib/push-dispatch.server.ts` — FCM v1 signer + sender.
+- `src/lib/mobile-action-registry.server.ts` — replay dispatch table.
+- `src/lib/mobile-deep-links.functions.ts` — CRUD.
+- `src/lib/mobile-push-diagnostics.functions.ts` — list / test send.
+- Extend `src/lib/notify.ts` (dispatchNotification) → add `sendPushIfEnabled`.
+
+## Routes (new)
+
+- `POST /api/public/v1/actions/replay`
+- `GET  /api/public/v1/deeplink/$key`
+- `GET  /api/public/v1/sync/silos-cockpit`
+- `GET  /api/public/v1/notifications`
+- `POST /api/public/v1/notifications/read`
+- `POST /api/public/v1/notifications/preferences`
+- `/platform/mobile-deep-links` (super-admin UI)
+- `/platform/mobile-push-diagnostics` (super-admin UI)
+- Register both in `router.tsx` skeletons and `AppSidebar.tsx` "Mobile" group (super-admin only).
+
+## Secrets to add
+
+- `FCM_SERVICE_ACCOUNT_JSON` — via `add_secret` (required before push works; UI shows disabled state until present).
+
+## Zero-hardcode confirmations
+
+- Push TTL, high-priority categories, retry policy → `platform_settings.mobile.push`.
+- Deep-link scheme & host → `platform_settings.mobile.deep_link` (Phase 23) + per-key overrides in new table.
+- Notification category → channel mapping → `notification_channel_prefs` per user.
+
+## Out of scope (Phase 25+)
+
+- Web-push parity (already Phase 7).
+- Rich media / images in push payloads.
+- SMS fallback when push fails (Phase 25 resilience matrix).
+
+Reply **go** to execute.
