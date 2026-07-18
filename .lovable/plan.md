@@ -1,110 +1,111 @@
-# Phase 18 — Finance Operations, Payouts & Tax Compliance
+# Phase 19 — Insurance, Risk Coverage & Claims Automation
 
-## Why this phase now
-Phases 11–17 built the marketplace, dispatch, disputes, refunds, reputation, and logistics cost tracking. Money currently flows in (buyer payments) and out (refunds, logistics costs), but there is no formal **seller payout ledger**, no **tax handling**, and no **finance reconciliation surface** for super-admins. Kimi's roadmap and our finalized plan both call for a "Finance & Payouts" pillar before we open the platform to external sellers at scale. This phase closes that gap — fully driven by super-admin settings, zero hardcoding.
+## Why
+Grain in silos and in transit represents high-value inventory. Sellers, buyers, and platform ops need a controlled way to attach insurance policies to batches / shipments / hardware, file claims against loss events (spoilage, theft, transit damage, sensor-detected quality drop), and let the super-admin operate a claims desk without hardcoding carriers, coverage tiers, or payout rules.
 
 ## Goals
-1. Track every money movement (payment, refund, platform fee, logistics cost, tax, payout) in a unified **finance ledger**.
-2. Compute seller **payout balances** automatically after each delivered/refunded order.
-3. Let super-admins **approve, schedule, and mark payouts as paid** (manual bank transfer first; Stripe Connect stub ready for later).
-4. Apply **tax rules** (VAT/GST/sales tax) configurable per region and per plan tier.
-5. Give super-admins a **Finance Command Center** with reconciliation, aging, and export.
-6. Give sellers a **Payouts & Earnings** page with statement PDFs.
+- First-class **policies** entity linkable to `grain_batches`, `buyer_shipments`, and `hardware_orders`.
+- **Claims** lifecycle: draft → submitted → under_review → approved / rejected → paid, with evidence uploads and audit trail.
+- Auto-suggest claims from existing signals: SLA overdue shipments, quality certificate failures, weight reconciliation variance beyond configurable %, spoilage alerts from telemetry.
+- Super-admin **Insurance Command Center**: carriers, coverage products, premium rates, deductibles, approval SLAs — all configurable, zero hardcoding.
+- Seller / admin views: "My Policies", "My Claims" with premium ledger entries auto-posted into the finance ledger (Phase 18).
+- Notifications: policy expiring, claim state changes, payout received — through existing multi-channel dispatcher.
 
-## Data model (new tables)
-- `finance_ledger_entries` — append-only rows: `entry_type` (payment_in, refund_out, platform_fee, logistics_cost, tax, payout_out, adjustment), `direction` (credit/debit), `amount`, `currency`, `seller_id`, `order_id`, `payout_id?`, `occurred_at`, `metadata jsonb`.
-- `seller_payout_accounts` — bank details (encrypted), preferred method, minimum payout threshold override.
-- `seller_payouts` — batch: `status` (pending, approved, processing, paid, failed, cancelled), `period_start/end`, `gross`, `fees`, `tax_withheld`, `net`, `reference`, `paid_at`, `receipt_url`.
-- `seller_payout_items` — join between `seller_payouts` and `finance_ledger_entries`.
-- `tax_rules` — `region`, `rule_type` (vat/gst/sales), `rate_pct`, `applies_to` (buyer/seller/platform_fee), `effective_from/to`, `active`.
-- `tax_registrations` — seller VAT/GST IDs per region for reverse-charge logic.
-- `finance_statements` — generated PDFs per seller per period.
+## Data Model (new tables)
+- `insurance_carriers` — name, contact, api_mode (manual/webhook), active flag, logo_url.
+- `insurance_products` — carrier_id, code, name, coverage_type (batch/shipment/hardware), base_premium_bps, deductible_bps, max_payout_cents, currency, terms_url.
+- `insurance_policies` — product_id, holder_admin_id, subject_type/subject_id (polymorphic to batch/shipment/order), coverage_start/end, premium_cents, status (active/expired/cancelled), external_ref.
+- `insurance_claims` — policy_id, opened_by, claim_type (spoilage/transit_damage/theft/quality_failure/hardware_loss), incident_at, loss_amount_cents, requested_payout_cents, approved_payout_cents, status, decision_reason, external_ref.
+- `insurance_claim_events` — claim_id, actor_id, event_type, payload jsonb, created_at (append-only audit).
+- `insurance_claim_attachments` — claim_id, file_path (bucket), mime, size, uploaded_by.
+- Storage bucket: `insurance-attachments` (private).
+- Settings additions (`marketplace-settings.functions.ts`): `insurance` block — auto-suggest thresholds (SLA overdue hours, weight variance %, quality fail triggers), default approval SLA hours, allow_seller_self_file bool.
 
-All tables: standard grants (`authenticated` + `service_role`), RLS scoping sellers to their own rows, super-admins to all.
-
-## Marketplace settings extension (super-admin, no hardcoding)
-Extend `marketplace-settings.functions.ts` `finance` schema with:
-- `payoutSchedule`: `manual | weekly | biweekly | monthly` + day-of-week/month.
-- `minimumPayoutAmount` per currency.
-- `platformFeePct` (default) + optional per-plan overrides.
-- `holdPeriodDays` after delivery before funds become payable.
-- `defaultCurrency`, `supportedCurrencies[]`.
-- `taxMode`: `inclusive | exclusive`.
-- `payoutMethods[]` (bank_transfer, stripe_connect_future) with per-method fee.
-- `statementTemplate` (heading, footer, tax notes).
-
-## Server functions
-`src/lib/finance-ledger.functions.ts`
-- `recordLedgerEntry` (internal helper, called from Stripe webhook, refund handler, logistics cost handler).
-- `getSellerBalance({ sellerId })` — running balance + `payable / on_hold / paid_out`.
-- `getPlatformFinanceSummary({ range })` — GMV, fees, refunds, tax collected, net platform revenue.
-
-`src/lib/payouts.functions.ts`
-- `listPayableSellers()` (super-admin) — sellers over threshold.
-- `createPayoutBatch({ sellerIds, periodStart, periodEnd })`.
-- `approvePayout / markPayoutPaid / cancelPayout` (super-admin) with receipt upload to `logistics-receipts`-style new `payout-receipts` bucket.
-- `getSellerPayouts()` (seller-scoped).
-- `generatePayoutStatementPdf` — pdf-lib, stored in `finance-statements` bucket.
-
-`src/lib/tax.functions.ts`
-- `resolveTaxForOrder({ orderId })` — applied at checkout and to platform fee.
-- `listTaxRules / upsertTaxRule / archiveTaxRule` (super-admin).
-- `upsertTaxRegistration` (seller).
-
-## Integration points (retrofit, non-breaking)
-- Stripe webhook (`charge.succeeded`, `charge.refunded`): also call `recordLedgerEntry` for payment_in, platform_fee, tax.
-- `refunds.functions.ts`: emit refund_out entry.
-- `logistics-cost-entries` insert trigger → ledger entry `logistics_cost` (debit against relevant seller when attributable, else platform).
-- `buyer-checkout.functions.ts`: compute tax via `resolveTaxForOrder` when `taxMode=exclusive`, store on invoice.
-- `invoicing-pdf.server.ts`: render tax line + seller VAT ID.
-
-## Cron / automation (`/api/public/cron/*`)
-- `finance-hold-release` (hourly) — moves ledger entries past `holdPeriodDays` from `on_hold` → `payable`.
-- `payout-auto-batch` (daily) — when schedule ≠ manual, auto-create payout batches ready for super-admin approval.
-- `finance-daily-digest` — email super-admins today's GMV, fees, refunds, and pending payout count.
+## Server Layer
+- `insurance-carriers.functions.ts` — CRUD for super-admin.
+- `insurance-products.functions.ts` — CRUD + pricing preview.
+- `insurance-policies.functions.ts` — `bindPolicy`, `renewPolicy`, `cancelPolicy`, `listMyPolicies`, `listAllPolicies`.
+- `insurance-claims.functions.ts` — `openClaim`, `submitClaim`, `addEvidence`, `moderateClaim` (approve/reject with payout), `markPaid`, `listMyClaims`, `listQueue`.
+- `insurance-suggestions.functions.ts` — scans SLA/weight/quality signals, produces suggested_claims rows (materialised view or on-demand query) for the admin/seller inbox.
+- Cron: hourly policy expiry sweeper (→ notifications) and daily suggestion refresh.
+- Finance hooks: on `bindPolicy` post debit ledger entry `premium_paid`; on `markPaid` post credit entry `insurance_payout`.
 
 ## UI
-
-Super-admin:
-- `/platform/finance` — Command Center: KPI tiles (GMV, net revenue, refunds, tax collected, pending payouts), 30d trend chart, top sellers by GMV, aging buckets. CSV + PDF export.
-- `/platform/finance/payouts` — batches table, filters (status, seller, period), detail sheet with items, approve/mark-paid/upload receipt actions.
-- `/platform/finance/tax-rules` — CRUD table with region/rate/effective dates.
-- `/platform/finance/ledger` — filterable ledger explorer with drill-down to source order.
-- Extend `/platform/marketplace-settings` with a **Finance** tab.
-
-Seller (admin role acting as seller):
-- `/earnings` — balance card (payable / on-hold / lifetime paid), upcoming payout ETA, recent payouts table with statement PDF download.
-- `/earnings/tax` — enter VAT/GST registration per region.
-- `/earnings/payout-account` — bank details form.
-
-Buyer:
-- Invoice PDF and order summary already show line items; add tax breakdown row when `taxMode=exclusive`.
-
-## Skeletons & navigation
-- Register `FinanceCenterSkeleton`, `PayoutsSkeleton`, `LedgerSkeleton`, `EarningsSkeleton` in `router.tsx`.
-- Sidebar: add "Finance" group for super-admin (Command Center, Payouts, Ledger, Tax Rules); add "Earnings" for admin/seller role.
+- **Seller/Admin**
+  - `/insurance` — policies list, bind policy drawer (choose product, subject, coverage period, see premium).
+  - `/insurance/claims` — my claims list, new claim wizard (subject → type → evidence upload → loss amount), timeline detail sheet.
+  - Suggested-claim banners on `/silos/$id`, `/orders/$id`, `/hardware-orders/$id` when signals cross thresholds.
+- **Super-admin**
+  - `/platform/insurance` — command center: KPIs (active policies, open claims, payout ratio, avg decision time), sub-tabs Carriers / Products / Policies / Claims Queue.
+  - Claim moderation sheet: evidence gallery, decision form (approve amount / reject reason), auto-generates ledger entries.
+  - Settings tab wired into marketplace settings.
+- Skeletons for every new route (`InsuranceListSkeleton`, `ClaimsQueueSkeleton`, `InsuranceCommandSkeleton`).
 
 ## Notifications
-Reuse `dispatchNotification`:
-- Seller: payout approved, payout paid (with statement link), payout failed, tax registration verified.
-- Super-admin: seller crossed payout threshold, payout marked failed by bank, tax rule expiring in 7 days.
+- Templates (super-admin editable): policy_bound, policy_expiring_7d, policy_expired, claim_submitted, claim_decisioned, claim_paid.
+- Buyer + seller + super-admin routing via existing channel prefs.
 
-Templates all live in marketplace settings (editable, no hardcoding).
+## Acceptance
+- Super-admin can add a carrier + product, seller can bind a policy to a batch, file a claim with photos, super-admin approves with partial payout, ledger records both premium and payout, all statuses visible in timelines, everything reads from configurable settings.
 
-## Security & compliance
-- Bank details encrypted at rest via `pgcrypto` symmetric key stored in `FINANCE_ENCRYPTION_KEY` secret (add via `add_secret`).
-- Ledger is append-only: RLS blocks UPDATE/DELETE for everyone except `service_role`; corrections happen via `adjustment` entries.
-- Super-admin payout actions logged to `activity_logs` with actor + IP.
+---
 
-## Deliverables order
-1. Migration (tables, buckets, grants, RLS, ledger triggers).
-2. `add_secret FINANCE_ENCRYPTION_KEY` if missing.
-3. Marketplace settings extension.
-4. `finance-ledger`, `tax`, `payouts` server functions.
-5. Retrofit Stripe webhook, refunds, logistics cost, invoicing.
-6. Cron routes + pg_cron jobs.
-7. Super-admin UI (4 pages) + settings tab.
-8. Seller UI (3 pages) + sidebar wiring.
-9. Skeletons + notifications templates + activity logging.
+# Phase 20 — Analytics Warehouse, Executive Dashboards & Data Exports
 
-Reply **go** to execute.
+## Why
+By Phase 19 the platform generates rich operational data (orders, shipments, telemetry, finance, claims). Live OLTP queries on `sensor_readings` and cross-joins across finance/dispatch already start hurting. We need a lightweight warehouse layer, canonical KPI definitions, and executive/tenant dashboards that read from precomputed marts — no hardcoded metrics.
+
+## Goals
+- **Warehouse schema** (`analytics` schema in same Supabase project) with fact + dimension tables refreshed by cron.
+- **Metric registry** — super-admin editable list of KPIs (name, sql template, unit, format) so new metrics don't require code changes.
+- **Executive dashboard** for super-admin: platform-wide KPIs, cohort retention (tenants), GMV vs cost vs profit, insurance loss ratio, SLA trends.
+- **Tenant analytics** for admins: their own batches, sales, spoilage %, revenue vs cost, subscription utilisation vs plan thresholds (Phase 2).
+- **Buyer analytics** (light): spend, favourite sellers, on-time delivery rate.
+- **Data exports**: any dashboard chart → CSV, PDF; scheduled email digests (weekly/monthly) using existing digest infra.
+- **Query safety**: warehouse queries use a dedicated read-only role, capped statement timeout, and row-level filters based on `tenant_admin_id` / `super_admin`.
+
+## Data Model
+- `analytics.fact_orders` (buyer_order grain: order_id, buyer_id, seller_admin_id, gross_cents, net_cents, cost_cents, status, placed_at, delivered_at, delay_hours).
+- `analytics.fact_shipments` (shipment_id, carrier_id, sla_target_hours, actual_hours, on_time bool, exception_type).
+- `analytics.fact_telemetry_daily` (silo_id, day, avg_temp, avg_humidity, alert_count, spoilage_risk_score).
+- `analytics.fact_finance_daily` (day, gross_cents, cost_cents, refunds_cents, payouts_cents, net_cents, currency).
+- `analytics.fact_insurance` (policy_id, claim_id, premium_cents, payout_cents, decision_hours, status).
+- `analytics.dim_tenant`, `analytics.dim_carrier`, `analytics.dim_plan`, `analytics.dim_calendar`.
+- `analytics.metric_registry` — key, label, sql_template, unit, format, allowed_roles[], default_filters jsonb.
+- `analytics.dashboard_widgets` — dashboard_key, position, metric_key, chart_type (kpi/line/bar/donut/table), filters jsonb, role_scope.
+- Refresh log table `analytics.refresh_log` for observability.
+
+## Server Layer
+- `analytics-refresh.server.ts` — SQL functions that upsert into fact tables from OLTP tables; run via `pg_cron` (hourly for fast marts, nightly for heavier ones like telemetry_daily).
+- `analytics-metrics.functions.ts` — `listMetrics`, `runMetric({ key, filters })` executing whitelisted SQL from registry with parameter binding + role scoping.
+- `analytics-dashboards.functions.ts` — load/save widget layouts per role (super_admin default, admin default, buyer default, plus user-saved variants).
+- `analytics-export.functions.ts` — CSV + PDF export (reuse `pdf-lib` helper), stored in `analytics-exports` bucket.
+- `analytics-digests.server.ts` — weekly email digest to super-admin + per-tenant admins using their opted-in metrics.
+
+## UI
+- **Super-admin**
+  - `/platform/analytics` — executive dashboard (KPIs strip, revenue vs cost, SLA trend, insurance loss ratio, tenant leaderboard, cohort retention).
+  - `/platform/analytics/metrics` — metric registry CRUD (with SQL preview + dry-run against sample tenant).
+  - `/platform/analytics/dashboards` — drag-drop widget composer (uses `dashboard_widgets`).
+- **Admin**
+  - `/analytics` — tenant dashboard: sales funnel, spoilage %, plan utilisation, top listings, alerts trend.
+- **Buyer**
+  - `/marketplace/insights` — personal spend & delivery stats.
+- Shared components: `MetricKpiCard`, `MetricLineChart`, `MetricBarChart`, `MetricDonut`, `MetricTable` — all driven by `{ metricKey, filters }` props hitting `runMetric`.
+- Skeletons for each dashboard, wired into `PAGE_SKELETONS`.
+
+## Governance & Safety
+- All warehouse SQL runs as a `SECURITY DEFINER` function that enforces `role_scope` and injects `tenant_admin_id = auth.uid()`'s tenant when role is admin.
+- Statement timeout 5s for analytics functions.
+- No raw SQL from client — clients call `runMetric({ key, filters })` only.
+- Grants: `analytics` schema — usage to authenticated, select on facts only via wrapper functions.
+
+## Acceptance
+- Cron populates fact tables from real OLTP data.
+- Super-admin edits a KPI (e.g. adds "avg claim decision hours") and it appears on the dashboard without code changes.
+- Admin sees only their tenant's data; buyer sees only their own.
+- Any chart can be exported to CSV/PDF, and a weekly digest email lists the top-line KPIs per recipient.
+
+---
+
+Reply **go** to start Phase 19 (schema + super-admin insurance center first, then seller/admin flows and suggestions engine). Phase 20 will follow with its own detailed slice-by-slice execution.
