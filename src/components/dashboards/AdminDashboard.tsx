@@ -103,20 +103,13 @@ export function AdminDashboard({ name }: { name?: string }) {
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
               <VariableFontText text="Home" base={650} hover={900} staggerMs={20} />
             </h1>
-            <p className="mt-1 text-sm text-white/40">
+            <p className="mt-1 text-sm text-muted-foreground">
               {name ? `Welcome back, ${name}. ` : ""}Tenant overview: revenue, operations and live activity
             </p>
           </div>
-          <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/60">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-            </span>
-            LIVE
-          </span>
         </div>
 
         {/* KPI cards */}

@@ -124,7 +124,7 @@ export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, 
       {!active && (
         <div
           ref={marqueeRef}
-          className="pointer-events-none absolute inset-0 z-0 translate-y-[101%] bg-[#ADFFBC]"
+          className="pointer-events-none absolute inset-0 z-0 translate-y-[101%] overflow-hidden bg-[#ADFFBC]"
         >
           <div ref={innerRef} className="h-full w-full translate-y-[-101%]">
             <div

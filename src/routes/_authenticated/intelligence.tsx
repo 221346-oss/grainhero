@@ -95,10 +95,10 @@ function IntelligenceWorkspace() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
             <VariableFontText text="Intelligence" base={650} hover={900} staggerMs={20} />
           </h1>
-          <p className="mt-1 text-sm text-white/40">
+          <p className="mt-1 text-sm text-muted-foreground">
             AI predictions, analytics, model performance and reports
           </p>
         </div>
