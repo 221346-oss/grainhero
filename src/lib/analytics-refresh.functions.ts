@@ -38,7 +38,8 @@ export const listRefreshLog = createServerFn({ method: "GET" })
       .order("started_at", { ascending: false })
       .limit(data.limit);
     if (error) throw error;
-    return { rows: (rows ?? []) as Array<Record<string, unknown>> };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { rows: (rows ?? []) as Array<Record<string, any>> };
   });
 
 export const getWarehouseHealth = createServerFn({ method: "GET" })
