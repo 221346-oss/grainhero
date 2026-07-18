@@ -27,7 +27,7 @@ import {
   CreditCard,
   Activity, AlertOctagon, FileBarChart,
   Wrench, Server, ShieldCheck, MoreHorizontal,
-  DollarSign, TrendingUp, UserPlus, ScrollText,
+  DollarSign, TrendingUp, UserPlus, ScrollText, Wallet,
   Tag, ShoppingCart,
 } from "lucide-react";
 import { performSignOut } from "@/lib/auth/signOut";
