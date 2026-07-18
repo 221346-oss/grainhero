@@ -125,6 +125,7 @@ import { Route as AuthenticatedPlatformInsuranceAuditRouteImport } from './route
 import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
 import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
 import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
+import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
@@ -775,6 +776,12 @@ const AuthenticatedPlatformFinanceLedgerRoute =
     path: '/ledger',
     getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
+const AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute =
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport.update({
+    id: '/insurance-policies/$policyId/documents',
+    path: '/insurance-policies/$policyId/documents',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBuyerOrdersOrderIdRoute =
   AuthenticatedBuyerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
@@ -900,6 +907,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1020,6 +1028,7 @@ export interface FileRoutesByTo {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1144,6 +1153,7 @@ export interface FileRoutesById {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1268,6 +1278,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
+    | '/insurance-policies/$policyId/documents'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
@@ -1388,6 +1399,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
+    | '/insurance-policies/$policyId/documents'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
@@ -1511,6 +1523,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/insurance-policies/$policyId/documents'
     | '/_authenticated/platform/finance/ledger'
     | '/_authenticated/platform/finance/payouts'
     | '/_authenticated/platform/finance/tax-rules'
@@ -2391,6 +2404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
       parentRoute: typeof AuthenticatedPlatformFinanceRoute
     }
+    '/_authenticated/insurance-policies/$policyId/documents': {
+      id: '/_authenticated/insurance-policies/$policyId/documents'
+      path: '/insurance-policies/$policyId/documents'
+      fullPath: '/insurance-policies/$policyId/documents'
+      preLoaderRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/buyer/orders/$orderId': {
       id: '/_authenticated/buyer/orders/$orderId'
       path: '/$orderId'
@@ -2618,6 +2638,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
   AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   AuthenticatedPlatformLogisticsFleetRoute: typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -2695,6 +2716,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTechnicianInstallsRoute:
     AuthenticatedTechnicianInstallsRouteWithChildren,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute:
+    AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute,
   AuthenticatedPlatformLogisticsCarriersRoute:
     AuthenticatedPlatformLogisticsCarriersRoute,
   AuthenticatedPlatformLogisticsCommandCenterRoute:
