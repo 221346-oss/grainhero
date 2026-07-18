@@ -79,12 +79,12 @@ export const Route = createFileRoute("/api/public/v1/commerce/checkout")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Resolve buyer_id: buyer_orders.buyer_id references public.buyers(id) via buyer_accounts.user_id.
-        // Auto-provision a buyer + account for the mobile auth user on first checkout.
+        // Resolve buyer_id + buyer_account_id (needed by RLS) via buyer_accounts.
         const { data: acctRaw } = await supabaseAdmin.from("buyer_accounts")
-          .select("buyer_id").eq("user_id", ctx.userId).maybeSingle();
-        let buyerId = (acctRaw as { buyer_id: string } | null)?.buyer_id;
-        if (!buyerId) {
+          .select("id, buyer_id").eq("user_id", ctx.userId).maybeSingle();
+        let buyerId = (acctRaw as { id: string; buyer_id: string } | null)?.buyer_id;
+        let buyerAccountId = (acctRaw as { id: string; buyer_id: string } | null)?.id;
+        if (!buyerId || !buyerAccountId) {
           const firstAdmin = quote.lines[0].admin_id;
           const contactName = (addr as { recipient?: string } | null)?.recipient ?? "Mobile buyer";
           const displayName = contactName;
@@ -93,9 +93,11 @@ export const Route = createFileRoute("/api/public/v1/commerce/checkout")({
             .select("id").single();
           if (bErr || !buyerRow) return Response.json({ error: `buyer_create_failed:${bErr?.message ?? "unknown"}` }, { status: 500 });
           buyerId = (buyerRow as { id: string }).id;
-          await supabaseAdmin.from("buyer_accounts").insert({
+          const { data: acctIns, error: aErr } = await supabaseAdmin.from("buyer_accounts").insert({
             user_id: ctx.userId, buyer_id: buyerId,
-          } as never);
+          } as never).select("id").single();
+          if (aErr || !acctIns) return Response.json({ error: `buyer_account_create_failed:${aErr?.message ?? "unknown"}` }, { status: 500 });
+          buyerAccountId = (acctIns as { id: string }).id;
         }
 
         const created: CheckoutOrder[] = [];
@@ -108,7 +110,7 @@ export const Route = createFileRoute("/api/public/v1/commerce/checkout")({
 
           const { data: insertedRaw, error: insErr } = await supabaseAdmin.from("buyer_orders")
             .insert({
-              admin_id: line.admin_id, buyer_id: buyerId,
+              admin_id: line.admin_id, buyer_id: buyerId, buyer_account_id: buyerAccountId,
               listing_id: line.listing_id, batch_id: line.batch_id,
               order_number: orderNumber,
               quantity_kg: line.quantity_kg,
