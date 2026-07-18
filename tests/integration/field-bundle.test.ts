@@ -46,7 +46,7 @@ d("field bundle + mutations", () => {
     const clientId = `t-${Date.now()}`;
     const body = {
       mutations: [
-        { client_id: clientId, kind: "read-notifs", payload: { ids: ["00000000-0000-0000-0000-000000000000"] } },
+        { client_id: clientId, kind: "notifications-read", payload: { ids: ["00000000-0000-0000-0000-000000000000"] } },
         { client_id: `${clientId}-x`, kind: "does-not-exist", payload: {} },
       ],
     };
@@ -72,7 +72,7 @@ d("field bundle + mutations", () => {
 
   it("400 on oversized batch", async () => {
     const mutations = Array.from({ length: 51 }, (_, i) => ({
-      client_id: `x-${i}`, kind: "read-notifs", payload: { ids: [] },
+      client_id: `x-${i}`, kind: "notifications-read", payload: { ids: [] },
     }));
     const r = await fetch(`${BASE_URL}/api/public/v1/field/mutations`, {
       method: "POST", headers: authHeaders(token), body: JSON.stringify({ mutations }),
