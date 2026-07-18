@@ -555,6 +555,30 @@ const SCHEMA = z.object({
     distanceProvider: "haversine", osrmBaseUrl: "", pollingIntervalMinutes: 60,
     autoCloseAfterDeliveryHours: 48, deliveryDelayGraceMinutes: 30, licenseExpiryWarnDays: [14,7,1],
   }),
+  finance: z.object({
+    payoutSchedule: z.enum(["manual","weekly","biweekly","monthly"]),
+    payoutDay: z.number().int().min(0).max(31),
+    minimumPayoutAmount: z.number().min(0),
+    platformFeePct: z.number().min(0).max(100),
+    holdPeriodDays: z.number().int().min(0).max(365),
+    defaultCurrency: z.string().length(3),
+    supportedCurrencies: z.array(z.string().length(3)).min(1).max(20),
+    taxMode: z.enum(["inclusive","exclusive"]),
+    payoutMethods: z.array(z.object({
+      key: z.string().min(1), label: z.string().min(1),
+      feePct: z.number().min(0).max(100), enabled: z.boolean(),
+    })).max(10),
+    statementHeading: z.string().max(200),
+    statementFooter: z.string().max(500),
+    dailyDigestEnabled: z.boolean(),
+  }).optional().default({
+    payoutSchedule: "manual", payoutDay: 1, minimumPayoutAmount: 100, platformFeePct: 5,
+    holdPeriodDays: 3, defaultCurrency: "USD", supportedCurrencies: ["USD"], taxMode: "exclusive",
+    payoutMethods: [{ key: "bank_transfer", label: "Bank transfer", feePct: 0, enabled: true }],
+    statementHeading: "Payout statement",
+    statementFooter: "Thank you for selling on GrainHero Marketplace.",
+    dailyDigestEnabled: true,
+  }),
 });
 
 export const updateMarketplaceSettings = createServerFn({ method: "POST" })
