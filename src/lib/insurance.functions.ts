@@ -24,6 +24,39 @@ async function tenantAdminId(ctx: { supabase: unknown; userId: string }): Promis
   return (data as string) ?? ctx.userId;
 }
 
+// Insert an audit-log row. Best-effort; never throws.
+async function audit(
+  ctx: { supabase: unknown; userId: string },
+  entry: {
+    action: string;
+    subject_type?: string;
+    subject_id?: string | null;
+    admin_id?: string | null;
+    carrier_id?: string | null;
+    policy_id?: string | null;
+    claim_id?: string | null;
+    payload?: Record<string, unknown>;
+  },
+) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (ctx.supabase as any).from("insurance_audit_log").insert({
+      actor_id: ctx.userId,
+      admin_id: entry.admin_id ?? null,
+      action: entry.action,
+      subject_type: entry.subject_type ?? null,
+      subject_id: entry.subject_id ?? null,
+      carrier_id: entry.carrier_id ?? null,
+      policy_id: entry.policy_id ?? null,
+      claim_id: entry.claim_id ?? null,
+      payload: entry.payload ?? {},
+      source: "app",
+    });
+  } catch (e) {
+    console.warn("[insurance-audit] insert failed", e);
+  }
+}
+
 /* -------------------- Carriers -------------------- */
 
 export const listCarriers = createServerFn({ method: "GET" })
