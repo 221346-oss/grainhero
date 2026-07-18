@@ -309,6 +309,22 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
     deliveryDelayGraceMinutes: 30,
     licenseExpiryWarnDays: [14, 7, 1],
   },
+  finance: {
+    payoutSchedule: "manual",
+    payoutDay: 1,
+    minimumPayoutAmount: 100,
+    platformFeePct: 5,
+    holdPeriodDays: 3,
+    defaultCurrency: "USD",
+    supportedCurrencies: ["USD"],
+    taxMode: "exclusive",
+    payoutMethods: [
+      { key: "bank_transfer", label: "Bank transfer", feePct: 0, enabled: true },
+    ],
+    statementHeading: "Payout statement",
+    statementFooter: "Thank you for selling on GrainHero Marketplace.",
+    dailyDigestEnabled: true,
+  },
 };
 
 export function mergeSettings(raw: unknown): MarketplaceSettings {
