@@ -44,6 +44,15 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
     if (!data.id) {
       await assertPlanAllows({ feature: "max_warehouses", sb: context.supabase, userId: context.userId });
     }
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    // Managers/technicians have profiles.admin_id set to their tenant admin; admins have it null.
+    const { data: prof, error: profErr } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (profErr) throw profErr;
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const location = {
       description: data.location_description ?? null,
       address: data.address ?? null,
@@ -55,7 +64,7 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
       total_capacity_kg: data.total_capacity_kg ?? null,
       status: data.status,
       notes: data.notes ?? null,
-      admin_id: context.userId,
+      admin_id: tenantAdminId,
       created_by: context.userId,
       updated_by: context.userId,
     };
