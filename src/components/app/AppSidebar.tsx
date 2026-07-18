@@ -128,6 +128,8 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-ledger", label: "Ledger", to: "/platform/finance/ledger", icon: ScrollText, roles: ["super_admin"] },
       { name: "platform-tax", label: "Tax Rules", to: "/platform/finance/tax-rules", icon: DollarSign, roles: ["super_admin"] },
       { name: "platform-insurance", label: "Insurance Center", to: "/platform/insurance", icon: Shield, roles: ["super_admin"] },
+      { name: "platform-metrics", label: "Metric Registry", to: "/platform/metrics", icon: ScrollText, roles: ["super_admin"] },
+      { name: "platform-dashboard-builder", label: "Dashboard Builder", to: "/platform/dashboard-builder", icon: LayoutDashboard, roles: ["super_admin", "admin", "manager", "technician"] },
     ],
   },
 ];
