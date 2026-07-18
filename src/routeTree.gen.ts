@@ -99,6 +99,7 @@ import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
 import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
@@ -619,6 +620,12 @@ const AuthenticatedPlatformAuditLogsRoute =
     path: '/platform/audit-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInsuranceClaimsClaimIdRoute =
+  AuthenticatedInsuranceClaimsClaimIdRouteImport.update({
+    id: '/insurance-claims/$claimId',
+    path: '/insurance-claims/$claimId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBuyerOrdersRoute =
   AuthenticatedBuyerOrdersRouteImport.update({
     id: '/buyer/orders',
@@ -854,6 +861,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -972,6 +980,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1094,6 +1103,7 @@ export interface FileRoutesById {
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1216,6 +1226,7 @@ export interface FileRouteTypes {
     | '/marketplace/'
     | '/admins/$adminId'
     | '/buyer/orders'
+    | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1334,6 +1345,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/admins/$adminId'
     | '/buyer/orders'
+    | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1455,6 +1467,7 @@ export interface FileRouteTypes {
     | '/marketplace/'
     | '/_authenticated/admins/$adminId'
     | '/_authenticated/buyer/orders'
+    | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
@@ -2183,6 +2196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/insurance-claims/$claimId': {
+      id: '/_authenticated/insurance-claims/$claimId'
+      path: '/insurance-claims/$claimId'
+      fullPath: '/insurance-claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/buyer/orders': {
       id: '/_authenticated/buyer/orders'
       path: '/buyer/orders'
@@ -2550,6 +2570,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
+  AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
@@ -2617,6 +2638,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
   AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRouteWithChildren,
+  AuthenticatedInsuranceClaimsClaimIdRoute:
+    AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
