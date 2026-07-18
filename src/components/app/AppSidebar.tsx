@@ -138,6 +138,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "platform-marketplace-mobile", label: "Marketplace Mobile", to: "/platform/marketplace-mobile", icon: Wrench, roles: ["super_admin"] },
       { name: "platform-mobile-sync-monitor", label: "Mobile Sync Monitor", to: "/platform/mobile-sync-monitor", icon: Activity, roles: ["super_admin"] },
       { name: "platform-commerce-mobile", label: "Mobile Commerce", to: "/platform/commerce-mobile", icon: Wrench, roles: ["super_admin"] },
+      { name: "platform-launch-readiness", label: "Launch Readiness", to: "/platform/launch-readiness", icon: ShieldCheck, roles: ["super_admin"] },
     ],
   },
 ];

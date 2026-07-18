@@ -97,6 +97,7 @@ import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './ro
 import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
 import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
 import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
@@ -113,6 +114,7 @@ import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './route
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
 import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
+import { Route as ApiPublicV1StatusRouteImport } from './routes/api/public/v1/status'
 import { Route as ApiPublicV1MetaRouteImport } from './routes/api/public/v1/meta'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
@@ -654,6 +656,12 @@ const AuthenticatedPlatformLeadsRoute =
     path: '/platform/leads',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformLaunchReadinessRoute =
+  AuthenticatedPlatformLaunchReadinessRouteImport.update({
+    id: '/platform/launch-readiness',
+    path: '/platform/launch-readiness',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformInvoiceFailuresRoute =
   AuthenticatedPlatformInvoiceFailuresRouteImport.update({
     id: '/platform/invoice-failures',
@@ -747,6 +755,11 @@ const AuthenticatedAdminsAdminIdRoute =
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
   path: '/api/public/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1StatusRoute = ApiPublicV1StatusRouteImport.update({
+  id: '/api/public/v1/status',
+  path: '/api/public/v1/status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicV1MetaRoute = ApiPublicV1MetaRouteImport.update({
@@ -1188,6 +1201,7 @@ export interface FileRoutesByFullPath {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -1242,6 +1256,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
+  '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
@@ -1353,6 +1368,7 @@ export interface FileRoutesByTo {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -1407,6 +1423,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
+  '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
@@ -1522,6 +1539,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
   '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/_authenticated/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -1576,6 +1594,7 @@ export interface FileRoutesById {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
+  '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
@@ -1691,6 +1710,7 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/insurance'
     | '/platform/invoice-failures'
+    | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
@@ -1745,6 +1765,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/v1/meta'
+    | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
@@ -1856,6 +1877,7 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/insurance'
     | '/platform/invoice-failures'
+    | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
@@ -1910,6 +1932,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/v1/meta'
+    | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
@@ -2024,6 +2047,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/insurance'
     | '/_authenticated/platform/invoice-failures'
+    | '/_authenticated/platform/launch-readiness'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/marketplace-health'
@@ -2078,6 +2102,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/v1/meta'
+    | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
     | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
@@ -2151,6 +2176,7 @@ export interface RootRouteChildren {
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicV1MetaRoute: typeof ApiPublicV1MetaRoute
+  ApiPublicV1StatusRoute: typeof ApiPublicV1StatusRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
   ApiPublicV1ActionsAckAlertRoute: typeof ApiPublicV1ActionsAckAlertRoute
   ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
@@ -2805,6 +2831,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/launch-readiness': {
+      id: '/_authenticated/platform/launch-readiness'
+      path: '/platform/launch-readiness'
+      fullPath: '/platform/launch-readiness'
+      preLoaderRoute: typeof AuthenticatedPlatformLaunchReadinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/invoice-failures': {
       id: '/_authenticated/platform/invoice-failures'
       path: '/platform/invoice-failures'
@@ -2915,6 +2948,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/webhooks/stripe'
       fullPath: '/api/public/webhooks/stripe'
       preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/status': {
+      id: '/api/public/v1/status'
+      path: '/api/public/v1/status'
+      fullPath: '/api/public/v1/status'
+      preLoaderRoute: typeof ApiPublicV1StatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/meta': {
@@ -3531,6 +3571,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformInsuranceRoute: typeof AuthenticatedPlatformInsuranceRouteWithChildren
   AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
+  AuthenticatedPlatformLaunchReadinessRoute: typeof AuthenticatedPlatformLaunchReadinessRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
   AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -3619,6 +3660,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformInsuranceRouteWithChildren,
   AuthenticatedPlatformInvoiceFailuresRoute:
     AuthenticatedPlatformInvoiceFailuresRoute,
+  AuthenticatedPlatformLaunchReadinessRoute:
+    AuthenticatedPlatformLaunchReadinessRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
   AuthenticatedPlatformMarketplaceHealthRoute:
@@ -3761,6 +3804,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
   ApiPublicV1MetaRoute: ApiPublicV1MetaRoute,
+  ApiPublicV1StatusRoute: ApiPublicV1StatusRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
   ApiPublicV1ActionsAckAlertRoute: ApiPublicV1ActionsAckAlertRoute,
   ApiPublicV1ActionsConfirmDeliveryRoute:
