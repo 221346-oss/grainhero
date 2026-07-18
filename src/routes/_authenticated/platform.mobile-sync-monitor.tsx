@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getSyncMonitorOverview, listSyncRuns, runSyncManually, type SyncEndpoint } from "@/lib/mobile-sync-monitor.functions";
+import { getSyncMonitorOverview, listSyncRuns, runSyncManually, listActiveSyncLocks, type SyncEndpoint } from "@/lib/mobile-sync-monitor.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ function MobileSyncMonitorPage() {
   const loadOverview = useServerFn(getSyncMonitorOverview);
   const loadRuns = useServerFn(listSyncRuns);
   const trigger = useServerFn(runSyncManually);
+  const loadLocks = useServerFn(listActiveSyncLocks);
   const qc = useQueryClient();
   const [selected, setSelected] = useState<SyncEndpoint | undefined>(undefined);
 
@@ -26,19 +27,32 @@ function MobileSyncMonitorPage() {
     queryKey: ["sync-monitor-overview"], queryFn: () => loadOverview(),
     refetchInterval: 30_000,
   });
+  const { data: locks } = useQuery({
+    queryKey: ["sync-monitor-locks"], queryFn: () => loadLocks(),
+    refetchInterval: 5_000,
+  });
   const { data: runs } = useQuery({
     queryKey: ["sync-monitor-runs", selected], queryFn: () => loadRuns({ data: { endpoint: selected, limit: 50 } }),
   });
 
   const runNow = useMutation({
-    mutationFn: (endpoint: SyncEndpoint) => trigger({ data: { endpoint } }),
+    mutationFn: (endpoint: SyncEndpoint) => trigger({ data: { endpoint, idempotency_key: crypto.randomUUID() } }),
     onSuccess: (r, endpoint) => {
-      toast[r.ok ? "success" : "error"](r.ok ? `${endpoint} probed OK (${r.row_count} rows)` : `${endpoint} failed: ${r.error}`);
+      if ((r as { deduped?: boolean }).deduped) {
+        toast.info(`${endpoint} already run for this key`);
+      } else if (r.error === "busy") {
+        toast.warning(`${endpoint} is already running — try again in a moment`);
+      } else {
+        toast[r.ok ? "success" : "error"](r.ok ? `${endpoint} probed OK (${r.row_count} rows)` : `${endpoint} failed: ${r.error}`);
+      }
       qc.invalidateQueries({ queryKey: ["sync-monitor-overview"] });
       qc.invalidateQueries({ queryKey: ["sync-monitor-runs"] });
+      qc.invalidateQueries({ queryKey: ["sync-monitor-locks"] });
     },
     onError: (e) => toast.error((e as Error).message),
   });
+  const [pendingEndpoint, setPendingEndpoint] = useState<SyncEndpoint | null>(null);
+  const lockedEndpoints = new Set(((locks as Array<{ endpoint: string }>) ?? []).map((l) => l.endpoint));
 
   const ov = overview as { endpoints: Array<{ endpoint: string; total: number; success: number; failure: number; error_rate: number; p95_ms: number; last_run_at: string | null; last_error_at: string | null; last_error_message: string | null }>; totals: { total: number; error_rate: number; p95_ms: number } } | undefined;
 
@@ -55,13 +69,18 @@ function MobileSyncMonitorPage() {
               {ENDPOINTS.map((endpoint) => {
                 const row = ov?.endpoints.find((e) => e.endpoint === endpoint);
                 const errRate = row?.error_rate ?? 0;
+                const isLocked = lockedEndpoints.has(endpoint);
+                const isPending = runNow.isPending && pendingEndpoint === endpoint;
                 return (
                   <div key={endpoint} className="rounded border p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="font-medium text-sm">{endpoint}</div>
-                      <Badge variant={errRate > 0.1 ? "destructive" : errRate > 0 ? "secondary" : "default"}>
-                        {(errRate * 100).toFixed(1)}% err
-                      </Badge>
+                      <div className="flex gap-1">
+                        {isLocked && <Badge variant="secondary">Locked</Badge>}
+                        <Badge variant={errRate > 0.1 ? "destructive" : errRate > 0 ? "secondary" : "default"}>
+                          {(errRate * 100).toFixed(1)}% err
+                        </Badge>
+                      </div>
                     </div>
                     <div className="text-xs text-muted-foreground grid grid-cols-2 gap-1">
                       <span>Total: {row?.total ?? 0}</span>
@@ -74,8 +93,11 @@ function MobileSyncMonitorPage() {
                     )}
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => setSelected(endpoint)}>View runs</Button>
-                      <Button size="sm" onClick={() => runNow.mutate(endpoint)} disabled={runNow.isPending}>
-                        Run now
+                      <Button size="sm"
+                        onClick={() => { setPendingEndpoint(endpoint); runNow.mutate(endpoint); }}
+                        disabled={runNow.isPending || isLocked}
+                        title={isLocked ? "A run is already in progress" : undefined}>
+                        {isPending ? "Running…" : isLocked ? "Locked" : "Run now"}
                       </Button>
                     </div>
                   </div>
