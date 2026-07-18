@@ -32,6 +32,8 @@ import {
   TaxRulesSkeleton,
   EarningsSkeleton,
   InsuranceCommandSkeleton,
+  MetricRegistrySkeleton,
+  DashboardBuilderSkeleton,
 } from "@/components/app/skeletons";
 
 // Route → matching page skeleton. Every page-level skeleton mirrors the real
@@ -77,6 +79,8 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/insurance": InsuranceCommandSkeleton,
   "/platform/insurance/audit": InsuranceCommandSkeleton,
   "/platform/insurance/webhooks": InsuranceCommandSkeleton,
+  "/platform/metrics": MetricRegistrySkeleton,
+  "/platform/dashboard-builder": DashboardBuilderSkeleton,
   "/platform/logistics/command-center": AnalyticsSkeleton,
   "/platform/logistics/fleet": AnalyticsSkeleton,
   "/platform/logistics/carriers": AnalyticsSkeleton,

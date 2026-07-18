@@ -3,6 +3,7 @@ import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { useDashboardStats } from "./useDashboardStats";
 import { RecentBatchesCard, RecentAlertsCard, TeamCard, ActuatorsCard, SilosOccupancyCard } from "./DashboardBlocks";
 import { Badge } from "@/components/ui/badge";
+import { CustomWidgetsBand } from "@/components/app/analytics/CustomWidgetsBand";
 
 export function AdminDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
@@ -22,6 +23,7 @@ export function AdminDashboard({ name }: { name?: string }) {
           { key: "sensors", label: "Sensors online", value: s?.sensors.online ?? "—" },
         ]}
       />
+      <CustomWidgetsBand />
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <RecentBatchesCard />
         <RecentAlertsCard />

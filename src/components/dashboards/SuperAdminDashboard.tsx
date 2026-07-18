@@ -7,6 +7,7 @@ import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-n
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from "recharts";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { CustomWidgetsBand } from "@/components/app/analytics/CustomWidgetsBand";
 import { cn } from "@/lib/utils";
 
 function InsightTile({
@@ -68,6 +69,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         <InsightTile to="/revenue" label="MRR" value={`PKR ${mrrValue.toLocaleString()}`} hint="Live" />
         <InsightTile to="/platform/health" label="Critical alerts" value={m?.criticalAlerts ?? 0} />
       </div>
+
+      <CustomWidgetsBand />
 
       {/* Charts — 3 up */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

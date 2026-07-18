@@ -86,6 +86,7 @@ import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
 import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
 import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
 import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
@@ -98,6 +99,7 @@ import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_a
 import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
+import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
 import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
@@ -105,6 +107,7 @@ import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authen
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
+import { Route as ApiPublicHooksAnalyticsRefreshRouteImport } from './routes/api/public/hooks/analytics-refresh'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
@@ -544,6 +547,12 @@ const AuthenticatedPlatformOrdersRoute =
     path: '/platform/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMetricsRoute =
+  AuthenticatedPlatformMetricsRouteImport.update({
+    id: '/platform/metrics',
+    path: '/platform/metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformMessagesRoute =
   AuthenticatedPlatformMessagesRouteImport.update({
     id: '/platform/messages',
@@ -616,6 +625,12 @@ const AuthenticatedPlatformDispatchAnalyticsRoute =
     path: '/platform/dispatch-analytics',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformDashboardBuilderRoute =
+  AuthenticatedPlatformDashboardBuilderRouteImport.update({
+    id: '/platform/dashboard-builder',
+    path: '/platform/dashboard-builder',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformAuditLogsRoute =
   AuthenticatedPlatformAuditLogsRouteImport.update({
     id: '/platform/audit-logs',
@@ -655,6 +670,12 @@ const ApiPublicHooksExpiryRemindersRoute =
   ApiPublicHooksExpiryRemindersRouteImport.update({
     id: '/api/public/hooks/expiry-reminders',
     path: '/api/public/hooks/expiry-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAnalyticsRefreshRoute =
+  ApiPublicHooksAnalyticsRefreshRouteImport.update({
+    id: '/api/public/hooks/analytics-refresh',
+    path: '/api/public/hooks/analytics-refresh',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksAlertsEscalationRoute =
@@ -877,6 +898,7 @@ export interface FileRoutesByFullPath {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
@@ -889,6 +911,7 @@ export interface FileRoutesByFullPath {
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
+  '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -928,6 +951,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -998,6 +1022,7 @@ export interface FileRoutesByTo {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
@@ -1010,6 +1035,7 @@ export interface FileRoutesByTo {
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
+  '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1049,6 +1075,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -1123,6 +1150,7 @@ export interface FileRoutesById {
   '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
   '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
@@ -1135,6 +1163,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
   '/_authenticated/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/_authenticated/platform/messages': typeof AuthenticatedPlatformMessagesRoute
+  '/_authenticated/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1174,6 +1203,7 @@ export interface FileRoutesById {
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -1248,6 +1278,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
     | '/platform/finance'
@@ -1260,6 +1291,7 @@ export interface FileRouteTypes {
     | '/platform/marketplace-health'
     | '/platform/marketplace-settings'
     | '/platform/messages'
+    | '/platform/metrics'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1299,6 +1331,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
@@ -1369,6 +1402,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
     | '/platform/finance'
@@ -1381,6 +1415,7 @@ export interface FileRouteTypes {
     | '/platform/marketplace-health'
     | '/platform/marketplace-settings'
     | '/platform/messages'
+    | '/platform/metrics'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1420,6 +1455,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
@@ -1493,6 +1529,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyer/orders'
     | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
     | '/_authenticated/platform/finance'
@@ -1505,6 +1542,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/marketplace-health'
     | '/_authenticated/platform/marketplace-settings'
     | '/_authenticated/platform/messages'
+    | '/_authenticated/platform/metrics'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
@@ -1544,6 +1582,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
@@ -1583,6 +1622,7 @@ export interface RootRouteChildren {
   ApiPublicCronSlaDigestRoute: typeof ApiPublicCronSlaDigestRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
+  ApiPublicHooksAnalyticsRefreshRoute: typeof ApiPublicHooksAnalyticsRefreshRoute
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
@@ -2131,6 +2171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/metrics': {
+      id: '/_authenticated/platform/metrics'
+      path: '/platform/metrics'
+      fullPath: '/platform/metrics'
+      preLoaderRoute: typeof AuthenticatedPlatformMetricsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/messages': {
       id: '/_authenticated/platform/messages'
       path: '/platform/messages'
@@ -2215,6 +2262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformDispatchAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/dashboard-builder': {
+      id: '/_authenticated/platform/dashboard-builder'
+      path: '/platform/dashboard-builder'
+      fullPath: '/platform/dashboard-builder'
+      preLoaderRoute: typeof AuthenticatedPlatformDashboardBuilderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/audit-logs': {
       id: '/_authenticated/platform/audit-logs'
       path: '/platform/audit-logs'
@@ -2262,6 +2316,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/expiry-reminders'
       fullPath: '/api/public/hooks/expiry-reminders'
       preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/analytics-refresh': {
+      id: '/api/public/hooks/analytics-refresh'
+      path: '/api/public/hooks/analytics-refresh'
+      fullPath: '/api/public/hooks/analytics-refresh'
+      preLoaderRoute: typeof ApiPublicHooksAnalyticsRefreshRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/alerts-escalation': {
@@ -2615,6 +2676,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
   AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
@@ -2627,6 +2689,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
   AuthenticatedPlatformMarketplaceSettingsRoute: typeof AuthenticatedPlatformMarketplaceSettingsRoute
   AuthenticatedPlatformMessagesRoute: typeof AuthenticatedPlatformMessagesRoute
+  AuthenticatedPlatformMetricsRoute: typeof AuthenticatedPlatformMetricsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
@@ -2685,6 +2748,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsuranceClaimsClaimIdRoute:
     AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformDashboardBuilderRoute:
+    AuthenticatedPlatformDashboardBuilderRoute,
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
@@ -2703,6 +2768,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformMarketplaceSettingsRoute:
     AuthenticatedPlatformMarketplaceSettingsRoute,
   AuthenticatedPlatformMessagesRoute: AuthenticatedPlatformMessagesRoute,
+  AuthenticatedPlatformMetricsRoute: AuthenticatedPlatformMetricsRoute,
   AuthenticatedPlatformOrdersRoute:
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
@@ -2807,6 +2873,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronSlaDigestRoute: ApiPublicCronSlaDigestRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
+  ApiPublicHooksAnalyticsRefreshRoute: ApiPublicHooksAnalyticsRefreshRoute,
   ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
