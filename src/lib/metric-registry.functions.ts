@@ -19,6 +19,7 @@ const upsertSchema = z.object({
   label: z.string().min(1).max(120),
   description: z.string().max(500).optional().nullable(),
   sql_template: z.string().min(10).max(4000),
+  csv_template: z.string().max(4000).optional().nullable(),
   unit: z.string().max(16).optional().nullable(),
   format: z.enum(FORMATS).default("number"),
   allowed_roles: z.array(z.enum(ROLES)).min(1),
@@ -56,6 +57,9 @@ export const upsertMetric = createServerFn({ method: "POST" })
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
+    const { data: prev } = data.id
+      ? await sb.from("metric_registry").select("*").eq("id", data.id).maybeSingle()
+      : { data: null };
     const payload = { ...data, created_by: context.userId };
     const { data: row, error } = await sb
       .from("metric_registry")
@@ -63,6 +67,13 @@ export const upsertMetric = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
+    await sb.rpc("record_governance_audit", {
+      _action: prev ? "metric.update" : "metric.create",
+      _target_type: "metric",
+      _target_key: row.key,
+      _before: prev ?? null,
+      _after: row,
+    });
     return { metric: row as Row };
   });
 
@@ -73,8 +84,16 @@ export const toggleMetric = createServerFn({ method: "POST" })
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
+    const { data: prev } = await sb.from("metric_registry").select("key,active").eq("id", data.id).maybeSingle();
     const { error } = await sb.from("metric_registry").update({ active: data.active }).eq("id", data.id);
     if (error) throw error;
+    await sb.rpc("record_governance_audit", {
+      _action: "metric.toggle",
+      _target_type: "metric",
+      _target_key: prev?.key ?? null,
+      _before: prev ?? null,
+      _after: { ...(prev ?? {}), active: data.active },
+    });
     return { ok: true };
   });
 
@@ -85,8 +104,16 @@ export const deleteMetric = createServerFn({ method: "POST" })
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
+    const { data: prev } = await sb.from("metric_registry").select("*").eq("id", data.id).maybeSingle();
     const { error } = await sb.from("metric_registry").delete().eq("id", data.id);
     if (error) throw error;
+    await sb.rpc("record_governance_audit", {
+      _action: "metric.delete",
+      _target_type: "metric",
+      _target_key: prev?.key ?? null,
+      _before: prev ?? null,
+      _after: null,
+    });
     return { ok: true };
   });
 
