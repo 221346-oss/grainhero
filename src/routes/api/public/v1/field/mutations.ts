@@ -62,17 +62,8 @@ export const Route = createFileRoute("/api/public/v1/field/mutations")({
               .update({ expires_at: new Date().toISOString() } as never)
               .eq("user_id", ctx.userId);
 
-            // Notify super-admins on batch failure (rate-limited server-side)
             if (failureCount > 0) {
-              try {
-                const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-                await supabaseAdmin.from("notifications").insert({
-                  admin_id: null, category: "mobile_sync",
-                  title: `Field mutation batch: ${failureCount}/${parsed.mutations.length} failed`,
-                  body: `User ${ctx.userId} — kinds: ${[...new Set(parsed.mutations.map((x) => x.kind))].join(", ")}`,
-                  severity: failureCount === parsed.mutations.length ? "high" : "medium",
-                } as never);
-              } catch { /* telemetry only */ }
+              console.warn(`[field-mutations] user=${ctx.userId} failed=${failureCount}/${parsed.mutations.length}`);
             }
 
             return {
