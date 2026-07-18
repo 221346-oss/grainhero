@@ -156,6 +156,7 @@ import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/pub
 import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
 import { Route as ApiPublicV1NotificationsReadRouteImport } from './routes/api/public/v1/notifications/read'
 import { Route as ApiPublicV1NotificationsPreferencesRouteImport } from './routes/api/public/v1/notifications/preferences'
+import { Route as ApiPublicV1FieldBundleRouteImport } from './routes/api/public/v1/field/bundle'
 import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
 import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
 import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
@@ -993,6 +994,11 @@ const ApiPublicV1NotificationsPreferencesRoute =
     path: '/api/public/v1/notifications/preferences',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1FieldBundleRoute = ApiPublicV1FieldBundleRouteImport.update({
+  id: '/api/public/v1/field/bundle',
+  path: '/api/public/v1/field/bundle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1DevicesRevokeRoute =
   ApiPublicV1DevicesRevokeRouteImport.update({
     id: '/api/public/v1/devices/revoke',
@@ -1200,6 +1206,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
   '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
@@ -1357,6 +1364,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
   '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
@@ -1518,6 +1526,7 @@ export interface FileRoutesById {
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
   '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
@@ -1679,6 +1688,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
     | '/api/public/v1/notifications/preferences'
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
@@ -1836,6 +1846,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
     | '/api/public/v1/notifications/preferences'
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
@@ -1996,6 +2007,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
     | '/api/public/v1/notifications/preferences'
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
@@ -2059,6 +2071,7 @@ export interface RootRouteChildren {
   ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
   ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
   ApiPublicV1DevicesRevokeRoute: typeof ApiPublicV1DevicesRevokeRoute
+  ApiPublicV1FieldBundleRoute: typeof ApiPublicV1FieldBundleRoute
   ApiPublicV1NotificationsPreferencesRoute: typeof ApiPublicV1NotificationsPreferencesRoute
   ApiPublicV1NotificationsReadRoute: typeof ApiPublicV1NotificationsReadRoute
   ApiPublicV1SyncAlertsRoute: typeof ApiPublicV1SyncAlertsRoute
@@ -3109,6 +3122,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1NotificationsPreferencesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/field/bundle': {
+      id: '/api/public/v1/field/bundle'
+      path: '/api/public/v1/field/bundle'
+      fullPath: '/api/public/v1/field/bundle'
+      preLoaderRoute: typeof ApiPublicV1FieldBundleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/devices/revoke': {
       id: '/api/public/v1/devices/revoke'
       path: '/api/public/v1/devices/revoke'
@@ -3592,6 +3612,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
   ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
   ApiPublicV1DevicesRevokeRoute: ApiPublicV1DevicesRevokeRoute,
+  ApiPublicV1FieldBundleRoute: ApiPublicV1FieldBundleRoute,
   ApiPublicV1NotificationsPreferencesRoute:
     ApiPublicV1NotificationsPreferencesRoute,
   ApiPublicV1NotificationsReadRoute: ApiPublicV1NotificationsReadRoute,
