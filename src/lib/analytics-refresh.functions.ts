@@ -22,7 +22,31 @@ export const refreshWarehouse = createServerFn({ method: "POST" })
     const admin = supabaseAdmin as any;
     const { data: result, error } = await admin.schema("analytics").rpc(fn);
     if (error) throw new Error(error.message);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (context.supabase as any).rpc("record_governance_audit", {
+      _action: "refresh.run", _target_type: "refresh", _target_key: data.scope, _before: null, _after: { result },
+    });
     return { scope: data.scope, result };
+  });
+
+export const retryRefreshOne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ fact_name: z.string().min(1).max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, ["super_admin"]);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = supabaseAdmin as any;
+    const scope = data.fact_name.replace(/^fact_/, "").replace(/_daily$/, "");
+    const map: Record<string, string> = { orders: "refresh_orders", shipments: "refresh_shipments", finance: "refresh_finance", insurance: "refresh_insurance", telemetry: "refresh_telemetry" };
+    const fn = map[scope] ?? "refresh_all";
+    const { data: result, error } = await admin.schema("analytics").rpc(fn);
+    if (error) return { ok: false as const, error: error.message };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (context.supabase as any).rpc("record_governance_audit", {
+      _action: "refresh.retry", _target_type: "refresh", _target_key: data.fact_name, _before: null, _after: { result },
+    });
+    return { ok: true as const, result };
   });
 
 export const listRefreshLog = createServerFn({ method: "GET" })

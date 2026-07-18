@@ -256,6 +256,45 @@ export type Database = {
           },
         ]
       }
+      analytics_governance_audit: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          ip: string | null
+          target_key: string | null
+          target_type: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          target_key?: string | null
+          target_type: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          target_key?: string | null
+          target_type?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       analytics_refresh_log: {
         Row: {
           error: string | null
@@ -1724,6 +1763,54 @@ export type Database = {
           type?: string
           updated_at?: string
           webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      dashboard_shares: {
+        Row: {
+          created_at: string
+          date_defaults: Json
+          expires_at: string | null
+          id: string
+          last_viewed_at: string | null
+          owner_user_id: string
+          revoked_at: string | null
+          role_snapshot: string
+          title: string
+          token: string
+          updated_at: string
+          view_count: number
+          widget_ids: string[]
+        }
+        Insert: {
+          created_at?: string
+          date_defaults?: Json
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          owner_user_id: string
+          revoked_at?: string | null
+          role_snapshot: string
+          title?: string
+          token: string
+          updated_at?: string
+          view_count?: number
+          widget_ids?: string[]
+        }
+        Update: {
+          created_at?: string
+          date_defaults?: Json
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          owner_user_id?: string
+          revoked_at?: string | null
+          role_snapshot?: string
+          title?: string
+          token?: string
+          updated_at?: string
+          view_count?: number
+          widget_ids?: string[]
         }
         Relationships: []
       }
@@ -3510,9 +3597,13 @@ export type Database = {
           external_id: string | null
           headers: Json | null
           id: string
+          last_replay_at: string | null
+          next_replay_allowed_at: string | null
           policy_id: string | null
           processed_at: string | null
           raw: Json
+          replay_count: number
+          replay_history: Json
           status: string
         }
         Insert: {
@@ -3525,9 +3616,13 @@ export type Database = {
           external_id?: string | null
           headers?: Json | null
           id?: string
+          last_replay_at?: string | null
+          next_replay_allowed_at?: string | null
           policy_id?: string | null
           processed_at?: string | null
           raw: Json
+          replay_count?: number
+          replay_history?: Json
           status?: string
         }
         Update: {
@@ -3540,9 +3635,13 @@ export type Database = {
           external_id?: string | null
           headers?: Json | null
           id?: string
+          last_replay_at?: string | null
+          next_replay_allowed_at?: string | null
           policy_id?: string | null
           processed_at?: string | null
           raw?: Json
+          replay_count?: number
+          replay_history?: Json
           status?: string
         }
         Relationships: [
@@ -3675,6 +3774,39 @@ export type Database = {
           },
         ]
       }
+      metric_export_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          filters: Json
+          id: string
+          metric_key: string
+          requested_by: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          filters?: Json
+          id?: string
+          metric_key: string
+          requested_by: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          filters?: Json
+          id?: string
+          metric_key?: string
+          requested_by?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       metric_registry: {
         Row: {
           active: boolean
@@ -3682,6 +3814,7 @@ export type Database = {
           chart_hint: string
           created_at: string
           created_by: string | null
+          csv_template: string | null
           default_filters: Json
           description: string | null
           format: string | null
@@ -3698,6 +3831,7 @@ export type Database = {
           chart_hint?: string
           created_at?: string
           created_by?: string | null
+          csv_template?: string | null
           default_filters?: Json
           description?: string | null
           format?: string | null
@@ -3714,6 +3848,7 @@ export type Database = {
           chart_hint?: string
           created_at?: string
           created_by?: string | null
+          csv_template?: string | null
           default_filters?: Json
           description?: string | null
           format?: string | null
@@ -5723,6 +5858,17 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      record_governance_audit: {
+        Args: {
+          _action: string
+          _after: Json
+          _before: Json
+          _target_key: string
+          _target_type: string
+        }
+        Returns: string
+      }
+      resolve_dashboard_share: { Args: { _token: string }; Returns: Json }
       run_metric: { Args: { _filters?: Json; _key: string }; Returns: Json }
     }
     Enums: {
