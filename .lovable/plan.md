@@ -1,92 +1,71 @@
-# Phase 20 — Analytics Warehouse, Metric Registry & Executive Dashboards
+# Phase 21 — Analytics Warehouse Activation
 
-## Why
-By Phase 19 the platform generates rich cross-domain data (orders, shipments, telemetry, finance, insurance). Live OLTP joins on `sensor_readings`, `buyer_orders`, `finance_ledger_entries`, and `insurance_*` are already slow, and every dashboard reinvents its own SQL. We need a lightweight warehouse layer, a **super-admin-editable metric registry** (zero hardcoded KPIs), and role-scoped dashboards for super-admin, admin, and buyer.
+Phase 20 landed the `analytics` schema, fact tables, `metric_registry`, `dashboard_widgets`, and the `public.run_metric` RPC. Phase 21 turns that plumbing into a working product: super-admins can register KPIs, refresh the warehouse, and every role gets a drag-configurable dashboard driven by the registry. Zero hardcoded KPIs — everything editable from the platform.
 
 ## Goals
-- Precomputed **fact tables** in a separate `analytics` schema, refreshed by `pg_cron`.
-- **Metric registry** — super-admin can add/edit KPIs (label, SQL template, unit, format, allowed roles) without code changes.
-- **Dashboard builder** — save widget layouts per role; users can also pin custom variants.
-- Executive, tenant, and buyer dashboards driven entirely by `runMetric({ key, filters })`.
-- **CSV + PDF export** for any chart and scheduled **weekly digest emails** through the existing dispatcher.
-- Strict role scoping: super_admin sees platform; admin sees only their tenant; buyer sees only their orders.
 
-## Data Model (new `analytics` schema)
-Facts (refreshed by cron):
-- `analytics.fact_orders` — order_id, buyer_id, seller_admin_id, gross_cents, net_cents, cost_cents, status, placed_at, delivered_at, delay_hours
-- `analytics.fact_shipments` — shipment_id, carrier_id, sla_target_hours, actual_hours, on_time, exception_type
-- `analytics.fact_telemetry_daily` — silo_id, day, avg_temp, avg_humidity, alert_count, spoilage_risk_score
-- `analytics.fact_finance_daily` — day, gross_cents, cost_cents, refunds_cents, payouts_cents, net_cents, currency
-- `analytics.fact_insurance` — policy_id, claim_id, premium_cents, payout_cents, decision_hours, status
+1. **Warehouse refresh automation** — the fact tables are populated on a schedule and on demand, with health surfaced to super-admins.
+2. **Metric Registry management UI** — super-admins can create, edit, test, and role-scope KPIs without a migration.
+3. **Dashboard Builder** — each role (super_admin, admin, manager, technician, buyer) gets a saved widget layout driven by the registry, with a builder for super-admins.
+4. **Role dashboards consume the registry** — existing dashboards can render a "custom widgets" band pulled from `dashboard_widgets` alongside their curated content.
+5. **Seed the registry** with a starter pack (revenue, active tenants, overdue shipments, claim loss ratio, silo fill %, technician SLA) so every role sees value on day one.
 
-Dimensions:
-- `analytics.dim_tenant`, `analytics.dim_carrier`, `analytics.dim_plan`, `analytics.dim_calendar`
+## Deliverables
 
-Governance tables (in `public`, super-admin-managed):
-- `public.metric_registry` — key, label, sql_template, unit, format, allowed_roles[], default_filters jsonb, active
-- `public.dashboard_widgets` — dashboard_key, owner (null=default), position, metric_key, chart_type, filters jsonb, role_scope
-- `public.analytics_refresh_log` — fact_name, started_at, finished_at, rows_upserted, error
+### 1. Warehouse refresh service
+- `src/lib/analytics-refresh.functions.ts` — server fns:
+  - `refreshWarehouse({ scope: 'all' | 'orders' | 'shipments' | 'telemetry' | 'finance' | 'insurance' })` — super-admin only, wraps existing refresh helpers, writes to `analytics_refresh_log`.
+  - `listRefreshLog({ limit })` — recent runs with status/duration/rows.
+  - `getWarehouseHealth()` — last successful run per fact + staleness in minutes.
+- `src/routes/api/public/hooks/analytics-refresh.ts` — POST endpoint verifying `apikey` header, calls the same helpers. Body `{}`.
+- pg_cron job (insert tool): `analytics-warehouse-refresh` every 15 min → hits the hook.
 
-Storage bucket: `analytics-exports` (private, signed URLs).
+### 2. Metric Registry UI (super-admin)
+- `src/lib/metric-registry.functions.ts` — CRUD (`listMetrics`, `upsertMetric`, `toggleMetric`, `deleteMetric`, `runMetricPreview`).
+  - `runMetricPreview` calls `public.run_metric` with sample filters and returns the JSON payload plus timing.
+  - `upsertMetric` validates: key format (`snake_case`), non-empty `sql_template`, `allowed_roles` subset of app_role, `default_filters` JSON, `visualization` in an enum.
+- `src/routes/_authenticated/platform.metrics.tsx` — table (`AdminDataCard`) of registered metrics with filters (category, active). Detail sheet for editing SQL, roles, defaults, visualization type (`tile | line | bar | pie | table`), refresh interval. "Run preview" panel shows JSON + rendered viz.
+- Sidebar entry under Platform → "Metric Registry".
 
-## Server Layer
-- `src/lib/analytics-metrics.functions.ts`
-  - `listMetrics()` — returns registry entries the caller can access
-  - `runMetric({ key, filters })` — resolves entry from registry, calls a `SECURITY DEFINER` RPC `run_metric(key, params, role, tenant_id)` that whitelists SQL, binds params, and enforces role scope
-  - `upsertMetric` / `deleteMetric` (super-admin)
-- `src/lib/analytics-dashboards.functions.ts`
-  - `getDashboard({ key })` — merges default widgets + user overrides
-  - `saveDashboardLayout({ key, widgets })`
-- `src/lib/analytics-export.functions.ts`
-  - `exportMetricCsv({ key, filters })` — returns `{ csv, filename }`
-  - `exportDashboardPdf({ key, filters })` — reuses `pdf-lib` helper, stores in `analytics-exports` bucket, returns signed URL
-- `src/routes/api/public/cron/analytics-refresh.ts` — POST, called by `pg_cron` hourly (fast marts) and nightly (`fact_telemetry_daily`). Auth via `apikey` header, calls SECURITY DEFINER refresh functions.
-- `src/routes/api/public/cron/analytics-weekly-digest.ts` — Monday 08:00 UTC, sends per-recipient digest via `dispatchNotification`.
+### 3. Dashboard Builder
+- Extend `dashboard_widgets` usage: `owner_scope` (`role:<role>` or `user:<uuid>`), `metric_key`, `title`, `layout` (`{x,y,w,h}`), `filters`, `visualization_override`.
+- `src/lib/dashboard-builder.functions.ts`:
+  - `listWidgetsForRole(role)` / `listMyWidgets()` — returns widgets visible to caller.
+  - `saveWidget(input)` / `deleteWidget(id)` / `reorderWidgets(items)`.
+  - Super-admin can save role-scoped widgets; other roles can save personal widgets only.
+- `src/routes/_authenticated/platform.dashboard-builder.tsx` — grid preview + add/remove widgets + role picker.
+- Reusable renderer `src/components/app/analytics/MetricWidget.tsx`:
+  - Fetches `run_metric(key, filters)`.
+  - Renders based on `visualization` (`tile`, `line`, `bar`, `pie`, `table`) using existing Recharts wrappers.
+  - Handles loading skeleton + error state consistent with theme (emerald/slate).
 
-## Safety & Grants
-- `analytics` schema: `GRANT USAGE TO authenticated`. No direct table SELECT.
-- `run_metric()` is `SECURITY DEFINER`, `SET search_path = analytics, public`, has `statement_timeout '5s'`, and:
-  - Verifies caller's role via `get_my_role(auth.uid())`.
-  - Rejects any metric whose `allowed_roles` doesn't include that role.
-  - Injects `tenant_admin_id = get_tenant_admin_id(auth.uid())` for role `admin`, `buyer_id = auth.uid()` for buyer.
-- All exports go through the same server fn — no raw SQL crosses the client boundary.
+### 4. Role dashboard integration
+- New shared component `src/components/app/analytics/CustomWidgetsBand.tsx` — loads `listWidgetsForRole(currentRole)` and renders responsive grid of `MetricWidget`s. Hidden if no widgets configured.
+- Mount in: `SuperAdminDashboard`, `AdminDashboard`, `ManagerDashboard`, `TechnicianDashboard`, and buyer dashboard route. Placed under KPI band, above activity feed. No changes to existing curated content.
 
-## UI
-Shared components (all take `{ metricKey, filters }`):
-- `MetricKpiCard`, `MetricLineChart`, `MetricBarChart`, `MetricDonut`, `MetricTable`
+### 5. Registry starter pack (migration)
+Seeds `metric_registry` with:
+- `platform_mrr` (super_admin) — tile, `SELECT sum(monthly_price) FROM subscriptions WHERE status='active'`.
+- `platform_active_tenants` (super_admin) — tile.
+- `orders_overdue_shipments` (super_admin, admin) — tile from `analytics.fact_shipments`.
+- `insurance_loss_ratio_12m` (super_admin) — line from `analytics.fact_insurance`.
+- `silo_fill_pct` (admin, manager) — bar per silo from `analytics.fact_telemetry_daily`.
+- `technician_sla_7d` (super_admin, admin) — tile from install SLA cohort.
+- `buyer_orders_in_flight` (buyer) — tile from `buyer_orders` scoped by `caller_user_id`.
 
-Routes:
-- **Super-admin**
-  - `/platform/analytics` — executive dashboard (KPI strip, revenue vs cost, SLA trend, insurance loss ratio, tenant leaderboard)
-  - `/platform/analytics/metrics` — metric registry CRUD with SQL preview + dry-run
-  - `/platform/analytics/dashboards` — drag-drop widget composer (defaults per role)
-- **Admin (tenant)**
-  - `/analytics` — sales funnel, spoilage %, plan utilisation, top listings, alerts trend
-- **Buyer**
-  - `/marketplace/insights` — spend, favourite sellers, on-time delivery rate
+Also seeds one default widget per role pointing at its most relevant metric so every dashboard shows something the moment Phase 21 ships.
 
-Skeletons: `AnalyticsCommandSkeleton`, `MetricRegistrySkeleton`, `DashboardComposerSkeleton`, `BuyerInsightsSkeleton` — wired into `PAGE_SKELETONS`.
+## Technical Notes
 
-## Cron & Digests
-- Hourly: refresh `fact_orders`, `fact_shipments`, `fact_finance_daily`, `fact_insurance`
-- Nightly (02:00 UTC): refresh `fact_telemetry_daily`
-- Weekly (Mon 08:00 UTC): digest email — top KPIs per recipient's role/tenant, honours `notification_channel_prefs`, logs to `platform_email_digest_log`
+- All new server fns use `requireSupabaseAuth`; privileged ones re-check `has_role(_, 'super_admin')`.
+- `run_metric` already enforces role + statement timeout — the UI just surfaces its errors.
+- Widget `filters` merge into `run_metric`'s filter jsonb; `caller_role`, `caller_user_id`, `caller_tenant_id` are always injected server-side, so role-scoped metrics stay tenant-safe.
+- Refresh helpers are idempotent (upserts keyed on natural business keys); the cron can run every 15 min without duplicates.
+- Reuse `AdminPageShell`, `AdminDataCard`, `AdminFilterBar`, `PageHeader`, and existing Recharts wrappers — no new theme tokens.
+- Skeletons: register `MetricRegistrySkeleton` and `DashboardBuilderSkeleton` in `src/router.tsx`.
 
-## Acceptance
-- Cron populates fact tables from real OLTP data; refresh log visible in super-admin UI.
-- Super-admin adds "avg claim decision hours" through the registry UI and it renders on a dashboard with zero code changes.
-- Admin only sees their tenant's rows; buyer only their own — verified with two accounts.
-- Any chart exports to CSV and PDF; weekly digest arrives with the recipient's opted-in KPIs.
-- `run_metric` rejects a metric the caller's role is not in `allowed_roles`, and every query respects the 5s statement timeout.
+## Out of scope (deferred to later phases)
 
-## Delivery Slices
-1. Migration: `analytics` schema + fact/dim tables + registry + widgets + refresh log + grants + `run_metric` RPC.
-2. Refresh cron route + SQL functions + `analytics-refresh` cron schedule.
-3. `analytics-metrics.functions.ts` + shared metric components.
-4. Super-admin routes (`/platform/analytics`, `/metrics`, `/dashboards`) with seeded default metrics (GMV, cost, profit, SLA, loss ratio, MRR, spoilage %).
-5. Tenant + buyer dashboards using the same shared components.
-6. Export server fns + `analytics-exports` bucket + PDF template.
-7. Weekly digest cron + email template.
-8. Sidebar wiring + skeletons + docs update.
-
-Reply **go** to start with slice 1 (migration + `run_metric` RPC).
+- Export widgets to PDF/PNG — Phase 22 (Reporting Studio).
+- Anomaly detection / alerting on metrics — Phase 22.
+- Cross-tenant benchmarking — Phase 24 (Enterprise Polish).
