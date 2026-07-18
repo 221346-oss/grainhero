@@ -10,6 +10,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmailViaResend } from "@/lib/resend.server";
+import { loadUserDevices, markDeviceError, markDeviceRevoked, markDeviceSuccess, sendPush } from "@/lib/push-dispatch.server";
 
 type Channel = "email" | "sms" | "push";
 type Severity = "info" | "success" | "warning" | "critical";
@@ -173,9 +174,6 @@ export async function dispatchNotification(
   const shouldEmail =
     (forceEmail(category, severity) || channelAllowed("email", category, prefs)) && !!profile?.email;
   const shouldSms = channelAllowed("sms", category, prefs) && !!profile?.phone_e164;
-  // Push not wired yet — record as skipped so the audit trail is complete.
-  const shouldPush = false;
-
   const appOrigin = process.env.APP_ORIGIN ?? "https://grainheroo.lovable.app";
 
   // Email
@@ -243,16 +241,49 @@ export async function dispatchNotification(
     });
   }
 
-  // Push (deferred)
-  if (shouldPush) {
-    // no-op until push subscriptions table exists
+  const pushAllowed = channelAllowed("push", category, prefs);
+  if (pushAllowed) {
+    const devices = await loadUserDevices(supabaseAdmin, n.user_id);
+    if (devices.length === 0) {
+      await recordDelivery(supabaseAdmin, {
+        notificationId, channel: "push", provider: "fcm",
+        status: "skipped", error: "no-devices",
+      });
+    } else {
+      const highPri = severity === "critical" || category === "security" || category === "billing";
+      let anySent = false;
+      let lastError: string | null = null;
+      let lastMessageId: string | null = null;
+      for (const dev of devices) {
+        const res = await sendPush(dev.push_token, {
+          title: n.title ?? "GrainHero",
+          body: n.message ?? "",
+          data: { notification_id: n.id, category: category ?? "", action_url: n.action_url ?? "" },
+          highPriority: highPri,
+        });
+        if ("skipped" in res) {
+          lastError = res.reason;
+        } else if (res.ok) {
+          anySent = true; lastMessageId = res.messageId;
+          await markDeviceSuccess(supabaseAdmin, dev.id);
+        } else {
+          lastError = res.error;
+          if (res.unregistered) await markDeviceRevoked(supabaseAdmin, dev.id, res.error);
+          else await markDeviceError(supabaseAdmin, dev.id, res.error);
+        }
+      }
+      await recordDelivery(supabaseAdmin, {
+        notificationId, channel: "push", provider: "fcm",
+        status: anySent ? "sent" : (lastError === "not-configured" ? "skipped" : "failed"),
+        providerMessageId: lastMessageId,
+        error: anySent ? null : lastError,
+        attempts: devices.length,
+      });
+    }
   } else {
     await recordDelivery(supabaseAdmin, {
-      notificationId,
-      channel: "push",
-      provider: "web-push",
-      status: "skipped",
-      error: "not-configured",
+      notificationId, channel: "push", provider: "fcm",
+      status: "skipped", error: "opt-out",
     });
   }
 }
