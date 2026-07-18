@@ -149,6 +149,7 @@ import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/publi
 import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
 import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
 import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
+import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
 import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
 import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
 import { Route as ApiPublicV1ActionsAckAlertRouteImport } from './routes/api/public/v1/actions/ack-alert'
@@ -937,6 +938,12 @@ const ApiPublicV1DeeplinkKeyRoute = ApiPublicV1DeeplinkKeyRouteImport.update({
   path: '/api/public/v1/deeplink/$key',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1ActionsReplayRoute =
+  ApiPublicV1ActionsReplayRouteImport.update({
+    id: '/api/public/v1/actions/replay',
+    path: '/api/public/v1/actions/replay',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ActionsInstallStepRoute =
   ApiPublicV1ActionsInstallStepRouteImport.update({
     id: '/api/public/v1/actions/install-step',
@@ -1096,6 +1103,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1240,6 +1248,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1388,6 +1397,7 @@ export interface FileRoutesById {
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1536,6 +1546,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/ack-alert'
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/actions/replay'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -1680,6 +1691,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/ack-alert'
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/actions/replay'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -1827,6 +1839,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/ack-alert'
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/actions/replay'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -1884,6 +1897,7 @@ export interface RootRouteChildren {
   ApiPublicV1ActionsAckAlertRoute: typeof ApiPublicV1ActionsAckAlertRoute
   ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
   ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
+  ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
   ApiPublicV1DeeplinkKeyRoute: typeof ApiPublicV1DeeplinkKeyRoute
   ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
   ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
@@ -2885,6 +2899,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1DeeplinkKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/actions/replay': {
+      id: '/api/public/v1/actions/replay'
+      path: '/api/public/v1/actions/replay'
+      fullPath: '/api/public/v1/actions/replay'
+      preLoaderRoute: typeof ApiPublicV1ActionsReplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/actions/install-step': {
       id: '/api/public/v1/actions/install-step'
       path: '/api/public/v1/actions/install-step'
@@ -3299,6 +3320,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ActionsConfirmDeliveryRoute:
     ApiPublicV1ActionsConfirmDeliveryRoute,
   ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
+  ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
   ApiPublicV1DeeplinkKeyRoute: ApiPublicV1DeeplinkKeyRoute,
   ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
   ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
