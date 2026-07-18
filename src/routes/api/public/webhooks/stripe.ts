@@ -498,19 +498,41 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 await supabaseAdmin.from("buyer_payment_intents")
                   .update({ status: pi.status, raw: pi as never, updated_at: new Date().toISOString() } as never)
                   .eq("stripe_pi_id", pi.id);
-                if (pi.status === "succeeded") {
-                  const { data: order } = await supabaseAdmin.from("buyer_orders")
-                    .select("id, admin_id, status").eq("id", orderId).maybeSingle();
-                  if (order && (order as { status?: string }).status !== "paid") {
+                const { data: order } = await supabaseAdmin.from("buyer_orders")
+                  .select("id, admin_id, buyer_id, status, order_number").eq("id", orderId).maybeSingle();
+                const o = order as { id: string; admin_id: string; buyer_id: string; status: string; order_number: string } | null;
+                if (o) {
+                  if (pi.status === "succeeded" && o.status !== "paid") {
                     await supabaseAdmin.from("buyer_orders")
                       .update({ status: "paid", paid_at: new Date().toISOString() } as never)
                       .eq("id", orderId);
                     await supabaseAdmin.from("buyer_order_events").insert({
-                      order_id: orderId,
-                      admin_id: (order as { admin_id?: string }).admin_id,
-                      from_state: (order as { status?: string }).status ?? null,
-                      to_state: "paid",
+                      order_id: orderId, admin_id: o.admin_id,
+                      from_state: o.status ?? null, to_state: "paid",
                       note: "Mobile PaymentIntent succeeded",
+                    } as never);
+                    await supabaseAdmin.from("notifications").insert({
+                      admin_id: o.admin_id, user_id: o.buyer_id,
+                      title: "Payment received",
+                      message: `Order ${o.order_number} is paid.`,
+                      type: "success", category: "commerce",
+                      entity_type: "buyer_order", entity_id: orderId,
+                      action_url: `/orders/${orderId}`,
+                    } as never);
+                  } else if (pi.status === "requires_payment_method" || event.type === "payment_intent.payment_failed") {
+                    await supabaseAdmin.from("buyer_order_events").insert({
+                      order_id: orderId, admin_id: o.admin_id,
+                      from_state: o.status, to_state: o.status,
+                      note: "Mobile PaymentIntent failed",
+                      meta: { pi_status: pi.status } as never,
+                    } as never);
+                    await supabaseAdmin.from("notifications").insert({
+                      admin_id: o.admin_id, user_id: o.buyer_id,
+                      title: "Payment failed",
+                      message: `Payment for order ${o.order_number} did not go through.`,
+                      type: "error", category: "commerce",
+                      entity_type: "buyer_order", entity_id: orderId,
+                      action_url: `/orders/${orderId}`,
                     } as never);
                   }
                 }

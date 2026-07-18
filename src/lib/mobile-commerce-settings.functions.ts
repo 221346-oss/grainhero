@@ -13,6 +13,8 @@ const schema = z.object({
   terms_url: z.string().url().nullish(),
   refund_policy_url: z.string().url().nullish(),
   stripe_publishable_key_override: z.string().max(200).nullish(),
+  cod_max_cents: z.number().int().nonnegative().default(0),
+  quote_ttl_seconds: z.number().int().min(30).max(3600).default(300),
 });
 
 export const getCommerceSettings = createServerFn({ method: "GET" })

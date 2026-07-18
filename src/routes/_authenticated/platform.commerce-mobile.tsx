@@ -21,6 +21,8 @@ type S = {
   terms_url: string | null;
   refund_policy_url: string | null;
   stripe_publishable_key_override: string | null;
+  cod_max_cents: number;
+  quote_ttl_seconds: number;
 };
 const DEFAULTS: S = {
   checkout_enabled: false,
@@ -30,6 +32,8 @@ const DEFAULTS: S = {
   platform_fee_bps: 250,
   currency_default: "usd",
   terms_url: null, refund_policy_url: null, stripe_publishable_key_override: null,
+  cod_max_cents: 0,
+  quote_ttl_seconds: 300,
 };
 
 export const Route = createFileRoute("/_authenticated/platform/commerce-mobile")({
@@ -55,6 +59,8 @@ function CommerceMobilePage() {
         terms_url: (d.terms_url as string | null) ?? null,
         refund_policy_url: (d.refund_policy_url as string | null) ?? null,
         stripe_publishable_key_override: (d.stripe_publishable_key_override as string | null) ?? null,
+        cod_max_cents: (d.cod_max_cents as number) ?? DEFAULTS.cod_max_cents,
+        quote_ttl_seconds: (d.quote_ttl_seconds as number) ?? DEFAULTS.quote_ttl_seconds,
       });
     }
   }, [data]);
@@ -93,6 +99,17 @@ function CommerceMobilePage() {
             <F label="Min order (cents)"><Input type="number" value={s.min_order_cents} onChange={(e) => patch({ min_order_cents: Number(e.target.value) })} /></F>
             <F label="Max order (cents)"><Input type="number" value={s.max_order_cents} onChange={(e) => patch({ max_order_cents: Number(e.target.value) })} /></F>
             <F label="Platform fee (bps)"><Input type="number" value={s.platform_fee_bps} onChange={(e) => patch({ platform_fee_bps: Number(e.target.value) })} /></F>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Checkout behaviour</CardTitle></CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-2">
+            <F label="Cash-on-delivery max (cents, 0 = disabled)">
+              <Input type="number" value={s.cod_max_cents} onChange={(e) => patch({ cod_max_cents: Number(e.target.value) })} />
+            </F>
+            <F label="Quote TTL (seconds)">
+              <Input type="number" value={s.quote_ttl_seconds} onChange={(e) => patch({ quote_ttl_seconds: Number(e.target.value) })} />
+            </F>
           </CardContent>
         </Card>
         <Card className="xl:col-span-2">
