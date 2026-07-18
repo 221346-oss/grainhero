@@ -7,6 +7,7 @@ import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-n
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from "recharts";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { CustomWidgetsBand } from "@/components/app/analytics/CustomWidgetsBand";
 import { cn } from "@/lib/utils";
 
 function InsightTile({
