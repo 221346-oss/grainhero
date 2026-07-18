@@ -101,6 +101,33 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
     const deliveredCurrent = current.filter((r) => r.status === "delivered").length;
     const deliveredPrev = previous.filter((r) => r.status === "delivered").length;
 
+    // Daily trend buckets for both windows so the UI can render
+    // "delivery rate this window vs baseline".
+    function bucketize(list: Row[]) {
+      const map = new Map<string, { day: string; dispatched: number; delivered: number; overdue: number }>();
+      for (const s of list) {
+        if (!s.dispatched_at) continue;
+        const day = new Date(s.dispatched_at).toISOString().slice(0, 10);
+        const b = map.get(day) ?? { day, dispatched: 0, delivered: 0, overdue: 0 };
+        b.dispatched++;
+        if (s.status === "delivered") b.delivered++;
+        else if (s.status !== "cancelled") {
+          const disp = new Date(s.dispatched_at).getTime();
+          const exp = s.expected_delivery_at ? new Date(s.expected_delivery_at).getTime() : null;
+          const lim = exp ?? (disp + overdueMs);
+          if (nowMs > lim) b.overdue++;
+        }
+        map.set(day, b);
+      }
+      return Array.from(map.values()).sort((a, b) => a.day.localeCompare(b.day));
+    }
+    const trendCurrent = bucketize(current).map((b) => ({ ...b, rate: b.dispatched ? b.delivered / b.dispatched : 0 }));
+    const trendPrevious = bucketize(previous).map((b) => ({ ...b, rate: b.dispatched ? b.delivered / b.dispatched : 0 }));
+    // Historical baseline = mean daily delivery rate across the previous window.
+    const baselineRate = trendPrevious.length
+      ? trendPrevious.reduce((s, b) => s + b.rate, 0) / trendPrevious.length
+      : 0;
+
     return {
       window: { days: data.days },
       totals: {
@@ -108,9 +135,61 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
         current: totalCurrent, previous: totalPrev,
         currentRate: totalCurrent ? deliveredCurrent / totalCurrent : 0,
         previousRate: totalPrev ? deliveredPrev / totalPrev : 0,
+        baselineRate,
       },
       overdue: overdue.slice(0, 100),
       sellerDrops: sellerDrops.filter((s) => s.delta < 0 || s.overdue > 0).slice(0, 25),
       slaHours: settings.dispatch.slaHours,
+      trend: { current: trendCurrent, previous: trendPrevious },
+      config: {
+        alertCooldownMinutes: settings.dispatch.alertCooldownMinutes,
+        deliveryRateAlertDropPct: settings.dispatch.deliveryRateAlertDropPct,
+        overdueGraceMinutes: settings.dispatch.overdueGraceMinutes,
+      },
     };
+  });
+
+/**
+ * Drill-down: shipments dispatched on a specific date (YYYY-MM-DD)
+ * filtered by status bucket (overdue / delivered / all).
+ */
+export const getSlaDrilldown = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) =>
+    z.object({
+      day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      bucket: z.enum(["all", "overdue", "delivered", "in_flight"]).default("all"),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuper(context.supabase, context.userId);
+    const settings = await loadMarketplaceSettings(context.supabase);
+    const overdueMs = settings.dispatch.slaHours.delivered * 3600_000;
+    const startIso = new Date(`${data.day}T00:00:00Z`).toISOString();
+    const endIso = new Date(`${data.day}T23:59:59Z`).toISOString();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { data: rows } = await sb
+      .from("buyer_shipments")
+      .select("id, order_id, admin_id, status, courier_key, courier_label, tracking_number, tracking_url, dispatched_at, expected_delivery_at, delivered_at, buyer_orders(order_number, buyers(name, company_name))")
+      .gte("dispatched_at", startIso)
+      .lte("dispatched_at", endIso)
+      .order("dispatched_at", { ascending: true });
+    const list = (rows ?? []) as Row[];
+    const nowMs = Date.now();
+    const enriched = list.map((s) => {
+      const disp = s.dispatched_at ? new Date(s.dispatched_at).getTime() : null;
+      const exp = s.expected_delivery_at ? new Date(s.expected_delivery_at).getTime() : null;
+      const limit = exp ?? (disp ? disp + overdueMs : nowMs);
+      const overdueHours = s.status !== "delivered" && s.status !== "cancelled"
+        ? Math.max(0, (nowMs - limit) / 3600_000) : 0;
+      return { ...s, overdueHours };
+    });
+    const filtered = (enriched as Row[]).filter((s) => {
+      if (data.bucket === "delivered") return s.status === "delivered";
+      if (data.bucket === "overdue") return (s.overdueHours as number) > 0;
+      if (data.bucket === "in_flight") return s.status !== "delivered" && s.status !== "cancelled";
+      return true;
+    });
+    return { shipments: filtered };
   });

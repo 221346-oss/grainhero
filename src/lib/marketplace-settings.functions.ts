@@ -26,6 +26,9 @@ export interface MarketplaceSettings {
     couriers: Array<{ key: string; label: string; trackingUrlTemplate: string }>;
     slaHours: { inTransit: number; outForDelivery: number; delivered: number };
     eventPresets: Array<{ code: string; label: string; setStatus?: string }>;
+    alertCooldownMinutes: number;
+    deliveryRateAlertDropPct: number;
+    overdueGraceMinutes: number;
   };
   reviews: {
     enabled: boolean;
@@ -184,6 +187,9 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       { code: "delivered", label: "Delivered", setStatus: "delivered" },
       { code: "exception", label: "Exception", setStatus: "exception" },
     ],
+    alertCooldownMinutes: 60,
+    deliveryRateAlertDropPct: 5,
+    overdueGraceMinutes: 30,
   },
   reviews: {
     enabled: true,
@@ -405,6 +411,9 @@ const SCHEMA = z.object({
       label: z.string().min(1),
       setStatus: z.string().optional(),
     })).max(20).optional().default([]),
+    alertCooldownMinutes: z.number().int().min(0).max(1440).optional().default(60),
+    deliveryRateAlertDropPct: z.number().min(0).max(100).optional().default(5),
+    overdueGraceMinutes: z.number().int().min(0).max(2000).optional().default(30),
   }),
   reviews: z.object({
     enabled: z.boolean(),
