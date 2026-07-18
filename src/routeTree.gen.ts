@@ -123,6 +123,7 @@ import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './rout
 import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
 import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
+import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
 
@@ -758,6 +759,12 @@ const AuthenticatedBuyerOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedBuyerOrdersRoute,
   } as any)
+const ApiPublicWebhooksInsuranceCarrierCodeRoute =
+  ApiPublicWebhooksInsuranceCarrierCodeRouteImport.update({
+    id: '/api/public/webhooks/insurance/$carrierCode',
+    path: '/api/public/webhooks/insurance/$carrierCode',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksCarrierCarrierCodeRoute =
   ApiPublicWebhooksCarrierCarrierCodeRouteImport.update({
     id: '/api/public/webhooks/carrier/$carrierCode',
@@ -887,6 +894,7 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1002,6 +1010,7 @@ export interface FileRoutesByTo {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1121,6 +1130,7 @@ export interface FileRoutesById {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1240,6 +1250,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
+    | '/api/public/webhooks/insurance/$carrierCode'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1355,6 +1366,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
+    | '/api/public/webhooks/insurance/$carrierCode'
   id:
     | '__root__'
     | '/'
@@ -1473,6 +1485,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/_authenticated/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
+    | '/api/public/webhooks/insurance/$carrierCode'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1509,6 +1522,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
   ApiPublicWebhooksCarrierCarrierCodeRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  ApiPublicWebhooksInsuranceCarrierCodeRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2311,6 +2325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedBuyerOrdersRoute
     }
+    '/api/public/webhooks/insurance/$carrierCode': {
+      id: '/api/public/webhooks/insurance/$carrierCode'
+      path: '/api/public/webhooks/insurance/$carrierCode'
+      fullPath: '/api/public/webhooks/insurance/$carrierCode'
+      preLoaderRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/carrier/$carrierCode': {
       id: '/api/public/webhooks/carrier/$carrierCode'
       path: '/api/public/webhooks/carrier/$carrierCode'
@@ -2664,6 +2685,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
   ApiPublicWebhooksCarrierCarrierCodeRoute:
     ApiPublicWebhooksCarrierCarrierCodeRoute,
+  ApiPublicWebhooksInsuranceCarrierCodeRoute:
+    ApiPublicWebhooksInsuranceCarrierCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
