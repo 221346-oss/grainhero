@@ -87,6 +87,8 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/field-settings": AnalyticsSkeleton,
   "/platform/field-incidents": AnalyticsSkeleton,
   "/platform/marketplace-mobile": AnalyticsSkeleton,
+  "/platform/mobile-sync-monitor": AnalyticsSkeleton,
+  "/platform/commerce-mobile": AnalyticsSkeleton,
   "/platform/logistics/command-center": AnalyticsSkeleton,
   "/platform/logistics/fleet": AnalyticsSkeleton,
   "/platform/logistics/carriers": AnalyticsSkeleton,
