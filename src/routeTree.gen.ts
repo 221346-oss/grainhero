@@ -163,6 +163,7 @@ import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/pub
 import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
 import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
 import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/public/v1/commerce/config'
+import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
 import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
 import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
 import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
@@ -1036,6 +1037,11 @@ const ApiPublicV1CommerceConfigRoute =
     path: '/api/public/v1/commerce/config',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1CommerceCartRoute = ApiPublicV1CommerceCartRouteImport.update({
+  id: '/api/public/v1/commerce/cart',
+  path: '/api/public/v1/commerce/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1CommerceAddressesRoute =
   ApiPublicV1CommerceAddressesRouteImport.update({
     id: '/api/public/v1/commerce/addresses',
@@ -1216,6 +1222,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
@@ -1376,6 +1383,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
@@ -1540,6 +1548,7 @@ export interface FileRoutesById {
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
@@ -1704,6 +1713,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
     | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
@@ -1864,6 +1874,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
     | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
@@ -2027,6 +2038,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
     | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
@@ -2093,6 +2105,7 @@ export interface RootRouteChildren {
   ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
   ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
   ApiPublicV1CommerceAddressesRoute: typeof ApiPublicV1CommerceAddressesRoute
+  ApiPublicV1CommerceCartRoute: typeof ApiPublicV1CommerceCartRoute
   ApiPublicV1CommerceConfigRoute: typeof ApiPublicV1CommerceConfigRoute
   ApiPublicV1DeeplinkKeyRoute: typeof ApiPublicV1DeeplinkKeyRoute
   ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
@@ -3199,6 +3212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1CommerceConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/commerce/cart': {
+      id: '/api/public/v1/commerce/cart'
+      path: '/api/public/v1/commerce/cart'
+      fullPath: '/api/public/v1/commerce/cart'
+      preLoaderRoute: typeof ApiPublicV1CommerceCartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/commerce/addresses': {
       id: '/api/public/v1/commerce/addresses'
       path: '/api/public/v1/commerce/addresses'
@@ -3650,6 +3670,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
   ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
   ApiPublicV1CommerceAddressesRoute: ApiPublicV1CommerceAddressesRoute,
+  ApiPublicV1CommerceCartRoute: ApiPublicV1CommerceCartRoute,
   ApiPublicV1CommerceConfigRoute: ApiPublicV1CommerceConfigRoute,
   ApiPublicV1DeeplinkKeyRoute: ApiPublicV1DeeplinkKeyRoute,
   ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
