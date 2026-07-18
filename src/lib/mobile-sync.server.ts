@@ -4,19 +4,16 @@
  * (updated_at, created_at) ISO string; ordering is stable via (cursor, id).
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 import type { MobileSettings } from "./mobile-auth.server";
 
-type TableName = keyof Database["public"]["Tables"];
-
 export type SyncOptions = {
-  table: TableName;
+  table: string;
   cursorColumn: string; // usually updated_at, else created_at
   columns?: string; // projection
 };
 
 export async function runSync<T = unknown>(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   settings: MobileSettings,
   since: string | null,
   requestedLimit: number | null,
@@ -27,7 +24,6 @@ export async function runSync<T = unknown>(
     settings.max_sync_page_size,
   );
   let q = supabase
-    // @ts-expect-error dynamic table name
     .from(opts.table)
     .select(opts.columns ?? "*")
     .order(opts.cursorColumn, { ascending: true })
@@ -36,7 +32,7 @@ export async function runSync<T = unknown>(
   if (since) q = q.gt(opts.cursorColumn, since);
   const { data, error } = await q;
   if (error) throw error;
-  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  const rows = ((data ?? []) as unknown) as Array<Record<string, unknown>>;
   const hasMore = rows.length > pageSize;
   const page = hasMore ? rows.slice(0, pageSize) : rows;
   const last = page[page.length - 1];
