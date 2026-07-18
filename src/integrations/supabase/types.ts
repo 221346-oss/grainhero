@@ -1871,6 +1871,69 @@ export type Database = {
           },
         ]
       }
+      finance_ledger_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          direction: string
+          entry_type: string
+          hold_until: string | null
+          id: string
+          metadata: Json
+          occurred_at: string
+          order_id: string | null
+          payout_id: string | null
+          seller_id: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          direction: string
+          entry_type: string
+          hold_until?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          order_id?: string | null
+          payout_id?: string | null
+          seller_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          direction?: string
+          entry_type?: string
+          hold_until?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          order_id?: string | null
+          payout_id?: string | null
+          seller_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ledger_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_ledger_entries_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grain_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -3621,6 +3684,187 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_payout_accounts: {
+        Row: {
+          account_holder: string | null
+          account_number_encrypted: string | null
+          bank_name: string | null
+          country: string | null
+          created_at: string
+          currency: string
+          iban_encrypted: string | null
+          id: string
+          metadata: Json
+          method: string
+          minimum_payout_override: number | null
+          seller_id: string
+          swift: string | null
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          account_holder?: string | null
+          account_number_encrypted?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          iban_encrypted?: string | null
+          id?: string
+          metadata?: Json
+          method?: string
+          minimum_payout_override?: number | null
+          seller_id: string
+          swift?: string | null
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          account_holder?: string | null
+          account_number_encrypted?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          iban_encrypted?: string | null
+          id?: string
+          metadata?: Json
+          method?: string
+          minimum_payout_override?: number | null
+          seller_id?: string
+          swift?: string | null
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_payout_accounts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_payout_items: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          ledger_entry_id: string
+          payout_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          ledger_entry_id: string
+          payout_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          ledger_entry_id?: string
+          payout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_payout_items_ledger_entry_id_fkey"
+            columns: ["ledger_entry_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ledger_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_payout_items_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "seller_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_payouts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          currency: string
+          failed_reason: string | null
+          fees_amount: number
+          gross_amount: number
+          id: string
+          method: string
+          net_amount: number
+          notes: string | null
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          receipt_url: string | null
+          reference: string | null
+          seller_id: string
+          statement_url: string | null
+          status: string
+          tax_withheld: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string
+          failed_reason?: string | null
+          fees_amount?: number
+          gross_amount?: number
+          id?: string
+          method?: string
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          receipt_url?: string | null
+          reference?: string | null
+          seller_id: string
+          statement_url?: string | null
+          status?: string
+          tax_withheld?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string
+          failed_reason?: string | null
+          fees_amount?: number
+          gross_amount?: number
+          id?: string
+          method?: string
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          receipt_url?: string | null
+          reference?: string | null
+          seller_id?: string
+          statement_url?: string | null
+          status?: string
+          tax_withheld?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sensor_devices: {
         Row: {
           admin_id: string
@@ -4552,6 +4796,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tax_registrations: {
+        Row: {
+          created_at: string
+          id: string
+          region: string
+          registration_number: string
+          rule_type: string
+          seller_id: string
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          region: string
+          registration_number: string
+          rule_type: string
+          seller_id: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          region?: string
+          registration_number?: string
+          rule_type?: string
+          seller_id?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_registrations_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_rules: {
+        Row: {
+          active: boolean
+          applies_to: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          notes: string | null
+          rate_pct: number
+          region: string
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          applies_to: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          notes?: string | null
+          rate_pct: number
+          region: string
+          rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          applies_to?: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          notes?: string | null
+          rate_pct?: number
+          region?: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       tenant_plan_change_requests: {
         Row: {
