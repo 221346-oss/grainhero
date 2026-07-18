@@ -72,59 +72,17 @@ export const Route = createFileRoute("/api/public/webhooks/insurance/$carrierCod
         const evtId = evtRow?.id as string | undefined;
 
         try {
-          let policyId: string | null = null;
-          let claimId: string | null = null;
-
-          // Policy update
-          if (payload.external_ref && payload.policy_status) {
-            const { data: pol } = await sb.from("insurance_policies").select("id, admin_id")
-              .eq("external_ref", String(payload.external_ref)).maybeSingle();
-            if (pol) {
-              policyId = pol.id as string;
-              await sb.from("insurance_policies").update({ status: payload.policy_status }).eq("id", pol.id);
-              await sb.from("insurance_audit_log").insert({
-                actor_id: null, admin_id: pol.admin_id, action: `policy.${payload.policy_status}`,
-                subject_type: "policy", subject_id: pol.id, carrier_id: carrier.id, policy_id: pol.id,
-                payload: { via: "webhook", event_id: externalId }, source: "webhook",
-              });
-            }
-          }
-
-          // Claim update
-          if (payload.claim_external_ref && payload.claim_status) {
-            const { data: cl } = await sb.from("insurance_claims").select("id, admin_id, policy_id")
-              .eq("external_ref", String(payload.claim_external_ref)).maybeSingle();
-            if (cl) {
-              claimId = cl.id as string;
-              const patch: Record<string, unknown> = { status: payload.claim_status };
-              if (payload.claim_status === "approved" || payload.claim_status === "rejected") {
-                patch.decided_at = new Date().toISOString();
-              }
-              if (payload.claim_status === "paid") patch.paid_at = new Date().toISOString();
-              if (typeof payload.approved_payout_cents === "number") {
-                patch.approved_payout_cents = payload.approved_payout_cents;
-                patch.amount_approved = payload.approved_payout_cents / 100;
-              }
-              if (payload.decision_reason) patch.decision_reason = String(payload.decision_reason);
-              await sb.from("insurance_claims").update(patch).eq("id", cl.id);
-              await sb.from("insurance_claim_events").insert({
-                claim_id: cl.id, actor_id: null, event_type: `webhook_${payload.claim_status}`,
-                payload: { event_id: externalId, ...patch },
-              });
-              await sb.from("insurance_audit_log").insert({
-                actor_id: null, admin_id: cl.admin_id, action: `claim.${payload.claim_status}`,
-                subject_type: "claim", subject_id: cl.id, carrier_id: carrier.id,
-                policy_id: cl.policy_id, claim_id: cl.id,
-                payload: { via: "webhook", event_id: externalId, approved_payout_cents: payload.approved_payout_cents ?? null },
-                source: "webhook",
-              });
-            }
-          }
-
+          const { processInsuranceWebhookPayload } = await import("@/lib/insurance-webhook.server");
+          const result = await processInsuranceWebhookPayload(sb, {
+            carrierId: carrier.id as string,
+            externalId,
+            payload,
+          });
+          if (result.status === "error") throw new Error(result.error ?? "processing failed");
           if (evtId) {
             await sb.from("insurance_webhook_events").update({
               status: "processed", processed_at: new Date().toISOString(),
-              policy_id: policyId, claim_id: claimId,
+              policy_id: result.policyId, claim_id: result.claimId,
             }).eq("id", evtId);
           }
           return new Response("ok", { status: 200 });
