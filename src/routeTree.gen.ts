@@ -132,15 +132,19 @@ import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './route
 import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
 import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
+import { Route as ApiPublicV1NotificationsIndexRouteImport } from './routes/api/public/v1/notifications/index'
 import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 import { Route as ApiPublicV1UploadsSignRouteImport } from './routes/api/public/v1/uploads/sign'
+import { Route as ApiPublicV1SyncSilosCockpitRouteImport } from './routes/api/public/v1/sync/silos-cockpit'
 import { Route as ApiPublicV1SyncSilosRouteImport } from './routes/api/public/v1/sync/silos'
 import { Route as ApiPublicV1SyncSensorsRouteImport } from './routes/api/public/v1/sync/sensors'
 import { Route as ApiPublicV1SyncNotificationsRouteImport } from './routes/api/public/v1/sync/notifications'
 import { Route as ApiPublicV1SyncHardwareOrdersRouteImport } from './routes/api/public/v1/sync/hardware-orders'
 import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/public/v1/sync/buyer-orders'
 import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
+import { Route as ApiPublicV1NotificationsReadRouteImport } from './routes/api/public/v1/notifications/read'
+import { Route as ApiPublicV1NotificationsPreferencesRouteImport } from './routes/api/public/v1/notifications/preferences'
 import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
 import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
 import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
@@ -836,6 +840,12 @@ const AuthenticatedBuyerOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedBuyerOrdersRoute,
   } as any)
+const ApiPublicV1NotificationsIndexRoute =
+  ApiPublicV1NotificationsIndexRouteImport.update({
+    id: '/api/public/v1/notifications/',
+    path: '/api/public/v1/notifications/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksInsuranceCarrierCodeRoute =
   ApiPublicWebhooksInsuranceCarrierCodeRouteImport.update({
     id: '/api/public/webhooks/insurance/$carrierCode',
@@ -853,6 +863,12 @@ const ApiPublicV1UploadsSignRoute = ApiPublicV1UploadsSignRouteImport.update({
   path: '/api/public/v1/uploads/sign',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1SyncSilosCockpitRoute =
+  ApiPublicV1SyncSilosCockpitRouteImport.update({
+    id: '/api/public/v1/sync/silos-cockpit',
+    path: '/api/public/v1/sync/silos-cockpit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1SyncSilosRoute = ApiPublicV1SyncSilosRouteImport.update({
   id: '/api/public/v1/sync/silos',
   path: '/api/public/v1/sync/silos',
@@ -886,6 +902,18 @@ const ApiPublicV1SyncAlertsRoute = ApiPublicV1SyncAlertsRouteImport.update({
   path: '/api/public/v1/sync/alerts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1NotificationsReadRoute =
+  ApiPublicV1NotificationsReadRouteImport.update({
+    id: '/api/public/v1/notifications/read',
+    path: '/api/public/v1/notifications/read',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1NotificationsPreferencesRoute =
+  ApiPublicV1NotificationsPreferencesRouteImport.update({
+    id: '/api/public/v1/notifications/preferences',
+    path: '/api/public/v1/notifications/preferences',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1DevicesRevokeRoute =
   ApiPublicV1DevicesRevokeRouteImport.update({
     id: '/api/public/v1/devices/revoke',
@@ -1072,15 +1100,19 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
+  '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
   '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
   '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
   '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/sync/silos-cockpit': typeof ApiPublicV1SyncSilosCockpitRoute
   '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  '/api/public/v1/notifications/': typeof ApiPublicV1NotificationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1212,15 +1244,19 @@ export interface FileRoutesByTo {
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
+  '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
   '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
   '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
   '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/sync/silos-cockpit': typeof ApiPublicV1SyncSilosCockpitRoute
   '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  '/api/public/v1/notifications': typeof ApiPublicV1NotificationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1356,15 +1392,19 @@ export interface FileRoutesById {
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
+  '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
   '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
   '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
   '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/sync/silos-cockpit': typeof ApiPublicV1SyncSilosCockpitRoute
   '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  '/api/public/v1/notifications/': typeof ApiPublicV1NotificationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1500,15 +1540,19 @@ export interface FileRouteTypes {
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/notifications/preferences'
+    | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
     | '/api/public/v1/sync/hardware-orders'
     | '/api/public/v1/sync/notifications'
     | '/api/public/v1/sync/sensors'
     | '/api/public/v1/sync/silos'
+    | '/api/public/v1/sync/silos-cockpit'
     | '/api/public/v1/uploads/sign'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
+    | '/api/public/v1/notifications/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1640,15 +1684,19 @@ export interface FileRouteTypes {
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/notifications/preferences'
+    | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
     | '/api/public/v1/sync/hardware-orders'
     | '/api/public/v1/sync/notifications'
     | '/api/public/v1/sync/sensors'
     | '/api/public/v1/sync/silos'
+    | '/api/public/v1/sync/silos-cockpit'
     | '/api/public/v1/uploads/sign'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
+    | '/api/public/v1/notifications'
   id:
     | '__root__'
     | '/'
@@ -1783,15 +1831,19 @@ export interface FileRouteTypes {
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/notifications/preferences'
+    | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
     | '/api/public/v1/sync/hardware-orders'
     | '/api/public/v1/sync/notifications'
     | '/api/public/v1/sync/sensors'
     | '/api/public/v1/sync/silos'
+    | '/api/public/v1/sync/silos-cockpit'
     | '/api/public/v1/uploads/sign'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
+    | '/api/public/v1/notifications/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1836,15 +1888,19 @@ export interface RootRouteChildren {
   ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
   ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
   ApiPublicV1DevicesRevokeRoute: typeof ApiPublicV1DevicesRevokeRoute
+  ApiPublicV1NotificationsPreferencesRoute: typeof ApiPublicV1NotificationsPreferencesRoute
+  ApiPublicV1NotificationsReadRoute: typeof ApiPublicV1NotificationsReadRoute
   ApiPublicV1SyncAlertsRoute: typeof ApiPublicV1SyncAlertsRoute
   ApiPublicV1SyncBuyerOrdersRoute: typeof ApiPublicV1SyncBuyerOrdersRoute
   ApiPublicV1SyncHardwareOrdersRoute: typeof ApiPublicV1SyncHardwareOrdersRoute
   ApiPublicV1SyncNotificationsRoute: typeof ApiPublicV1SyncNotificationsRoute
   ApiPublicV1SyncSensorsRoute: typeof ApiPublicV1SyncSensorsRoute
   ApiPublicV1SyncSilosRoute: typeof ApiPublicV1SyncSilosRoute
+  ApiPublicV1SyncSilosCockpitRoute: typeof ApiPublicV1SyncSilosCockpitRoute
   ApiPublicV1UploadsSignRoute: typeof ApiPublicV1UploadsSignRoute
   ApiPublicWebhooksCarrierCarrierCodeRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   ApiPublicWebhooksInsuranceCarrierCodeRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  ApiPublicV1NotificationsIndexRoute: typeof ApiPublicV1NotificationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2710,6 +2766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedBuyerOrdersRoute
     }
+    '/api/public/v1/notifications/': {
+      id: '/api/public/v1/notifications/'
+      path: '/api/public/v1/notifications'
+      fullPath: '/api/public/v1/notifications/'
+      preLoaderRoute: typeof ApiPublicV1NotificationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/insurance/$carrierCode': {
       id: '/api/public/webhooks/insurance/$carrierCode'
       path: '/api/public/webhooks/insurance/$carrierCode'
@@ -2729,6 +2792,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/uploads/sign'
       fullPath: '/api/public/v1/uploads/sign'
       preLoaderRoute: typeof ApiPublicV1UploadsSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/silos-cockpit': {
+      id: '/api/public/v1/sync/silos-cockpit'
+      path: '/api/public/v1/sync/silos-cockpit'
+      fullPath: '/api/public/v1/sync/silos-cockpit'
+      preLoaderRoute: typeof ApiPublicV1SyncSilosCockpitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/sync/silos': {
@@ -2771,6 +2841,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/sync/alerts'
       fullPath: '/api/public/v1/sync/alerts'
       preLoaderRoute: typeof ApiPublicV1SyncAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/notifications/read': {
+      id: '/api/public/v1/notifications/read'
+      path: '/api/public/v1/notifications/read'
+      fullPath: '/api/public/v1/notifications/read'
+      preLoaderRoute: typeof ApiPublicV1NotificationsReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/notifications/preferences': {
+      id: '/api/public/v1/notifications/preferences'
+      path: '/api/public/v1/notifications/preferences'
+      fullPath: '/api/public/v1/notifications/preferences'
+      preLoaderRoute: typeof ApiPublicV1NotificationsPreferencesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/devices/revoke': {
@@ -3219,17 +3303,22 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
   ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
   ApiPublicV1DevicesRevokeRoute: ApiPublicV1DevicesRevokeRoute,
+  ApiPublicV1NotificationsPreferencesRoute:
+    ApiPublicV1NotificationsPreferencesRoute,
+  ApiPublicV1NotificationsReadRoute: ApiPublicV1NotificationsReadRoute,
   ApiPublicV1SyncAlertsRoute: ApiPublicV1SyncAlertsRoute,
   ApiPublicV1SyncBuyerOrdersRoute: ApiPublicV1SyncBuyerOrdersRoute,
   ApiPublicV1SyncHardwareOrdersRoute: ApiPublicV1SyncHardwareOrdersRoute,
   ApiPublicV1SyncNotificationsRoute: ApiPublicV1SyncNotificationsRoute,
   ApiPublicV1SyncSensorsRoute: ApiPublicV1SyncSensorsRoute,
   ApiPublicV1SyncSilosRoute: ApiPublicV1SyncSilosRoute,
+  ApiPublicV1SyncSilosCockpitRoute: ApiPublicV1SyncSilosCockpitRoute,
   ApiPublicV1UploadsSignRoute: ApiPublicV1UploadsSignRoute,
   ApiPublicWebhooksCarrierCarrierCodeRoute:
     ApiPublicWebhooksCarrierCarrierCodeRoute,
   ApiPublicWebhooksInsuranceCarrierCodeRoute:
     ApiPublicWebhooksInsuranceCarrierCodeRoute,
+  ApiPublicV1NotificationsIndexRoute: ApiPublicV1NotificationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
