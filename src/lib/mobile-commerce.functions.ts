@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { stripeForm, stripeFetch } from "./stripe-api.server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Phase 27 — Mobile-initiated Stripe PaymentIntent flow. Config-driven:
@@ -9,11 +10,7 @@ import { stripeForm, stripeFetch } from "./stripe-api.server";
  * `mobile_commerce_settings`. No hardcoded pricing.
  */
 
-async function loadCommerceConfig(supabase: Parameters<typeof requireSupabaseAuth>[0] extends never ? never : Awaited<ReturnType<typeof getCommerceRow>>) {
-  return supabase;
-}
-
-async function getCommerceRow(supabase: import("@supabase/supabase-js").SupabaseClient) {
+async function getCommerceRow(supabase: SupabaseClient) {
   const { data, error } = await supabase.from("mobile_commerce_settings").select("*").limit(1).maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("commerce_disabled");
@@ -27,7 +24,6 @@ async function getCommerceRow(supabase: import("@supabase/supabase-js").Supabase
     stripe_publishable_key_override: string | null;
   };
 }
-void loadCommerceConfig; // reserved for future explicit-config helper
 
 export const createMobilePaymentIntent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -38,37 +34,36 @@ export const createMobilePaymentIntent = createServerFn({ method: "POST" })
     const cfg = await getCommerceRow(context.supabase);
     if (!cfg.checkout_enabled) throw new Error("checkout_disabled");
 
-    const { data: order, error: orderErr } = await context.supabase
+    const { data: orderRaw, error: orderErr } = await context.supabase
       .from("buyer_orders")
-      .select("id, admin_id, buyer_id, total, currency, status, stripe_payment_intent")
+      .select("id, admin_id, buyer_id, subtotal, currency, status, stripe_payment_intent")
       .eq("id", data.order_id)
       .maybeSingle();
     if (orderErr) throw new Error(orderErr.message);
-    if (!order) throw new Error("order_not_found");
-    if ((order as { buyer_id?: string }).buyer_id !== context.userId) throw new Error("Forbidden");
+    if (!orderRaw) throw new Error("order_not_found");
+    const order = orderRaw as unknown as { id: string; admin_id: string; buyer_id: string; subtotal: number; currency: string | null; status: string; stripe_payment_intent: string | null };
+    if (order.buyer_id !== context.userId) throw new Error("Forbidden");
 
-    const totalCents = Math.round(Number((order as { total?: number }).total ?? 0) * 100);
+    const totalCents = Math.round(Number(order.subtotal ?? 0) * 100);
     if (totalCents < cfg.min_order_cents) throw new Error(`amount_below_min:${cfg.min_order_cents}`);
     if (totalCents > cfg.max_order_cents) throw new Error(`amount_above_max:${cfg.max_order_cents}`);
 
-    const currency = ((order as { currency?: string }).currency ?? cfg.currency_default).toLowerCase();
+    const currency = (order.currency ?? cfg.currency_default).toLowerCase();
     const feeCents = Math.floor((totalCents * cfg.platform_fee_bps) / 10000);
 
     const params: Record<string, string | number> = {
       amount: totalCents,
       currency,
       "automatic_payment_methods[enabled]": "true",
-      "metadata[order_id]": (order as { id: string }).id,
+      "metadata[order_id]": order.id,
       "metadata[channel]": "mobile",
       "metadata[buyer_id]": context.userId,
     };
-    const pi = await stripeFetch("/payment_intents", stripeForm(params)) as {
-      id: string; client_secret: string; status: string;
-    };
+    const pi = await stripeFetch("/payment_intents", stripeForm(params)) as unknown as { id: string; client_secret: string; status: string };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("buyer_payment_intents").insert({
-      order_id: (order as { id: string }).id,
+      order_id: order.id,
       stripe_pi_id: pi.id,
       amount_cents: totalCents,
       currency,
@@ -81,7 +76,7 @@ export const createMobilePaymentIntent = createServerFn({ method: "POST" })
     await supabaseAdmin.from("buyer_orders").update({
       stripe_payment_intent: pi.id,
       payment_channel: "mobile",
-    } as never).eq("id", (order as { id: string }).id);
+    } as never).eq("id", order.id);
 
     return {
       client_secret: pi.client_secret,
@@ -101,20 +96,21 @@ export const confirmMobileOrderPaid = createServerFn({ method: "POST" })
   }).parse(v))
   .handler(async ({ data, context }) => {
     // Idempotent client-side sync. Webhook remains the source of truth.
-    const pi = await stripeFetch(`/payment_intents/${data.payment_intent_id}`, null, "GET") as { status: string; id: string };
+    const pi = await stripeFetch(`/payment_intents/${data.payment_intent_id}`, null, "GET") as unknown as { status: string; id: string };
     if (pi.status !== "succeeded") return { ok: false, status: pi.status };
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: order } = await supabaseAdmin.from("buyer_orders")
+    const { data: orderRaw } = await supabaseAdmin.from("buyer_orders")
       .select("id, buyer_id, status, admin_id").eq("id", data.order_id).maybeSingle();
-    if (!order || (order as { buyer_id?: string }).buyer_id !== context.userId) throw new Error("Forbidden");
+    const order = orderRaw as unknown as { id: string; buyer_id: string; status: string; admin_id: string } | null;
+    if (!order || order.buyer_id !== context.userId) throw new Error("Forbidden");
 
-    if ((order as { status?: string }).status !== "paid") {
+    if (order.status !== "paid") {
       await supabaseAdmin.from("buyer_orders").update({ status: "paid", paid_at: new Date().toISOString() } as never).eq("id", data.order_id);
       await supabaseAdmin.from("buyer_order_events").insert({
         order_id: data.order_id,
-        admin_id: (order as { admin_id?: string }).admin_id,
-        from_state: (order as { status?: string }).status ?? null,
+        admin_id: order.admin_id,
+        from_state: order.status ?? null,
         to_state: "paid",
         note: "Mobile checkout confirmed",
       } as never);
