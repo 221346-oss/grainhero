@@ -8,6 +8,7 @@ import {
   ArrowUpRight, Plus, TrendingUp, AlertTriangle, Layers, ShoppingCart,
   ChevronRight, Activity, Wrench, AlertOctagon, Building2, Smartphone, Zap, Brain, Shield, DollarSign, Cpu, CreditCard, ShieldCheck,
 } from "lucide-react";
+import { CustomWidgetsBand } from "@/components/app/analytics/CustomWidgetsBand";
 
 // ============================================================================
 // 1. DATA & TYPES
@@ -373,6 +374,8 @@ export function ManagerDashboard({ name }: { name?: string }) {
             ))}
           </div>
         </div>
+
+        <CustomWidgetsBand />
 
         {/* Overview & Analytics Parent Container */}
         <motion.div
