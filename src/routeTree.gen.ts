@@ -86,6 +86,7 @@ import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
 import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
 import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
 import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
@@ -576,6 +577,12 @@ const AuthenticatedPlatformOrdersRoute =
   AuthenticatedPlatformOrdersRouteImport.update({
     id: '/platform/orders',
     path: '/platform/orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobileSyncMonitorRoute =
+  AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
+    id: '/platform/mobile-sync-monitor',
+    path: '/platform/mobile-sync-monitor',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformMobileSettingsRoute =
@@ -1129,6 +1136,7 @@ export interface FileRoutesByFullPath {
   '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1284,6 +1292,7 @@ export interface FileRoutesByTo {
   '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1443,6 +1452,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
   '/_authenticated/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/_authenticated/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/_authenticated/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1602,6 +1612,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-deep-links'
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
+    | '/platform/mobile-sync-monitor'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1757,6 +1768,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-deep-links'
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
+    | '/platform/mobile-sync-monitor'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1915,6 +1927,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/mobile-deep-links'
     | '/_authenticated/platform/mobile-push-diagnostics'
     | '/_authenticated/platform/mobile-settings'
+    | '/_authenticated/platform/mobile-sync-monitor'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
@@ -2591,6 +2604,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/orders'
       fullPath: '/platform/orders'
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-sync-monitor': {
+      id: '/_authenticated/platform/mobile-sync-monitor'
+      path: '/platform/mobile-sync-monitor'
+      fullPath: '/platform/mobile-sync-monitor'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileSyncMonitorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/mobile-settings': {
@@ -3335,6 +3355,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformMobileDeepLinksRoute: typeof AuthenticatedPlatformMobileDeepLinksRoute
   AuthenticatedPlatformMobilePushDiagnosticsRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   AuthenticatedPlatformMobileSettingsRoute: typeof AuthenticatedPlatformMobileSettingsRoute
+  AuthenticatedPlatformMobileSyncMonitorRoute: typeof AuthenticatedPlatformMobileSyncMonitorRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
@@ -3426,6 +3447,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformMobilePushDiagnosticsRoute,
   AuthenticatedPlatformMobileSettingsRoute:
     AuthenticatedPlatformMobileSettingsRoute,
+  AuthenticatedPlatformMobileSyncMonitorRoute:
+    AuthenticatedPlatformMobileSyncMonitorRoute,
   AuthenticatedPlatformOrdersRoute:
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
