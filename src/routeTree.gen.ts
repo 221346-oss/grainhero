@@ -119,6 +119,7 @@ import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes
 import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
+import { Route as AuthenticatedPlatformInsuranceWebhooksRouteImport } from './routes/_authenticated/platform.insurance.webhooks'
 import { Route as AuthenticatedPlatformInsuranceAuditRouteImport } from './routes/_authenticated/platform.insurance.audit'
 import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
 import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
@@ -736,6 +737,12 @@ const AuthenticatedPlatformLogisticsCarriersRoute =
     path: '/platform/logistics/carriers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformInsuranceWebhooksRoute =
+  AuthenticatedPlatformInsuranceWebhooksRouteImport.update({
+    id: '/webhooks',
+    path: '/webhooks',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
+  } as any)
 const AuthenticatedPlatformInsuranceAuditRoute =
   AuthenticatedPlatformInsuranceAuditRouteImport.update({
     id: '/audit',
@@ -882,6 +889,7 @@ export interface FileRoutesByFullPath {
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -999,6 +1007,7 @@ export interface FileRoutesByTo {
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -1120,6 +1129,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/_authenticated/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/_authenticated/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
   '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -1241,6 +1251,7 @@ export interface FileRouteTypes {
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
     | '/platform/insurance/audit'
+    | '/platform/insurance/webhooks'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1358,6 +1369,7 @@ export interface FileRouteTypes {
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
     | '/platform/insurance/audit'
+    | '/platform/insurance/webhooks'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1478,6 +1490,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/finance/payouts'
     | '/_authenticated/platform/finance/tax-rules'
     | '/_authenticated/platform/insurance/audit'
+    | '/_authenticated/platform/insurance/webhooks'
     | '/_authenticated/platform/logistics/carriers'
     | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/logistics/fleet'
@@ -2310,6 +2323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/insurance/webhooks': {
+      id: '/_authenticated/platform/insurance/webhooks'
+      path: '/webhooks'
+      fullPath: '/platform/insurance/webhooks'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceWebhooksRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
+    }
     '/_authenticated/platform/insurance/audit': {
       id: '/_authenticated/platform/insurance/audit'
       path: '/audit'
@@ -2431,12 +2451,15 @@ const AuthenticatedPlatformFinanceRouteWithChildren =
 
 interface AuthenticatedPlatformInsuranceRouteChildren {
   AuthenticatedPlatformInsuranceAuditRoute: typeof AuthenticatedPlatformInsuranceAuditRoute
+  AuthenticatedPlatformInsuranceWebhooksRoute: typeof AuthenticatedPlatformInsuranceWebhooksRoute
 }
 
 const AuthenticatedPlatformInsuranceRouteChildren: AuthenticatedPlatformInsuranceRouteChildren =
   {
     AuthenticatedPlatformInsuranceAuditRoute:
       AuthenticatedPlatformInsuranceAuditRoute,
+    AuthenticatedPlatformInsuranceWebhooksRoute:
+      AuthenticatedPlatformInsuranceWebhooksRoute,
   }
 
 const AuthenticatedPlatformInsuranceRouteWithChildren =

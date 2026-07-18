@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { RefreshCw, Play, Webhook } from "lucide-react";
+import { RefreshCw, Play } from "lucide-react";
 import { toast } from "sonner";
 import {
   listInsuranceWebhookEvents,
@@ -63,8 +63,7 @@ function WebhookMonitor() {
   return (
     <AdminPageShell
       title="Insurance Webhook Monitor"
-      description="Failed carrier webhook events with manual replay controls."
-      icon={Webhook}
+      subtitle="Failed carrier webhook events with manual replay controls."
       actions={
         <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Refresh
