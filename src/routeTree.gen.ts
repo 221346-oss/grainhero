@@ -60,6 +60,7 @@ import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
+import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
 import { Route as AuthenticatedDataVisualizationRouteImport } from './routes/_authenticated/data-visualization'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
@@ -93,6 +94,7 @@ import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
+import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
@@ -116,6 +118,9 @@ import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes
 import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
+import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
+import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
+import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
@@ -385,6 +390,11 @@ const AuthenticatedEnvironmentalRoute =
     path: '/environmental',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDataVisualizationRoute =
   AuthenticatedDataVisualizationRouteImport.update({
     id: '/data-visualization',
@@ -575,6 +585,12 @@ const AuthenticatedPlatformFinancialsRoute =
     path: '/platform/financials',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformFinanceRoute =
+  AuthenticatedPlatformFinanceRouteImport.update({
+    id: '/platform/finance',
+    path: '/platform/finance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformDisputesRoute =
   AuthenticatedPlatformDisputesRouteImport.update({
     id: '/platform/disputes',
@@ -711,6 +727,24 @@ const AuthenticatedPlatformLogisticsCarriersRoute =
     path: '/platform/logistics/carriers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformFinanceTaxRulesRoute =
+  AuthenticatedPlatformFinanceTaxRulesRouteImport.update({
+    id: '/tax-rules',
+    path: '/tax-rules',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
+const AuthenticatedPlatformFinancePayoutsRoute =
+  AuthenticatedPlatformFinancePayoutsRouteImport.update({
+    id: '/payouts',
+    path: '/payouts',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
+const AuthenticatedPlatformFinanceLedgerRoute =
+  AuthenticatedPlatformFinanceLedgerRouteImport.update({
+    id: '/ledger',
+    path: '/ledger',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
 const AuthenticatedBuyerOrdersOrderIdRoute =
   AuthenticatedBuyerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
@@ -754,6 +788,7 @@ export interface FileRoutesByFullPath {
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/data-visualization': typeof AuthenticatedDataVisualizationRoute
+  '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
@@ -794,6 +829,7 @@ export interface FileRoutesByFullPath {
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -820,6 +856,9 @@ export interface FileRoutesByFullPath {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
+  '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -863,6 +902,7 @@ export interface FileRoutesByTo {
   '/buyers': typeof AuthenticatedBuyersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/data-visualization': typeof AuthenticatedDataVisualizationRoute
+  '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-batches': typeof AuthenticatedGrainBatchesRoute
@@ -903,6 +943,7 @@ export interface FileRoutesByTo {
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -929,6 +970,9 @@ export interface FileRoutesByTo {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
+  '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -976,6 +1020,7 @@ export interface FileRoutesById {
   '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/data-visualization': typeof AuthenticatedDataVisualizationRoute
+  '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/environmental': typeof AuthenticatedEnvironmentalRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
@@ -1016,6 +1061,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -1042,6 +1088,9 @@ export interface FileRoutesById {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
+  '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -1089,6 +1138,7 @@ export interface FileRouteTypes {
     | '/buyers'
     | '/dashboard'
     | '/data-visualization'
+    | '/earnings'
     | '/environmental'
     | '/grain-alerts'
     | '/grain-batches'
@@ -1129,6 +1179,7 @@ export interface FileRouteTypes {
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
     | '/platform/invoice-failures'
@@ -1155,6 +1206,9 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
+    | '/platform/finance/ledger'
+    | '/platform/finance/payouts'
+    | '/platform/finance/tax-rules'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1198,6 +1252,7 @@ export interface FileRouteTypes {
     | '/buyers'
     | '/dashboard'
     | '/data-visualization'
+    | '/earnings'
     | '/environmental'
     | '/grain-alerts'
     | '/grain-batches'
@@ -1238,6 +1293,7 @@ export interface FileRouteTypes {
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
     | '/platform/invoice-failures'
@@ -1264,6 +1320,9 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
+    | '/platform/finance/ledger'
+    | '/platform/finance/payouts'
+    | '/platform/finance/tax-rules'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1310,6 +1369,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyers'
     | '/_authenticated/dashboard'
     | '/_authenticated/data-visualization'
+    | '/_authenticated/earnings'
     | '/_authenticated/environmental'
     | '/_authenticated/grain-alerts'
     | '/_authenticated/grain-batches'
@@ -1350,6 +1410,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/audit-logs'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
+    | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/invoice-failures'
@@ -1376,6 +1437,9 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/platform/finance/ledger'
+    | '/_authenticated/platform/finance/payouts'
+    | '/_authenticated/platform/finance/tax-rules'
     | '/_authenticated/platform/logistics/carriers'
     | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/logistics/fleet'
@@ -1793,6 +1857,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEnvironmentalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/earnings': {
+      id: '/_authenticated/earnings'
+      path: '/earnings'
+      fullPath: '/earnings'
+      preLoaderRoute: typeof AuthenticatedEarningsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/data-visualization': {
       id: '/_authenticated/data-visualization'
       path: '/data-visualization'
@@ -2024,6 +2095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFinancialsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/finance': {
+      id: '/_authenticated/platform/finance'
+      path: '/platform/finance'
+      fullPath: '/platform/finance'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/disputes': {
       id: '/_authenticated/platform/disputes'
       path: '/platform/disputes'
@@ -2185,6 +2263,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/finance/tax-rules': {
+      id: '/_authenticated/platform/finance/tax-rules'
+      path: '/tax-rules'
+      fullPath: '/platform/finance/tax-rules'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceTaxRulesRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
+    '/_authenticated/platform/finance/payouts': {
+      id: '/_authenticated/platform/finance/payouts'
+      path: '/payouts'
+      fullPath: '/platform/finance/payouts'
+      preLoaderRoute: typeof AuthenticatedPlatformFinancePayoutsRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
+    '/_authenticated/platform/finance/ledger': {
+      id: '/_authenticated/platform/finance/ledger'
+      path: '/ledger'
+      fullPath: '/platform/finance/ledger'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
     '/_authenticated/buyer/orders/$orderId': {
       id: '/_authenticated/buyer/orders/$orderId'
       path: '/$orderId'
@@ -2248,6 +2347,27 @@ const AuthenticatedBuyerOrdersRouteWithChildren =
     AuthenticatedBuyerOrdersRouteChildren,
   )
 
+interface AuthenticatedPlatformFinanceRouteChildren {
+  AuthenticatedPlatformFinanceLedgerRoute: typeof AuthenticatedPlatformFinanceLedgerRoute
+  AuthenticatedPlatformFinancePayoutsRoute: typeof AuthenticatedPlatformFinancePayoutsRoute
+  AuthenticatedPlatformFinanceTaxRulesRoute: typeof AuthenticatedPlatformFinanceTaxRulesRoute
+}
+
+const AuthenticatedPlatformFinanceRouteChildren: AuthenticatedPlatformFinanceRouteChildren =
+  {
+    AuthenticatedPlatformFinanceLedgerRoute:
+      AuthenticatedPlatformFinanceLedgerRoute,
+    AuthenticatedPlatformFinancePayoutsRoute:
+      AuthenticatedPlatformFinancePayoutsRoute,
+    AuthenticatedPlatformFinanceTaxRulesRoute:
+      AuthenticatedPlatformFinanceTaxRulesRoute,
+  }
+
+const AuthenticatedPlatformFinanceRouteWithChildren =
+  AuthenticatedPlatformFinanceRoute._addFileChildren(
+    AuthenticatedPlatformFinanceRouteChildren,
+  )
+
 interface AuthenticatedPlatformOrdersOrderIdRouteChildren {
   AuthenticatedPlatformOrdersOrderIdAuditRoute: typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
 }
@@ -2302,6 +2422,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDataVisualizationRoute: typeof AuthenticatedDataVisualizationRoute
+  AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
   AuthenticatedEnvironmentalRoute: typeof AuthenticatedEnvironmentalRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
   AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
@@ -2333,6 +2454,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
+  AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -2366,6 +2488,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDataVisualizationRoute: AuthenticatedDataVisualizationRoute,
+  AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
   AuthenticatedEnvironmentalRoute: AuthenticatedEnvironmentalRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
   AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
@@ -2398,6 +2521,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
+  AuthenticatedPlatformFinanceRoute:
+    AuthenticatedPlatformFinanceRouteWithChildren,
   AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformInvoiceFailuresRoute:

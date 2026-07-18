@@ -26,6 +26,11 @@ import {
   FinancialsSkeleton,
   AdminProfileSkeleton,
   PlatformOrdersSkeleton,
+  FinanceCommandSkeleton,
+  PayoutsSkeleton,
+  LedgerSkeleton,
+  TaxRulesSkeleton,
+  EarningsSkeleton,
 } from "@/components/app/skeletons";
 
 // Route → matching page skeleton. Every page-level skeleton mirrors the real
@@ -63,6 +68,11 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/health": AnalyticsSkeleton,
   "/platform/financials": FinancialsSkeleton,
   "/platform/orders": PlatformOrdersSkeleton,
+  "/platform/finance": FinanceCommandSkeleton,
+  "/platform/finance/payouts": PayoutsSkeleton,
+  "/platform/finance/ledger": LedgerSkeleton,
+  "/platform/finance/tax-rules": TaxRulesSkeleton,
+  "/earnings": EarningsSkeleton,
   "/platform/logistics/command-center": AnalyticsSkeleton,
   "/platform/logistics/fleet": AnalyticsSkeleton,
   "/platform/logistics/carriers": AnalyticsSkeleton,
