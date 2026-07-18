@@ -93,6 +93,7 @@ import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
+import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
@@ -575,6 +576,12 @@ const AuthenticatedPlatformFinancialsRoute =
     path: '/platform/financials',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformFinanceRoute =
+  AuthenticatedPlatformFinanceRouteImport.update({
+    id: '/platform/finance',
+    path: '/platform/finance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformDisputesRoute =
   AuthenticatedPlatformDisputesRouteImport.update({
     id: '/platform/disputes',
@@ -794,6 +801,7 @@ export interface FileRoutesByFullPath {
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/finance': typeof AuthenticatedPlatformFinanceRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -903,6 +911,7 @@ export interface FileRoutesByTo {
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/finance': typeof AuthenticatedPlatformFinanceRoute
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -1016,6 +1025,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRoute
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -1129,6 +1139,7 @@ export interface FileRouteTypes {
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
     | '/platform/invoice-failures'
@@ -1238,6 +1249,7 @@ export interface FileRouteTypes {
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
     | '/platform/invoice-failures'
@@ -1350,6 +1362,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/audit-logs'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
+    | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/invoice-failures'
@@ -2024,6 +2037,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFinancialsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/finance': {
+      id: '/_authenticated/platform/finance'
+      path: '/platform/finance'
+      fullPath: '/platform/finance'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/disputes': {
       id: '/_authenticated/platform/disputes'
       path: '/platform/disputes'
@@ -2333,6 +2353,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
+  AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRoute
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
@@ -2398,6 +2419,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
+  AuthenticatedPlatformFinanceRoute: AuthenticatedPlatformFinanceRoute,
   AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformInvoiceFailuresRoute:
