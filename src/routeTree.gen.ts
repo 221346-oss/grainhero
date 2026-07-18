@@ -156,11 +156,15 @@ import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/pub
 import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
 import { Route as ApiPublicV1NotificationsReadRouteImport } from './routes/api/public/v1/notifications/read'
 import { Route as ApiPublicV1NotificationsPreferencesRouteImport } from './routes/api/public/v1/notifications/preferences'
+import { Route as ApiPublicV1FieldMutationsRouteImport } from './routes/api/public/v1/field/mutations'
+import { Route as ApiPublicV1FieldBundleRouteImport } from './routes/api/public/v1/field/bundle'
 import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
 import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
 import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
 import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
 import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/public/v1/commerce/config'
+import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
+import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
 import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
 import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
 import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
@@ -993,6 +997,17 @@ const ApiPublicV1NotificationsPreferencesRoute =
     path: '/api/public/v1/notifications/preferences',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1FieldMutationsRoute =
+  ApiPublicV1FieldMutationsRouteImport.update({
+    id: '/api/public/v1/field/mutations',
+    path: '/api/public/v1/field/mutations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1FieldBundleRoute = ApiPublicV1FieldBundleRouteImport.update({
+  id: '/api/public/v1/field/bundle',
+  path: '/api/public/v1/field/bundle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1DevicesRevokeRoute =
   ApiPublicV1DevicesRevokeRouteImport.update({
     id: '/api/public/v1/devices/revoke',
@@ -1020,6 +1035,17 @@ const ApiPublicV1CommerceConfigRoute =
   ApiPublicV1CommerceConfigRouteImport.update({
     id: '/api/public/v1/commerce/config',
     path: '/api/public/v1/commerce/config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceCartRoute = ApiPublicV1CommerceCartRouteImport.update({
+  id: '/api/public/v1/commerce/cart',
+  path: '/api/public/v1/commerce/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1CommerceAddressesRoute =
+  ApiPublicV1CommerceAddressesRouteImport.update({
+    id: '/api/public/v1/commerce/addresses',
+    path: '/api/public/v1/commerce/addresses',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ActionsReplayRoute =
@@ -1195,11 +1221,15 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
+  '/api/public/v1/field/mutations': typeof ApiPublicV1FieldMutationsRoute
   '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
@@ -1352,11 +1382,15 @@ export interface FileRoutesByTo {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
+  '/api/public/v1/field/mutations': typeof ApiPublicV1FieldMutationsRoute
   '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
@@ -1513,11 +1547,15 @@ export interface FileRoutesById {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
   '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
+  '/api/public/v1/field/mutations': typeof ApiPublicV1FieldMutationsRoute
   '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
@@ -1674,11 +1712,15 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
+    | '/api/public/v1/field/mutations'
     | '/api/public/v1/notifications/preferences'
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
@@ -1831,11 +1873,15 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
+    | '/api/public/v1/field/mutations'
     | '/api/public/v1/notifications/preferences'
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
@@ -1991,11 +2037,15 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
     | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
+    | '/api/public/v1/field/mutations'
     | '/api/public/v1/notifications/preferences'
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
@@ -2054,11 +2104,15 @@ export interface RootRouteChildren {
   ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
   ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
   ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
+  ApiPublicV1CommerceAddressesRoute: typeof ApiPublicV1CommerceAddressesRoute
+  ApiPublicV1CommerceCartRoute: typeof ApiPublicV1CommerceCartRoute
   ApiPublicV1CommerceConfigRoute: typeof ApiPublicV1CommerceConfigRoute
   ApiPublicV1DeeplinkKeyRoute: typeof ApiPublicV1DeeplinkKeyRoute
   ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
   ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
   ApiPublicV1DevicesRevokeRoute: typeof ApiPublicV1DevicesRevokeRoute
+  ApiPublicV1FieldBundleRoute: typeof ApiPublicV1FieldBundleRoute
+  ApiPublicV1FieldMutationsRoute: typeof ApiPublicV1FieldMutationsRoute
   ApiPublicV1NotificationsPreferencesRoute: typeof ApiPublicV1NotificationsPreferencesRoute
   ApiPublicV1NotificationsReadRoute: typeof ApiPublicV1NotificationsReadRoute
   ApiPublicV1SyncAlertsRoute: typeof ApiPublicV1SyncAlertsRoute
@@ -3109,6 +3163,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1NotificationsPreferencesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/field/mutations': {
+      id: '/api/public/v1/field/mutations'
+      path: '/api/public/v1/field/mutations'
+      fullPath: '/api/public/v1/field/mutations'
+      preLoaderRoute: typeof ApiPublicV1FieldMutationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/field/bundle': {
+      id: '/api/public/v1/field/bundle'
+      path: '/api/public/v1/field/bundle'
+      fullPath: '/api/public/v1/field/bundle'
+      preLoaderRoute: typeof ApiPublicV1FieldBundleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/devices/revoke': {
       id: '/api/public/v1/devices/revoke'
       path: '/api/public/v1/devices/revoke'
@@ -3142,6 +3210,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/commerce/config'
       fullPath: '/api/public/v1/commerce/config'
       preLoaderRoute: typeof ApiPublicV1CommerceConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/cart': {
+      id: '/api/public/v1/commerce/cart'
+      path: '/api/public/v1/commerce/cart'
+      fullPath: '/api/public/v1/commerce/cart'
+      preLoaderRoute: typeof ApiPublicV1CommerceCartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/addresses': {
+      id: '/api/public/v1/commerce/addresses'
+      path: '/api/public/v1/commerce/addresses'
+      fullPath: '/api/public/v1/commerce/addresses'
+      preLoaderRoute: typeof ApiPublicV1CommerceAddressesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/actions/replay': {
@@ -3587,11 +3669,15 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ActionsConfirmDeliveryRoute,
   ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
   ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
+  ApiPublicV1CommerceAddressesRoute: ApiPublicV1CommerceAddressesRoute,
+  ApiPublicV1CommerceCartRoute: ApiPublicV1CommerceCartRoute,
   ApiPublicV1CommerceConfigRoute: ApiPublicV1CommerceConfigRoute,
   ApiPublicV1DeeplinkKeyRoute: ApiPublicV1DeeplinkKeyRoute,
   ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
   ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
   ApiPublicV1DevicesRevokeRoute: ApiPublicV1DevicesRevokeRoute,
+  ApiPublicV1FieldBundleRoute: ApiPublicV1FieldBundleRoute,
+  ApiPublicV1FieldMutationsRoute: ApiPublicV1FieldMutationsRoute,
   ApiPublicV1NotificationsPreferencesRoute:
     ApiPublicV1NotificationsPreferencesRoute,
   ApiPublicV1NotificationsReadRoute: ApiPublicV1NotificationsReadRoute,

@@ -511,6 +511,90 @@ export type Database = {
           },
         ]
       }
+      buyer_addresses: {
+        Row: {
+          buyer_id: string
+          city: string
+          country: string
+          created_at: string
+          id: string
+          is_default: boolean
+          label: string | null
+          line1: string
+          line2: string | null
+          phone: string | null
+          postal: string | null
+          recipient: string
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          city: string
+          country: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string | null
+          line1: string
+          line2?: string | null
+          phone?: string | null
+          postal?: string | null
+          recipient: string
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string | null
+          line1?: string
+          line2?: string | null
+          phone?: string | null
+          postal?: string | null
+          recipient?: string
+          region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      buyer_carts: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          items: Json
+          subtotal_cents: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          items?: Json
+          subtotal_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          items?: Json
+          subtotal_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       buyer_dispute_events: {
         Row: {
           action: string
@@ -1533,6 +1617,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      buyer_saved_payment_methods: {
+        Row: {
+          brand: string | null
+          buyer_id: string
+          created_at: string
+          exp_month: number | null
+          exp_year: number | null
+          id: string
+          is_default: boolean
+          last4: string | null
+          stripe_pm_id: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          buyer_id: string
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string
+          is_default?: boolean
+          last4?: string | null
+          stripe_pm_id: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          buyer_id?: string
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string
+          is_default?: boolean
+          last4?: string | null
+          stripe_pm_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       buyer_shipment_events: {
         Row: {
@@ -4044,6 +4167,8 @@ export type Database = {
       mobile_commerce_settings: {
         Row: {
           allowed_payment_methods: Json
+          cart_max_items: number
+          cart_ttl_hours: number
           checkout_enabled: boolean
           currency_default: string
           id: string
@@ -4058,6 +4183,8 @@ export type Database = {
         }
         Insert: {
           allowed_payment_methods?: Json
+          cart_max_items?: number
+          cart_ttl_hours?: number
           checkout_enabled?: boolean
           currency_default?: string
           id?: string
@@ -4072,6 +4199,8 @@ export type Database = {
         }
         Update: {
           allowed_payment_methods?: Json
+          cart_max_items?: number
+          cart_ttl_hours?: number
           checkout_enabled?: boolean
           currency_default?: string
           id?: string
@@ -4176,9 +4305,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_field_bundles: {
+        Row: {
+          bundle: Json
+          bundle_bytes: number
+          etag: string
+          expires_at: string
+          generated_at: string
+          user_id: string
+        }
+        Insert: {
+          bundle?: Json
+          bundle_bytes?: number
+          etag: string
+          expires_at?: string
+          generated_at?: string
+          user_id: string
+        }
+        Update: {
+          bundle?: Json
+          bundle_bytes?: number
+          etag?: string
+          expires_at?: string
+          generated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mobile_field_settings: {
         Row: {
           actuator_override_allowed: boolean
+          bundle_max_incidents: number
+          bundle_max_tasks: number
+          bundle_ttl_minutes: number
           default_page_size: number
           geofence_enforced: boolean
           id: boolean
@@ -4191,6 +4350,9 @@ export type Database = {
         }
         Insert: {
           actuator_override_allowed?: boolean
+          bundle_max_incidents?: number
+          bundle_max_tasks?: number
+          bundle_ttl_minutes?: number
           default_page_size?: number
           geofence_enforced?: boolean
           id?: boolean
@@ -4203,6 +4365,9 @@ export type Database = {
         }
         Update: {
           actuator_override_allowed?: boolean
+          bundle_max_incidents?: number
+          bundle_max_tasks?: number
+          bundle_ttl_minutes?: number
           default_page_size?: number
           geofence_enforced?: boolean
           id?: boolean
@@ -4287,6 +4452,27 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_sync_locks: {
+        Row: {
+          endpoint: string
+          idempotency_key: string | null
+          locked_at: string
+          locked_by: string | null
+        }
+        Insert: {
+          endpoint: string
+          idempotency_key?: string | null
+          locked_at?: string
+          locked_by?: string | null
+        }
+        Update: {
+          endpoint?: string
+          idempotency_key?: string | null
+          locked_at?: string
+          locked_by?: string | null
+        }
+        Relationships: []
+      }
       mobile_sync_runs: {
         Row: {
           actor_user_id: string | null
@@ -4295,6 +4481,8 @@ export type Database = {
           error_message: string | null
           finished_at: string | null
           id: string
+          idempotency_key: string | null
+          manual: boolean
           request_meta: Json
           row_count: number | null
           started_at: string
@@ -4307,6 +4495,8 @@ export type Database = {
           error_message?: string | null
           finished_at?: string | null
           id?: string
+          idempotency_key?: string | null
+          manual?: boolean
           request_meta?: Json
           row_count?: number | null
           started_at?: string
@@ -4319,6 +4509,8 @@ export type Database = {
           error_message?: string | null
           finished_at?: string | null
           id?: string
+          idempotency_key?: string | null
+          manual?: boolean
           request_meta?: Json
           row_count?: number | null
           started_at?: string
