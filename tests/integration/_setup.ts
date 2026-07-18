@@ -49,6 +49,13 @@ export async function mintUser(role: "admin" | "manager" | "technician" | "super
 }
 
 export async function cleanupUser(userId: string) {
+  // Buyer artifacts created by checkout
+  const { data: acctRow } = await admin.from("buyer_accounts").select("id, buyer_id").eq("user_id", userId).maybeSingle();
+  if (acctRow) {
+    const acct = acctRow as { id: string; buyer_id: string };
+    await admin.from("buyer_accounts").delete().eq("id", acct.id);
+    await admin.from("buyers").delete().eq("id", acct.buyer_id);
+  }
   await admin.from("buyer_carts").delete().eq("buyer_id", userId);
   await admin.from("buyer_addresses").delete().eq("buyer_id", userId);
   await admin.from("mobile_field_bundles").delete().eq("user_id", userId);
