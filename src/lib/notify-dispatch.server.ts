@@ -244,7 +244,6 @@ export async function dispatchNotification(
     });
   }
 
-  // Push (deferred)
   const pushAllowed = channelAllowed("push", category, prefs);
   if (pushAllowed) {
     const devices = await loadUserDevices(supabaseAdmin, n.user_id);
