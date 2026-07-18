@@ -31,6 +31,7 @@ import {
   LedgerSkeleton,
   TaxRulesSkeleton,
   EarningsSkeleton,
+  InsuranceCommandSkeleton,
 } from "@/components/app/skeletons";
 
 // Route → matching page skeleton. Every page-level skeleton mirrors the real
@@ -73,6 +74,7 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/finance/ledger": LedgerSkeleton,
   "/platform/finance/tax-rules": TaxRulesSkeleton,
   "/earnings": EarningsSkeleton,
+  "/platform/insurance": InsuranceCommandSkeleton,
   "/platform/logistics/command-center": AnalyticsSkeleton,
   "/platform/logistics/fleet": AnalyticsSkeleton,
   "/platform/logistics/carriers": AnalyticsSkeleton,
