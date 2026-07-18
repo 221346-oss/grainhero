@@ -117,6 +117,7 @@ import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes
 import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
+import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
 import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
 import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
@@ -720,6 +721,12 @@ const AuthenticatedPlatformLogisticsCarriersRoute =
     path: '/platform/logistics/carriers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformFinanceTaxRulesRoute =
+  AuthenticatedPlatformFinanceTaxRulesRouteImport.update({
+    id: '/tax-rules',
+    path: '/tax-rules',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
 const AuthenticatedPlatformFinancePayoutsRoute =
   AuthenticatedPlatformFinancePayoutsRouteImport.update({
     id: '/payouts',
@@ -844,6 +851,7 @@ export interface FileRoutesByFullPath {
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -956,6 +964,7 @@ export interface FileRoutesByTo {
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -1072,6 +1081,7 @@ export interface FileRoutesById {
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -1188,6 +1198,7 @@ export interface FileRouteTypes {
     | '/buyer/orders/$orderId'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
+    | '/platform/finance/tax-rules'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1300,6 +1311,7 @@ export interface FileRouteTypes {
     | '/buyer/orders/$orderId'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
+    | '/platform/finance/tax-rules'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1415,6 +1427,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/platform/finance/ledger'
     | '/_authenticated/platform/finance/payouts'
+    | '/_authenticated/platform/finance/tax-rules'
     | '/_authenticated/platform/logistics/carriers'
     | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/logistics/fleet'
@@ -2231,6 +2244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/finance/tax-rules': {
+      id: '/_authenticated/platform/finance/tax-rules'
+      path: '/tax-rules'
+      fullPath: '/platform/finance/tax-rules'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceTaxRulesRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
     '/_authenticated/platform/finance/payouts': {
       id: '/_authenticated/platform/finance/payouts'
       path: '/payouts'
@@ -2311,6 +2331,7 @@ const AuthenticatedBuyerOrdersRouteWithChildren =
 interface AuthenticatedPlatformFinanceRouteChildren {
   AuthenticatedPlatformFinanceLedgerRoute: typeof AuthenticatedPlatformFinanceLedgerRoute
   AuthenticatedPlatformFinancePayoutsRoute: typeof AuthenticatedPlatformFinancePayoutsRoute
+  AuthenticatedPlatformFinanceTaxRulesRoute: typeof AuthenticatedPlatformFinanceTaxRulesRoute
 }
 
 const AuthenticatedPlatformFinanceRouteChildren: AuthenticatedPlatformFinanceRouteChildren =
@@ -2319,6 +2340,8 @@ const AuthenticatedPlatformFinanceRouteChildren: AuthenticatedPlatformFinanceRou
       AuthenticatedPlatformFinanceLedgerRoute,
     AuthenticatedPlatformFinancePayoutsRoute:
       AuthenticatedPlatformFinancePayoutsRoute,
+    AuthenticatedPlatformFinanceTaxRulesRoute:
+      AuthenticatedPlatformFinanceTaxRulesRoute,
   }
 
 const AuthenticatedPlatformFinanceRouteWithChildren =
