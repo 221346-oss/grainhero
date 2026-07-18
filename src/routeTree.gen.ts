@@ -129,6 +129,7 @@ import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_a
 import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
+import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -798,6 +799,12 @@ const AuthenticatedPlatformOrdersOrderIdAuditRoute =
     path: '/audit',
     getParentRoute: () => AuthenticatedPlatformOrdersOrderIdRoute,
   } as any)
+const AuthenticatedPlatformInsuranceClaimsClaimIdRoute =
+  AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport.update({
+    id: '/claims/$claimId',
+    path: '/claims/$claimId',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -916,6 +923,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
@@ -1035,6 +1043,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
@@ -1158,6 +1167,7 @@ export interface FileRoutesById {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
@@ -1281,6 +1291,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
@@ -1400,6 +1411,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
@@ -1522,6 +1534,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
@@ -2406,6 +2419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdAuditRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
     }
+    '/_authenticated/platform/insurance/claims/$claimId': {
+      id: '/_authenticated/platform/insurance/claims/$claimId'
+      path: '/claims/$claimId'
+      fullPath: '/platform/insurance/claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
+    }
   }
 }
 
@@ -2472,6 +2492,7 @@ const AuthenticatedPlatformFinanceRouteWithChildren =
 interface AuthenticatedPlatformInsuranceRouteChildren {
   AuthenticatedPlatformInsuranceAuditRoute: typeof AuthenticatedPlatformInsuranceAuditRoute
   AuthenticatedPlatformInsuranceWebhooksRoute: typeof AuthenticatedPlatformInsuranceWebhooksRoute
+  AuthenticatedPlatformInsuranceClaimsClaimIdRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
 }
 
 const AuthenticatedPlatformInsuranceRouteChildren: AuthenticatedPlatformInsuranceRouteChildren =
@@ -2480,6 +2501,8 @@ const AuthenticatedPlatformInsuranceRouteChildren: AuthenticatedPlatformInsuranc
       AuthenticatedPlatformInsuranceAuditRoute,
     AuthenticatedPlatformInsuranceWebhooksRoute:
       AuthenticatedPlatformInsuranceWebhooksRoute,
+    AuthenticatedPlatformInsuranceClaimsClaimIdRoute:
+      AuthenticatedPlatformInsuranceClaimsClaimIdRoute,
   }
 
 const AuthenticatedPlatformInsuranceRouteWithChildren =
