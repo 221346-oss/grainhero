@@ -64,7 +64,7 @@ export const updateMobileSettings = createServerFn({ method: "POST" })
     cfg.mobile = data;
     const { error } = await context.supabase
       .from("platform_settings")
-      .upsert({ id: "singleton", config: cfg, updated_by: context.userId });
+      .upsert({ id: "singleton", config: cfg as never, updated_by: context.userId });
     if (error) throw error;
     return { ok: true };
   });
