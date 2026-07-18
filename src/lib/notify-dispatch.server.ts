@@ -174,9 +174,6 @@ export async function dispatchNotification(
   const shouldEmail =
     (forceEmail(category, severity) || channelAllowed("email", category, prefs)) && !!profile?.email;
   const shouldSms = channelAllowed("sms", category, prefs) && !!profile?.phone_e164;
-  // Push not wired yet — record as skipped so the audit trail is complete.
-  const shouldPush = false;
-
   const appOrigin = process.env.APP_ORIGIN ?? "https://grainheroo.lovable.app";
 
   // Email
