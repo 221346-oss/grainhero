@@ -83,7 +83,8 @@ export const createPayoutBatch = createServerFn({ method: "POST" })
       }));
       await sb.from("seller_payout_items").insert(items);
       created.push(payout.id);
-      await logActivity(context.supabase, {
+      await logActivity({
+      sb: context.supabase,
         userId: context.userId, action: "payout.created",
         entityType: "seller_payout", entityId: payout.id,
         metadata: { sellerId, gross },
@@ -103,7 +104,8 @@ export const approvePayout = createServerFn({ method: "POST" })
       status: "approved", approved_by: context.userId, approved_at: new Date().toISOString(),
     }).eq("id", data.payoutId);
     if (error) throw error;
-    await logActivity(context.supabase, {
+    await logActivity({
+      sb: context.supabase,
       userId: context.userId, action: "payout.approved",
       entityType: "seller_payout", entityId: data.payoutId,
     });
@@ -142,7 +144,8 @@ export const markPayoutPaid = createServerFn({ method: "POST" })
       reference: data.reference ?? null, receipt_url: data.receiptUrl ?? null,
     }).eq("id", data.payoutId);
     if (error) throw error;
-    await logActivity(context.supabase, {
+    await logActivity({
+      sb: context.supabase,
       userId: context.userId, action: "payout.paid",
       entityType: "seller_payout", entityId: data.payoutId,
       metadata: { reference: data.reference ?? null },
@@ -161,7 +164,8 @@ export const cancelPayout = createServerFn({ method: "POST" })
       status: "cancelled", failed_reason: data.reason ?? null,
     }).eq("id", data.payoutId);
     if (error) throw error;
-    await logActivity(context.supabase, {
+    await logActivity({
+      sb: context.supabase,
       userId: context.userId, action: "payout.cancelled",
       entityType: "seller_payout", entityId: data.payoutId,
       metadata: { reason: data.reason ?? null },
