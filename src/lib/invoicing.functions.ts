@@ -103,7 +103,7 @@ export const generateInvoice = createServerFn({ method: "POST" })
     return { id: (inv as Row).id as string, invoiceNumber, existed: false, pdfUrl };
   });
 
-async function sendInvoiceEmailAndTrack(
+export async function sendInvoiceEmailAndTrack(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sb: any, invoiceId: string, orderId: string,
 ): Promise<{ ok: boolean; error?: string }> {
