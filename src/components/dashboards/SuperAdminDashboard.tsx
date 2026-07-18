@@ -69,6 +69,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         <InsightTile to="/platform/health" label="Critical alerts" value={m?.criticalAlerts ?? 0} />
       </div>
 
+      <CustomWidgetsBand />
+
       {/* Charts — 3 up */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Card>
