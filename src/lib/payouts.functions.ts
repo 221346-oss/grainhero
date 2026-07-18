@@ -85,9 +85,9 @@ export const createPayoutBatch = createServerFn({ method: "POST" })
       created.push(payout.id);
       await logActivity({
       sb: context.supabase,
-        userId: context.userId, action: "payout.created",
-        entityType: "seller_payout", entityId: payout.id,
-        metadata: { sellerId, gross },
+        actorId: context.userId, action: "payout.created",
+        targetType: "seller_payout", targetId: payout.id,
+        meta: { sellerId, gross },
       });
     }
     return { created };
@@ -106,8 +106,8 @@ export const approvePayout = createServerFn({ method: "POST" })
     if (error) throw error;
     await logActivity({
       sb: context.supabase,
-      userId: context.userId, action: "payout.approved",
-      entityType: "seller_payout", entityId: data.payoutId,
+      actorId: context.userId, action: "payout.approved",
+      targetType: "seller_payout", targetId: data.payoutId,
     });
     return { ok: true };
   });
@@ -136,7 +136,7 @@ export const markPayoutPaid = createServerFn({ method: "POST" })
       await sb.from("finance_ledger_entries").insert({
         entry_type: "payout_out", direction: "debit", amount: payout.net_amount,
         currency: payout.currency, seller_id: payout.seller_id, status: "paid",
-        payout_id: data.payoutId, metadata: { reference: data.reference ?? null },
+        payout_id: data.payoutId, meta: { reference: data.reference ?? null },
       });
     }
     const { error } = await sb.from("seller_payouts").update({
@@ -146,9 +146,9 @@ export const markPayoutPaid = createServerFn({ method: "POST" })
     if (error) throw error;
     await logActivity({
       sb: context.supabase,
-      userId: context.userId, action: "payout.paid",
-      entityType: "seller_payout", entityId: data.payoutId,
-      metadata: { reference: data.reference ?? null },
+      actorId: context.userId, action: "payout.paid",
+      targetType: "seller_payout", targetId: data.payoutId,
+      meta: { reference: data.reference ?? null },
     });
     return { ok: true };
   });
@@ -166,9 +166,9 @@ export const cancelPayout = createServerFn({ method: "POST" })
     if (error) throw error;
     await logActivity({
       sb: context.supabase,
-      userId: context.userId, action: "payout.cancelled",
-      entityType: "seller_payout", entityId: data.payoutId,
-      metadata: { reason: data.reason ?? null },
+      actorId: context.userId, action: "payout.cancelled",
+      targetType: "seller_payout", targetId: data.payoutId,
+      meta: { reason: data.reason ?? null },
     });
     return { ok: true };
   });
