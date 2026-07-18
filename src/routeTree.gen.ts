@@ -133,6 +133,7 @@ import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } f
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
+import { Route as ApiPublicV1SyncSilosRouteImport } from './routes/api/public/v1/sync/silos'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
 import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
 
@@ -827,6 +828,11 @@ const ApiPublicWebhooksCarrierCarrierCodeRoute =
     path: '/api/public/webhooks/carrier/$carrierCode',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1SyncSilosRoute = ApiPublicV1SyncSilosRouteImport.update({
+  id: '/api/public/v1/sync/silos',
+  path: '/api/public/v1/sync/silos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPlatformOrdersOrderIdAuditRoute =
   AuthenticatedPlatformOrdersOrderIdAuditRouteImport.update({
     id: '/audit',
@@ -964,6 +970,7 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -1089,6 +1096,7 @@ export interface FileRoutesByTo {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -1218,6 +1226,7 @@ export interface FileRoutesById {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -1347,6 +1356,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/sync/silos'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
   fileRoutesByTo: FileRoutesByTo
@@ -1472,6 +1482,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/sync/silos'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
   id:
@@ -1600,6 +1611,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
+    | '/api/public/v1/sync/silos'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
   fileRoutesById: FileRoutesById
@@ -1639,6 +1651,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicV1MetaRoute: typeof ApiPublicV1MetaRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiPublicV1SyncSilosRoute: typeof ApiPublicV1SyncSilosRoute
   ApiPublicWebhooksCarrierCarrierCodeRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   ApiPublicWebhooksInsuranceCarrierCodeRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -2513,6 +2526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/sync/silos': {
+      id: '/api/public/v1/sync/silos'
+      path: '/api/public/v1/sync/silos'
+      fullPath: '/api/public/v1/sync/silos'
+      preLoaderRoute: typeof ApiPublicV1SyncSilosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/platform/orders/$orderId/audit': {
       id: '/_authenticated/platform/orders/$orderId/audit'
       path: '/audit'
@@ -2899,6 +2919,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksSensorOfflineDetectorRoute,
   ApiPublicV1MetaRoute: ApiPublicV1MetaRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiPublicV1SyncSilosRoute: ApiPublicV1SyncSilosRoute,
   ApiPublicWebhooksCarrierCarrierCodeRoute:
     ApiPublicWebhooksCarrierCarrierCodeRoute,
   ApiPublicWebhooksInsuranceCarrierCodeRoute:
