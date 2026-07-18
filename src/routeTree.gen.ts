@@ -107,6 +107,7 @@ import { Route as AuthenticatedPlatformFieldIncidentsRouteImport } from './route
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
+import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
 import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
@@ -705,6 +706,12 @@ const AuthenticatedPlatformDashboardBuilderRoute =
     path: '/platform/dashboard-builder',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformCommerceMobileRoute =
+  AuthenticatedPlatformCommerceMobileRouteImport.update({
+    id: '/platform/commerce-mobile',
+    path: '/platform/commerce-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformAuditLogsRoute =
   AuthenticatedPlatformAuditLogsRouteImport.update({
     id: '/platform/audit-logs',
@@ -1116,6 +1123,7 @@ export interface FileRoutesByFullPath {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1272,6 +1280,7 @@ export interface FileRoutesByTo {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1432,6 +1441,7 @@ export interface FileRoutesById {
   '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1592,6 +1602,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1748,6 +1759,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1907,6 +1919,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyer/orders'
     | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/commerce-mobile'
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
@@ -2753,6 +2766,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformDashboardBuilderRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/commerce-mobile': {
+      id: '/_authenticated/platform/commerce-mobile'
+      path: '/platform/commerce-mobile'
+      fullPath: '/platform/commerce-mobile'
+      preLoaderRoute: typeof AuthenticatedPlatformCommerceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/audit-logs': {
       id: '/_authenticated/platform/audit-logs'
       path: '/platform/audit-logs'
@@ -3335,6 +3355,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformCommerceMobileRoute: typeof AuthenticatedPlatformCommerceMobileRoute
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
@@ -3414,6 +3435,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsuranceClaimsClaimIdRoute:
     AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformCommerceMobileRoute:
+    AuthenticatedPlatformCommerceMobileRoute,
   AuthenticatedPlatformDashboardBuilderRoute:
     AuthenticatedPlatformDashboardBuilderRoute,
   AuthenticatedPlatformDispatchAnalyticsRoute:
