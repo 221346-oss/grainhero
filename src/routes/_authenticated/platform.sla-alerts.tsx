@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSlaAlerts, getSlaDrilldown } from "@/lib/sla-alerts.functions";
-import { AlertTriangle, TrendingDown, ExternalLink } from "lucide-react";
+import { AlertTriangle, TrendingDown, ExternalLink, ScrollText } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -141,6 +141,9 @@ function SlaAlertsPage() {
                         <td>
                           <Link to="/platform/orders/$orderId" params={{ orderId: s.order_id as string }}>
                             <Button variant="ghost" size="sm"><ExternalLink className="h-3 w-3" /></Button>
+                          </Link>
+                          <Link to="/platform/orders/$orderId/audit" params={{ orderId: s.order_id as string }}>
+                            <Button variant="ghost" size="sm" title="Audit timeline"><ScrollText className="h-3 w-3" /></Button>
                           </Link>
                         </td>
                       </tr>
