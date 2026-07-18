@@ -118,6 +118,7 @@ import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './route
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
 import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
+import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
@@ -725,6 +726,12 @@ const AuthenticatedPlatformFinancePayoutsRoute =
     path: '/payouts',
     getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
+const AuthenticatedPlatformFinanceLedgerRoute =
+  AuthenticatedPlatformFinanceLedgerRouteImport.update({
+    id: '/ledger',
+    path: '/ledger',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
 const AuthenticatedBuyerOrdersOrderIdRoute =
   AuthenticatedBuyerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
@@ -835,6 +842,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
@@ -946,6 +954,7 @@ export interface FileRoutesByTo {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
@@ -1061,6 +1070,7 @@ export interface FileRoutesById {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
@@ -1176,6 +1186,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
+    | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
@@ -1287,6 +1298,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
+    | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
@@ -1401,6 +1413,7 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/platform/finance/ledger'
     | '/_authenticated/platform/finance/payouts'
     | '/_authenticated/platform/logistics/carriers'
     | '/_authenticated/platform/logistics/command-center'
@@ -2225,6 +2238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFinancePayoutsRouteImport
       parentRoute: typeof AuthenticatedPlatformFinanceRoute
     }
+    '/_authenticated/platform/finance/ledger': {
+      id: '/_authenticated/platform/finance/ledger'
+      path: '/ledger'
+      fullPath: '/platform/finance/ledger'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
     '/_authenticated/buyer/orders/$orderId': {
       id: '/_authenticated/buyer/orders/$orderId'
       path: '/$orderId'
@@ -2289,11 +2309,14 @@ const AuthenticatedBuyerOrdersRouteWithChildren =
   )
 
 interface AuthenticatedPlatformFinanceRouteChildren {
+  AuthenticatedPlatformFinanceLedgerRoute: typeof AuthenticatedPlatformFinanceLedgerRoute
   AuthenticatedPlatformFinancePayoutsRoute: typeof AuthenticatedPlatformFinancePayoutsRoute
 }
 
 const AuthenticatedPlatformFinanceRouteChildren: AuthenticatedPlatformFinanceRouteChildren =
   {
+    AuthenticatedPlatformFinanceLedgerRoute:
+      AuthenticatedPlatformFinanceLedgerRoute,
     AuthenticatedPlatformFinancePayoutsRoute:
       AuthenticatedPlatformFinancePayoutsRoute,
   }
