@@ -97,6 +97,7 @@ import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './ro
 import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
 import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
 import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
@@ -655,6 +656,12 @@ const AuthenticatedPlatformLeadsRoute =
     path: '/platform/leads',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformLaunchReadinessRoute =
+  AuthenticatedPlatformLaunchReadinessRouteImport.update({
+    id: '/platform/launch-readiness',
+    path: '/platform/launch-readiness',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformInvoiceFailuresRoute =
   AuthenticatedPlatformInvoiceFailuresRouteImport.update({
     id: '/platform/invoice-failures',
@@ -1194,6 +1201,7 @@ export interface FileRoutesByFullPath {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -1360,6 +1368,7 @@ export interface FileRoutesByTo {
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -1530,6 +1539,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
   '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/_authenticated/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -1700,6 +1710,7 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/insurance'
     | '/platform/invoice-failures'
+    | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
@@ -1866,6 +1877,7 @@ export interface FileRouteTypes {
     | '/platform/health'
     | '/platform/insurance'
     | '/platform/invoice-failures'
+    | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
@@ -2035,6 +2047,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/insurance'
     | '/_authenticated/platform/invoice-failures'
+    | '/_authenticated/platform/launch-readiness'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/marketplace-health'
@@ -2818,6 +2831,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/launch-readiness': {
+      id: '/_authenticated/platform/launch-readiness'
+      path: '/platform/launch-readiness'
+      fullPath: '/platform/launch-readiness'
+      preLoaderRoute: typeof AuthenticatedPlatformLaunchReadinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/invoice-failures': {
       id: '/_authenticated/platform/invoice-failures'
       path: '/platform/invoice-failures'
@@ -3551,6 +3571,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformInsuranceRoute: typeof AuthenticatedPlatformInsuranceRouteWithChildren
   AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
+  AuthenticatedPlatformLaunchReadinessRoute: typeof AuthenticatedPlatformLaunchReadinessRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
   AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
@@ -3639,6 +3660,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformInsuranceRouteWithChildren,
   AuthenticatedPlatformInvoiceFailuresRoute:
     AuthenticatedPlatformInvoiceFailuresRoute,
+  AuthenticatedPlatformLaunchReadinessRoute:
+    AuthenticatedPlatformLaunchReadinessRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
   AuthenticatedPlatformMarketplaceHealthRoute:

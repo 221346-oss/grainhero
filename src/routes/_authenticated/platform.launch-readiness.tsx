@@ -3,9 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getLaunchReadiness } from "@/lib/launch-readiness.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Rocket } from "lucide-react";
+import { Check, X, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/launch-readiness")({
   head: () => ({ meta: [{ title: "Launch Readiness — Grain Hero" }, { name: "robots", content: "noindex" }] }),
@@ -23,11 +24,12 @@ function LaunchReadinessPage() {
   return (
     <AdminPageShell
       title="Launch Readiness"
-      description="Final go-live checklist covering payments, notifications, mobile sync, and disputes."
-      icon={Rocket}
-      isLoading={isLoading}
-      onRefresh={() => refetch()}
-      isRefreshing={isFetching}
+      subtitle="Final go-live checklist covering payments, notifications, mobile sync, and disputes."
+      actions={
+        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || isLoading}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+        </Button>
+      }
     >
       <Card className="p-6 mb-4 flex items-center justify-between">
         <div>
