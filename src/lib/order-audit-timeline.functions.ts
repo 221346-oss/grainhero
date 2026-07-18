@@ -20,7 +20,8 @@ export type TimelineEntry = {
   from: string | null;
   to: string | null;
   note: string | null;
-  metadata: Record<string, unknown> | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  metadata: any;
   createdAt: string;
 };
 
@@ -104,7 +105,7 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
         from: null,
         to: r.event_code,
         note: r.note ?? null,
-        metadata: (r.metadata ?? null) as Record<string, unknown> | null,
+        metadata: r.metadata ?? null,
         createdAt: r.created_at,
       });
     }
@@ -119,7 +120,7 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
         from: r.from_state ?? null,
         to: r.to_state,
         note: r.note ?? null,
-        metadata: (r.metadata ?? null) as Record<string, unknown> | null,
+        metadata: r.metadata ?? null,
         createdAt: r.created_at,
       });
     }
@@ -134,7 +135,7 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
         from: null,
         to: null,
         note: r.description ?? null,
-        metadata: (r.metadata ?? null) as Record<string, unknown> | null,
+        metadata: r.metadata ?? null,
         createdAt: r.created_at,
       });
     }
