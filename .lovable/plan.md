@@ -1,142 +1,110 @@
-# Phase 17 — Logistics Orchestration, Carrier Integrations & Route Optimization
+# Phase 18 — Finance Operations, Payouts & Tax Compliance
 
-## Why now
-Phases 13–16 covered dispatch tracking, disputes, refunds, messaging, returns, and quality. What's still missing is the **operational spine that plans the dispatch itself**: who drives, which vehicle, which route, how much fuel, and how carrier tracking events flow back automatically instead of being typed by the seller. Phase 17 turns dispatch from a manual log into a coordinated logistics workflow — while staying fully super-admin-configurable (no hardcoded carriers, vehicle types, or SLA rules).
+## Why this phase now
+Phases 11–17 built the marketplace, dispatch, disputes, refunds, reputation, and logistics cost tracking. Money currently flows in (buyer payments) and out (refunds, logistics costs), but there is no formal **seller payout ledger**, no **tax handling**, and no **finance reconciliation surface** for super-admins. Kimi's roadmap and our finalized plan both call for a "Finance & Payouts" pillar before we open the platform to external sellers at scale. This phase closes that gap — fully driven by super-admin settings, zero hardcoding.
 
 ## Goals
-1. Model **carriers, vehicles, and drivers** as first-class, super-admin-managed entities.
-2. Let sellers **assign a carrier + driver + vehicle** to a shipment and auto-generate expected pickup / delivery windows from marketplace settings.
-3. **Auto-ingest tracking events** from external carriers (webhook + polling fallback) and merge them into the existing shipment timeline.
-4. Provide **route optimization** for multi-stop dispatches (nearest-neighbour + distance matrix) with a map preview.
-5. Add a **logistics cost ledger** (fuel, driver payout, tolls) that feeds the financials dashboard and profit calc.
-6. Give super-admins a **Logistics Command Center** with fleet utilization, on-time %, and cost-per-kg analytics.
+1. Track every money movement (payment, refund, platform fee, logistics cost, tax, payout) in a unified **finance ledger**.
+2. Compute seller **payout balances** automatically after each delivered/refunded order.
+3. Let super-admins **approve, schedule, and mark payouts as paid** (manual bank transfer first; Stripe Connect stub ready for later).
+4. Apply **tax rules** (VAT/GST/sales tax) configurable per region and per plan tier.
+5. Give super-admins a **Finance Command Center** with reconciliation, aging, and export.
+6. Give sellers a **Payouts & Earnings** page with statement PDFs.
 
 ## Data model (new tables)
+- `finance_ledger_entries` — append-only rows: `entry_type` (payment_in, refund_out, platform_fee, logistics_cost, tax, payout_out, adjustment), `direction` (credit/debit), `amount`, `currency`, `seller_id`, `order_id`, `payout_id?`, `occurred_at`, `metadata jsonb`.
+- `seller_payout_accounts` — bank details (encrypted), preferred method, minimum payout threshold override.
+- `seller_payouts` — batch: `status` (pending, approved, processing, paid, failed, cancelled), `period_start/end`, `gross`, `fees`, `tax_withheld`, `net`, `reference`, `paid_at`, `receipt_url`.
+- `seller_payout_items` — join between `seller_payouts` and `finance_ledger_entries`.
+- `tax_rules` — `region`, `rule_type` (vat/gst/sales), `rate_pct`, `applies_to` (buyer/seller/platform_fee), `effective_from/to`, `active`.
+- `tax_registrations` — seller VAT/GST IDs per region for reverse-charge logic.
+- `finance_statements` — generated PDFs per seller per period.
 
-```text
-carriers                    (super-admin managed catalog)
-  ├─ code, name, type (in_house | third_party)
-  ├─ webhook_secret, tracking_url_template
-  └─ contact_email, contact_phone, active
+All tables: standard grants (`authenticated` + `service_role`), RLS scoping sellers to their own rows, super-admins to all.
 
-vehicles
-  ├─ carrier_id → carriers
-  ├─ registration_no, type (truck|van|pickup), capacity_kg
-  ├─ fuel_type, avg_kmpl, active
-  └─ current_status (idle|assigned|in_transit|maintenance)
+## Marketplace settings extension (super-admin, no hardcoding)
+Extend `marketplace-settings.functions.ts` `finance` schema with:
+- `payoutSchedule`: `manual | weekly | biweekly | monthly` + day-of-week/month.
+- `minimumPayoutAmount` per currency.
+- `platformFeePct` (default) + optional per-plan overrides.
+- `holdPeriodDays` after delivery before funds become payable.
+- `defaultCurrency`, `supportedCurrencies[]`.
+- `taxMode`: `inclusive | exclusive`.
+- `payoutMethods[]` (bank_transfer, stripe_connect_future) with per-method fee.
+- `statementTemplate` (heading, footer, tax notes).
 
-drivers
-  ├─ carrier_id → carriers
-  ├─ profile_id (nullable — optional link to app user)
-  ├─ full_name, phone, license_no, license_expiry
-  └─ active, rating (denormalized)
+## Server functions
+`src/lib/finance-ledger.functions.ts`
+- `recordLedgerEntry` (internal helper, called from Stripe webhook, refund handler, logistics cost handler).
+- `getSellerBalance({ sellerId })` — running balance + `payable / on_hold / paid_out`.
+- `getPlatformFinanceSummary({ range })` — GMV, fees, refunds, tax collected, net platform revenue.
 
-shipment_assignments
-  ├─ shipment_id → buyer_shipments (1-1)
-  ├─ carrier_id, vehicle_id, driver_id
-  ├─ planned_pickup_at, planned_delivery_at
-  ├─ actual_pickup_at, actual_delivery_at
-  ├─ distance_km, route_polyline (text)
-  └─ status, assigned_by, assigned_at
+`src/lib/payouts.functions.ts`
+- `listPayableSellers()` (super-admin) — sellers over threshold.
+- `createPayoutBatch({ sellerIds, periodStart, periodEnd })`.
+- `approvePayout / markPayoutPaid / cancelPayout` (super-admin) with receipt upload to `logistics-receipts`-style new `payout-receipts` bucket.
+- `getSellerPayouts()` (seller-scoped).
+- `generatePayoutStatementPdf` — pdf-lib, stored in `finance-statements` bucket.
 
-shipment_route_stops        (multi-stop support)
-  ├─ assignment_id, sequence
-  ├─ stop_type (pickup|dropoff|waypoint)
-  ├─ address, lat, lng
-  └─ eta, arrived_at, departed_at
+`src/lib/tax.functions.ts`
+- `resolveTaxForOrder({ orderId })` — applied at checkout and to platform fee.
+- `listTaxRules / upsertTaxRule / archiveTaxRule` (super-admin).
+- `upsertTaxRegistration` (seller).
 
-logistics_cost_entries
-  ├─ assignment_id, category (fuel|driver_payout|toll|misc)
-  ├─ amount, currency, incurred_at
-  └─ recorded_by, receipt_url
+## Integration points (retrofit, non-breaking)
+- Stripe webhook (`charge.succeeded`, `charge.refunded`): also call `recordLedgerEntry` for payment_in, platform_fee, tax.
+- `refunds.functions.ts`: emit refund_out entry.
+- `logistics-cost-entries` insert trigger → ledger entry `logistics_cost` (debit against relevant seller when attributable, else platform).
+- `buyer-checkout.functions.ts`: compute tax via `resolveTaxForOrder` when `taxMode=exclusive`, store on invoice.
+- `invoicing-pdf.server.ts`: render tax line + seller VAT ID.
 
-carrier_tracking_events     (raw carrier payloads)
-  ├─ shipment_id, carrier_id
-  ├─ external_event_id (unique per carrier)
-  ├─ event_code, event_label, occurred_at
-  └─ raw_payload jsonb, mapped_status
-```
-
-All tables: RLS on, GRANTs to `authenticated` + `service_role`, updated_at triggers.
-
-## Super-admin settings (extend marketplace_settings JSON)
-
-```text
-logistics: {
-  carriers_enabled: true,
-  default_pickup_window_hours: 24,
-  default_delivery_window_hours: 72,
-  fuel_cost_per_litre: 285,
-  driver_payout_per_km: 12,
-  route_optimizer: "nearest_neighbour" | "off",
-  distance_provider: "haversine" | "osrm",
-  osrm_base_url: "",
-  polling_interval_minutes: 15,
-  auto_close_after_delivery_hours: 48
-}
-```
-
-## Server functions (`src/lib/logistics.functions.ts`)
-- `listCarriers`, `upsertCarrier`, `deactivateCarrier` (super-admin only)
-- `listVehicles`, `upsertVehicle`, `listDrivers`, `upsertDriver`
-- `assignShipment({shipmentId, carrierId, vehicleId, driverId, stops[]})`
-  - validates capacity, driver license expiry, active flags
-  - computes distance via haversine or OSRM (settings driven)
-  - writes `shipment_assignments` + `shipment_route_stops`
-  - appends a `buyer_shipment_events` row ("Carrier assigned")
-- `optimizeRoute({assignmentId})` → nearest-neighbour reordering of stops
-- `recordLogisticsCost({assignmentId, category, amount, receiptFile})`
-- `getFleetUtilization({from,to})`, `getOnTimeStats`, `getCostPerKg`
-
-## Public endpoints (external, signed)
-- `POST /api/public/carrier-webhook/$carrierCode`
-  - HMAC verify against `carriers.webhook_secret`
-  - upsert `carrier_tracking_events` (dedupe on `external_event_id`)
-  - map `event_code` → shipment status via a super-admin mapping table field on `carriers.event_map` (JSONB)
-  - append normalized `buyer_shipment_events` row (actor = "carrier:<code>")
-- Cron `GET /api/public/cron/carrier-poll` (hourly)
-  - for carriers without webhooks, poll `tracking_url_template` and reconcile
+## Cron / automation (`/api/public/cron/*`)
+- `finance-hold-release` (hourly) — moves ledger entries past `holdPeriodDays` from `on_hold` → `payable`.
+- `payout-auto-batch` (daily) — when schedule ≠ manual, auto-create payout batches ready for super-admin approval.
+- `finance-daily-digest` — email super-admins today's GMV, fees, refunds, and pending payout count.
 
 ## UI
 
-### Seller side
-- **Dispatch drawer** gains a "Logistics" tab: pick carrier → vehicle → driver → auto-suggest pickup/delivery windows → optional multi-stop editor with drag-to-reorder + "Optimize route" button → live map preview (Leaflet via `<ClientOnly>` + dynamic import) → cost estimate.
-- Cost ledger: add fuel/tolls with receipt upload after delivery.
+Super-admin:
+- `/platform/finance` — Command Center: KPI tiles (GMV, net revenue, refunds, tax collected, pending payouts), 30d trend chart, top sellers by GMV, aging buckets. CSV + PDF export.
+- `/platform/finance/payouts` — batches table, filters (status, seller, period), detail sheet with items, approve/mark-paid/upload receipt actions.
+- `/platform/finance/tax-rules` — CRUD table with region/rate/effective dates.
+- `/platform/finance/ledger` — filterable ledger explorer with drill-down to source order.
+- Extend `/platform/marketplace-settings` with a **Finance** tab.
 
-### Super-admin
-- `/platform/logistics/carriers` — CRUD carriers, webhook secret rotation, event-map JSON editor with schema hints.
-- `/platform/logistics/fleet` — vehicles + drivers tabs, utilization sparklines, license-expiry warnings.
-- `/platform/logistics/command-center` — KPIs (on-time %, avg cost/kg, active shipments), map of live shipments, filters by carrier/date/silo.
-- `marketplace-settings` gets a "Logistics" section for the JSON knobs above.
+Seller (admin role acting as seller):
+- `/earnings` — balance card (payable / on-hold / lifetime paid), upcoming payout ETA, recent payouts table with statement PDF download.
+- `/earnings/tax` — enter VAT/GST registration per region.
+- `/earnings/payout-account` — bank details form.
 
-### Buyer side
-- Order tracking page shows carrier logo, driver first name, vehicle reg (masked last 3 chars), external tracking URL when available, and the merged timeline.
+Buyer:
+- Invoice PDF and order summary already show line items; add tax breakdown row when `taxMode=exclusive`.
+
+## Skeletons & navigation
+- Register `FinanceCenterSkeleton`, `PayoutsSkeleton`, `LedgerSkeleton`, `EarningsSkeleton` in `router.tsx`.
+- Sidebar: add "Finance" group for super-admin (Command Center, Payouts, Ledger, Tax Rules); add "Earnings" for admin/seller role.
 
 ## Notifications
-Reuse existing `dispatchNotification`. New templates (all editable in marketplace settings):
-- `logistics.carrier_assigned` (buyer + seller)
-- `logistics.eta_updated` (buyer)
-- `logistics.delivery_delayed` (buyer + super-admin, triggered when now > planned_delivery_at and status ≠ delivered)
+Reuse `dispatchNotification`:
+- Seller: payout approved, payout paid (with statement link), payout failed, tax registration verified.
+- Super-admin: seller crossed payout threshold, payout marked failed by bank, tax rule expiring in 7 days.
 
-## Financials integration
-- `financials.functions.ts` extended: subtract `logistics_cost_entries.amount` from gross when computing per-order profit.
-- New "Logistics costs" line item on the financial PDF report.
+Templates all live in marketplace settings (editable, no hardcoding).
 
-## Cron / automation
-- `carrier-poll` — hourly
-- `delivery-delay-scan` — every 30 min, fires the delayed notification once per shipment
-- `driver-license-expiry-scan` — daily, notifies super-admin 14/7/1 days before expiry
+## Security & compliance
+- Bank details encrypted at rest via `pgcrypto` symmetric key stored in `FINANCE_ENCRYPTION_KEY` secret (add via `add_secret`).
+- Ledger is append-only: RLS blocks UPDATE/DELETE for everyone except `service_role`; corrections happen via `adjustment` entries.
+- Super-admin payout actions logged to `activity_logs` with actor + IP.
 
-## Zero-hardcoding checklist
-- Carrier list, event-code mappings, cost rates, polling interval, optimizer choice, distance provider, notification templates → all in `marketplace_settings` or per-carrier rows.
-- No literal carrier names or vehicle types anywhere in components.
+## Deliverables order
+1. Migration (tables, buckets, grants, RLS, ledger triggers).
+2. `add_secret FINANCE_ENCRYPTION_KEY` if missing.
+3. Marketplace settings extension.
+4. `finance-ledger`, `tax`, `payouts` server functions.
+5. Retrofit Stripe webhook, refunds, logistics cost, invoicing.
+6. Cron routes + pg_cron jobs.
+7. Super-admin UI (4 pages) + settings tab.
+8. Seller UI (3 pages) + sidebar wiring.
+9. Skeletons + notifications templates + activity logging.
 
-## Rollout order in this phase
-1. Migration (all tables + settings extension + storage bucket `logistics-receipts`).
-2. `logistics.functions.ts` + carrier webhook route + cron routes.
-3. Super-admin carriers/fleet/settings UI.
-4. Seller dispatch-drawer logistics tab + map + optimizer.
-5. Buyer tracking enhancements + notification templates.
-6. Command Center analytics + financials integration.
-
-Reply **go** to execute Phase 17.
+Reply **go** to execute.
