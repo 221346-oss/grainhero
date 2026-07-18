@@ -86,6 +86,7 @@ import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
 import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
 import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
 import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
@@ -105,6 +106,7 @@ import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './route
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
 import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
+import { Route as ApiPublicV1MetaRouteImport } from './routes/api/public/v1/meta'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
 import { Route as ApiPublicHooksAnalyticsRefreshRouteImport } from './routes/api/public/hooks/analytics-refresh'
@@ -132,6 +134,19 @@ import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } f
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
+import { Route as ApiPublicV1UploadsSignRouteImport } from './routes/api/public/v1/uploads/sign'
+import { Route as ApiPublicV1SyncSilosRouteImport } from './routes/api/public/v1/sync/silos'
+import { Route as ApiPublicV1SyncSensorsRouteImport } from './routes/api/public/v1/sync/sensors'
+import { Route as ApiPublicV1SyncNotificationsRouteImport } from './routes/api/public/v1/sync/notifications'
+import { Route as ApiPublicV1SyncHardwareOrdersRouteImport } from './routes/api/public/v1/sync/hardware-orders'
+import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/public/v1/sync/buyer-orders'
+import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
+import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
+import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
+import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
+import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
+import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
+import { Route as ApiPublicV1ActionsAckAlertRouteImport } from './routes/api/public/v1/actions/ack-alert'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
 import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
 
@@ -547,6 +562,12 @@ const AuthenticatedPlatformOrdersRoute =
     path: '/platform/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMobileSettingsRoute =
+  AuthenticatedPlatformMobileSettingsRouteImport.update({
+    id: '/platform/mobile-settings',
+    path: '/platform/mobile-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformMetricsRoute =
   AuthenticatedPlatformMetricsRouteImport.update({
     id: '/platform/metrics',
@@ -658,6 +679,11 @@ const AuthenticatedAdminsAdminIdRoute =
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
   path: '/api/public/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1MetaRoute = ApiPublicV1MetaRouteImport.update({
+  id: '/api/public/v1/meta',
+  path: '/api/public/v1/meta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksSensorOfflineDetectorRoute =
@@ -821,6 +847,80 @@ const ApiPublicWebhooksCarrierCarrierCodeRoute =
     path: '/api/public/webhooks/carrier/$carrierCode',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1UploadsSignRoute = ApiPublicV1UploadsSignRouteImport.update({
+  id: '/api/public/v1/uploads/sign',
+  path: '/api/public/v1/uploads/sign',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SyncSilosRoute = ApiPublicV1SyncSilosRouteImport.update({
+  id: '/api/public/v1/sync/silos',
+  path: '/api/public/v1/sync/silos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SyncSensorsRoute = ApiPublicV1SyncSensorsRouteImport.update({
+  id: '/api/public/v1/sync/sensors',
+  path: '/api/public/v1/sync/sensors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SyncNotificationsRoute =
+  ApiPublicV1SyncNotificationsRouteImport.update({
+    id: '/api/public/v1/sync/notifications',
+    path: '/api/public/v1/sync/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncHardwareOrdersRoute =
+  ApiPublicV1SyncHardwareOrdersRouteImport.update({
+    id: '/api/public/v1/sync/hardware-orders',
+    path: '/api/public/v1/sync/hardware-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncBuyerOrdersRoute =
+  ApiPublicV1SyncBuyerOrdersRouteImport.update({
+    id: '/api/public/v1/sync/buyer-orders',
+    path: '/api/public/v1/sync/buyer-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncAlertsRoute = ApiPublicV1SyncAlertsRouteImport.update({
+  id: '/api/public/v1/sync/alerts',
+  path: '/api/public/v1/sync/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1DevicesRevokeRoute =
+  ApiPublicV1DevicesRevokeRouteImport.update({
+    id: '/api/public/v1/devices/revoke',
+    path: '/api/public/v1/devices/revoke',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesRegisterRoute =
+  ApiPublicV1DevicesRegisterRouteImport.update({
+    id: '/api/public/v1/devices/register',
+    path: '/api/public/v1/devices/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesHeartbeatRoute =
+  ApiPublicV1DevicesHeartbeatRouteImport.update({
+    id: '/api/public/v1/devices/heartbeat',
+    path: '/api/public/v1/devices/heartbeat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsInstallStepRoute =
+  ApiPublicV1ActionsInstallStepRouteImport.update({
+    id: '/api/public/v1/actions/install-step',
+    path: '/api/public/v1/actions/install-step',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsConfirmDeliveryRoute =
+  ApiPublicV1ActionsConfirmDeliveryRouteImport.update({
+    id: '/api/public/v1/actions/confirm-delivery',
+    path: '/api/public/v1/actions/confirm-delivery',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsAckAlertRoute =
+  ApiPublicV1ActionsAckAlertRouteImport.update({
+    id: '/api/public/v1/actions/ack-alert',
+    path: '/api/public/v1/actions/ack-alert',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPlatformOrdersOrderIdAuditRoute =
   AuthenticatedPlatformOrdersOrderIdAuditRouteImport.update({
     id: '/audit',
@@ -912,6 +1012,7 @@ export interface FileRoutesByFullPath {
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -954,9 +1055,23 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
+  '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
+  '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
+  '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
+  '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -1036,6 +1151,7 @@ export interface FileRoutesByTo {
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1078,9 +1194,23 @@ export interface FileRoutesByTo {
   '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
+  '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
+  '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
+  '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
+  '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -1164,6 +1294,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/_authenticated/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/_authenticated/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/_authenticated/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1206,9 +1337,23 @@ export interface FileRoutesById {
   '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
+  '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
+  '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
+  '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
+  '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -1292,6 +1437,7 @@ export interface FileRouteTypes {
     | '/platform/marketplace-settings'
     | '/platform/messages'
     | '/platform/metrics'
+    | '/platform/mobile-settings'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1334,9 +1480,23 @@ export interface FileRouteTypes {
     | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
+    | '/api/public/v1/meta'
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/actions/ack-alert'
+    | '/api/public/v1/actions/confirm-delivery'
+    | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/sync/alerts'
+    | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/notifications'
+    | '/api/public/v1/sync/sensors'
+    | '/api/public/v1/sync/silos'
+    | '/api/public/v1/uploads/sign'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
   fileRoutesByTo: FileRoutesByTo
@@ -1416,6 +1576,7 @@ export interface FileRouteTypes {
     | '/platform/marketplace-settings'
     | '/platform/messages'
     | '/platform/metrics'
+    | '/platform/mobile-settings'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1458,9 +1619,23 @@ export interface FileRouteTypes {
     | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
+    | '/api/public/v1/meta'
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/actions/ack-alert'
+    | '/api/public/v1/actions/confirm-delivery'
+    | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/sync/alerts'
+    | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/notifications'
+    | '/api/public/v1/sync/sensors'
+    | '/api/public/v1/sync/silos'
+    | '/api/public/v1/uploads/sign'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
   id:
@@ -1543,6 +1718,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/marketplace-settings'
     | '/_authenticated/platform/messages'
     | '/_authenticated/platform/metrics'
+    | '/_authenticated/platform/mobile-settings'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
@@ -1585,9 +1761,23 @@ export interface FileRouteTypes {
     | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
+    | '/api/public/v1/meta'
     | '/api/public/webhooks/stripe'
     | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
+    | '/api/public/v1/actions/ack-alert'
+    | '/api/public/v1/actions/confirm-delivery'
+    | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/sync/alerts'
+    | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/notifications'
+    | '/api/public/v1/sync/sensors'
+    | '/api/public/v1/sync/silos'
+    | '/api/public/v1/uploads/sign'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
   fileRoutesById: FileRoutesById
@@ -1625,7 +1815,21 @@ export interface RootRouteChildren {
   ApiPublicHooksAnalyticsRefreshRoute: typeof ApiPublicHooksAnalyticsRefreshRoute
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
+  ApiPublicV1MetaRoute: typeof ApiPublicV1MetaRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiPublicV1ActionsAckAlertRoute: typeof ApiPublicV1ActionsAckAlertRoute
+  ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
+  ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
+  ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
+  ApiPublicV1DevicesRevokeRoute: typeof ApiPublicV1DevicesRevokeRoute
+  ApiPublicV1SyncAlertsRoute: typeof ApiPublicV1SyncAlertsRoute
+  ApiPublicV1SyncBuyerOrdersRoute: typeof ApiPublicV1SyncBuyerOrdersRoute
+  ApiPublicV1SyncHardwareOrdersRoute: typeof ApiPublicV1SyncHardwareOrdersRoute
+  ApiPublicV1SyncNotificationsRoute: typeof ApiPublicV1SyncNotificationsRoute
+  ApiPublicV1SyncSensorsRoute: typeof ApiPublicV1SyncSensorsRoute
+  ApiPublicV1SyncSilosRoute: typeof ApiPublicV1SyncSilosRoute
+  ApiPublicV1UploadsSignRoute: typeof ApiPublicV1UploadsSignRoute
   ApiPublicWebhooksCarrierCarrierCodeRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   ApiPublicWebhooksInsuranceCarrierCodeRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
 }
@@ -2171,6 +2375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/mobile-settings': {
+      id: '/_authenticated/platform/mobile-settings'
+      path: '/platform/mobile-settings'
+      fullPath: '/platform/mobile-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/metrics': {
       id: '/_authenticated/platform/metrics'
       path: '/platform/metrics'
@@ -2302,6 +2513,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/webhooks/stripe'
       fullPath: '/api/public/webhooks/stripe'
       preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/meta': {
+      id: '/api/public/v1/meta'
+      path: '/api/public/v1/meta'
+      fullPath: '/api/public/v1/meta'
+      preLoaderRoute: typeof ApiPublicV1MetaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/sensor-offline-detector': {
@@ -2491,6 +2709,97 @@ declare module '@tanstack/react-router' {
       path: '/api/public/webhooks/carrier/$carrierCode'
       fullPath: '/api/public/webhooks/carrier/$carrierCode'
       preLoaderRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/uploads/sign': {
+      id: '/api/public/v1/uploads/sign'
+      path: '/api/public/v1/uploads/sign'
+      fullPath: '/api/public/v1/uploads/sign'
+      preLoaderRoute: typeof ApiPublicV1UploadsSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/silos': {
+      id: '/api/public/v1/sync/silos'
+      path: '/api/public/v1/sync/silos'
+      fullPath: '/api/public/v1/sync/silos'
+      preLoaderRoute: typeof ApiPublicV1SyncSilosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/sensors': {
+      id: '/api/public/v1/sync/sensors'
+      path: '/api/public/v1/sync/sensors'
+      fullPath: '/api/public/v1/sync/sensors'
+      preLoaderRoute: typeof ApiPublicV1SyncSensorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/notifications': {
+      id: '/api/public/v1/sync/notifications'
+      path: '/api/public/v1/sync/notifications'
+      fullPath: '/api/public/v1/sync/notifications'
+      preLoaderRoute: typeof ApiPublicV1SyncNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/hardware-orders': {
+      id: '/api/public/v1/sync/hardware-orders'
+      path: '/api/public/v1/sync/hardware-orders'
+      fullPath: '/api/public/v1/sync/hardware-orders'
+      preLoaderRoute: typeof ApiPublicV1SyncHardwareOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/buyer-orders': {
+      id: '/api/public/v1/sync/buyer-orders'
+      path: '/api/public/v1/sync/buyer-orders'
+      fullPath: '/api/public/v1/sync/buyer-orders'
+      preLoaderRoute: typeof ApiPublicV1SyncBuyerOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/alerts': {
+      id: '/api/public/v1/sync/alerts'
+      path: '/api/public/v1/sync/alerts'
+      fullPath: '/api/public/v1/sync/alerts'
+      preLoaderRoute: typeof ApiPublicV1SyncAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/revoke': {
+      id: '/api/public/v1/devices/revoke'
+      path: '/api/public/v1/devices/revoke'
+      fullPath: '/api/public/v1/devices/revoke'
+      preLoaderRoute: typeof ApiPublicV1DevicesRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/register': {
+      id: '/api/public/v1/devices/register'
+      path: '/api/public/v1/devices/register'
+      fullPath: '/api/public/v1/devices/register'
+      preLoaderRoute: typeof ApiPublicV1DevicesRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/heartbeat': {
+      id: '/api/public/v1/devices/heartbeat'
+      path: '/api/public/v1/devices/heartbeat'
+      fullPath: '/api/public/v1/devices/heartbeat'
+      preLoaderRoute: typeof ApiPublicV1DevicesHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/install-step': {
+      id: '/api/public/v1/actions/install-step'
+      path: '/api/public/v1/actions/install-step'
+      fullPath: '/api/public/v1/actions/install-step'
+      preLoaderRoute: typeof ApiPublicV1ActionsInstallStepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/confirm-delivery': {
+      id: '/api/public/v1/actions/confirm-delivery'
+      path: '/api/public/v1/actions/confirm-delivery'
+      fullPath: '/api/public/v1/actions/confirm-delivery'
+      preLoaderRoute: typeof ApiPublicV1ActionsConfirmDeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/ack-alert': {
+      id: '/api/public/v1/actions/ack-alert'
+      path: '/api/public/v1/actions/ack-alert'
+      fullPath: '/api/public/v1/actions/ack-alert'
+      preLoaderRoute: typeof ApiPublicV1ActionsAckAlertRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/platform/orders/$orderId/audit': {
@@ -2690,6 +2999,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformMarketplaceSettingsRoute: typeof AuthenticatedPlatformMarketplaceSettingsRoute
   AuthenticatedPlatformMessagesRoute: typeof AuthenticatedPlatformMessagesRoute
   AuthenticatedPlatformMetricsRoute: typeof AuthenticatedPlatformMetricsRoute
+  AuthenticatedPlatformMobileSettingsRoute: typeof AuthenticatedPlatformMobileSettingsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
@@ -2769,6 +3079,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformMarketplaceSettingsRoute,
   AuthenticatedPlatformMessagesRoute: AuthenticatedPlatformMessagesRoute,
   AuthenticatedPlatformMetricsRoute: AuthenticatedPlatformMetricsRoute,
+  AuthenticatedPlatformMobileSettingsRoute:
+    AuthenticatedPlatformMobileSettingsRoute,
   AuthenticatedPlatformOrdersRoute:
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
@@ -2877,7 +3189,22 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
+  ApiPublicV1MetaRoute: ApiPublicV1MetaRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiPublicV1ActionsAckAlertRoute: ApiPublicV1ActionsAckAlertRoute,
+  ApiPublicV1ActionsConfirmDeliveryRoute:
+    ApiPublicV1ActionsConfirmDeliveryRoute,
+  ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
+  ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
+  ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
+  ApiPublicV1DevicesRevokeRoute: ApiPublicV1DevicesRevokeRoute,
+  ApiPublicV1SyncAlertsRoute: ApiPublicV1SyncAlertsRoute,
+  ApiPublicV1SyncBuyerOrdersRoute: ApiPublicV1SyncBuyerOrdersRoute,
+  ApiPublicV1SyncHardwareOrdersRoute: ApiPublicV1SyncHardwareOrdersRoute,
+  ApiPublicV1SyncNotificationsRoute: ApiPublicV1SyncNotificationsRoute,
+  ApiPublicV1SyncSensorsRoute: ApiPublicV1SyncSensorsRoute,
+  ApiPublicV1SyncSilosRoute: ApiPublicV1SyncSilosRoute,
+  ApiPublicV1UploadsSignRoute: ApiPublicV1UploadsSignRoute,
   ApiPublicWebhooksCarrierCarrierCodeRoute:
     ApiPublicWebhooksCarrierCarrierCodeRoute,
   ApiPublicWebhooksInsuranceCarrierCodeRoute:

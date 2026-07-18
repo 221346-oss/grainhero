@@ -3861,6 +3861,75 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_devices: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          id: string
+          last_seen_at: string
+          locale: string | null
+          os_version: string | null
+          platform: string
+          push_token: string | null
+          revoked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          locale?: string | null
+          os_version?: string | null
+          platform: string
+          push_token?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          locale?: string | null
+          os_version?: string | null
+          platform?: string
+          push_token?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mobile_idempotency_keys: {
+        Row: {
+          created_at: string
+          endpoint: string
+          key: string
+          request_hash: string | null
+          response: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          key: string
+          request_hash?: string | null
+          response?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          key?: string
+          request_hash?: string | null
+          response?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_channel_prefs: {
         Row: {
           categories: Json
