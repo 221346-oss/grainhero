@@ -213,7 +213,9 @@ export const bindPolicy = createServerFn({ method: "POST" })
       notes: data.notes ?? null,
     }).select("id").single();
     if (error) throw error;
-    return { id: (row as Row).id as string };
+    const id = (row as Row).id as string;
+    await audit(context, { action: "policy.bind", subject_type: "policy", subject_id: id, admin_id: admin, policy_id: id, payload: { product_id: data.product_id, subject_type: data.subject_type, subject_id: data.subject_id, premium_cents: data.premium_cents } });
+    return { id };
   });
 
 export const cancelPolicy = createServerFn({ method: "POST" })
@@ -224,6 +226,28 @@ export const cancelPolicy = createServerFn({ method: "POST" })
     const { error } = await (context.supabase as any)
       .from("insurance_policies").update({ status: "cancelled" }).eq("id", data.id);
     if (error) throw error;
+    await audit(context, { action: "policy.cancel", subject_type: "policy", subject_id: data.id, policy_id: data.id });
+    return { ok: true };
+  });
+
+export const renewPolicy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    id: z.string().uuid(),
+    new_end_date: z.string(),
+    premium_cents: z.number().int().nonnegative().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const patch: Row = { coverage_end: data.new_end_date, end_date: data.new_end_date, status: "active" };
+    if (data.premium_cents != null) {
+      patch.premium_cents = data.premium_cents;
+      patch.premium_amount = data.premium_cents / 100;
+    }
+    const { error } = await sb.from("insurance_policies").update(patch).eq("id", data.id);
+    if (error) throw error;
+    await audit(context, { action: "policy.renew", subject_type: "policy", subject_id: data.id, policy_id: data.id, payload: { new_end_date: data.new_end_date, premium_cents: data.premium_cents ?? null } });
     return { ok: true };
   });
 
