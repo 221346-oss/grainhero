@@ -128,6 +128,20 @@ function MarketplaceSettingsPage() {
               <Field label="Delivered target (h)"><Input type="number" value={s.dispatch.slaHours.delivered}
                 onChange={(e) => setS((p) => ({ ...p, dispatch: { ...p.dispatch, slaHours: { ...p.dispatch.slaHours, delivered: Number(e.target.value) } } }))} /></Field>
             </div>
+            <div className="grid grid-cols-3 gap-3 pt-2 border-t">
+              <Field label="Alert cooldown (min)">
+                <Input type="number" value={s.dispatch.alertCooldownMinutes}
+                  onChange={(e) => setS((p) => ({ ...p, dispatch: { ...p.dispatch, alertCooldownMinutes: Number(e.target.value) } }))} />
+              </Field>
+              <Field label="Delivery-rate drop alert (pp)">
+                <Input type="number" value={s.dispatch.deliveryRateAlertDropPct}
+                  onChange={(e) => setS((p) => ({ ...p, dispatch: { ...p.dispatch, deliveryRateAlertDropPct: Number(e.target.value) } }))} />
+              </Field>
+              <Field label="Overdue grace (min)">
+                <Input type="number" value={s.dispatch.overdueGraceMinutes}
+                  onChange={(e) => setS((p) => ({ ...p, dispatch: { ...p.dispatch, overdueGraceMinutes: Number(e.target.value) } }))} />
+              </Field>
+            </div>
           </CardContent>
         </Card>
 
