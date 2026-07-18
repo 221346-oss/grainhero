@@ -2933,6 +2933,132 @@ export type Database = {
           },
         ]
       }
+      insurance_carriers: {
+        Row: {
+          active: boolean
+          api_mode: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          api_mode?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          api_mode?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      insurance_claim_attachments: {
+        Row: {
+          claim_id: string
+          created_at: string
+          file_path: string
+          id: string
+          mime: string | null
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          file_path: string
+          id?: string
+          mime?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          mime?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claim_attachments_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_claim_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_claim_events: {
+        Row: {
+          actor_id: string | null
+          claim_id: string
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          actor_id?: string | null
+          claim_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+        }
+        Update: {
+          actor_id?: string | null
+          claim_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claim_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_claim_events_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_claims: {
         Row: {
           admin_id: string
@@ -2944,11 +3070,17 @@ export type Database = {
           claim_type: string
           created_at: string
           created_by: string | null
+          currency: string
+          decided_at: string | null
+          decision_reason: string | null
           description: string | null
+          external_ref: string | null
           filed_date: string | null
           id: string
           incident_date: string | null
+          narrative: string | null
           notes: string | null
+          paid_at: string | null
           photos: Json
           policy_id: string | null
           status: string
@@ -2964,11 +3096,17 @@ export type Database = {
           claim_type?: string
           created_at?: string
           created_by?: string | null
+          currency?: string
+          decided_at?: string | null
+          decision_reason?: string | null
           description?: string | null
+          external_ref?: string | null
           filed_date?: string | null
           id?: string
           incident_date?: string | null
+          narrative?: string | null
           notes?: string | null
+          paid_at?: string | null
           photos?: Json
           policy_id?: string | null
           status?: string
@@ -2984,11 +3122,17 @@ export type Database = {
           claim_type?: string
           created_at?: string
           created_by?: string | null
+          currency?: string
+          decided_at?: string | null
+          decision_reason?: string | null
           description?: string | null
+          external_ref?: string | null
           filed_date?: string | null
           id?: string
           incident_date?: string | null
+          narrative?: string | null
           notes?: string | null
+          paid_at?: string | null
           photos?: Json
           policy_id?: string | null
           status?: string
@@ -3013,17 +3157,23 @@ export type Database = {
           covered_batches: Json
           created_at: string
           created_by: string | null
+          currency: string
           deductible: number
           end_date: string | null
+          external_ref: string | null
           id: string
+          metadata: Json
           notes: string | null
           policy_number: string
           premium_amount: number
+          product_id: string | null
           provider_name: string
           renewal_date: string | null
           risk_factors: Json
           start_date: string | null
           status: string
+          subject_id: string | null
+          subject_type: string | null
           updated_at: string
         }
         Insert: {
@@ -3034,17 +3184,23 @@ export type Database = {
           covered_batches?: Json
           created_at?: string
           created_by?: string | null
+          currency?: string
           deductible?: number
           end_date?: string | null
+          external_ref?: string | null
           id?: string
+          metadata?: Json
           notes?: string | null
           policy_number: string
           premium_amount?: number
+          product_id?: string | null
           provider_name: string
           renewal_date?: string | null
           risk_factors?: Json
           start_date?: string | null
           status?: string
+          subject_id?: string | null
+          subject_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -3055,20 +3211,93 @@ export type Database = {
           covered_batches?: Json
           created_at?: string
           created_by?: string | null
+          currency?: string
           deductible?: number
           end_date?: string | null
+          external_ref?: string | null
           id?: string
+          metadata?: Json
           notes?: string | null
           policy_number?: string
           premium_amount?: number
+          product_id?: string | null
           provider_name?: string
           renewal_date?: string | null
           risk_factors?: Json
           start_date?: string | null
           status?: string
+          subject_id?: string | null
+          subject_type?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "insurance_policies_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_products: {
+        Row: {
+          active: boolean
+          base_premium_bps: number
+          carrier_id: string
+          code: string
+          coverage_type: string
+          created_at: string
+          currency: string
+          deductible_bps: number
+          description: string | null
+          id: string
+          max_payout_cents: number | null
+          name: string
+          terms_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_premium_bps?: number
+          carrier_id: string
+          code: string
+          coverage_type: string
+          created_at?: string
+          currency?: string
+          deductible_bps?: number
+          description?: string | null
+          id?: string
+          max_payout_cents?: number | null
+          name: string
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_premium_bps?: number
+          carrier_id?: string
+          code?: string
+          coverage_type?: string
+          created_at?: string
+          currency?: string
+          deductible_bps?: number
+          description?: string | null
+          id?: string
+          max_payout_cents?: number | null
+          name?: string
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_products_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_carriers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
