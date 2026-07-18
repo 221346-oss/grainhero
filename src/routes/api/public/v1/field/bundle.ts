@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/public/v1/field/bundle")({
             await ctx.supabase.from("mobile_field_bundles").upsert({
               user_id: ctx.userId, bundle: bundle as never, etag,
               generated_at: generatedAt, expires_at: expiresAt, bundle_bytes: bytes,
-            } as never);
+            } as never, { onConflict: "user_id" });
 
             if (inm && inm === etag) {
               return { response: new Response(null, { status: 304, headers: { ETag: etag } }), rowCount: 0 };
