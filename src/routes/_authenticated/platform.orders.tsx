@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PlatformOrdersSkeleton } from "@/components/app/skeletons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
@@ -21,6 +22,10 @@ import { toast } from "sonner";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
+import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
+import { Truck, MoreHorizontal } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_authenticated/platform/orders")({
   head: () => ({ meta: [{ title: "Install orders — Platform" }] }),
@@ -47,6 +52,7 @@ function PlatformOrdersPage() {
   const updateFn = useServerFn(updateHardwareOrder);
   const messageFn = useServerFn(sendOrderMessage);
   const [filter, setFilter] = useState<string>("all");
+  const [installOrderId, setInstallOrderId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["platform-orders"],
@@ -112,32 +118,59 @@ function PlatformOrdersPage() {
       </AdminFilterBar>
 
       {isLoading ? (
-        <div className="text-sm text-slate-500">Loading orders…</div>
+        <PlatformOrdersSkeleton />
       ) : orders.length === 0 ? (
         <Card><CardContent className="p-8 text-center text-sm text-slate-500">No orders match this filter</CardContent></Card>
       ) : (
-        <div className="grid gap-3">
-          {orders.map((o) => (
-            <OrderRow key={o.id as string} order={o}
-              onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
-              onMessage={(v) => sendMsg.mutate({ orderId: o.id as string, ...v })}
-              busy={update.isPending || sendMsg.isPending}
-            />
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order</TableHead>
+                  <TableHead>Buyer</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Placed</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((o) => (
+                  <OrderTableRow
+                    key={o.id as string}
+                    order={o}
+                    onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
+                    onMessage={(v) => sendMsg.mutate({ orderId: o.id as string, ...v })}
+                    busy={update.isPending || sendMsg.isPending}
+                    onOpenInstall={() => setInstallOrderId(o.id as string)}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
+      <InstallationDrawer
+        orderId={installOrderId}
+        open={!!installOrderId}
+        onOpenChange={(v) => !v && setInstallOrderId(null)}
+        canEdit
+      />
     </AdminPageShell>
   );
 }
 
-function OrderRow({
-  order, onUpdate, onMessage, busy,
+function OrderTableRow({
+  order, onUpdate, onMessage, busy, onOpenInstall,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   order: any;
   onUpdate: (v: { status?: (typeof STATUSES)[number]; technicianName?: string; technicianPhone?: string; scheduledInstallDate?: string; cancelReason?: string; refunded?: boolean }) => void;
   onMessage: (v: { message: string; emailBuyer: boolean }) => void;
   busy: boolean;
+  onOpenInstall: () => void;
 }) {
   const [status, setStatus] = useState<(typeof STATUSES)[number]>(order.status);
   const [techName, setTechName] = useState<string>(order.technician_name ?? "");
@@ -148,116 +181,128 @@ function OrderRow({
   const [message, setMessage] = useState("");
   const [emailBuyer, setEmailBuyer] = useState(true);
   const [cancelReason, setCancelReason] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [msgOpen, setMsgOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <CardTitle className="text-base">
-              {order.plan_name ?? order.plan_id} · {order.hardware_quantity} sensor{order.hardware_quantity === 1 ? "" : "s"}
-            </CardTitle>
-            <CardDescription className="text-xs">
-              {order.buyer?.name ?? "—"} · {order.buyer?.email ?? "—"} · placed {new Date(order.created_at).toLocaleString()}
-            </CardDescription>
-          </div>
-          <Badge className={STATUS_STYLE[order.status] ?? ""}>{String(order.status).replace("_", " ")}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="grid gap-2 md:grid-cols-2 text-slate-700">
-          <div><b>Address:</b> {order.install_address}, {order.install_city}, {order.install_country}</div>
-          <div><b>Phone:</b> {order.contact_phone ?? "—"}</div>
-          <div><b>Preferred:</b> {order.preferred_install_date ?? "—"}</div>
-          <div><b>Hardware total:</b> Rs. {Number(order.hardware_total ?? 0).toLocaleString()}</div>
-          {order.business_name && <div><b>Business:</b> {order.business_name}</div>}
-          {order.tax_id && <div><b>Tax ID:</b> {order.tax_id}</div>}
-          {order.notes && <div className="md:col-span-2"><b>Notes:</b> {order.notes}</div>}
-        </div>
+    <>
+      <TableRow>
+        <TableCell>
+          <div className="font-medium text-sm">{order.plan_name ?? order.plan_id}</div>
+          <div className="text-xs text-muted-foreground">{order.hardware_quantity} sensor{order.hardware_quantity === 1 ? "" : "s"} · {String(order.id).slice(0, 8)}</div>
+        </TableCell>
+        <TableCell>
+          <div className="text-sm">{order.buyer?.name ?? "—"}</div>
+          <div className="text-xs text-muted-foreground">{order.buyer?.email ?? "—"}</div>
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground max-w-[220px] truncate">
+          {[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}
+        </TableCell>
+        <TableCell className="text-sm font-medium">Rs. {Number(order.hardware_total ?? 0).toLocaleString()}</TableCell>
+        <TableCell><Badge className={STATUS_STYLE[order.status] ?? ""}>{String(order.status).replace("_", " ")}</Badge></TableCell>
+        <TableCell className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</TableCell>
+        <TableCell className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={() => setDetailsOpen(true)}>Details & assignment</DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenInstall}><Truck className="h-3.5 w-3.5 mr-1.5" /> Installation tracking</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setMsgOpen(true)}>Message buyer</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "installed" })}>Mark installed</DropdownMenuItem>
+              <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "live" })}>Mark live</DropdownMenuItem>
+              {order.status !== "cancelled" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>Cancel order</DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
 
-        <div className="grid gap-2 md:grid-cols-4 border-t border-slate-100 pt-3">
-          <div>
-            <Label className="text-xs">Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as (typeof STATUSES)[number])}>
-              <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
-              </SelectContent>
-            </Select>
+      {/* Details / assignment dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Order details</DialogTitle>
+            <DialogDescription>{order.plan_name ?? order.plan_id} · {String(order.id).slice(0, 8)}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 md:grid-cols-2 text-sm">
+            <div><b>Address:</b> {order.install_address}, {order.install_city}, {order.install_country}</div>
+            <div><b>Phone:</b> {order.contact_phone ?? "—"}</div>
+            <div><b>Preferred:</b> {order.preferred_install_date ?? "—"}</div>
+            <div><b>Hardware total:</b> Rs. {Number(order.hardware_total ?? 0).toLocaleString()}</div>
+            {order.business_name && <div><b>Business:</b> {order.business_name}</div>}
+            {order.tax_id && <div><b>Tax ID:</b> {order.tax_id}</div>}
+            {order.notes && <div className="md:col-span-2"><b>Notes:</b> {order.notes}</div>}
           </div>
-          <div>
-            <Label className="text-xs">Technician name</Label>
-            <Input className="h-9 text-xs" value={techName} onChange={(e) => setTechName(e.target.value)} />
+          <div className="grid gap-2 md:grid-cols-2 border-t pt-3">
+            <div>
+              <Label className="text-xs">Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as (typeof STATUSES)[number])}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Scheduled install</Label>
+              <Input type="datetime-local" className="h-9 text-xs" value={scheduled} onChange={(e) => setScheduled(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Technician name</Label>
+              <Input className="h-9 text-xs" value={techName} onChange={(e) => setTechName(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Technician phone</Label>
+              <Input className="h-9 text-xs" value={techPhone} onChange={(e) => setTechPhone(e.target.value)} />
+            </div>
           </div>
-          <div>
-            <Label className="text-xs">Technician phone</Label>
-            <Input className="h-9 text-xs" value={techPhone} onChange={(e) => setTechPhone(e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Scheduled install</Label>
-            <Input type="datetime-local" className="h-9 text-xs" value={scheduled} onChange={(e) => setScheduled(e.target.value)} />
-          </div>
-        </div>
+          <DialogFooter>
+            <Button disabled={busy} onClick={() => { onUpdate({ status, technicianName: techName, technicianPhone: techPhone, scheduledInstallDate: scheduled ? new Date(scheduled).toISOString() : null as unknown as string }); setDetailsOpen(false); }}>
+              Save assignment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" disabled={busy} onClick={() => onUpdate({
-            status,
-            technicianName: techName,
-            technicianPhone: techPhone,
-            scheduledInstallDate: scheduled ? new Date(scheduled).toISOString() : null as unknown as string,
-          })}>
-            Save assignment
-          </Button>
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => onUpdate({ status: "installed" })}>
-            Mark installed
-          </Button>
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => onUpdate({ status: "live" })}>
-            Mark live
-          </Button>
+      {/* Message dialog */}
+      <Dialog open={msgOpen} onOpenChange={setMsgOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send message to buyer</DialogTitle>
+            <DialogDescription>Goes to their in-app notifications{emailBuyer ? " and email inbox" : ""}.</DialogDescription>
+          </DialogHeader>
+          <Textarea rows={5} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} placeholder="Hi, our technician will arrive at…" />
+          <label className="text-xs flex items-center gap-2">
+            <input type="checkbox" checked={emailBuyer} onChange={(e) => setEmailBuyer(e.target.checked)} />
+            Also send by email
+          </label>
+          <DialogFooter>
+            <Button disabled={busy || message.trim().length === 0} onClick={() => { onMessage({ message: message.trim(), emailBuyer }); setMsgOpen(false); }}>Send</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline">Message buyer</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Send message to buyer</DialogTitle>
-                <DialogDescription>Goes to their in-app notifications{emailBuyer ? " and email inbox" : ""}.</DialogDescription>
-              </DialogHeader>
-              <Textarea rows={5} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} placeholder="Hi, our technician will arrive at…" />
-              <label className="text-xs flex items-center gap-2">
-                <input type="checkbox" checked={emailBuyer} onChange={(e) => setEmailBuyer(e.target.checked)} />
-                Also send by email
-              </label>
-              <DialogFooter>
-                <Button disabled={busy || message.trim().length === 0} onClick={() => onMessage({ message: message.trim(), emailBuyer })}>
-                  Send
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {order.status !== "cancelled" && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="destructive">Cancel</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Cancel this install order?</DialogTitle>
-                  <DialogDescription>The buyer will be notified. Refunds are handled separately in Stripe.</DialogDescription>
-                </DialogHeader>
-                <Textarea rows={3} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Reason (optional)" />
-                <DialogFooter>
-                  <Button variant="destructive" disabled={busy} onClick={() => onUpdate({ status: "cancelled", cancelReason })}>
-                    Confirm cancel
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      {/* Cancel dialog */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel this install order?</DialogTitle>
+            <DialogDescription>The buyer will be notified. Refunds are handled separately in Stripe.</DialogDescription>
+          </DialogHeader>
+          <Textarea rows={3} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Reason (optional)" />
+          <DialogFooter>
+            <Button variant="destructive" disabled={busy} onClick={() => { onUpdate({ status: "cancelled", cancelReason }); setCancelOpen(false); }}>Confirm cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

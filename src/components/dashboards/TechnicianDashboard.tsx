@@ -3,6 +3,7 @@ import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { useDashboardStats } from "./useDashboardStats";
 import { ActuatorsCard, RecentAlertsCard, SilosOccupancyCard } from "./DashboardBlocks";
 import { Badge } from "@/components/ui/badge";
+import { CustomWidgetsBand } from "@/components/app/analytics/CustomWidgetsBand";
 
 export function TechnicianDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
@@ -21,6 +22,7 @@ export function TechnicianDashboard({ name }: { name?: string }) {
           { key: "ca", label: "Critical", value: s?.alerts.critical ?? "—" },
         ]}
       />
+      <CustomWidgetsBand />
       <div className="grid gap-4 md:grid-cols-2">
         <ActuatorsCard />
         <RecentAlertsCard />

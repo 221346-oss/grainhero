@@ -69,7 +69,7 @@ export function RecentAlertsCard() {
           <CardTitle className="text-base">Recent alerts</CardTitle>
           <CardDescription>Latest 5 grain alerts</CardDescription>
         </div>
-        <Button asChild size="sm" variant="outline"><Link to="/grain-alerts">View all</Link></Button>
+        <Button asChild size="sm" variant="outline"><Link to="/grain-alerts" search={{ priority: "all" }}>View all</Link></Button>
       </CardHeader>
       <CardContent className="space-y-2">
         {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No open alerts 🎉</p>}

@@ -1297,3 +1297,184 @@ export function AuthSkeleton() {
     </div>
   );
 }
+
+// ─── Financials (super-admin) ────────────────────────────────────────────────
+export function FinancialsSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-56 rounded" />
+          <Skeleton className="h-4 w-72 rounded" />
+        </div>
+        <div className="flex gap-2">
+          {Array(3).fill(null).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-24 rounded-md" />
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        {Array(6).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border bg-card p-4 space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-16 rounded" />
+              <Skeleton className="h-3 w-3 rounded" />
+            </div>
+            <Skeleton className="h-6 w-24 rounded" />
+            <Skeleton className="h-3 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-32 rounded" />
+          {Array(6).fill(null).map((_, i) => (
+            <div key={i} className="flex justify-between">
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-4 w-20 rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-28 rounded" />
+          <div className="flex justify-center py-4">
+            <Skeleton className="h-40 w-40 rounded-full" />
+          </div>
+          {Array(4).fill(null).map((_, i) => (
+            <div key={i} className="flex justify-between">
+              <Skeleton className="h-3 w-24 rounded" />
+              <Skeleton className="h-3 w-16 rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-40 rounded" />
+          <Skeleton className="h-[240px] w-full rounded-lg" />
+        </div>
+      </div>
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <Skeleton className="h-5 w-40 rounded" />
+        <Skeleton className="h-[200px] w-full rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Admin profile (super-admin) ─────────────────────────────────────────────
+export function AdminProfileSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1200px] mx-auto">
+      <div className="rounded-xl border bg-card p-5 flex items-center gap-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-6 w-48 rounded" />
+          <Skeleton className="h-4 w-64 rounded" />
+        </div>
+        <Skeleton className="h-8 w-24 rounded-md" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {Array(6).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border bg-card p-4 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-6 w-20 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-40 rounded" />
+          {Array(5).fill(null).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <Skeleton className="h-3 w-20 rounded" />
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-36 rounded" />
+          <Skeleton className="h-[240px] w-full rounded-lg" />
+        </div>
+      </div>
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <Skeleton className="h-5 w-32 rounded" />
+        {Array(6).fill(null).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="flex-1 space-y-1"><Skeleton className="h-4 w-1/2 rounded" /><Skeleton className="h-3 w-1/3 rounded" /></div>
+            <Skeleton className="h-3 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Platform orders (super-admin) ───────────────────────────────────────────
+export function PlatformOrdersSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-48 rounded" />
+        <Skeleton className="h-4 w-72 rounded" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array(4).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border bg-card p-4 space-y-2">
+            <Skeleton className="h-3 w-20 rounded" />
+            <Skeleton className="h-7 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <div className="p-4 border-b flex justify-between items-center">
+          <Skeleton className="h-5 w-40 rounded" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+        </div>
+        {Array(8).fill(null).map((_, i) => (
+          <div key={i} className="p-4 border-b last:border-0 flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-lg" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-1/3 rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Phase 18 finance ───────────────────────────────────────────────────────
+export function FinanceCommandSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-56 rounded" />
+        <Skeleton className="h-4 w-72 rounded" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {Array(7).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border bg-card p-4 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-6 w-24 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <Skeleton className="h-5 w-40 rounded" />
+        <Skeleton className="h-[300px] w-full rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+export function PayoutsSkeleton() { return <PlatformOrdersSkeleton />; }
+export function LedgerSkeleton() { return <PlatformOrdersSkeleton />; }
+export function TaxRulesSkeleton() { return <PlatformOrdersSkeleton />; }
+export function EarningsSkeleton() { return <FinanceCommandSkeleton />; }
+export function InsuranceCommandSkeleton() { return <FinanceCommandSkeleton />; }
+export function ClaimsQueueSkeleton() { return <PlatformOrdersSkeleton />; }
+export function MetricRegistrySkeleton() { return <FinanceCommandSkeleton />; }
+export function DashboardBuilderSkeleton() { return <FinanceCommandSkeleton />; }

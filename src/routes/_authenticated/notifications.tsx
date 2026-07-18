@@ -41,6 +41,9 @@ const CATEGORY_ICON: Record<string, React.ReactNode> = {
   insurance: <Shield className="h-3.5 w-3.5" />,
   invoice: <FileText className="h-3.5 w-3.5" />,
   system: <Settings className="h-3.5 w-3.5" />,
+  moderation: <Shield className="h-3.5 w-3.5" />,
+  messaging: <Bell className="h-3.5 w-3.5" />,
+  audit: <FileText className="h-3.5 w-3.5" />,
 };
 
 function formatTime(dateStr: string) {
@@ -109,6 +112,7 @@ function NotificationPreferences() {
 
 function NotificationsPage() {
   const [filter, setFilter] = useState<Filter>("all");
+  const [categories, setCategories] = useState<Set<string>>(new Set());
   const qc = useQueryClient();
   useRealtimeInvalidate("notifications", [["notifications"]]);
   const list = useServerFn(listNotifications);
@@ -117,8 +121,14 @@ function NotificationsPage() {
   const del = useServerFn(deleteNotification);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["notifications", filter],
-    queryFn: () => list({ data: { filter, limit: 50 } }),
+    queryKey: ["notifications", filter, Array.from(categories).sort().join(",")],
+    queryFn: () => list({
+      data: {
+        filter,
+        limit: 50,
+        categories: categories.size ? Array.from(categories) : undefined,
+      },
+    }),
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["notifications"] });
@@ -182,6 +192,33 @@ function NotificationsPage() {
           </Button>
         ))}
       </div>
+
+      {(data?.availableCategories?.length ?? 0) > 0 && (
+        <div className="flex gap-1.5 flex-wrap items-center">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-1">Categories:</span>
+          {(data?.availableCategories ?? []).map((c) => {
+            const on = categories.has(c);
+            return (
+              <button
+                key={c}
+                onClick={() => setCategories((s) => {
+                  const n = new Set(s); n.has(c) ? n.delete(c) : n.add(c); return n;
+                })}
+                className={`text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1 transition-colors ${
+                  on ? "bg-emerald-600 text-white border-emerald-600" : "border-slate-300 text-slate-600 hover:border-emerald-500 hover:text-emerald-700"
+                }`}
+              >
+                {CATEGORY_ICON[c] ?? CATEGORY_ICON.system}
+                {c}
+              </button>
+            );
+          })}
+          {categories.size > 0 && (
+            <button className="text-[11px] text-slate-400 hover:text-slate-700 underline"
+              onClick={() => setCategories(new Set())}>clear</button>
+          )}
+        </div>
+      )}
 
       <Card className="border-slate-200/70">
         <CardContent className="p-0">

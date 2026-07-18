@@ -1,39 +1,114 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, useRouterState } from "@tanstack/react-router";
+import type React from "react";
 import { routeTree } from "./routeTree.gen";
 import {
   DashboardSkeleton,
-  TableSkeleton,
   AnalyticsSkeleton,
-  FormSkeleton,
+  NotificationsSkeleton,
+  OrdersSkeleton,
+  ReportsSkeleton,
+  SubscriptionSkeleton,
+  GrainBatchesSkeleton,
+  SilosSkeleton,
+  SensorsSkeleton,
+  ActuatorsSkeleton,
+  GrainAlertsSkeleton,
+  BuyersSkeleton,
+  WarehousesSkeleton,
+  IncidentsSkeleton,
+  MaintenanceSkeleton,
+  ActivityLogsSkeleton,
+  InsuranceSkeleton,
+  PlansSkeleton,
+  TeamManagementSkeleton,
+  SettingsSkeleton,
+  FinancialsSkeleton,
+  AdminProfileSkeleton,
+  PlatformOrdersSkeleton,
+  FinanceCommandSkeleton,
+  PayoutsSkeleton,
+  LedgerSkeleton,
+  TaxRulesSkeleton,
+  EarningsSkeleton,
+  InsuranceCommandSkeleton,
+  MetricRegistrySkeleton,
+  DashboardBuilderSkeleton,
 } from "@/components/app/skeletons";
 
-// Route-shape mapping — keeps the pending state consistent with what the
-// page will actually render, so users don't see a dashboard skeleton on
-// a table page and vice-versa.
-const TABLE = new Set([
-  "/grain-batches", "/silos", "/sensors", "/actuators", "/warehouses",
-  "/grain-alerts", "/buyers", "/incidents", "/maintenance", "/notifications",
-  "/orders", "/activity-logs", "/team-management",
-  "/platform/tenants", "/platform/users", "/platform/leads",
-  "/platform/orders", "/platform/audit-logs", "/platform/logs",
-]);
-const INSIGHT = new Set([
-  "/analytics", "/ai-predictions", "/reports", "/intelligence",
-  "/traceability", "/ml-models", "/revenue", "/business", "/environmental",
-  "/server-monitoring", "/security-center",
-  "/revenue", "/platform/pipeline", "/platform/health",
-]);
-const FORM = new Set([
-  "/settings", "/subscription", "/plans", "/insurance", "/administration",
-  "/platform/plans", "/checkout", "/theme-test",
-]);
+// Route → matching page skeleton. Every page-level skeleton mirrors the real
+// layout (container, grid, tile counts) so the pending state visually snaps
+// to the destination page instead of a generic table/insight block.
+const PAGE_SKELETONS: Record<string, React.ComponentType> = {
+  "/grain-batches": GrainBatchesSkeleton,
+  "/silos": SilosSkeleton,
+  "/sensors": SensorsSkeleton,
+  "/actuators": ActuatorsSkeleton,
+  "/grain-alerts": GrainAlertsSkeleton,
+  "/buyers": BuyersSkeleton,
+  "/warehouses": WarehousesSkeleton,
+  "/incidents": IncidentsSkeleton,
+  "/maintenance": MaintenanceSkeleton,
+  "/activity-logs": ActivityLogsSkeleton,
+  "/insurance": InsuranceSkeleton,
+  "/plans": PlansSkeleton,
+  "/team-management": TeamManagementSkeleton,
+  "/settings": SettingsSkeleton,
+  "/subscription": SubscriptionSkeleton,
+  "/notifications": NotificationsSkeleton,
+  "/orders": OrdersSkeleton,
+  "/reports": ReportsSkeleton,
+  "/analytics": AnalyticsSkeleton,
+  "/ai-predictions": AnalyticsSkeleton,
+  "/data-visualization": AnalyticsSkeleton,
+  "/traceability": AnalyticsSkeleton,
+  "/ml-models": AnalyticsSkeleton,
+  "/revenue": AnalyticsSkeleton,
+  "/environmental": AnalyticsSkeleton,
+  "/server-monitoring": AnalyticsSkeleton,
+  "/security-center": AnalyticsSkeleton,
+  "/platform/pipeline": AnalyticsSkeleton,
+  "/platform/health": AnalyticsSkeleton,
+  "/platform/financials": FinancialsSkeleton,
+  "/platform/orders": PlatformOrdersSkeleton,
+  "/platform/finance": FinanceCommandSkeleton,
+  "/platform/finance/payouts": PayoutsSkeleton,
+  "/platform/finance/ledger": LedgerSkeleton,
+  "/platform/finance/tax-rules": TaxRulesSkeleton,
+  "/earnings": EarningsSkeleton,
+  "/platform/insurance": InsuranceCommandSkeleton,
+  "/platform/insurance/audit": InsuranceCommandSkeleton,
+  "/platform/insurance/webhooks": InsuranceCommandSkeleton,
+  "/platform/metrics": MetricRegistrySkeleton,
+  "/platform/dashboard-builder": DashboardBuilderSkeleton,
+  "/platform/mobile-settings": AnalyticsSkeleton,
+  "/platform/mobile-deep-links": AnalyticsSkeleton,
+  "/platform/mobile-push-diagnostics": AnalyticsSkeleton,
+  "/platform/field-settings": AnalyticsSkeleton,
+  "/platform/field-incidents": AnalyticsSkeleton,
+  "/platform/marketplace-mobile": AnalyticsSkeleton,
+  "/platform/mobile-sync-monitor": AnalyticsSkeleton,
+  "/platform/commerce-mobile": AnalyticsSkeleton,
+  "/platform/logistics/command-center": AnalyticsSkeleton,
+  "/platform/logistics/fleet": AnalyticsSkeleton,
+  "/platform/logistics/carriers": AnalyticsSkeleton,
+  "/technician/installs": OrdersSkeleton,
+  "/sales": OrdersSkeleton,
+  "/listings": GrainBatchesSkeleton,
+  "/grain-operations": GrainBatchesSkeleton,
+  "/monitoring": SensorsSkeleton,
+  "/intelligence": AnalyticsSkeleton,
+  "/business": SubscriptionSkeleton,
+  "/administration": SettingsSkeleton,
+};
 
 function AutoPending() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  if (TABLE.has(pathname)) return <TableSkeleton rows={6} cols={5} />;
-  if (INSIGHT.has(pathname)) return <AnalyticsSkeleton />;
-  if (FORM.has(pathname)) return <FormSkeleton fields={4} />;
+  let Skel = PAGE_SKELETONS[pathname];
+  if (!Skel && pathname.startsWith("/admins/")) Skel = AdminProfileSkeleton;
+  if (!Skel && pathname.startsWith("/platform/orders/")) Skel = PlatformOrdersSkeleton;
+  if (!Skel && pathname.startsWith("/technician/installs/")) Skel = OrdersSkeleton;
+  if (Skel) return <Skel />;
   return <DashboardSkeleton />;
 }
 

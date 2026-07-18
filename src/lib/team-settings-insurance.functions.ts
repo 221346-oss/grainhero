@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
+import { assertPlanAllows } from "@/lib/plan-gate";
 
 async function roleFlags(supabase: any, userId: string) {
   const r = await getEffectiveRole(supabase, userId);
@@ -48,7 +49,7 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
 export const inviteTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
+  .validator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
@@ -60,28 +61,8 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       .from("profiles").select("admin_id, id").eq("id", context.userId).maybeSingle();
     const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? tenantId;
 
-    // Enforce plan-based staff limit (admin's active subscription)
-    if (!isSuper) {
-      const { supabaseAdmin: sa } = await import("@/integrations/supabase/client.server");
-      const { data: sub } = await sa
-        .from("subscriptions")
-        .select("max_users, status")
-        .eq("admin_id", admin_id)
-        .in("status", ["active", "trial"] as never)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!sub) throw new Error("No active subscription. Purchase a plan first to invite staff.");
-      const maxUsers = Number((sub as { max_users?: number }).max_users ?? 0);
-      const { count } = await sa
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .or(`admin_id.eq.${admin_id},id.eq.${admin_id}`);
-      const current = count ?? 1;
-      if (maxUsers > 0 && current >= maxUsers) {
-        throw new Error(`Staff limit reached (${current}/${maxUsers}). Upgrade your plan to add more members.`);
-      }
-    }
+    // Enforce plan-based staff limit via central gate.
+    await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email.trim().toLowerCase(), {
@@ -98,7 +79,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
 
 export const updateTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
+  .validator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
@@ -121,7 +102,7 @@ export const updateTeamMember = createServerFn({ method: "POST" })
 
 export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin) throw new Error("Forbidden");
@@ -148,7 +129,7 @@ export const getMySettings = createServerFn({ method: "GET" })
 
 export const updateMySettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
+  .validator((d: {
     name?: string; phone?: string; business_type?: string; avatar?: string | null;
     address?: Record<string, unknown>; location?: Record<string, unknown>;
     preferences?: Record<string, unknown>;
@@ -195,8 +176,11 @@ export const listPolicies = createServerFn({ method: "GET" })
 
 export const upsertPolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
+  .validator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "insurance", sb: context.supabase, userId: context.userId });
+    }
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
       policy_number: data.policy_number ?? `POL-${Date.now()}`,
@@ -227,7 +211,7 @@ export const upsertPolicy = createServerFn({ method: "POST" })
 
 export const deletePolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("insurance_policies").delete().eq("id", data.id);
     if (error) throw error;
@@ -245,7 +229,7 @@ export const listClaims = createServerFn({ method: "GET" })
 
 export const upsertClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: Partial<InsuranceClaimRow> & { id?: string }) => d)
+  .validator((d: Partial<InsuranceClaimRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
@@ -277,7 +261,7 @@ export const upsertClaim = createServerFn({ method: "POST" })
 
 export const deleteClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("insurance_claims").delete().eq("id", data.id);
     if (error) throw error;

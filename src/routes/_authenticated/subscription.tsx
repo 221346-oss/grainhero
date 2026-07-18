@@ -14,9 +14,12 @@ import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions
 import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
 import { changeMyPlan, cancelAtPeriodEnd, resumeSubscription } from "@/lib/subscription-management.functions";
 import { getAllSubscriptions } from "@/lib/platform-no-admin.functions";
+import { adminChangeUserPlan, adminCancelSubscription, adminResumeSubscription, adminSyncSubscription, adminReconcileAllSubscriptions } from "@/lib/admin-subscriptions.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import pricingData from "@/lib/pricing-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { SubscriptionSkeleton } from "@/components/app/skeletons";
@@ -58,6 +61,11 @@ function SubscriptionPage() {
   const resumeFn = useServerFn(resumeSubscription);
   const roleFn = useServerFn(getMyRole);
   const allSubsFn = useServerFn(getAllSubscriptions);
+  const adminChangeFn = useServerFn(adminChangeUserPlan);
+  const adminCancelFn = useServerFn(adminCancelSubscription);
+  const adminResumeFn = useServerFn(adminResumeSubscription);
+  const adminSyncFn = useServerFn(adminSyncSubscription);
+  const adminReconcileFn = useServerFn(adminReconcileAllSubscriptions);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
@@ -75,6 +83,10 @@ function SubscriptionPage() {
   const [reason, setReason] = useState("");
   const [changeOpen, setChangeOpen] = useState(false);
   const [newPlan, setNewPlan] = useState<"basic" | "intermediate" | "pro">("intermediate");
+  async function runAdmin(op: () => Promise<any>, successMsg: string) {
+    try { await op(); toast.success(successMsg); qc.invalidateQueries({ queryKey: ["all-subscriptions"] }); }
+    catch (e: any) { toast.error(e?.message ?? "Action failed"); }
+  }
 
   const cancelM = useMutation({
     mutationFn: () => cancelFn({ data: { reason: reason || undefined } }),
@@ -129,6 +141,11 @@ function SubscriptionPage() {
               <ArrowUpRight className="h-4 w-4 mr-2" /> Change plan
             </Button>
           )}
+          {isSuperAdmin && (
+            <Button variant="outline" size="sm" onClick={() => runAdmin(() => adminReconcileFn(), "Reconciled from Stripe")}>
+              <RotateCcw className="h-4 w-4 mr-2" /> Sync all from Stripe
+            </Button>
+          )}
           <Button asChild variant="outline" size="sm"><Link to="/plans">Browse plans</Link></Button>
         </>
       }
@@ -147,6 +164,19 @@ function SubscriptionPage() {
 
       {sub && (
         <>
+          {(sub as any).cancel_at && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                <Calendar className="h-4 w-4" />
+                Scheduled to cancel on {new Date((sub as any).cancel_at).toLocaleDateString()}
+              </div>
+              {canManage && (
+                <Button size="sm" variant="outline" onClick={() => resumeM.mutate()} disabled={resumeM.isPending}>
+                  <RotateCcw className="h-4 w-4 mr-2" /> Resume
+                </Button>
+              )}
+            </div>
+          )}
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -217,7 +247,7 @@ function SubscriptionPage() {
 
           {canManage && sub.status !== "cancelled" && (
             <div className="flex justify-end gap-2">
-              {(sub as any).cancel_at_period_end ? (
+              {(sub as any).cancel_at ? (
                 <Button variant="outline" onClick={() => resumeM.mutate()} disabled={resumeM.isPending}>
                   <RotateCcw className="h-4 w-4 mr-2" /> Resume subscription
                 </Button>
@@ -235,9 +265,12 @@ function SubscriptionPage() {
       )}
 
       {/* Super Admin: Show all subscriptions */}
-      {isSuperAdmin && allSubs.length > 0 && (
-        <AdminDataCard title="All platform subscriptions" description={`${allSubs.length} subscriptions`}>
-          <div className="">
+      {isSuperAdmin && (
+        <AdminDataCard title="All platform subscriptions" description={`${allSubs.length} subscription${allSubs.length === 1 ? "" : "s"} · manage plans, cancel or resume from here`}>
+          {allSubs.length === 0 && (
+            <div className="p-8 text-center text-sm text-slate-500">No tenant subscriptions yet.</div>
+          )}
+          <div className="divide-y divide-slate-100">
             {allSubs.map((s: any) => {
               const daysLeft = s.next_payment_date ? Math.ceil((new Date(s.next_payment_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
               const expiryText = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";
@@ -254,6 +287,34 @@ function SubscriptionPage() {
                     <span className="text-sm font-bold text-slate-900">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-slate-500">/mo</span></span>
                     <div className={`text-[10px] font-medium ${expiryColor}`}>Expires: {expiryText}</div>
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuLabel className="text-[11px]">Change plan</DropdownMenuLabel>
+                      {pricingData.map((p: any) => (
+                        <DropdownMenuItem key={p.id} onClick={() => runAdmin(() => adminChangeFn({ data: { subscriptionId: s.id, planId: p.id } }), `Moved ${s.user_name} to ${p.name}`)}>
+                          <ArrowUpRight className="h-3.5 w-3.5 mr-2" /> {p.name} — {p.currency ?? "PKR"} {p.price}/mo
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => runAdmin(() => adminCancelFn({ data: { subscriptionId: s.id, immediate: false } }), "Will cancel at period end")}>
+                        <Calendar className="h-3.5 w-3.5 mr-2" /> Cancel at period end
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => runAdmin(() => adminResumeFn({ data: { subscriptionId: s.id } }), "Subscription resumed")}>
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Resume
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600" onClick={() => runAdmin(() => adminCancelFn({ data: { subscriptionId: s.id, immediate: true } }), "Subscription cancelled")}>
+                        <XCircle className="h-3.5 w-3.5 mr-2" /> Cancel immediately
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => runAdmin(() => adminSyncFn({ data: { subscriptionId: s.id } }), "Synced from Stripe")}>
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Sync from Stripe
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               );
             })}

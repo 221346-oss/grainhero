@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "preview": "npm run build && node preview.js",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:integration": "vitest run tests/integration --reporter=verbose"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -57,6 +58,7 @@
     "gsap": "^3.15.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
+    "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
@@ -90,6 +92,7 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^4.1.10"
   }
 }

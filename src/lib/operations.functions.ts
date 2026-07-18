@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { assertPlanAllows } from "@/lib/plan-gate";
 
 // Turn ZodError into a readable one-liner so the client toast is helpful.
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
@@ -38,8 +39,20 @@ const warehouseInput = z.object({
 
 export const upsertWarehouse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(warehouseInput, d))
+  .validator((d: unknown) => parseOrThrow(warehouseInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_warehouses", sb: context.supabase, userId: context.userId });
+    }
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    // Managers/technicians have profiles.admin_id set to their tenant admin; admins have it null.
+    const { data: prof, error: profErr } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (profErr) throw profErr;
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const location = {
       description: data.location_description ?? null,
       address: data.address ?? null,
@@ -51,7 +64,7 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
       total_capacity_kg: data.total_capacity_kg ?? null,
       status: data.status,
       notes: data.notes ?? null,
-      admin_id: context.userId,
+      admin_id: tenantAdminId,
       created_by: context.userId,
       updated_by: context.userId,
     };
@@ -76,7 +89,7 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
 
 export const deleteWarehouse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("warehouses").delete().eq("id", data.id);
     if (error) throw error;
@@ -108,8 +121,11 @@ const siloInput = z.object({
 
 export const upsertSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(siloInput, d))
+  .validator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_silos", sb: context.supabase, userId: context.userId });
+    }
     const location = { description: data.location_description ?? null };
     if (data.id) {
       // Update: don't touch silo_id or name (immutable per original app)
@@ -153,7 +169,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
 
 export const deleteSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { count, error: countError } = await context.supabase
       .from("grain_batches")
@@ -211,8 +227,11 @@ const batchInput = z.object({
 
 export const upsertGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(batchInput, d))
+  .validator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_batches", sb: context.supabase, userId: context.userId });
+    }
     // resolve warehouse from silo
     const { data: silo, error: siloErr } = await context.supabase
       .from("silos").select("id, warehouse_id, capacity_kg, current_occupancy_kg").eq("id", data.silo_id).single();
@@ -304,7 +323,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
 
 export const deleteGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     // free up silo if this was the current batch
     const { data: batch } = await context.supabase
@@ -340,10 +359,11 @@ const dispatchInput = z.object({
 
 export const dispatchGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(dispatchInput, d))
+  .validator((d: unknown) => parseOrThrow(dispatchInput, d))
   .handler(async ({ data, context }) => {
     let buyerId = data.buyer_id ?? null;
     if (!buyerId && data.new_buyer?.name) {
+      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
       const { data: b, error: bErr } = await context.supabase.from("buyers").insert({
         admin_id: context.userId,
         name: data.new_buyer.name,
@@ -421,7 +441,7 @@ const spoilageInput = z.object({
 
 export const logSpoilageEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(spoilageInput, d))
+  .validator((d: unknown) => parseOrThrow(spoilageInput, d))
   .handler(async ({ data, context }) => {
     const { data: batch, error: getErr } = await context.supabase
       .from("grain_batches").select("spoilage_events, spoilage_label, risk_score").eq("id", data.id).single();
@@ -493,8 +513,11 @@ const sensorInput = z.object({
 
 export const upsertSensorDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(sensorInput, d))
+  .validator((d: unknown) => parseOrThrow(sensorInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_sensors", sb: context.supabase, userId: context.userId });
+    }
     const base = {
       device_name: data.device_name,
       mac_address: data.mac_address ?? null,
@@ -533,7 +556,7 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
 
 export const deleteSensorDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("sensor_devices").delete().eq("id", data.id);
     if (error) throw error;
@@ -568,7 +591,7 @@ export const listLatestSensorReadings = createServerFn({ method: "GET" })
 // Recent readings for a single device (history)
 export const listDeviceReadings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ device_id: z.string().uuid(), limit: z.number().int().max(500).default(50) }).parse(d))
+  .validator((d: unknown) => z.object({ device_id: z.string().uuid(), limit: z.number().int().max(500).default(50) }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("sensor_readings")
@@ -612,8 +635,11 @@ const actuatorInput = z.object({
 
 export const upsertActuator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(actuatorInput, d))
+  .validator((d: unknown) => parseOrThrow(actuatorInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_actuators", sb: context.supabase, userId: context.userId });
+    }
     const payload = {
       actuator_id: data.actuator_id,
       name: data.name,
@@ -654,7 +680,7 @@ export const upsertActuator = createServerFn({ method: "POST" })
 
 export const deleteActuator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("actuators").delete().eq("id", data.id);
     if (error) throw error;
@@ -669,7 +695,7 @@ const controlInput = z.object({
 
 export const controlActuator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(controlInput, d))
+  .validator((d: unknown) => parseOrThrow(controlInput, d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
     const patch: Database["public"]["Tables"]["actuators"]["Update"] = { updated_by: context.userId };
@@ -762,7 +788,7 @@ const alertInput = z.object({
 
 export const upsertGrainAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(alertInput, d))
+  .validator((d: unknown) => parseOrThrow(alertInput, d))
   .handler(async ({ data, context }) => {
     const payload = {
       alert_id: data.alert_id,
@@ -801,7 +827,7 @@ export const upsertGrainAlert = createServerFn({ method: "POST" })
 
 export const deleteGrainAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("grain_alerts").delete().eq("id", data.id);
     if (error) throw error;
@@ -819,7 +845,7 @@ const alertActionInput = z.object({
 
 export const actionGrainAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(alertActionInput, d))
+  .validator((d: unknown) => parseOrThrow(alertActionInput, d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
     const patch: Database["public"]["Tables"]["grain_alerts"]["Update"] = {};
@@ -907,8 +933,11 @@ const buyerInput = z.object({
 
 export const upsertBuyer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(buyerInput, d))
+  .validator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
+    }
     const payload = {
       name: data.name,
       contact_name: data.contact_name,
@@ -950,7 +979,7 @@ export const upsertBuyer = createServerFn({ method: "POST" })
 
 export const deleteBuyer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("buyers").delete().eq("id", data.id);
     if (error) throw error;
@@ -1000,7 +1029,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 
 export const getSensorHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({
       device_uuid: z.string().uuid(),
       hours: z.number().int().positive().default(6),
@@ -1022,7 +1051,7 @@ export const getSensorHistory = createServerFn({ method: "POST" })
 
 export const exportSensorCSV = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({
       device_id: z.string().uuid().optional(),
     }).parse(d)

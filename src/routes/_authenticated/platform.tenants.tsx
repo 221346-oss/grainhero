@@ -10,6 +10,7 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/platform/tenants")({ component: TenantsPage });
 
@@ -67,7 +68,12 @@ function TenantsPage() {
         ) : (
           <div>
             {filtered.map((t) => (
-              <div key={t.id} className="flex flex-wrap items-center gap-4 px-4 py-3 hover:bg-slate-50 transition-colors">
+              <Link
+                key={t.id}
+                to="/admins/$adminId"
+                params={{ adminId: t.id }}
+                className="flex flex-wrap items-center gap-4 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-slate-900 truncate">{t.name ?? "Unnamed organization"}</div>
                   <div className="text-xs text-slate-500 truncate mt-0.5">
@@ -90,7 +96,7 @@ function TenantsPage() {
                     </Badge>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
