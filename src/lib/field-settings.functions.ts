@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { recordSettingsAudit } from "./settings-audit.server";
 
 const schema = z.object({
   default_page_size: z.number().int().positive().max(1000),
@@ -27,9 +28,17 @@ export const updateFieldSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { data: before } = await context.supabase.from("mobile_field_settings")
+      .select("*").eq("id", true).maybeSingle();
     const { error } = await context.supabase.from("mobile_field_settings")
       .update({ ...data, updated_by: context.userId } as never).eq("id", true);
     if (error) throw new Error(error.message);
+    await recordSettingsAudit({
+      actorUserId: context.userId,
+      settingsKey: "mobile_field",
+      before,
+      after: { ...data, updated_by: context.userId },
+    });
     return { ok: true };
   });
 
