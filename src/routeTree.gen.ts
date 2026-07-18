@@ -87,6 +87,8 @@ import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authen
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
+import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
+import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
 import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
 import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
 import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
@@ -574,6 +576,18 @@ const AuthenticatedPlatformMobileSettingsRoute =
     path: '/platform/mobile-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMobilePushDiagnosticsRoute =
+  AuthenticatedPlatformMobilePushDiagnosticsRouteImport.update({
+    id: '/platform/mobile-push-diagnostics',
+    path: '/platform/mobile-push-diagnostics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobileDeepLinksRoute =
+  AuthenticatedPlatformMobileDeepLinksRouteImport.update({
+    id: '/platform/mobile-deep-links',
+    path: '/platform/mobile-deep-links',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformMetricsRoute =
   AuthenticatedPlatformMetricsRouteImport.update({
     id: '/platform/metrics',
@@ -1053,6 +1067,8 @@ export interface FileRoutesByFullPath {
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
+  '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
@@ -1198,6 +1214,8 @@ export interface FileRoutesByTo {
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
+  '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
@@ -1347,6 +1365,8 @@ export interface FileRoutesById {
   '/_authenticated/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/_authenticated/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/_authenticated/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/_authenticated/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
+  '/_authenticated/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/_authenticated/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
@@ -1496,6 +1516,8 @@ export interface FileRouteTypes {
     | '/platform/marketplace-settings'
     | '/platform/messages'
     | '/platform/metrics'
+    | '/platform/mobile-deep-links'
+    | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
     | '/platform/orders'
     | '/platform/pipeline'
@@ -1641,6 +1663,8 @@ export interface FileRouteTypes {
     | '/platform/marketplace-settings'
     | '/platform/messages'
     | '/platform/metrics'
+    | '/platform/mobile-deep-links'
+    | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
     | '/platform/orders'
     | '/platform/pipeline'
@@ -1789,6 +1813,8 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/marketplace-settings'
     | '/_authenticated/platform/messages'
     | '/_authenticated/platform/metrics'
+    | '/_authenticated/platform/mobile-deep-links'
+    | '/_authenticated/platform/mobile-push-diagnostics'
     | '/_authenticated/platform/mobile-settings'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
@@ -2465,6 +2491,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformMobileSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/mobile-push-diagnostics': {
+      id: '/_authenticated/platform/mobile-push-diagnostics'
+      path: '/platform/mobile-push-diagnostics'
+      fullPath: '/platform/mobile-push-diagnostics'
+      preLoaderRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-deep-links': {
+      id: '/_authenticated/platform/mobile-deep-links'
+      path: '/platform/mobile-deep-links'
+      fullPath: '/platform/mobile-deep-links'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileDeepLinksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/metrics': {
       id: '/_authenticated/platform/metrics'
       path: '/platform/metrics'
@@ -3124,6 +3164,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformMarketplaceSettingsRoute: typeof AuthenticatedPlatformMarketplaceSettingsRoute
   AuthenticatedPlatformMessagesRoute: typeof AuthenticatedPlatformMessagesRoute
   AuthenticatedPlatformMetricsRoute: typeof AuthenticatedPlatformMetricsRoute
+  AuthenticatedPlatformMobileDeepLinksRoute: typeof AuthenticatedPlatformMobileDeepLinksRoute
+  AuthenticatedPlatformMobilePushDiagnosticsRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   AuthenticatedPlatformMobileSettingsRoute: typeof AuthenticatedPlatformMobileSettingsRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
@@ -3204,6 +3246,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformMarketplaceSettingsRoute,
   AuthenticatedPlatformMessagesRoute: AuthenticatedPlatformMessagesRoute,
   AuthenticatedPlatformMetricsRoute: AuthenticatedPlatformMetricsRoute,
+  AuthenticatedPlatformMobileDeepLinksRoute:
+    AuthenticatedPlatformMobileDeepLinksRoute,
+  AuthenticatedPlatformMobilePushDiagnosticsRoute:
+    AuthenticatedPlatformMobilePushDiagnosticsRoute,
   AuthenticatedPlatformMobileSettingsRoute:
     AuthenticatedPlatformMobileSettingsRoute,
   AuthenticatedPlatformOrdersRoute:

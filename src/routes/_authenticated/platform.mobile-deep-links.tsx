@@ -28,7 +28,7 @@ function MobileDeepLinksPage() {
   const [draft, setDraft] = useState<Row>({ key: "", native_route: "", web_fallback: "", active: true });
 
   const saveMut = useMutation({
-    mutationFn: (row: Row) => save({ data: row as Parameters<typeof save>[0]["data"] }),
+    mutationFn: (row: Row) => save({ data: row } as never),
     onSuccess: () => { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["mobile-deep-links"] }); },
     onError: (e) => toast.error((e as Error).message),
   });
