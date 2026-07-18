@@ -373,6 +373,34 @@ export const moderateClaim = createServerFn({ method: "POST" })
       payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null },
     });
     await audit(context, { action: `claim.${data.decision}`, subject_type: "claim", subject_id: data.id, claim_id: data.id, payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null } });
+    // Fan-out notifications to tenant + super-admins.
+    try {
+      const { data: cl } = await sb.from("insurance_claims").select("admin_id").eq("id", data.id).maybeSingle();
+      const { emitBulk, emitToSuperAdmins } = await import("@/lib/notify");
+      if (cl?.admin_id) {
+        await emitBulk(sb, [cl.admin_id as string], {
+          tenantAdminId: cl.admin_id as string,
+          category: "insurance" as never,
+          severity: data.decision === "rejected" ? "warning" : data.decision === "approved" || data.decision === "paid" ? "success" : "info",
+          title: `Claim ${data.decision}`,
+          body: data.decision_reason ?? `Insurance claim moved to ${data.decision}.`,
+          link: `/insurance-claims/${data.id}`,
+          entityType: "insurance_claim",
+          entityId: data.id,
+        });
+      }
+      await emitToSuperAdmins(sb, {
+        category: "insurance" as never,
+        severity: "info",
+        title: `Claim ${data.decision}`,
+        body: `Claim ${data.id.slice(0,8)} moved to ${data.decision}.`,
+        link: `/platform/insurance/claims/${data.id}`,
+        entityType: "insurance_claim",
+        entityId: data.id,
+      });
+    } catch (e) {
+      console.warn("[insurance] notify moderate failed", (e as Error).message);
+    }
     return { ok: true };
   });
 
@@ -578,12 +606,181 @@ export const exportInsuranceAuditCsv = createServerFn({ method: "POST" })
 
 export const listInsuranceWebhookEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((d) => z.object({
+    status: z.enum(["all","received","processed","error"]).default("all"),
+    carrier_code: z.string().optional(),
+    limit: z.number().int().min(1).max(500).default(200),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (context.supabase as any)
-      .from("insurance_webhook_events").select("*").order("created_at", { ascending: false }).limit(200);
-    return { events: (data ?? []) as Row[] };
+    const sb = (context.supabase as any);
+    let q = sb.from("insurance_webhook_events")
+      .select("*, carrier:insurance_carriers(id,name)")
+      .order("created_at", { ascending: false }).limit(data.limit);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    if (data.carrier_code) q = q.eq("carrier_code", data.carrier_code);
+    const { data: rows } = await q;
+    return { events: (rows ?? []) as Row[] };
+  });
+
+export const replayInsuranceWebhookEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ event_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const { data: evt, error } = await sb.from("insurance_webhook_events")
+      .select("id, carrier_id, external_id, raw").eq("id", data.event_id).maybeSingle();
+    if (error || !evt) throw new Error("Event not found");
+    const { processInsuranceWebhookPayload } = await import("@/lib/insurance-webhook.server");
+    const result = await processInsuranceWebhookPayload(sb, {
+      carrierId: evt.carrier_id as string,
+      externalId: evt.external_id as string | null,
+      payload: (evt.raw ?? {}) as Record<string, unknown>,
+    });
+    await sb.from("insurance_webhook_events").update({
+      status: result.status,
+      processed_at: new Date().toISOString(),
+      policy_id: result.policyId,
+      claim_id: result.claimId,
+      error_message: result.error ?? null,
+    }).eq("id", evt.id);
+    await audit(context, {
+      action: "webhook.replay",
+      subject_type: "webhook_event",
+      subject_id: evt.id as string,
+      payload: { result: result.status, error: result.error ?? null },
+    });
+    return { ok: result.status === "processed", result };
+  });
+
+/* -------------------- Policy documents -------------------- */
+
+export const listPolicyDocuments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ policy_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const [{ data: policy }, { data: docs }] = await Promise.all([
+      sb.from("insurance_policies")
+        .select("*, product:insurance_products(name, carrier:insurance_carriers(id,name))")
+        .eq("id", data.policy_id).maybeSingle(),
+      sb.from("insurance_policy_documents")
+        .select("*").eq("policy_id", data.policy_id)
+        .order("version", { ascending: false }),
+    ]);
+    return { policy: (policy ?? null) as Row | null, documents: (docs ?? []) as Row[] };
+  });
+
+export const createPolicyDocumentUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    policy_id: z.string().uuid(),
+    filename: z.string().min(1).max(200),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const admin = await tenantAdminId(context);
+    const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${admin}/${data.policy_id}/${Date.now()}-${safe}`;
+    const { data: signed, error } = await sb.storage
+      .from("insurance-attachments").createSignedUploadUrl(path);
+    if (error) throw error;
+    return { path, token: signed?.token as string, signedUrl: signed?.signedUrl as string };
+  });
+
+export const savePolicyDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    policy_id: z.string().uuid(),
+    filename: z.string().min(1).max(200),
+    storage_path: z.string().min(1),
+    mime: z.string().max(120).optional().nullable(),
+    size_bytes: z.number().int().nonnegative().optional().nullable(),
+    document_type: z.string().max(40).default("policy"),
+    notes: z.string().max(2000).optional().nullable(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const admin = await tenantAdminId(context);
+    // Determine next version and demote current docs.
+    const { data: existing } = await sb.from("insurance_policy_documents")
+      .select("version").eq("policy_id", data.policy_id)
+      .order("version", { ascending: false }).limit(1);
+    const nextVersion = ((existing?.[0]?.version as number | undefined) ?? 0) + 1;
+    const { data: pol } = await sb.from("insurance_policies")
+      .select("admin_id, product:insurance_products(carrier_id)")
+      .eq("id", data.policy_id).maybeSingle();
+    await sb.from("insurance_policy_documents")
+      .update({ is_current: false }).eq("policy_id", data.policy_id);
+    const { data: row, error } = await sb.from("insurance_policy_documents").insert({
+      policy_id: data.policy_id,
+      admin_id: (pol?.admin_id as string) ?? admin,
+      carrier_id: (pol?.product?.carrier_id as string) ?? null,
+      version: nextVersion,
+      is_current: true,
+      document_type: data.document_type,
+      filename: data.filename,
+      storage_path: data.storage_path,
+      mime: data.mime ?? null,
+      size_bytes: data.size_bytes ?? null,
+      notes: data.notes ?? null,
+      uploaded_by: context.userId,
+    }).select("id").single();
+    if (error) throw error;
+    await audit(context, {
+      action: "policy.document.upload",
+      subject_type: "policy_document",
+      subject_id: (row as Row).id as string,
+      policy_id: data.policy_id,
+      admin_id: (pol?.admin_id as string) ?? admin,
+      payload: { version: nextVersion, filename: data.filename },
+    });
+    return { id: (row as Row).id as string, version: nextVersion };
+  });
+
+export const getPolicyDocumentDownloadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const { data: doc } = await sb.from("insurance_policy_documents")
+      .select("storage_path, filename").eq("id", data.id).maybeSingle();
+    if (!doc) throw new Error("Document not found");
+    const { data: signed, error } = await sb.storage.from("insurance-attachments")
+      .createSignedUrl(doc.storage_path as string, 60 * 10);
+    if (error) throw error;
+    return { url: signed?.signedUrl as string, filename: doc.filename as string };
+  });
+
+export const deletePolicyDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const { data: doc } = await sb.from("insurance_policy_documents")
+      .select("storage_path, policy_id, admin_id").eq("id", data.id).maybeSingle();
+    if (doc?.storage_path) {
+      try { await sb.storage.from("insurance-attachments").remove([doc.storage_path as string]); } catch { /* ignore */ }
+    }
+    const { error } = await sb.from("insurance_policy_documents").delete().eq("id", data.id);
+    if (error) throw error;
+    await audit(context, {
+      action: "policy.document.delete",
+      subject_type: "policy_document",
+      subject_id: data.id,
+      policy_id: doc?.policy_id as string,
+      admin_id: doc?.admin_id as string | null,
+    });
+    return { ok: true };
   });
 
 /* -------------------- Attachments (signed upload) -------------------- */

@@ -76,6 +76,7 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/earnings": EarningsSkeleton,
   "/platform/insurance": InsuranceCommandSkeleton,
   "/platform/insurance/audit": InsuranceCommandSkeleton,
+  "/platform/insurance/webhooks": InsuranceCommandSkeleton,
   "/platform/logistics/command-center": AnalyticsSkeleton,
   "/platform/logistics/fleet": AnalyticsSkeleton,
   "/platform/logistics/carriers": AnalyticsSkeleton,

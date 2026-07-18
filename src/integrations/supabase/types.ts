@@ -3371,6 +3371,75 @@ export type Database = {
           },
         ]
       }
+      insurance_policy_documents: {
+        Row: {
+          admin_id: string | null
+          carrier_id: string | null
+          created_at: string
+          document_type: string
+          filename: string
+          id: string
+          is_current: boolean
+          mime: string | null
+          notes: string | null
+          policy_id: string
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          uploaded_by: string | null
+          version: number
+        }
+        Insert: {
+          admin_id?: string | null
+          carrier_id?: string | null
+          created_at?: string
+          document_type?: string
+          filename: string
+          id?: string
+          is_current?: boolean
+          mime?: string | null
+          notes?: string | null
+          policy_id: string
+          size_bytes?: number | null
+          storage_path: string
+          updated_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Update: {
+          admin_id?: string | null
+          carrier_id?: string | null
+          created_at?: string
+          document_type?: string
+          filename?: string
+          id?: string
+          is_current?: boolean
+          mime?: string | null
+          notes?: string | null
+          policy_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_policy_documents_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_policy_documents_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_products: {
         Row: {
           active: boolean

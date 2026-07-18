@@ -99,6 +99,7 @@ import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
 import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
@@ -119,14 +120,17 @@ import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes
 import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
+import { Route as AuthenticatedPlatformInsuranceWebhooksRouteImport } from './routes/_authenticated/platform.insurance.webhooks'
 import { Route as AuthenticatedPlatformInsuranceAuditRouteImport } from './routes/_authenticated/platform.insurance.audit'
 import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
 import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
 import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
+import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
 import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
+import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -618,6 +622,12 @@ const AuthenticatedPlatformAuditLogsRoute =
     path: '/platform/audit-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInsuranceClaimsClaimIdRoute =
+  AuthenticatedInsuranceClaimsClaimIdRouteImport.update({
+    id: '/insurance-claims/$claimId',
+    path: '/insurance-claims/$claimId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBuyerOrdersRoute =
   AuthenticatedBuyerOrdersRouteImport.update({
     id: '/buyer/orders',
@@ -736,6 +746,12 @@ const AuthenticatedPlatformLogisticsCarriersRoute =
     path: '/platform/logistics/carriers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformInsuranceWebhooksRoute =
+  AuthenticatedPlatformInsuranceWebhooksRouteImport.update({
+    id: '/webhooks',
+    path: '/webhooks',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
+  } as any)
 const AuthenticatedPlatformInsuranceAuditRoute =
   AuthenticatedPlatformInsuranceAuditRouteImport.update({
     id: '/audit',
@@ -760,6 +776,12 @@ const AuthenticatedPlatformFinanceLedgerRoute =
     path: '/ledger',
     getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
+const AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute =
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport.update({
+    id: '/insurance-policies/$policyId/documents',
+    path: '/insurance-policies/$policyId/documents',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBuyerOrdersOrderIdRoute =
   AuthenticatedBuyerOrdersOrderIdRouteImport.update({
     id: '/$orderId',
@@ -783,6 +805,12 @@ const AuthenticatedPlatformOrdersOrderIdAuditRoute =
     id: '/audit',
     path: '/audit',
     getParentRoute: () => AuthenticatedPlatformOrdersOrderIdRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceClaimsClaimIdRoute =
+  AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport.update({
+    id: '/claims/$claimId',
+    path: '/claims/$claimId',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -847,6 +875,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -878,10 +907,12 @@ export interface FileRoutesByFullPath {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -900,6 +931,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
@@ -964,6 +996,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -995,10 +1028,12 @@ export interface FileRoutesByTo {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
   '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -1017,6 +1052,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
@@ -1085,6 +1121,7 @@ export interface FileRoutesById {
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1116,10 +1153,12 @@ export interface FileRoutesById {
   '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
   '/_authenticated/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/_authenticated/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
   '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -1138,6 +1177,7 @@ export interface FileRoutesById {
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
@@ -1206,6 +1246,7 @@ export interface FileRouteTypes {
     | '/marketplace/'
     | '/admins/$adminId'
     | '/buyer/orders'
+    | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1237,10 +1278,12 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform/'
     | '/buyer/orders/$orderId'
+    | '/insurance-policies/$policyId/documents'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
     | '/platform/insurance/audit'
+    | '/platform/insurance/webhooks'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1259,6 +1302,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
@@ -1323,6 +1367,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/admins/$adminId'
     | '/buyer/orders'
+    | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1354,10 +1399,12 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/platform'
     | '/buyer/orders/$orderId'
+    | '/insurance-policies/$policyId/documents'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
     | '/platform/insurance/audit'
+    | '/platform/insurance/webhooks'
     | '/platform/logistics/carriers'
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
@@ -1376,6 +1423,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
@@ -1443,6 +1491,7 @@ export interface FileRouteTypes {
     | '/marketplace/'
     | '/_authenticated/admins/$adminId'
     | '/_authenticated/buyer/orders'
+    | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
@@ -1474,10 +1523,12 @@ export interface FileRouteTypes {
     | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/insurance-policies/$policyId/documents'
     | '/_authenticated/platform/finance/ledger'
     | '/_authenticated/platform/finance/payouts'
     | '/_authenticated/platform/finance/tax-rules'
     | '/_authenticated/platform/insurance/audit'
+    | '/_authenticated/platform/insurance/webhooks'
     | '/_authenticated/platform/logistics/carriers'
     | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/logistics/fleet'
@@ -1496,6 +1547,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
+    | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
@@ -2170,6 +2222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/insurance-claims/$claimId': {
+      id: '/_authenticated/insurance-claims/$claimId'
+      path: '/insurance-claims/$claimId'
+      fullPath: '/insurance-claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/buyer/orders': {
       id: '/_authenticated/buyer/orders'
       path: '/buyer/orders'
@@ -2310,6 +2369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/insurance/webhooks': {
+      id: '/_authenticated/platform/insurance/webhooks'
+      path: '/webhooks'
+      fullPath: '/platform/insurance/webhooks'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceWebhooksRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
+    }
     '/_authenticated/platform/insurance/audit': {
       id: '/_authenticated/platform/insurance/audit'
       path: '/audit'
@@ -2338,6 +2404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
       parentRoute: typeof AuthenticatedPlatformFinanceRoute
     }
+    '/_authenticated/insurance-policies/$policyId/documents': {
+      id: '/_authenticated/insurance-policies/$policyId/documents'
+      path: '/insurance-policies/$policyId/documents'
+      fullPath: '/insurance-policies/$policyId/documents'
+      preLoaderRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/buyer/orders/$orderId': {
       id: '/_authenticated/buyer/orders/$orderId'
       path: '/$orderId'
@@ -2365,6 +2438,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/platform/orders/$orderId/audit'
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdAuditRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
+    }
+    '/_authenticated/platform/insurance/claims/$claimId': {
+      id: '/_authenticated/platform/insurance/claims/$claimId'
+      path: '/claims/$claimId'
+      fullPath: '/platform/insurance/claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
     }
   }
 }
@@ -2431,12 +2511,18 @@ const AuthenticatedPlatformFinanceRouteWithChildren =
 
 interface AuthenticatedPlatformInsuranceRouteChildren {
   AuthenticatedPlatformInsuranceAuditRoute: typeof AuthenticatedPlatformInsuranceAuditRoute
+  AuthenticatedPlatformInsuranceWebhooksRoute: typeof AuthenticatedPlatformInsuranceWebhooksRoute
+  AuthenticatedPlatformInsuranceClaimsClaimIdRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
 }
 
 const AuthenticatedPlatformInsuranceRouteChildren: AuthenticatedPlatformInsuranceRouteChildren =
   {
     AuthenticatedPlatformInsuranceAuditRoute:
       AuthenticatedPlatformInsuranceAuditRoute,
+    AuthenticatedPlatformInsuranceWebhooksRoute:
+      AuthenticatedPlatformInsuranceWebhooksRoute,
+    AuthenticatedPlatformInsuranceClaimsClaimIdRoute:
+      AuthenticatedPlatformInsuranceClaimsClaimIdRoute,
   }
 
 const AuthenticatedPlatformInsuranceRouteWithChildren =
@@ -2527,6 +2613,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
+  AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
@@ -2551,6 +2638,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
   AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
   AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   AuthenticatedPlatformLogisticsFleetRoute: typeof AuthenticatedPlatformLogisticsFleetRoute
@@ -2594,6 +2682,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
   AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRouteWithChildren,
+  AuthenticatedInsuranceClaimsClaimIdRoute:
+    AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
@@ -2626,6 +2716,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTechnicianInstallsRoute:
     AuthenticatedTechnicianInstallsRouteWithChildren,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute:
+    AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute,
   AuthenticatedPlatformLogisticsCarriersRoute:
     AuthenticatedPlatformLogisticsCarriersRoute,
   AuthenticatedPlatformLogisticsCommandCenterRoute:
@@ -2727,13 +2819,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
