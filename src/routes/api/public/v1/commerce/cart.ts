@@ -13,12 +13,6 @@ const cartSchema = z.object({
   currency: z.string().min(3).max(8).default("USD"),
 });
 
-async function buyerIdFor(userId: string, supabase: Awaited<ReturnType<typeof authenticateMobile>>) {
-  if (supabase instanceof Response) return null;
-  const { data } = await supabase.supabase.from("buyer_accounts").select("id").eq("user_id", userId).maybeSingle();
-  return (data as { id: string } | null)?.id ?? null;
-}
-
 export const Route = createFileRoute("/api/public/v1/commerce/cart")({
   server: {
     handlers: {
@@ -26,8 +20,7 @@ export const Route = createFileRoute("/api/public/v1/commerce/cart")({
         const ctx = await authenticateMobile(request);
         if (ctx instanceof Response) return ctx;
         return withSyncLogging({ endpoint: "commerce-cart", actorUserId: ctx.userId }, async () => {
-          const buyerId = await buyerIdFor(ctx.userId, ctx);
-          if (!buyerId) return { response: Response.json({ data: null, meta: { version: "v1" } }), rowCount: 0 };
+          const buyerId = ctx.userId;
           const { data, error } = await ctx.supabase.from("buyer_carts")
             .select("*").eq("buyer_id", buyerId).maybeSingle();
           if (error) return { response: Response.json({ error: error.message }, { status: 500 }), rowCount: 0 };
@@ -41,8 +34,7 @@ export const Route = createFileRoute("/api/public/v1/commerce/cart")({
           let body: z.infer<typeof cartSchema>;
           try { body = cartSchema.parse(await request.json()); }
           catch (e) { return { response: Response.json({ error: (e as Error).message }, { status: 400 }), rowCount: 0 }; }
-          const buyerId = await buyerIdFor(ctx.userId, ctx);
-          if (!buyerId) return { response: Response.json({ error: "no_buyer_account" }, { status: 400 }), rowCount: 0 };
+          const buyerId = ctx.userId;
 
           const subtotalCents = body.items.reduce(
             (s, it) => s + Math.round(it.quantity_kg * it.unit_price_cents), 0);
@@ -75,8 +67,7 @@ export const Route = createFileRoute("/api/public/v1/commerce/cart")({
         const ctx = await authenticateMobile(request);
         if (ctx instanceof Response) return ctx;
         return withSyncLogging({ endpoint: "commerce-cart", actorUserId: ctx.userId }, async () => {
-          const buyerId = await buyerIdFor(ctx.userId, ctx);
-          if (!buyerId) return { response: Response.json({ ok: true }), rowCount: 0 };
+          const buyerId = ctx.userId;
           await ctx.supabase.from("buyer_carts").delete().eq("buyer_id", buyerId);
           return { response: Response.json({ ok: true }), rowCount: 1 };
         });
