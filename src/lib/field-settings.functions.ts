@@ -11,6 +11,9 @@ const schema = z.object({
   actuator_override_allowed: z.boolean(),
   required_photo_rules: z.record(z.string(), z.any()),
   incident_categories: z.array(z.string().min(1)).min(1),
+  bundle_ttl_minutes: z.number().int().positive().max(240).optional(),
+  bundle_max_tasks: z.number().int().positive().max(1000).optional(),
+  bundle_max_incidents: z.number().int().positive().max(500).optional(),
 });
 
 export const getFieldSettings = createServerFn({ method: "GET" })
