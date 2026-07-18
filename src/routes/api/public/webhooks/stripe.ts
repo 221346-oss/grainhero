@@ -487,6 +487,36 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               break;
             }
+            case "payment_intent.succeeded":
+            case "payment_intent.payment_failed": {
+              const pi = event.data.object as {
+                id: string; status: string; amount?: number; currency?: string;
+                metadata?: Record<string, string>;
+              };
+              const orderId = pi.metadata?.order_id;
+              if (orderId && pi.metadata?.channel === "mobile") {
+                await supabaseAdmin.from("buyer_payment_intents")
+                  .update({ status: pi.status, raw: pi as never, updated_at: new Date().toISOString() } as never)
+                  .eq("stripe_pi_id", pi.id);
+                if (pi.status === "succeeded") {
+                  const { data: order } = await supabaseAdmin.from("buyer_orders")
+                    .select("id, admin_id, status").eq("id", orderId).maybeSingle();
+                  if (order && (order as { status?: string }).status !== "paid") {
+                    await supabaseAdmin.from("buyer_orders")
+                      .update({ status: "paid", paid_at: new Date().toISOString() } as never)
+                      .eq("id", orderId);
+                    await supabaseAdmin.from("buyer_order_events").insert({
+                      order_id: orderId,
+                      admin_id: (order as { admin_id?: string }).admin_id,
+                      from_state: (order as { status?: string }).status ?? null,
+                      to_state: "paid",
+                      note: "Mobile PaymentIntent succeeded",
+                    } as never);
+                  }
+                }
+              }
+              break;
+            }
             default:
               // Unhandled event types are OK — Stripe will not retry once we 2xx.
               break;

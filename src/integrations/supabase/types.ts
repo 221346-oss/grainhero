@@ -944,6 +944,7 @@ export type Database = {
           notes: string | null
           order_number: string
           paid_at: string | null
+          payment_channel: string
           placed_by: string | null
           quantity_kg: number
           refund_status: string | null
@@ -981,6 +982,7 @@ export type Database = {
           notes?: string | null
           order_number: string
           paid_at?: string | null
+          payment_channel?: string
           placed_by?: string | null
           quantity_kg: number
           refund_status?: string | null
@@ -1018,6 +1020,7 @@ export type Database = {
           notes?: string | null
           order_number?: string
           paid_at?: string | null
+          payment_channel?: string
           placed_by?: string | null
           quantity_kg?: number
           refund_status?: string | null
@@ -1081,6 +1084,59 @@ export type Database = {
             columns: ["shipment_id"]
             isOneToOne: false
             referencedRelation: "buyer_shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buyer_payment_intents: {
+        Row: {
+          amount_cents: number
+          channel: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          order_id: string | null
+          platform_fee_cents: number
+          raw: Json
+          status: string
+          stripe_pi_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          order_id?: string | null
+          platform_fee_cents?: number
+          raw?: Json
+          status?: string
+          stripe_pi_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          order_id?: string | null
+          platform_fee_cents?: number
+          raw?: Json
+          status?: string
+          stripe_pi_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_payment_intents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -3985,6 +4041,51 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_commerce_settings: {
+        Row: {
+          allowed_payment_methods: Json
+          checkout_enabled: boolean
+          currency_default: string
+          id: string
+          max_order_cents: number
+          min_order_cents: number
+          platform_fee_bps: number
+          refund_policy_url: string | null
+          stripe_publishable_key_override: string | null
+          terms_url: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allowed_payment_methods?: Json
+          checkout_enabled?: boolean
+          currency_default?: string
+          id?: string
+          max_order_cents?: number
+          min_order_cents?: number
+          platform_fee_bps?: number
+          refund_policy_url?: string | null
+          stripe_publishable_key_override?: string | null
+          terms_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allowed_payment_methods?: Json
+          checkout_enabled?: boolean
+          currency_default?: string
+          id?: string
+          max_order_cents?: number
+          min_order_cents?: number
+          platform_fee_bps?: number
+          refund_policy_url?: string | null
+          stripe_publishable_key_override?: string | null
+          terms_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       mobile_deep_link_routes: {
         Row: {
           active: boolean
@@ -4183,6 +4284,45 @@ export type Database = {
           moderation_banner?: string | null
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      mobile_sync_runs: {
+        Row: {
+          actor_user_id: string | null
+          duration_ms: number | null
+          endpoint: string
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          request_meta: Json
+          row_count: number | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          duration_ms?: number | null
+          endpoint: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          request_meta?: Json
+          row_count?: number | null
+          started_at?: string
+          status: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          duration_ms?: number | null
+          endpoint?: string
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          request_meta?: Json
+          row_count?: number | null
+          started_at?: string
+          status?: string
         }
         Relationships: []
       }
@@ -4473,6 +4613,36 @@ export type Database = {
           id?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      platform_settings_audit: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          settings_key: string
+        }
+        Insert: {
+          action?: string
+          actor_user_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          settings_key: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          settings_key?: string
         }
         Relationships: []
       }

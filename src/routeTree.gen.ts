@@ -86,6 +86,7 @@ import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
 import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
 import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
 import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
@@ -106,6 +107,7 @@ import { Route as AuthenticatedPlatformFieldIncidentsRouteImport } from './route
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
+import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
 import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
@@ -158,6 +160,7 @@ import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/publi
 import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
 import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
 import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
+import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/public/v1/commerce/config'
 import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
 import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
 import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
@@ -577,6 +580,12 @@ const AuthenticatedPlatformOrdersRoute =
     path: '/platform/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMobileSyncMonitorRoute =
+  AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
+    id: '/platform/mobile-sync-monitor',
+    path: '/platform/mobile-sync-monitor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformMobileSettingsRoute =
   AuthenticatedPlatformMobileSettingsRouteImport.update({
     id: '/platform/mobile-settings',
@@ -695,6 +704,12 @@ const AuthenticatedPlatformDashboardBuilderRoute =
   AuthenticatedPlatformDashboardBuilderRouteImport.update({
     id: '/platform/dashboard-builder',
     path: '/platform/dashboard-builder',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformCommerceMobileRoute =
+  AuthenticatedPlatformCommerceMobileRouteImport.update({
+    id: '/platform/commerce-mobile',
+    path: '/platform/commerce-mobile',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformAuditLogsRoute =
@@ -1001,6 +1016,12 @@ const ApiPublicV1DeeplinkKeyRoute = ApiPublicV1DeeplinkKeyRouteImport.update({
   path: '/api/public/v1/deeplink/$key',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1CommerceConfigRoute =
+  ApiPublicV1CommerceConfigRouteImport.update({
+    id: '/api/public/v1/commerce/config',
+    path: '/api/public/v1/commerce/config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ActionsReplayRoute =
   ApiPublicV1ActionsReplayRouteImport.update({
     id: '/api/public/v1/actions/replay',
@@ -1102,6 +1123,7 @@ export interface FileRoutesByFullPath {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1122,6 +1144,7 @@ export interface FileRoutesByFullPath {
   '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1172,6 +1195,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1256,6 +1280,7 @@ export interface FileRoutesByTo {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1276,6 +1301,7 @@ export interface FileRoutesByTo {
   '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1326,6 +1352,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1414,6 +1441,7 @@ export interface FileRoutesById {
   '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
@@ -1434,6 +1462,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
   '/_authenticated/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/_authenticated/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/_authenticated/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1484,6 +1513,7 @@ export interface FileRoutesById {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1572,6 +1602,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1592,6 +1623,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-deep-links'
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
+    | '/platform/mobile-sync-monitor'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1642,6 +1674,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -1726,6 +1759,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
@@ -1746,6 +1780,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-deep-links'
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
+    | '/platform/mobile-sync-monitor'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1796,6 +1831,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -1883,6 +1919,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyer/orders'
     | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/commerce-mobile'
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
@@ -1903,6 +1940,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/mobile-deep-links'
     | '/_authenticated/platform/mobile-push-diagnostics'
     | '/_authenticated/platform/mobile-settings'
+    | '/_authenticated/platform/mobile-sync-monitor'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
@@ -1953,6 +1991,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/config'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -2015,6 +2054,7 @@ export interface RootRouteChildren {
   ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
   ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
   ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
+  ApiPublicV1CommerceConfigRoute: typeof ApiPublicV1CommerceConfigRoute
   ApiPublicV1DeeplinkKeyRoute: typeof ApiPublicV1DeeplinkKeyRoute
   ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
   ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
@@ -2579,6 +2619,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/mobile-sync-monitor': {
+      id: '/_authenticated/platform/mobile-sync-monitor'
+      path: '/platform/mobile-sync-monitor'
+      fullPath: '/platform/mobile-sync-monitor'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileSyncMonitorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/mobile-settings': {
       id: '/_authenticated/platform/mobile-settings'
       path: '/platform/mobile-settings'
@@ -2717,6 +2764,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/dashboard-builder'
       fullPath: '/platform/dashboard-builder'
       preLoaderRoute: typeof AuthenticatedPlatformDashboardBuilderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/commerce-mobile': {
+      id: '/_authenticated/platform/commerce-mobile'
+      path: '/platform/commerce-mobile'
+      fullPath: '/platform/commerce-mobile'
+      preLoaderRoute: typeof AuthenticatedPlatformCommerceMobileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/audit-logs': {
@@ -3083,6 +3137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1DeeplinkKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/commerce/config': {
+      id: '/api/public/v1/commerce/config'
+      path: '/api/public/v1/commerce/config'
+      fullPath: '/api/public/v1/commerce/config'
+      preLoaderRoute: typeof ApiPublicV1CommerceConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/actions/replay': {
       id: '/api/public/v1/actions/replay'
       path: '/api/public/v1/actions/replay'
@@ -3294,6 +3355,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformCommerceMobileRoute: typeof AuthenticatedPlatformCommerceMobileRoute
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
@@ -3314,6 +3376,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformMobileDeepLinksRoute: typeof AuthenticatedPlatformMobileDeepLinksRoute
   AuthenticatedPlatformMobilePushDiagnosticsRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   AuthenticatedPlatformMobileSettingsRoute: typeof AuthenticatedPlatformMobileSettingsRoute
+  AuthenticatedPlatformMobileSyncMonitorRoute: typeof AuthenticatedPlatformMobileSyncMonitorRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
@@ -3372,6 +3435,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsuranceClaimsClaimIdRoute:
     AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformCommerceMobileRoute:
+    AuthenticatedPlatformCommerceMobileRoute,
   AuthenticatedPlatformDashboardBuilderRoute:
     AuthenticatedPlatformDashboardBuilderRoute,
   AuthenticatedPlatformDispatchAnalyticsRoute:
@@ -3405,6 +3470,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformMobilePushDiagnosticsRoute,
   AuthenticatedPlatformMobileSettingsRoute:
     AuthenticatedPlatformMobileSettingsRoute,
+  AuthenticatedPlatformMobileSyncMonitorRoute:
+    AuthenticatedPlatformMobileSyncMonitorRoute,
   AuthenticatedPlatformOrdersRoute:
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
@@ -3520,6 +3587,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ActionsConfirmDeliveryRoute,
   ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
   ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
+  ApiPublicV1CommerceConfigRoute: ApiPublicV1CommerceConfigRoute,
   ApiPublicV1DeeplinkKeyRoute: ApiPublicV1DeeplinkKeyRoute,
   ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
   ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
