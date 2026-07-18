@@ -78,7 +78,7 @@ export const resolveShare = createServerFn({ method: "POST" })
     if (!meta) return { ok: false as const, error: "Link expired or revoked" };
     // Fetch widgets + metric metadata for the whitelisted ids
     const ids: string[] = meta.widget_ids ?? [];
-    if (ids.length === 0) return { ok: true as const, meta, widgets: [], metrics: {} as Record<string, unknown> };
+    if (ids.length === 0) return { ok: true as const, meta, widgets: [] as unknown[], metrics: [] as unknown[], results: {} as Record<string, unknown> };
     const { data: widgets } = await admin.from("dashboard_widgets").select("*").in("id", ids);
     const metricKeys = Array.from(new Set(((widgets ?? []) as Array<{ metric_key: string }>).map((w) => w.metric_key)));
     const { data: metrics } = await admin.from("metric_registry").select("*").in("key", metricKeys);
