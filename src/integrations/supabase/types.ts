@@ -256,6 +256,33 @@ export type Database = {
           },
         ]
       }
+      analytics_refresh_log: {
+        Row: {
+          error: string | null
+          fact_name: string
+          finished_at: string | null
+          id: string
+          rows_upserted: number | null
+          started_at: string
+        }
+        Insert: {
+          error?: string | null
+          fact_name: string
+          finished_at?: string | null
+          id?: string
+          rows_upserted?: number | null
+          started_at?: string
+        }
+        Update: {
+          error?: string | null
+          fact_name?: string
+          finished_at?: string | null
+          id?: string
+          rows_upserted?: number | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       automation_rules: {
         Row: {
           actuator_id: string
@@ -1699,6 +1726,56 @@ export type Database = {
           webhook_secret?: string | null
         }
         Relationships: []
+      }
+      dashboard_widgets: {
+        Row: {
+          chart_type: string
+          created_at: string
+          dashboard_key: string
+          filters: Json
+          id: string
+          metric_key: string
+          owner_id: string | null
+          position: number
+          role_scope: string
+          size: string
+          updated_at: string
+        }
+        Insert: {
+          chart_type?: string
+          created_at?: string
+          dashboard_key: string
+          filters?: Json
+          id?: string
+          metric_key: string
+          owner_id?: string | null
+          position?: number
+          role_scope?: string
+          size?: string
+          updated_at?: string
+        }
+        Update: {
+          chart_type?: string
+          created_at?: string
+          dashboard_key?: string
+          filters?: Json
+          id?: string
+          metric_key?: string
+          owner_id?: string | null
+          position?: number
+          role_scope?: string
+          size?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_widgets_metric_key_fkey"
+            columns: ["metric_key"]
+            isOneToOne: false
+            referencedRelation: "metric_registry"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       device_heartbeats: {
         Row: {
@@ -3528,6 +3605,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      metric_registry: {
+        Row: {
+          active: boolean
+          allowed_roles: string[]
+          chart_hint: string
+          created_at: string
+          created_by: string | null
+          default_filters: Json
+          description: string | null
+          format: string | null
+          id: string
+          key: string
+          label: string
+          sql_template: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allowed_roles?: string[]
+          chart_hint?: string
+          created_at?: string
+          created_by?: string | null
+          default_filters?: Json
+          description?: string | null
+          format?: string | null
+          id?: string
+          key: string
+          label: string
+          sql_template: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allowed_roles?: string[]
+          chart_hint?: string
+          created_at?: string
+          created_by?: string | null
+          default_filters?: Json
+          description?: string | null
+          format?: string | null
+          id?: string
+          key?: string
+          label?: string
+          sql_template?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       notification_channel_prefs: {
         Row: {
@@ -5526,6 +5654,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      run_metric: { Args: { _filters?: Json; _key: string }; Returns: Json }
     }
     Enums: {
       actuator_type: "fan" | "vent" | "heater" | "cooler" | "alarm" | "light"
