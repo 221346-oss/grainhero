@@ -14,7 +14,11 @@ export const Route = createFileRoute("/api/public/v1/commerce/orders/$orderId")(
         if (error) return Response.json({ error: error.message }, { status: 500 });
         const order = orderRaw as unknown as { id: string; buyer_id: string; invoice_pdf_url: string | null } | null;
         if (!order) return Response.json({ error: "not_found" }, { status: 404 });
-        if (order.buyer_id !== ctx.userId) return Response.json({ error: "forbidden" }, { status: 403 });
+
+        const { data: acct } = await ctx.supabase.from("buyer_accounts")
+          .select("buyer_id").eq("user_id", ctx.userId).maybeSingle();
+        const callerBuyerId = (acct as { buyer_id: string } | null)?.buyer_id ?? null;
+        if (order.buyer_id !== callerBuyerId) return Response.json({ error: "forbidden" }, { status: 403 });
 
         const [{ data: events }, { data: shipments }, { data: payments }] = await Promise.all([
           ctx.supabase.from("buyer_order_events")
