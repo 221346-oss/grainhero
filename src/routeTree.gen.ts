@@ -92,6 +92,7 @@ import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './rout
 import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
 import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
 import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
+import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './routes/_authenticated/platform.marketplace-mobile'
 import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
@@ -100,6 +101,8 @@ import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_au
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
 import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
+import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
+import { Route as AuthenticatedPlatformFieldIncidentsRouteImport } from './routes/_authenticated/platform.field-incidents'
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
@@ -142,7 +145,11 @@ import { Route as ApiPublicV1SyncSilosCockpitRouteImport } from './routes/api/pu
 import { Route as ApiPublicV1SyncSilosRouteImport } from './routes/api/public/v1/sync/silos'
 import { Route as ApiPublicV1SyncSensorsRouteImport } from './routes/api/public/v1/sync/sensors'
 import { Route as ApiPublicV1SyncNotificationsRouteImport } from './routes/api/public/v1/sync/notifications'
+import { Route as ApiPublicV1SyncMarketplaceRouteImport } from './routes/api/public/v1/sync/marketplace'
 import { Route as ApiPublicV1SyncHardwareOrdersRouteImport } from './routes/api/public/v1/sync/hardware-orders'
+import { Route as ApiPublicV1SyncFieldTasksRouteImport } from './routes/api/public/v1/sync/field-tasks'
+import { Route as ApiPublicV1SyncFieldIncidentsRouteImport } from './routes/api/public/v1/sync/field-incidents'
+import { Route as ApiPublicV1SyncBuyerSummaryRouteImport } from './routes/api/public/v1/sync/buyer-summary'
 import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/public/v1/sync/buyer-orders'
 import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
 import { Route as ApiPublicV1NotificationsReadRouteImport } from './routes/api/public/v1/notifications/read'
@@ -606,6 +613,12 @@ const AuthenticatedPlatformMarketplaceSettingsRoute =
     path: '/platform/marketplace-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMarketplaceMobileRoute =
+  AuthenticatedPlatformMarketplaceMobileRouteImport.update({
+    id: '/platform/marketplace-mobile',
+    path: '/platform/marketplace-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformMarketplaceHealthRoute =
   AuthenticatedPlatformMarketplaceHealthRouteImport.update({
     id: '/platform/marketplace-health',
@@ -652,6 +665,18 @@ const AuthenticatedPlatformFinanceRoute =
   AuthenticatedPlatformFinanceRouteImport.update({
     id: '/platform/finance',
     path: '/platform/finance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldSettingsRoute =
+  AuthenticatedPlatformFieldSettingsRouteImport.update({
+    id: '/platform/field-settings',
+    path: '/platform/field-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsRoute =
+  AuthenticatedPlatformFieldIncidentsRouteImport.update({
+    id: '/platform/field-incidents',
+    path: '/platform/field-incidents',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformDisputesRoute =
@@ -900,10 +925,34 @@ const ApiPublicV1SyncNotificationsRoute =
     path: '/api/public/v1/sync/notifications',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1SyncMarketplaceRoute =
+  ApiPublicV1SyncMarketplaceRouteImport.update({
+    id: '/api/public/v1/sync/marketplace',
+    path: '/api/public/v1/sync/marketplace',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1SyncHardwareOrdersRoute =
   ApiPublicV1SyncHardwareOrdersRouteImport.update({
     id: '/api/public/v1/sync/hardware-orders',
     path: '/api/public/v1/sync/hardware-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncFieldTasksRoute =
+  ApiPublicV1SyncFieldTasksRouteImport.update({
+    id: '/api/public/v1/sync/field-tasks',
+    path: '/api/public/v1/sync/field-tasks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncFieldIncidentsRoute =
+  ApiPublicV1SyncFieldIncidentsRouteImport.update({
+    id: '/api/public/v1/sync/field-incidents',
+    path: '/api/public/v1/sync/field-incidents',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncBuyerSummaryRoute =
+  ApiPublicV1SyncBuyerSummaryRouteImport.update({
+    id: '/api/public/v1/sync/buyer-summary',
+    path: '/api/public/v1/sync/buyer-summary',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1SyncBuyerOrdersRoute =
@@ -1056,6 +1105,8 @@ export interface FileRoutesByFullPath {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
+  '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -1064,6 +1115,7 @@ export interface FileRoutesByFullPath {
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
+  '/platform/marketplace-mobile': typeof AuthenticatedPlatformMarketplaceMobileRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
@@ -1128,7 +1180,11 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/buyer-summary': typeof ApiPublicV1SyncBuyerSummaryRoute
+  '/api/public/v1/sync/field-incidents': typeof ApiPublicV1SyncFieldIncidentsRoute
+  '/api/public/v1/sync/field-tasks': typeof ApiPublicV1SyncFieldTasksRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/marketplace': typeof ApiPublicV1SyncMarketplaceRoute
   '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
   '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
   '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
@@ -1203,6 +1259,8 @@ export interface FileRoutesByTo {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
+  '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -1211,6 +1269,7 @@ export interface FileRoutesByTo {
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
+  '/platform/marketplace-mobile': typeof AuthenticatedPlatformMarketplaceMobileRoute
   '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
@@ -1275,7 +1334,11 @@ export interface FileRoutesByTo {
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/buyer-summary': typeof ApiPublicV1SyncBuyerSummaryRoute
+  '/api/public/v1/sync/field-incidents': typeof ApiPublicV1SyncFieldIncidentsRoute
+  '/api/public/v1/sync/field-tasks': typeof ApiPublicV1SyncFieldTasksRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/marketplace': typeof ApiPublicV1SyncMarketplaceRoute
   '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
   '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
   '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
@@ -1354,6 +1417,8 @@ export interface FileRoutesById {
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/_authenticated/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
+  '/_authenticated/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
@@ -1362,6 +1427,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
   '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
+  '/_authenticated/platform/marketplace-mobile': typeof AuthenticatedPlatformMarketplaceMobileRoute
   '/_authenticated/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
   '/_authenticated/platform/messages': typeof AuthenticatedPlatformMessagesRoute
   '/_authenticated/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
@@ -1426,7 +1492,11 @@ export interface FileRoutesById {
   '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/buyer-summary': typeof ApiPublicV1SyncBuyerSummaryRoute
+  '/api/public/v1/sync/field-incidents': typeof ApiPublicV1SyncFieldIncidentsRoute
+  '/api/public/v1/sync/field-tasks': typeof ApiPublicV1SyncFieldTasksRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/marketplace': typeof ApiPublicV1SyncMarketplaceRoute
   '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
   '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
   '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
@@ -1505,6 +1575,8 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/field-incidents'
+    | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
@@ -1513,6 +1585,7 @@ export interface FileRouteTypes {
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
+    | '/platform/marketplace-mobile'
     | '/platform/marketplace-settings'
     | '/platform/messages'
     | '/platform/metrics'
@@ -1577,7 +1650,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/buyer-summary'
+    | '/api/public/v1/sync/field-incidents'
+    | '/api/public/v1/sync/field-tasks'
     | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/marketplace'
     | '/api/public/v1/sync/notifications'
     | '/api/public/v1/sync/sensors'
     | '/api/public/v1/sync/silos'
@@ -1652,6 +1729,8 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/field-incidents'
+    | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
@@ -1660,6 +1739,7 @@ export interface FileRouteTypes {
     | '/platform/leads'
     | '/platform/logs'
     | '/platform/marketplace-health'
+    | '/platform/marketplace-mobile'
     | '/platform/marketplace-settings'
     | '/platform/messages'
     | '/platform/metrics'
@@ -1724,7 +1804,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/buyer-summary'
+    | '/api/public/v1/sync/field-incidents'
+    | '/api/public/v1/sync/field-tasks'
     | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/marketplace'
     | '/api/public/v1/sync/notifications'
     | '/api/public/v1/sync/sensors'
     | '/api/public/v1/sync/silos'
@@ -1802,6 +1886,8 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
+    | '/_authenticated/platform/field-incidents'
+    | '/_authenticated/platform/field-settings'
     | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
@@ -1810,6 +1896,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
     | '/_authenticated/platform/marketplace-health'
+    | '/_authenticated/platform/marketplace-mobile'
     | '/_authenticated/platform/marketplace-settings'
     | '/_authenticated/platform/messages'
     | '/_authenticated/platform/metrics'
@@ -1874,7 +1961,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/notifications/read'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/buyer-summary'
+    | '/api/public/v1/sync/field-incidents'
+    | '/api/public/v1/sync/field-tasks'
     | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/marketplace'
     | '/api/public/v1/sync/notifications'
     | '/api/public/v1/sync/sensors'
     | '/api/public/v1/sync/silos'
@@ -1932,7 +2023,11 @@ export interface RootRouteChildren {
   ApiPublicV1NotificationsReadRoute: typeof ApiPublicV1NotificationsReadRoute
   ApiPublicV1SyncAlertsRoute: typeof ApiPublicV1SyncAlertsRoute
   ApiPublicV1SyncBuyerOrdersRoute: typeof ApiPublicV1SyncBuyerOrdersRoute
+  ApiPublicV1SyncBuyerSummaryRoute: typeof ApiPublicV1SyncBuyerSummaryRoute
+  ApiPublicV1SyncFieldIncidentsRoute: typeof ApiPublicV1SyncFieldIncidentsRoute
+  ApiPublicV1SyncFieldTasksRoute: typeof ApiPublicV1SyncFieldTasksRoute
   ApiPublicV1SyncHardwareOrdersRoute: typeof ApiPublicV1SyncHardwareOrdersRoute
+  ApiPublicV1SyncMarketplaceRoute: typeof ApiPublicV1SyncMarketplaceRoute
   ApiPublicV1SyncNotificationsRoute: typeof ApiPublicV1SyncNotificationsRoute
   ApiPublicV1SyncSensorsRoute: typeof ApiPublicV1SyncSensorsRoute
   ApiPublicV1SyncSilosRoute: typeof ApiPublicV1SyncSilosRoute
@@ -2526,6 +2621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformMarketplaceSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/marketplace-mobile': {
+      id: '/_authenticated/platform/marketplace-mobile'
+      path: '/platform/marketplace-mobile'
+      fullPath: '/platform/marketplace-mobile'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/marketplace-health': {
       id: '/_authenticated/platform/marketplace-health'
       path: '/platform/marketplace-health'
@@ -2580,6 +2682,20 @@ declare module '@tanstack/react-router' {
       path: '/platform/finance'
       fullPath: '/platform/finance'
       preLoaderRoute: typeof AuthenticatedPlatformFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-settings': {
+      id: '/_authenticated/platform/field-settings'
+      path: '/platform/field-settings'
+      fullPath: '/platform/field-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents': {
+      id: '/_authenticated/platform/field-incidents'
+      path: '/platform/field-incidents'
+      fullPath: '/platform/field-incidents'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/disputes': {
@@ -2876,11 +2992,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SyncNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/sync/marketplace': {
+      id: '/api/public/v1/sync/marketplace'
+      path: '/api/public/v1/sync/marketplace'
+      fullPath: '/api/public/v1/sync/marketplace'
+      preLoaderRoute: typeof ApiPublicV1SyncMarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/sync/hardware-orders': {
       id: '/api/public/v1/sync/hardware-orders'
       path: '/api/public/v1/sync/hardware-orders'
       fullPath: '/api/public/v1/sync/hardware-orders'
       preLoaderRoute: typeof ApiPublicV1SyncHardwareOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/field-tasks': {
+      id: '/api/public/v1/sync/field-tasks'
+      path: '/api/public/v1/sync/field-tasks'
+      fullPath: '/api/public/v1/sync/field-tasks'
+      preLoaderRoute: typeof ApiPublicV1SyncFieldTasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/field-incidents': {
+      id: '/api/public/v1/sync/field-incidents'
+      path: '/api/public/v1/sync/field-incidents'
+      fullPath: '/api/public/v1/sync/field-incidents'
+      preLoaderRoute: typeof ApiPublicV1SyncFieldIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/buyer-summary': {
+      id: '/api/public/v1/sync/buyer-summary'
+      path: '/api/public/v1/sync/buyer-summary'
+      fullPath: '/api/public/v1/sync/buyer-summary'
+      preLoaderRoute: typeof ApiPublicV1SyncBuyerSummaryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/sync/buyer-orders': {
@@ -3153,6 +3297,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
+  AuthenticatedPlatformFieldIncidentsRoute: typeof AuthenticatedPlatformFieldIncidentsRoute
+  AuthenticatedPlatformFieldSettingsRoute: typeof AuthenticatedPlatformFieldSettingsRoute
   AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
@@ -3161,6 +3307,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
   AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
+  AuthenticatedPlatformMarketplaceMobileRoute: typeof AuthenticatedPlatformMarketplaceMobileRoute
   AuthenticatedPlatformMarketplaceSettingsRoute: typeof AuthenticatedPlatformMarketplaceSettingsRoute
   AuthenticatedPlatformMessagesRoute: typeof AuthenticatedPlatformMessagesRoute
   AuthenticatedPlatformMetricsRoute: typeof AuthenticatedPlatformMetricsRoute
@@ -3230,6 +3377,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
+  AuthenticatedPlatformFieldIncidentsRoute:
+    AuthenticatedPlatformFieldIncidentsRoute,
+  AuthenticatedPlatformFieldSettingsRoute:
+    AuthenticatedPlatformFieldSettingsRoute,
   AuthenticatedPlatformFinanceRoute:
     AuthenticatedPlatformFinanceRouteWithChildren,
   AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
@@ -3242,6 +3393,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
   AuthenticatedPlatformMarketplaceHealthRoute:
     AuthenticatedPlatformMarketplaceHealthRoute,
+  AuthenticatedPlatformMarketplaceMobileRoute:
+    AuthenticatedPlatformMarketplaceMobileRoute,
   AuthenticatedPlatformMarketplaceSettingsRoute:
     AuthenticatedPlatformMarketplaceSettingsRoute,
   AuthenticatedPlatformMessagesRoute: AuthenticatedPlatformMessagesRoute,
@@ -3376,7 +3529,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1NotificationsReadRoute: ApiPublicV1NotificationsReadRoute,
   ApiPublicV1SyncAlertsRoute: ApiPublicV1SyncAlertsRoute,
   ApiPublicV1SyncBuyerOrdersRoute: ApiPublicV1SyncBuyerOrdersRoute,
+  ApiPublicV1SyncBuyerSummaryRoute: ApiPublicV1SyncBuyerSummaryRoute,
+  ApiPublicV1SyncFieldIncidentsRoute: ApiPublicV1SyncFieldIncidentsRoute,
+  ApiPublicV1SyncFieldTasksRoute: ApiPublicV1SyncFieldTasksRoute,
   ApiPublicV1SyncHardwareOrdersRoute: ApiPublicV1SyncHardwareOrdersRoute,
+  ApiPublicV1SyncMarketplaceRoute: ApiPublicV1SyncMarketplaceRoute,
   ApiPublicV1SyncNotificationsRoute: ApiPublicV1SyncNotificationsRoute,
   ApiPublicV1SyncSensorsRoute: ApiPublicV1SyncSensorsRoute,
   ApiPublicV1SyncSilosRoute: ApiPublicV1SyncSilosRoute,
