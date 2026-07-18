@@ -411,6 +411,9 @@ const SCHEMA = z.object({
       label: z.string().min(1),
       setStatus: z.string().optional(),
     })).max(20).optional().default([]),
+    alertCooldownMinutes: z.number().int().min(0).max(1440).optional().default(60),
+    deliveryRateAlertDropPct: z.number().min(0).max(100).optional().default(5),
+    overdueGraceMinutes: z.number().int().min(0).max(2000).optional().default(30),
   }),
   reviews: z.object({
     enabled: z.boolean(),
