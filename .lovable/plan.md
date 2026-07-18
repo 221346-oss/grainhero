@@ -1,88 +1,62 @@
-# Plan — Phase 26.5 (Hardening) + Phase 27 (Mobile Commerce & Payments)
+# Track A — Sync run concurrency lock & idempotency (Phase 26.5 patch)
 
-Runs both tracks in the same pass. Every setting stays super-admin configurable — no hardcoded thresholds, keys, or copy.
+**Problem:** `runSyncManually` currently probes the source view directly; two clicks in quick succession spawn overlapping runs, inflate error rates, and produce duplicate `mobile_sync_runs` rows for the same intent.
 
----
+**Approach:** Add advisory-style locks in Postgres plus an idempotency key on the manual trigger.
 
-## Track A — Phase 26.5 Hardening
+1. **Migration**
+   - Add `mobile_sync_locks(endpoint text primary key, locked_at timestamptz, locked_by uuid, idempotency_key text)`.
+   - Add `idempotency_key text` + `manual boolean default false` columns on `mobile_sync_runs`; unique index `(endpoint, idempotency_key) where idempotency_key is not null`.
+   - GRANT to `authenticated`/`service_role`; RLS: only super-admins can read.
 
-### A1. Sync monitoring & manual replay
-New table `mobile_sync_runs`:
-- `endpoint` (text: `field-tasks | field-incidents | marketplace | buyer-summary | …`)
-- `actor_user_id` (nullable — null for anonymous marketplace)
-- `status` (`ok | error`)
-- `duration_ms`, `row_count`, `error_message`, `request_meta jsonb`
-- `started_at`, `finished_at`
+2. **Server function `runSyncManually`**
+   - Accept optional `idempotency_key` (auto-generated on client per click).
+   - Short-circuit if a prior run with same `(endpoint, idempotency_key)` exists → return that result.
+   - Acquire lock via `INSERT ... ON CONFLICT DO NOTHING`; if conflict AND `locked_at` newer than 60s → return `{ ok:false, error:"busy" }`.
+   - Stale locks (>60s) auto-expire (delete then insert).
+   - `try/finally` releases the lock; `logSyncRun` persists the `idempotency_key` + `manual:true`.
 
-Wire every `/api/public/v1/sync/*` handler through a shared `withSyncLogging(endpoint, handler)` wrapper in `src/lib/mobile-sync.server.ts` that inserts one row per call via `supabaseAdmin` (fire-and-forget, never blocks the response).
-
-New page `/platform/mobile-sync-monitor`:
-- KPI tiles (last 24h): total runs, error rate, p95 duration.
-- Table grouped by endpoint: last run, success count, failure count, last error.
-- "Run now" button per endpoint → calls a new `runMobileSyncManually` server fn (super-admin gated) that invokes the sync endpoint server-to-server with an internal `x-internal-run: <CRON_SECRET>` header and records the result.
-- Row-level drill-down drawer with recent 50 runs.
-
-### A2. RBAC hardening + 401/403 UX
-- Add `requireSuperAdmin` middleware (composes `requireSupabaseAuth` + `has_role(uid,'super_admin')`); apply to every `platform.*` server fn touched this phase (field-settings, field-incidents, marketplace-mobile-settings, sync monitor, audit reads).
-- Sync endpoints (`/api/public/v1/sync/*`): authenticated ones already run through mobile bearer; add explicit 401 JSON `{ error: "unauthorized" }` shape and a role guard for endpoints that must be super-admin (manual re-run only).
-- New shared `<UnauthorizedState>` component; new route `/403` and `/401` with retry + sign-in CTAs.
-- Root error boundary maps `status===401|403` responses to those routes instead of the generic error component.
-
-### A3. Settings audit trail
-New table `platform_settings_audit`:
-- `actor_user_id`, `settings_key` (`mobile_field | mobile_marketplace | …`), `action` (`update`), `before jsonb`, `after jsonb`, `created_at`.
-
-Update `updateFieldSettings` / `updateMarketplaceMobileSettings` server fns to:
-1. Read current row.
-2. Compute diff.
-3. Update.
-4. Insert audit row.
-
-Expose read-only "Change history" panel on both settings pages (last 20 entries with expandable diff).
+3. **UI**
+   - `platform.mobile-sync-monitor.tsx`: generate `crypto.randomUUID()` per click, disable the button while `runNow.isPending`, surface `busy` toast distinctly from failures, show a "Locked" badge per endpoint when `mobile_sync_locks` has an active row (poll with overview).
 
 ---
 
-## Track B — Phase 27 Mobile Commerce & Payments
+# Track B — Phase 28: Mobile Field Ops Offline-First Shell (backend contract)
 
-Goal: mobile app can complete a buyer checkout end-to-end and sellers get paid, without duplicating any web logic. All commerce knobs (fees, currencies, allowed methods, min/max order value, copy) come from super-admin settings.
+Goal: Give the external Flutter field-ops app a durable offline-first contract so technicians can complete tasks with no signal and reconcile cleanly. Web app stays untouched.
 
-### B1. Schema
-- `mobile_commerce_settings` (singleton): `checkout_enabled`, `allowed_payment_methods jsonb`, `min_order_cents`, `max_order_cents`, `platform_fee_bps`, `currency_default`, `terms_url`, `refund_policy_url`, `stripe_publishable_key_override` (nullable, else env).
-- `buyer_payment_intents`: mirrors Stripe PaymentIntent lifecycle for mobile-initiated checkouts. `order_id`, `stripe_pi_id`, `client_secret_hash`, `amount_cents`, `currency`, `status`, `platform_fee_cents`, `raw jsonb`, `created_by`, timestamps.
-- Add `payment_channel` (`web|mobile`) to `buyer_orders` if missing.
+- **Migration `mobile_field_bundles`** — pre-computed per-user bundle (assigned tasks + recent incidents + reference lists) refreshed on demand; columns: `user_id`, `bundle jsonb`, `generated_at`, `expires_at`, `etag`.
+- **`GET /api/public/v1/field/bundle`** (authenticated mobile bearer) — returns bundle + ETag; supports `If-None-Match` → 304.
+- **`POST /api/public/v1/field/mutations`** — batch endpoint accepting an array of `{ client_id, kind, payload, occurred_at }`. Reuses `mobile_idempotency_keys` per `client_id`. Dispatches to existing `mobile-action-registry.server` handlers; returns per-item `{ client_id, status, server_id?, error? }`.
+- **Super-admin page `platform.field-bundle-monitor`** — bundle size p50/p95, mutation success/failure per kind (24h), replay-latency histogram, per-user last-sync.
+- **Field settings extension** — `bundle_ttl_minutes`, `bundle_max_incidents`, `bundle_max_tasks` (all customizable, no hardcode).
+- **Sync-monitor integration** — wrap `/field/bundle` & `/field/mutations` with `withSyncLogging`.
+- **Notifications** — mutation-batch failures for a user trigger a super-admin notification (rate-limited).
 
-### B2. Server surface
-- `createServerFn` `mobile.checkout.createIntent` (auth): validates listing + qty against `mobile_commerce_settings` and existing pricing, creates Stripe PaymentIntent with `automatic_payment_methods`, returns `client_secret` + `publishable_key`.
-- `mobile.checkout.confirmOrder` (auth): idempotency-keyed; after Stripe confirms, promotes `buyer_orders` to `paid`, writes `buyer_order_events`, notifies seller.
-- Extend Stripe webhook `/api/public/hooks/stripe` handler to update `buyer_payment_intents` and orders for mobile intents (event types: `payment_intent.succeeded|failed|canceled`).
-- New sync endpoint `/api/public/v1/sync/commerce-config` returning safe subset of `mobile_commerce_settings` (public — no secrets).
+# Track C — Phase 29: Mobile Buyer Commerce Shell (backend contract)
 
-### B3. Mobile action registry additions
-- `commerce.start-checkout` → calls `createIntent`.
-- `commerce.cancel-order` (buyer, pre-dispatch only).
-- `commerce.request-refund` → creates `buyer_refunds` row via existing refund flow.
-- `commerce.save-payment-method` (stores Stripe PM id under buyer_account for future one-tap; no raw PAN ever stored).
+Goal: Complete the Phase 27 PaymentIntent groundwork with the surface Flutter buyers need: cart, address book, saved payment methods, order history feed, and receipts.
 
-### B4. Super-admin pages
-- `/platform/commerce-mobile` — toggle checkout, payment methods, fees, min/max, currency, copy, links; live preview of the resulting mobile config JSON.
-- Every save flows through the Track A audit trail (`settings_key = 'mobile_commerce'`).
+- **Migrations**
+  - `buyer_carts(id, buyer_id, items jsonb, currency, subtotal_cents, expires_at, updated_at)`; RLS: `auth.uid() = buyer_id`.
+  - `buyer_addresses(id, buyer_id, label, recipient, phone, line1, line2, city, region, postal, country, is_default)`.
+  - `buyer_saved_payment_methods(id, buyer_id, stripe_pm_id, brand, last4, exp_month, exp_year, is_default)` (never store PAN).
+- **Server functions** (all `requireSupabaseAuth`)
+  - `getCart` / `upsertCartItem` / `removeCartItem` / `clearCart` — merge validation against `grain_listings` availability and mobile commerce min/max.
+  - `listAddresses` / `saveAddress` / `deleteAddress` / `setDefaultAddress`.
+  - `listSavedPaymentMethods` / `detachPaymentMethod` / `createSetupIntent` (returns Stripe SetupIntent client_secret using existing `stripeFetch`).
+  - `checkoutCart` — creates a `buyer_orders` row from the cart snapshot then reuses `createMobilePaymentIntent`.
+- **Public read endpoint** `/api/public/v1/commerce/catalog` — publishable-key client, returns active listings via existing `mobile_marketplace_v` with paging + `since` cursor (delta sync).
+- **Buyer summary view extension** — add `open_cart_items`, `saved_addresses_count`, `default_payment_last4` for the mobile home screen.
+- **Super-admin page `platform.commerce-buyer-monitor`** — cart abandonment (carts with items & no order in N hours), PaymentIntent conversion funnel (created → succeeded), refunds volume, all filtered by date range from mobile commerce settings.
+- **Sync-monitor** — wrap the two new public endpoints; add them to `SyncEndpoint` union and the sync monitor dashboard.
 
-### B5. Docs & deep links
-- Seed `mobile_deep_link_routes` with `commerce.checkout`, `commerce.order-status`, `commerce.refund-status` mapped to their web equivalents.
-- Update `GrainHero_Finalized_Plan.md` phase log with Phase 26.5 + 27 outcomes.
+**Router + sidebar**: register `/platform/field-bundle-monitor` and `/platform/commerce-buyer-monitor` under super_admin; both get skeletons in `PAGE_SKELETONS`.
 
----
+**No hardcoded values** — bundle TTLs, cart TTL, cart max items, order min/max cents, allowed payment methods all sourced from `mobile_field_settings` and `mobile_commerce_settings`.
 
-## Non-Goals (deferred to Phase 28)
-- Marketplace search personalization, saved carts, promo codes.
-- Apple Pay / Google Pay domain verification (needs live domain).
-- Multi-currency FX (Stripe handles single presentment currency for now).
-
-## Rollout order
-1. Migrations (A1 + A3 + B1) in a single migration file.
-2. Server functions + endpoints + wrappers.
-3. Super-admin pages + audit UI + sync monitor.
-4. Register routes + sidebar entries + skeletons.
-5. Typecheck.
-
-Approve to proceed.
+**Order of execution**
+1. Track A migration + code + UI wiring (fast; ~1 pass).
+2. Phase 28 migration → server contracts → super-admin monitor.
+3. Phase 29 migration → server contracts → super-admin monitor.
+4. Sidebar + router registrations, typecheck, done.
