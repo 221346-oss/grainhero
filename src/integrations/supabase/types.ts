@@ -1066,6 +1066,13 @@ export type Database = {
             foreignKeyName: "buyer_orders_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "mobile_marketplace_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "public_listings_v"
             referencedColumns: ["id"]
           },
@@ -2044,7 +2051,89 @@ export type Database = {
             foreignKeyName: "favorite_listings_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "mobile_marketplace_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "public_listings_v"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      field_incidents: {
+        Row: {
+          attachments: Json
+          category: string
+          created_at: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          notes: string | null
+          reporter_user_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          silo_id: string | null
+          source: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          category: string
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          notes?: string | null
+          reporter_user_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          silo_id?: string | null
+          source?: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          category?: string
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          notes?: string | null
+          reporter_user_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          silo_id?: string | null
+          source?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_incidents_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incidents_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
             referencedColumns: ["id"]
           },
         ]
@@ -3986,6 +4075,45 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_field_settings: {
+        Row: {
+          actuator_override_allowed: boolean
+          default_page_size: number
+          geofence_enforced: boolean
+          id: boolean
+          incident_categories: Json
+          max_attachment_mb: number
+          offline_window_hours: number
+          required_photo_rules: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          actuator_override_allowed?: boolean
+          default_page_size?: number
+          geofence_enforced?: boolean
+          id?: boolean
+          incident_categories?: Json
+          max_attachment_mb?: number
+          offline_window_hours?: number
+          required_photo_rules?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          actuator_override_allowed?: boolean
+          default_page_size?: number
+          geofence_enforced?: boolean
+          id?: boolean
+          incident_categories?: Json
+          max_attachment_mb?: number
+          offline_window_hours?: number
+          required_photo_rules?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       mobile_idempotency_keys: {
         Row: {
           created_at: string
@@ -4010,6 +4138,51 @@ export type Database = {
           request_hash?: string | null
           response?: Json | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      mobile_marketplace_settings: {
+        Row: {
+          allowed_attachment_types: Json
+          featured_commodities: Json
+          hero_headline: string
+          hero_subheadline: string
+          id: boolean
+          kill_switch: boolean
+          kill_switch_message: string | null
+          max_message_length: number
+          min_app_build: number
+          moderation_banner: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allowed_attachment_types?: Json
+          featured_commodities?: Json
+          hero_headline?: string
+          hero_subheadline?: string
+          id?: boolean
+          kill_switch?: boolean
+          kill_switch_message?: string | null
+          max_message_length?: number
+          min_app_build?: number
+          moderation_banner?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allowed_attachment_types?: Json
+          featured_commodities?: Json
+          hero_headline?: string
+          hero_subheadline?: string
+          id?: boolean
+          kill_switch?: boolean
+          kill_switch_message?: string | null
+          max_message_length?: number
+          min_app_build?: number
+          moderation_banner?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -5975,6 +6148,61 @@ export type Database = {
       }
     }
     Views: {
+      mobile_buyer_summary_v: {
+        Row: {
+          active_orders: number | null
+          buyer_user_id: string | null
+          in_flight_orders: number | null
+          unread_messages: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_orders_buyer_id_fkey"
+            columns: ["buyer_user_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobile_field_task_v: {
+        Row: {
+          assignee_user_id: string | null
+          body: string | null
+          order_id: string | null
+          priority: string | null
+          silo_id: string | null
+          status: string | null
+          task_key: string | null
+          task_type: string | null
+          tenant_id: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
+      mobile_marketplace_v: {
+        Row: {
+          available_kg: number | null
+          commodity: string | null
+          cover_image_url: string | null
+          currency: string | null
+          description: string | null
+          grade: string | null
+          id: string | null
+          min_order_kg: number | null
+          price_per_kg: number | null
+          seller_id: string | null
+          seller_name: string | null
+          slug: string | null
+          status: Database["public"]["Enums"]["listing_status"] | null
+          title: string | null
+          updated_at: string | null
+          visibility: Database["public"]["Enums"]["listing_visibility"] | null
+        }
+        Relationships: []
+      }
       mobile_silo_cockpit_v: {
         Row: {
           admin_id: string | null
