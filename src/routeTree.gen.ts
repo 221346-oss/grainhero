@@ -105,6 +105,7 @@ import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authen
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
+import { Route as ApiPublicHooksAnalyticsRefreshRouteImport } from './routes/api/public/hooks/analytics-refresh'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
 import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
@@ -657,6 +658,12 @@ const ApiPublicHooksExpiryRemindersRoute =
     path: '/api/public/hooks/expiry-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAnalyticsRefreshRoute =
+  ApiPublicHooksAnalyticsRefreshRouteImport.update({
+    id: '/api/public/hooks/analytics-refresh',
+    path: '/api/public/hooks/analytics-refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAlertsEscalationRoute =
   ApiPublicHooksAlertsEscalationRouteImport.update({
     id: '/api/public/hooks/alerts-escalation',
@@ -928,6 +935,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -1049,6 +1057,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -1174,6 +1183,7 @@ export interface FileRoutesById {
   '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -1299,6 +1309,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
@@ -1420,6 +1431,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
@@ -1544,6 +1556,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
     | '/api/public/webhooks/stripe'
@@ -1583,6 +1596,7 @@ export interface RootRouteChildren {
   ApiPublicCronSlaDigestRoute: typeof ApiPublicCronSlaDigestRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
+  ApiPublicHooksAnalyticsRefreshRoute: typeof ApiPublicHooksAnalyticsRefreshRoute
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
@@ -2264,6 +2278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/analytics-refresh': {
+      id: '/api/public/hooks/analytics-refresh'
+      path: '/api/public/hooks/analytics-refresh'
+      fullPath: '/api/public/hooks/analytics-refresh'
+      preLoaderRoute: typeof ApiPublicHooksAnalyticsRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/alerts-escalation': {
       id: '/api/public/hooks/alerts-escalation'
       path: '/api/public/hooks/alerts-escalation'
@@ -2807,6 +2828,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronSlaDigestRoute: ApiPublicCronSlaDigestRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
+  ApiPublicHooksAnalyticsRefreshRoute: ApiPublicHooksAnalyticsRefreshRoute,
   ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
