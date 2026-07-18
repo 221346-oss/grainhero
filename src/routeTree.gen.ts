@@ -139,6 +139,9 @@ import { Route as ApiPublicV1SyncNotificationsRouteImport } from './routes/api/p
 import { Route as ApiPublicV1SyncHardwareOrdersRouteImport } from './routes/api/public/v1/sync/hardware-orders'
 import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/public/v1/sync/buyer-orders'
 import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
+import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
+import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
+import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
 import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
 
@@ -866,6 +869,24 @@ const ApiPublicV1SyncAlertsRoute = ApiPublicV1SyncAlertsRouteImport.update({
   path: '/api/public/v1/sync/alerts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1DevicesRevokeRoute =
+  ApiPublicV1DevicesRevokeRouteImport.update({
+    id: '/api/public/v1/devices/revoke',
+    path: '/api/public/v1/devices/revoke',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesRegisterRoute =
+  ApiPublicV1DevicesRegisterRouteImport.update({
+    id: '/api/public/v1/devices/register',
+    path: '/api/public/v1/devices/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesHeartbeatRoute =
+  ApiPublicV1DevicesHeartbeatRouteImport.update({
+    id: '/api/public/v1/devices/heartbeat',
+    path: '/api/public/v1/devices/heartbeat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPlatformOrdersOrderIdAuditRoute =
   AuthenticatedPlatformOrdersOrderIdAuditRouteImport.update({
     id: '/audit',
@@ -1003,6 +1024,9 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
@@ -1134,6 +1158,9 @@ export interface FileRoutesByTo {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
@@ -1269,6 +1296,9 @@ export interface FileRoutesById {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
   '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
   '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
   '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
@@ -1404,6 +1434,9 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
     | '/api/public/v1/sync/hardware-orders'
@@ -1535,6 +1568,9 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
     | '/api/public/v1/sync/hardware-orders'
@@ -1669,6 +1705,9 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
     | '/api/public/v1/sync/alerts'
     | '/api/public/v1/sync/buyer-orders'
     | '/api/public/v1/sync/hardware-orders'
@@ -1714,6 +1753,9 @@ export interface RootRouteChildren {
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
   ApiPublicV1MetaRoute: typeof ApiPublicV1MetaRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
+  ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
+  ApiPublicV1DevicesRevokeRoute: typeof ApiPublicV1DevicesRevokeRoute
   ApiPublicV1SyncAlertsRoute: typeof ApiPublicV1SyncAlertsRoute
   ApiPublicV1SyncBuyerOrdersRoute: typeof ApiPublicV1SyncBuyerOrdersRoute
   ApiPublicV1SyncHardwareOrdersRoute: typeof ApiPublicV1SyncHardwareOrdersRoute
@@ -2636,6 +2678,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SyncAlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/devices/revoke': {
+      id: '/api/public/v1/devices/revoke'
+      path: '/api/public/v1/devices/revoke'
+      fullPath: '/api/public/v1/devices/revoke'
+      preLoaderRoute: typeof ApiPublicV1DevicesRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/register': {
+      id: '/api/public/v1/devices/register'
+      path: '/api/public/v1/devices/register'
+      fullPath: '/api/public/v1/devices/register'
+      preLoaderRoute: typeof ApiPublicV1DevicesRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/heartbeat': {
+      id: '/api/public/v1/devices/heartbeat'
+      path: '/api/public/v1/devices/heartbeat'
+      fullPath: '/api/public/v1/devices/heartbeat'
+      preLoaderRoute: typeof ApiPublicV1DevicesHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/platform/orders/$orderId/audit': {
       id: '/_authenticated/platform/orders/$orderId/audit'
       path: '/audit'
@@ -3022,6 +3085,9 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksSensorOfflineDetectorRoute,
   ApiPublicV1MetaRoute: ApiPublicV1MetaRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
+  ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
+  ApiPublicV1DevicesRevokeRoute: ApiPublicV1DevicesRevokeRoute,
   ApiPublicV1SyncAlertsRoute: ApiPublicV1SyncAlertsRoute,
   ApiPublicV1SyncBuyerOrdersRoute: ApiPublicV1SyncBuyerOrdersRoute,
   ApiPublicV1SyncHardwareOrdersRoute: ApiPublicV1SyncHardwareOrdersRoute,
