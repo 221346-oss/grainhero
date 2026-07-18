@@ -185,7 +185,7 @@ export const getSlaDrilldown = createServerFn({ method: "GET" })
         ? Math.max(0, (nowMs - limit) / 3600_000) : 0;
       return { ...s, overdueHours };
     });
-    const filtered = enriched.filter((s) => {
+    const filtered = (enriched as Row[]).filter((s) => {
       if (data.bucket === "delivered") return s.status === "delivered";
       if (data.bucket === "overdue") return (s.overdueHours as number) > 0;
       if (data.bucket === "in_flight") return s.status !== "delivered" && s.status !== "cancelled";
