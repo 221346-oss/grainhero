@@ -62,6 +62,8 @@ const pinnedNav: NavItem[] = [
   { name: "sales", label: "Sales", to: "/sales", icon: ShoppingCart, roles: ["admin", "manager"] },
   { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
   { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
+  { name: "platform-finance", label: "Finance Center", to: "/platform/finance", icon: Wallet, roles: ["super_admin"] },
+  { name: "earnings", label: "Earnings", to: "/earnings", icon: Wallet, roles: ["admin", "manager"] },
   { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
   { name: "technician-installs", label: "My Installs", to: "/technician/installs", icon: Wrench, roles: ["technician"] },
 ];
