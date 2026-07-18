@@ -65,7 +65,7 @@ function TenantsPage() {
             <p className="text-sm">No tenants found</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div>
             {filtered.map((t) => (
               <div key={t.id} className="flex flex-wrap items-center gap-4 px-4 py-3 hover:bg-slate-50 transition-colors">
                 <div className="flex-1 min-w-0">

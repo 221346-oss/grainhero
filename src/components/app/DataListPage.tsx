@@ -57,7 +57,7 @@ export function DataListPage<T extends Record<string, unknown>>({
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="">
                 {rows.map((row, i) => (
                   <tr key={(row.id as string) ?? i} className="hover:bg-slate-50/50">
                     {columns.map((c) => (

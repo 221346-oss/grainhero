@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -71,10 +70,6 @@ import {
 } from "@/lib/operations.functions";
 import { getMLModels } from "@/lib/analytics.functions";
 
-export const Route = createFileRoute("/_authenticated/data-visualization")({
-  component: DataVisualizationPage,
-});
-
 /* ────────── Types ────────── */
 interface HistoryPoint {
   time: string;
@@ -115,7 +110,7 @@ function StatusBadge({
   );
 }
 
-function DataVisualizationPage() {
+export function DataVisualizationPanel() {
   const getDevicesFn = useServerFn(listSensorDevices);
   const getHistoryFn = useServerFn(getSensorHistory);
   const exportCsvFn = useServerFn(exportSensorCSV);
@@ -333,15 +328,15 @@ function DataVisualizationPage() {
         : "bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/20";
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 flex items-center gap-2">
-            <BarChart3 className="h-8 w-8 text-emerald-600" />
+          <h2 className="text-xl font-black text-white flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-emerald-500" />
             IoT Data Visualization
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          </h2>
+          <p className="text-sm text-white/40 mt-1">
             Real-time charts and live telemetry stream from remote device nodes
           </p>
         </div>

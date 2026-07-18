@@ -237,7 +237,7 @@ function SubscriptionPage() {
       {/* Super Admin: Show all subscriptions */}
       {isSuperAdmin && allSubs.length > 0 && (
         <AdminDataCard title="All platform subscriptions" description={`${allSubs.length} subscriptions`}>
-          <div className="divide-y divide-slate-100">
+          <div className="">
             {allSubs.map((s: any) => {
               const daysLeft = s.next_payment_date ? Math.ceil((new Date(s.next_payment_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
               const expiryText = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";

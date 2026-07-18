@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { Bell, Sun, Moon } from "lucide-react";
@@ -11,6 +11,7 @@ import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
+import { VariableFontText } from "@/components/app/VariableFontText";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -27,7 +28,6 @@ export const Route = createFileRoute("/_authenticated")({
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
       "/team-management": "/platform/users",
-      "/data-visualization": "/analytics",
       "/traceability": "/dashboard",
       "/orders": "/platform/orders",
     };
@@ -80,7 +80,7 @@ function AuthenticatedLayout() {
     setMode(next);
   };
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <SessionGuard />
       <OnboardingTour />
       <div className="min-h-screen flex w-full bg-background">
@@ -90,10 +90,16 @@ function AuthenticatedLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
           <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
-            <SidebarTrigger className="shrink-0" />
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
+            {/* Upgrade — plan management */}
+            <Link
+              to="/plan-management"
+              className="shrink-0 h-9 flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] hover:bg-muted transition"
+            >
+              <VariableFontText text="Upgrade" base={550} hover={900} />
+            </Link>
             {/* Dark / Light toggle */}
             <button
               type="button"

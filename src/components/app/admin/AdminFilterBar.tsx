@@ -12,7 +12,7 @@ export function AdminFilterBar({
   submitLabel?: string;
 }) {
   return (
-    <Card>
+    <Card className="border-0 shadow-none">
       <CardContent className="p-4">
         <form
           onSubmit={(e) => {

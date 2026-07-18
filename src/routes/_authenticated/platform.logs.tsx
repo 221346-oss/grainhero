@@ -49,7 +49,7 @@ function LogsPage() {
             <p className="text-sm">No logs found</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="">
             {data.map((l: any) => (
               <div key={l.id} className="px-4 py-3 hover:bg-slate-50">
                 <div className="flex items-center gap-2 flex-wrap mb-1">

@@ -19,13 +19,13 @@ const TABLE = new Set([
   "/platform/orders", "/platform/audit-logs", "/platform/logs",
 ]);
 const INSIGHT = new Set([
-  "/analytics", "/ai-predictions", "/reports", "/data-visualization",
-  "/traceability", "/ml-models", "/revenue", "/environmental",
+  "/analytics", "/ai-predictions", "/reports", "/intelligence",
+  "/traceability", "/ml-models", "/revenue", "/business", "/environmental",
   "/server-monitoring", "/security-center",
   "/revenue", "/platform/pipeline", "/platform/health",
 ]);
 const FORM = new Set([
-  "/settings", "/subscription", "/plans", "/insurance",
+  "/settings", "/subscription", "/plans", "/insurance", "/administration",
   "/platform/plans", "/checkout", "/theme-test",
 ]);
 

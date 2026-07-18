@@ -149,7 +149,7 @@ function TeamPage() {
             <p className="text-sm">No team members found</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="">
             {filtered.map((m) => (
               <div key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50">
                 <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">

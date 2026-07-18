@@ -84,12 +84,14 @@ export type Database = {
           id: string
           is_enabled: boolean | null
           is_on: boolean | null
+          last_maintenance_date: string | null
           mac_address: string | null
           manufacturer: string | null
           ml_decision: string | null
           ml_requested_fan: boolean | null
           model: string | null
           name: string
+          next_maintenance_date: string | null
           notes: string | null
           performance_metrics: Json | null
           power_level: number | null
@@ -118,12 +120,14 @@ export type Database = {
           id?: string
           is_enabled?: boolean | null
           is_on?: boolean | null
+          last_maintenance_date?: string | null
           mac_address?: string | null
           manufacturer?: string | null
           ml_decision?: string | null
           ml_requested_fan?: boolean | null
           model?: string | null
           name: string
+          next_maintenance_date?: string | null
           notes?: string | null
           performance_metrics?: Json | null
           power_level?: number | null
@@ -152,12 +156,14 @@ export type Database = {
           id?: string
           is_enabled?: boolean | null
           is_on?: boolean | null
+          last_maintenance_date?: string | null
           mac_address?: string | null
           manufacturer?: string | null
           ml_decision?: string | null
           ml_requested_fan?: boolean | null
           model?: string | null
           name?: string
+          next_maintenance_date?: string | null
           notes?: string | null
           performance_metrics?: Json | null
           power_level?: number | null

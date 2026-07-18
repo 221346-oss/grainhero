@@ -286,7 +286,7 @@ function SensorsPage() {
             <Inbox className="w-10 h-10 mb-3 opacity-40" />
             <p className="text-sm mb-4">No sensor devices.</p>
             {silos.length === 0 ? (
-              <Link to="/silos" className="text-sm text-emerald-700 underline">Create a silo first →</Link>
+              <Link to="/grain-operations" className="text-sm text-emerald-700 underline">Create a silo first →</Link>
             ) : (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add sensor</Button>
             )}
@@ -317,7 +317,7 @@ function SensorsPage() {
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">You have no warehouses yet.</div>
-                <Link to="/warehouses" className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
+                <Link to="/grain-operations" className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
               </div>
             </div>
           )}
@@ -326,7 +326,7 @@ function SensorsPage() {
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">This warehouse has no silos.</div>
-                <Link to="/silos" className="underline">Add a silo</Link> before registering a sensor.
+                <Link to="/grain-operations" className="underline">Add a silo</Link> before registering a sensor.
               </div>
             </div>
           )}
@@ -609,7 +609,7 @@ function DeviceDetail({ device, reading, historyFn, onEdit }: {
           <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">Recent history</div>
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> :
            !history || history.length === 0 ? <p className="text-xs text-slate-500">No history.</p> : (
-            <div className="max-h-56 overflow-y-auto rounded border border-slate-100 divide-y divide-slate-100 text-xs">
+            <div className="max-h-56 overflow-y-auto rounded border border-slate-100 text-xs">
               {history.map(r => (
                 <div key={r.id} className="grid grid-cols-5 items-center px-2 py-1 gap-1">
                   <span className="col-span-2 text-slate-500">{new Date(r.reading_timestamp).toLocaleTimeString()}</span>

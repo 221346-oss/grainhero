@@ -95,7 +95,7 @@ function PlatformPlansPage() {
                   <th className="text-center px-2 py-2 font-medium">Active</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="">
                 {plans.map((p) => (
                   <tr
                     key={p.plan_id}
@@ -162,7 +162,7 @@ function PlatformPlansPage() {
                   <th className="text-right px-4 py-2 font-medium">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="">
                 {requests.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50">
                     <td className="px-4 py-2 font-mono text-[11px] text-slate-600 truncate max-w-[160px]">

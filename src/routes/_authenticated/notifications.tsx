@@ -16,6 +16,9 @@ import {
 import {
   listNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification,
 } from "@/lib/notifications-audit.functions";
+import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
+import { Switch } from "@/components/ui/switch";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   component: NotificationsPage,
@@ -48,6 +51,60 @@ function formatTime(dateStr: string) {
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+const PREF_ROWS = [
+  { key: "email_alerts", label: "Email alerts" },
+  { key: "sms_alerts", label: "SMS alerts" },
+  { key: "push_notifications", label: "Push notifications" },
+  { key: "weekly_reports", label: "Weekly reports" },
+  { key: "expiry_email_alerts", label: "Email me when my plan is about to expire (7 / 3 / 1 days)" },
+  { key: "expiry_push_alerts", label: "In-app notification when my plan is about to expire" },
+] as const;
+
+const PREF_DEFAULTS: Record<string, boolean> = {
+  email_alerts: true, sms_alerts: false, push_notifications: true,
+  weekly_reports: true, expiry_email_alerts: true, expiry_push_alerts: true,
+};
+
+function NotificationPreferences() {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getMySettings);
+  const saveFn = useServerFn(updateMySettings);
+  const { data } = useQuery({ queryKey: ["my-settings"], queryFn: () => getFn() });
+
+  const prefs: Record<string, boolean> = { ...PREF_DEFAULTS };
+  const stored = (data?.preferences ?? {}) as Record<string, unknown>;
+  for (const k of Object.keys(PREF_DEFAULTS)) {
+    if (typeof stored[k] === "boolean") prefs[k] = stored[k] as boolean;
+  }
+
+  const saveMut = useMutation({
+    mutationFn: (next: Record<string, boolean>) => saveFn({ data: { preferences: { ...stored, ...next } } }),
+    onSuccess: () => { toast.success("Preferences saved"); qc.invalidateQueries({ queryKey: ["my-settings"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="border-slate-200/70">
+      <CardHeader>
+        <CardTitle className="text-base">Notification preferences</CardTitle>
+        <CardDescription>Choose how we contact you. Changes save automatically.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {PREF_ROWS.map((row) => (
+          <div key={row.key} className="flex items-center justify-between rounded-lg border border-border p-3">
+            <span className="text-sm font-medium text-foreground">{row.label}</span>
+            <Switch
+              checked={prefs[row.key]}
+              disabled={saveMut.isPending || !data}
+              onCheckedChange={(v) => saveMut.mutate({ ...prefs, [row.key]: v })}
+            />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
 }
 
 function NotificationsPage() {
@@ -192,6 +249,8 @@ function NotificationsPage() {
           )}
         </CardContent>
       </Card>
+
+      <NotificationPreferences />
     </div>
   );
 }

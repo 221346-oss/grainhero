@@ -19,24 +19,15 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Maintenance", to: "/maintenance", group: "Operations" },
   { label: "Environmental", to: "/environmental", group: "Operations", keywords: "climate weather" },
   // Insights
-  { label: "AI Predictions", to: "/ai-predictions", group: "Insights" },
-  { label: "Analytics", to: "/analytics", group: "Insights" },
-  { label: "Reports", to: "/reports", group: "Insights" },
-  { label: "ML Models", to: "/ml-models", group: "Insights" },
-  { label: "Data Visualization", to: "/data-visualization", group: "Insights", keywords: "charts graphs" },
+  { label: "Intelligence", to: "/intelligence", group: "Insights", keywords: "ai predictions analytics ml models reports charts graphs data visualization" },
   { label: "Traceability", to: "/traceability", group: "Insights" },
-  { label: "Notifications", to: "/notifications", group: "Insights" },
-  { label: "Activity Logs", to: "/activity-logs", group: "Insights", keywords: "audit history" },
+  { label: "Administration", to: "/administration", group: "Admin", keywords: "team members users security activity logs audit history" },
   // Business
   { label: "Buyers", to: "/buyers", group: "Business", keywords: "customers" },
   { label: "Orders", to: "/orders", group: "Business", keywords: "hardware install" },
-  { label: "Revenue", to: "/revenue", group: "Business", keywords: "income" },
-  { label: "Subscription", to: "/subscription", group: "Business" },
+  { label: "Business", to: "/business", group: "Business", keywords: "revenue income subscription insurance policies claims plan management billing" },
   { label: "Plans", to: "/plans", group: "Business", keywords: "pricing" },
-  { label: "Insurance", to: "/insurance", group: "Business" },
   // Admin
-  { label: "Team", to: "/team-management", group: "Admin", keywords: "members users" },
-  { label: "Security Center", to: "/security-center", group: "Admin" },
   { label: "Server Monitoring", to: "/server-monitoring", group: "Admin" },
   { label: "Settings", to: "/settings", group: "Admin" },
   // Platform (super_admin)
@@ -76,10 +67,12 @@ const PAGE_LABELS: Record<string, string> = {
   "/analytics": "analytics",
   "/ai-predictions": "predictions",
   "/ml-models": "models",
-  "/data-visualization": "visualisations",
+  "/intelligence": "intelligence",
   "/security-center": "security events",
+  "/administration": "administration",
   "/server-monitoring": "server metrics",
   "/revenue": "revenue records",
+  "/business": "business",
   "/settings": "settings",
 };
 

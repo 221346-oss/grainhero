@@ -38,7 +38,7 @@ export function RecentBatchesCard() {
           <CardTitle className="text-base">Recent batches</CardTitle>
           <CardDescription>Latest 5 intake / dispatch</CardDescription>
         </div>
-        <Button asChild size="sm" variant="outline"><Link to="/grain-batches">View all</Link></Button>
+        <Button asChild size="sm" variant="outline"><Link to="/grain-operations">View all</Link></Button>
       </CardHeader>
       <CardContent className="space-y-2">
         {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No batches yet</p>}
@@ -155,7 +155,7 @@ export function SilosOccupancyCard() {
           <CardTitle className="text-base">Silo occupancy</CardTitle>
           <CardDescription>Storage utilisation</CardDescription>
         </div>
-        <Button asChild size="sm" variant="outline"><Link to="/silos">Details</Link></Button>
+        <Button asChild size="sm" variant="outline"><Link to="/grain-operations">Details</Link></Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No silos yet</p>}

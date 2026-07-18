@@ -24,7 +24,7 @@ export function AdminDataCard({
   className?: string;
 }) {
   return (
-    <Card className={className}>
+    <Card className={cn("border-0 shadow-none", className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
