@@ -7,9 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getSlaAlerts } from "@/lib/sla-alerts.functions";
+import { getSlaAlerts, getSlaDrilldown } from "@/lib/sla-alerts.functions";
 import { AlertTriangle, TrendingDown, ExternalLink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/platform/sla-alerts")({
   component: SlaAlertsPage,
@@ -17,12 +19,29 @@ export const Route = createFileRoute("/_authenticated/platform/sla-alerts")({
 
 function SlaAlertsPage() {
   const load = useServerFn(getSlaAlerts);
+  const drill = useServerFn(getSlaDrilldown);
   const [days, setDays] = useState(30);
+  const [drillKey, setDrillKey] = useState<{ day: string; bucket: "all" | "overdue" | "delivered" | "in_flight" } | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["sla-alerts", days],
     queryFn: () => load({ data: { days } }),
     refetchInterval: 60_000,
   });
+  const drillQuery = useQuery({
+    queryKey: ["sla-drilldown", drillKey],
+    queryFn: () => drill({ data: drillKey! }),
+    enabled: !!drillKey,
+  });
+
+  const trendData = data ? data.trend.current.map((c) => ({
+    day: c.day,
+    rate: Number((c.rate * 100).toFixed(1)),
+    overdue: c.overdue,
+    dispatched: c.dispatched,
+  })) : [];
+  const baselinePct = data ? Number((data.totals.baselineRate * 100).toFixed(1)) : 0;
+  const dropThreshold = data ? baselinePct - data.config.deliveryRateAlertDropPct : 0;
+
   return (
     <AdminPageShell
       title="SLA alerts"
@@ -52,6 +71,41 @@ function SlaAlertsPage() {
               tone={data.totals.currentRate - data.totals.previousRate < 0 ? "rose" : "emerald"}
             />
           </div>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-emerald-600" />
+                Delivery-rate trend
+                <span className="text-xs font-normal text-muted-foreground ml-2">
+                  Baseline (prior window): {baselinePct}% · alert if drop &gt; {data.config.deliveryRateAlertDropPct} pp
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-64 p-2">
+              {trendData.length === 0 ? (
+                <div className="text-sm text-muted-foreground p-6">No dispatched shipments in this window.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}
+                    onClick={(e: { activeLabel?: string }) => {
+                      if (e?.activeLabel) setDrillKey({ day: e.activeLabel, bucket: "all" });
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="day" fontSize={11} />
+                    <YAxis fontSize={11} unit="%" domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <ReferenceLine y={baselinePct} stroke="#059669" strokeDasharray="4 4" label={{ value: "baseline", fontSize: 10, fill: "#059669" }} />
+                    <ReferenceLine y={dropThreshold} stroke="#f43f5e" strokeDasharray="4 4" label={{ value: "alert", fontSize: 10, fill: "#f43f5e" }} />
+                    <Line type="monotone" dataKey="rate" name="Delivery rate %" stroke="#059669" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6, cursor: "pointer" }} />
+                    <Line type="monotone" dataKey="overdue" name="Overdue count" stroke="#f43f5e" strokeWidth={1.5} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader className="pb-2">
@@ -135,9 +189,48 @@ function SlaAlertsPage() {
 
           <p className="text-xs text-muted-foreground">
             SLA thresholds (from marketplace settings): in-transit {data.slaHours.inTransit}h · out-for-delivery {data.slaHours.outForDelivery}h · delivered {data.slaHours.delivered}h.
+            {" "}Cooldown: {data.config.alertCooldownMinutes}m · Overdue grace: {data.config.overdueGraceMinutes}m.
           </p>
         </div>
       )}
+
+      <Sheet open={!!drillKey} onOpenChange={(v) => !v && setDrillKey(null)}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader><SheetTitle>Shipments on {drillKey?.day}</SheetTitle></SheetHeader>
+          <div className="flex gap-2 mt-3">
+            {(["all", "overdue", "delivered", "in_flight"] as const).map((b) => (
+              <Button key={b} size="sm" variant={drillKey?.bucket === b ? "default" : "outline"}
+                onClick={() => drillKey && setDrillKey({ ...drillKey, bucket: b })}>
+                {b.replace("_", " ")}
+              </Button>
+            ))}
+          </div>
+          <div className="mt-4 space-y-2">
+            {drillQuery.isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
+            {drillQuery.data?.shipments.length === 0 && (
+              <div className="text-sm text-muted-foreground">No shipments in this bucket.</div>
+            )}
+            {drillQuery.data?.shipments.map((s) => {
+              const bo = (s as { buyer_orders?: { order_number?: string; buyers?: { name?: string; company_name?: string } } }).buyer_orders;
+              const buyer = bo?.buyers?.company_name ?? bo?.buyers?.name ?? "—";
+              return (
+                <div key={s.id} className="border rounded px-3 py-2 flex items-center justify-between text-sm hover:border-emerald-500">
+                  <div>
+                    <div className="font-mono text-xs">{bo?.order_number ?? s.order_id}</div>
+                    <div className="text-xs text-muted-foreground">{buyer} · {s.courier_label ?? s.courier_key}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">{s.status}</Badge>
+                    <Link to="/platform/orders/$orderId" params={{ orderId: s.order_id as string }}>
+                      <Button variant="ghost" size="sm"><ExternalLink className="h-3 w-3" /></Button>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
     </AdminPageShell>
   );
 }
