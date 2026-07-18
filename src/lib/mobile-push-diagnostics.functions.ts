@@ -14,7 +14,7 @@ export const listPushDeliveries = createServerFn({ method: "GET" })
       .eq("channel", "push")
       .order("created_at", { ascending: false })
       .limit(100);
-    return { rows: (data ?? []) as Array<Record<string, unknown>> };
+    return { rows: (data ?? []) as Array<Record<string, any>> };
   });
 
 export const listRegisteredDevices = createServerFn({ method: "GET" })
@@ -28,7 +28,7 @@ export const listRegisteredDevices = createServerFn({ method: "GET" })
       .select("id, user_id, platform, app_version, last_seen_at, last_push_success_at, last_push_error, last_push_error_at, revoked_at")
       .order("last_seen_at", { ascending: false, nullsFirst: false })
       .limit(100);
-    return { rows: (data ?? []) as Array<Record<string, unknown>> };
+    return { rows: (data ?? []) as Array<Record<string, any>> };
   });
 
 const testSchema = z.object({

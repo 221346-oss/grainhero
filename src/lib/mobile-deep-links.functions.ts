@@ -10,7 +10,7 @@ export const listDeepLinks = createServerFn({ method: "GET" })
       .select("id, key, native_route, web_fallback, description, active, updated_at")
       .order("key", { ascending: true });
     if (error) throw error;
-    return { rows: (data ?? []) as Array<Record<string, unknown>> };
+    return { rows: (data ?? []) as Array<Record<string, any>> };
   });
 
 const upsertSchema = z.object({
