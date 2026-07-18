@@ -1,116 +1,106 @@
-# Phase 22 — Governance, Sharing & Notification Depth
+# Phases 23 → 32 — Finalization Roadmap
 
-Bundles the nine Phase 21 follow-ups you listed, the warehouse-creation fix, and the next-phase scope (governance / shareable read-only surfaces / notification depth). Zero-hardcode rule preserved: every threshold, template, rate limit, and default is editable in super-admin settings.
-
----
-
-## 0. Hotfix — Warehouses cannot be created
-
-**Root cause:** `upsertWarehouse` writes `admin_id: context.userId`. For manager/technician users that's their own profile id, but RLS `with_check` requires `admin_id = get_tenant_admin_id(auth.uid())`, which resolves to their tenant admin's id. Insert silently fails RLS.
-
-**Fix:** resolve `admin_id` via `profiles.admin_id ?? profiles.id` (same rule as `get_tenant_admin_id`) and use that for `admin_id` + `created_by`/`updated_by`. Also gate creation to `admin` and `manager` roles (technicians shouldn't create warehouses).
+Locked to the original GrainHero_Finalized_Plan.md + Kimi phase file. Mobile stays external (Flutter) but consumes the **same Supabase DB** through a versioned, documented, RLS-safe surface — no separate backend, no divergent schema. Each phase below is a shippable unit; we execute them one-by-one, starting with Phase 23.
 
 ---
 
-## 1. Metric Registry & Dashboard Publish Audit
+## Overview of the last 10 phases
 
-- New table `analytics_governance_audit` (actor, action, target_type: metric|widget|share|refresh, target_key, before/after jsonb, ip, ua, at).
-- Wire audit writes into `upsertMetric`, `toggleMetric`, `deleteMetric`, `saveWidget`, `deleteWidget`, `reorderWidgets`, and share-link CRUD (below).
-- New route `/platform/analytics-audit` — filters (actor, action, date), diff viewer, CSV export.
-
-## 2. Analytics Refresh Monitor
-
-- Route `/platform/analytics-refresh` reads `analytics_refresh_log`.
-- Cards: last success per fact table, current freshness lag, failure count 24h.
-- Table: run history with status, duration, error, retry button (calls `refreshWarehouse` for that fact).
-- Uses existing `pg_cron` schedule; adds `retryOne(factKey)` server fn and per-fact backoff.
-
-## 3. Widget CSV Export (date-range)
-
-- Extend `metric_registry` with optional `csv_template` (SQL that accepts `date_from`/`date_to`) — falls back to `sql_template` if null.
-- Server fn `exportMetricCsv({ key, from, to, filters })` → streams CSV via server route `/api/public/exports/metric/<token>` (short-lived signed token in `metric_export_tokens`).
-- Widget card gains "Export CSV" button with date-range popover.
-
-## 4. Shareable Read-Only Dashboards
-
-- Table `dashboard_shares` (id, owner_user_id, role_snapshot, widget_ids[], date_defaults jsonb, token, expires_at, revoked_at, view_count).
-- Public route `/share/dashboard/$token` — SSR-safe read-only band; no auth; queries via `run_metric` under service role scoped to snapshot widgets only.
-- Manage sheet in Dashboard Builder: create/revoke/copy link, set expiry, default date range.
-- All copy (title, footer, disclaimer) driven by super-admin `platform_settings.share_defaults`.
-
-## 5. Insurance Notification Deep Links
-
-- Extend `dispatchNotification` payload with `deep_link` (route + params).
-- Existing insurance events (claim status, audit, webhook, policy doc) emit deep links to:
-  - `/insurance/claims/$id/timeline`
-  - `/platform/insurance/audit?event=<id>`
-  - `/policies/$id/documents#v<version>`
-- Notification center + email templates render the link.
-
-## 6. Safer Webhook Replay Controls
-
-- Extend `insurance_webhook_events` with `replay_count`, `last_replay_at`, `next_replay_allowed_at`, `replay_history jsonb[]`.
-- Config in `marketplace-settings` (rename section → `platform_ops_settings`): max replays/hour per event, min backoff seconds, cooldown after N failures.
-- Replay endpoint enforces backoff, records attempt, appends to history.
-- Webhook monitor: history panel per event, disabled state during cooldown with countdown.
-
-## 7. Bulk Notification Actions
-
-- Notification center gains multi-select (checkbox + shift-range).
-- Server fns `bulkMarkRead(ids[])`, `bulkMarkUnread(ids[])`, `bulkArchive(ids[])` scoped to caller.
-- Toolbar: Mark read / Mark unread / Archive / Clear selection. Filters (category=insurance) preserved.
-
-## 8. Claim Timeline Export (PDF + CSV)
-
-- Server fn `exportClaimTimeline({ claimId, format })`.
-- CSV: chronological events.
-- PDF: reuse `invoicing-pdf.server.ts` `pdf-lib` layout — header (claim id, policy, carrier), event table, decision block, footer.
-- Buttons on `/insurance/claims/$id/timeline` and super-admin alias.
-
-## 9. Policy Documents Version History
-
-- `insurance_policy_documents` already versioned. Add UI: version list (uploader, timestamp, size, notes), download per version, "current" pill, diff-of-metadata expandable row.
-- Route: `/policies/$policyId/documents` — accessible to policy owner + super-admin.
-- Super-admin can mark any version "current" (writes audit entry).
+| # | Phase | One-liner |
+|---|---|---|
+| 23 | Mobile API Contract & Sync Foundation | Versioned `/api/public/v1/*` read/sync endpoints, device-token auth, delta-sync cursors, docs for Flutter |
+| 24 | Push Notifications & Deep Links (Mobile) | FCM/APNs registration, per-device prefs, action deep-links usable by Flutter router |
+| 25 | Offline-First Contracts | Idempotency keys, conflict resolution, "since" cursors on telemetry / alerts / orders / tasks |
+| 26 | Field Ops Workflows | Technician install/commissioning + Manager silo actions optimized for mobile (photo upload, signature, GPS) |
+| 27 | Buyer Mobile Storefront Surface | Marketplace/checkout/tracking endpoints hardened for mobile SDK, Stripe PaymentSheet contract |
+| 28 | ML Inference & Feedback Loop | Deployed inference gateway (HTTPS + token), request/response logging, human-in-loop correction pipeline |
+| 29 | Observability, SLOs & Cost Guardrails | Structured logs, error budgets, per-tenant rate limits, cost dashboards |
+| 30 | Security Hardening & Compliance | 2FA enforcement policies, audit export, data-retention jobs, GDPR/PDPA request flows |
+| 31 | Disaster Recovery & Multi-Region Readiness | Backups, PITR runbook, read-replica path, failover drills (single-region now, multi-region-ready) |
+| 32 | Launch Polish & Handoff | Status page, changelog, admin runbooks, Flutter integration guide, final QA sweep |
 
 ---
 
-## Migration summary (single migration)
+## Phase 23 — detailed plan (execute now)
 
-1. `analytics_governance_audit` + grants/RLS (super_admin read; system-writable via SECURITY DEFINER fn).
-2. `dashboard_shares` + `metric_export_tokens` + grants/RLS.
-3. Extend `insurance_webhook_events` with replay tracking columns.
-4. Extend `metric_registry` with `csv_template text`.
-5. Extend `platform_settings` with `share_defaults` + `platform_ops_settings` keys (seeded).
-6. `pg_cron` schedule for `analytics_refresh_log` retention (30d).
+### Goal
+Give the external Flutter app a **stable, versioned, RLS-safe** way to talk to the existing Supabase DB. Zero schema forks, zero hardcoded config, everything tunable from super-admin.
 
-## Server functions (new)
+### Deliverables
 
-- `analytics-audit.functions.ts` — list/export.
-- `dashboard-shares.functions.ts` — CRUD + resolve token.
-- `metric-export.functions.ts` — CSV generation + token mint.
-- `analytics-refresh.functions.ts` — add `retryOne`, `getRefreshHealth`.
-- `webhook-replay.functions.ts` — backoff-guarded replay.
-- `notifications-bulk.functions.ts` — bulk actions.
-- `claim-timeline-export.functions.ts` — CSV/PDF.
-- `policy-documents.functions.ts` — version list + mark-current.
+**1. Versioned public API namespace**
+- `src/routes/api/public/v1/` (new). All mobile-facing HTTP endpoints live here.
+- Every endpoint returns `{ data, meta: { server_time, cursor, version } }`.
+- `GET /api/public/v1/meta` → server time, min supported client build, feature flags (reads `platform_settings.mobile`).
 
-## Routes (new / updated)
+**2. Auth model for mobile**
+- Flutter uses Supabase Auth SDK directly (same project) → gets the same JWT the web uses. No custom token server.
+- Add `mobile_devices` table: `id, user_id, platform (ios|android), push_token, app_version, os_version, locale, last_seen_at, revoked_at`.
+- Server fns: `registerDevice`, `heartbeatDevice`, `revokeDevice` (auth-required, RLS: owner-only).
+- Middleware helper `requireMobileClient` = `requireSupabaseAuth` + optional `x-app-version` gate against `platform_settings.mobile.min_build`.
 
-- `/platform/analytics-audit`, `/platform/analytics-refresh`
-- `/share/dashboard/$token` (public), `/policies/$id/documents`
-- Skeletons registered in `router.tsx` + `skeletons.tsx`
-- Sidebar: "Analytics Ops" group (Metric Registry, Dashboard Builder, Refresh Monitor, Governance Audit, Share Links)
+**3. Delta-sync endpoints (read side)**
+Cursor-based (`updated_at, id`) so Flutter can pull incrementals:
+- `GET /api/public/v1/sync/silos?since=<cursor>`
+- `GET /api/public/v1/sync/sensors?since=`
+- `GET /api/public/v1/sync/alerts?since=`
+- `GET /api/public/v1/sync/hardware-orders?since=` (technician scope)
+- `GET /api/public/v1/sync/buyer-orders?since=` (buyer scope)
+- `GET /api/public/v1/sync/notifications?since=`
+All enforce RLS via user's bearer; response includes `next_cursor` and `has_more`. Page size from `platform_settings.mobile.sync_page_size` (default 200, capped 1000).
 
-## Zero-hardcode confirmations
+**4. Write endpoints with idempotency**
+- Header `Idempotency-Key` (UUID) required on POSTs.
+- New table `mobile_idempotency_keys (key, user_id, endpoint, request_hash, response jsonb, created_at)` — 24h TTL cron cleanup.
+- Endpoints: `POST /telemetry/ack`, `POST /alerts/:id/acknowledge`, `POST /installations/:id/step`, `POST /buyer-orders/:id/confirm-delivery`. Each wraps an existing server fn.
 
-- Share expiry defaults, footer text, PDF branding → `platform_settings`
-- Replay backoff/limits → `platform_settings.platform_ops_settings`
-- CSV row cap, timezone → `platform_settings.exports`
+**5. File uploads**
+- Reuse existing Supabase storage buckets. Add signed-URL mint endpoint: `POST /api/public/v1/uploads/sign` → returns short-lived upload URL + final public/signed read URL. Bucket + max size come from `platform_settings.mobile.uploads` (per-purpose: install_photo, dispute_evidence, quality_cert).
 
-## Out of scope (deferred)
+**6. Realtime channels (documented, not new)**
+- Document which existing Postgres tables are on `supabase_realtime` publication so Flutter can subscribe directly (alerts, actuator_commands, buyer_order_events, hardware_order_visit_events).
 
-- Multi-tenant sharing (invite-based collaborators) — Phase 23.
-- Warehouse role/permission overhaul beyond the hotfix — Phase 24 (Ops Hardening).
+**7. Super-admin controls (zero hardcode)**
+- Extend `platform_settings.config.mobile`:
+  - `min_build`, `latest_build`, `force_update_below`
+  - `sync_page_size`, `heartbeat_interval_seconds`
+  - `uploads` { bucket, max_mb, allowed_mime[] per purpose }
+  - `feature_flags` { offline_mode, push_v2, ml_inline }
+- New route `/platform/mobile-settings` with form + audit log entry via existing `record_governance_audit`.
 
-Reply **go** to execute.
+**8. Docs for Flutter team**
+- `docs/mobile/API_CONTRACT.md` — auth flow, endpoint list, cursor semantics, idempotency, error codes, realtime channel list, sample cURL + Dio snippets.
+- `docs/mobile/DB_SHARED_MODEL.md` — which tables Flutter reads/writes, RLS assumptions, do-not-touch list (finance, insurance internals, analytics fact tables).
+
+### Migration summary (single migration)
+1. `mobile_devices` + grants (authenticated: full on own rows; service_role all) + RLS.
+2. `mobile_idempotency_keys` + grants + RLS (owner-only).
+3. Extend `platform_settings.config` seed with `mobile.*` defaults.
+4. `pg_cron` cleanup job (24h) for idempotency keys.
+
+### New server fns
+- `src/lib/mobile-devices.functions.ts`
+- `src/lib/mobile-sync.functions.ts` (reads)
+- `src/lib/mobile-uploads.functions.ts`
+- `src/lib/mobile-settings.functions.ts`
+
+### New routes (server)
+- `src/routes/api/public/v1/meta.ts`
+- `src/routes/api/public/v1/sync/{silos,sensors,alerts,hardware-orders,buyer-orders,notifications}.ts`
+- `src/routes/api/public/v1/uploads/sign.ts`
+- `src/routes/api/public/v1/devices/{register,heartbeat,revoke}.ts`
+- `src/routes/api/public/v1/actions/{ack-alert,ack-telemetry,install-step,confirm-delivery}.ts`
+
+### New UI (super-admin)
+- `src/routes/_authenticated/platform.mobile-settings.tsx` — versions, page sizes, upload limits, feature flags.
+
+### Zero-hardcode confirmations
+- All limits, buckets, min-build, feature flags → `platform_settings.mobile`.
+- Deep-link scheme + universal-link host → `platform_settings.mobile.deep_link`.
+
+### Out of scope for P23 (moves to P24+)
+- Push token → FCM/APNs delivery pipeline (P24).
+- Offline conflict-resolution UX (P25).
+- Payment sheet contract (P27).
+
+Reply **go** to execute Phase 23.
