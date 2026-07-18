@@ -99,6 +99,20 @@ export interface MarketplaceSettings {
     deliveryDelayGraceMinutes: number;
     licenseExpiryWarnDays: number[];
   };
+  finance: {
+    payoutSchedule: "manual" | "weekly" | "biweekly" | "monthly";
+    payoutDay: number; // 0-6 for weekly, 1-31 for monthly
+    minimumPayoutAmount: number;
+    platformFeePct: number;
+    holdPeriodDays: number;
+    defaultCurrency: string;
+    supportedCurrencies: string[];
+    taxMode: "inclusive" | "exclusive";
+    payoutMethods: Array<{ key: string; label: string; feePct: number; enabled: boolean }>;
+    statementHeading: string;
+    statementFooter: string;
+    dailyDigestEnabled: boolean;
+  };
 }
 
 export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
