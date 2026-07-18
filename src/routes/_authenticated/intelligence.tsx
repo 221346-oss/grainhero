@@ -26,13 +26,6 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "reports",     label: "Reports",        icon: FileBarChart },
 ];
 
-const BAR_COLORS = [
-  "from-[#6366f1] to-[#818cf8]",   // indigo
-  "from-[#10b981] to-[#34d399]",   // emerald
-  "from-[#a855f7] to-[#c084fc]",   // purple
-  "from-[#f59e0b] to-[#fbbf24]",   // amber
-];
-
 function IntelligenceWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("predictions");
 
@@ -118,36 +111,39 @@ function IntelligenceWorkspace() {
             <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-5">
               Intelligence Overview
             </p>
-            <div className="space-y-4">
-              {TABS.map((tab, i) => {
+            <div className="space-y-1">
+              {TABS.map((tab) => {
                 const count = counts[tab.key];
-                const pct = Math.max((count / maxCount) * 100, count > 0 ? 4 : 0);
+                const pct = (count / maxCount) * 100;
+                const Icon = tab.icon;
                 return (
-                  <div key={tab.key} className="flex items-center gap-4">
-                    <span className="w-24 text-xs text-white/50 font-mono truncate text-right shrink-0">
-                      {tab.label.split(" ")[0]}…
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className="w-full flex items-center gap-4 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-white/5 group"
+                    title={`${count} ${tab.label.toLowerCase()} — view ${tab.label}`}
+                  >
+                    <span className="w-36 flex items-center gap-2 text-sm text-white/70 shrink-0 group-hover:text-white transition-colors">
+                      <Icon className="w-4 h-4 text-white/30 group-hover:text-emerald-400 transition-colors shrink-0" />
+                      {tab.label}
                     </span>
-                    <div className="flex-1 h-8 bg-white/5 rounded-md overflow-hidden relative">
+                    <div className="flex-1 h-2.5 bg-white/5 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-md bg-gradient-to-r ${BAR_COLORS[i]} transition-all duration-700`}
-                        style={{ width: `${pct}%`, boxShadow: "0 0 12px rgba(99,102,241,0.3)" }}
-                      />
-                      <div
-                        className="absolute inset-0 pointer-events-none opacity-10"
-                        style={{
-                          backgroundImage:
-                            "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-                          backgroundSize: "8px 8px",
-                        }}
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                        style={{ width: count > 0 ? `${Math.max(pct, 3)}%` : "0%" }}
                       />
                     </div>
-                    <span className="w-8 text-right text-xs text-white/60 font-mono shrink-0">
+                    <span className="w-10 text-right text-sm font-semibold text-white tabular-nums shrink-0">
                       {count}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
+            <p className="mt-4 text-[11px] text-white/30">
+              Items per area — click a row to open it
+            </p>
           </div>
 
           {/* Stats Panel */}

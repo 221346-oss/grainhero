@@ -154,28 +154,28 @@ ON CONFLICT (id) DO NOTHING;
 -- ---------------------------------------------------------------------
 INSERT INTO public.sensor_devices
   (id, device_id, device_name, admin_id, warehouse_id, silo_id, device_type, category,
-   sensor_types, status, connection_status, battery_level, signal_strength, last_heartbeat)
+   sensor_types, status, connection_status, battery_level, signal_strength, last_heartbeat, created_by)
 VALUES
   ('ffffffff-0000-4000-8000-000000000001', 'DEV-DEMO-001', 'EnviroSense A1',
    'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-000000000001', 'eeeeeeee-0000-4000-8000-000000000001',
    'sensor', 'environmental', ARRAY['temperature','humidity','co2','moisture']::public.sensor_type[],
-   'active', 'online', 87, -52, now() - interval '3 minutes'),
+   'active', 'online', 87, -52, now() - interval '3 minutes', 'aaaaaaaa-0000-4000-8000-000000000001'),
   ('ffffffff-0000-4000-8000-000000000002', 'DEV-DEMO-002', 'EnviroSense A2',
    'aaaaaaaa-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-000000000001', 'eeeeeeee-0000-4000-8000-000000000002',
    'sensor', 'environmental', ARRAY['temperature','humidity','moisture']::public.sensor_type[],
-   'active', 'online', 64, -61, now() - interval '4 minutes'),
+   'active', 'online', 64, -61, now() - interval '4 minutes', 'aaaaaaaa-0000-4000-8000-000000000001'),
   ('ffffffff-0000-4000-8000-000000000003', 'DEV-DEMO-003', 'EnviroSense B1',
    'aaaaaaaa-0000-4000-8000-000000000002', 'dddddddd-0000-4000-8000-000000000002', 'eeeeeeee-0000-4000-8000-000000000003',
    'sensor', 'environmental', ARRAY['temperature','humidity','co2','voc']::public.sensor_type[],
-   'active', 'online', 91, -47, now() - interval '2 minutes'),
+   'active', 'online', 91, -47, now() - interval '2 minutes', 'aaaaaaaa-0000-4000-8000-000000000002'),
   ('ffffffff-0000-4000-8000-000000000004', 'DEV-DEMO-004', 'EnviroSense B2',
    'aaaaaaaa-0000-4000-8000-000000000002', 'dddddddd-0000-4000-8000-000000000002', 'eeeeeeee-0000-4000-8000-000000000004',
    'sensor', 'environmental', ARRAY['temperature','humidity','co2']::public.sensor_type[],
-   'active', 'offline', 12, -78, now() - interval '9 hours'),
+   'active', 'offline', 12, -78, now() - interval '9 hours', 'aaaaaaaa-0000-4000-8000-000000000002'),
   ('ffffffff-0000-4000-8000-000000000005', 'DEV-DEMO-005', 'EnviroSense C1',
    'aaaaaaaa-0000-4000-8000-000000000003', 'dddddddd-0000-4000-8000-000000000003', 'eeeeeeee-0000-4000-8000-000000000005',
    'sensor', 'environmental', ARRAY['temperature','humidity','moisture']::public.sensor_type[],
-   'active', 'online', 73, -58, now() - interval '5 minutes')
+   'active', 'online', 73, -58, now() - interval '5 minutes', 'aaaaaaaa-0000-4000-8000-000000000003')
 ON CONFLICT (id) DO NOTHING;
 
 -- Readings: silo B2 (device 4) trends hot/humid to justify the critical alert

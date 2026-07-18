@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listGrainAlerts } from "@/lib/operations.functions";
 import { Badge } from "@/components/ui/badge";
+import { AlertsFunnel } from "./AlertsFunnel";
 
 const PRIO_ICON: Record<string, React.ElementType> = {
   critical: AlertTriangle,
@@ -21,6 +22,7 @@ export function AlertsSection() {
 
   return (
     <div className="space-y-4">
+      <AlertsFunnel />
       {isLoading ? (
         <div className="flex items-center justify-center py-12 text-white/40">
           <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading alerts…

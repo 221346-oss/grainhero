@@ -91,7 +91,7 @@ export function AdminDashboard({ name }: { name?: string }) {
 
   return (
     <div
-      className="min-h-screen bg-[#0a0a0a] p-4 md:p-8"
+      className="min-h-screen bg-background p-4 md:p-8"
       style={{
         fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
