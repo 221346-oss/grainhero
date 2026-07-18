@@ -4170,11 +4170,13 @@ export type Database = {
           cart_max_items: number
           cart_ttl_hours: number
           checkout_enabled: boolean
+          cod_max_cents: number
           currency_default: string
           id: string
           max_order_cents: number
           min_order_cents: number
           platform_fee_bps: number
+          quote_ttl_seconds: number
           refund_policy_url: string | null
           stripe_publishable_key_override: string | null
           terms_url: string | null
@@ -4186,11 +4188,13 @@ export type Database = {
           cart_max_items?: number
           cart_ttl_hours?: number
           checkout_enabled?: boolean
+          cod_max_cents?: number
           currency_default?: string
           id?: string
           max_order_cents?: number
           min_order_cents?: number
           platform_fee_bps?: number
+          quote_ttl_seconds?: number
           refund_policy_url?: string | null
           stripe_publishable_key_override?: string | null
           terms_url?: string | null
@@ -4202,11 +4206,13 @@ export type Database = {
           cart_max_items?: number
           cart_ttl_hours?: number
           checkout_enabled?: boolean
+          cod_max_cents?: number
           currency_default?: string
           id?: string
           max_order_cents?: number
           min_order_cents?: number
           platform_fee_bps?: number
+          quote_ttl_seconds?: number
           refund_policy_url?: string | null
           stripe_publishable_key_override?: string | null
           terms_url?: string | null

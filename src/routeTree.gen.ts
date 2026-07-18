@@ -162,7 +162,10 @@ import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/publi
 import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
 import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
 import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
+import { Route as ApiPublicV1CommerceQuoteRouteImport } from './routes/api/public/v1/commerce/quote'
+import { Route as ApiPublicV1CommerceOrdersRouteImport } from './routes/api/public/v1/commerce/orders'
 import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/public/v1/commerce/config'
+import { Route as ApiPublicV1CommerceCheckoutRouteImport } from './routes/api/public/v1/commerce/checkout'
 import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
 import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
 import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
@@ -171,6 +174,7 @@ import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/
 import { Route as ApiPublicV1ActionsAckAlertRouteImport } from './routes/api/public/v1/actions/ack-alert'
 import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
 import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
+import { Route as ApiPublicV1CommerceOrdersOrderIdRouteImport } from './routes/api/public/v1/commerce/orders.$orderId'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -1031,10 +1035,28 @@ const ApiPublicV1DeeplinkKeyRoute = ApiPublicV1DeeplinkKeyRouteImport.update({
   path: '/api/public/v1/deeplink/$key',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1CommerceQuoteRoute =
+  ApiPublicV1CommerceQuoteRouteImport.update({
+    id: '/api/public/v1/commerce/quote',
+    path: '/api/public/v1/commerce/quote',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceOrdersRoute =
+  ApiPublicV1CommerceOrdersRouteImport.update({
+    id: '/api/public/v1/commerce/orders',
+    path: '/api/public/v1/commerce/orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1CommerceConfigRoute =
   ApiPublicV1CommerceConfigRouteImport.update({
     id: '/api/public/v1/commerce/config',
     path: '/api/public/v1/commerce/config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceCheckoutRoute =
+  ApiPublicV1CommerceCheckoutRouteImport.update({
+    id: '/api/public/v1/commerce/checkout',
+    path: '/api/public/v1/commerce/checkout',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1CommerceCartRoute = ApiPublicV1CommerceCartRouteImport.update({
@@ -1083,6 +1105,12 @@ const AuthenticatedPlatformInsuranceClaimsClaimIdRoute =
     id: '/claims/$claimId',
     path: '/claims/$claimId',
     getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
+  } as any)
+const ApiPublicV1CommerceOrdersOrderIdRoute =
+  ApiPublicV1CommerceOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => ApiPublicV1CommerceOrdersRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -1223,7 +1251,10 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
+  '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
+  '/api/public/v1/commerce/orders': typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  '/api/public/v1/commerce/quote': typeof ApiPublicV1CommerceQuoteRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1247,6 +1278,7 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
   '/api/public/v1/notifications/': typeof ApiPublicV1NotificationsIndexRoute
+  '/api/public/v1/commerce/orders/$orderId': typeof ApiPublicV1CommerceOrdersOrderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -1384,7 +1416,10 @@ export interface FileRoutesByTo {
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
+  '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
+  '/api/public/v1/commerce/orders': typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  '/api/public/v1/commerce/quote': typeof ApiPublicV1CommerceQuoteRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1408,6 +1443,7 @@ export interface FileRoutesByTo {
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
   '/api/public/v1/notifications': typeof ApiPublicV1NotificationsIndexRoute
+  '/api/public/v1/commerce/orders/$orderId': typeof ApiPublicV1CommerceOrdersOrderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1549,7 +1585,10 @@ export interface FileRoutesById {
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
+  '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
   '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
+  '/api/public/v1/commerce/orders': typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  '/api/public/v1/commerce/quote': typeof ApiPublicV1CommerceQuoteRoute
   '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
   '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
   '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
@@ -1573,6 +1612,7 @@ export interface FileRoutesById {
   '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
   '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
   '/api/public/v1/notifications/': typeof ApiPublicV1NotificationsIndexRoute
+  '/api/public/v1/commerce/orders/$orderId': typeof ApiPublicV1CommerceOrdersOrderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1714,7 +1754,10 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/replay'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
+    | '/api/public/v1/commerce/checkout'
     | '/api/public/v1/commerce/config'
+    | '/api/public/v1/commerce/orders'
+    | '/api/public/v1/commerce/quote'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -1738,6 +1781,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
     | '/api/public/v1/notifications/'
+    | '/api/public/v1/commerce/orders/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1875,7 +1919,10 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/replay'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
+    | '/api/public/v1/commerce/checkout'
     | '/api/public/v1/commerce/config'
+    | '/api/public/v1/commerce/orders'
+    | '/api/public/v1/commerce/quote'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -1899,6 +1946,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
     | '/api/public/v1/notifications'
+    | '/api/public/v1/commerce/orders/$orderId'
   id:
     | '__root__'
     | '/'
@@ -2039,7 +2087,10 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/replay'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
+    | '/api/public/v1/commerce/checkout'
     | '/api/public/v1/commerce/config'
+    | '/api/public/v1/commerce/orders'
+    | '/api/public/v1/commerce/quote'
     | '/api/public/v1/deeplink/$key'
     | '/api/public/v1/devices/heartbeat'
     | '/api/public/v1/devices/register'
@@ -2063,6 +2114,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/carrier/$carrierCode'
     | '/api/public/webhooks/insurance/$carrierCode'
     | '/api/public/v1/notifications/'
+    | '/api/public/v1/commerce/orders/$orderId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2106,7 +2158,10 @@ export interface RootRouteChildren {
   ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
   ApiPublicV1CommerceAddressesRoute: typeof ApiPublicV1CommerceAddressesRoute
   ApiPublicV1CommerceCartRoute: typeof ApiPublicV1CommerceCartRoute
+  ApiPublicV1CommerceCheckoutRoute: typeof ApiPublicV1CommerceCheckoutRoute
   ApiPublicV1CommerceConfigRoute: typeof ApiPublicV1CommerceConfigRoute
+  ApiPublicV1CommerceOrdersRoute: typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  ApiPublicV1CommerceQuoteRoute: typeof ApiPublicV1CommerceQuoteRoute
   ApiPublicV1DeeplinkKeyRoute: typeof ApiPublicV1DeeplinkKeyRoute
   ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
   ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
@@ -3205,11 +3260,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1DeeplinkKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/commerce/quote': {
+      id: '/api/public/v1/commerce/quote'
+      path: '/api/public/v1/commerce/quote'
+      fullPath: '/api/public/v1/commerce/quote'
+      preLoaderRoute: typeof ApiPublicV1CommerceQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/orders': {
+      id: '/api/public/v1/commerce/orders'
+      path: '/api/public/v1/commerce/orders'
+      fullPath: '/api/public/v1/commerce/orders'
+      preLoaderRoute: typeof ApiPublicV1CommerceOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/commerce/config': {
       id: '/api/public/v1/commerce/config'
       path: '/api/public/v1/commerce/config'
       fullPath: '/api/public/v1/commerce/config'
       preLoaderRoute: typeof ApiPublicV1CommerceConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/checkout': {
+      id: '/api/public/v1/commerce/checkout'
+      path: '/api/public/v1/commerce/checkout'
+      fullPath: '/api/public/v1/commerce/checkout'
+      preLoaderRoute: typeof ApiPublicV1CommerceCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/commerce/cart': {
@@ -3267,6 +3343,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/platform/insurance/claims/$claimId'
       preLoaderRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport
       parentRoute: typeof AuthenticatedPlatformInsuranceRoute
+    }
+    '/api/public/v1/commerce/orders/$orderId': {
+      id: '/api/public/v1/commerce/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/api/public/v1/commerce/orders/$orderId'
+      preLoaderRoute: typeof ApiPublicV1CommerceOrdersOrderIdRouteImport
+      parentRoute: typeof ApiPublicV1CommerceOrdersRoute
     }
   }
 }
@@ -3628,6 +3711,21 @@ const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
   MarketplaceRouteChildren,
 )
 
+interface ApiPublicV1CommerceOrdersRouteChildren {
+  ApiPublicV1CommerceOrdersOrderIdRoute: typeof ApiPublicV1CommerceOrdersOrderIdRoute
+}
+
+const ApiPublicV1CommerceOrdersRouteChildren: ApiPublicV1CommerceOrdersRouteChildren =
+  {
+    ApiPublicV1CommerceOrdersOrderIdRoute:
+      ApiPublicV1CommerceOrdersOrderIdRoute,
+  }
+
+const ApiPublicV1CommerceOrdersRouteWithChildren =
+  ApiPublicV1CommerceOrdersRoute._addFileChildren(
+    ApiPublicV1CommerceOrdersRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -3671,7 +3769,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
   ApiPublicV1CommerceAddressesRoute: ApiPublicV1CommerceAddressesRoute,
   ApiPublicV1CommerceCartRoute: ApiPublicV1CommerceCartRoute,
+  ApiPublicV1CommerceCheckoutRoute: ApiPublicV1CommerceCheckoutRoute,
   ApiPublicV1CommerceConfigRoute: ApiPublicV1CommerceConfigRoute,
+  ApiPublicV1CommerceOrdersRoute: ApiPublicV1CommerceOrdersRouteWithChildren,
+  ApiPublicV1CommerceQuoteRoute: ApiPublicV1CommerceQuoteRoute,
   ApiPublicV1DeeplinkKeyRoute: ApiPublicV1DeeplinkKeyRoute,
   ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
   ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
