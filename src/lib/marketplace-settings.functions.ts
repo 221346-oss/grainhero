@@ -391,6 +391,14 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
       licenseExpiryWarnDays:
         r.logistics?.licenseExpiryWarnDays ?? DEFAULT_MARKETPLACE_SETTINGS.logistics.licenseExpiryWarnDays,
     },
+    finance: {
+      ...DEFAULT_MARKETPLACE_SETTINGS.finance,
+      ...(r.finance ?? {}),
+      supportedCurrencies:
+        r.finance?.supportedCurrencies ?? DEFAULT_MARKETPLACE_SETTINGS.finance.supportedCurrencies,
+      payoutMethods:
+        r.finance?.payoutMethods ?? DEFAULT_MARKETPLACE_SETTINGS.finance.payoutMethods,
+    },
   };
 }
 
