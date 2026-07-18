@@ -76,7 +76,7 @@ export const saveWidget = createServerFn({ method: "POST" })
       filters: data.filters,
       position: data.position,
       owner_id: isRoleWidget ? null : context.userId,
-      role_scope: isRoleWidget ? data.role_scope : null,
+      role_scope: isRoleWidget ? data.role_scope! : role,
     };
     if (data.id) {
       const { data: row, error } = await sb.from("dashboard_widgets").update(payload).eq("id", data.id).select().single();
