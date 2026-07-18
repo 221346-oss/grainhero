@@ -78,12 +78,14 @@ export const resolveShare = createServerFn({ method: "POST" })
     if (!meta) return { ok: false as const, error: "Link expired or revoked" };
     // Fetch widgets + metric metadata for the whitelisted ids
     const ids: string[] = meta.widget_ids ?? [];
-    if (ids.length === 0) return { ok: true as const, meta, widgets: [] as unknown[], metrics: [] as unknown[], results: {} as Record<string, unknown> };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (ids.length === 0) return { ok: true as const, meta, widgets: [] as any[], metrics: [] as any[], results: {} as Record<string, any> };
     const { data: widgets } = await admin.from("dashboard_widgets").select("*").in("id", ids);
     const metricKeys = Array.from(new Set(((widgets ?? []) as Array<{ metric_key: string }>).map((w) => w.metric_key)));
     const { data: metrics } = await admin.from("metric_registry").select("*").in("key", metricKeys);
     // Run each metric in the caller-agnostic way (using admin — public read-only surface).
-    const results: Record<string, unknown> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results: Record<string, any> = {};
     for (const m of (metrics ?? []) as Array<{ key: string; sql_template: string }>) {
       try {
         // We can't call run_metric as anon (RLS), so execute the template with admin.
