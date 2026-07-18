@@ -187,6 +187,9 @@ export const DEFAULT_MARKETPLACE_SETTINGS: MarketplaceSettings = {
       { code: "delivered", label: "Delivered", setStatus: "delivered" },
       { code: "exception", label: "Exception", setStatus: "exception" },
     ],
+    alertCooldownMinutes: 60,
+    deliveryRateAlertDropPct: 5,
+    overdueGraceMinutes: 30,
   },
   reviews: {
     enabled: true,
