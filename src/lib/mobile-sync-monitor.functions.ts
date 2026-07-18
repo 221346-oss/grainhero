@@ -65,10 +65,53 @@ export const listSyncRuns = createServerFn({ method: "GET" })
 
 export const runSyncManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({ endpoint: z.enum(ENDPOINTS) }).parse(v))
+  .inputValidator((v) => z.object({
+    endpoint: z.enum(ENDPOINTS),
+    idempotency_key: z.string().min(8).max(64).optional(),
+  }).parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 1. Idempotency short-circuit — same key returns prior result.
+    if (data.idempotency_key) {
+      const { data: existing } = await supabaseAdmin.from("mobile_sync_runs")
+        .select("status,row_count,error_message,started_at")
+        .eq("endpoint", data.endpoint)
+        .eq("idempotency_key", data.idempotency_key)
+        .maybeSingle();
+      if (existing) {
+        const row = existing as { status: string; row_count: number | null; error_message: string | null; started_at: string };
+        return {
+          ok: row.status === "ok", row_count: row.row_count ?? 0,
+          error: row.error_message, deduped: true, started_at: row.started_at,
+        };
+      }
+    }
+
+    // 2. Try to acquire lock. Auto-expire stale locks (>60s).
+    const STALE_MS = 60_000;
+    const nowIso = new Date().toISOString();
+    const { error: lockErr } = await supabaseAdmin.from("mobile_sync_locks").insert({
+      endpoint: data.endpoint, locked_at: nowIso,
+      locked_by: context.userId, idempotency_key: data.idempotency_key ?? null,
+    } as never);
+    if (lockErr) {
+      // Conflict — inspect existing lock
+      const { data: existingLock } = await supabaseAdmin.from("mobile_sync_locks")
+        .select("locked_at,locked_by,idempotency_key").eq("endpoint", data.endpoint).maybeSingle();
+      const lockRow = existingLock as { locked_at: string; locked_by: string | null; idempotency_key: string | null } | null;
+      const ageMs = lockRow ? Date.now() - new Date(lockRow.locked_at).getTime() : Infinity;
+      if (lockRow && ageMs < STALE_MS) {
+        return { ok: false, row_count: 0, error: "busy", locked_by: lockRow.locked_by, locked_at: lockRow.locked_at };
+      }
+      // Stale — steal it
+      await supabaseAdmin.from("mobile_sync_locks").update({
+        locked_at: nowIso, locked_by: context.userId, idempotency_key: data.idempotency_key ?? null,
+      } as never).eq("endpoint", data.endpoint);
+    }
 
     const started = Date.now();
     const startedAt = new Date(started).toISOString();
@@ -78,7 +121,6 @@ export const runSyncManually = createServerFn({ method: "POST" })
 
     try {
       if (data.endpoint === "buyer-summary") {
-        // Requires a mobile bearer; instead we probe RLS visibility as a health check.
         const { count, error } = await context.supabase
           .from("mobile_buyer_summary_v" as never)
           .select("*", { head: true, count: "exact" });
@@ -106,18 +148,34 @@ export const runSyncManually = createServerFn({ method: "POST" })
     } catch (err) {
       status = "error";
       errorMessage = (err as Error).message?.slice(0, 500) ?? "unknown";
+    } finally {
+      // 3. Release lock unconditionally.
+      await supabaseAdmin.from("mobile_sync_locks").delete().eq("endpoint", data.endpoint);
     }
 
-    const { logSyncRun } = await import("./sync-monitor.server");
-    await logSyncRun({
+    // 4. Persist run with idempotency key + manual flag.
+    await supabaseAdmin.from("mobile_sync_runs").insert({
       endpoint: data.endpoint,
-      actorUserId: context.userId,
+      actor_user_id: context.userId,
       status,
-      durationMs: Date.now() - started,
-      rowCount,
-      errorMessage,
-      requestMeta: { manual: true },
-      startedAt,
-    });
+      duration_ms: Date.now() - started,
+      row_count: rowCount,
+      error_message: errorMessage,
+      request_meta: { manual: true } as never,
+      started_at: startedAt,
+      finished_at: new Date().toISOString(),
+      idempotency_key: data.idempotency_key ?? null,
+      manual: true,
+    } as never);
     return { ok: status === "ok", row_count: rowCount, error: errorMessage };
+  });
+
+export const listActiveSyncLocks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { isSuperAdmin } = await import("./rbac.server");
+    if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { data, error } = await context.supabase.from("mobile_sync_locks").select("*");
+    if (error) throw new Error(error.message);
+    return data ?? [];
   });
