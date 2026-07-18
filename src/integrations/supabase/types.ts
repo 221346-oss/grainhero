@@ -2933,6 +2933,54 @@ export type Database = {
           },
         ]
       }
+      insurance_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          admin_id: string | null
+          carrier_id: string | null
+          claim_id: string | null
+          created_at: string
+          id: string
+          payload: Json
+          policy_id: string | null
+          source: string
+          subject_id: string | null
+          subject_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          admin_id?: string | null
+          carrier_id?: string | null
+          claim_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          policy_id?: string | null
+          source?: string
+          subject_id?: string | null
+          subject_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          admin_id?: string | null
+          carrier_id?: string | null
+          claim_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          policy_id?: string | null
+          source?: string
+          subject_id?: string | null
+          subject_type?: string | null
+        }
+        Relationships: []
+      }
       insurance_carriers: {
         Row: {
           active: boolean
@@ -2945,6 +2993,8 @@ export type Database = {
           name: string
           notes: string | null
           updated_at: string
+          webhook_secret: string | null
+          webhook_url: string | null
         }
         Insert: {
           active?: boolean
@@ -2957,6 +3007,8 @@ export type Database = {
           name: string
           notes?: string | null
           updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Update: {
           active?: boolean
@@ -2969,6 +3021,8 @@ export type Database = {
           name?: string
           notes?: string | null
           updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -3292,6 +3346,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "insurance_products_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_carriers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_webhook_events: {
+        Row: {
+          carrier_code: string | null
+          carrier_id: string | null
+          claim_id: string | null
+          created_at: string
+          error_message: string | null
+          event_type: string
+          external_id: string | null
+          headers: Json | null
+          id: string
+          policy_id: string | null
+          processed_at: string | null
+          raw: Json
+          status: string
+        }
+        Insert: {
+          carrier_code?: string | null
+          carrier_id?: string | null
+          claim_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          external_id?: string | null
+          headers?: Json | null
+          id?: string
+          policy_id?: string | null
+          processed_at?: string | null
+          raw: Json
+          status?: string
+        }
+        Update: {
+          carrier_code?: string | null
+          carrier_id?: string | null
+          claim_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          external_id?: string | null
+          headers?: Json | null
+          id?: string
+          policy_id?: string | null
+          processed_at?: string | null
+          raw?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_webhook_events_carrier_id_fkey"
             columns: ["carrier_id"]
             isOneToOne: false
             referencedRelation: "insurance_carriers"

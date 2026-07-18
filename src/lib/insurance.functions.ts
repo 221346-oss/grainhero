@@ -24,6 +24,39 @@ async function tenantAdminId(ctx: { supabase: unknown; userId: string }): Promis
   return (data as string) ?? ctx.userId;
 }
 
+// Insert an audit-log row. Best-effort; never throws.
+async function audit(
+  ctx: { supabase: unknown; userId: string },
+  entry: {
+    action: string;
+    subject_type?: string;
+    subject_id?: string | null;
+    admin_id?: string | null;
+    carrier_id?: string | null;
+    policy_id?: string | null;
+    claim_id?: string | null;
+    payload?: Record<string, unknown>;
+  },
+) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (ctx.supabase as any).from("insurance_audit_log").insert({
+      actor_id: ctx.userId,
+      admin_id: entry.admin_id ?? null,
+      action: entry.action,
+      subject_type: entry.subject_type ?? null,
+      subject_id: entry.subject_id ?? null,
+      carrier_id: entry.carrier_id ?? null,
+      policy_id: entry.policy_id ?? null,
+      claim_id: entry.claim_id ?? null,
+      payload: entry.payload ?? {},
+      source: "app",
+    });
+  } catch (e) {
+    console.warn("[insurance-audit] insert failed", e);
+  }
+}
+
 /* -------------------- Carriers -------------------- */
 
 export const listCarriers = createServerFn({ method: "GET" })
@@ -180,7 +213,9 @@ export const bindPolicy = createServerFn({ method: "POST" })
       notes: data.notes ?? null,
     }).select("id").single();
     if (error) throw error;
-    return { id: (row as Row).id as string };
+    const id = (row as Row).id as string;
+    await audit(context, { action: "policy.bind", subject_type: "policy", subject_id: id, admin_id: admin, policy_id: id, payload: { product_id: data.product_id, subject_type: data.subject_type, subject_id: data.subject_id, premium_cents: data.premium_cents } });
+    return { id };
   });
 
 export const cancelPolicy = createServerFn({ method: "POST" })
@@ -191,6 +226,28 @@ export const cancelPolicy = createServerFn({ method: "POST" })
     const { error } = await (context.supabase as any)
       .from("insurance_policies").update({ status: "cancelled" }).eq("id", data.id);
     if (error) throw error;
+    await audit(context, { action: "policy.cancel", subject_type: "policy", subject_id: data.id, policy_id: data.id });
+    return { ok: true };
+  });
+
+export const renewPolicy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    id: z.string().uuid(),
+    new_end_date: z.string(),
+    premium_cents: z.number().int().nonnegative().optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const patch: Row = { coverage_end: data.new_end_date, end_date: data.new_end_date, status: "active" };
+    if (data.premium_cents != null) {
+      patch.premium_cents = data.premium_cents;
+      patch.premium_amount = data.premium_cents / 100;
+    }
+    const { error } = await sb.from("insurance_policies").update(patch).eq("id", data.id);
+    if (error) throw error;
+    await audit(context, { action: "policy.renew", subject_type: "policy", subject_id: data.id, policy_id: data.id, payload: { new_end_date: data.new_end_date, premium_cents: data.premium_cents ?? null } });
     return { ok: true };
   });
 
@@ -255,6 +312,7 @@ export const openClaim = createServerFn({ method: "POST" })
       claim_id: claimId, actor_id: context.userId, event_type: "submitted",
       payload: { loss_amount_cents: data.loss_amount_cents },
     });
+    await audit(context, { action: "claim.open", subject_type: "claim", subject_id: claimId, admin_id: admin, claim_id: claimId, policy_id: data.policy_id, payload: { claim_type: data.claim_type, requested_payout_cents: data.requested_payout_cents } });
     return { id: claimId };
   });
 
@@ -314,6 +372,7 @@ export const moderateClaim = createServerFn({ method: "POST" })
       event_type: `decision_${data.decision}`,
       payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null },
     });
+    await audit(context, { action: `claim.${data.decision}`, subject_type: "claim", subject_id: data.id, claim_id: data.id, payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null } });
     return { ok: true };
   });
 
@@ -367,4 +426,181 @@ export const getInsuranceKpis = createServerFn({ method: "GET" })
       avgDecisionHours: Math.round(avgHours * 10) / 10,
       currency: (p[0]?.currency as string) ?? "USD",
     };
+  });
+
+/* -------------------- Analytics -------------------- */
+
+export const getInsuranceAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const [policies, claims] = await Promise.all([
+      sb.from("insurance_policies")
+        .select("id, premium_cents, status, created_at, product:insurance_products(id,name, carrier:insurance_carriers(id,name))")
+        .limit(5000),
+      sb.from("insurance_claims")
+        .select("id, status, requested_payout_cents, approved_payout_cents, created_at, policy:insurance_policies(product:insurance_products(id,name, carrier:insurance_carriers(id,name)))")
+        .limit(5000),
+    ]);
+    const p = (policies.data ?? []) as Row[];
+    const c = (claims.data ?? []) as Row[];
+
+    // Monthly buckets — last 12 months
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    const bucket = (iso: string) => iso?.slice(0, 7);
+    const trend = months.map((m) => {
+      const pm = p.filter((x) => bucket(x.created_at) === m);
+      const cm = c.filter((x) => bucket(x.created_at) === m);
+      return {
+        month: m,
+        policies: pm.length,
+        premium: pm.reduce((s, x) => s + Number(x.premium_cents ?? 0), 0) / 100,
+        claims: cm.length,
+        payout: cm.filter((x) => x.status === "paid").reduce((s, x) => s + Number(x.approved_payout_cents ?? 0), 0) / 100,
+      };
+    });
+
+    // Carrier performance
+    const carrierMap = new Map<string, { name: string; policies: number; premium: number; claims: number; payout: number }>();
+    for (const row of p) {
+      const carrier = row.product?.carrier as Row | undefined;
+      if (!carrier?.id) continue;
+      const key = carrier.id as string;
+      const agg = carrierMap.get(key) ?? { name: carrier.name as string, policies: 0, premium: 0, claims: 0, payout: 0 };
+      agg.policies++;
+      agg.premium += Number(row.premium_cents ?? 0) / 100;
+      carrierMap.set(key, agg);
+    }
+    for (const row of c) {
+      const carrier = row.policy?.product?.carrier as Row | undefined;
+      if (!carrier?.id) continue;
+      const key = carrier.id as string;
+      const agg = carrierMap.get(key) ?? { name: carrier.name as string, policies: 0, premium: 0, claims: 0, payout: 0 };
+      agg.claims++;
+      if (row.status === "paid") agg.payout += Number(row.approved_payout_cents ?? 0) / 100;
+      carrierMap.set(key, agg);
+    }
+    const carriers = Array.from(carrierMap.values()).map((a) => ({
+      ...a,
+      lossRatio: a.premium > 0 ? Math.round((a.payout / a.premium) * 1000) / 10 : 0,
+    })).sort((x, y) => y.premium - x.premium).slice(0, 12);
+
+    // Product performance
+    const productMap = new Map<string, { name: string; policies: number; premium: number; claims: number; payout: number }>();
+    for (const row of p) {
+      const prod = row.product as Row | undefined;
+      if (!prod?.id) continue;
+      const key = prod.id as string;
+      const agg = productMap.get(key) ?? { name: prod.name as string, policies: 0, premium: 0, claims: 0, payout: 0 };
+      agg.policies++;
+      agg.premium += Number(row.premium_cents ?? 0) / 100;
+      productMap.set(key, agg);
+    }
+    for (const row of c) {
+      const prod = row.policy?.product as Row | undefined;
+      if (!prod?.id) continue;
+      const key = prod.id as string;
+      const agg = productMap.get(key) ?? { name: prod.name as string, policies: 0, premium: 0, claims: 0, payout: 0 };
+      agg.claims++;
+      if (row.status === "paid") agg.payout += Number(row.approved_payout_cents ?? 0) / 100;
+      productMap.set(key, agg);
+    }
+    const products = Array.from(productMap.values())
+      .sort((x, y) => y.premium - x.premium).slice(0, 12);
+
+    return { trend, carriers, products };
+  });
+
+/* -------------------- Audit -------------------- */
+
+export const listInsuranceAudit = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    scope: z.enum(["mine","all"]).default("all"),
+    action: z.string().optional(),
+    subject_type: z.string().optional(),
+    from: z.string().optional(),
+    to: z.string().optional(),
+    limit: z.number().int().min(1).max(2000).default(500),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    let q = sb.from("insurance_audit_log").select("*").order("created_at", { ascending: false }).limit(data.limit);
+    if (data.scope === "mine") {
+      const t = await tenantAdminId(context);
+      q = q.eq("admin_id", t);
+    }
+    if (data.action) q = q.eq("action", data.action);
+    if (data.subject_type) q = q.eq("subject_type", data.subject_type);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+    const { data: rows } = await q;
+    return { entries: (rows ?? []) as Row[] };
+  });
+
+export const exportInsuranceAuditCsv = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    action: z.string().optional(),
+    subject_type: z.string().optional(),
+    from: z.string().optional(),
+    to: z.string().optional(),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    let q = sb.from("insurance_audit_log").select("*").order("created_at", { ascending: false }).limit(10000);
+    if (data.action) q = q.eq("action", data.action);
+    if (data.subject_type) q = q.eq("subject_type", data.subject_type);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+    const { data: rows } = await q;
+    const header = ["created_at","action","subject_type","subject_id","admin_id","actor_id","carrier_id","policy_id","claim_id","source","payload"];
+    const escape = (v: unknown) => {
+      const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+    const lines = [header.join(",")];
+    for (const r of (rows ?? []) as Row[]) {
+      lines.push(header.map((k) => escape(r[k])).join(","));
+    }
+    return { csv: lines.join("\n"), filename: `insurance-audit-${new Date().toISOString().slice(0,10)}.csv` };
+  });
+
+export const listInsuranceWebhookEvents = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (context.supabase as any)
+      .from("insurance_webhook_events").select("*").order("created_at", { ascending: false }).limit(200);
+    return { events: (data ?? []) as Row[] };
+  });
+
+/* -------------------- Attachments (signed upload) -------------------- */
+
+export const createEvidenceUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    claim_id: z.string().uuid(),
+    filename: z.string().min(1).max(200),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const admin = await tenantAdminId(context);
+    const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${admin}/${data.claim_id}/${Date.now()}-${safe}`;
+    const { data: signed, error } = await sb.storage.from("insurance-attachments").createSignedUploadUrl(path);
+    if (error) throw error;
+    return { path, token: signed?.token as string, signedUrl: signed?.signedUrl as string };
   });
