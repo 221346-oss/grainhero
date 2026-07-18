@@ -244,6 +244,13 @@ export type Database = {
             foreignKeyName: "actuators_silo_id_fkey"
             columns: ["silo_id"]
             isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actuators_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
             referencedRelation: "silos"
             referencedColumns: ["id"]
           },
@@ -377,6 +384,13 @@ export type Database = {
             columns: ["actuator_id"]
             isOneToOne: false
             referencedRelation: "actuators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_rules_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
             referencedColumns: ["id"]
           },
           {
@@ -2286,6 +2300,13 @@ export type Database = {
             foreignKeyName: "grain_alerts_silo_id_fkey"
             columns: ["silo_id"]
             isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_alerts_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
             referencedRelation: "silos"
             referencedColumns: ["id"]
           },
@@ -2528,6 +2549,13 @@ export type Database = {
             foreignKeyName: "grain_batches_silo_id_fkey"
             columns: ["silo_id"]
             isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
             referencedRelation: "silos"
             referencedColumns: ["id"]
           },
@@ -2761,6 +2789,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "hardware_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hardware_order_installations_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
             referencedColumns: ["id"]
           },
           {
@@ -3861,11 +3896,53 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_deep_link_routes: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          native_route: string
+          params_schema: Json
+          updated_at: string
+          updated_by: string | null
+          web_fallback: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          native_route: string
+          params_schema?: Json
+          updated_at?: string
+          updated_by?: string | null
+          web_fallback: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          native_route?: string
+          params_schema?: Json
+          updated_at?: string
+          updated_by?: string | null
+          web_fallback?: string
+        }
+        Relationships: []
+      }
       mobile_devices: {
         Row: {
           app_version: string | null
           created_at: string
           id: string
+          last_push_error: string | null
+          last_push_error_at: string | null
+          last_push_success_at: string | null
           last_seen_at: string
           locale: string | null
           os_version: string | null
@@ -3879,6 +3956,9 @@ export type Database = {
           app_version?: string | null
           created_at?: string
           id?: string
+          last_push_error?: string | null
+          last_push_error_at?: string | null
+          last_push_success_at?: string | null
           last_seen_at?: string
           locale?: string | null
           os_version?: string | null
@@ -3892,6 +3972,9 @@ export type Database = {
           app_version?: string | null
           created_at?: string
           id?: string
+          last_push_error?: string | null
+          last_push_error_at?: string | null
+          last_push_success_at?: string | null
           last_seen_at?: string
           locale?: string | null
           os_version?: string | null
@@ -3935,6 +4018,7 @@ export type Database = {
           categories: Json
           created_at: string
           email_enabled: boolean
+          push_categories: Json
           push_enabled: boolean
           sms_enabled: boolean
           updated_at: string
@@ -3944,6 +4028,7 @@ export type Database = {
           categories?: Json
           created_at?: string
           email_enabled?: boolean
+          push_categories?: Json
           push_enabled?: boolean
           sms_enabled?: boolean
           updated_at?: string
@@ -3953,6 +4038,7 @@ export type Database = {
           categories?: Json
           created_at?: string
           email_enabled?: boolean
+          push_categories?: Json
           push_enabled?: boolean
           sms_enabled?: boolean
           updated_at?: string
@@ -4778,6 +4864,13 @@ export type Database = {
             foreignKeyName: "sensor_devices_silo_id_fkey"
             columns: ["silo_id"]
             isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensor_devices_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
             referencedRelation: "silos"
             referencedColumns: ["id"]
           },
@@ -4998,6 +5091,13 @@ export type Database = {
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "sensor_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensor_readings_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
             referencedColumns: ["id"]
           },
           {
@@ -5875,6 +5975,60 @@ export type Database = {
       }
     }
     Views: {
+      mobile_silo_cockpit_v: {
+        Row: {
+          admin_id: string | null
+          capacity_kg: number | null
+          current_occupancy_kg: number | null
+          id: string | null
+          latest_reading: Json | null
+          name: string | null
+          open_alerts: number | null
+          status: Database["public"]["Enums"]["device_status"] | null
+          updated_at: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          capacity_kg?: number | null
+          current_occupancy_kg?: number | null
+          id?: string | null
+          latest_reading?: never
+          name?: string | null
+          open_alerts?: never
+          status?: Database["public"]["Enums"]["device_status"] | null
+          updated_at?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          capacity_kg?: number | null
+          current_occupancy_kg?: number | null
+          id?: string | null
+          latest_reading?: never
+          name?: string | null
+          open_alerts?: never
+          status?: Database["public"]["Enums"]["device_status"] | null
+          updated_at?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "silos_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "silos_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_listings_v: {
         Row: {
           available_from: string | null
