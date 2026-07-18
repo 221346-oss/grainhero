@@ -26,6 +26,9 @@ export interface MarketplaceSettings {
     couriers: Array<{ key: string; label: string; trackingUrlTemplate: string }>;
     slaHours: { inTransit: number; outForDelivery: number; delivered: number };
     eventPresets: Array<{ code: string; label: string; setStatus?: string }>;
+    alertCooldownMinutes: number;
+    deliveryRateAlertDropPct: number;
+    overdueGraceMinutes: number;
   };
   reviews: {
     enabled: boolean;
