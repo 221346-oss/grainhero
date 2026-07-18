@@ -13,12 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { InsuranceCommandSkeleton } from "@/components/app/skeletons";
-import { Shield, ShieldCheck, AlertTriangle, DollarSign, Clock, TrendingDown, Plus, Trash2 } from "lucide-react";
+import { Shield, ShieldCheck, AlertTriangle, DollarSign, Clock, TrendingDown, Plus, Trash2, ScrollText, BarChart3 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Legend } from "recharts";
 import { toast } from "sonner";
 import {
   getInsuranceKpis, listCarriers, upsertCarrier, deleteCarrier,
   listProducts, upsertProduct, deleteProduct,
-  listClaims, moderateClaim, getClaimTimeline,
+  listClaims, moderateClaim, getClaimTimeline, getInsuranceAnalytics,
 } from "@/lib/insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/insurance")({
@@ -83,11 +85,85 @@ function PlatformInsurancePage() {
           <TabsTrigger value="claims">Claims queue</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="carriers">Carriers</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
         <TabsContent value="claims"><ClaimsQueue /></TabsContent>
         <TabsContent value="products"><ProductsTab /></TabsContent>
         <TabsContent value="carriers"><CarriersTab /></TabsContent>
+        <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
       </Tabs>
+
+      <div className="flex justify-end">
+        <Link to="/platform/insurance/audit" className="text-sm text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
+          <ScrollText className="h-4 w-4" /> Open full audit log
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsTab() {
+  const fn = useServerFn(getInsuranceAnalytics);
+  const { data, isLoading } = useQuery({ queryKey: ["ins-analytics"], queryFn: () => fn() });
+  if (isLoading || !data) return <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading analytics…</CardContent></Card>;
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-4">
+          <div className="text-sm font-semibold flex items-center gap-2 mb-3"><BarChart3 className="h-4 w-4 text-emerald-600" /> Monthly trend (12m)</div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data.trend}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="premium" stroke="#059669" name="Premium" />
+                <Line type="monotone" dataKey="payout" stroke="#dc2626" name="Payout" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card><CardContent className="p-4">
+          <div className="text-sm font-semibold mb-2">Carrier performance</div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.carriers}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="name" fontSize={10} interval={0} angle={-15} textAnchor="end" height={60} />
+                <YAxis fontSize={11} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="premium" fill="#059669" name="Premium" />
+                <Bar dataKey="payout" fill="#dc2626" name="Payout" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-sm font-semibold mb-2">Product performance</div>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader><TableRow><TableHead>Product</TableHead><TableHead className="text-right">Policies</TableHead><TableHead className="text-right">Premium</TableHead><TableHead className="text-right">Claims</TableHead><TableHead className="text-right">Payout</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {data.products.map((p) => (
+                  <TableRow key={p.name} className="hover:bg-emerald-50/30">
+                    <TableCell className="text-xs">{p.name}</TableCell>
+                    <TableCell className="text-xs text-right tabular-nums">{p.policies}</TableCell>
+                    <TableCell className="text-xs text-right tabular-nums">{p.premium.toLocaleString()}</TableCell>
+                    <TableCell className="text-xs text-right tabular-nums">{p.claims}</TableCell>
+                    <TableCell className="text-xs text-right tabular-nums">{p.payout.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+                {!data.products.length && <TableRow><TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-6">No product activity yet.</TableCell></TableRow>}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent></Card>
+      </div>
     </div>
   );
 }
