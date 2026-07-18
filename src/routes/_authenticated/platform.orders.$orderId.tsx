@@ -176,6 +176,11 @@ function OrderDetailPage() {
                   <div className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString()}</div>
                 </div>
               ))}
+            <div className="pt-3">
+              <Link to="/platform/orders/$orderId/audit" params={{ orderId }}>
+                <Button variant="outline" size="sm" className="w-full">Open full audit timeline →</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
