@@ -93,9 +93,12 @@ function PlatformInsurancePage() {
         <TabsContent value="analytics"><AnalyticsTab /></TabsContent>
       </Tabs>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
+        <Link to="/platform/insurance/webhooks" className="text-sm text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
+          <ScrollText className="h-4 w-4" /> Webhook monitor
+        </Link>
         <Link to="/platform/insurance/audit" className="text-sm text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
-          <ScrollText className="h-4 w-4" /> Open full audit log
+          <ScrollText className="h-4 w-4" /> Audit log
         </Link>
       </div>
     </div>
