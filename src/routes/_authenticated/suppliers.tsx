@@ -14,6 +14,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RowActions } from "@/components/app/RowActions";
 import { listSuppliers, upsertSupplier, deleteSupplier } from "@/lib/suppliers.functions";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupplierRow = Record<string, any>;
+
 export const Route = createFileRoute("/_authenticated/suppliers")({
   component: SuppliersPage,
 });
@@ -61,7 +64,7 @@ function SuppliersPage() {
     queryKey: ["suppliers", kindFilter, search],
     queryFn: () => listFn({ data: { kind: kindFilter === "all" ? undefined : (kindFilter as Kind), search: search || undefined } }),
   });
-  const rows = q.data?.suppliers ?? [];
+  const rows: SupplierRow[] = (q.data?.suppliers ?? []) as SupplierRow[];
 
   const saveMut = useMutation({
     mutationFn: () => saveFn({ data: {
@@ -151,8 +154,8 @@ function SuppliersPage() {
                 <td className="px-3 py-2 text-xs text-muted-foreground">{r.last_delivery ? new Date(r.last_delivery).toLocaleDateString() : "—"}</td>
                 <td className="px-2 py-2">
                   <RowActions actions={[
-                    { key: "edit", label: "Edit", icon: Pencil, onSelect: () => { setForm({ id: r.id, kind: r.kind, name: r.name, phone: r.phone ?? "", email: r.email ?? "", address: r.address ?? "", city: r.city ?? "", country: r.country ?? "", notes: r.notes ?? "" }); setEditOpen(true); } },
-                    { key: "delete", label: "Delete", icon: Trash2, destructive: true, onSelect: () => { if (confirm(`Delete ${r.name}?`)) delMut.mutate(r.id); } },
+                    { label: "Edit", icon: Pencil, onClick: () => { setForm({ id: r.id, kind: r.kind, name: r.name, phone: r.phone ?? "", email: r.email ?? "", address: r.address ?? "", city: r.city ?? "", country: r.country ?? "", notes: r.notes ?? "" }); setEditOpen(true); } },
+                    { label: "Delete", icon: Trash2, destructive: true, onClick: () => { if (confirm(`Delete ${r.name}?`)) delMut.mutate(r.id); } },
                   ]} />
                 </td>
               </tr>
