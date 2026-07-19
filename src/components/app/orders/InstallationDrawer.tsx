@@ -7,16 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, Save, Send, Calendar as CalIcon, Warehouse, ExternalLink, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Save, Send, Calendar as CalIcon, Warehouse, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { getInstallation, upsertInstallation, upsertDevices, addVisitEvent } from "@/lib/installations.functions";
+import { getInstallation, upsertInstallation, upsertDevices, addVisitEvent, advanceInstallStage } from "@/lib/installations.functions";
 import { RouteMapCard } from "./RouteMapCard";
 import { Link } from "@tanstack/react-router";
+import { InstallStageTracker, deriveStage } from "./InstallStageTracker";
+import { useMyProfile } from "@/hooks/useMyProfile";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 interface Props { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void; canEdit: boolean }
 
-// Must match hardware_order_installations_status_check in the DB
-const STATUS_OPTIONS = ["scheduled", "en_route", "onsite", "completed", "blocked"];
 const DEVICE_STATUS = ["shipped", "en_route", "installed", "verified"];
 
 export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Props) {
@@ -25,6 +26,9 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const saveFn = useServerFn(upsertInstallation);
   const devFn = useServerFn(upsertDevices);
   const eventFn = useServerFn(addVisitEvent);
+  const advanceFn = useServerFn(advanceInstallStage);
+  const myProfile = useMyProfile();
+  const isSuper = useIsSuperAdmin();
 
   const q = useQuery({
     queryKey: ["installation", orderId],
@@ -36,6 +40,12 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const order = q.data?.order as any;
   const companyOrigin = (q.data as any)?.companyOrigin as string | undefined;
   const adminId = order?.admin_id as string | undefined;
+  const events = ((q.data as any)?.events ?? []) as Array<Record<string, unknown>>;
+  const { stage, blocked, blockerNote, history } = deriveStage(order, install, events);
+  const canAdvanceAs = {
+    superAdmin: !!isSuper.isSuperAdmin,
+    admin: !!(myProfile.data as any)?.profile?.id && (myProfile.data as any)?.profile?.id === adminId,
+  };
 
   // form state
   const [form, setForm] = useState<any>({});
@@ -58,7 +68,6 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
       scheduled_visit_at: form.scheduled_visit_at ? new Date(form.scheduled_visit_at).toISOString() : null,
       origin_address: form.origin_address, origin_lat: form.origin_lat ? Number(form.origin_lat) : null, origin_lng: form.origin_lng ? Number(form.origin_lng) : null,
       destination_address: form.destination_address, destination_lat: form.destination_lat ? Number(form.destination_lat) : null, destination_lng: form.destination_lng ? Number(form.destination_lng) : null,
-      status: form.status ?? "scheduled",
     } } }),
     onSuccess: () => { toast.success("Installation saved"); qc.invalidateQueries({ queryKey: ["installation", orderId] }); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -95,81 +104,54 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
           <div className="p-6 text-sm text-muted-foreground">Loading…</div>
         ) : (
           <div className="mt-4 space-y-6">
-            {/* Visit / status card — installer info comes from the assigned technician on the order page */}
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-foreground">Installation status</div>
-                    <div className="text-xs text-muted-foreground">Technician is managed from the order page.</div>
-                  </div>
-                  <Badge className="bg-primary/10 text-primary border-transparent capitalize">{(form.status ?? "scheduled").replace("_", " ")}</Badge>
-                </div>
-                {canEdit && (
-                  <div className="grid grid-cols-2 gap-2 pt-2">
+            <InstallStageTracker
+              stage={stage}
+              blocked={blocked}
+              blockerNote={blockerNote}
+              history={history}
+              variant="full"
+              canAdvanceAs={canAdvanceAs}
+              onAdvance={async (next, note) => {
+                if (next === "completed") {
+                  // ensure devices are persisted so the provision trigger sees them
+                  if (devices.filter((d) => d.serial.trim()).length === 0) {
+                    toast.error("Add at least one device serial before completing — one silo is provisioned per serial.");
+                    return;
+                  }
+                  await saveDevM.mutateAsync();
+                }
+                try {
+                  await advanceFn({ data: { orderId: orderId!, next, note } });
+                  toast.success(next === "completed" ? "Confirmed — warehouse & silos provisioned." : `Advanced to ${next.replace("_", " ")}`);
+                  qc.invalidateQueries({ queryKey: ["installation", orderId] });
+                  qc.invalidateQueries({ queryKey: ["platform-orders"] });
+                  qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+                } catch (e: any) {
+                  toast.error(e.message ?? "Failed to advance");
+                }
+              }}
+            />
+            {canEdit && (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <Field label="City" v={form.city} onChange={(v) => set("city", v)} />
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Status</label>
-                      <select className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm" value={form.status ?? "scheduled"} onChange={(e) => set("status", e.target.value)}>
-                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
                       <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><CalIcon className="h-3 w-3" /> Scheduled visit</label>
                       <Input type="datetime-local" value={form.scheduled_visit_at ? new Date(form.scheduled_visit_at).toISOString().slice(0, 16) : ""} onChange={(e) => set("scheduled_visit_at", e.target.value)} />
                     </div>
                   </div>
-                )}
-                {canEdit && (
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {adminId ? (
-                      <Button asChild size="sm" variant="outline" className="col-span-2" onClick={() => onOpenChange(false)}>
-                        <Link to="/admins/$adminId" params={{ adminId }}>
-                          <Warehouse className="h-3.5 w-3.5 mr-1" /> Open admin — warehouses & silos auto-provision on install complete
-                          <ExternalLink className="h-3 w-3 ml-1 opacity-60" />
-                        </Link>
-                      </Button>
-                    ) : (
-                      <div className="col-span-2 text-xs text-muted-foreground">
-                        Warehouse & silos are created automatically when the installation status is marked <b>completed</b>.
-                      </div>
-                    )}
-                  </div>
-                )}
-                {canEdit && form.status !== "completed" && (
-                  <Button
-                    size="sm"
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                    disabled={saveM.isPending || devices.filter((d) => d.serial.trim()).length === 0}
-                    onClick={async () => {
-                      if (devices.filter((d) => d.serial.trim()).length === 0) {
-                        toast.error("Add at least one device serial before completing — one silo is provisioned per serial.");
-                        return;
-                      }
-                      // Persist devices first so the trigger sees them
-                      await saveDevM.mutateAsync();
-                      set("status", "completed");
-                      await saveFn({ data: { orderId: orderId!, patch: {
-                        city: form.city, warehouse_id: form.warehouse_id ?? null, silo_id: form.silo_id ?? null,
-                        scheduled_visit_at: form.scheduled_visit_at ? new Date(form.scheduled_visit_at).toISOString() : null,
-                        origin_address: form.origin_address, origin_lat: form.origin_lat ? Number(form.origin_lat) : null, origin_lng: form.origin_lng ? Number(form.origin_lng) : null,
-                        destination_address: form.destination_address, destination_lat: form.destination_lat ? Number(form.destination_lat) : null, destination_lng: form.destination_lng ? Number(form.destination_lng) : null,
-                        status: "completed",
-                      } } });
-                      toast.success("Installation completed — warehouse & silos provisioned for the admin.");
-                      qc.invalidateQueries({ queryKey: ["installation", orderId] });
-                    }}
-                  >
-                    <CheckCircle2 className="h-4 w-4 mr-2" /> Mark complete & provision silos
-                  </Button>
-                )}
-                {canEdit && form.status === "completed" && (
-                  <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Completed — warehouse & silos provisioned.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  {adminId && (
+                    <Button asChild size="sm" variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
+                      <Link to="/admins/$adminId" params={{ adminId }}>
+                        <Warehouse className="h-3.5 w-3.5 mr-1" /> Open admin profile
+                        <ExternalLink className="h-3 w-3 ml-1 opacity-60" />
+                      </Link>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Map */}
             <div>
