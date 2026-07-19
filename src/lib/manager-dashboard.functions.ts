@@ -34,19 +34,19 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       batchesCountRes, activeBatchesRes,
     ] = await Promise.all([
       context.supabase.from("silos")
-        .select("id, silo_id, name, capacity_kg, current_occupancy_kg, status, temperature_c, humidity_pct, warehouse_id")
+        .select("id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_conditions, warehouse_id")
         .order("current_occupancy_kg", { ascending: false }).limit(12),
       context.supabase.from("grain_alerts")
         .select("id, alert_id, title, priority, status, alert_type, triggered_at, silo_id")
-        .in("status", ["open", "active", "triggered", "unresolved"])
+        .in("status", ["pending", "acknowledged", "escalated"] as never)
         .order("triggered_at", { ascending: false, nullsFirst: false }).limit(10),
       context.supabase.from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id")
-        .in("status", ["qc_pending", "quality_check", "qc"])
+        .in("status", ["intake", "processing", "treatment"] as never)
         .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, silo_id, purchase_price_per_kg")
-        .in("status", ["ready", "ready_to_ship", "dispatch_pending", "stored"])
+        .in("status", ["ready", "stored"] as never)
         .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("actuators")
         .select("id, name, actuator_type, status, is_on, power_level, silo_id")
@@ -54,21 +54,25 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       context.supabase.from("buyer_orders")
         .select("id, order_number, status, total_amount, buyer_id, created_at")
         .eq("admin_id", adminId)
-        .in("status", ["pending", "confirmed", "processing", "awaiting_shipment"])
+        .in("status", ["pending", "confirmed"] as never)
         .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("profiles")
         .select("id, name, email, department, shift_pattern")
         .eq("admin_id", adminId).limit(20),
       context.supabase.from("field_incidents")
         .select("id, title, severity, status, created_at, assigned_to")
-        .in("status", ["open", "in_progress", "pending"])
+        .in("status", ["pending", "in_progress"] as never)
         .order("created_at", { ascending: false }).limit(8),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true })
         .gte("created_at", startISO),
     ]);
 
-    const silos = silosRes.data ?? [];
+    const silos = (silosRes.data ?? []) as Array<{
+      id: string; silo_id: string; name: string; capacity_kg: number;
+      current_occupancy_kg: number | null; status: string | null;
+      current_conditions: Record<string, unknown> | null; warehouse_id: string;
+    }>;
     const totalCap = silos.reduce((s, x) => s + Number(x.capacity_kg ?? 0), 0);
     const totalOcc = silos.reduce((s, x) => s + Number(x.current_occupancy_kg ?? 0), 0);
     const fillPct = totalCap ? Math.round((totalOcc / totalCap) * 100) : 0;
