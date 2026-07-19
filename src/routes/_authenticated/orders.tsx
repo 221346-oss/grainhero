@@ -1,10 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
+import { advanceInstallStage } from "@/lib/installations.functions";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck } from "lucide-react";
+import { Package, MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck, CheckCircle2 } from "lucide-react";
 import { OrdersSkeleton } from "@/components/app/skeletons";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +35,18 @@ const STATUS_STYLE: Record<string, string> = {
 
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
+  const qc = useQueryClient();
+  const advanceFn = useServerFn(advanceInstallStage);
+  const completeMut = useMutation({
+    mutationFn: (orderId: string) => advanceFn({ data: { orderId, next: "completed" } }),
+    onSuccess: () => {
+      toast.success("Installation completed. Silos & warehouse were auto-provisioned.");
+      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["warehouses"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Could not complete install"),
+  });
   const { data, isLoading } = useQuery({
     queryKey: ["my-hardware-orders"],
     queryFn: () => fetchFn(),
@@ -104,9 +122,12 @@ function MyOrdersPage() {
                   Rs. {Number(o.hardware_total ?? 0).toLocaleString()} in hardware · order id: {o.id}
                 </div>
                 <div className="md:col-span-2 flex justify-end">
-                  <Button size="sm" variant="outline" onClick={() => setOpenOrderId(o.id as string)}>
-                    <Truck className="h-3.5 w-3.5 mr-1.5" /> Track installation
-                  </Button>
+                  <CardActions
+                    order={o}
+                    onTrack={() => setOpenOrderId(o.id as string)}
+                    onComplete={() => completeMut.mutate(o.id as string)}
+                    completing={completeMut.isPending && completeMut.variables === o.id}
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <HardwareOrderThread orderId={o.id as string} as="admin" />
@@ -122,6 +143,55 @@ function MyOrdersPage() {
         onOpenChange={(v) => !v && setOpenOrderId(null)}
         canEdit={false}
       />
+    </div>
+  );
+}
+
+function CardActions({ order, onTrack, onComplete, completing }: {
+  order: Record<string, unknown>;
+  onTrack: () => void;
+  onComplete: () => void;
+  completing: boolean;
+}) {
+  const derived = deriveStage(order as any, (order as any).installation ?? null, ((order as any).visit_events ?? []) as any);
+  const canComplete = derived.stage === "installed" && !derived.blocked;
+  return (
+    <div className="flex items-center gap-2">
+      <Button size="sm" variant="outline" onClick={onTrack}>
+        <Truck className="h-3.5 w-3.5 mr-1.5" /> Track installation
+      </Button>
+      {canComplete && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={completing}>
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+              {completing ? "Completing…" : "Mark as complete"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm installation is complete?</AlertDialogTitle>
+              <AlertDialogDescription>
+                By confirming, you acknowledge every sensor is physically installed and functioning at your site. GrainHero will automatically:
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
+                  <li>Provision a warehouse for this install (if none exists).</li>
+                  <li>Create one silo per installed device serial.</li>
+                  <li>Move the order to <strong>Completed</strong> — this step cannot be reversed.</li>
+                </ul>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Not yet</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={onComplete}
+              >
+                Yes, mark complete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
