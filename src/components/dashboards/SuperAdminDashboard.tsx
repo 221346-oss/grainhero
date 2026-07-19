@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WelcomeBanner } from "./WelcomeBanner";
 import { SuperKpiSummary } from "./SuperKpiSummary";
@@ -12,6 +14,34 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
+  const qc = useQueryClient();
+
+  // Realtime invalidation — any change to revenue-shaping tables refreshes
+  // MRR, revenue trend, and by-plan chart across every SuperAdmin surface.
+  useEffect(() => {
+    const channel = supabase
+      .channel("superadmin-revenue")
+      .on("postgres_changes", { event: "*", schema: "public", table: "subscriptions" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-metrics"] });
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+        qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
+        qc.invalidateQueries({ queryKey: ["revenue-integrity"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-metrics"] });
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+        qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "plan_thresholds" }, () => {
+        qc.invalidateQueries();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+        qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   const { data: m } = useQuery({
     queryKey: ["platform-metrics"],
