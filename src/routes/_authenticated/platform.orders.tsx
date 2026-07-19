@@ -23,6 +23,7 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
+import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
 import { Truck, MoreHorizontal } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -200,7 +201,12 @@ function OrderTableRow({
           {[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}
         </TableCell>
         <TableCell className="text-sm font-medium">Rs. {Number(order.hardware_total ?? 0).toLocaleString()}</TableCell>
-        <TableCell><Badge className={STATUS_STYLE[order.status] ?? ""}>{String(order.status).replace("_", " ")}</Badge></TableCell>
+        <TableCell>
+          <InstallStageTracker
+            variant="row"
+            {...deriveStage(order, order.installation ?? null, order.visit_events ?? [])}
+          />
+        </TableCell>
         <TableCell className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</TableCell>
         <TableCell className="text-right">
           <DropdownMenu>
