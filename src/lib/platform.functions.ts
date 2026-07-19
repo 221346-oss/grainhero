@@ -158,7 +158,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
       supabaseAdmin
         .from("subscriptions")
-        .select("id, status, price_per_month, plan_name, created_at, cancellation_date"),
+        .select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at, cancellation_date"),
       supabaseAdmin
         .from("hubspot_sync_log")
         .select("id, action, status, hubspot_object_type, created_at")
@@ -183,11 +183,21 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     const prev7 = signupsSeries.slice(-14, -7).reduce((s, p) => s + p.count, 0);
     const wowDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
 
-    // Revenue snapshot.
+    // Revenue snapshot — PKR from plan_thresholds (single source of truth).
     const subs = subsRes.data ?? [];
-    const activeSubs = subs.filter((s: any) => s.status === "active");
+    const { data: allProfiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, subscription_plan, created_at")
+      .not("subscription_plan", "is", null);
+    const { computeMrr } = await import("@/lib/plan-pricing.server");
+    const mrrResult = await computeMrr({
+      supabase: supabaseAdmin,
+      subscriptions: subs,
+      profiles: allProfiles ?? [],
+    });
+    const mrr = mrrResult.mrr;
+    const activeSubs = mrrResult.entries;
     const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancellation_date);
-    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.price_per_month) || 0), 0);
 
     // Pipeline snapshot — aggregate HubSpot sync activity by status.
     const pipeline: Record<string, number> = {};
