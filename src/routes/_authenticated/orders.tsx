@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { HardwareOrderThread } from "@/components/app/orders/HardwareOrderThread";
+import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({ meta: [{ title: "My install orders — GrainHero" }] }),
@@ -68,9 +69,10 @@ function MyOrdersPage() {
                     <CardTitle className="text-base">{o.plan_name ?? o.plan_id} · {o.hardware_quantity} sensor{Number(o.hardware_quantity) === 1 ? "" : "s"}</CardTitle>
                     <CardDescription className="text-xs">Placed {new Date(o.created_at as string).toLocaleString()}</CardDescription>
                   </div>
-                  <Badge className={STATUS_STYLE[o.status as string] ?? "bg-slate-200 text-slate-700"}>
-                    {String(o.status).replace("_", " ")}
-                  </Badge>
+                  <InstallStageTracker
+                    variant="row"
+                    {...deriveStage(o as any, (o as any).installation ?? null, ((o as any).visit_events ?? []) as any)}
+                  />
                 </div>
               </CardHeader>
               <CardContent className="grid gap-3 md:grid-cols-2 text-sm text-slate-700">
