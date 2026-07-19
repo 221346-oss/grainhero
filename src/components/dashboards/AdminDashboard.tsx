@@ -1,6 +1,6 @@
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { useDashboardStats } from "./useDashboardStats";
-import { RecentBatchesCard, RecentAlertsCard, TeamCard, ActuatorsCard, SilosOccupancyCard } from "./DashboardBlocks";
+import { RecentBatchesCard, RecentAlertsCard, ActuatorsCard, SilosOccupancyCard } from "./DashboardBlocks";
 import { Badge } from "@/components/ui/badge";
 import { KpiStrip } from "./KpiStrip";
 import { TeamMini, InstallOrdersMini, RevenueMini } from "./MiniBlocks";
@@ -50,7 +50,6 @@ export function AdminDashboard({ name }: { name?: string }) {
         <RevenueMini />
       </div>
 
-      <TeamCard />
     </AdminPageShell>
   );
 }
