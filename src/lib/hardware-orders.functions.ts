@@ -127,14 +127,11 @@ const messageInput = z.object({
   emailBuyer: z.boolean().default(true),
 });
 
-/** Super-admin: send a message + optional email to the buyer for an order. */
+/** Super-admin OR the order owner (admin): send a message on the order thread. */
 export const sendOrderMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => messageInput.parse(d))
   .handler(async ({ data, context }) => {
-    const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
-    if (!isSuper) throw new Error("Forbidden");
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order } = await supabaseAdmin
       .from("hardware_orders" as never)
@@ -143,9 +140,13 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
       .single();
     if (!order) throw new Error("Order not found");
     const buyerId = (order as { admin_id?: string | null }).admin_id ?? null;
+    const isSuper = (await getEffectiveRole(context.supabase, context.userId)) === "super_admin";
+    const isOwner = !!buyerId && buyerId === context.userId;
+    if (!isSuper && !isOwner) throw new Error("Forbidden");
+    const senderRole: "super_admin" | "admin" = isSuper ? "super_admin" : "admin";
 
     let emailed = false;
-    if (data.emailBuyer) {
+    if (data.emailBuyer && isSuper) {
       const { data: buyer } = buyerId
         ? await supabaseAdmin
             .from("profiles")
@@ -183,7 +184,8 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
       emailed,
     } as never);
 
-    if (buyerId) {
+    // Notify the OTHER party.
+    if (isSuper && buyerId) {
       const { emitNotification } = await import("@/lib/notify");
       await emitNotification(supabaseAdmin, {
         recipientId: buyerId,
@@ -196,9 +198,49 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
         entityType: "hardware_order",
         entityId: data.orderId,
       });
+    } else if (isOwner) {
+      const { emitToSuperAdmins } = await import("@/lib/notify");
+      await emitToSuperAdmins(supabaseAdmin, {
+        category: "install",
+        severity: "info",
+        title: "Buyer replied on install order",
+        body: data.message,
+        link: `/platform/orders/${data.orderId}`,
+        entityType: "hardware_order",
+        entityId: data.orderId,
+      });
     }
 
-    return { ok: true, emailed };
+    return { ok: true, emailed, senderRole };
+  });
+
+/** List messages on an install order — visible to owner admin and super admins. */
+export const listOrderMessages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    // RLS on hardware_order_messages already scopes to owner or super_admin.
+    const { data: rows, error } = await context.supabase
+      .from("hardware_order_messages" as never)
+      .select("*")
+      .eq("order_id", data.orderId)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    const list = (rows ?? []) as Array<Record<string, unknown>>;
+    // Attach sender role (admin vs super_admin) by matching against the order owner.
+    const { data: order } = await context.supabase
+      .from("hardware_orders" as never)
+      .select("admin_id")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    const ownerId = (order as { admin_id?: string | null } | null)?.admin_id ?? null;
+    return {
+      messages: list.map((m) => ({
+        ...m,
+        sender_role: m.sender_id === ownerId ? "admin" : "super_admin",
+      })),
+      viewerIsOwner: ownerId === context.userId,
+    };
   });
 
 /** Super-admin: count of orders needing attention, for sidebar badge. */
