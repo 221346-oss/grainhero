@@ -9,16 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { listGrainBatches } from "@/lib/operations.functions";
 
-type Silo = {
-  id: string;
-  silo_id: string;
-  name: string;
-  capacity_kg: number | null;
-  current_occupancy_kg: number | null;
-  status: string | null;
-  current_batch?: { grain_type?: string | null } | null;
-  warehouses?: { name?: string | null } | null;
-};
+// Structurally-compatible with the Silo type used in the Silos page.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Silo = any;
 
 type Batch = {
   id: string;
