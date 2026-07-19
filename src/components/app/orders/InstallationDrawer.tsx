@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, Save, Send, Calendar as CalIcon, Warehouse, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Save, Send, Calendar as CalIcon, Warehouse, ExternalLink, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { getInstallation, upsertInstallation, upsertDevices, addVisitEvent } from "@/lib/installations.functions";
 import { RouteMapCard } from "./RouteMapCard";
@@ -15,7 +15,8 @@ import { Link } from "@tanstack/react-router";
 
 interface Props { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void; canEdit: boolean }
 
-const STATUS_OPTIONS = ["scheduled", "en_route", "on_site", "installed", "verified", "cancelled"];
+// Must match hardware_order_installations_status_check in the DB
+const STATUS_OPTIONS = ["scheduled", "en_route", "onsite", "completed", "blocked"];
 const DEVICE_STATUS = ["shipped", "en_route", "installed", "verified"];
 
 export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Props) {
@@ -133,6 +134,38 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
                         Warehouse & silos are created automatically when the installation status is marked <b>completed</b>.
                       </div>
                     )}
+                  </div>
+                )}
+                {canEdit && form.status !== "completed" && (
+                  <Button
+                    size="sm"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                    disabled={saveM.isPending || devices.filter((d) => d.serial.trim()).length === 0}
+                    onClick={async () => {
+                      if (devices.filter((d) => d.serial.trim()).length === 0) {
+                        toast.error("Add at least one device serial before completing — one silo is provisioned per serial.");
+                        return;
+                      }
+                      // Persist devices first so the trigger sees them
+                      await saveDevM.mutateAsync();
+                      set("status", "completed");
+                      await saveFn({ data: { orderId: orderId!, patch: {
+                        city: form.city, warehouse_id: form.warehouse_id ?? null, silo_id: form.silo_id ?? null,
+                        scheduled_visit_at: form.scheduled_visit_at ? new Date(form.scheduled_visit_at).toISOString() : null,
+                        origin_address: form.origin_address, origin_lat: form.origin_lat ? Number(form.origin_lat) : null, origin_lng: form.origin_lng ? Number(form.origin_lng) : null,
+                        destination_address: form.destination_address, destination_lat: form.destination_lat ? Number(form.destination_lat) : null, destination_lng: form.destination_lng ? Number(form.destination_lng) : null,
+                        status: "completed",
+                      } } });
+                      toast.success("Installation completed — warehouse & silos provisioned for the admin.");
+                      qc.invalidateQueries({ queryKey: ["installation", orderId] });
+                    }}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" /> Mark complete & provision silos
+                  </Button>
+                )}
+                {canEdit && form.status === "completed" && (
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Completed — warehouse & silos provisioned.
                   </div>
                 )}
               </CardContent>
