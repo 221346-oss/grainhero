@@ -7031,6 +7031,15 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      notify_install_progress: {
+        Args: {
+          _event: string
+          _message: string
+          _order_id: string
+          _title: string
+        }
+        Returns: undefined
+      }
       recalc_batch_remaining: {
         Args: { _batch_id: string }
         Returns: undefined
