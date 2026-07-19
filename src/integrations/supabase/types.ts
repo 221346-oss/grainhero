@@ -3191,6 +3191,7 @@ export type Database = {
       }
       hardware_order_installations: {
         Row: {
+          assigned_at: string | null
           blocker_note: string | null
           city: string | null
           completed_at: string | null
@@ -3198,11 +3199,14 @@ export type Database = {
           destination_address: string | null
           destination_lat: number | null
           destination_lng: number | null
+          en_route_at: string | null
           id: string
+          installed_at: string | null
           installer_company: string | null
           installer_name: string | null
           installer_phone: string | null
           installer_photo_url: string | null
+          onsite_at: string | null
           order_id: string
           origin_address: string | null
           origin_lat: number | null
@@ -3216,6 +3220,7 @@ export type Database = {
           warehouse_id: string | null
         }
         Insert: {
+          assigned_at?: string | null
           blocker_note?: string | null
           city?: string | null
           completed_at?: string | null
@@ -3223,11 +3228,14 @@ export type Database = {
           destination_address?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
+          en_route_at?: string | null
           id?: string
+          installed_at?: string | null
           installer_company?: string | null
           installer_name?: string | null
           installer_phone?: string | null
           installer_photo_url?: string | null
+          onsite_at?: string | null
           order_id: string
           origin_address?: string | null
           origin_lat?: number | null
@@ -3241,6 +3249,7 @@ export type Database = {
           warehouse_id?: string | null
         }
         Update: {
+          assigned_at?: string | null
           blocker_note?: string | null
           city?: string | null
           completed_at?: string | null
@@ -3248,11 +3257,14 @@ export type Database = {
           destination_address?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
+          en_route_at?: string | null
           id?: string
+          installed_at?: string | null
           installer_company?: string | null
           installer_name?: string | null
           installer_phone?: string | null
           installer_photo_url?: string | null
+          onsite_at?: string | null
           order_id?: string
           origin_address?: string | null
           origin_lat?: number | null
@@ -7024,6 +7036,10 @@ export type Database = {
       }
     }
     Functions: {
+      advance_install_stage: {
+        Args: { _next: string; _note?: string; _order_id: string }
+        Returns: Json
+      }
       get_my_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
