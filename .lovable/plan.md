@@ -1,85 +1,51 @@
+# Admin Dashboard — Topbar Nav + KPI Split Fix
 
-# Admin Dashboard — Compact & Revenue-First Refresh
+## 1. Fix KPI Summary split (revenue dominant)
 
-Scope: `src/components/dashboards/AdminDashboard.tsx` and its children only. No business logic changes.
+`src/components/dashboards/KpiSummary.tsx`
+- Swap grid to `md:grid-cols-[1fr_35%]` so **Revenue hero = LEFT 65%**, compact list = RIGHT 35%.
+- Revenue card: keep big emerald PKR value, plan chip top-right, delta + "12-mo trend" line, sparkline full width; scale value to `text-3xl md:text-4xl` since it now has room.
+- Right list: unchanged (icon-less rows, delta pill, deep links). Slightly tighter row padding to fit 5 rows at 35%.
+- Single `(i)` stays only on the section header.
 
-## 1. KPI Summary — 35 / 65 split, revenue on top
+## 2. Topbar tabs = navigation shortcuts, NOT dashboard filters
 
-Replace the current 5-equal-tile grid with a two-column band:
+`src/components/app/DashboardQuickTabs.tsx`
+- Remove the "active tab filters the dashboard body" behavior entirely. Stop using `useDashboardTab` for click handling.
+- Every pill becomes a `<Link to="…">` to the real route (Silos → `/silos`, Batches → `/grain-batches`, Alerts → `/alerts`, Marketplace → `/marketplace`, Sensors → `/sensors`, Actuators → `/actuators`, Buyers → `/buyers`, Orders → `/orders`, Team → `/team-management`).
+- **Overview** pill added as first item → links to `/dashboard`. This replaces the "pinned overview" tab concept.
+- Active state = current route matches the pill's `to` (via `useRouterState` pathname). Active pill: emerald pill + label visible; inactive: icon-only round button with tooltip.
+- Show topbar on **every authenticated route**, not just `/dashboard`, so it feels like a fixed nav (the sidebar is already fixed).
+- Keep the ⚙️ customize popover (max 5 visible, Overview pinned) — user already liked this.
+- **Remove the AI cluster** from the topbar (user rejected AI mentions in sidebar; keep AI links reachable only via their own pages/search).
 
-```text
-┌──────────────────────────────┬───────────────────────────────────────────┐
-│ REVENUE (35%)                │ 4 mini KPI rows (65%)                     │
-│  PKR 128,400   +12% vs prev  │  Buyers  2      Warehouses 2              │
-│  Grain Professional · MTD    │  Active  3      Silos      4              │
-│  ▁▂▃▅▆▇  tiny sparkline      │  Sensors 3                                │
-└──────────────────────────────┴───────────────────────────────────────────┘
-```
+## 3. "Page loads inside the dashboard" feel
 
-- Left card (35%): Revenue is the hero — big number in emerald (`text-emerald-600`), current plan chip, delta vs prev, 24px sparkline. Clickable → `/financials` (admin) or `/subscription`.
-- Right card (65%): Buyers, Warehouses, Active Batches, Silos, Sensors Online as **compact rows** (icon-less, label left · value right · delta pill). No large icon squares, no `(i)` per row — one `(i)` on the card header. Each row is a `<Link>` with hover ring.
-- Range chip stays in the header row.
-- Removes ~40% of vertical space vs the current grid.
+`src/routes/_authenticated/route.tsx` (already renders topbar in the shell)
+- Wrap `<Outlet />` in a `motion.div` keyed by `pathname` with a 180ms opacity + 4px translateY fade-in. With the fixed sidebar + fixed topbar staying mounted, only the content region animates — giving the "page loads into the dashboard frame" impression.
+- No route-level changes needed; skeletons per route already handle loading.
 
-## 2. Insights & Performance — diversify, theme-safe colors
+## 4. Sidebar: swap Overview slot for collapse toggle
 
-Current strip is all batch-derived and uses red/yellow. Rebuild with 4 tenant-wide insights, each with a subtle emerald/slate palette (no raw red/yellow):
+`src/components/app/AppSidebar.tsx`
+- Remove the "Overview / Dashboard" nav item from the sidebar list (it now lives in the topbar).
+- In its place at the top of the sidebar, render the sidebar open/close toggle icon (uses existing `SidebarTrigger`), styled like a nav row so it occupies the same visual slot.
+- Remove any lingering "AI" section/labels from the sidebar (user: "no need of ai mentions").
 
-| Tile | Metric | Source | Accent |
-|---|---|---|---|
-| QC Health | pending + rejected ratio | grain_batches | emerald / muted |
-| Storage Risk | at-risk batches vs total | grain_batches + alerts | amber via `text-amber-600` sparingly on number only |
-| Fulfillment | ready-to-ship / dispatched | batches + orders | emerald |
-| Automation | actuators on / total + open alerts | actuators + alerts | slate + emerald dot |
+## 5. Dashboard body cleanup
 
-- Layout: 4 columns on lg, 2 on sm, single card height ~72px.
-- Colors: value colored, card stays neutral (`bg-card`, `border`). Use `text-emerald-600`, `text-amber-600`, `text-slate-500` only. No `bg-red-*`, `bg-yellow-*`.
-- Each tile deep-links to its filtered page (e.g. QC → `/grain-batches?status=qc_pending`).
+`src/components/dashboards/AdminDashboard.tsx`
+- Delete the `useDashboardTab` filtering logic and the `switching` opacity effect (motion now lives at the route Outlet).
+- Always render: KpiSummary → InsightsStrip → BatchesTable → (Silos + Alerts grid). Single continuous scroll; topbar no longer hides/shows bands.
+- Keep `RangeChip` in KpiSummary for period comparison.
 
-## 3. Top Nav Tabs → icon buttons in the app topbar
+## 6. Cleanup
 
-Move `DashTabs` out of the dashboard body and into the existing topbar next to the search bar.
-
-- New component `src/components/app/DashboardQuickTabs.tsx` rendered by `AppSidebar`'s header/topbar area (or the header slot the search lives in).
-- Rendered as **icon-only pill buttons**; label appears on hover/focus as a tooltip and inline when the tab is active (image ref 45 behavior).
-- Max 5, still customizable via the existing gear popover.
-- Icons: Overview `LayoutDashboard`, Silos `Container`, Batches `Wheat`, Alerts `Bell`, Marketplace `Store`, Sensors `Radio`, Actuators `ToggleRight`, Buyers `Users`, Orders `Package`, Team `UserCog`.
-- Only shown on `/dashboard` route (hide elsewhere).
-
-## 4. AI section highlighted in the same tab bar
-
-Add a separate, always-visible AI cluster to the right of the custom tabs — this is the primary selling point:
-
-```text
-[Overview] [Silos] [Batches] [Alerts] [Marketplace]  │  ✨ AI ▸ [Predictions] [Spoilage] [Insights]
-```
-
-- Rendered with an emerald gradient chip (`bg-gradient-to-r from-emerald-500 to-emerald-600 text-white`) and a `Sparkles` icon.
-- Clicking each AI tab routes to the actual AI page (`/ai-predictions`, `/ai-spoilage-detection`, `/ai-insights`).
-
-## 5. "Page-loads-inside-dashboard" feel
-
-When a non-Overview tab is selected:
-
-- Instead of navigating away, keep the user on `/dashboard` and swap the dashboard body for the target page's **existing skeleton** for ~200ms then render an inline embed of that page's primary panel (reuse the route's default component through a lightweight `<PageEmbed name="silos" />` wrapper that renders the same query + table used by the dedicated route).
-- Overview tab renders the full dashboard.
-- Clicking the tab a second time (or a "Open full page ↗" link in the embed header) navigates to the standalone route.
-- Uses the existing skeletons from `src/components/app/skeletons.tsx` (`SilosSkeleton`, `BatchesSkeleton`, etc.) during the transition — no new skeletons needed.
-
-## 6. Files touched
-
-- Edit: `src/components/dashboards/KpiSummary.tsx` — rewrite to 35/65 split.
-- Edit: `src/components/dashboards/InsightsStrip.tsx` — 4 diversified tiles, theme colors.
-- Edit: `src/components/dashboards/AdminDashboard.tsx` — remove old `DashTabs`, add `PageEmbed` slot.
-- New: `src/components/app/DashboardQuickTabs.tsx` — icon tabs + AI cluster, mounted in topbar.
-- New: `src/components/dashboards/PageEmbed.tsx` — maps tab key → embedded panel + skeleton.
-- Edit: `src/components/app/AppSidebar.tsx` (topbar/header area) — mount `DashboardQuickTabs` next to search on `/dashboard`.
-- Data: extend `getDashboardExtras` return with `revenueMtd`, `revenueSpark` (12-point series) and `plan.name` so revenue card has real numbers without extra requests.
+- `useDashboardTab.ts` becomes unused → delete.
+- Remove `DashTabs.tsx` if no other consumer (grep).
+- Typecheck.
 
 ## Technical notes
-
-- Sparkline: inline SVG polyline, no new deps.
-- Tooltips already provided by `TooltipProvider` in `AdminDashboard`.
-- Revenue value formatting via `Intl.NumberFormat('en-PK', { style:'currency', currency:'PKR', maximumFractionDigits:0 })`.
-- All colors stay within existing tokens: `emerald-500/600`, `amber-600` (numbers only), `slate-500`, `border`, `bg-card`, `muted`.
-- No changes to routes, sidebar links, or server functions beyond the two extra fields on `getDashboardExtras`.
+- Fixed topbar already exists in `_authenticated/route.tsx`; only its content and the Outlet wrapper change.
+- No backend / server-fn changes.
+- No new dependencies (framer-motion already installed).
