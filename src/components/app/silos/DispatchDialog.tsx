@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createDispatchFromSilo, listSiloAvailableBatches } from "@/lib/dispatches.functions";
 import { listBuyers } from "@/lib/operations.functions";
+import { getPriceSettings } from "@/lib/suppliers.functions";
 
 type Batch = { id: string; batch_id: string; grain_type: string; remaining_kg: number | string; purchase_price_per_kg: number | string | null };
 type Buyer = { id: string; name: string; company_name: string | null };
@@ -30,14 +31,18 @@ export function DispatchDialog({
   const [destination, setDestination] = useState("");
   const [notes, setNotes] = useState("");
   const [expected, setExpected] = useState("");
+  const [basis, setBasis] = useState<"cost_margin" | "market" | "manual">("manual");
+  const [stage, setStage] = useState<"staged" | "in_transit">("staged");
 
   useEffect(() => {
-    if (open) { setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDestination(""); setNotes(""); setExpected(""); }
+    if (open) { setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDestination(""); setNotes(""); setExpected(""); setBasis("manual"); setStage("staged"); }
   }, [open]);
 
   const listBatchesFn = useServerFn(listSiloAvailableBatches);
   const listBuyersFn = useServerFn(listBuyers);
   const createFn = useServerFn(createDispatchFromSilo);
+  const priceFn = useServerFn(getPriceSettings);
+  const priceQ = useQuery({ queryKey: ["price-settings"], queryFn: () => priceFn(), enabled: open });
 
   const batchesQ = useQuery({
     queryKey: ["silo-batches", siloId],
@@ -78,6 +83,13 @@ export function DispatchDialog({
   const avgCost = costed > 0 ? costSum / costed : null;
   const profit = avgCost != null ? total - avgCost * qtyNum : null;
 
+  // Suggested prices
+  const settings = (priceQ.data?.settings ?? null) as Row | null;
+  const marginPct = settings?.default_margin_pct != null ? Number(settings.default_margin_pct) : 15;
+  const marketMap = (settings?.market_price_snapshot ?? {}) as Record<string, number>;
+  const suggestedCost = avgCost != null ? avgCost * (1 + marginPct / 100) : null;
+  const suggestedMarket = grainType ? Number(marketMap[grainType] ?? 0) || null : null;
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!siloId) throw new Error("No silo");
@@ -92,6 +104,7 @@ export function DispatchDialog({
         newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
         vehicleNumber: vehicle || null, driverName: driver || null, destination: destination || null,
         notes: notes || null, expectedDate: expected || null,
+        priceBasis: basis, marketPriceSnapshot: suggestedMarket, stage,
       } });
     },
     onSuccess: (r) => {
@@ -135,13 +148,30 @@ export function DispatchDialog({
               </div>
               <div>
                 <Label className="text-xs">Price / kg ({currency})</Label>
-                <Input className="h-9" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 120" />
+                <Input className="h-9" type="number" min="0" step="0.01" value={price} onChange={(e) => { setPrice(e.target.value); setBasis("manual"); }} placeholder="e.g. 120" />
               </div>
               <div>
                 <Label className="text-xs">Expected date</Label>
                 <Input className="h-9" type="date" value={expected} onChange={(e) => setExpected(e.target.value)} />
               </div>
             </div>
+
+            {(suggestedCost != null || suggestedMarket != null) && (
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => { if (suggestedCost != null) { setPrice(suggestedCost.toFixed(2)); setBasis("cost_margin"); } }} disabled={suggestedCost == null}
+                  className={`rounded-lg border p-2 text-left transition ${basis === "cost_margin" ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-emerald-500/50"} disabled:opacity-50`}>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Cost + {marginPct}%</div>
+                  <div className="text-sm font-semibold tabular-nums">{suggestedCost != null ? `${currency} ${suggestedCost.toFixed(2)}` : "—"}</div>
+                  {avgCost != null && <div className="text-[10px] text-muted-foreground">avg cost {avgCost.toFixed(2)}</div>}
+                </button>
+                <button type="button" onClick={() => { if (suggestedMarket != null) { setPrice(suggestedMarket.toFixed(2)); setBasis("market"); } }} disabled={suggestedMarket == null}
+                  className={`rounded-lg border p-2 text-left transition ${basis === "market" ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-emerald-500/50"} disabled:opacity-50`}>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Market price</div>
+                  <div className="text-sm font-semibold tabular-nums">{suggestedMarket != null ? `${currency} ${suggestedMarket.toFixed(2)}` : "not set"}</div>
+                  <div className="text-[10px] text-muted-foreground">from platform settings</div>
+                </button>
+              </div>
+            )}
 
             <div>
               <Label className="text-xs">Buyer</Label>
@@ -162,6 +192,20 @@ export function DispatchDialog({
             </div>
             <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
             <Textarea rows={2} placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+            <div>
+              <Label className="text-xs">Stage</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <button type="button" onClick={() => setStage("staged")} className={`rounded-lg border p-2 text-left text-xs ${stage === "staged" ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-emerald-500/50"}`}>
+                  <div className="font-medium">Sold, still on premises</div>
+                  <div className="text-muted-foreground">Reserved but not yet loaded.</div>
+                </button>
+                <button type="button" onClick={() => setStage("in_transit")} className={`rounded-lg border p-2 text-left text-xs ${stage === "in_transit" ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-emerald-500/50"}`}>
+                  <div className="font-medium">Dispatched now</div>
+                  <div className="text-muted-foreground">Truck is leaving with the load.</div>
+                </button>
+              </div>
+            </div>
 
             {qtyNum > 0 && (
               <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-xs">
