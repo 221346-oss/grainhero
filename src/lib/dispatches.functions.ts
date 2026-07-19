@@ -209,6 +209,31 @@ export const listDispatches = createServerFn({ method: "GET" })
     return { dispatches: (rows ?? []) as Row[] };
   });
 
+export const updateDispatchStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      stage: z.enum(["staged", "in_transit", "delivered"]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: Row = { stage: data.stage };
+    if (data.stage === "in_transit") patch.dispatched_at = new Date().toISOString();
+    if (data.stage === "delivered") patch.status = "delivered";
+    const { error } = await context.supabase
+      .from("grain_dispatches").update(patch as never).eq("id", data.id);
+    if (error) throw error;
+    await logActivity({
+      actorId: context.userId,
+      action: `dispatch.${data.stage}`,
+      targetType: "grain_dispatch",
+      targetId: data.id,
+      meta: { stage: data.stage },
+    });
+    return { ok: true };
+  });
+
 export const getDispatchDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
