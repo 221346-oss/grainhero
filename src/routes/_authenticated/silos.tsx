@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SilosSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -77,6 +77,7 @@ function SilosPage() {
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
   const qc = useQueryClient();
+  const navigate = useNavigate();
   
   // Plan limits check
   const { canAddSilo, siloLimitMessage } = usePlanLimits();
@@ -301,7 +302,7 @@ function SilosPage() {
                       <TableCell className="text-right">
                         <RowActions
                           actions={[
-                            { label: "Open", icon: Eye, onClick: () => { window.location.assign(`/silos/${s.id}`); } },
+                            { label: "Open", icon: Eye, onClick: () => navigate({ to: "/silos/$siloId", params: { siloId: s.id } }) },
                             { label: "Dispatch", icon: Truck, onClick: () => { setDispatchSilo(s); setDispatchOpen(true); } },
                             { label: "Edit", icon: Edit2, onClick: () => openEdit(s) },
                             { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(s.id) },
