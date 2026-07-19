@@ -289,6 +289,37 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       .is("admin_id", null)
       .ilike("customer_email", email);
 
+    // Promote any still-pending orders to `new` so Platform → Orders shows
+    // them right away (fallback for when the Stripe webhook isn't reachable),
+    // and notify every super admin so they don't miss the sign-up.
+    try {
+      const pendingIds = orders
+        .filter((o) => String(o.status ?? "") === "pending_payment")
+        .map((o) => String(o.id ?? ""))
+        .filter(Boolean);
+      if (pendingIds.length > 0) {
+        await supabaseAdmin
+          .from("hardware_orders" as never)
+          .update({ status: "new" } as never)
+          .in("id", pendingIds);
+      }
+      const { emitToSuperAdmins } = await import("@/lib/notify");
+      for (const o of orders) {
+        await emitToSuperAdmins(supabaseAdmin, {
+          category: "order",
+          severity: "info",
+          title: "New install order placed",
+          body: `Order for plan ${String(o.plan_id ?? o.plan_name ?? "?")} · ${Number(o.hardware_quantity ?? 0)} unit(s) by ${email}.`,
+          link: "/platform/orders",
+          entityType: "hardware_order",
+          entityId: String(o.id ?? ""),
+          metadata: { plan_id: o.plan_id ?? null, hardware_quantity: o.hardware_quantity ?? null },
+        });
+      }
+    } catch (e) {
+      console.warn("[claim] super-admin notify failed:", (e as Error).message);
+    }
+
     const stripeCustomerId = String(first.stripe_customer_id ?? "");
     if (stripeCustomerId) {
       await supabaseAdmin.from("profiles").update({ stripe_customer_id: stripeCustomerId, admin_id: context.userId } as never).eq("id", context.userId);
