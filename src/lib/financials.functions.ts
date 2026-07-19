@@ -71,7 +71,13 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
       .from("profiles")
       .select("id, subscription_plan, created_at")
       .not("subscription_plan", "is", null);
-    const profileRows = (planProfiles ?? []).map((row: any) => {
+    // Exclude super_admin accounts — they aren't tenants and must not skew MRR.
+    const { data: superRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "super_admin");
+    const superIds = new Set((superRows ?? []).map((r: any) => r.user_id));
+    const profileRows = (planProfiles ?? []).filter((row: any) => !superIds.has(row.id)).map((row: any) => {
       const p = planFor(row.subscription_plan);
       return { plan_id: p.id, plan_name: p.name, price: p.price, created_at: row.created_at };
     });
@@ -196,7 +202,17 @@ export const generateFinancialPdf = createServerFn({ method: "POST" })
       .from("profiles")
       .select("subscription_plan")
       .not("subscription_plan", "is", null);
-    const profileRows = (planProfiles ?? []).map((row: any) => ({ price: planFor(row.subscription_plan).price }));
+    const { data: superRows2 } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "super_admin");
+    const superIds2 = new Set((superRows2 ?? []).map((r: any) => r.user_id));
+    const { data: planProfilesFull } = await supabaseAdmin
+      .from("profiles")
+      .select("id, subscription_plan")
+      .not("subscription_plan", "is", null);
+    const profileRows = (planProfilesFull ?? []).filter((row: any) => !superIds2.has(row.id)).map((row: any) => ({ price: planFor(row.subscription_plan).price }));
+    void planProfiles;
     const activeSubs = [...subRows, ...profileRows];
     const mrr = activeSubs.reduce((s: number, x: any) => s + Number(x.price ?? 0), 0);
     const iot = (orders.data ?? []).filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
