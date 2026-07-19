@@ -18,7 +18,6 @@ import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { listWarehouses, upsertWarehouse, deleteWarehouse } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 export const Route = createFileRoute("/_authenticated/warehouses")({
   component: WarehousesPage,
@@ -65,7 +64,6 @@ function WarehousesPage() {
   
   // Plan limits check
   const { canAddWarehouse, warehouseLimitMessage } = usePlanLimits();
-  const { isSuperAdmin } = useIsSuperAdmin();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["warehouses"],
