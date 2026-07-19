@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { RowActions } from "@/components/app/RowActions";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import {
@@ -425,13 +426,15 @@ function GrainBatchesPage() {
                       <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
                       <TableCell><StatusBadge value={b.status} /></TableCell>
                       <TableCell className="text-right">
-                        <div className="inline-flex items-center gap-0.5">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="View" onClick={() => { setSelected(b); setViewOpen(true); }}><Eye className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="QR" onClick={() => { setSelected(b); setQrOpen(true); }}><QrCode className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit" onClick={() => openEdit(b)}><Edit2 className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-amber-600 hover:text-amber-700" title="Log spoilage" onClick={() => openSpoilage(b)}><AlertTriangle className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600 hover:text-red-700" title="Delete" onClick={() => setDeleteId(b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                        </div>
+                        <RowActions
+                          actions={[
+                            { label: "View", icon: Eye, onClick: () => { setSelected(b); setViewOpen(true); } },
+                            { label: "Edit", icon: Edit2, onClick: () => openEdit(b) },
+                            { label: "QR code", icon: QrCode, onClick: () => { setSelected(b); setQrOpen(true); } },
+                            { label: "Log spoilage", icon: AlertTriangle, onClick: () => openSpoilage(b) },
+                            { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(b.id) },
+                          ]}
+                        />
                       </TableCell>
                     </TableRow>
                   );
