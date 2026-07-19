@@ -26,6 +26,7 @@ import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
   dispatchGrainBatch, logSpoilageEvent, listSilos, listBuyers,
 } from "@/lib/operations.functions";
+import { listSuppliers } from "@/lib/suppliers.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-batches")({
   validateSearch: (search: Record<string, unknown>) => ({
