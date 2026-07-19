@@ -44,7 +44,7 @@ export const listSiloAvailableBatches = createServerFn({ method: "GET" })
       .gt("remaining_kg", 0)
       .order("harvest_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true });
-    if (data.grainType) q = q.eq("grain_type", data.grainType);
+    if (data.grainType) q = q.eq("grain_type", data.grainType as never);
     const { data: rows, error } = await q;
     if (error) throw error;
     return { batches: (rows ?? []) as Row[] };
@@ -69,7 +69,7 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
       .from("grain_batches")
       .select("id, batch_id, quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
       .eq("silo_id", data.siloId)
-      .eq("grain_type", data.grainType)
+      .eq("grain_type", data.grainType as never)
       .gt("remaining_kg", 0)
       .order("harvest_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true });
