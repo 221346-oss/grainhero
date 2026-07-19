@@ -242,20 +242,14 @@ function SilosPage() {
             </SelectContent>
           </Select>
         </div>
-        {isSuperAdmin ? (
-          <Button
-            onClick={openCreate}
-            className="gap-2 whitespace-nowrap"
-            disabled={!canAddSilo}
-            title={siloLimitMessage ?? "Create new silo"}
-          >
-            <Plus className="w-4 h-4" /> New silo
-          </Button>
-        ) : (
-          <Button asChild variant="outline" className="gap-2 whitespace-nowrap">
-            <Link to="/orders">Request install →</Link>
-          </Button>
-        )}
+        <Button
+          onClick={openCreate}
+          className="gap-2 whitespace-nowrap"
+          disabled={!canAddSilo || warehouses.length === 0}
+          title={warehouses.length === 0 ? "Create a warehouse first" : (siloLimitMessage ?? "Create new silo")}
+        >
+          <Plus className="w-4 h-4" /> New silo
+        </Button>
       </div>
 
       {/* Plan limit warning banner */}
