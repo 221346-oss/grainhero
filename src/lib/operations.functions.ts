@@ -275,6 +275,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
           status: data.status ?? "stored",
           notes: data.notes ?? null,
           updated_by: context.userId,
+          supplier_id: data.supplier_id ?? null,
+          source_kind: data.source_kind ?? null,
+          unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
+          currency: data.currency ?? "PKR",
         })
         .eq("id", data.id).select("*").single();
       if (error) throw error;
