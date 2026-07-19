@@ -1,52 +1,64 @@
 ## Goal
-Collapse three sidebar links (Silos, Warehouses, Grain Batches) into one **Silo Management** hub. Warehouses become the left rail; silos are the middle list; batches open in a right-side drawer per silo.
 
-## Layout (`/silos`)
+Replace the confusing free-form status dropdown with a single, forward-only 6-stage install lifecycle that spans the whole order journey, with clear ownership per step and a compact visual tracker.
 
-```text
-┌───────────────────────────────────────────────────────────────────┐
-│ PageHeader: Silo Management  · [Range chip] [Request install]     │
-├──────────────────┬────────────────────────────────────────────────┤
-│ WAREHOUSES  (L)  │ SILOS TABLE (M)                                │
-│  ▸ All (12)      │ Name | WH | Grain | Fill% | Status | Actions   │
-│  ▸ WH-Lahore (4) │ …row click → opens Batches drawer              │
-│  ▸ WH-Multan (3) │                                                │
-│  + inline info   │                                                │
-└──────────────────┴────────────────────────────────────────────────┘
-                          ↘ Right drawer: "Batches in <Silo>"
-                             - Compact batch table (intake / dispatch)
-                             - Actions: Add batch · Dispatch · View details
+## Unified stages
+
+```
+1 Paid  →  2 Assigned  →  3 En route  →  4 On-site  →  5 Installed  →  6 Completed
+ (Stripe)   (SuperAdmin) (SuperAdmin)   (SuperAdmin) (SuperAdmin)     (Admin)
 ```
 
-- Left rail: warehouse list (from `warehouses` query) with silo counts. "All warehouses" default. Click filters middle table. Small "Warehouse details" (i) link opens a slim warehouse-info popover (address, capacity, origin order) — no separate page needed.
-- Middle: existing silo table, filtered by selected warehouse. Row click opens the drawer.
-- Right drawer (`Sheet`): shows that silo's batches using the existing `BatchesTable` component scoped by `silo_id`. Includes "Add batch" + "Dispatch" buttons (reuses current dialogs).
+- **Forward-only.** Once a step is reached, it cannot be moved backward from the UI. (Guarded server-side.)
+- **Silo/warehouse provisioning fires only when Admin confirms step 6 (Completed).** Not on "Installed".
+- **"Blocked"** stays available as an off-flow state (with a required note) so a stalled install is visible without regressing the stage.
 
-## Files
+## Ownership
 
-**New**
-- `src/components/app/silos/WarehouseRail.tsx` — left list + counts + info popover.
-- `src/components/app/silos/SiloBatchesDrawer.tsx` — Sheet wrapping BatchesTable + AddBatch + DispatchDialog for one silo.
+- Steps 2–5: only `super_admin` can advance.
+- Step 6 (Completed): only the order's `admin_id` can confirm — this is the buyer signing off that hardware is live. This is what runs the auto-provision trigger.
+- The stale "installed" order-level field on `hardware_orders` gets aligned so the /orders page never shows a downgrade like "installed → pending payment" again.
 
-**Modified**
-- `src/routes/_authenticated/silos.tsx` — grid layout `[220px_1fr]`, wire warehouse filter, row click → drawer.
-- `src/components/app/AppSidebar.tsx` — remove "Warehouses" and "Grain Batches" nav entries for admin/manager/technician.
-- `src/routes/_authenticated/warehouses.tsx` — keep route file (so old bookmarks still resolve) but redirect to `/silos`.
-- `src/routes/_authenticated/grain-batches.tsx` — keep as fallback deep view (accessible from drawer "Open full page"), remove sidebar link only.
-- `src/routes/_authenticated/silos.$siloId.tsx` — keep; drawer's "Open full page" links here.
+## Visual tracker
 
-## Data
-- Reuse existing server fns: `listSilos`, `listWarehouses`, `listGrainBatches({ siloId })`.
-- No schema change. No new server functions.
+- **Compact pill row** in the orders table + drawer header: 6 tiny dots/pills, filled up to the current stage, current one glowing emerald, blocked = amber outline. Hover shows stage name + timestamp.
+- **Expandable timeline** inside the drawer: each stage as a row with icon, actor, timestamp, and optional note. Reuses existing `hardware_order_visit_events` rows keyed by `event_type` (`assigned`, `en_route`, `onsite`, `installed`, `completed`, `blocked`).
+- Replaces the free-form status `<select>` entirely.
 
-## UX details
-- Preserve current empty-state guides (Admins can't create warehouses/silos — install-order CTA).
-- Drawer width: `w-full sm:max-w-2xl`, closes on route change.
-- Batch drawer header shows silo name, fill%, grain type, and quick "Dispatch" primary button.
-- Keyboard: Esc closes drawer; ↑/↓ moves row selection.
-- Dark-mode: uses same semantic tokens already in `DataListPage`.
+## Technical changes
+
+**Database migration**
+- Extend `hardware_order_installations_status_check` to include `installed` in addition to existing values.
+- Add `installed_at timestamptz` (already exists on `hardware_orders`; add on installations too for the timeline).
+- Update `auto_provision_from_install()` trigger: fire on transition to `completed` only when the previous status was `installed` (guards accidental double provisioning and enforces the order of steps).
+- Add trigger `enforce_install_status_forward()` that rejects backward transitions (allow to/from `blocked` from any prior stage, but never past `completed`).
+- Add helper RPC `advance_install_stage(order_id, next_stage, note)` that:
+  - Verifies the caller's role vs. required actor for `next_stage`.
+  - Writes the new status + timestamp column.
+  - Inserts a matching `hardware_order_visit_events` row (`event_type = next_stage`).
+
+**Server functions (`src/lib/installations.functions.ts`)**
+- Replace `upsertInstallation`'s free-form status write with `advanceInstallStage` calling the new RPC.
+- Keep other patch fields (address, devices, coordinates) editable independently — they no longer touch status.
+- Add `getInstallLifecycle(orderId)` returning `{ stage, history: Array<{stage, actor, at, note}> }` derived from `hardware_orders` + installation + visit events.
+
+**Components**
+- New `src/components/app/orders/InstallStageTracker.tsx`
+  - Props: `stage`, `history`, `canAdvance`, `onAdvance(nextStage, note?)`, `variant: "row" | "full"`.
+  - Row variant = pill row (used in orders tables).
+  - Full variant = pill row + vertical timeline + "Advance to X" button gated by role.
+- Refactor `InstallationDrawer.tsx`:
+  - Drop the `<select>` for status.
+  - Show `InstallStageTracker variant="full"` at top.
+  - Remove the "Mark complete & provision silos" custom button; it becomes the tracker's Advance button on the `installed → completed` step, and is only enabled for the Admin.
+  - Keep devices + address + map + notes as-is (unchanged responsibilities).
+- Refactor `src/routes/_authenticated/platform.orders.tsx` (SuperAdmin table) and `src/routes/_authenticated/orders.tsx` (Admin table) to render `InstallStageTracker variant="row"` in the status column so both sides see the same lifecycle.
+
+**Role gating**
+- Reuse existing `has_role` + order `admin_id` to compute `canAdvance` client-side; the RPC re-checks server-side (source of truth).
+- Admin's "Confirm Completed" button also fires the existing provisioning trigger (unchanged) — no separate provisioning UI.
 
 ## Out of scope
-- No changes to batch/dispatch business logic.
-- SuperAdmin sidebar untouched.
-- No warehouse edit UI added (view-only popover, since admins can't create warehouses anyway).
+
+- No changes to the checkout flow, Stripe webhook, technician assignment UI, marketplace, or dashboards.
+- No changes to the auto-provisioning logic itself — only *when* it fires (on Admin's Completed step, not SuperAdmin's Installed step).
