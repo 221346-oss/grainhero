@@ -48,10 +48,9 @@ type NavItem = {
 // Pinned = strict per-role muscle-memory list. Max 6 items per role + Home.
 // Everything else lives in More or on the dashboard tiles.
 const pinnedNav: NavItem[] = [
-  // Home — all roles
-  { name: "dashboard", label: "Home", to: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "manager", "technician"] },
+  // (Home lives in the topbar quick-tabs as "Overview" → /dashboard)
 
-  // Admin (6)
+  // Admin (5)
   { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["admin"] },
   { name: "silos-admin", label: "Silos", to: "/silos", icon: Warehouse, roles: ["admin"] },
   { name: "sensors-admin", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin"] },
@@ -85,7 +84,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
     label: "Insights",
     items: [
       { name: "analytics-more", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
-      { name: "ai-predictions-more", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"], badge: "AI" },
+      { name: "ai-predictions-more", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"] },
       { name: "activity-logs-more", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
       { name: "warehouses-more", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
       { name: "actuators-more", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager"] },
