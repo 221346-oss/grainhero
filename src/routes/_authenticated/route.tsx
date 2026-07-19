@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/rea
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
@@ -93,7 +93,6 @@ function AuthenticatedLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
           <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
-            <SidebarTrigger className="shrink-0" />
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
