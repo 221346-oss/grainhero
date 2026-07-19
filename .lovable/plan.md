@@ -1,78 +1,85 @@
-# Admin Dashboard — Nav Tabs + Filterable Blocks + Batch Table
 
-Inspired by the reference: compact top nav, KPI cards with inline filter chips (This month / Today etc.), an info-circle for descriptions instead of body copy, and a dense table for batches.
+# Admin Dashboard — Compact & Revenue-First Refresh
 
-## 1. Top nav tabs (contextual, customizable, max 5)
-New: `src/components/dashboards/DashTabs.tsx`.
-- Pill-style horizontal tabs rendered under the welcome banner. Active pill = emerald filled; inactive = ghost.
-- Admin default set (5): **Overview**, **Silos**, **Batches**, **Alerts**, **Marketplace**. Each tab = a filter for what section the dashboard highlights (no route change — swaps the middle band).
-- Customization: gear icon → dropdown lets user check up to 5 from a full catalog (Overview, Silos, Batches, Alerts, Actuators, Sensors, Buyers, Marketplace, Orders, Team). Selection persisted in `localStorage` under `gh_admin_tabs`.
-- Overflow: on `<sm` the tab bar becomes horizontally scrollable; gear button stays sticky right.
-- No lucide icons inside the pills (per your rule "min icons are not encouraged" for pills — text-only), gear icon is the only icon and sits outside the tab list.
+Scope: `src/components/dashboards/AdminDashboard.tsx` and its children only. No business logic changes.
 
-## 2. KPI Summary band (with per-card filter chip)
-New: `src/components/dashboards/KpiSummary.tsx` — replaces the current `KpiStrip`.
-- Header row: title "KPI Summary" + tiny `(i)` info-circle tooltip ("Live totals for your tenant") + right-side global range chip (`This month ▾`) → `Today / 7d / 30d / MTD / YTD` — persisted in URL search param `range`.
-- Each KPI tile:
-  - Small monotone icon in a soft emerald square (kept because it's the tile identity, not repeated inline).
-  - Label + `(i)` tooltip explaining the metric.
-  - Big number.
-  - Delta pill (`+35% vs last month`) computed from the selected range vs prior period.
-  - Whole tile deep-links to its detail page (Buyers/Warehouses/Batches/Silos/Sensors).
-- Tiles: Total Batches Value, Active Batches, Silos in Use, Sensors Online, Open Alerts. (5 tiles, matching image density.)
+## 1. KPI Summary — 35 / 65 split, revenue on top
 
-## 3. Insights & Performance band (mini-metric strip)
-New: `src/components/dashboards/InsightsStrip.tsx`.
-- 5 slim cards each with: title + `(i)`, big number, tiny two-row mini bar comparing **This period vs Last period** (emerald bar for current, muted bar for previous), delta % right-aligned.
-- Cards: **Pending QC**, **Rejected QC**, **Batches At-Risk** (risk_score ≥ 70), **Ready to Ship**, **Actuators On**.
-- Uses the same range filter from band 2.
+Replace the current 5-equal-tile grid with a two-column band:
 
-## 4. "Your batches" table (replaces batch card list)
-New: `src/components/dashboards/BatchesTable.tsx`.
-- Header: title + `(i)` + right-side inline search input + status multi-filter (`All / Storing / QC / Dispatched / Rejected`) + expand-to-fullscreen link to `/grain-batches`.
-- Columns: **Batch ID**, **Grain**, **Silo**, **Qty (kg)**, **Risk** (colored dot + score), **Status** (pill), **Actions** (row-hover arrow → batch detail).
-- Sticky header, zebra rows, `max-h-[420px]` scroll body, tabular-nums, `text-xs` dense.
-- Empty state: single line "No batches match".
-
-## 5. Right rail becomes secondary strip (kept minimal)
-Below the batch table, a 2-col strip:
-- **Silo occupancy** — existing bar-stack visual (already refactored), header adds `(i)`.
-- **Recent alerts** — dot + title list, header adds `(i)`.
-Actuators dot-grid drops into the Insights band as "Actuators On" mini, so it doesn't repeat here.
-
-## 6. Info tooltips (i-circle)
-Small helper `src/components/ui/InfoDot.tsx`:
-- `<InfoDot text="..." />` renders a 12px circle with `i`, shows the shadcn `Tooltip` on hover/focus.
-- Used in every band header and every KPI/insight label to replace body-copy descriptions.
-
-## 7. Final layout
 ```text
-[ Welcome banner (self-vanishes) ]
-[ Dash tabs: Overview · Silos · Batches · Alerts · Marketplace   ⚙ ]
-[ KPI Summary (i) ................................ range chip ]
-[ 5 KPI tiles with per-tile (i) + delta ]
-[ Insights & Performance (i) ..................... range chip ]
-[ 5 mini insight cards ]
-[ Your batches (i) ..... search | status filter | expand ]
-[ dense scrollable table ]
-[ Silos (i)  |  Alerts (i) ]
+┌──────────────────────────────┬───────────────────────────────────────────┐
+│ REVENUE (35%)                │ 4 mini KPI rows (65%)                     │
+│  PKR 128,400   +12% vs prev  │  Buyers  2      Warehouses 2              │
+│  Grain Professional · MTD    │  Active  3      Silos      4              │
+│  ▁▂▃▅▆▇  tiny sparkline      │  Sensors 3                                │
+└──────────────────────────────┴───────────────────────────────────────────┘
 ```
 
-## Interaction rules
-- Global `range` state lives in URL search params → shared by KPI Summary + Insights + Batches table date filter.
-- Tab click = local filter only. `Overview` shows all bands; other tabs hide bands that don't match (e.g. `Batches` collapses KPI Summary to just batch-relevant tiles and expands the table).
-- All numbers remain clickable → their canonical page with the same filter carried through search params.
+- Left card (35%): Revenue is the hero — big number in emerald (`text-emerald-600`), current plan chip, delta vs prev, 24px sparkline. Clickable → `/financials` (admin) or `/subscription`.
+- Right card (65%): Buyers, Warehouses, Active Batches, Silos, Sensors Online as **compact rows** (icon-less, label left · value right · delta pill). No large icon squares, no `(i)` per row — one `(i)` on the card header. Each row is a `<Link>` with hover ring.
+- Range chip stays in the header row.
+- Removes ~40% of vertical space vs the current grid.
 
-## Files
-- add: `src/components/ui/InfoDot.tsx`
-- add: `src/components/dashboards/DashTabs.tsx`
-- add: `src/components/dashboards/KpiSummary.tsx`
-- add: `src/components/dashboards/InsightsStrip.tsx`
-- add: `src/components/dashboards/BatchesTable.tsx`
-- edit: `src/components/dashboards/AdminDashboard.tsx` — new composition, drop old `KpiStrip`, `RecentBatchesCard`, `ActuatorsCard`, `InstallOrdersMini`, `RevenueMini` from this page (they remain available for other roles/pages).
-- edit: `src/lib/dashboard-extras.functions.ts` — accept `range` arg, add previous-period counts for delta %, add QC/at-risk/ready-to-ship counters.
-- keep: `SilosOccupancyCard`, `RecentAlertsCard` (already dense visuals).
+## 2. Insights & Performance — diversify, theme-safe colors
 
-## Notes
-- Icons stay only where they're identity (KPI tile leading icon, gear for tab settings, action arrow). No decorative icons in pills, table cells, or tooltip triggers.
-- Everything continues to respect dark mode via existing tokens (bg-card, border-border/60, emerald-500 accent).
+Current strip is all batch-derived and uses red/yellow. Rebuild with 4 tenant-wide insights, each with a subtle emerald/slate palette (no raw red/yellow):
+
+| Tile | Metric | Source | Accent |
+|---|---|---|---|
+| QC Health | pending + rejected ratio | grain_batches | emerald / muted |
+| Storage Risk | at-risk batches vs total | grain_batches + alerts | amber via `text-amber-600` sparingly on number only |
+| Fulfillment | ready-to-ship / dispatched | batches + orders | emerald |
+| Automation | actuators on / total + open alerts | actuators + alerts | slate + emerald dot |
+
+- Layout: 4 columns on lg, 2 on sm, single card height ~72px.
+- Colors: value colored, card stays neutral (`bg-card`, `border`). Use `text-emerald-600`, `text-amber-600`, `text-slate-500` only. No `bg-red-*`, `bg-yellow-*`.
+- Each tile deep-links to its filtered page (e.g. QC → `/grain-batches?status=qc_pending`).
+
+## 3. Top Nav Tabs → icon buttons in the app topbar
+
+Move `DashTabs` out of the dashboard body and into the existing topbar next to the search bar.
+
+- New component `src/components/app/DashboardQuickTabs.tsx` rendered by `AppSidebar`'s header/topbar area (or the header slot the search lives in).
+- Rendered as **icon-only pill buttons**; label appears on hover/focus as a tooltip and inline when the tab is active (image ref 45 behavior).
+- Max 5, still customizable via the existing gear popover.
+- Icons: Overview `LayoutDashboard`, Silos `Container`, Batches `Wheat`, Alerts `Bell`, Marketplace `Store`, Sensors `Radio`, Actuators `ToggleRight`, Buyers `Users`, Orders `Package`, Team `UserCog`.
+- Only shown on `/dashboard` route (hide elsewhere).
+
+## 4. AI section highlighted in the same tab bar
+
+Add a separate, always-visible AI cluster to the right of the custom tabs — this is the primary selling point:
+
+```text
+[Overview] [Silos] [Batches] [Alerts] [Marketplace]  │  ✨ AI ▸ [Predictions] [Spoilage] [Insights]
+```
+
+- Rendered with an emerald gradient chip (`bg-gradient-to-r from-emerald-500 to-emerald-600 text-white`) and a `Sparkles` icon.
+- Clicking each AI tab routes to the actual AI page (`/ai-predictions`, `/ai-spoilage-detection`, `/ai-insights`).
+
+## 5. "Page-loads-inside-dashboard" feel
+
+When a non-Overview tab is selected:
+
+- Instead of navigating away, keep the user on `/dashboard` and swap the dashboard body for the target page's **existing skeleton** for ~200ms then render an inline embed of that page's primary panel (reuse the route's default component through a lightweight `<PageEmbed name="silos" />` wrapper that renders the same query + table used by the dedicated route).
+- Overview tab renders the full dashboard.
+- Clicking the tab a second time (or a "Open full page ↗" link in the embed header) navigates to the standalone route.
+- Uses the existing skeletons from `src/components/app/skeletons.tsx` (`SilosSkeleton`, `BatchesSkeleton`, etc.) during the transition — no new skeletons needed.
+
+## 6. Files touched
+
+- Edit: `src/components/dashboards/KpiSummary.tsx` — rewrite to 35/65 split.
+- Edit: `src/components/dashboards/InsightsStrip.tsx` — 4 diversified tiles, theme colors.
+- Edit: `src/components/dashboards/AdminDashboard.tsx` — remove old `DashTabs`, add `PageEmbed` slot.
+- New: `src/components/app/DashboardQuickTabs.tsx` — icon tabs + AI cluster, mounted in topbar.
+- New: `src/components/dashboards/PageEmbed.tsx` — maps tab key → embedded panel + skeleton.
+- Edit: `src/components/app/AppSidebar.tsx` (topbar/header area) — mount `DashboardQuickTabs` next to search on `/dashboard`.
+- Data: extend `getDashboardExtras` return with `revenueMtd`, `revenueSpark` (12-point series) and `plan.name` so revenue card has real numbers without extra requests.
+
+## Technical notes
+
+- Sparkline: inline SVG polyline, no new deps.
+- Tooltips already provided by `TooltipProvider` in `AdminDashboard`.
+- Revenue value formatting via `Intl.NumberFormat('en-PK', { style:'currency', currency:'PKR', maximumFractionDigits:0 })`.
+- All colors stay within existing tokens: `emerald-500/600`, `amber-600` (numbers only), `slate-500`, `border`, `bg-card`, `muted`.
+- No changes to routes, sidebar links, or server functions beyond the two extra fields on `getDashboardExtras`.

@@ -1,66 +1,124 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
-import { RangeChip, type RangeKey } from "./RangeChip";
+import { ShieldCheck, AlertTriangle, Truck, Cpu, type LucideIcon } from "lucide-react";
 
-type Card = { key: string; label: string; value: number; to: string; info: string; tone: "amber" | "red" | "emerald" | "sky" | "violet"; prevPct?: number };
+type Tile = {
+  key: string;
+  label: string;
+  value: string;
+  hint: string;
+  to: string;
+  info: string;
+  icon: LucideIcon;
+  tone: "emerald" | "amber" | "slate";
+  ratio: number; // 0..1 for the tiny progress bar
+};
 
-const toneMap: Record<Card["tone"], { bar: string; text: string; bg: string }> = {
-  amber:   { bar: "bg-amber-400",   text: "text-amber-700",   bg: "bg-amber-50/60 dark:bg-amber-500/5" },
-  red:     { bar: "bg-red-400",     text: "text-red-700",     bg: "bg-red-50/60 dark:bg-red-500/5" },
-  emerald: { bar: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50/60 dark:bg-emerald-500/5" },
-  sky:     { bar: "bg-sky-500",     text: "text-sky-700",     bg: "bg-sky-50/60 dark:bg-sky-500/5" },
-  violet:  { bar: "bg-violet-500",  text: "text-violet-700",  bg: "bg-violet-50/60 dark:bg-violet-500/5" },
+const toneVal: Record<Tile["tone"], string> = {
+  emerald: "text-emerald-600",
+  amber: "text-amber-600",
+  slate: "text-slate-600 dark:text-slate-300",
+};
+const toneBar: Record<Tile["tone"], string> = {
+  emerald: "bg-emerald-500",
+  amber: "bg-amber-500",
+  slate: "bg-slate-400",
 };
 
 export function InsightsStrip({
-  range, onRange,
   insights,
+  ordersOpen,
+  alertsOpen,
 }: {
-  range: RangeKey;
-  onRange: (v: RangeKey) => void;
   insights?: { pendingQC: number; rejectedQC: number; atRisk: number; readyToShip: number; actuatorsOn: number; actuatorsTotal: number };
+  ordersOpen?: number;
+  alertsOpen?: number;
 }) {
   const i = insights ?? { pendingQC: 0, rejectedQC: 0, atRisk: 0, readyToShip: 0, actuatorsOn: 0, actuatorsTotal: 0 };
-  const cards: Card[] = [
-    { key: "pending", label: "Pending QC",    value: i.pendingQC,   to: "/grain-batches", info: "Batches awaiting quality inspection.", tone: "amber", prevPct: 70 },
-    { key: "rejected",label: "Rejected QC",   value: i.rejectedQC,  to: "/grain-batches", info: "Batches that failed the last quality check.", tone: "red", prevPct: 50 },
-    { key: "risk",    label: "At-Risk",       value: i.atRisk,      to: "/grain-batches", info: "Batches with risk score above 70.", tone: "amber", prevPct: 60 },
-    { key: "ready",   label: "Ready to Ship", value: i.readyToShip, to: "/grain-batches", info: "Batches ready for dispatch.", tone: "emerald", prevPct: 80 },
-    { key: "act",     label: "Actuators On",  value: i.actuatorsOn, to: "/actuators",     info: `Actuators currently active out of ${i.actuatorsTotal}.`, tone: "sky", prevPct: 65 },
+  const qcTotal = Math.max(1, i.pendingQC + i.rejectedQC + i.readyToShip);
+  const qcHealth = Math.round((i.readyToShip / qcTotal) * 100);
+  const actRatio = i.actuatorsTotal ? i.actuatorsOn / i.actuatorsTotal : 0;
+
+  const tiles: Tile[] = [
+    {
+      key: "qc",
+      label: "QC Health",
+      value: `${qcHealth}%`,
+      hint: `${i.readyToShip} ready · ${i.pendingQC} pending`,
+      to: "/grain-batches",
+      info: "Share of batches passing quality out of pending + rejected + ready.",
+      icon: ShieldCheck,
+      tone: qcHealth >= 70 ? "emerald" : "amber",
+      ratio: qcHealth / 100,
+    },
+    {
+      key: "risk",
+      label: "Storage Risk",
+      value: String(i.atRisk),
+      hint: `${alertsOpen ?? 0} open alerts`,
+      to: "/grain-alerts",
+      info: "Batches with risk score ≥ 70, cross-checked with open alerts.",
+      icon: AlertTriangle,
+      tone: i.atRisk > 0 ? "amber" : "emerald",
+      ratio: Math.min(1, i.atRisk / 10),
+    },
+    {
+      key: "fulfil",
+      label: "Fulfillment",
+      value: String(i.readyToShip),
+      hint: `${ordersOpen ?? 0} orders open`,
+      to: "/orders",
+      info: "Batches ready to ship and orders awaiting dispatch.",
+      icon: Truck,
+      tone: "emerald",
+      ratio: Math.min(1, i.readyToShip / Math.max(1, i.readyToShip + (ordersOpen ?? 0))),
+    },
+    {
+      key: "auto",
+      label: "Automation",
+      value: `${i.actuatorsOn}/${i.actuatorsTotal}`,
+      hint: "Actuators currently active",
+      to: "/actuators",
+      info: "Live actuators reporting an 'on' state versus total provisioned.",
+      icon: Cpu,
+      tone: "slate",
+      ratio: actRatio,
+    },
   ];
+
   return (
     <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">Insights & Performance</h2>
-          <InfoDot text="Operational signals across your storage and dispatch pipeline." />
+          <InfoDot text="Cross-cutting signals across quality, risk, fulfillment and automation." />
         </div>
-        <RangeChip value={range} onChange={onRange} />
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-        {cards.map((c) => {
-          const tone = toneMap[c.tone];
-          const curPct = Math.min(100, (c.value / Math.max(1, c.value + 4)) * 100);
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        {tiles.map((t) => {
+          const Icon = t.icon;
           return (
             <Link
-              key={c.key}
-              to={c.to}
-              className={`rounded-lg border p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 ${tone.bg}`}
+              key={t.key}
+              to={t.to}
+              className="rounded-lg border bg-card px-3 py-2.5 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground truncate">{c.label}</span>
-                <InfoDot text={c.info} />
+                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Icon className="h-3.5 w-3.5 text-emerald-600" />
+                  {t.label}
+                </span>
+                <InfoDot text={t.info} />
               </div>
-              <div className={`text-2xl font-bold tabular-nums leading-tight ${tone.text}`}>{c.value}</div>
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] w-8 text-muted-foreground">now</span>
-                  <div className="flex-1 h-1.5 rounded bg-muted overflow-hidden"><div className={`h-full ${tone.bar}`} style={{ width: `${curPct}%` }} /></div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] w-8 text-muted-foreground">prev</span>
-                  <div className="flex-1 h-1.5 rounded bg-muted overflow-hidden"><div className="h-full bg-muted-foreground/30" style={{ width: `${c.prevPct}%` }} /></div>
-                </div>
+              <div className="mt-1 flex items-baseline justify-between gap-2">
+                <span className={`text-xl font-bold tabular-nums leading-none ${toneVal[t.tone]}`}>{t.value}</span>
+                <span className="text-[10px] text-muted-foreground truncate">{t.hint}</span>
+              </div>
+              <div className="mt-2 h-1 rounded bg-muted overflow-hidden">
+                <div
+                  className={`h-full ${toneBar[t.tone]}`}
+                  style={{ width: `${Math.max(4, Math.round(t.ratio * 100))}%` }}
+                />
               </div>
             </Link>
           );

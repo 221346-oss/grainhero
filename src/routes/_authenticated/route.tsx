@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
+import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
@@ -95,6 +96,7 @@ function AuthenticatedLayout() {
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
+            <DashboardQuickTabs />
             {/* Dark / Light toggle */}
             <button
               type="button"
