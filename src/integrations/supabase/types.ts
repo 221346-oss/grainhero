@@ -6093,6 +6093,8 @@ export type Database = {
           name: string
           next_inspection_date: string | null
           notes: string | null
+          origin_device_serial: string | null
+          origin_order_id: string | null
           sensors: Json | null
           silo_id: string
           statistics: Json | null
@@ -6126,6 +6128,8 @@ export type Database = {
           name: string
           next_inspection_date?: string | null
           notes?: string | null
+          origin_device_serial?: string | null
+          origin_order_id?: string | null
           sensors?: Json | null
           silo_id: string
           statistics?: Json | null
@@ -6159,6 +6163,8 @@ export type Database = {
           name?: string
           next_inspection_date?: string | null
           notes?: string | null
+          origin_device_serial?: string | null
+          origin_order_id?: string | null
           sensors?: Json | null
           silo_id?: string
           statistics?: Json | null
@@ -6191,6 +6197,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "silos_origin_order_id_fkey"
+            columns: ["origin_order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
             referencedColumns: ["id"]
           },
           {
@@ -6727,6 +6740,7 @@ export type Database = {
           manager_id: string | null
           name: string
           notes: string | null
+          origin_order_id: string | null
           statistics: Json | null
           status: Database["public"]["Enums"]["device_status"] | null
           tags: string[] | null
@@ -6749,6 +6763,7 @@ export type Database = {
           manager_id?: string | null
           name: string
           notes?: string | null
+          origin_order_id?: string | null
           statistics?: Json | null
           status?: Database["public"]["Enums"]["device_status"] | null
           tags?: string[] | null
@@ -6771,6 +6786,7 @@ export type Database = {
           manager_id?: string | null
           name?: string
           notes?: string | null
+          origin_order_id?: string | null
           statistics?: Json | null
           status?: Database["public"]["Enums"]["device_status"] | null
           tags?: string[] | null
@@ -6801,6 +6817,13 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouses_origin_order_id_fkey"
+            columns: ["origin_order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
             referencedColumns: ["id"]
           },
           {

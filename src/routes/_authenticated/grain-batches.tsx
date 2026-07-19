@@ -26,6 +26,7 @@ import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
   dispatchGrainBatch, logSpoilageEvent, listSilos, listBuyers,
 } from "@/lib/operations.functions";
+import { listSuppliers } from "@/lib/suppliers.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-batches")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -88,7 +89,9 @@ type Form = {
   moisture_content: string;
   protein_content: string;
   test_weight: string;
-  farmer_name: string;
+  supplier_id: string;
+  source_kind: "external" | "own_farm" | "internal_transfer" | "anonymous";
+  farmer_name: string; // fallback / anonymous label
   farmer_contact: string;
   source_location: string;
   harvest_date: string;
@@ -103,6 +106,7 @@ type Form = {
 const emptyForm: Form = {
   grain_type: "", variety: "", grade: "Standard", quantity_kg: "", silo_id: "",
   moisture_content: "", protein_content: "", test_weight: "",
+  supplier_id: "", source_kind: "external",
   farmer_name: "", farmer_contact: "", source_location: "",
   harvest_date: "", expected_dispatch_date: "",
   purchase_price_per_kg: "", intake_temperature: "", intake_humidity: "",
@@ -144,6 +148,7 @@ function GrainBatchesPage() {
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
   const listBuyerFn = useServerFn(listBuyers);
+  const listSupFn = useServerFn(listSuppliers);
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
   const dispatchFn = useServerFn(dispatchGrainBatch);
@@ -158,6 +163,9 @@ function GrainBatchesPage() {
   const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const silos = silosData ?? [];
   const buyers = buyersData ?? [];
+  const { data: suppliersData } = useQuery({ queryKey: ["suppliers-mini"], queryFn: () => listSupFn({ data: {} }) });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const suppliers: any[] = (suppliersData?.suppliers ?? []) as any[];
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState(searchStatus ?? "all");
@@ -216,6 +224,9 @@ function GrainBatchesPage() {
       protein_content: f.protein_content ? Number(f.protein_content) : null,
       test_weight: f.test_weight ? Number(f.test_weight) : null,
       farmer_name: f.farmer_name.trim() || null,
+      supplier_id: f.supplier_id || null,
+      source_kind: f.source_kind,
+      unit_cost: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
       farmer_contact: f.farmer_contact.trim() || null,
       source_location: f.source_location.trim() || null,
       harvest_date: f.harvest_date || null,
@@ -311,6 +322,8 @@ function GrainBatchesPage() {
       grade: b.grade ?? "Standard",
       quantity_kg: String(b.quantity_kg ?? ""),
       silo_id: b.silos?.id ?? "",
+      supplier_id: (b as { supplier_id?: string | null }).supplier_id ?? "",
+      source_kind: ((b as { source_kind?: string }).source_kind as Form["source_kind"]) ?? "external",
       moisture_content: b.moisture_content != null ? String(b.moisture_content) : "",
       protein_content: b.protein_content != null ? String(b.protein_content) : "",
       test_weight: b.test_weight != null ? String(b.test_weight) : "",
@@ -521,12 +534,36 @@ function GrainBatchesPage() {
                 <Input type="number" step="0.01" value={form.purchase_price_per_kg} onChange={(e) => setForm({ ...form, purchase_price_per_kg: e.target.value })} />
               </div>
               <div>
-                <Label>Farmer name</Label>
-                <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} />
+                <Label>Source kind</Label>
+                <Select value={form.source_kind} onValueChange={(v) => setForm({ ...form, source_kind: v as Form["source_kind"], supplier_id: "" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="external">External supplier</SelectItem>
+                    <SelectItem value="own_farm">Own farm / harvest</SelectItem>
+                    <SelectItem value="internal_transfer">Internal transfer</SelectItem>
+                    <SelectItem value="anonymous">Anonymous / walk-in</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label>Farmer contact</Label>
-                <Input value={form.farmer_contact} onChange={(e) => setForm({ ...form, farmer_contact: e.target.value })} />
+                <Label>Supplier</Label>
+                {form.source_kind === "anonymous" ? (
+                  <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} placeholder="Walk-in name (optional)" />
+                ) : (
+                  <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Pick from suppliers" /></SelectTrigger>
+                    <SelectContent>
+                      {suppliers.filter((s) => s.kind === form.source_kind).map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Link to="/suppliers" className="text-[10px] text-muted-foreground hover:text-emerald-600 underline">Manage suppliers →</Link>
+              </div>
+              <div>
+                <Label>Contact (optional)</Label>
+                <Input value={form.farmer_contact} onChange={(e) => setForm({ ...form, farmer_contact: e.target.value })} placeholder="Override contact" />
               </div>
               <div className="sm:col-span-2">
                 <Label>Source location</Label>
