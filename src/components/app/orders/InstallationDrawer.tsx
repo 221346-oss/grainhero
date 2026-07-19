@@ -43,8 +43,8 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const events = ((q.data as any)?.events ?? []) as Array<Record<string, unknown>>;
   const { stage, blocked, blockerNote, history } = deriveStage(order, install, events);
   const canAdvanceAs = {
-    superAdmin: !!isSuper.data,
-    admin: !!myProfile.data?.id && myProfile.data.id === adminId,
+    superAdmin: !!isSuper.isSuperAdmin,
+    admin: !!(myProfile.data as any)?.profile?.id && (myProfile.data as any)?.profile?.id === adminId,
   };
 
   // form state
