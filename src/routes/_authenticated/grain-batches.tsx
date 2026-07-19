@@ -163,9 +163,13 @@ function GrainBatchesPage() {
   const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const silos = silosData ?? [];
   const buyers = buyersData ?? [];
-  const { data: suppliersData } = useQuery({ queryKey: ["suppliers-mini"], queryFn: () => listSupFn({ data: {} }) });
+  const suppliersQ = useQuery({
+    queryKey: ["suppliers-mini"],
+    queryFn: () => listSupFn({ data: {} }),
+    retry: 1,
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const suppliers: any[] = (suppliersData?.suppliers ?? []) as any[];
+  const suppliers: any[] = (suppliersQ.data?.suppliers ?? []) as any[];
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState(searchStatus ?? "all");
@@ -471,7 +475,23 @@ function GrainBatchesPage() {
               {form.id ? "Update batch details." : "Batch ID and QR code are generated automatically on intake."}
             </DialogDescription>
           </DialogHeader>
-          <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMut.mutate(form); }}>
+          <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => {
+            e.preventDefault();
+            // Source validation
+            if (form.source_kind === "anonymous") {
+              if (!form.farmer_name.trim()) { toast.error("Enter a walk-in name for anonymous source"); return; }
+            } else if (!form.supplier_id) {
+              toast.error("Pick a supplier or switch source to Anonymous");
+              return;
+            }
+            if (!form.silo_id) { toast.error("Pick a silo"); return; }
+            if (!form.grain_type) { toast.error("Pick a grain type"); return; }
+            if (!form.quantity_kg || Number(form.quantity_kg) <= 0) { toast.error("Enter a quantity"); return; }
+            if (!form.purchase_price_per_kg || Number(form.purchase_price_per_kg) <= 0) {
+              toast.error("Purchase price / kg is required for cost tracking"); return;
+            }
+            saveMut.mutate(form);
+          }}>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <Label>Grain type *</Label>
@@ -546,20 +566,42 @@ function GrainBatchesPage() {
                 </Select>
               </div>
               <div>
-                <Label>Supplier</Label>
+                <Label>Supplier <span className="text-red-500">*</span></Label>
                 {form.source_kind === "anonymous" ? (
-                  <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} placeholder="Walk-in name (optional)" />
+                  <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} placeholder="Walk-in name (required)" required />
+                ) : suppliersQ.isLoading ? (
+                  <div className="h-9 flex items-center gap-2 rounded-md border border-input px-3 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading suppliers…
+                  </div>
+                ) : suppliersQ.isError ? (
+                  <div className="h-9 flex items-center gap-2 rounded-md border border-red-500/40 bg-red-500/5 px-3 text-xs text-red-600">
+                    <span className="flex-1">Failed to load suppliers</span>
+                    <button type="button" onClick={() => suppliersQ.refetch()} className="underline hover:text-red-700">Retry</button>
+                  </div>
                 ) : (
-                  <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Pick from suppliers" /></SelectTrigger>
-                    <SelectContent>
-                      {suppliers.filter((s) => s.kind === form.source_kind).map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  (() => {
+                    const options = suppliers.filter((s) => s.kind === form.source_kind);
+                    if (options.length === 0) {
+                      return (
+                        <div className="h-9 flex items-center gap-2 rounded-md border border-dashed border-input px-3 text-xs text-muted-foreground">
+                          No {form.source_kind.replace("_", " ")} suppliers.
+                          <Link to="/suppliers" className="text-emerald-600 underline">Add one →</Link>
+                        </div>
+                      );
+                    }
+                    return (
+                      <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Pick from suppliers" /></SelectTrigger>
+                        <SelectContent>
+                          {options.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  })()
                 )}
-                <Link to="/suppliers" className="text-[10px] text-muted-foreground hover:text-emerald-600 underline">Manage suppliers →</Link>
+                <Link to="/suppliers" className="text-[10px] text-muted-foreground hover:text-emerald-600 underline mt-1 inline-block">Manage suppliers →</Link>
               </div>
               <div>
                 <Label>Contact (optional)</Label>

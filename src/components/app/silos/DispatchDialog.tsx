@@ -61,24 +61,18 @@ export function DispatchDialog({
   const priceNum = Number(price) || 0;
   const total = qtyNum * priceNum;
 
-  // FIFO preview
-  const preview: { batch_id: string; qty: number }[] = [];
+  // FIFO preview + per-lot cost
+  const preview: { batch_id: string; qty: number; unit_cost: number | null; line_cost: number | null }[] = [];
   let need = qtyNum;
+  let costed = 0; let costSum = 0;
   for (const b of filtered) {
     if (need <= 0) break;
     const take = Math.min(need, Number(b.remaining_kg));
-    preview.push({ batch_id: b.batch_id, qty: take });
+    const uc = b.purchase_price_per_kg != null ? Number(b.purchase_price_per_kg) : null;
+    const line = uc != null ? uc * take : null;
+    preview.push({ batch_id: b.batch_id, qty: take, unit_cost: uc, line_cost: line });
+    if (uc != null) { costed += take; costSum += uc * take; }
     need -= take;
-  }
-
-  // avg cost preview
-  let costed = 0; let costSum = 0;
-  let n = qtyNum;
-  for (const b of filtered) {
-    if (n <= 0) break;
-    const take = Math.min(n, Number(b.remaining_kg));
-    if (b.purchase_price_per_kg != null) { costed += take; costSum += Number(b.purchase_price_per_kg) * take; }
-    n -= take;
   }
   const avgCost = costed > 0 ? costSum / costed : null;
   const profit = avgCost != null ? total - avgCost * qtyNum : null;
@@ -219,14 +213,23 @@ export function DispatchDialog({
                 )}
                 {preview.length > 0 && (
                   <div className="pt-2 border-t border-border/50">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">FIFO draw</div>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">FIFO cost breakdown</div>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${stage === "in_transit" ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" : "bg-slate-500/15 text-slate-700 dark:text-slate-300"}`}>
+                        {stage === "in_transit" ? "Dispatching now" : "Sold · on premises"}
+                      </span>
+                    </div>
+                    <div className="grid gap-1">
                       {preview.map((p) => (
-                        <span key={p.batch_id} className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 text-[10px]">
-                          {p.batch_id} · {p.qty.toLocaleString()} kg
-                        </span>
+                        <div key={p.batch_id} className="flex items-center justify-between rounded-md bg-background/60 border border-border/60 px-2 py-1 text-[11px]">
+                          <span className="font-mono text-emerald-700 dark:text-emerald-400">{p.batch_id}</span>
+                          <span className="tabular-nums text-muted-foreground">{p.qty.toLocaleString()} kg</span>
+                          <span className="tabular-nums">{p.unit_cost != null ? `${currency} ${p.unit_cost.toFixed(2)}/kg` : <span className="text-amber-600">no cost</span>}</span>
+                          <span className="tabular-nums font-medium">{p.line_cost != null ? `${currency} ${p.line_cost.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "—"}</span>
+                        </div>
                       ))}
                     </div>
+                    {need > 0 && <div className="text-[10px] text-red-600 mt-1">Short by {need.toLocaleString()} kg — reduce quantity.</div>}
                   </div>
                 )}
               </div>
