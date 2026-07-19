@@ -12,18 +12,24 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
     await assertSuperAdmin(context.supabase, context.userId);
     const supabaseAdmin = context.supabase;
     const [profiles, roles, batches, silos, alerts, subs, logs] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, admin_id, created_at, business_type, blocked", { count: "exact" }),
+      supabaseAdmin.from("profiles").select("id, admin_id, subscription_plan, created_at, business_type, blocked", { count: "exact" }),
       supabaseAdmin.from("user_roles").select("role, user_id"),
       supabaseAdmin.from("grain_batches").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("silos").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("grain_alerts").select("id, priority", { count: "exact" }),
-      supabaseAdmin.from("subscriptions").select("id, status, plan_name, price_per_month"),
+      supabaseAdmin.from("subscriptions").select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at"),
       supabaseAdmin.from("activity_logs").select("id, severity", { count: "exact" }),
     ]);
     const tenants = new Set((profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id));
     const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.priority === "critical").length;
-    const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active");
-    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.price_per_month) || 0), 0);
+    const { computeMrr } = await import("@/lib/plan-pricing.server");
+    const mrrResult = await computeMrr({
+      supabase: supabaseAdmin,
+      subscriptions: subs.data ?? [],
+      profiles: profiles.data ?? [],
+    });
+    const mrr = mrrResult.mrr;
+    const activeSubs = mrrResult.entries;
     const roleDist: Record<string, number> = {};
     for (const r of roles.data ?? []) roleDist[r.role] = (roleDist[r.role] ?? 0) + 1;
     return {
