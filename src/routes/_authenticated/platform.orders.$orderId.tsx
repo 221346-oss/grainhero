@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { ArrowLeft, Truck, UserCheck, XCircle, Cpu } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { HardwareOrderThread } from "@/components/app/orders/HardwareOrderThread";
 
 export const Route = createFileRoute("/_authenticated/platform/orders/$orderId")({
   head: () => ({ meta: [{ title: "Order detail — Platform" }] }),
@@ -179,6 +180,8 @@ function OrderDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <HardwareOrderThread orderId={orderId} as="super_admin" />
     </div>
   );
 }
