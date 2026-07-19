@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Thermometer, Droplets, Wind,
-  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff,
+  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff, Truck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 
 export const Route = createFileRoute("/_authenticated/silos")({
   component: SilosPage,
@@ -247,10 +248,22 @@ function SilosPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((s) => (
-            <SiloCard key={s.id} silo={s} onView={() => { setSelected(s); setViewOpen(true); }} onEdit={() => openEdit(s)} onDelete={() => setDeleteId(s.id)} />
+            <SiloCard key={s.id} silo={s}
+              onView={() => { setSelected(s); setViewOpen(true); }}
+              onEdit={() => openEdit(s)}
+              onDelete={() => setDeleteId(s.id)}
+              onDispatch={() => { setDispatchSilo(s); setDispatchOpen(true); }}
+            />
           ))}
         </div>
       )}
+
+      <DispatchDialog
+        open={dispatchOpen}
+        onOpenChange={setDispatchOpen}
+        siloId={dispatchSilo?.id ?? null}
+        siloName={dispatchSilo?.name}
+      />
 
       {/* Create / Edit dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setForm(emptyForm); }}>
