@@ -1,5 +1,6 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
@@ -125,10 +126,27 @@ function AuthenticatedLayout() {
             </Link>
           </header>
           <main className="flex-1 overflow-y-auto overflow-x-hidden">
-            <Outlet />
+            <AnimatedOutlet />
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+function AnimatedOutlet() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+      >
+        <Outlet />
+      </motion.div>
+    </AnimatePresence>
   );
 }

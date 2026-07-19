@@ -66,8 +66,8 @@ export function KpiSummary({
         <RangeChip value={range} onChange={onRange} />
       </div>
 
-      <div className="grid gap-2 md:grid-cols-[35%_1fr]">
-        {/* Revenue hero (35%) */}
+      <div className="grid gap-2 md:grid-cols-[1fr_35%]">
+        {/* Revenue hero (65%, LEFT) */}
         <Link
           to="/subscription"
           className="group rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between"
@@ -81,7 +81,7 @@ export function KpiSummary({
             )}
           </div>
           <div className="mt-1">
-            <div className="text-2xl md:text-3xl font-bold tabular-nums text-emerald-600 leading-tight">
+            <div className="text-3xl md:text-4xl font-bold tabular-nums text-emerald-600 leading-tight">
               {fmtPKR.format(rev)}
             </div>
             <div className="flex items-center justify-between mt-0.5">
@@ -94,7 +94,7 @@ export function KpiSummary({
           </div>
         </Link>
 
-        {/* Compact KPI list (65%) */}
+        {/* Compact KPI list (35%, RIGHT) */}
         <div className="rounded-lg border bg-card overflow-hidden">
           <ul className="divide-y">
             {rows.map((r) => {
@@ -103,7 +103,7 @@ export function KpiSummary({
                 <li key={r.label}>
                   <Link
                     to={r.to}
-                    className="flex items-center justify-between px-3 py-2 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
+                    className="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
                   >
                     <span className="text-xs text-foreground">{r.label}</span>
                     <div className="flex items-center gap-2">
