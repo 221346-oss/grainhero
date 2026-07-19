@@ -12,19 +12,19 @@ function useExtras() {
 }
 
 function riskColor(score: number) {
-  if (score >= 70) return "bg-red-100 text-red-800";
-  if (score >= 40) return "bg-amber-100 text-amber-800";
-  return "bg-emerald-100 text-emerald-800";
+  if (score >= 70) return "bg-red-500";
+  if (score >= 40) return "bg-amber-500";
+  return "bg-emerald-500";
 }
 
-function priorityColor(p: string) {
+function priorityDot(p: string) {
   return p === "critical"
-    ? "bg-red-100 text-red-800"
+    ? "bg-red-500"
     : p === "high"
-      ? "bg-orange-100 text-orange-800"
+      ? "bg-orange-500"
       : p === "medium"
-        ? "bg-amber-100 text-amber-800"
-        : "bg-slate-100 text-slate-700";
+        ? "bg-amber-500"
+        : "bg-slate-400";
 }
 
 function CardHeaderLink({ to, title, count }: { to: string; title: string; count?: number }) {
@@ -91,7 +91,7 @@ export function TeamCard() {
   const rows = data?.team ?? [];
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/team-management" title="Team" description="Recent activity" count={rows.length} />
+      <CardHeaderLink to="/team-management" title="Team" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No members yet</p>}
         {rows.slice(0, 4).map((u) => (
