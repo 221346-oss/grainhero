@@ -2661,6 +2661,7 @@ export type Database = {
           insured: boolean | null
           intake_conditions: Json | null
           intake_date: string | null
+          intake_source: string | null
           last_risk_assessment: string | null
           moisture_content: number | null
           net_weight_kg: number | null
@@ -2673,6 +2674,7 @@ export type Database = {
           quality_snapshot: Json | null
           quality_tests: Json | null
           quantity_kg: number
+          remaining_kg: number | null
           revenue: number | null
           risk_score: number | null
           sell_price_per_kg: number | null
@@ -2683,6 +2685,8 @@ export type Database = {
           spoilage_label: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at: string | null
           status: Database["public"]["Enums"]["batch_status"] | null
+          supplier_contact: string | null
+          supplier_name: string | null
           tags: string[] | null
           test_weight: number | null
           total_purchase_value: number | null
@@ -2714,6 +2718,7 @@ export type Database = {
           insured?: boolean | null
           intake_conditions?: Json | null
           intake_date?: string | null
+          intake_source?: string | null
           last_risk_assessment?: string | null
           moisture_content?: number | null
           net_weight_kg?: number | null
@@ -2726,6 +2731,7 @@ export type Database = {
           quality_snapshot?: Json | null
           quality_tests?: Json | null
           quantity_kg: number
+          remaining_kg?: number | null
           revenue?: number | null
           risk_score?: number | null
           sell_price_per_kg?: number | null
@@ -2736,6 +2742,8 @@ export type Database = {
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
           tags?: string[] | null
           test_weight?: number | null
           total_purchase_value?: number | null
@@ -2767,6 +2775,7 @@ export type Database = {
           insured?: boolean | null
           intake_conditions?: Json | null
           intake_date?: string | null
+          intake_source?: string | null
           last_risk_assessment?: string | null
           moisture_content?: number | null
           net_weight_kg?: number | null
@@ -2779,6 +2788,7 @@ export type Database = {
           quality_snapshot?: Json | null
           quality_tests?: Json | null
           quantity_kg?: number
+          remaining_kg?: number | null
           revenue?: number | null
           risk_score?: number | null
           sell_price_per_kg?: number | null
@@ -2789,6 +2799,8 @@ export type Database = {
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
+          supplier_contact?: string | null
+          supplier_name?: string | null
           tags?: string[] | null
           test_weight?: number | null
           total_purchase_value?: number | null
@@ -2842,6 +2854,171 @@ export type Database = {
           },
           {
             foreignKeyName: "grain_batches_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grain_dispatch_allocations: {
+        Row: {
+          batch_id: string
+          created_at: string
+          dispatch_id: string
+          id: string
+          qty_kg: number
+          unit_cost: number | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          dispatch_id: string
+          id?: string
+          qty_kg: number
+          unit_cost?: number | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          dispatch_id?: string
+          id?: string
+          qty_kg?: number
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_dispatch_allocations_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatch_allocations_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_dispatches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grain_dispatches: {
+        Row: {
+          admin_id: string
+          avg_unit_cost: number | null
+          buyer_id: string | null
+          buyer_order_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          destination: string | null
+          dispatch_number: string
+          dispatched_at: string | null
+          driver_contact: string | null
+          driver_name: string | null
+          expected_date: string | null
+          grain_type: string
+          id: string
+          notes: string | null
+          price_per_kg: number
+          profit: number | null
+          silo_id: string
+          status: string
+          total_amount: number
+          total_cost: number | null
+          total_qty_kg: number
+          updated_at: string
+          vehicle_number: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          admin_id: string
+          avg_unit_cost?: number | null
+          buyer_id?: string | null
+          buyer_order_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          destination?: string | null
+          dispatch_number: string
+          dispatched_at?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          expected_date?: string | null
+          grain_type: string
+          id?: string
+          notes?: string | null
+          price_per_kg: number
+          profit?: number | null
+          silo_id: string
+          status?: string
+          total_amount?: number
+          total_cost?: number | null
+          total_qty_kg: number
+          updated_at?: string
+          vehicle_number?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          admin_id?: string
+          avg_unit_cost?: number | null
+          buyer_id?: string | null
+          buyer_order_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          destination?: string | null
+          dispatch_number?: string
+          dispatched_at?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          expected_date?: string | null
+          grain_type?: string
+          id?: string
+          notes?: string | null
+          price_per_kg?: number
+          profit?: number | null
+          silo_id?: string
+          status?: string
+          total_amount?: number
+          total_cost?: number | null
+          total_qty_kg?: number
+          updated_at?: string
+          vehicle_number?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_dispatches_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_buyer_order_id_fkey"
+            columns: ["buyer_order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_warehouse_id_fkey"
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
@@ -6683,6 +6860,10 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      recalc_batch_remaining: {
+        Args: { _batch_id: string }
+        Returns: undefined
+      }
       record_governance_audit: {
         Args: {
           _action: string
