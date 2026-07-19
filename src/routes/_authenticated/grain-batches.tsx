@@ -10,6 +10,7 @@ import {
   Truck, AlertTriangle, Building2, User, Calendar, DollarSign, Wheat,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -390,19 +391,58 @@ function GrainBatchesPage() {
             )}
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((b) => (
-            <BatchCard
-              key={b.id} batch={b}
-              onView={() => { setSelected(b); setViewOpen(true); }}
-              onEdit={() => openEdit(b)}
-              onDelete={() => setDeleteId(b.id)}
-              onQR={() => { setSelected(b); setQrOpen(true); }}
-              onDispatch={() => openDispatch(b)}
-              onSpoilage={() => openSpoilage(b)}
-            />
-          ))}
+       ) : (
+        <div className="rounded-xl border bg-card/60 overflow-hidden">
+          <div className="max-h-[70vh] overflow-auto">
+            <Table className="text-xs">
+              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
+                <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
+                  <TableHead>Batch</TableHead>
+                  <TableHead>Grain</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Silo</TableHead>
+                  <TableHead className="text-right">Intake (kg)</TableHead>
+                  <TableHead className="text-right">Remaining (kg)</TableHead>
+                  <TableHead>Intake date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((b) => {
+                  const supplier = b.farmer_name ?? "—";
+                  const intake = Number(b.quantity_kg ?? 0);
+                  const remaining = Math.max(0, intake - Number(b.dispatched_quantity_kg ?? 0));
+                  const intakeDate = b.harvest_date ?? b.intake_date ?? null;
+                  return (
+                    <TableRow key={b.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
+                      <TableCell className="font-medium">{b.batch_id}</TableCell>
+                      <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{supplier}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.silos?.name ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell><StatusBadge status={b.status} /></TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex items-center gap-0.5">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="View" onClick={() => { setSelected(b); setViewOpen(true); }}><Eye className="h-3.5 w-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="QR" onClick={() => { setSelected(b); setQrOpen(true); }}><QrCode className="h-3.5 w-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit" onClick={() => openEdit(b)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-amber-600 hover:text-amber-700" title="Log spoilage" onClick={() => openSpoilage(b)}><AlertTriangle className="h-3.5 w-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-red-600 hover:text-red-700" title="Delete" onClick={() => setDeleteId(b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{rows.length} batch{rows.length === 1 ? "" : "es"}</span>
+            <span>Dispatch happens from <Link to="/silos" className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">Silos</Link></span>
+          </div>
         </div>
       )}
 
