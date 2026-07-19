@@ -31,6 +31,7 @@ import { listSuppliers } from "@/lib/suppliers.functions";
 export const Route = createFileRoute("/_authenticated/grain-batches")({
   validateSearch: (search: Record<string, unknown>) => ({
     status: (search.status as string) ?? "all",
+    siloId: (search.siloId as string) ?? undefined,
   }),
   component: GrainBatchesPage,
 });
