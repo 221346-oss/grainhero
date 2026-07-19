@@ -158,33 +158,23 @@ export const generateFinancialPdf = createServerFn({ method: "POST" })
     const iotCostPct = Number(data.iotCostPct ?? 55);
     const opexPct = Number(data.opexPct ?? 25);
 
+    const { computeMrr } = await import("@/lib/plan-pricing.server");
     const [subs, orders, policies] = await Promise.all([
-      supabaseAdmin.from("subscriptions").select("price_per_month, status, plan_name"),
+      supabaseAdmin.from("subscriptions").select("admin_id, price_per_month, status, plan_id, plan_name, created_at"),
       supabaseAdmin.from("hardware_orders").select("hardware_total, status"),
       supabaseAdmin.from("insurance_policies").select("premium_amount, commission_rate"),
     ]);
-    const activeSubsRaw = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
-    const subRows = activeSubsRaw.map((s: any) => {
-      const p = planFor(s.plan_name);
-      return { price: Number(s.price_per_month ?? 0) || p.price };
-    });
-    const { data: planProfiles } = await supabaseAdmin
-      .from("profiles")
-      .select("subscription_plan")
-      .not("subscription_plan", "is", null);
-    const { data: superRows2 } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "super_admin");
-    const superIds2 = new Set((superRows2 ?? []).map((r: any) => r.user_id));
     const { data: planProfilesFull } = await supabaseAdmin
       .from("profiles")
-      .select("id, subscription_plan")
+      .select("id, subscription_plan, created_at")
       .not("subscription_plan", "is", null);
-    const profileRows = (planProfilesFull ?? []).filter((row: any) => !superIds2.has(row.id)).map((row: any) => ({ price: planFor(row.subscription_plan).price }));
-    void planProfiles;
-    const activeSubs = [...subRows, ...profileRows];
-    const mrr = activeSubs.reduce((s: number, x: any) => s + Number(x.price ?? 0), 0);
+    const mrrResult = await computeMrr({
+      supabase: supabaseAdmin,
+      subscriptions: subs.data ?? [],
+      profiles: planProfilesFull ?? [],
+    });
+    const activeSubs = mrrResult.entries;
+    const mrr = mrrResult.mrr;
     const iot = (orders.data ?? []).filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
       .reduce((s: number, x: any) => s + Number(x.hardware_total ?? 0), 0);
     const ins = (policies.data ?? []).reduce((s: number, p: any) => s + Number(p.premium_amount ?? 0) * Number(p.commission_rate ?? 0) / 100, 0);
