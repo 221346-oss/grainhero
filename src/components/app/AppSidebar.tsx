@@ -51,15 +51,13 @@ type NavItem = {
 const pinnedNav: NavItem[] = [
   // (Home lives in the topbar quick-tabs as "Overview" → /dashboard)
 
-  // Admin (5)
-  { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["admin"] },
+  // Admin (4) — Warehouses & Batches accessible from the Silos hub
   { name: "silos-admin", label: "Silos", to: "/silos", icon: Warehouse, roles: ["admin"] },
   { name: "sensors-admin", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin"] },
   { name: "grain-alerts-admin", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin"] },
   { name: "marketplace-admin", label: "Marketplace", to: "/marketplace", icon: ShoppingCart, roles: ["admin"] },
 
-  // Manager (6)
-  { name: "grain-batches-mgr", label: "Batches", to: "/grain-batches", icon: Package, roles: ["manager"] },
+  // Manager (5) — Warehouses & Batches accessible from the Silos hub
   { name: "silos-mgr", label: "Silos", to: "/silos", icon: Warehouse, roles: ["manager"] },
   { name: "sensors-mgr", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["manager"] },
   { name: "grain-alerts-mgr", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["manager"] },
@@ -87,7 +85,6 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
       { name: "analytics-more", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
       { name: "ai-predictions-more", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"] },
       { name: "activity-logs-more", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
-      { name: "warehouses-more", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
       { name: "actuators-more", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager"] },
       { name: "silos-more", label: "Silos", to: "/silos", icon: Warehouse, roles: ["technician"] },
       { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["admin", "manager", "technician"] },

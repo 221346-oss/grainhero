@@ -26,6 +26,8 @@ import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operati
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { WarehouseRail, type WarehouseRailItem } from "@/components/app/silos/WarehouseRail";
+import { SiloBatchesDrawer } from "@/components/app/silos/SiloBatchesDrawer";
 
 export const Route = createFileRoute("/_authenticated/silos")({
   component: SilosPage,
@@ -97,6 +99,8 @@ function SilosPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [dispatchSilo, setDispatchSilo] = useState<Silo | null>(null);
+  const [batchesOpen, setBatchesOpen] = useState(false);
+  const [batchesSilo, setBatchesSilo] = useState<Silo | null>(null);
 
   // Live tick for storage-duration counter
   const [, setTick] = useState(0);
@@ -119,6 +123,30 @@ function SilosPage() {
   const totalCap = rows.reduce((s, x) => s + (x.capacity_kg ?? 0), 0);
   const totalStock = rows.reduce((s, x) => s + (x.current_occupancy_kg ?? 0), 0);
   const activeCount = rows.filter((x) => x.status === "active").length;
+
+  // Build warehouse rail items with silo counts (unfiltered — the rail itself is the filter).
+  const railItems: WarehouseRailItem[] = useMemo(() => {
+    const all = (data ?? []) as Silo[];
+    const counts = new Map<string, number>();
+    all.forEach((s) => {
+      if (s.warehouse_id) counts.set(s.warehouse_id, (counts.get(s.warehouse_id) ?? 0) + 1);
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return warehouses.map((w: any) => ({
+      id: w.id,
+      name: w.name,
+      warehouse_id: w.warehouse_id,
+      city: w.location?.description ?? null,
+      address: w.location?.address ?? null,
+      total_capacity_kg: w.total_capacity_kg ?? null,
+      silo_count: counts.get(w.id) ?? 0,
+    }));
+  }, [warehouses, data]);
+
+  function openBatches(s: Silo) {
+    setBatchesSilo(s);
+    setBatchesOpen(true);
+  }
 
   const saveMutation = useMutation({
     mutationFn: (fs: FormState) =>
@@ -177,7 +205,7 @@ function SilosPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <PageHeader
         title="Silo Management"
-        subtitle="Storage units, live conditions, and batch tracking"
+        subtitle="Warehouses, silos, and grain batches — one place."
         badge={isLoading ? "…" : `${rows.length}`}
       />
 
@@ -246,13 +274,21 @@ function SilosPage() {
       )}
 
       {/* Grid */}
+      <div className="grid gap-4 md:grid-cols-[220px_1fr]">
+        <WarehouseRail
+          warehouses={railItems}
+          selectedId={warehouseFilter}
+          onSelect={setWarehouseFilter}
+          totalSilos={(data ?? []).length}
+        />
+
       {rows.length === 0 ? (
         <Card className="border-dashed border-border bg-card/60">
           <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
             <Inbox className="w-10 h-10 mb-3 opacity-60" />
             <p className="text-sm mb-4">No silos match your filters.</p>
             {warehouses.length === 0 ? (
-              <Link to="/warehouses" className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a warehouse first →</Link>
+              <Link to="/orders" className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Request an install to provision a warehouse →</Link>
             ) : (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add silo</Button>
             )}
@@ -279,11 +315,13 @@ function SilosPage() {
                   const occ = Number(s.current_occupancy_kg ?? 0);
                   const pct = cap > 0 ? Math.round((occ / cap) * 100) : 0;
                   return (
-                    <TableRow key={s.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
+                    <TableRow
+                      key={s.id}
+                      onClick={() => openBatches(s)}
+                      className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition cursor-pointer"
+                    >
                       <TableCell className="font-medium">
-                        <Link to="/silos/$siloId" params={{ siloId: s.id }} className="hover:text-emerald-700 hover:underline">
-                          {s.name}
-                        </Link>
+                        <span className="hover:text-emerald-700">{s.name}</span>
                         <div className="text-[10px] text-muted-foreground">{s.silo_id}</div>
                       </TableCell>
                       <TableCell className="text-muted-foreground truncate max-w-[160px]">
@@ -299,11 +337,12 @@ function SilosPage() {
                         {occ.toLocaleString()} <span className="text-[10px] text-muted-foreground">({pct}%)</span>
                       </TableCell>
                       <TableCell><StatusBadge value={s.status} /></TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <RowActions
                           actions={[
-                            { label: "Open", icon: Eye, onClick: () => navigate({ to: "/silos/$siloId", params: { siloId: s.id } }) },
+                            { label: "Batches", icon: Package, onClick: () => openBatches(s) },
                             { label: "Dispatch", icon: Truck, onClick: () => { setDispatchSilo(s); setDispatchOpen(true); } },
+                            { label: "Open page", icon: Eye, onClick: () => navigate({ to: "/silos/$siloId", params: { siloId: s.id } }) },
                             { label: "Edit", icon: Edit2, onClick: () => openEdit(s) },
                             { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(s.id) },
                           ]}
@@ -317,16 +356,24 @@ function SilosPage() {
           </div>
           <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
             <span>{rows.length} silo{rows.length === 1 ? "" : "s"}</span>
-            <span>Open a silo to see its warehouse and batches</span>
+            <span>Click a row to open batches for that silo</span>
           </div>
         </div>
       )}
+      </div>
 
       <DispatchDialog
         open={dispatchOpen}
         onOpenChange={setDispatchOpen}
         siloId={dispatchSilo?.id ?? null}
         siloName={dispatchSilo?.name}
+      />
+
+      <SiloBatchesDrawer
+        silo={batchesSilo}
+        open={batchesOpen}
+        onOpenChange={setBatchesOpen}
+        onDispatch={(s) => { setDispatchSilo(s); setDispatchOpen(true); }}
       />
 
       {/* Create / Edit dialog */}
