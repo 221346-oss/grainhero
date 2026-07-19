@@ -254,11 +254,11 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
       pipeline[k] = (pipeline[k] ?? 0) + 1;
     }
 
-    const openHwOrders = (hwOrdersRes.data ?? []).filter(
-      (o: { status?: string }) => o.status !== "cancelled",
+    const openHwOrders = ((hwOrdersRes.data ?? []) as Array<{ status?: string | null }>).filter(
+      (o) => o.status !== "cancelled",
     );
-    const hardwareIssues = openHwOrders.length + (hwIssuesRes.data ?? []).filter(
-      (a: { status?: string }) => a.status === "open" || a.status === "active",
+    const hardwareIssues = openHwOrders.length + ((hwIssuesRes.data ?? []) as Array<{ status?: string | null }>).filter(
+      (a) => a.status === "open" || a.status === "active",
     ).length;
     const bugReports = (errorLogsRes as { count?: number })?.count ?? 0;
     const managerQueries = (supportQueriesRes as { count?: number })?.count ?? 0;
