@@ -14,21 +14,27 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
+    const { computeMrr } = await import("@/lib/plan-pricing.server");
     // Use regular authenticated client - will respect RLS
     const [profiles, roles, batches, silos, alerts, subs, logs] = await Promise.all([
-      context.supabase.from("profiles").select("id, admin_id, created_at, business_type, blocked", { count: "exact" }),
+      context.supabase.from("profiles").select("id, admin_id, subscription_plan, created_at, business_type, blocked", { count: "exact" }),
       context.supabase.from("user_roles").select("role, user_id"),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
       context.supabase.from("silos").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_alerts").select("id, priority", { count: "exact" }),
-      context.supabase.from("subscriptions").select("id, status, plan_name, price_per_month"),
+      context.supabase.from("subscriptions").select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at"),
       context.supabase.from("activity_logs").select("id, severity", { count: "exact" }),
     ]);
 
     const tenants = new Set((profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id));
     const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.priority === "critical").length;
-    const activeSubs = (subs.data ?? []).filter((s: any) => s.status === "active");
-    const mrr = activeSubs.reduce((s: number, x: any) => s + (Number(x.price_per_month) || 0), 0);
+    const mrrResult = await computeMrr({
+      supabase: context.supabase,
+      subscriptions: subs.data ?? [],
+      profiles: profiles.data ?? [],
+    });
+    const mrr = mrrResult.mrr;
+    const activeSubs = mrrResult.entries;
     const roleDist: Record<string, number> = {};
     for (const r of roles.data ?? []) roleDist[r.role] = (roleDist[r.role] ?? 0) + 1;
 
