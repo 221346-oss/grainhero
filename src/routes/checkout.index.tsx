@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createStripeCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
 import { validateEmail } from "@/lib/validation";
+import { AddressMapPicker } from "@/components/checkout/AddressMapPicker";
 
 const DRAFT_KEY = "grainhero.checkoutDraft.v1";
 type Draft = {
@@ -75,6 +76,8 @@ function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("Pakistan");
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
   const [phone, setPhone] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -243,6 +246,8 @@ function CheckoutPage() {
             address: address.trim(),
             city: city.trim(),
             country: country.trim(),
+            lat,
+            lng,
             phone: normalizePhone(phone).trim(),
             preferredDate: preferredDate || null,
             notes: notes.trim() || null,
