@@ -45,27 +45,38 @@ type NavItem = {
   badge?: string;
 };
 
-// Pinned = the ~8 items always visible in the sidebar (Slack-style "starred/channels").
+// Pinned = strict per-role muscle-memory list. Max 6 items per role + Home.
+// Everything else lives in More or on the dashboard tiles.
 const pinnedNav: NavItem[] = [
+  // Home — all roles
   { name: "dashboard", label: "Home", to: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["admin", "manager", "technician"] },
-  { name: "silos", label: "Silos", to: "/silos", icon: Warehouse, roles: ["admin", "manager", "technician"] },
-  { name: "sensors", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin", "manager", "technician"] },
-  { name: "actuators", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager", "technician"] },
-  { name: "grain-alerts", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin", "manager", "technician"] },
-  { name: "ai-predictions", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"], badge: "AI" },
-  { name: "analytics", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
-  { name: "activity-logs", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
-  { name: "warehouses", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
-  { name: "buyers", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
-  { name: "listings", label: "Listings", to: "/listings", icon: Tag, roles: ["admin", "manager"] },
-  { name: "sales", label: "Sales", to: "/sales", icon: ShoppingCart, roles: ["admin", "manager"] },
-  { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
-  { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
-  { name: "platform-finance", label: "Finance Center", to: "/platform/finance", icon: Wallet, roles: ["super_admin"] },
-  { name: "earnings", label: "Earnings", to: "/earnings", icon: Wallet, roles: ["admin", "manager"] },
-  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
+
+  // Admin (6)
+  { name: "grain-batches", label: "Batches", to: "/grain-batches", icon: Package, roles: ["admin"] },
+  { name: "silos-admin", label: "Silos", to: "/silos", icon: Warehouse, roles: ["admin"] },
+  { name: "sensors-admin", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin"] },
+  { name: "grain-alerts-admin", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin"] },
+  { name: "marketplace-admin", label: "Marketplace", to: "/marketplace", icon: ShoppingCart, roles: ["admin"] },
+
+  // Manager (6)
+  { name: "grain-batches-mgr", label: "Batches", to: "/grain-batches", icon: Package, roles: ["manager"] },
+  { name: "silos-mgr", label: "Silos", to: "/silos", icon: Warehouse, roles: ["manager"] },
+  { name: "sensors-mgr", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["manager"] },
+  { name: "grain-alerts-mgr", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["manager"] },
+  { name: "orders-mgr", label: "Orders", to: "/orders", icon: ShoppingCart, roles: ["manager"] },
+
+  // Technician (5)
   { name: "technician-installs", label: "My Installs", to: "/technician/installs", icon: Wrench, roles: ["technician"] },
+  { name: "sensors-tech", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["technician"] },
+  { name: "actuators-tech", label: "Actuators", to: "/actuators", icon: Zap, roles: ["technician"] },
+  { name: "grain-alerts-tech", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["technician"] },
+
+  // Super Admin (6)
+  { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
+  { name: "platform-marketplace-health", label: "Marketplace Ops", to: "/platform/marketplace-health", icon: ShoppingCart, roles: ["super_admin"] },
+  { name: "platform-insurance", label: "Insurance", to: "/platform/insurance", icon: Shield, roles: ["super_admin"] },
+  { name: "platform-launch-readiness", label: "Launch Readiness", to: "/platform/launch-readiness", icon: ShieldCheck, roles: ["super_admin"] },
+  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
 ];
 
 // Everything else lives behind a "More" popover, grouped like Slack's overflow menu.
@@ -73,6 +84,12 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Insights",
     items: [
+      { name: "analytics-more", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
+      { name: "ai-predictions-more", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"], badge: "AI" },
+      { name: "activity-logs-more", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
+      { name: "warehouses-more", label: "Warehouses", to: "/warehouses", icon: Building2, roles: ["admin", "manager", "technician"] },
+      { name: "actuators-more", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager"] },
+      { name: "silos-more", label: "Silos", to: "/silos", icon: Warehouse, roles: ["technician"] },
       { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["admin", "manager", "technician"] },
       { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["admin", "manager", "technician"] },
       { name: "maintenance", label: "Maintenance", to: "/maintenance", icon: Wrench, roles: ["admin", "manager", "technician"] },
@@ -88,6 +105,10 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
     label: "Business",
     items: [
       { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
+      { name: "buyers-more", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
+      { name: "listings-more", label: "Listings", to: "/listings", icon: Tag, roles: ["admin", "manager"] },
+      { name: "sales-more", label: "Sales", to: "/sales", icon: ShoppingCart, roles: ["admin", "manager"] },
+      { name: "earnings-more", label: "Earnings", to: "/earnings", icon: Wallet, roles: ["admin", "manager"] },
       { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
       { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
       { name: "plan-management", label: "Plan Management", to: "/plan-management", icon: CreditCard, roles: ["admin"] },

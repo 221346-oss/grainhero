@@ -1,46 +1,96 @@
-## Goal
-1) Fresh, realistic demo data for `atifnazir005@gmail.com` so every dashboard renders with meaningful numbers.
-2) Sidebar simplification per role (industry-standard agritech shell — max 6–8 pinned items) with the long tail surfaced from each dashboard.
-3) Sweep the top 4 recurring UI flaws.
 
-## 1. Data population (idempotent SQL)
-Only insert what's missing so re-running is safe. For the tenant admin resolved from `atifnazir005@gmail.com`:
-- Ensure `subscription` = Pro active, `plan_thresholds` row exists.
-- Backfill 2 warehouses, 4 silos, 3 grain batches, 3 sensor devices with 72h hourly readings, 3 actuators, 8 alerts (mix open/resolved).
-- Marketplace: 3 listings, 4 buyer orders (paid/dispatched/delivered/disputed), shipment events, 2 reviews, 1 dispute, 1 return.
-- Hardware: 1 completed install order + devices, 1 in-progress install.
-- Finance: 6 months of invoices + payments; ledger entries.
-- Insurance: 1 active policy + 1 open claim.
-- Notifications, activity logs, mobile devices.
-- Super-admin visibility: seed 4 additional demo admins (existing profiles) with sample subscriptions so `/platform/financials` and `/platform/users` are populated.
+# Role-Aware Sidebar Shrink + Dashboard Command Centers
 
-## 2. Sidebar redesign (per-role, industry standard)
-Replace the current 20+ pinned items with a compact role-scoped rail. Everything else lives in a `More` popover, but each dash surfaces its own deep-links via clickable tiles (already partly in place).
+## Guiding principles
 
-**Admin / Manager (6 items):**
-Home · Batches · Silos · Sensors · Alerts · Marketplace · More
+1. Sidebar = permanent muscle memory only. Max **6 pinned items + Home + Settings** per role. Everything else lives in **More** and on the dashboard.
+2. Dashboard = command center. KPI tiles are the primary nav for secondary pages (click → drill in). Each dashboard fits in ~1.5 viewport heights (no infinite scroll).
+3. AppSearch (⌘K) is the safety net — every removed sidebar item stays discoverable there.
+4. Layouts use a **12-col bento grid** on desktop, **stacked accordion** on mobile. No stat card wider than 3 cols; charts max 6.
 
-**Technician (5):**
-Home · My Installs · Sensors · Actuators · Alerts · More
+---
 
-**Super Admin (6):**
-Home · Tenants (via /platform/users) · Financials · Marketplace Ops · Insurance · Launch Readiness · More
+## 1. Sidebar reshape (single `AppSidebar.tsx` rewrite)
 
-Bottom rail (all roles): Team · Settings.
-Everything removed from the rail (Warehouses, Buyers, Listings, Sales, Revenue, Earnings, Activity Logs, Analytics, AI Predictions, Insurance, Subscription, all `/platform/*` deep pages) is:
-- Grouped in `More` popover (already exists, just repopulated), AND
-- Surfaced as a clickable KPI tile / quick-action button on the relevant dashboard.
+### Super Admin (6)
+Home · Financials · Marketplace Ops · Insurance · Launch Readiness · Install Orders
+→ More: Users, Leads, Pipeline, Health, Logs, Audit Logs, Metrics, Dashboards, SLA Alerts, Disputes, Returns, Quality, Reviews, Logistics (3), Finance (3), Mobile (5), Plans, Field Settings, Sellers, Messages, Invoice Failures
 
-## 3. UI flaw sweep
-- Duplicate `revenue` nav entry (present twice in pinned + more).
-- `financials.tsx` "Revenue by plan" pie hover text overflow (tooltip formatter).
-- Empty-state cards on dashboards that still hardcode `text-gray-500` (dark-mode invisible).
-- Skeleton container width mismatch on 2 remaining platform pages (`launch-readiness`, `finance`).
+### Admin (6)
+Home · Batches · Silos · Sensors · Alerts · Marketplace
+→ More: Actuators, Warehouses, Buyers, Listings, Sales, Revenue, Earnings, Analytics, AI Predictions, ML Models, Reports, Data Viz, Traceability, Environmental, Incidents, Maintenance, Device Health, Insurance, Subscription, Plan Mgmt, Activity Logs, Notifications
 
-## Deliverables
-- 1 SQL insert script (via `supabase--insert`, idempotent `ON CONFLICT`).
-- `AppSidebar.tsx` rewrite: shrink `pinnedNav` to role-scoped small sets, move rest into `moreGroups`.
-- Small patches to `financials.tsx` tooltip + 3–4 empty-state cards.
-- No new pages, no route changes — only sidebar surface + dashboard tile links.
+### Manager (6)
+Home · Batches · Silos · Sensors · Alerts · Orders
+→ More: Actuators, Warehouses, Buyers, Listings, Sales, Analytics, Reports, Maintenance, Incidents, Environmental, Traceability, Notifications
 
-After apply I run typecheck and confirm the dev preview loads.
+### Technician (5)
+Home · My Installs · Sensors · Actuators · Alerts
+→ More: Silos, Maintenance, Incidents, Environmental, Device Health, Traceability, Notifications
+
+### Footer (all roles)
+Team · Settings · Sign out
+
+---
+
+## 2. Dashboard command centers (redesign, no new routes)
+
+Every dashboard follows the same **3-band bento** so users learn one pattern:
+
+```
+┌─────── Band A: 4 KPI tiles (clickable → deep link) ───────┐
+├──── Band B: Primary work surface (chart | list | map) ────┤
+└──── Band C: Quick actions grid (6-8 icon tiles → More) ───┘
+```
+
+### 2.1 SuperAdmin `/dashboard`
+- **A**: MRR · Active tenants · Open disputes · Failed webhooks
+- **B**: Split 8/4 → Revenue trend chart | Recent platform activity feed (unified)
+- **C**: 8 quick-tiles → Users, Leads, Pipeline, Health, Logs, Metrics, SLA Alerts, Logistics
+- **Right rail** (desktop only, hidden mobile): Launch readiness score + pending moderation queue
+
+### 2.2 Admin `/dashboard`
+- **A**: Active batches · Silos at risk · Open alerts · Revenue this month
+- **B**: 8/4 → Silo condition heatmap | Alerts stream
+- **C**: 8 quick-tiles → Buyers, Listings, Sales, Analytics, AI Predictions, Reports, Insurance, Subscription
+- **Right rail**: Plan usage meter + pending team invites
+
+### 2.3 Manager `/dashboard`
+- **A**: Batches in cycle · Sensors offline · Today's alerts · Orders to fulfil
+- **B**: 8/4 → Batch pipeline kanban | Sensor grid mini
+- **C**: 6 tiles → Warehouses, Buyers, Sales, Reports, Maintenance, Incidents
+
+### 2.4 Technician `/dashboard`
+- **A**: Installs today · Open tasks · Devices offline · Overdue maintenance
+- **B**: 8/4 → Install schedule timeline | Assigned actuator queue
+- **C**: 6 tiles → Sensors, Silos, Maintenance, Incidents, Device Health, Traceability
+
+---
+
+## 3. Anti-scroll rules applied to every existing page
+
+- Wrap header + KPI band in `sticky top-0` where useful.
+- Convert vertical stat lists → 2/4-col grids (`grid-cols-2 lg:grid-cols-4`).
+- Replace tall empty-state cards with 1-line inline notices.
+- Move any secondary chart into a `<Tabs>` next to the primary chart instead of stacking.
+- Cap max-width at `max-w-7xl mx-auto`; use 2-col split on desktop for detail pages.
+
+---
+
+## 4. Files to change
+
+- `src/components/app/AppSidebar.tsx` — rewrite `pinnedNav` per role, expand `moreGroups`.
+- `src/components/dashboards/SuperAdminDashboard.tsx` — apply bento 3-band; wire tiles to routes.
+- `src/components/dashboards/AdminDashboard.tsx` — same.
+- `src/components/dashboards/ManagerDashboard.tsx` — same.
+- `src/components/dashboards/TechnicianDashboard.tsx` — same.
+- `src/components/dashboards/DashboardBlocks.tsx` — add reusable `KpiTile` (clickable), `QuickActionTile`, `RightRail`.
+- Small polish sweep on 4 highest-scroll pages: `platform.financials.tsx`, `orders.tsx`, `grain-alerts.tsx`, `sensors.tsx` (grid density + sticky headers).
+
+No route file changes, no data model changes, no new pages. Search bar continues to index every route so nothing gets lost.
+
+---
+
+## 5. Verification
+
+After each dashboard edit: typecheck + open preview at 1440×900 and 390×844 (mobile) and confirm dashboard fits in ≤ 1.5 viewport heights, all tiles clickable, sidebar shows only pinned items for that role.
