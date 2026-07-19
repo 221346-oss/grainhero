@@ -90,6 +90,8 @@ function SilosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Silo | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [dispatchSilo, setDispatchSilo] = useState<Silo | null>(null);
 
   // Live tick for storage-duration counter
   const [, setTick] = useState(0);
@@ -402,7 +404,7 @@ function SilosPage() {
   );
 }
 
-function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () => void; onEdit: () => void; onDelete: () => void }) {
+function SiloCard({ silo, onView, onEdit, onDelete, onDispatch }: { silo: Silo; onView: () => void; onEdit: () => void; onDelete: () => void; onDispatch: () => void }) {
   const cap = silo.capacity_kg ?? 0;
   const occ = silo.current_occupancy_kg ?? 0;
   const pct = cap > 0 ? Math.min(100, Math.round((occ / cap) * 100)) : 0;
@@ -497,9 +499,10 @@ function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () =
 
         {/* Actions */}
         <div className="flex gap-1 pt-1">
-          <Button variant="outline" size="sm" onClick={onView} className="flex-1 h-8"><Eye className="w-3.5 h-3.5 mr-1" />View</Button>
-          <Button variant="outline" size="sm" onClick={onEdit} className="flex-1 h-8"><Edit2 className="w-3.5 h-3.5 mr-1" />Edit</Button>
-          <Button variant="outline" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-rose-600 hover:text-rose-700 shrink-0"><Trash2 className="w-3.5 h-3.5" /></Button>
+          <Button size="sm" onClick={onDispatch} className="flex-1 h-8 bg-emerald-600 hover:bg-emerald-700 text-white"><Truck className="w-3.5 h-3.5 mr-1" />Dispatch</Button>
+          <Button variant="outline" size="sm" onClick={onView} className="h-8 w-8 p-0" title="View"><Eye className="w-3.5 h-3.5" /></Button>
+          <Button variant="outline" size="sm" onClick={onEdit} className="h-8 w-8 p-0" title="Edit"><Edit2 className="w-3.5 h-3.5" /></Button>
+          <Button variant="outline" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-rose-600 hover:text-rose-700" title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </CardContent>
     </Card>
