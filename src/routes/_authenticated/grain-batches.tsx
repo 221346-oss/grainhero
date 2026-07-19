@@ -471,7 +471,23 @@ function GrainBatchesPage() {
               {form.id ? "Update batch details." : "Batch ID and QR code are generated automatically on intake."}
             </DialogDescription>
           </DialogHeader>
-          <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMut.mutate(form); }}>
+          <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => {
+            e.preventDefault();
+            // Source validation
+            if (form.source_kind === "anonymous") {
+              if (!form.farmer_name.trim()) { toast.error("Enter a walk-in name for anonymous source"); return; }
+            } else if (!form.supplier_id) {
+              toast.error("Pick a supplier or switch source to Anonymous");
+              return;
+            }
+            if (!form.silo_id) { toast.error("Pick a silo"); return; }
+            if (!form.grain_type) { toast.error("Pick a grain type"); return; }
+            if (!form.quantity_kg || Number(form.quantity_kg) <= 0) { toast.error("Enter a quantity"); return; }
+            if (!form.purchase_price_per_kg || Number(form.purchase_price_per_kg) <= 0) {
+              toast.error("Purchase price / kg is required for cost tracking"); return;
+            }
+            saveMut.mutate(form);
+          }}>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <Label>Grain type *</Label>
