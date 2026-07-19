@@ -157,7 +157,7 @@ function GrainBatchesPage() {
   const qc = useQueryClient();
 
   // Seed statusFilter from ?status= URL search param (e.g. navigated from dashboard)
-  const { status: searchStatus } = useSearch({ from: "/_authenticated/grain-batches" });
+  const { status: searchStatus, siloId: searchSiloId } = useSearch({ from: "/_authenticated/grain-batches" });
 
   const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
@@ -196,6 +196,7 @@ function GrainBatchesPage() {
     return all.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (grainFilter !== "all" && b.grain_type !== grainFilter) return false;
+      if (searchSiloId && b.silos?.id !== searchSiloId) return false;
       if (!q.trim()) return true;
       const t = q.toLowerCase();
       return (
@@ -206,7 +207,7 @@ function GrainBatchesPage() {
         b.buyers?.name?.toLowerCase().includes(t)
       );
     });
-  }, [data, q, statusFilter, grainFilter]);
+  }, [data, q, statusFilter, grainFilter, searchSiloId]);
 
   const stats = useMemo(() => {
     const total = rows.length;
