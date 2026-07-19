@@ -56,7 +56,7 @@ export function InstallOrdersMini() {
   const { data } = useExtras();
   const c = data?.installCounts ?? { pending: 0, scheduled: 0, completed: 0, total: 0 };
   return (
-    <MiniCard to="/install-orders" icon={PackageOpen} label="Install orders">
+    <MiniCard to="/orders" icon={PackageOpen} label="Install orders">
       <div className="flex items-center justify-between">
         <div className="text-2xl font-bold tabular-nums">{c.total}</div>
         <div className="text-[11px] text-muted-foreground text-right leading-tight">
