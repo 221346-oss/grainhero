@@ -1,36 +1,32 @@
 import { useEffect, useState } from "react";
-import { useRouterState, useNavigate, Link } from "@tanstack/react-router";
+import { useRouterState, Link } from "@tanstack/react-router";
 import {
   LayoutDashboard, Container, Wheat, Bell, Store, Radio,
-  ToggleRight, Users, Package, UserCog, Settings2, Check, Sparkles,
-  Brain, ShieldAlert, LineChart, type LucideIcon,
+  ToggleRight, Users, Package, UserCog, Settings2, Check, type LucideIcon,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useDashboardTab, type TabKey } from "@/components/dashboards/useDashboardTab";
 
-type Def = { key: TabKey; label: string; icon: LucideIcon; to?: string };
+type TabKey =
+  | "overview" | "silos" | "batches" | "alerts" | "marketplace"
+  | "sensors" | "actuators" | "buyers" | "orders" | "team";
+
+type Def = { key: TabKey; label: string; icon: LucideIcon; to: string };
 
 const CATALOG: Def[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard },
-  { key: "silos", label: "Silos", icon: Container },
-  { key: "batches", label: "Batches", icon: Wheat },
-  { key: "alerts", label: "Alerts", icon: Bell },
-  { key: "marketplace", label: "Marketplace", icon: Store },
-  { key: "sensors", label: "Sensors", icon: Radio },
-  { key: "actuators", label: "Actuators", icon: ToggleRight },
-  { key: "buyers", label: "Buyers", icon: Users },
-  { key: "orders", label: "Orders", icon: Package },
-  { key: "team", label: "Team", icon: UserCog },
+  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
+  { key: "silos", label: "Silos", icon: Container, to: "/silos" },
+  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-batches" },
+  { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
+  { key: "marketplace", label: "Marketplace", icon: Store, to: "/marketplace" },
+  { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
+  { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
+  { key: "buyers", label: "Buyers", icon: Users, to: "/buyers" },
+  { key: "orders", label: "Orders", icon: Package, to: "/orders" },
+  { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
 ];
 
-const AI_TABS: Def[] = [
-  { key: "ai-predictions", label: "Predictions", icon: Brain, to: "/ai-predictions" },
-  { key: "ai-spoilage", label: "Spoilage", icon: ShieldAlert, to: "/ai-spoilage-detection" },
-  { key: "ai-insights", label: "Insights", icon: LineChart, to: "/ai-insights" },
-];
-
-const STORAGE = "gh_admin_tabs_v2";
+const STORAGE = "gh_admin_tabs_v3";
 const DEFAULT: TabKey[] = ["overview", "silos", "batches", "alerts", "marketplace"];
 
 function readStored(): TabKey[] {
@@ -39,18 +35,17 @@ function readStored(): TabKey[] {
     const raw = localStorage.getItem(STORAGE);
     if (!raw) return DEFAULT;
     const parsed = JSON.parse(raw) as TabKey[];
-    return parsed.length ? parsed.slice(0, 5) : DEFAULT;
+    if (!parsed.length) return DEFAULT;
+    let out = parsed.slice(0, 5);
+    if (!out.includes("overview")) out = (["overview", ...out] as TabKey[]).slice(0, 5);
+    return out;
   } catch { return DEFAULT; }
 }
 
 export function DashboardQuickTabs() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
-  const [active, setActive] = useDashboardTab();
   const [tabs, setTabs] = useState<TabKey[]>(DEFAULT);
   useEffect(() => { setTabs(readStored()); }, []);
-
-  if (path !== "/dashboard") return null;
 
   function toggle(k: TabKey) {
     setTabs((cur) => {
@@ -70,28 +65,29 @@ export function DashboardQuickTabs() {
           const def = CATALOG.find((d) => d.key === k);
           if (!def) return null;
           const Icon = def.icon;
-          const isActive = active === k;
-          const btn = (
-            <button
-              type="button"
-              onClick={() => setActive(k)}
+          const isActive = def.to === "/dashboard"
+            ? path === "/dashboard"
+            : path === def.to || path.startsWith(def.to + "/");
+          const pill = (
+            <Link
+              to={def.to}
+              aria-label={def.label}
               className={
                 "h-8 inline-flex items-center gap-1.5 rounded-full text-xs font-medium transition " +
                 (isActive
                   ? "bg-emerald-600 text-white px-3 shadow-sm"
                   : "w-8 justify-center text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10")
               }
-              aria-label={def.label}
             >
               <Icon className="h-3.5 w-3.5" />
               {isActive && <span>{def.label}</span>}
-            </button>
+            </Link>
           );
           return isActive ? (
-            <span key={k}>{btn}</span>
+            <span key={k}>{pill}</span>
           ) : (
             <Tooltip key={k}>
-              <TooltipTrigger asChild>{btn}</TooltipTrigger>
+              <TooltipTrigger asChild>{pill}</TooltipTrigger>
               <TooltipContent side="bottom" className="text-[11px]">{def.label}</TooltipContent>
             </Tooltip>
           );
@@ -133,31 +129,6 @@ export function DashboardQuickTabs() {
             </div>
           </PopoverContent>
         </Popover>
-
-        <div className="mx-2 h-6 w-px bg-border" aria-hidden />
-
-        <div className="inline-flex items-center gap-1 rounded-full pl-2 pr-1 py-1 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/30">
-          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mr-1">AI</span>
-          {AI_TABS.map((t) => {
-            const Icon = t.icon;
-            return (
-              <Tooltip key={t.key}>
-                <TooltipTrigger asChild>
-                  <Link
-                    to={t.to!}
-                    aria-label={t.label}
-                    onClick={() => navigate({ to: t.to! })}
-                    className="h-6 w-6 grid place-items-center rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition"
-                  >
-                    <Icon className="h-3 w-3" />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="text-[11px]">{t.label}</TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
       </div>
     </TooltipProvider>
   );
