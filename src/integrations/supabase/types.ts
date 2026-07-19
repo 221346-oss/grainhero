@@ -2646,6 +2646,7 @@ export type Database = {
           buyer_id: string | null
           created_at: string | null
           created_by: string
+          currency: string | null
           deleted_at: string | null
           dispatch_details: Json | null
           dispatched_quantity_kg: number | null
@@ -2680,16 +2681,19 @@ export type Database = {
           sell_price_per_kg: number | null
           sensor_summary: Json | null
           silo_id: string
+          source_kind: Database["public"]["Enums"]["supplier_kind"] | null
           source_location: string | null
           spoilage_events: Json | null
           spoilage_label: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at: string | null
           status: Database["public"]["Enums"]["batch_status"] | null
           supplier_contact: string | null
+          supplier_id: string | null
           supplier_name: string | null
           tags: string[] | null
           test_weight: number | null
           total_purchase_value: number | null
+          unit_cost: number | null
           updated_at: string | null
           updated_by: string | null
           variety: string | null
@@ -2703,6 +2707,7 @@ export type Database = {
           buyer_id?: string | null
           created_at?: string | null
           created_by: string
+          currency?: string | null
           deleted_at?: string | null
           dispatch_details?: Json | null
           dispatched_quantity_kg?: number | null
@@ -2737,16 +2742,19 @@ export type Database = {
           sell_price_per_kg?: number | null
           sensor_summary?: Json | null
           silo_id: string
+          source_kind?: Database["public"]["Enums"]["supplier_kind"] | null
           source_location?: string | null
           spoilage_events?: Json | null
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
           supplier_contact?: string | null
+          supplier_id?: string | null
           supplier_name?: string | null
           tags?: string[] | null
           test_weight?: number | null
           total_purchase_value?: number | null
+          unit_cost?: number | null
           updated_at?: string | null
           updated_by?: string | null
           variety?: string | null
@@ -2760,6 +2768,7 @@ export type Database = {
           buyer_id?: string | null
           created_at?: string | null
           created_by?: string
+          currency?: string | null
           deleted_at?: string | null
           dispatch_details?: Json | null
           dispatched_quantity_kg?: number | null
@@ -2794,16 +2803,19 @@ export type Database = {
           sell_price_per_kg?: number | null
           sensor_summary?: Json | null
           silo_id?: string
+          source_kind?: Database["public"]["Enums"]["supplier_kind"] | null
           source_location?: string | null
           spoilage_events?: Json | null
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
           supplier_contact?: string | null
+          supplier_id?: string | null
           supplier_name?: string | null
           tags?: string[] | null
           test_weight?: number | null
           total_purchase_value?: number | null
+          unit_cost?: number | null
           updated_at?: string | null
           updated_by?: string | null
           variety?: string | null
@@ -2843,6 +2855,13 @@ export type Database = {
             columns: ["silo_id"]
             isOneToOne: false
             referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
           {
@@ -2906,6 +2925,7 @@ export type Database = {
       grain_dispatches: {
         Row: {
           admin_id: string
+          avg_cost_snapshot: number | null
           avg_unit_cost: number | null
           buyer_id: string | null
           buyer_order_id: string | null
@@ -2920,10 +2940,13 @@ export type Database = {
           expected_date: string | null
           grain_type: string
           id: string
+          market_price_snapshot: number | null
           notes: string | null
+          price_basis: string | null
           price_per_kg: number
           profit: number | null
           silo_id: string
+          stage: string
           status: string
           total_amount: number
           total_cost: number | null
@@ -2934,6 +2957,7 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          avg_cost_snapshot?: number | null
           avg_unit_cost?: number | null
           buyer_id?: string | null
           buyer_order_id?: string | null
@@ -2948,10 +2972,13 @@ export type Database = {
           expected_date?: string | null
           grain_type: string
           id?: string
+          market_price_snapshot?: number | null
           notes?: string | null
+          price_basis?: string | null
           price_per_kg: number
           profit?: number | null
           silo_id: string
+          stage?: string
           status?: string
           total_amount?: number
           total_cost?: number | null
@@ -2962,6 +2989,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          avg_cost_snapshot?: number | null
           avg_unit_cost?: number | null
           buyer_id?: string | null
           buyer_order_id?: string | null
@@ -2976,10 +3004,13 @@ export type Database = {
           expected_date?: string | null
           grain_type?: string
           id?: string
+          market_price_snapshot?: number | null
           notes?: string | null
+          price_basis?: string | null
           price_per_kg?: number
           profit?: number | null
           silo_id?: string
+          stage?: string
           status?: string
           total_amount?: number
           total_cost?: number | null
@@ -6361,6 +6392,60 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          address: string | null
+          admin_id: string
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          kind: Database["public"]["Enums"]["supplier_kind"]
+          metadata: Json
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          admin_id: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["supplier_kind"]
+          metadata?: Json
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          admin_id?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["supplier_kind"]
+          metadata?: Json
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tax_registrations: {
         Row: {
           created_at: string
@@ -6503,6 +6588,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenant_price_settings: {
+        Row: {
+          admin_id: string
+          created_at: string
+          currency: string
+          default_margin_pct: number
+          per_grain_margin: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          currency?: string
+          default_margin_pct?: number
+          per_grain_margin?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          currency?: string
+          default_margin_pct?: number
+          per_grain_margin?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -6845,6 +6960,39 @@ export type Database = {
         }
         Relationships: []
       }
+      silo_pool_summary: {
+        Row: {
+          active_batch_count: number | null
+          admin_id: string | null
+          oldest_intake_at: string | null
+          silo_id: string | null
+          total_on_hand_kg: number | null
+          weighted_avg_cost: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_batches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_my_role: {
@@ -6963,6 +7111,7 @@ export type Database = {
         | "cancelled"
         | "expired"
         | "trial"
+      supplier_kind: "external" | "own_farm" | "internal_transfer" | "anonymous"
       user_status: "active" | "inactive" | "deleted"
     }
     CompositeTypes: {
@@ -7185,6 +7334,7 @@ export const Constants = {
         "expired",
         "trial",
       ],
+      supplier_kind: ["external", "own_farm", "internal_transfer", "anonymous"],
       user_status: ["active", "inactive", "deleted"],
     },
   },
