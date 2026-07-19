@@ -1,55 +1,78 @@
-# Admin Dashboard — Simplify & Animate
+# Admin Dashboard — Nav Tabs + Filterable Blocks + Batch Table
 
-## Goal
-Replace the static header + verbose blocks with an animated welcome that self-destructs, then let a denser, more visual bento fill the reclaimed space. Remove redundancy (role badge, Team mini — already in sidebar).
+Inspired by the reference: compact top nav, KPI cards with inline filter chips (This month / Today etc.), an info-circle for descriptions instead of body copy, and a dense table for batches.
 
-## 1. Animated Welcome Banner (self-vanishing)
-New component `src/components/dashboards/WelcomeBanner.tsx`:
-- Typewriter animation: `Welcome back, {name}` (char-by-char, ~40ms/char, blinking caret).
-- Hold ~1.6s after typing completes.
-- Fade + collapse height to 0 (framer-motion `AnimatePresence` + `layout` animation on parent grid so blocks below animate upward smoothly).
-- Session-scoped: use `sessionStorage` key `gh_welcome_shown` so it only plays on first dashboard visit per session (not every re-render / tab switch).
-- Reduced-motion: if `prefers-reduced-motion`, skip typing → show static line for 1s → vanish.
+## 1. Top nav tabs (contextual, customizable, max 5)
+New: `src/components/dashboards/DashTabs.tsx`.
+- Pill-style horizontal tabs rendered under the welcome banner. Active pill = emerald filled; inactive = ghost.
+- Admin default set (5): **Overview**, **Silos**, **Batches**, **Alerts**, **Marketplace**. Each tab = a filter for what section the dashboard highlights (no route change — swaps the middle band).
+- Customization: gear icon → dropdown lets user check up to 5 from a full catalog (Overview, Silos, Batches, Alerts, Actuators, Sensors, Buyers, Marketplace, Orders, Team). Selection persisted in `localStorage` under `gh_admin_tabs`.
+- Overflow: on `<sm` the tab bar becomes horizontally scrollable; gear button stays sticky right.
+- No lucide icons inside the pills (per your rule "min icons are not encouraged" for pills — text-only), gear icon is the only icon and sits outside the tab list.
 
-## 2. AdminDashboard header cleanup
-In `src/components/dashboards/AdminDashboard.tsx`:
-- Remove `AdminPageShell`'s title/subtitle/actions (no "Admin — Name", no "Tenant overview…", no Admin badge).
-- Wrap content in a plain padded container with `motion.div layout` so children reflow when the banner unmounts.
-- Render `<WelcomeBanner name={name} />` at the top, above the KPI strip.
+## 2. KPI Summary band (with per-card filter chip)
+New: `src/components/dashboards/KpiSummary.tsx` — replaces the current `KpiStrip`.
+- Header row: title "KPI Summary" + tiny `(i)` info-circle tooltip ("Live totals for your tenant") + right-side global range chip (`This month ▾`) → `Today / 7d / 30d / MTD / YTD` — persisted in URL search param `range`.
+- Each KPI tile:
+  - Small monotone icon in a soft emerald square (kept because it's the tile identity, not repeated inline).
+  - Label + `(i)` tooltip explaining the metric.
+  - Big number.
+  - Delta pill (`+35% vs last month`) computed from the selected range vs prior period.
+  - Whole tile deep-links to its detail page (Buyers/Warehouses/Batches/Silos/Sensors).
+- Tiles: Total Batches Value, Active Batches, Silos in Use, Sensors Online, Open Alerts. (5 tiles, matching image density.)
 
-## 3. Simplify blocks (less text, more visual)
-Goal: every card = 1 line title + dense visual. No descriptions, no helper copy.
+## 3. Insights & Performance band (mini-metric strip)
+New: `src/components/dashboards/InsightsStrip.tsx`.
+- 5 slim cards each with: title + `(i)`, big number, tiny two-row mini bar comparing **This period vs Last period** (emerald bar for current, muted bar for previous), delta % right-aligned.
+- Cards: **Pending QC**, **Rejected QC**, **Batches At-Risk** (risk_score ≥ 70), **Ready to Ship**, **Actuators On**.
+- Uses the same range filter from band 2.
 
-- `KpiStrip` (keep, already compact): drop the `delta` text row entirely — just number + icon. Sparkline optional later.
-- `SilosOccupancyCard`: replace list rows with a compact **horizontal bar stack** — one thin bar per silo, colored by fill band (emerald < 70, amber 70–90, red > 90), silo name only on hover tooltip. Header: just "Silos" + count pill.
-- `ActuatorsCard`: replace text rows with a **status dot grid** (e.g. 6-col grid of dots colored on/off/fault) + tiny legend. Header: "Actuators".
-- `RecentAlertsCard`: keep list but drop the description/second line; show severity dot + title + relative time only. Cap at 4 rows.
-- `RecentBatchesCard`: convert to compact table (batch code · status pill · qty) — no meta paragraph.
+## 4. "Your batches" table (replaces batch card list)
+New: `src/components/dashboards/BatchesTable.tsx`.
+- Header: title + `(i)` + right-side inline search input + status multi-filter (`All / Storing / QC / Dispatched / Rejected`) + expand-to-fullscreen link to `/grain-batches`.
+- Columns: **Batch ID**, **Grain**, **Silo**, **Qty (kg)**, **Risk** (colored dot + score), **Status** (pill), **Actions** (row-hover arrow → batch detail).
+- Sticky header, zebra rows, `max-h-[420px]` scroll body, tabular-nums, `text-xs` dense.
+- Empty state: single line "No batches match".
 
-## 4. Remove redundancy
-- Delete `<TeamMini />` from the dashboard (already pinned in sidebar).
-- Restructure secondary strip into 2 columns: `InstallOrdersMini` + `RevenueMini`.
-- Both minis: keep number + tiny status split (e.g. mini stacked bar for install statuses, single number + delta for revenue). Strip descriptive sentences.
+## 5. Right rail becomes secondary strip (kept minimal)
+Below the batch table, a 2-col strip:
+- **Silo occupancy** — existing bar-stack visual (already refactored), header adds `(i)`.
+- **Recent alerts** — dot + title list, header adds `(i)`.
+Actuators dot-grid drops into the Insights band as "Actuators On" mini, so it doesn't repeat here.
 
-## 5. Final layout
+## 6. Info tooltips (i-circle)
+Small helper `src/components/ui/InfoDot.tsx`:
+- `<InfoDot text="..." />` renders a 12px circle with `i`, shows the shadcn `Tooltip` on hover/focus.
+- Used in every band header and every KPI/insight label to replace body-copy descriptions.
+
+## 7. Final layout
 ```text
-[ Welcome banner — vanishes ]
-[ KPI strip: 5 tiles, no delta text ]
-[ Silos (bar stack) | Alerts (dot list) ]
-[ Actuators (dot grid) | Batches (mini table) ]
-[ Install Orders | Revenue ]
+[ Welcome banner (self-vanishes) ]
+[ Dash tabs: Overview · Silos · Batches · Alerts · Marketplace   ⚙ ]
+[ KPI Summary (i) ................................ range chip ]
+[ 5 KPI tiles with per-tile (i) + delta ]
+[ Insights & Performance (i) ..................... range chip ]
+[ 5 mini insight cards ]
+[ Your batches (i) ..... search | status filter | expand ]
+[ dense scrollable table ]
+[ Silos (i)  |  Alerts (i) ]
 ```
-All cards `p-3`, `text-sm` titles, tabular-nums for numbers, emerald hover ring preserved.
 
-## Technical notes
-- Use `framer-motion` (already a common dep — verify with `bun pm ls framer-motion`; if missing, `bun add framer-motion`).
-- `AnimatePresence mode="popLayout"` on the dashboard root so removing the banner triggers `layout` transitions on siblings.
-- Typewriter: pure `useEffect` + `setInterval`, no extra dep.
-- Skeleton (`DashboardSkeleton`) stays as-is; banner not shown during skeleton phase.
+## Interaction rules
+- Global `range` state lives in URL search params → shared by KPI Summary + Insights + Batches table date filter.
+- Tab click = local filter only. `Overview` shows all bands; other tabs hide bands that don't match (e.g. `Batches` collapses KPI Summary to just batch-relevant tiles and expands the table).
+- All numbers remain clickable → their canonical page with the same filter carried through search params.
 
-## Files touched
-- add: `src/components/dashboards/WelcomeBanner.tsx`
-- edit: `src/components/dashboards/AdminDashboard.tsx` (remove header, add banner, drop TeamMini, restructure grid)
-- edit: `src/components/dashboards/DashboardBlocks.tsx` (simplify Silos, Actuators, Alerts, Batches visuals + remove descriptive text)
-- edit: `src/components/dashboards/KpiStrip.tsx` (drop delta line)
-- edit: `src/components/dashboards/MiniBlocks.tsx` (simplify InstallOrders + Revenue, remove TeamMini export usage)
+## Files
+- add: `src/components/ui/InfoDot.tsx`
+- add: `src/components/dashboards/DashTabs.tsx`
+- add: `src/components/dashboards/KpiSummary.tsx`
+- add: `src/components/dashboards/InsightsStrip.tsx`
+- add: `src/components/dashboards/BatchesTable.tsx`
+- edit: `src/components/dashboards/AdminDashboard.tsx` — new composition, drop old `KpiStrip`, `RecentBatchesCard`, `ActuatorsCard`, `InstallOrdersMini`, `RevenueMini` from this page (they remain available for other roles/pages).
+- edit: `src/lib/dashboard-extras.functions.ts` — accept `range` arg, add previous-period counts for delta %, add QC/at-risk/ready-to-ship counters.
+- keep: `SilosOccupancyCard`, `RecentAlertsCard` (already dense visuals).
+
+## Notes
+- Icons stay only where they're identity (KPI tile leading icon, gear for tab settings, action arrow). No decorative icons in pills, table cells, or tooltip triggers.
+- Everything continues to respect dark mode via existing tokens (bg-card, border-border/60, emerald-500 accent).
