@@ -226,7 +226,8 @@ export const listOrderMessages = createServerFn({ method: "GET" })
       .eq("order_id", data.orderId)
       .order("created_at", { ascending: true });
     if (error) throw error;
-    const list = (rows ?? []) as Array<Record<string, unknown>>;
+    type Msg = { id: string; order_id: string; sender_id: string; message: string; emailed: boolean | null; created_at: string };
+    const list = (rows ?? []) as unknown as Msg[];
     // Attach sender role (admin vs super_admin) by matching against the order owner.
     const { data: order } = await context.supabase
       .from("hardware_orders" as never)
@@ -234,13 +235,15 @@ export const listOrderMessages = createServerFn({ method: "GET" })
       .eq("id", data.orderId)
       .maybeSingle();
     const ownerId = (order as { admin_id?: string | null } | null)?.admin_id ?? null;
-    return {
-      messages: list.map((m) => ({
-        ...(m as Record<string, unknown>),
-        sender_role: (m.sender_id === ownerId ? "admin" : "super_admin") as "admin" | "super_admin",
-      })) as Array<Record<string, unknown> & { sender_role: "admin" | "super_admin" }>,
-      viewerIsOwner: ownerId === context.userId,
-    };
+    const messages = list.map((m) => ({
+      id: m.id,
+      order_id: m.order_id,
+      sender_id: m.sender_id,
+      message: m.message,
+      created_at: m.created_at,
+      sender_role: (m.sender_id === ownerId ? "admin" : "super_admin") as "admin" | "super_admin",
+    }));
+    return { messages, viewerIsOwner: ownerId === context.userId };
   });
 
 /** Super-admin: count of orders needing attention, for sidebar badge. */
