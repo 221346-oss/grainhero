@@ -85,3 +85,18 @@ export const addVisitEvent = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export type InstallStage = "paid" | "assigned" | "en_route" | "onsite" | "installed" | "completed" | "blocked";
+
+export const advanceInstallStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string; next: "en_route" | "onsite" | "installed" | "completed" | "blocked"; note?: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc("advance_install_stage", {
+      _order_id: data.orderId,
+      _next: data.next,
+      _note: data.note ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean; stage: string };
+  });
