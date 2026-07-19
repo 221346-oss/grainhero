@@ -1,77 +1,52 @@
-## Goals
+## Goal
+Collapse three sidebar links (Silos, Warehouses, Grain Batches) into one **Silo Management** hub. Warehouses become the left rail; silos are the middle list; batches open in a right-side drawer per silo.
 
-1. Fix rendering gaps on SuperAdmin surfaces (impersonation banner + reports).
-2. Rebuild `SuperAdminDashboard.tsx` to mirror the Admin dashboard shell (WelcomeBanner → hero → insights/filters → bento) but with an MRR-trend hero.
-3. Make the top quick-nav role-aware so SuperAdmin gets a **customizable** icon bar (default: Install Orders + 4 others, +Customize popover) — same UX admin already has.
-
-Nothing outside SuperAdmin surfaces will change.
-
----
-
-## 1. Fix rendering gaps
-
-- **ImpersonationBanner**: no visible entry point when SuperAdmin sits on `/dashboard`. It only renders when session exists — verify Start button on `platform/users` still writes to `gh_impersonation_session` and confirm the "Viewing as" bar shows across all routes. If broken, restore save call.
-- **Reports/reporting**: `/platform/reporting` exists. Add a "Reports" quick-tile back into the new dashboard so it isn't orphaned, and make the `/reports` (financial reports) route reachable from the SuperAdmin quick-nav catalog.
-
-## 2. New SuperAdmin dashboard structure
-
-Rewrite `src/components/dashboards/SuperAdminDashboard.tsx` to compose the same primitives Admin uses, plus one SuperAdmin-specific hero:
+## Layout (`/silos`)
 
 ```text
-┌ WelcomeBanner (typewriter, self-vanishing) ────────────────┐
-│ Platform KPI Summary  [MTD | WTD | 30D | YTD]              │
-│ ┌────────── 65% Hero ──────────┐┌── 35% compact list ─────┐│
-│ │ MRR PKR X • +Δ% • 12-mo spark││ Tenants        N        ││
-│ │ (click → /platform/financials)│ Users          N        ││
-│ │                              ││ Active subs    N        ││
-│ │                              ││ Install orders N (open) ││
-│ │                              ││ Critical alerts N       ││
-│ └──────────────────────────────┘└─────────────────────────┘│
-├────────────────────────────────────────────────────────────┤
-│ Platform Insights strip (4 tiles):                         │
-│  Signups WoW · Reporting tickets · Pipeline · Health       │
-├────────────────────────────────────────────────────────────┤
-│ Recent signups table  │  Recent platform activity          │
-└────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│ PageHeader: Silo Management  · [Range chip] [Request install]     │
+├──────────────────┬────────────────────────────────────────────────┤
+│ WAREHOUSES  (L)  │ SILOS TABLE (M)                                │
+│  ▸ All (12)      │ Name | WH | Grain | Fill% | Status | Actions   │
+│  ▸ WH-Lahore (4) │ …row click → opens Batches drawer              │
+│  ▸ WH-Multan (3) │                                                │
+│  + inline info   │                                                │
+└──────────────────┴────────────────────────────────────────────────┘
+                          ↘ Right drawer: "Batches in <Silo>"
+                             - Compact batch table (intake / dispatch)
+                             - Actions: Add batch · Dispatch · View details
 ```
 
-Everything is a link — every number jumps to the matching page.
+- Left rail: warehouse list (from `warehouses` query) with silo counts. "All warehouses" default. Click filters middle table. Small "Warehouse details" (i) link opens a slim warehouse-info popover (address, capacity, origin order) — no separate page needed.
+- Middle: existing silo table, filtered by selected warehouse. Row click opens the drawer.
+- Right drawer (`Sheet`): shows that silo's batches using the existing `BatchesTable` component scoped by `silo_id`. Includes "Add batch" + "Dispatch" buttons (reuses current dialogs).
 
-### Files
+## Files
 
-- **New** `src/components/dashboards/SuperKpiSummary.tsx`
-  - 65/35 split; hero = MRR + spark from `getSaasRevenueAnalytics().revenueSeries`; list = Tenants / Users / Active subs / Install orders / Critical alerts (all as `<Link>`).
-- **New** `src/components/dashboards/SuperInsightsStrip.tsx`
-  - 4 tiles reusing the InsightsStrip visual pattern: Signups (WoW Δ), Reporting tickets (`reportingStats.totalTickets` → `/platform/reporting`), Pipeline (`pipelineTotal` → `/platform/pipeline`), Health (`criticalAlerts` → `/platform/health`).
-- **New** `src/components/dashboards/SuperBento.tsx`
-  - Left: Recent signups table (existing content, condensed). Right: Recent platform activity from `activity_logs` (limit 6, links to `/platform/audit-logs`).
-- **Rewrite** `SuperAdminDashboard.tsx` to:
-  - Wrap in `TooltipProvider`, `WelcomeBanner`, then the three sections above.
-  - Drop the current "Quick access — Sales / Operations / Monitoring" three-band grid (top-nav pills replace it).
+**New**
+- `src/components/app/silos/WarehouseRail.tsx` — left list + counts + info popover.
+- `src/components/app/silos/SiloBatchesDrawer.tsx` — Sheet wrapping BatchesTable + AddBatch + DispatchDialog for one silo.
 
-## 3. Role-aware DashboardQuickTabs
+**Modified**
+- `src/routes/_authenticated/silos.tsx` — grid layout `[220px_1fr]`, wire warehouse filter, row click → drawer.
+- `src/components/app/AppSidebar.tsx` — remove "Warehouses" and "Grain Batches" nav entries for admin/manager/technician.
+- `src/routes/_authenticated/warehouses.tsx` — keep route file (so old bookmarks still resolve) but redirect to `/silos`.
+- `src/routes/_authenticated/grain-batches.tsx` — keep as fallback deep view (accessible from drawer "Open full page"), remove sidebar link only.
+- `src/routes/_authenticated/silos.$siloId.tsx` — keep; drawer's "Open full page" links here.
 
-Update `src/components/app/DashboardQuickTabs.tsx`:
+## Data
+- Reuse existing server fns: `listSilos`, `listWarehouses`, `listGrainBatches({ siloId })`.
+- No schema change. No new server functions.
 
-- Accept role via `useIsSuperAdmin()` hook (already exists).
-- Add a second `CATALOG_SUPER` array:
-  - `overview → /dashboard` (pinned)
-  - `orders → /platform/orders` (default, "Install Orders")
-  - `financials → /platform/financials` (default)
-  - `users → /platform/users` (default)
-  - `plans → /platform/plans` (default)
-  - `+ reporting`, `health`, `audit-logs`, `system-logs`, `pipeline`, `leads`, `insurance`, `subscription`, `security`, `launch-readiness` (all opt-in via Customize)
-- Storage key becomes role-scoped: `gh_super_tabs_v1` vs `gh_admin_tabs_v3`.
-- Default super list: `[overview, orders, financials, users, plans]` (Install Orders is second).
-
-## 4. Small polish
-
-- Ensure `<AdminPageShell>` wrapper is removed from SuperAdmin dashboard so it matches Admin's edge-to-edge look (`min-h-screen p-4 sm:p-6 bg-gradient…`).
-- Verify InfoDot descriptions + delta formatting stay under two lines.
-- `tsgo` after edits to catch any typing regressions.
+## UX details
+- Preserve current empty-state guides (Admins can't create warehouses/silos — install-order CTA).
+- Drawer width: `w-full sm:max-w-2xl`, closes on route change.
+- Batch drawer header shows silo name, fill%, grain type, and quick "Dispatch" primary button.
+- Keyboard: Esc closes drawer; ↑/↓ moves row selection.
+- Dark-mode: uses same semantic tokens already in `DataListPage`.
 
 ## Out of scope
-
-- No schema changes.
-- No changes to other dashboards, sidebar catalog, or route registration beyond quick-tabs.
-- Reporting/financial data logic already exists — dashboard is view-only over it.
+- No changes to batch/dispatch business logic.
+- SuperAdmin sidebar untouched.
+- No warehouse edit UI added (view-only popover, since admins can't create warehouses anyway).
