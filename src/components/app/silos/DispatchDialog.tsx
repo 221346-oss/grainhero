@@ -84,9 +84,10 @@ export function DispatchDialog({
   const profit = avgCost != null ? total - avgCost * qtyNum : null;
 
   // Suggested prices
-  const settings = (priceQ.data?.settings ?? null) as Row | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const settings = (priceQ.data ?? null) as any;
   const marginPct = settings?.default_margin_pct != null ? Number(settings.default_margin_pct) : 15;
-  const marketMap = (settings?.market_price_snapshot ?? {}) as Record<string, number>;
+  const marketMap = (settings?.per_grain_margin ?? settings?.market_price_snapshot ?? {}) as Record<string, number>;
   const suggestedCost = avgCost != null ? avgCost * (1 + marginPct / 100) : null;
   const suggestedMarket = grainType ? Number(marketMap[grainType] ?? 0) || null : null;
 
