@@ -88,7 +88,9 @@ type Form = {
   moisture_content: string;
   protein_content: string;
   test_weight: string;
-  farmer_name: string;
+  supplier_id: string;
+  source_kind: "external" | "own_farm" | "internal_transfer" | "anonymous";
+  farmer_name: string; // fallback / anonymous label
   farmer_contact: string;
   source_location: string;
   harvest_date: string;
@@ -103,6 +105,7 @@ type Form = {
 const emptyForm: Form = {
   grain_type: "", variety: "", grade: "Standard", quantity_kg: "", silo_id: "",
   moisture_content: "", protein_content: "", test_weight: "",
+  supplier_id: "", source_kind: "external",
   farmer_name: "", farmer_contact: "", source_location: "",
   harvest_date: "", expected_dispatch_date: "",
   purchase_price_per_kg: "", intake_temperature: "", intake_humidity: "",
