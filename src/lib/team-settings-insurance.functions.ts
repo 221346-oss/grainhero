@@ -65,14 +65,31 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email.trim().toLowerCase(), {
+    const email = data.email.trim().toLowerCase();
+    let uid: string | undefined;
+    const inviteRes = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       data: { name: data.name ?? "", invited_role: data.role, admin_id },
     });
-    if (error) throw new Error(error.message);
-    const uid = invited.user?.id;
+    if (inviteRes.error) {
+      const msg = inviteRes.error.message || (inviteRes.error as { code?: string }).code || "";
+      const alreadyExists = /already|registered|exists|duplicate/i.test(msg);
+      if (!alreadyExists) {
+        console.error("[inviteTeamMember] inviteUserByEmail failed", inviteRes.error);
+        throw new Error(msg || "Failed to send invitation email. Check Supabase email settings.");
+      }
+      // Fallback: look up existing auth user and just (re)assign them.
+      const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
+      if (!uid) throw new Error("A user with that email already exists but could not be located.");
+    } else {
+      uid = inviteRes.data.user?.id;
+    }
     if (uid) {
-      await supabaseAdmin.from("profiles").upsert({ id: uid, email: data.email.trim().toLowerCase(), name: data.name ?? data.email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
-      await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: data.role }, { onConflict: "user_id,role" });
+      const { error: pErr } = await supabaseAdmin.from("profiles").upsert({ id: uid, email, name: data.name ?? email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
+      if (pErr) { console.error("[inviteTeamMember] profiles upsert failed", pErr); throw new Error(pErr.message || "Failed to save profile"); }
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+      const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
+      if (rErr) { console.error("[inviteTeamMember] user_roles insert failed", rErr); throw new Error(rErr.message || "Failed to assign role"); }
     }
     return { ok: true };
   });
