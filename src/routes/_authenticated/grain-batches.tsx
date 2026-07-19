@@ -148,6 +148,7 @@ function GrainBatchesPage() {
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
   const listBuyerFn = useServerFn(listBuyers);
+  const listSupFn = useServerFn(listSuppliers);
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
   const dispatchFn = useServerFn(dispatchGrainBatch);
@@ -162,6 +163,9 @@ function GrainBatchesPage() {
   const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const silos = silosData ?? [];
   const buyers = buyersData ?? [];
+  const { data: suppliersData } = useQuery({ queryKey: ["suppliers-mini"], queryFn: () => listSupFn({ data: {} }) });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const suppliers: any[] = (suppliersData?.suppliers ?? []) as any[];
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState(searchStatus ?? "all");
