@@ -423,7 +423,7 @@ function GrainBatchesPage() {
                       <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
                       <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell><StatusBadge status={b.status} /></TableCell>
+                      <TableCell><StatusBadge value={b.status} /></TableCell>
                       <TableCell className="text-right">
                         <div className="inline-flex items-center gap-0.5">
                           <Button size="icon" variant="ghost" className="h-7 w-7" title="View" onClick={() => { setSelected(b); setViewOpen(true); }}><Eye className="h-3.5 w-3.5" /></Button>
