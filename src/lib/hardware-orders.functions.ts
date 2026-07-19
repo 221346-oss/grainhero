@@ -236,9 +236,9 @@ export const listOrderMessages = createServerFn({ method: "GET" })
     const ownerId = (order as { admin_id?: string | null } | null)?.admin_id ?? null;
     return {
       messages: list.map((m) => ({
-        ...m,
-        sender_role: m.sender_id === ownerId ? "admin" : "super_admin",
-      })),
+        ...(m as Record<string, unknown>),
+        sender_role: (m.sender_id === ownerId ? "admin" : "super_admin") as "admin" | "super_admin",
+      })) as Array<Record<string, unknown> & { sender_role: "admin" | "super_admin" }>,
       viewerIsOwner: ownerId === context.userId,
     };
   });
