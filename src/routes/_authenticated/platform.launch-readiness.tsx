@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getLaunchReadiness } from "@/lib/launch-readiness.functions";
+import { verifyRevenueIntegrity } from "@/lib/revenue-integrity.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,9 +16,15 @@ export const Route = createFileRoute("/_authenticated/platform/launch-readiness"
 
 function LaunchReadinessPage() {
   const fetchFn = useServerFn(getLaunchReadiness);
+  const revenueFn = useServerFn(verifyRevenueIntegrity);
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["launch-readiness"],
     queryFn: () => fetchFn(),
+    refetchInterval: 60_000,
+  });
+  const { data: rev, refetch: refetchRev } = useQuery({
+    queryKey: ["revenue-integrity"],
+    queryFn: () => revenueFn(),
     refetchInterval: 60_000,
   });
 
@@ -26,11 +33,31 @@ function LaunchReadinessPage() {
       title="Launch Readiness"
       subtitle="Final go-live checklist covering payments, notifications, mobile sync, and disputes."
       actions={
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || isLoading}>
+        <Button variant="outline" size="sm" onClick={() => { refetch(); refetchRev(); }} disabled={isFetching || isLoading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Refresh
         </Button>
       }
     >
+      {rev ? (
+        <Card className="p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-muted-foreground">Revenue integrity (PKR)</div>
+              <div className="text-2xl font-semibold">Rs {rev.mrr.toLocaleString()} MRR · {rev.activeSubs} subscribers</div>
+            </div>
+            <Badge variant={rev.ok ? "outline" : "destructive"}>{rev.ok ? "Consistent" : "Issues"}</Badge>
+          </div>
+          {rev.issues.length > 0 ? (
+            <ul className="mt-3 text-xs space-y-1">
+              {rev.issues.map((i, idx) => (
+                <li key={idx} className={i.level === "error" ? "text-rose-500" : "text-amber-500"}>• {i.message}</li>
+              ))}
+            </ul>
+          ) : (
+            <div className="mt-2 text-xs text-muted-foreground">All revenue surfaces use plan_thresholds PKR pricing.</div>
+          )}
+        </Card>
+      ) : null}
       <Card className="p-6 mb-4 flex items-center justify-between">
         <div>
           <div className="text-sm text-muted-foreground">Overall score</div>
