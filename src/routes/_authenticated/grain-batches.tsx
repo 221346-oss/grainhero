@@ -314,6 +314,8 @@ function GrainBatchesPage() {
       grade: b.grade ?? "Standard",
       quantity_kg: String(b.quantity_kg ?? ""),
       silo_id: b.silos?.id ?? "",
+      supplier_id: (b as { supplier_id?: string | null }).supplier_id ?? "",
+      source_kind: ((b as { source_kind?: string }).source_kind as Form["source_kind"]) ?? "external",
       moisture_content: b.moisture_content != null ? String(b.moisture_content) : "",
       protein_content: b.protein_content != null ? String(b.protein_content) : "",
       test_weight: b.test_weight != null ? String(b.test_weight) : "",
