@@ -41,7 +41,7 @@ export function DashTabs({ active, onChange }: { active: TabKey; onChange: (t: T
       const has = cur.includes(k);
       let next = has ? cur.filter((x) => x !== k) : [...cur, k];
       if (!has && next.length > 5) next = next.slice(-5);
-      if (!next.includes("overview")) next = ["overview", ...next].slice(0, 5);
+      if (!next.includes("overview")) next = (["overview", ...next] as TabKey[]).slice(0, 5);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
