@@ -148,6 +148,13 @@ export const upsertSilo = createServerFn({ method: "POST" })
     // Insert: auto-generate silo_id and name if not provided
     const siloId = data.silo_id ?? `SILO-${Date.now().toString().slice(-8)}`;
     const name = data.name ?? `Silo ${siloId.slice(-4)}`;
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const { data: row, error } = await context.supabase
       .from("silos")
       .insert({
@@ -158,7 +165,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
         location,
         status: data.status,
         notes: data.notes ?? null,
-        admin_id: context.userId,
+        admin_id: tenantAdminId,
         created_by: context.userId,
       })
       .select("*")

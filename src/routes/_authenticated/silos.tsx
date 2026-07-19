@@ -25,7 +25,6 @@ import { RowActions } from "@/components/app/RowActions";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { WarehouseRail, type WarehouseRailItem } from "@/components/app/silos/WarehouseRail";
 import { SiloBatchesDrawer } from "@/components/app/silos/SiloBatchesDrawer";
 
@@ -83,7 +82,6 @@ function SilosPage() {
   
   // Plan limits check
   const { canAddSilo, siloLimitMessage } = usePlanLimits();
-  const { isSuperAdmin } = useIsSuperAdmin();
 
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
@@ -242,20 +240,14 @@ function SilosPage() {
             </SelectContent>
           </Select>
         </div>
-        {isSuperAdmin ? (
-          <Button
-            onClick={openCreate}
-            className="gap-2 whitespace-nowrap"
-            disabled={!canAddSilo}
-            title={siloLimitMessage ?? "Create new silo"}
-          >
-            <Plus className="w-4 h-4" /> New silo
-          </Button>
-        ) : (
-          <Button asChild variant="outline" className="gap-2 whitespace-nowrap">
-            <Link to="/orders">Request install →</Link>
-          </Button>
-        )}
+        <Button
+          onClick={openCreate}
+          className="gap-2 whitespace-nowrap"
+          disabled={!canAddSilo || warehouses.length === 0}
+          title={warehouses.length === 0 ? "Create a warehouse first" : (siloLimitMessage ?? "Create new silo")}
+        >
+          <Plus className="w-4 h-4" /> New silo
+        </Button>
       </div>
 
       {/* Plan limit warning banner */}
