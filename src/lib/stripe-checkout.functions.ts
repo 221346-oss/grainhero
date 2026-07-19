@@ -19,6 +19,8 @@ const checkoutInput = z.object({
     notes: z.string().trim().max(1000).optional().nullable(),
     businessName: z.string().trim().max(200).optional().nullable(),
     taxId: z.string().trim().max(80).optional().nullable(),
+    lat: z.number().min(-90).max(90).optional().nullable(),
+    lng: z.number().min(-180).max(180).optional().nullable(),
   }),
 });
 
@@ -111,6 +113,8 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
             install_address: data.install.address,
             install_city: data.install.city,
             install_country: data.install.country,
+            install_lat: data.install.lat ?? null,
+            install_lng: data.install.lng ?? null,
             contact_phone: data.install.phone,
             preferred_install_date: data.install.preferredDate || null,
             notes: data.install.notes || null,
@@ -288,6 +292,37 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       .update({ admin_id: context.userId } as never)
       .is("admin_id", null)
       .ilike("customer_email", email);
+
+    // Promote any still-pending orders to `new` so Platform → Orders shows
+    // them right away (fallback for when the Stripe webhook isn't reachable),
+    // and notify every super admin so they don't miss the sign-up.
+    try {
+      const pendingIds = orders
+        .filter((o) => String(o.status ?? "") === "pending_payment")
+        .map((o) => String(o.id ?? ""))
+        .filter(Boolean);
+      if (pendingIds.length > 0) {
+        await supabaseAdmin
+          .from("hardware_orders" as never)
+          .update({ status: "new" } as never)
+          .in("id", pendingIds);
+      }
+      const { emitToSuperAdmins } = await import("@/lib/notify");
+      for (const o of orders) {
+        await emitToSuperAdmins(supabaseAdmin, {
+          category: "order",
+          severity: "info",
+          title: "New install order placed",
+          body: `Order for plan ${String(o.plan_id ?? o.plan_name ?? "?")} · ${Number(o.hardware_quantity ?? 0)} unit(s) by ${email}.`,
+          link: `/platform/orders/${String(o.id ?? "")}`,
+          entityType: "hardware_order",
+          entityId: String(o.id ?? ""),
+          metadata: { plan_id: o.plan_id ?? null, hardware_quantity: o.hardware_quantity ?? null },
+        });
+      }
+    } catch (e) {
+      console.warn("[claim] super-admin notify failed:", (e as Error).message);
+    }
 
     const stripeCustomerId = String(first.stripe_customer_id ?? "");
     if (stripeCustomerId) {

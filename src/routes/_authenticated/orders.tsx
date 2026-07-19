@@ -9,6 +9,7 @@ import { OrdersSkeleton } from "@/components/app/skeletons";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
+import { HardwareOrderThread } from "@/components/app/orders/HardwareOrderThread";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({ meta: [{ title: "My install orders — GrainHero" }] }),
@@ -104,6 +105,9 @@ function MyOrdersPage() {
                   <Button size="sm" variant="outline" onClick={() => setOpenOrderId(o.id as string)}>
                     <Truck className="h-3.5 w-3.5 mr-1.5" /> Track installation
                   </Button>
+                </div>
+                <div className="md:col-span-2">
+                  <HardwareOrderThread orderId={o.id as string} as="admin" />
                 </div>
               </CardContent>
             </Card>

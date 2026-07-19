@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SilosSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,9 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Thermometer, Droplets, Wind,
-  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff,
+  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff, Truck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,8 +21,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
+import { RowActions } from "@/components/app/RowActions";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 export const Route = createFileRoute("/_authenticated/silos")({
   component: SilosPage,
@@ -73,9 +77,11 @@ function SilosPage() {
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
   const qc = useQueryClient();
+  const navigate = useNavigate();
   
   // Plan limits check
   const { canAddSilo, siloLimitMessage } = usePlanLimits();
+  const { isSuperAdmin } = useIsSuperAdmin();
 
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
@@ -89,6 +95,8 @@ function SilosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Silo | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [dispatchSilo, setDispatchSilo] = useState<Silo | null>(null);
 
   // Live tick for storage-duration counter
   const [, setTick] = useState(0);
@@ -206,14 +214,20 @@ function SilosPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button 
-          onClick={openCreate} 
-          className="gap-2 whitespace-nowrap"
-          disabled={!canAddSilo}
-          title={siloLimitMessage ?? "Create new silo"}
-        >
-          <Plus className="w-4 h-4" /> New silo
-        </Button>
+        {isSuperAdmin ? (
+          <Button
+            onClick={openCreate}
+            className="gap-2 whitespace-nowrap"
+            disabled={!canAddSilo}
+            title={siloLimitMessage ?? "Create new silo"}
+          >
+            <Plus className="w-4 h-4" /> New silo
+          </Button>
+        ) : (
+          <Button asChild variant="outline" className="gap-2 whitespace-nowrap">
+            <Link to="/orders">Request install →</Link>
+          </Button>
+        )}
       </div>
 
       {/* Plan limit warning banner */}
@@ -245,12 +259,75 @@ function SilosPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((s) => (
-            <SiloCard key={s.id} silo={s} onView={() => { setSelected(s); setViewOpen(true); }} onEdit={() => openEdit(s)} onDelete={() => setDeleteId(s.id)} />
-          ))}
+        <div className="rounded-xl border bg-card/60 overflow-hidden">
+          <div className="max-h-[70vh] overflow-auto">
+            <Table className="text-xs">
+              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
+                <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
+                  <TableHead>Silo</TableHead>
+                  <TableHead>Warehouse</TableHead>
+                  <TableHead>Current batch</TableHead>
+                  <TableHead className="text-right">Capacity (kg)</TableHead>
+                  <TableHead className="text-right">Occupancy</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((s) => {
+                  const cap = Number(s.capacity_kg ?? 0);
+                  const occ = Number(s.current_occupancy_kg ?? 0);
+                  const pct = cap > 0 ? Math.round((occ / cap) * 100) : 0;
+                  return (
+                    <TableRow key={s.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
+                      <TableCell className="font-medium">
+                        <Link to="/silos/$siloId" params={{ siloId: s.id }} className="hover:text-emerald-700 hover:underline">
+                          {s.name}
+                        </Link>
+                        <div className="text-[10px] text-muted-foreground">{s.silo_id}</div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[160px]">
+                        {s.warehouses ? (
+                          <span className="inline-flex items-center gap-1"><Building2 className="w-3 h-3" />{s.warehouses.name}</span>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[160px]">
+                        {s.current_batch ? `${s.current_batch.batch_id} · ${s.current_batch.grain_type}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{cap.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {occ.toLocaleString()} <span className="text-[10px] text-muted-foreground">({pct}%)</span>
+                      </TableCell>
+                      <TableCell><StatusBadge value={s.status} /></TableCell>
+                      <TableCell className="text-right">
+                        <RowActions
+                          actions={[
+                            { label: "Open", icon: Eye, onClick: () => navigate({ to: "/silos/$siloId", params: { siloId: s.id } }) },
+                            { label: "Dispatch", icon: Truck, onClick: () => { setDispatchSilo(s); setDispatchOpen(true); } },
+                            { label: "Edit", icon: Edit2, onClick: () => openEdit(s) },
+                            { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(s.id) },
+                          ]}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{rows.length} silo{rows.length === 1 ? "" : "s"}</span>
+            <span>Open a silo to see its warehouse and batches</span>
+          </div>
         </div>
       )}
+
+      <DispatchDialog
+        open={dispatchOpen}
+        onOpenChange={setDispatchOpen}
+        siloId={dispatchSilo?.id ?? null}
+        siloName={dispatchSilo?.name}
+      />
 
       {/* Create / Edit dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setForm(emptyForm); }}>
@@ -389,7 +466,7 @@ function SilosPage() {
   );
 }
 
-function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () => void; onEdit: () => void; onDelete: () => void }) {
+function SiloCard({ silo, onView, onEdit, onDelete, onDispatch }: { silo: Silo; onView: () => void; onEdit: () => void; onDelete: () => void; onDispatch: () => void }) {
   const cap = silo.capacity_kg ?? 0;
   const occ = silo.current_occupancy_kg ?? 0;
   const pct = cap > 0 ? Math.min(100, Math.round((occ / cap) * 100)) : 0;
@@ -484,9 +561,10 @@ function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () =
 
         {/* Actions */}
         <div className="flex gap-1 pt-1">
-          <Button variant="outline" size="sm" onClick={onView} className="flex-1 h-8"><Eye className="w-3.5 h-3.5 mr-1" />View</Button>
-          <Button variant="outline" size="sm" onClick={onEdit} className="flex-1 h-8"><Edit2 className="w-3.5 h-3.5 mr-1" />Edit</Button>
-          <Button variant="outline" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-rose-600 hover:text-rose-700 shrink-0"><Trash2 className="w-3.5 h-3.5" /></Button>
+          <Button size="sm" onClick={onDispatch} className="flex-1 h-8 bg-emerald-600 hover:bg-emerald-700 text-white"><Truck className="w-3.5 h-3.5 mr-1" />Dispatch</Button>
+          <Button variant="outline" size="sm" onClick={onView} className="h-8 w-8 p-0" title="View"><Eye className="w-3.5 h-3.5" /></Button>
+          <Button variant="outline" size="sm" onClick={onEdit} className="h-8 w-8 p-0" title="Edit"><Edit2 className="w-3.5 h-3.5" /></Button>
+          <Button variant="outline" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-rose-600 hover:text-rose-700" title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </CardContent>
     </Card>

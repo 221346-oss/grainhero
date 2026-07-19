@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { assertPlanAllows } from "@/lib/plan-gate";
 
 // Turn ZodError into a readable one-liner so the client toast is helpful.
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
@@ -40,6 +41,18 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(warehouseInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_warehouses", sb: context.supabase, userId: context.userId });
+    }
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    // Managers/technicians have profiles.admin_id set to their tenant admin; admins have it null.
+    const { data: prof, error: profErr } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (profErr) throw profErr;
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const location = {
       description: data.location_description ?? null,
       address: data.address ?? null,
@@ -51,7 +64,7 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
       total_capacity_kg: data.total_capacity_kg ?? null,
       status: data.status,
       notes: data.notes ?? null,
-      admin_id: context.userId,
+      admin_id: tenantAdminId,
       created_by: context.userId,
       updated_by: context.userId,
     };
@@ -110,6 +123,9 @@ export const upsertSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_silos", sb: context.supabase, userId: context.userId });
+    }
     const location = { description: data.location_description ?? null };
     if (data.id) {
       // Update: don't touch silo_id or name (immutable per original app)
@@ -207,12 +223,19 @@ const batchInput = z.object({
   intake_humidity: z.number().optional().nullable(),
   status: z.enum(batchStatuses).optional(),
   notes: z.string().max(2000).optional().nullable(),
+  supplier_id: z.string().uuid().optional().nullable(),
+  source_kind: z.enum(["external","own_farm","internal_transfer","anonymous"]).optional().nullable(),
+  unit_cost: z.number().nonnegative().optional().nullable(),
+  currency: z.string().min(3).max(3).optional().nullable(),
 });
 
 export const upsertGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_batches", sb: context.supabase, userId: context.userId });
+    }
     // resolve warehouse from silo
     const { data: silo, error: siloErr } = await context.supabase
       .from("silos").select("id, warehouse_id, capacity_kg, current_occupancy_kg").eq("id", data.silo_id).single();
@@ -252,6 +275,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
           status: data.status ?? "stored",
           notes: data.notes ?? null,
           updated_by: context.userId,
+          supplier_id: data.supplier_id ?? null,
+          source_kind: data.source_kind ?? null,
+          unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
+          currency: data.currency ?? "PKR",
         })
         .eq("id", data.id).select("*").single();
       if (error) throw error;
@@ -286,6 +313,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         status: data.status ?? "stored",
         notes: data.notes ?? null,
         created_by: context.userId,
+        supplier_id: data.supplier_id ?? null,
+        source_kind: data.source_kind ?? null,
+        unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
+        currency: data.currency ?? "PKR",
       })
       .select("*").single();
     if (error) throw error;
@@ -344,6 +375,7 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let buyerId = data.buyer_id ?? null;
     if (!buyerId && data.new_buyer?.name) {
+      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
       const { data: b, error: bErr } = await context.supabase.from("buyers").insert({
         admin_id: context.userId,
         name: data.new_buyer.name,
@@ -495,6 +527,9 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(sensorInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_sensors", sb: context.supabase, userId: context.userId });
+    }
     const base = {
       device_name: data.device_name,
       mac_address: data.mac_address ?? null,
@@ -614,6 +649,9 @@ export const upsertActuator = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(actuatorInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_actuators", sb: context.supabase, userId: context.userId });
+    }
     const payload = {
       actuator_id: data.actuator_id,
       name: data.name,
@@ -909,6 +947,9 @@ export const upsertBuyer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
+    }
     const payload = {
       name: data.name,
       contact_name: data.contact_name,

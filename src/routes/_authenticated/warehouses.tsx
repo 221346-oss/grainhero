@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { listWarehouses, upsertWarehouse, deleteWarehouse } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 export const Route = createFileRoute("/_authenticated/warehouses")({
   component: WarehousesPage,
@@ -64,6 +65,7 @@ function WarehousesPage() {
   
   // Plan limits check
   const { canAddWarehouse, warehouseLimitMessage } = usePlanLimits();
+  const { isSuperAdmin } = useIsSuperAdmin();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["warehouses"],
@@ -186,14 +188,20 @@ function WarehousesPage() {
             <SelectItem value="error">Error</SelectItem>
           </SelectContent>
         </Select>
-        <Button 
-          onClick={openCreate} 
-          className="gap-2"
-          disabled={!canAddWarehouse}
-          title={warehouseLimitMessage ?? "Create new warehouse"}
-        >
-          <Plus className="w-4 h-4" /> New warehouse
-        </Button>
+        {isSuperAdmin ? (
+          <Button
+            onClick={openCreate}
+            className="gap-2"
+            disabled={!canAddWarehouse}
+            title={warehouseLimitMessage ?? "Create new warehouse"}
+          >
+            <Plus className="w-4 h-4" /> New warehouse
+          </Button>
+        ) : (
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/orders">Request install →</Link>
+          </Button>
+        )}
       </div>
 
       {/* Plan limit warning banner */}
