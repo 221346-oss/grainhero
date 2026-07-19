@@ -188,20 +188,14 @@ function WarehousesPage() {
             <SelectItem value="error">Error</SelectItem>
           </SelectContent>
         </Select>
-        {isSuperAdmin ? (
-          <Button
-            onClick={openCreate}
-            className="gap-2"
-            disabled={!canAddWarehouse}
-            title={warehouseLimitMessage ?? "Create new warehouse"}
-          >
-            <Plus className="w-4 h-4" /> New warehouse
-          </Button>
-        ) : (
-          <Button asChild variant="outline" className="gap-2">
-            <Link to="/orders">Request install →</Link>
-          </Button>
-        )}
+        <Button
+          onClick={openCreate}
+          className="gap-2"
+          disabled={!canAddWarehouse}
+          title={warehouseLimitMessage ?? "Create new warehouse"}
+        >
+          <Plus className="w-4 h-4" /> New warehouse
+        </Button>
       </div>
 
       {/* Plan limit warning banner */}
