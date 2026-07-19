@@ -199,7 +199,7 @@ function WarehousesPage() {
           </Button>
         ) : (
           <Button asChild variant="outline" className="gap-2">
-            <Link to="/install-orders">Request install →</Link>
+            <Link to="/orders">Request install →</Link>
           </Button>
         )}
       </div>
