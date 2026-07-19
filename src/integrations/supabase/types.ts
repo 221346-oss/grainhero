@@ -3456,6 +3456,8 @@ export type Database = {
           install_address: string | null
           install_city: string | null
           install_country: string | null
+          install_lat: number | null
+          install_lng: number | null
           installed_at: string | null
           notes: string | null
           plan_id: string | null
@@ -3498,6 +3500,8 @@ export type Database = {
           install_address?: string | null
           install_city?: string | null
           install_country?: string | null
+          install_lat?: number | null
+          install_lng?: number | null
           installed_at?: string | null
           notes?: string | null
           plan_id?: string | null
@@ -3540,6 +3544,8 @@ export type Database = {
           install_address?: string | null
           install_city?: string | null
           install_country?: string | null
+          install_lat?: number | null
+          install_lng?: number | null
           installed_at?: string | null
           notes?: string | null
           plan_id?: string | null

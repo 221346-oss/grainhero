@@ -19,6 +19,8 @@ const checkoutInput = z.object({
     notes: z.string().trim().max(1000).optional().nullable(),
     businessName: z.string().trim().max(200).optional().nullable(),
     taxId: z.string().trim().max(80).optional().nullable(),
+    lat: z.number().min(-90).max(90).optional().nullable(),
+    lng: z.number().min(-180).max(180).optional().nullable(),
   }),
 });
 
@@ -111,6 +113,8 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
             install_address: data.install.address,
             install_city: data.install.city,
             install_country: data.install.country,
+            install_lat: data.install.lat ?? null,
+            install_lng: data.install.lng ?? null,
             contact_phone: data.install.phone,
             preferred_install_date: data.install.preferredDate || null,
             notes: data.install.notes || null,
