@@ -145,7 +145,70 @@ export const getPlatformLogs = createServerFn({ method: "GET" })
     if (data.severity && data.severity !== "all") q = q.eq("severity", data.severity);
     const { data: rows, error } = await q;
     if (error) throw error;
-    return rows ?? [];
+    const audit = rows ?? [];
+
+    // Augment / fall back with synthesized events from hardware_orders and
+    // new signups so the SuperAdmin activity feed is never empty when real
+    // platform events exist but the audit trigger hasn't written a row.
+    const [ordersRes, signupsRes] = await Promise.all([
+      context.supabase
+        .from("hardware_orders")
+        .select("id, admin_id, plan_name, hardware_quantity, hardware_total, currency, status, created_at, customer_name, customer_email")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      context.supabase
+        .from("profiles")
+        .select("id, name, email, subscription_plan, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
+
+    const synth: any[] = [];
+    for (const o of ordersRes.data ?? []) {
+      synth.push({
+        id: `hw-${o.id}`,
+        admin_id: o.admin_id,
+        user_id: o.admin_id,
+        user_name: o.customer_name ?? o.customer_email ?? "Admin",
+        user_role: "admin",
+        action: `Install order · ${o.plan_name ?? "plan"}`,
+        category: "billing",
+        entity_type: "hardware_order",
+        entity_ref: o.id,
+        description: `${o.hardware_quantity ?? 0} device(s) · ${o.currency ?? "PKR"} ${Number(o.hardware_total ?? 0).toLocaleString()} · ${o.status}`,
+        severity: o.status === "new" || o.status === "pending_payment" ? "warning" : "info",
+        created_at: o.created_at,
+      });
+    }
+    for (const p of signupsRes.data ?? []) {
+      synth.push({
+        id: `su-${p.id}`,
+        admin_id: p.id,
+        user_id: p.id,
+        user_name: p.name ?? p.email ?? "New user",
+        user_role: "admin",
+        action: "New signup",
+        category: "auth",
+        entity_type: "profile",
+        entity_ref: p.id,
+        description: `${p.email ?? ""}${p.subscription_plan ? ` · ${p.subscription_plan}` : ""}`,
+        severity: "info",
+        created_at: p.created_at,
+      });
+    }
+
+    // Merge, dedupe by (action + entity_ref), keep newest first.
+    const seen = new Set<string>();
+    const merged = [...audit, ...synth]
+      .filter((r) => {
+        const k = `${r.action}|${r.entity_ref ?? r.id}`;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      })
+      .sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
+
+    return merged.slice(0, data.limit ?? 200);
   });
 
 export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
