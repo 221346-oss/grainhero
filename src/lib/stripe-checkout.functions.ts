@@ -310,7 +310,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
           severity: "info",
           title: "New install order placed",
           body: `Order for plan ${String(o.plan_id ?? o.plan_name ?? "?")} · ${Number(o.hardware_quantity ?? 0)} unit(s) by ${email}.`,
-          link: "/platform/orders",
+          link: `/platform/orders/${String(o.id ?? "")}`,
           entityType: "hardware_order",
           entityId: String(o.id ?? ""),
           metadata: { plan_id: o.plan_id ?? null, hardware_quantity: o.hardware_quantity ?? null },

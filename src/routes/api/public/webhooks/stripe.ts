@@ -238,7 +238,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     severity: "info",
                     title: "New install order placed",
                     body: `A new install order was placed for plan ${planId ?? "?"}.`,
-                    link: "/platform/orders",
+                    link: `/platform/orders/${hardwareOrderId}`,
                     entityType: "hardware_order",
                     entityId: hardwareOrderId,
                     metadata: { plan_id: planId },
