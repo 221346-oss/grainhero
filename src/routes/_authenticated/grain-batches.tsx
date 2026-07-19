@@ -534,12 +534,36 @@ function GrainBatchesPage() {
                 <Input type="number" step="0.01" value={form.purchase_price_per_kg} onChange={(e) => setForm({ ...form, purchase_price_per_kg: e.target.value })} />
               </div>
               <div>
-                <Label>Farmer name</Label>
-                <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} />
+                <Label>Source kind</Label>
+                <Select value={form.source_kind} onValueChange={(v) => setForm({ ...form, source_kind: v as Form["source_kind"], supplier_id: "" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="external">External supplier</SelectItem>
+                    <SelectItem value="own_farm">Own farm / harvest</SelectItem>
+                    <SelectItem value="internal_transfer">Internal transfer</SelectItem>
+                    <SelectItem value="anonymous">Anonymous / walk-in</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label>Farmer contact</Label>
-                <Input value={form.farmer_contact} onChange={(e) => setForm({ ...form, farmer_contact: e.target.value })} />
+                <Label>Supplier</Label>
+                {form.source_kind === "anonymous" ? (
+                  <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} placeholder="Walk-in name (optional)" />
+                ) : (
+                  <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Pick from suppliers" /></SelectTrigger>
+                    <SelectContent>
+                      {suppliers.filter((s) => s.kind === form.source_kind).map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Link to="/suppliers" className="text-[10px] text-muted-foreground hover:text-emerald-600 underline">Manage suppliers →</Link>
+              </div>
+              <div>
+                <Label>Contact (optional)</Label>
+                <Input value={form.farmer_contact} onChange={(e) => setForm({ ...form, farmer_contact: e.target.value })} placeholder="Override contact" />
               </div>
               <div className="sm:col-span-2">
                 <Label>Source location</Label>
