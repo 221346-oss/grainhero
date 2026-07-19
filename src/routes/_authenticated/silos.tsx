@@ -25,7 +25,6 @@ import { RowActions } from "@/components/app/RowActions";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { WarehouseRail, type WarehouseRailItem } from "@/components/app/silos/WarehouseRail";
 import { SiloBatchesDrawer } from "@/components/app/silos/SiloBatchesDrawer";
 
@@ -83,7 +82,6 @@ function SilosPage() {
   
   // Plan limits check
   const { canAddSilo, siloLimitMessage } = usePlanLimits();
-  const { isSuperAdmin } = useIsSuperAdmin();
 
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
