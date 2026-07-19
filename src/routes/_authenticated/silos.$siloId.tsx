@@ -91,11 +91,13 @@ function SiloDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to silos
       </Link>
 
-      <PageHeader
-        title={silo.name}
-        subtitle={`${silo.silo_id} · ${cap.toLocaleString()} kg capacity`}
-        badge={<StatusBadge value={silo.status} />}
-      />
+      <div className="flex items-center gap-3">
+        <PageHeader
+          title={silo.name}
+          subtitle={`${silo.silo_id} · ${cap.toLocaleString()} kg capacity`}
+        />
+        <StatusBadge value={silo.status} />
+      </div>
 
       {/* Silo + Warehouse cards */}
       <div className="grid gap-4 md:grid-cols-2">
