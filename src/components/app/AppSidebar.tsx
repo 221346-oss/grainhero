@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarFooter,
   SidebarHeader,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
@@ -345,15 +346,16 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      {!collapsed && (
-        <SidebarHeader className="border-b border-sidebar-border/60">
-          <div className="px-2 py-1.5">
-            <span className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-[0.22em]">
+      <SidebarHeader className="h-14 border-b border-sidebar-border/60 justify-center">
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between px-2")}>
+          {!collapsed && (
+            <span className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-[0.22em] truncate">
               {role.replace("_", " ")}
             </span>
-          </div>
-        </SidebarHeader>
-      )}
+          )}
+          <SidebarTrigger className="shrink-0 h-8 w-8 text-sidebar-foreground/80 hover:text-sidebar-accent-foreground" />
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <Section items={pinnedNav} role={role} currentPath={currentPath} showLabel={false} />
         <MoreButton role={role} currentPath={currentPath} />
