@@ -157,6 +157,38 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       actuatorsTotal: (actuatorsRes.data ?? []).length,
     };
 
+    // 12-month revenue sparkline from dispatched batches
+    const now = new Date();
+    const buckets: { key: string; label: string; total: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      buckets.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: d.toLocaleString("en", { month: "short" }),
+        total: 0,
+      });
+    }
+    const twelveMoAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1).toISOString();
+    const { data: revRows } = await context.supabase
+      .from("grain_batches")
+      .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
+      .eq("status", "dispatched")
+      .gte("created_at", twelveMoAgo);
+    for (const r of revRows ?? []) {
+      const d = new Date(r.created_at as string);
+      const k = `${d.getFullYear()}-${d.getMonth()}`;
+      const b = buckets.find((x) => x.key === k);
+      if (!b) continue;
+      const val = Number(r.revenue ?? (Number(r.purchase_price_per_kg ?? 0) * Number(r.quantity_kg ?? 0)));
+      b.total += val;
+    }
+    const revenueSpark = buckets.map((b) => b.total);
+    const revenueMtd = buckets[buckets.length - 1]?.total ?? 0;
+    const revenuePrev = buckets[buckets.length - 2]?.total ?? 0;
+    const revenueDeltaPct = revenuePrev
+      ? Math.round(((revenueMtd - revenuePrev) / revenuePrev) * 100)
+      : (revenueMtd ? 100 : 0);
+
     function pctDelta(cur: number, prev: number) {
       if (!prev) return cur ? 100 : 0;
       return Math.round(((cur - prev) / prev) * 100);
@@ -179,6 +211,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       insights,
       deltas,
       range,
+      revenueSpark,
+      revenueMtd,
+      revenueDeltaPct,
       trends: {
         newBatches7d: batches7Res.count ?? 0,
         newSensors7d: sensors7Res.count ?? 0,
