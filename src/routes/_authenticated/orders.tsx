@@ -40,8 +40,9 @@ function MyOrdersPage() {
   const completeMut = useMutation({
     mutationFn: (orderId: string) => advanceFn({ data: { orderId, next: "completed" } }),
     onSuccess: () => {
-      toast.success("Installation completed. Silos & warehouse were auto-provisioned.");
+      toast.success("Admin sign-off recorded. Silos & warehouse are ready.");
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+      qc.invalidateQueries({ queryKey: ["installation"] });
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["warehouses"] });
     },
@@ -165,18 +166,18 @@ function CardActions({ order, onTrack, onComplete, completing }: {
           <AlertDialogTrigger asChild>
             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={completing}>
               <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-              {completing ? "Completing…" : "Mark as complete"}
+              {completing ? "Signing off…" : "Sign off & complete"}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirm installation is complete?</AlertDialogTitle>
+              <AlertDialogTitle>Admin sign-off required</AlertDialogTitle>
               <AlertDialogDescription>
-                By confirming, you acknowledge every sensor is physically installed and functioning at your site. GrainHero will automatically:
+                By signing off, you confirm every sensor is physically installed and working at your site. GrainHero will automatically:
                 <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
                   <li>Provision a warehouse for this install (if none exists).</li>
                   <li>Create one silo per installed device serial.</li>
-                  <li>Move the order to <strong>Completed</strong> — this step cannot be reversed.</li>
+                  <li>Record your Admin sign-off and move the order to <strong>Completed</strong> — this step cannot be reversed.</li>
                 </ul>
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -186,7 +187,7 @@ function CardActions({ order, onTrack, onComplete, completing }: {
                 className="bg-emerald-600 hover:bg-emerald-700"
                 onClick={onComplete}
               >
-                Yes, mark complete
+                Yes, sign off
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
