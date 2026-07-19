@@ -32,7 +32,6 @@ export function KpiStrip({ tiles, className }: { tiles: KpiTile[]; className?: s
               <span className="text-2xl font-bold tabular-nums text-foreground">{t.value}</span>
               <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100 text-emerald-600" />
             </div>
-            {t.delta && <p className="text-[10px] text-emerald-600 mt-0.5">{t.delta}</p>}
           </Link>
         );
       })}

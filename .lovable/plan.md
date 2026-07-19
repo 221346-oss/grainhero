@@ -1,57 +1,55 @@
+# Admin Dashboard — Simplify & Animate
+
 ## Goal
-Redesign the Admin dashboard from an airy vertical stack into a dense, information-rich command center. Every number becomes a deep link to its dedicated page, so the dashboard functions as the primary navigation surface (reducing sidebar dependency).
+Replace the static header + verbose blocks with an animated welcome that self-destructs, then let a denser, more visual bento fill the reclaimed space. Remove redundancy (role badge, Team mini — already in sidebar).
 
-## Problems today
-- KPI tiles are large but static (not clickable) and take a full band for 5 numbers.
-- Cards use large padding + single-column stacking on narrow viewports → excessive scroll.
-- `column "fill_percentage" does not exist` error breaks the Silo Fill widget.
-- Recent Batches / Alerts / Team rows are not clickable — user must jump to sidebar to drill in.
-- Actuators & Silo Occupancy blocks repeat headers/CTAs, wasting space.
+## 1. Animated Welcome Banner (self-vanishing)
+New component `src/components/dashboards/WelcomeBanner.tsx`:
+- Typewriter animation: `Welcome back, {name}` (char-by-char, ~40ms/char, blinking caret).
+- Hold ~1.6s after typing completes.
+- Fade + collapse height to 0 (framer-motion `AnimatePresence` + `layout` animation on parent grid so blocks below animate upward smoothly).
+- Session-scoped: use `sessionStorage` key `gh_welcome_shown` so it only plays on first dashboard visit per session (not every re-render / tab switch).
+- Reduced-motion: if `prefers-reduced-motion`, skip typing → show static line for 1s → vanish.
 
-## Redesign — 3-band bento layout
+## 2. AdminDashboard header cleanup
+In `src/components/dashboards/AdminDashboard.tsx`:
+- Remove `AdminPageShell`'s title/subtitle/actions (no "Admin — Name", no "Tenant overview…", no Admin badge).
+- Wrap content in a plain padded container with `motion.div layout` so children reflow when the banner unmounts.
+- Render `<WelcomeBanner name={name} />` at the top, above the KPI strip.
 
-### Band 1 — KPI strip (clickable)
-Replace `AdminSummaryTiles` with a compact `KpiStrip` (h-20, 2 cols mobile / 5 cols desktop). Each tile:
-- Icon + label + big number + trend delta (↑/↓ vs 7d).
-- Wrapped in `<Link>` with hover: `ring-1 ring-emerald-500/40 bg-emerald-50/40`.
-- Deep links: Buyers→`/buyers`, Warehouses→`/warehouses`, Active batches→`/grain-batches?status=stored`, Silos→`/silos`, Sensors online→`/sensors?status=online`.
+## 3. Simplify blocks (less text, more visual)
+Goal: every card = 1 line title + dense visual. No descriptions, no helper copy.
 
-### Band 2 — Operations grid (2 cols desktop, 1 col mobile)
-Left column (stacked, compact):
-- **Silo occupancy** — sparkline bars, each row clickable → `/silos/$id`. Fix `fill_percentage` bug by computing `occupancy_kg/capacity_kg` in the server fn (already done in `SilosOccupancyCard`; remove the custom widget that queries `fill_percentage`).
-- **Actuators** — chip grid (3 per row), tap = toggle drawer to `/actuators?device=$id`.
+- `KpiStrip` (keep, already compact): drop the `delta` text row entirely — just number + icon. Sparkline optional later.
+- `SilosOccupancyCard`: replace list rows with a compact **horizontal bar stack** — one thin bar per silo, colored by fill band (emerald < 70, amber 70–90, red > 90), silo name only on hover tooltip. Header: just "Silos" + count pill.
+- `ActuatorsCard`: replace text rows with a **status dot grid** (e.g. 6-col grid of dots colored on/off/fault) + tiny legend. Header: "Actuators".
+- `RecentAlertsCard`: keep list but drop the description/second line; show severity dot + title + relative time only. Cap at 4 rows.
+- `RecentBatchesCard`: convert to compact table (batch code · status pill · qty) — no meta paragraph.
 
-Right column:
-- **Recent alerts** (top 4) — priority chip + title, entire row → `/grain-alerts/$id`. Header shows count badge → `/grain-alerts`.
-- **Recent batches** (top 4) — row → `/grain-batches/$id`.
+## 4. Remove redundancy
+- Delete `<TeamMini />` from the dashboard (already pinned in sidebar).
+- Restructure secondary strip into 2 columns: `InstallOrdersMini` + `RevenueMini`.
+- Both minis: keep number + tiny status split (e.g. mini stacked bar for install statuses, single number + delta for revenue). Strip descriptive sentences.
 
-### Band 3 — Secondary strip (3 cols)
-- **Team** — 3 avatars + "+N" → `/team-management`.
-- **Install orders** compact status (`Pending 2 · Scheduled 1 · Done 5`) → `/install-orders`.
-- **Revenue snapshot** — MRR + trend spark → `/subscription`.
+## 5. Final layout
+```text
+[ Welcome banner — vanishes ]
+[ KPI strip: 5 tiles, no delta text ]
+[ Silos (bar stack) | Alerts (dot list) ]
+[ Actuators (dot grid) | Batches (mini table) ]
+[ Install Orders | Revenue ]
+```
+All cards `p-3`, `text-sm` titles, tabular-nums for numbers, emerald hover ring preserved.
 
-## UX rules applied everywhere
-- Any number in the dashboard = link. Use `underline-offset-4 hover:underline decoration-emerald-500` for text numerics.
-- Card padding tightened: `p-3` (was `p-6`), `gap-3` grid (was `gap-6`).
-- Card headers use single-line: title + count badge + arrow-icon "View" (no separate button).
-- Hover state: subtle emerald outline (`hover:ring-1 hover:ring-emerald-500/30`) for cursor affordance.
-- Empty states: 1-line inline instead of 6-line centered block.
+## Technical notes
+- Use `framer-motion` (already a common dep — verify with `bun pm ls framer-motion`; if missing, `bun add framer-motion`).
+- `AnimatePresence mode="popLayout"` on the dashboard root so removing the banner triggers `layout` transitions on siblings.
+- Typewriter: pure `useEffect` + `setInterval`, no extra dep.
+- Skeleton (`DashboardSkeleton`) stays as-is; banner not shown during skeleton phase.
 
-## Bug fixes bundled
-- Remove/replace the `fill_percentage` widget (in `CustomWidgetsBand` metric registry) — use derived expression from `silos.current_occupancy_kg / capacity_kg`.
-- Skeleton for AdminDashboard sized to new bento (5-tile strip + 2-col + 3-col strip) so loading state doesn't overflow viewport.
-
-## Files to touch
-- `src/components/dashboards/AdminDashboard.tsx` — new layout.
-- `src/components/dashboards/DashboardBlocks.tsx` — tighten cards, add row-level `<Link>`s, compact variants.
-- New: `src/components/dashboards/KpiStrip.tsx` — clickable KPIs with trend.
-- New: `src/components/dashboards/InstallOrdersMini.tsx`, `RevenueMini.tsx`.
-- `src/lib/dashboard-extras.functions.ts` — add trend deltas (buyers/batches/sensors 7d), install order counts, MRR snapshot.
-- `src/components/app/skeletons.tsx` — update `AdminDashboardSkeleton` to match new bento.
-- Fix `fill_percentage` metric in the analytics metric registry migration or in `CustomWidgetsBand` default set.
-
-## Out of scope (next passes)
-- Manager / Technician / SuperAdmin dashboards (same pattern, separate turn).
-- Sidebar further pruning (already done last pass).
-
-Approve to implement.
+## Files touched
+- add: `src/components/dashboards/WelcomeBanner.tsx`
+- edit: `src/components/dashboards/AdminDashboard.tsx` (remove header, add banner, drop TeamMini, restructure grid)
+- edit: `src/components/dashboards/DashboardBlocks.tsx` (simplify Silos, Actuators, Alerts, Batches visuals + remove descriptive text)
+- edit: `src/components/dashboards/KpiStrip.tsx` (drop delta line)
+- edit: `src/components/dashboards/MiniBlocks.tsx` (simplify InstallOrders + Revenue, remove TeamMini export usage)
