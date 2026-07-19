@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SilosSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import {
   Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff, Truck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
+import { RowActions } from "@/components/app/RowActions";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
@@ -75,6 +77,7 @@ function SilosPage() {
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
   const qc = useQueryClient();
+  const navigate = useNavigate();
   
   // Plan limits check
   const { canAddSilo, siloLimitMessage } = usePlanLimits();
@@ -256,15 +259,66 @@ function SilosPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((s) => (
-            <SiloCard key={s.id} silo={s}
-              onView={() => { setSelected(s); setViewOpen(true); }}
-              onEdit={() => openEdit(s)}
-              onDelete={() => setDeleteId(s.id)}
-              onDispatch={() => { setDispatchSilo(s); setDispatchOpen(true); }}
-            />
-          ))}
+        <div className="rounded-xl border bg-card/60 overflow-hidden">
+          <div className="max-h-[70vh] overflow-auto">
+            <Table className="text-xs">
+              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
+                <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
+                  <TableHead>Silo</TableHead>
+                  <TableHead>Warehouse</TableHead>
+                  <TableHead>Current batch</TableHead>
+                  <TableHead className="text-right">Capacity (kg)</TableHead>
+                  <TableHead className="text-right">Occupancy</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((s) => {
+                  const cap = Number(s.capacity_kg ?? 0);
+                  const occ = Number(s.current_occupancy_kg ?? 0);
+                  const pct = cap > 0 ? Math.round((occ / cap) * 100) : 0;
+                  return (
+                    <TableRow key={s.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
+                      <TableCell className="font-medium">
+                        <Link to="/silos/$siloId" params={{ siloId: s.id }} className="hover:text-emerald-700 hover:underline">
+                          {s.name}
+                        </Link>
+                        <div className="text-[10px] text-muted-foreground">{s.silo_id}</div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[160px]">
+                        {s.warehouses ? (
+                          <span className="inline-flex items-center gap-1"><Building2 className="w-3 h-3" />{s.warehouses.name}</span>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[160px]">
+                        {s.current_batch ? `${s.current_batch.batch_id} · ${s.current_batch.grain_type}` : "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{cap.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {occ.toLocaleString()} <span className="text-[10px] text-muted-foreground">({pct}%)</span>
+                      </TableCell>
+                      <TableCell><StatusBadge value={s.status} /></TableCell>
+                      <TableCell className="text-right">
+                        <RowActions
+                          actions={[
+                            { label: "Open", icon: Eye, onClick: () => navigate({ to: "/silos/$siloId", params: { siloId: s.id } }) },
+                            { label: "Dispatch", icon: Truck, onClick: () => { setDispatchSilo(s); setDispatchOpen(true); } },
+                            { label: "Edit", icon: Edit2, onClick: () => openEdit(s) },
+                            { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(s.id) },
+                          ]}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{rows.length} silo{rows.length === 1 ? "" : "s"}</span>
+            <span>Open a silo to see its warehouse and batches</span>
+          </div>
         </div>
       )}
 
