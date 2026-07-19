@@ -95,7 +95,7 @@ export const advanceInstallStage = createServerFn({ method: "POST" })
     const { data: res, error } = await context.supabase.rpc("advance_install_stage", {
       _order_id: data.orderId,
       _next: data.next,
-      _note: data.note ?? null,
+      _note: data.note ?? undefined,
     });
     if (error) throw new Error(error.message);
     return res as { ok: boolean; stage: string };
