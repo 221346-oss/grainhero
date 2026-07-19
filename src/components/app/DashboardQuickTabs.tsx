@@ -3,17 +3,28 @@ import { useRouterState, Link } from "@tanstack/react-router";
 import {
   LayoutDashboard, Container, Wheat, Bell, Store, Radio,
   ToggleRight, Users, Package, UserCog, Settings2, Check, type LucideIcon,
+  DollarSign, CreditCard, MessageSquare, Activity, ScrollText,
+  ClipboardList, TrendingUp, UserPlus, Shield, ShieldCheck, Rocket,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
-type TabKey =
+type AdminTabKey =
   | "overview" | "silos" | "batches" | "alerts" | "marketplace"
   | "sensors" | "actuators" | "buyers" | "orders" | "team";
 
-type Def = { key: TabKey; label: string; icon: LucideIcon; to: string };
+type SuperTabKey =
+  | "overview" | "orders" | "financials" | "users" | "plans"
+  | "reporting" | "health" | "audit-logs" | "system-logs"
+  | "pipeline" | "leads" | "insurance" | "subscription"
+  | "security" | "launch";
 
-const CATALOG: Def[] = [
+type TabKey = AdminTabKey | SuperTabKey;
+
+type Def<K extends string> = { key: K; label: string; icon: LucideIcon; to: string };
+
+const CATALOG_ADMIN: Def<AdminTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
   { key: "silos", label: "Silos", icon: Container, to: "/silos" },
   { key: "batches", label: "Batches", icon: Wheat, to: "/grain-batches" },
@@ -26,26 +37,55 @@ const CATALOG: Def[] = [
   { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
 ];
 
-const STORAGE = "gh_admin_tabs_v3";
-const DEFAULT: TabKey[] = ["overview", "silos", "batches", "alerts", "marketplace"];
+const CATALOG_SUPER: Def<SuperTabKey>[] = [
+  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
+  { key: "orders", label: "Install Orders", icon: Package, to: "/platform/orders" },
+  { key: "financials", label: "Financials", icon: DollarSign, to: "/platform/financials" },
+  { key: "users", label: "Users", icon: Users, to: "/platform/users" },
+  { key: "plans", label: "Plans", icon: CreditCard, to: "/platform/plans" },
+  { key: "reporting", label: "Reporting", icon: MessageSquare, to: "/platform/reporting" },
+  { key: "health", label: "Health", icon: Activity, to: "/platform/health" },
+  { key: "audit-logs", label: "Audit logs", icon: ScrollText, to: "/platform/audit-logs" },
+  { key: "system-logs", label: "System logs", icon: ClipboardList, to: "/platform/logs" },
+  { key: "pipeline", label: "Pipeline", icon: TrendingUp, to: "/platform/pipeline" },
+  { key: "leads", label: "Leads", icon: UserPlus, to: "/platform/leads" },
+  { key: "insurance", label: "Insurance", icon: Shield, to: "/insurance" },
+  { key: "subscription", label: "Subscriptions", icon: CreditCard, to: "/subscription" },
+  { key: "security", label: "Security", icon: ShieldCheck, to: "/security" },
+  { key: "launch", label: "Launch readiness", icon: Rocket, to: "/platform/launch-readiness" },
+];
 
-function readStored(): TabKey[] {
-  if (typeof window === "undefined") return DEFAULT;
+const STORAGE_ADMIN = "gh_admin_tabs_v3";
+const STORAGE_SUPER = "gh_super_tabs_v1";
+const DEFAULT_ADMIN: AdminTabKey[] = ["overview", "silos", "batches", "alerts", "marketplace"];
+const DEFAULT_SUPER: SuperTabKey[] = ["overview", "orders", "financials", "users", "plans"];
+
+function readStored(storage: string, def: TabKey[], validKeys: Set<string>): TabKey[] {
+  if (typeof window === "undefined") return def;
   try {
-    const raw = localStorage.getItem(STORAGE);
-    if (!raw) return DEFAULT;
+    const raw = localStorage.getItem(storage);
+    if (!raw) return def;
     const parsed = JSON.parse(raw) as TabKey[];
-    if (!parsed.length) return DEFAULT;
-    let out = parsed.slice(0, 5);
+    const filtered = parsed.filter((k) => validKeys.has(k));
+    if (!filtered.length) return def;
+    let out = filtered.slice(0, 5);
     if (!out.includes("overview")) out = (["overview", ...out] as TabKey[]).slice(0, 5);
     return out;
-  } catch { return DEFAULT; }
+  } catch { return def; }
 }
 
 export function DashboardQuickTabs() {
+  const { isSuperAdmin } = useIsSuperAdmin();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const CATALOG = (isSuperAdmin ? CATALOG_SUPER : CATALOG_ADMIN) as Def<TabKey>[];
+  const STORAGE = isSuperAdmin ? STORAGE_SUPER : STORAGE_ADMIN;
+  const DEFAULT = (isSuperAdmin ? DEFAULT_SUPER : DEFAULT_ADMIN) as TabKey[];
+  const validKeys = new Set(CATALOG.map((c) => c.key));
   const [tabs, setTabs] = useState<TabKey[]>(DEFAULT);
-  useEffect(() => { setTabs(readStored()); }, []);
+  useEffect(() => {
+    setTabs(readStored(STORAGE, DEFAULT, validKeys));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuperAdmin]);
 
   function toggle(k: TabKey) {
     setTabs((cur) => {
