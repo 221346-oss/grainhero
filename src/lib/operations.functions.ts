@@ -223,6 +223,10 @@ const batchInput = z.object({
   intake_humidity: z.number().optional().nullable(),
   status: z.enum(batchStatuses).optional(),
   notes: z.string().max(2000).optional().nullable(),
+  supplier_id: z.string().uuid().optional().nullable(),
+  source_kind: z.enum(["external","own_farm","internal_transfer","anonymous"]).optional().nullable(),
+  unit_cost: z.number().nonnegative().optional().nullable(),
+  currency: z.string().min(3).max(3).optional().nullable(),
 });
 
 export const upsertGrainBatch = createServerFn({ method: "POST" })
@@ -271,6 +275,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
           status: data.status ?? "stored",
           notes: data.notes ?? null,
           updated_by: context.userId,
+          supplier_id: data.supplier_id ?? null,
+          source_kind: data.source_kind ?? null,
+          unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
+          currency: data.currency ?? "PKR",
         })
         .eq("id", data.id).select("*").single();
       if (error) throw error;
@@ -305,6 +313,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         status: data.status ?? "stored",
         notes: data.notes ?? null,
         created_by: context.userId,
+        supplier_id: data.supplier_id ?? null,
+        source_kind: data.source_kind ?? null,
+        unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
+        currency: data.currency ?? "PKR",
       })
       .select("*").single();
     if (error) throw error;

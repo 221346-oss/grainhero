@@ -106,6 +106,7 @@ const moreGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
       { name: "buyers-more", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
+      { name: "suppliers", label: "Suppliers", to: "/suppliers", icon: Users, roles: ["admin", "manager"] },
       { name: "listings-more", label: "Listings", to: "/listings", icon: Tag, roles: ["admin", "manager"] },
       { name: "sales-more", label: "Sales", to: "/sales", icon: ShoppingCart, roles: ["admin", "manager"] },
       { name: "earnings-more", label: "Earnings", to: "/earnings", icon: Wallet, roles: ["admin", "manager"] },

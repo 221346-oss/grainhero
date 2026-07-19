@@ -31,6 +31,9 @@ const createInput = z.object({
   driverContact: z.string().max(50).optional().nullable(),
   destination: z.string().max(500).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
+  priceBasis: z.enum(["cost_margin", "market", "manual"]).optional().nullable(),
+  marketPriceSnapshot: z.number().nonnegative().optional().nullable(),
+  stage: z.enum(["staged", "in_transit", "delivered"]).default("staged"),
 });
 
 export const listSiloAvailableBatches = createServerFn({ method: "GET" })
@@ -141,7 +144,11 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
         profit,
         status: "confirmed",
         expected_date: data.expectedDate ?? null,
-        dispatched_at: new Date().toISOString(),
+        dispatched_at: data.stage === "staged" ? null : new Date().toISOString(),
+        stage: data.stage,
+        price_basis: data.priceBasis ?? "manual",
+        market_price_snapshot: data.marketPriceSnapshot ?? null,
+        avg_cost_snapshot: avgCost,
         vehicle_number: data.vehicleNumber ?? null,
         driver_name: data.driverName ?? null,
         driver_contact: data.driverContact ?? null,
@@ -200,6 +207,31 @@ export const listDispatches = createServerFn({ method: "GET" })
     const { data: rows, error } = await q;
     if (error) throw error;
     return { dispatches: (rows ?? []) as Row[] };
+  });
+
+export const updateDispatchStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      stage: z.enum(["staged", "in_transit", "delivered"]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: Row = { stage: data.stage };
+    if (data.stage === "in_transit") patch.dispatched_at = new Date().toISOString();
+    if (data.stage === "delivered") patch.status = "delivered";
+    const { error } = await context.supabase
+      .from("grain_dispatches").update(patch as never).eq("id", data.id);
+    if (error) throw error;
+    await logActivity({
+      actorId: context.userId,
+      action: `dispatch.${data.stage}`,
+      targetType: "grain_dispatch",
+      targetId: data.id,
+      meta: { stage: data.stage },
+    });
+    return { ok: true };
   });
 
 export const getDispatchDetail = createServerFn({ method: "GET" })
