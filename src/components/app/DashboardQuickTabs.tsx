@@ -5,6 +5,7 @@ import {
   ToggleRight, Users, Package, UserCog, Settings2, Check, type LucideIcon,
   DollarSign, CreditCard, MessageSquare, Activity, ScrollText,
   ClipboardList, TrendingUp, UserPlus, Shield, ShieldCheck, Rocket,
+  Truck, ClipboardCheck,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,13 +15,17 @@ type AdminTabKey =
   | "overview" | "silos" | "batches" | "alerts" | "marketplace"
   | "sensors" | "actuators" | "buyers" | "orders" | "team";
 
+type ManagerTabKey =
+  | "overview" | "silos" | "batches" | "alerts" | "dispatch"
+  | "qc" | "actuators" | "orders" | "team" | "sensors";
+
 type SuperTabKey =
   | "overview" | "orders" | "financials" | "users" | "plans"
   | "reporting" | "health" | "audit-logs" | "system-logs"
   | "pipeline" | "leads" | "insurance" | "subscription"
   | "security" | "launch";
 
-type TabKey = AdminTabKey | SuperTabKey;
+type TabKey = AdminTabKey | SuperTabKey | ManagerTabKey;
 
 type Def<K extends string> = { key: K; label: string; icon: LucideIcon; to: string };
 
@@ -34,6 +39,19 @@ const CATALOG_ADMIN: Def<AdminTabKey>[] = [
   { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
   { key: "buyers", label: "Buyers", icon: Users, to: "/buyers" },
   { key: "orders", label: "Orders", icon: Package, to: "/orders" },
+  { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
+];
+
+const CATALOG_MANAGER: Def<ManagerTabKey>[] = [
+  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
+  { key: "silos", label: "Silos", icon: Container, to: "/silos" },
+  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-batches" },
+  { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
+  { key: "dispatch", label: "Dispatch", icon: Truck, to: "/grain-batches" },
+  { key: "qc", label: "QC", icon: ClipboardCheck, to: "/grain-batches" },
+  { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
+  { key: "orders", label: "Orders", icon: Package, to: "/orders" },
+  { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
   { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
 ];
 
@@ -57,8 +75,10 @@ const CATALOG_SUPER: Def<SuperTabKey>[] = [
 
 const STORAGE_ADMIN = "gh_admin_tabs_v3";
 const STORAGE_SUPER = "gh_super_tabs_v1";
+const STORAGE_MANAGER = "gh_manager_tabs_v1";
 const DEFAULT_ADMIN: AdminTabKey[] = ["overview", "silos", "batches", "alerts", "marketplace"];
 const DEFAULT_SUPER: SuperTabKey[] = ["overview", "orders", "financials", "users", "plans"];
+const DEFAULT_MANAGER: ManagerTabKey[] = ["overview", "silos", "batches", "alerts", "dispatch"];
 
 function readStored(storage: string, def: TabKey[], validKeys: Set<string>): TabKey[] {
   if (typeof window === "undefined") return def;
@@ -75,17 +95,18 @@ function readStored(storage: string, def: TabKey[], validKeys: Set<string>): Tab
 }
 
 export function DashboardQuickTabs() {
-  const { isSuperAdmin } = useIsSuperAdmin();
+  const { isSuperAdmin, role } = useIsSuperAdmin();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const CATALOG = (isSuperAdmin ? CATALOG_SUPER : CATALOG_ADMIN) as Def<TabKey>[];
-  const STORAGE = isSuperAdmin ? STORAGE_SUPER : STORAGE_ADMIN;
-  const DEFAULT = (isSuperAdmin ? DEFAULT_SUPER : DEFAULT_ADMIN) as TabKey[];
+  const isManager = role === "manager";
+  const CATALOG = (isSuperAdmin ? CATALOG_SUPER : isManager ? CATALOG_MANAGER : CATALOG_ADMIN) as Def<TabKey>[];
+  const STORAGE = isSuperAdmin ? STORAGE_SUPER : isManager ? STORAGE_MANAGER : STORAGE_ADMIN;
+  const DEFAULT = (isSuperAdmin ? DEFAULT_SUPER : isManager ? DEFAULT_MANAGER : DEFAULT_ADMIN) as TabKey[];
   const validKeys = new Set(CATALOG.map((c) => c.key));
   const [tabs, setTabs] = useState<TabKey[]>(DEFAULT);
   useEffect(() => {
     setTabs(readStored(STORAGE, DEFAULT, validKeys));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, isManager]);
 
   function toggle(k: TabKey) {
     setTabs((cur) => {
