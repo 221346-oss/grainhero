@@ -33,6 +33,8 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
 
   const install = q.data?.installation as any;
   const order = q.data?.order as any;
+  const companyOrigin = (q.data as any)?.companyOrigin as string | undefined;
+  const adminId = order?.admin_id as string | undefined;
 
   // form state
   const [form, setForm] = useState<any>({});
@@ -40,9 +42,12 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const [note, setNote] = useState("");
 
   useEffect(() => {
-    setForm(install ?? {});
+    setForm({
+      ...(install ?? {}),
+      origin_address: install?.origin_address || companyOrigin || "",
+    });
     setDevices((q.data?.devices as any[])?.map((d) => ({ serial: d.serial, model: d.model ?? "", status: d.status })) ?? []);
-  }, [q.data, install]);
+  }, [q.data, install, companyOrigin]);
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
@@ -116,12 +121,18 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
                 )}
                 {canEdit && (
                   <div className="grid grid-cols-2 gap-2 pt-1">
-                    <Button asChild size="sm" variant="outline" onClick={() => onOpenChange(false)}>
-                      <Link to="/warehouses"><Warehouse className="h-3.5 w-3.5 mr-1" /> Assign warehouse <ExternalLink className="h-3 w-3 ml-1 opacity-60" /></Link>
-                    </Button>
-                    <Button asChild size="sm" variant="outline" onClick={() => onOpenChange(false)}>
-                      <Link to="/silos"><Warehouse className="h-3.5 w-3.5 mr-1" /> Assign silo <ExternalLink className="h-3 w-3 ml-1 opacity-60" /></Link>
-                    </Button>
+                    {adminId ? (
+                      <Button asChild size="sm" variant="outline" className="col-span-2" onClick={() => onOpenChange(false)}>
+                        <Link to="/admins/$adminId" params={{ adminId }}>
+                          <Warehouse className="h-3.5 w-3.5 mr-1" /> Open admin — warehouses & silos auto-provision on install complete
+                          <ExternalLink className="h-3 w-3 ml-1 opacity-60" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <div className="col-span-2 text-xs text-muted-foreground">
+                        Warehouse & silos are created automatically when the installation status is marked <b>completed</b>.
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -132,13 +143,10 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
               <div className="text-sm font-semibold text-foreground mb-2">Route</div>
               <RouteMapCard {...mapProps} />
               {canEdit && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  <Field label="Origin address" v={form.origin_address} onChange={(v) => set("origin_address", v)} full />
-                  <Field label="Origin lat" v={form.origin_lat} onChange={(v) => set("origin_lat", v)} />
-                  <Field label="Origin lng" v={form.origin_lng} onChange={(v) => set("origin_lng", v)} />
-                  <Field label="Destination address" v={form.destination_address} onChange={(v) => set("destination_address", v)} full />
-                  <Field label="Dest lat" v={form.destination_lat} onChange={(v) => set("destination_lat", v)} />
-                  <Field label="Dest lng" v={form.destination_lng} onChange={(v) => set("destination_lng", v)} />
+                <div className="grid grid-cols-1 gap-2 mt-3">
+                  <Field label="Origin address (company HQ — editable in Platform settings)" v={form.origin_address} onChange={(v) => set("origin_address", v)} full />
+                  <Field label="Destination address (from buyer's install order)" v={form.destination_address} onChange={(v) => set("destination_address", v)} full />
+                  <div className="text-[11px] text-muted-foreground">Coordinates are captured from the buyer's map pin at checkout; no need to enter lat/lng manually.</div>
                 </div>
               )}
             </div>
