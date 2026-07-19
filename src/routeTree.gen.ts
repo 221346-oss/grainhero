@@ -81,10 +81,10 @@ import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
-import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
 import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
 import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
+import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
 import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
@@ -562,10 +562,6 @@ const AuthenticatedPlatformTenantsRoute =
     path: '/platform/tenants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformReportingRoute =
-  AuthenticatedPlatformReportingRouteImport.update({
-    id: '/platform/reporting',
-    path: '/platform/reporting',
 const AuthenticatedPlatformSlaAlertsRoute =
   AuthenticatedPlatformSlaAlertsRouteImport.update({
     id: '/platform/sla-alerts',
@@ -582,6 +578,12 @@ const AuthenticatedPlatformReviewsRoute =
   AuthenticatedPlatformReviewsRouteImport.update({
     id: '/platform/reviews',
     path: '/platform/reviews',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformReportingRoute =
+  AuthenticatedPlatformReportingRouteImport.update({
+    id: '/platform/reporting',
+    path: '/platform/reporting',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformQualityRoute =
@@ -1235,8 +1237,8 @@ export interface FileRoutesByFullPath {
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
-  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -1405,8 +1407,8 @@ export interface FileRoutesByTo {
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
-  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -1579,8 +1581,8 @@ export interface FileRoutesById {
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
-  '/_authenticated/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/_authenticated/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/_authenticated/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -1753,8 +1755,8 @@ export interface FileRouteTypes {
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
-    | '/platform/reporting'
     | '/platform/quality'
+    | '/platform/reporting'
     | '/platform/reviews'
     | '/platform/sellers'
     | '/platform/sla-alerts'
@@ -1923,8 +1925,8 @@ export interface FileRouteTypes {
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
-    | '/platform/reporting'
     | '/platform/quality'
+    | '/platform/reporting'
     | '/platform/reviews'
     | '/platform/sellers'
     | '/platform/sla-alerts'
@@ -2096,8 +2098,8 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
-    | '/_authenticated/platform/reporting'
     | '/_authenticated/platform/quality'
+    | '/_authenticated/platform/reporting'
     | '/_authenticated/platform/reviews'
     | '/_authenticated/platform/sellers'
     | '/_authenticated/platform/sla-alerts'
@@ -2755,11 +2757,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/reporting': {
-      id: '/_authenticated/platform/reporting'
-      path: '/platform/reporting'
-      fullPath: '/platform/reporting'
-      preLoaderRoute: typeof AuthenticatedPlatformReportingRouteImport
     '/_authenticated/platform/sla-alerts': {
       id: '/_authenticated/platform/sla-alerts'
       path: '/platform/sla-alerts'
@@ -2779,6 +2776,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/reviews'
       fullPath: '/platform/reviews'
       preLoaderRoute: typeof AuthenticatedPlatformReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/reporting': {
+      id: '/_authenticated/platform/reporting'
+      path: '/platform/reporting'
+      fullPath: '/platform/reporting'
+      preLoaderRoute: typeof AuthenticatedPlatformReportingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/quality': {
@@ -3657,8 +3661,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
-  AuthenticatedPlatformReportingRoute: typeof AuthenticatedPlatformReportingRoute
   AuthenticatedPlatformQualityRoute: typeof AuthenticatedPlatformQualityRoute
+  AuthenticatedPlatformReportingRoute: typeof AuthenticatedPlatformReportingRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
@@ -3757,8 +3761,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
-  AuthenticatedPlatformReportingRoute: AuthenticatedPlatformReportingRoute,
   AuthenticatedPlatformQualityRoute: AuthenticatedPlatformQualityRoute,
+  AuthenticatedPlatformReportingRoute: AuthenticatedPlatformReportingRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
@@ -3921,13 +3925,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
