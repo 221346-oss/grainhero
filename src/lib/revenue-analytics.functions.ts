@@ -12,13 +12,32 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
     await assertSuperAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ data: subs }, { data: invs }] = await Promise.all([
+    const [{ data: subs }, { data: invs }, { data: profs }, { data: plans }, { data: hwOrders }] = await Promise.all([
       supabaseAdmin.from("subscriptions").select("*"),
       supabaseAdmin.from("invoices").select("*").order("billing_date", { ascending: false }).limit(500),
+      supabaseAdmin.from("profiles").select("id, subscription_plan, created_at"),
+      supabaseAdmin.from("plan_thresholds").select("plan_id, name, price_cents, currency"),
+      supabaseAdmin.from("hardware_orders").select("id, admin_id, plan_name, hardware_total, currency, status, created_at").not("status", "in", "(pending_payment,cancelled,refunded)"),
     ]);
 
     const subscriptions = subs ?? [];
     const invoices = invs ?? [];
+    const profiles = profs ?? [];
+    const hardware = hwOrders ?? [];
+
+    // Identify super_admin ids to exclude them from tenant MRR counting
+    const { data: superAdmins } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "super_admin");
+    const superIds = new Set((superAdmins ?? []).map((r: any) => r.user_id));
+
+    // Plan price lookup in USD cents → convert to whole units (dashboard shows PKR label but numbers are the raw monthly price)
+    const planPrice = new Map<string, number>();
+    for (const p of plans ?? []) {
+      const key = String(p.plan_id ?? p.name ?? "").toLowerCase();
+      planPrice.set(key, Number(p.price_cents ?? 0) / 100);
+    }
 
     const activeSubs = subscriptions.filter((s: any) => s.status === "active");
     const trialSubs = subscriptions.filter((s: any) => s.status === "trial");
@@ -30,11 +49,24 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
       if (s.billing_cycle === "yearly") return p / 12;
       return p;
     };
-    const mrr = activeSubs.reduce((sum: number, s: any) => sum + monthly(s), 0);
+    let mrr = activeSubs.reduce((sum: number, s: any) => sum + monthly(s), 0);
+    const subscribedAdminIds = new Set(activeSubs.map((s: any) => s.admin_id));
+
+    // Fallback: derive MRR from profiles.subscription_plan for tenants that
+    // don't have a subscriptions row yet (typical right after signup).
+    for (const p of profiles) {
+      if (superIds.has(p.id)) continue;
+      if (subscribedAdminIds.has(p.id)) continue;
+      const key = String(p.subscription_plan ?? "").toLowerCase();
+      if (!key) continue;
+      const price = planPrice.get(key) ?? 0;
+      if (price > 0) mrr += price;
+    }
     const arr = mrr * 12;
 
     const paid = invoices.filter((i: any) => i.status === "paid");
-    const totalRevenue = paid.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0);
+    const hardwareRevenue = hardware.reduce((s: number, o: any) => s + Number(o.hardware_total ?? 0), 0);
+    const totalRevenue = paid.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0) + hardwareRevenue;
 
     // Revenue by month (last 12)
     const byMonth: Record<string, number> = {};
@@ -47,6 +79,12 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
       const key = String(inv.billing_date ?? inv.created_at ?? "").slice(0, 7);
       if (key in byMonth) byMonth[key] += Number(inv.amount ?? 0);
     }
+    for (const o of hardware) {
+      const key = String(o.created_at ?? "").slice(0, 7);
+      if (key in byMonth) byMonth[key] += Number(o.hardware_total ?? 0);
+    }
+    // If the current month has revenue but earlier months are all zero,
+    // sparkline still renders because we always emit 12 buckets.
     const revenueSeries = Object.entries(byMonth).map(([month, revenue]) => ({ month, revenue }));
 
     // Revenue by plan
