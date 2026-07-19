@@ -3191,6 +3191,9 @@ export type Database = {
       }
       hardware_order_installations: {
         Row: {
+          admin_signed_off_at: string | null
+          admin_signed_off_by: string | null
+          admin_signoff_note: string | null
           assigned_at: string | null
           blocker_note: string | null
           city: string | null
@@ -3220,6 +3223,9 @@ export type Database = {
           warehouse_id: string | null
         }
         Insert: {
+          admin_signed_off_at?: string | null
+          admin_signed_off_by?: string | null
+          admin_signoff_note?: string | null
           assigned_at?: string | null
           blocker_note?: string | null
           city?: string | null
@@ -3249,6 +3255,9 @@ export type Database = {
           warehouse_id?: string | null
         }
         Update: {
+          admin_signed_off_at?: string | null
+          admin_signed_off_by?: string | null
+          admin_signoff_note?: string | null
           assigned_at?: string | null
           blocker_note?: string | null
           city?: string | null
