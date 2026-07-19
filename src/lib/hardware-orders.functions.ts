@@ -23,11 +23,15 @@ export const listMyHardwareOrders = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("hardware_orders" as never)
-      .select("*")
+      .select("*, installation:hardware_order_installations(*), visit_events:hardware_order_visit_events(*)")
       .eq("admin_id", context.userId)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return { orders: (data ?? []) as HardwareOrder[] };
+    return { orders: (data ?? []).map((o: any) => ({
+      ...o,
+      installation: Array.isArray(o.installation) ? o.installation[0] ?? null : o.installation ?? null,
+      visit_events: o.visit_events ?? [],
+    })) as HardwareOrder[] };
   });
 
 /** Super-admin: list every order. */
@@ -38,11 +42,15 @@ export const listAllHardwareOrders = createServerFn({ method: "GET" })
     if (!isSuper) throw new Error("Forbidden");
     const { data, error } = await context.supabase
       .from("hardware_orders" as never)
-      .select("*")
+      .select("*, installation:hardware_order_installations(*), visit_events:hardware_order_visit_events(*)")
       .order("created_at", { ascending: false });
     if (error) throw error;
     // Attach the buyer profile so the console can show name + email.
-    const rows = (data ?? []) as HardwareOrder[];
+    const rows = (data ?? []).map((o: any) => ({
+      ...o,
+      installation: Array.isArray(o.installation) ? o.installation[0] ?? null : o.installation ?? null,
+      visit_events: o.visit_events ?? [],
+    }) as HardwareOrder);
     const adminIds = Array.from(new Set(rows.map((o) => o.admin_id as string | null).filter(Boolean) as string[]));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let profiles: Record<string, any> = {};
