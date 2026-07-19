@@ -39,7 +39,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .from("subscriptions")
         .select("id, plan_name, price_per_month, status, next_payment_date")
         .eq("admin_id", tenantId)
-        .in("status", ["active", "trialing"])
+        .in("status", ["active", "trial"])
         .order("created_at", { ascending: false })
         .limit(1),
       context.supabase
