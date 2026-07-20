@@ -309,22 +309,67 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
     if (newRank > curRank) direction = "upgrade";
     else if (newRank < curRank) direction = "downgrade";
     else direction = "cycle_change";
-    const proration = computeProration({
-      currentPriceRs,
-      newPriceRs,
-      currentCycle,
-      newCycle: data.billing_cycle,
-      currentPeriodEnd: profile.current_period_end,
-    });
     const applyNow = direction === "upgrade" || (direction === "cycle_change" && newPriceRs > currentPriceRs);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { emitToSuperAdmins } = await import("@/lib/notify");
     const { logActivity } = await import("@/lib/activity");
+    const { ensurePlanStripeIds, ensureStripeCustomer, priceIdForCycle } =
+      await import("@/lib/stripe-billing.server");
+    const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) throw new Error("Stripe not configured");
+
+    // Make sure Product + Prices exist for the target plan.
+    const ids = await ensurePlanStripeIds(supabaseAdmin, data.requested_plan);
+    const newPriceId = priceIdForCycle(ids, data.billing_cycle);
+
+    // Fallback period-end estimate for scheduled downgrades.
+    const nowMs = Date.now();
+    const defaultPeriodEndIso = profile.current_period_end
+      ?? new Date(nowMs + cycleDays(currentCycle) * 86400_000).toISOString();
 
     if (!applyNow) {
-      // Downgrade or same-price cycle switch → schedule at period end.
-      const applyAt = proration.periodEndIso;
+      // ────── DOWNGRADE / same-price cycle switch ──────
+      // Attach a Stripe subscription schedule so the price flips at the
+      // real Stripe period_end (source of truth).
+      let applyAt = defaultPeriodEndIso;
+      if (profile.stripe_subscription_id) {
+        try {
+          const sub = await stripeFetch(
+            `/subscriptions/${profile.stripe_subscription_id}`, null, "GET",
+          ) as { current_period_end: number; items: { data: Array<{ id: string; price: { id: string } }> } };
+          const periodEndSec = sub.current_period_end;
+          const currentPriceId = sub.items.data[0]?.price.id;
+          applyAt = new Date(periodEndSec * 1000).toISOString();
+
+          if (profile.stripe_schedule_id) {
+            await stripeFetch(`/subscription_schedules/${profile.stripe_schedule_id}/cancel`,
+              new URLSearchParams()).catch(() => null);
+          }
+          const created = await stripeFetch("/subscription_schedules", stripeForm({
+            from_subscription: profile.stripe_subscription_id,
+          })) as { id: string };
+          const phaseBody = new URLSearchParams();
+          phaseBody.set("end_behavior", "release");
+          phaseBody.set("phases[0][items][0][price]", currentPriceId);
+          phaseBody.set("phases[0][items][0][quantity]", "1");
+          phaseBody.set("phases[0][end_date]", String(periodEndSec));
+          phaseBody.set("phases[0][proration_behavior]", "none");
+          phaseBody.set("phases[1][items][0][price]", newPriceId);
+          phaseBody.set("phases[1][items][0][quantity]", "1");
+          phaseBody.set("phases[1][proration_behavior]", "none");
+          await stripeFetch(`/subscription_schedules/${created.id}`, phaseBody);
+
+          await supabaseAdmin.from("profiles")
+            .update({ stripe_schedule_id: created.id } as never)
+            .eq("id", tenantAdminId);
+        } catch (e) {
+          console.warn("[plan-schedule] Stripe schedule failed, falling back to cron:", (e as Error).message);
+        }
+      }
+
       const { data: inserted, error } = await supabaseAdmin
         .from("tenant_plan_change_requests")
         .insert({
@@ -363,100 +408,93 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
       return { scheduled: true, apply_at: applyAt, id: (inserted as { id?: string } | null)?.id };
     }
 
-    // Upgrade path → Stripe Checkout for prorated amount in PKR.
-    if (proration.proratedRs <= 0) {
-      // Edge case: nothing to charge; apply immediately.
-      await supabaseAdmin
-        .from("profiles")
-        .update({
-          subscription_plan: data.requested_plan,
-          billing_cycle: data.billing_cycle,
-          current_period_end: new Date(Date.now() + cycleDays(data.billing_cycle) * 86400_000).toISOString(),
-        } as never)
-        .eq("id", tenantAdminId);
-      return { scheduled: false, apply_now: true, prorated_pkr: 0 };
+    // ────── UPGRADE / cycle upsize ──────
+    // Case A: no active Stripe subscription yet → Checkout in subscription mode.
+    if (!profile.stripe_subscription_id) {
+      const customerId = await ensureStripeCustomer(supabaseAdmin, context.userId);
+      const originHeader = (context as any)?.request?.headers?.get?.("origin")
+        ?? (context as any)?.request?.headers?.get?.("referer")
+        ?? process.env.PUBLIC_APP_URL ?? "";
+      const origin = originHeader ? new URL(originHeader).origin : "";
+      const success = `${origin}/plan-management?upgrade=success`;
+      const cancel = `${origin}/plan-management?upgrade=cancel`;
+
+      const { data: req } = await supabaseAdmin.from("tenant_plan_change_requests").insert({
+        tenant_admin_id: tenantAdminId, requested_plan: data.requested_plan,
+        current_plan: currentPlanId, direction, status: "pending_payment",
+        billing_cycle: data.billing_cycle, requested_by: context.userId,
+      } as never).select("id").single();
+      const requestId = (req as { id: string }).id;
+
+      const body = new URLSearchParams();
+      body.set("mode", "subscription");
+      body.set("customer", customerId);
+      body.set("success_url", success);
+      body.set("cancel_url", cancel);
+      body.set("line_items[0][price]", newPriceId);
+      body.set("line_items[0][quantity]", "1");
+      body.set("subscription_data[metadata][tenant_admin_id]", tenantAdminId);
+      body.set("subscription_data[metadata][plan_id]", data.requested_plan);
+      body.set("subscription_data[metadata][billing_cycle]", data.billing_cycle);
+      body.set("metadata[plan_change_request_id]", requestId);
+      body.set("metadata[user_id]", context.userId);
+
+      const session = await stripeFetch("/checkout/sessions", body) as { id: string; url: string };
+      await supabaseAdmin.from("tenant_plan_change_requests")
+        .update({ stripe_session_id: session.id } as never).eq("id", requestId);
+      return { scheduled: false, apply_now: true, url: session.url, id: requestId };
     }
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) throw new Error("Stripe not configured");
+    // Case B: active subscription → subscription.update with proration_behavior=always_invoice.
+    try {
+      const sub = await stripeFetch(
+        `/subscriptions/${profile.stripe_subscription_id}`, null, "GET",
+      ) as { items: { data: Array<{ id: string }> } };
+      const currentItemId = sub.items.data[0]?.id;
+      if (!currentItemId) throw new Error("Subscription has no item to update");
 
-    const { data: req, error: reqErr } = await supabaseAdmin
-      .from("tenant_plan_change_requests")
-      .insert({
-        tenant_admin_id: tenantAdminId,
-        requested_plan: data.requested_plan,
-        current_plan: currentPlanId,
-        direction,
-        status: "pending_payment",
+      if (profile.stripe_schedule_id) {
+        await stripeFetch(`/subscription_schedules/${profile.stripe_schedule_id}/cancel`,
+          new URLSearchParams()).catch(() => null);
+        await supabaseAdmin.from("profiles")
+          .update({ stripe_schedule_id: null } as never)
+          .eq("id", tenantAdminId);
+      }
+
+      const updBody = new URLSearchParams();
+      updBody.set("items[0][id]", currentItemId);
+      updBody.set("items[0][price]", newPriceId);
+      updBody.set("proration_behavior", "always_invoice");
+      updBody.set("payment_behavior", "error_if_incomplete");
+      updBody.set("metadata[plan_id]", data.requested_plan);
+      updBody.set("metadata[billing_cycle]", data.billing_cycle);
+      await stripeFetch(`/subscriptions/${profile.stripe_subscription_id}`, updBody);
+
+      // Cache locally; webhook confirms.
+      await supabaseAdmin.from("profiles").update({
+        subscription_plan: data.requested_plan,
         billing_cycle: data.billing_cycle,
-        charge_amount_cents: proration.proratedRs * 100,
-        requested_by: context.userId,
-      } as never)
-      .select("id")
-      .single();
-    if (reqErr) throw reqErr;
-    const requestId = (req as { id: string }).id;
+      } as never).eq("id", tenantAdminId);
 
-    const { data: prof } = await supabaseAdmin
-      .from("profiles")
-      .select("email, stripe_customer_id")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const email = (prof as { email?: string } | null)?.email ?? null;
-    const stripeCustomerId = (prof as { stripe_customer_id?: string } | null)?.stripe_customer_id ?? null;
-
-    // Same-origin success/cancel URLs.
-    const originHeader = (context as any)?.request?.headers?.get?.("origin")
-      ?? (context as any)?.request?.headers?.get?.("referer")
-      ?? process.env.PUBLIC_APP_URL
-      ?? "";
-    const origin = originHeader ? new URL(originHeader).origin : "";
-    const success = `${origin}/plan-management?upgrade=success`;
-    const cancel = `${origin}/plan-management?upgrade=cancel`;
-
-    const body = new URLSearchParams();
-    body.set("mode", "payment");
-    body.set("success_url", success);
-    body.set("cancel_url", cancel);
-    if (stripeCustomerId) body.set("customer", stripeCustomerId);
-    else if (email) body.set("customer_email", email);
-    body.set("line_items[0][price_data][currency]", "pkr");
-    body.set("line_items[0][price_data][product_data][name]",
-      `Plan ${currentPlanId} → ${data.requested_plan} (${data.billing_cycle}) — prorated`);
-    body.set("line_items[0][price_data][unit_amount]", String(proration.proratedRs * 100));
-    body.set("line_items[0][quantity]", "1");
-    body.set("metadata[plan_change_request_id]", requestId);
-    body.set("metadata[tenant_admin_id]", tenantAdminId);
-    body.set("metadata[user_id]", context.userId);
-    body.set("metadata[requested_plan]", data.requested_plan);
-    body.set("metadata[billing_cycle]", data.billing_cycle);
-
-    const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${stripeKey}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body,
-    });
-    const text = await res.text();
-    if (!res.ok) throw new Error(`Stripe error ${res.status}: ${text.slice(0, 300)}`);
-    const session = JSON.parse(text) as { id: string; url: string };
-
-    await supabaseAdmin
-      .from("tenant_plan_change_requests")
-      .update({ stripe_session_id: session.id } as never)
-      .eq("id", requestId);
-
-    await logActivity({
-      sb: supabaseAdmin, tenantAdminId, actorId: context.userId,
-      action: "billing.plan_change_checkout_started",
-      targetType: "plan_change_request",
-      targetId: requestId,
-        meta: { direction, from: currentPlanId, to: data.requested_plan, amount_pkr: proration.proratedRs },
-    });
-
-    return { scheduled: false, apply_now: true, url: session.url, prorated_pkr: proration.proratedRs, id: requestId };
+      await logActivity({
+        sb: supabaseAdmin, tenantAdminId, actorId: context.userId,
+        action: "billing.plan_upgrade_applied",
+        targetType: "profile", targetId: tenantAdminId,
+        meta: { direction, from: currentPlanId, to: data.requested_plan, cycle: data.billing_cycle },
+      });
+      await emitToSuperAdmins(supabaseAdmin, {
+        category: "plan", severity: "success",
+        title: "Plan upgraded",
+        body: `${currentPlanId} → ${data.requested_plan} (${data.billing_cycle}) — invoiced by Stripe.`,
+        link: "/platform/plans",
+      });
+      return { scheduled: false, apply_now: true, url: null, id: null, invoiced: true };
+    } catch (e) {
+      throw new Error(
+        `Upgrade could not be charged automatically: ${(e as Error).message}. ` +
+        `Open the billing portal to update your payment method and try again.`,
+      );
+    }
   });
 
 /* -------------------- cancelScheduledPlanChange -------------------- */
