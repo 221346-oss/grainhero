@@ -99,6 +99,57 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
               const buyerOrderId = s.metadata?.buyer_order_id ?? null;
               const sessionId = (s as { id?: string }).id ?? null;
+              const planChangeRequestId = s.metadata?.plan_change_request_id ?? null;
+
+              // Prorated plan change (upgrade / cycle upsize) confirmed by Stripe.
+              if (planChangeRequestId) {
+                const { data: req } = await supabaseAdmin
+                  .from("tenant_plan_change_requests")
+                  .select("id, tenant_admin_id, requested_plan, current_plan, direction, billing_cycle, status")
+                  .eq("id", planChangeRequestId)
+                  .maybeSingle();
+                const r = req as {
+                  id: string; tenant_admin_id: string; requested_plan: string;
+                  current_plan: string | null; direction: string | null;
+                  billing_cycle: string | null; status: string;
+                } | null;
+                if (r && r.status !== "approved") {
+                  const cycleDays = r.billing_cycle === "yearly" ? 365 : 30;
+                  const nextEnd = new Date(Date.now() + cycleDays * 86400_000).toISOString();
+                  await supabaseAdmin
+                    .from("profiles")
+                    .update({
+                      subscription_plan: r.requested_plan,
+                      billing_cycle: r.billing_cycle ?? "monthly",
+                      current_period_end: nextEnd,
+                    } as never)
+                    .eq("id", r.tenant_admin_id);
+                  await supabaseAdmin
+                    .from("tenant_plan_change_requests")
+                    .update({ status: "approved", decided_at: new Date().toISOString() } as never)
+                    .eq("id", r.id);
+                  try {
+                    const { emitNotification, emitToSuperAdmins } = await import("@/lib/notify");
+                    await emitNotification(supabaseAdmin, {
+                      recipientId: r.tenant_admin_id, tenantAdminId: r.tenant_admin_id,
+                      category: "plan", severity: "success",
+                      title: "Plan upgraded",
+                      body: `Your plan is now ${r.requested_plan} (${r.billing_cycle ?? "monthly"}).`,
+                      link: "/plan-management",
+                      entityType: "plan_change_request", entityId: r.id,
+                    });
+                    await emitToSuperAdmins(supabaseAdmin, {
+                      category: "plan", severity: "info",
+                      title: "Plan upgrade paid",
+                      body: `${r.current_plan ?? "?"} → ${r.requested_plan} (${r.billing_cycle ?? "monthly"}) confirmed via Stripe.`,
+                      link: "/platform/plans",
+                      entityType: "plan_change_request", entityId: r.id,
+                    });
+                  } catch (e) {
+                    console.warn("[stripe-webhook] plan-change notify failed:", (e as Error).message);
+                  }
+                }
+              }
 
               // Phase 12 — Buyer marketplace order paid via Stripe Checkout.
               if (buyerOrderId) {
