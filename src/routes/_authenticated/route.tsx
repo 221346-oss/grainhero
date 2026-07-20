@@ -15,9 +15,12 @@ import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import TextShimmer from "@/components/ui/text-shimmer";
+import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  // Full app-chrome skeleton while the auth check runs on first paint.
+  pendingComponent: AppShellSkeleton,
   beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth/login" });
