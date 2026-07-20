@@ -118,6 +118,18 @@ export const getMyPlanState = createServerFn({ method: "GET" })
       current_plan: (profile.subscription_plan ?? "basic") as string,
       current_cycle: (profile.billing_cycle ?? "monthly") as Cycle,
       current_period_end: profile.current_period_end,
+      usage: {
+        silos: profile.plan_usage_silos ?? 0,
+        users: profile.plan_usage_users ?? 0,
+        sensors: profile.plan_usage_sensors ?? 0,
+        actuators: profile.plan_usage_actuators ?? 0,
+      },
+      retention: {
+        discount_pct: profile.retention_discount_pct ?? 0,
+        active_until: profile.retention_discount_until,
+        offer_used_at: profile.retention_offer_used_at,
+        offer_available: !profile.retention_offer_used_at,
+      },
       plans: plans.map((p) => ({
         plan_id: p.plan_id,
         name: p.name ?? p.plan_id,
