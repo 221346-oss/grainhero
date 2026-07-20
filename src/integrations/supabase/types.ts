@@ -5527,12 +5527,14 @@ export type Database = {
           admin_id: string | null
           auto_upgrade_enabled: boolean
           avatar: string | null
+          billing_cycle: string | null
           blocked: boolean | null
           business_type: string | null
           certification_level: string | null
           created_at: string | null
           created_by: string | null
           current_job_count: number | null
+          current_period_end: string | null
           customer_id: string | null
           deleted_at: string | null
           department: string | null
@@ -5584,12 +5586,14 @@ export type Database = {
           admin_id?: string | null
           auto_upgrade_enabled?: boolean
           avatar?: string | null
+          billing_cycle?: string | null
           blocked?: boolean | null
           business_type?: string | null
           certification_level?: string | null
           created_at?: string | null
           created_by?: string | null
           current_job_count?: number | null
+          current_period_end?: string | null
           customer_id?: string | null
           deleted_at?: string | null
           department?: string | null
@@ -5641,12 +5645,14 @@ export type Database = {
           admin_id?: string | null
           auto_upgrade_enabled?: boolean
           avatar?: string | null
+          billing_cycle?: string | null
           blocked?: boolean | null
           business_type?: string | null
           certification_level?: string | null
           created_at?: string | null
           created_by?: string | null
           current_job_count?: number | null
+          current_period_end?: string | null
           customer_id?: string | null
           deleted_at?: string | null
           department?: string | null
@@ -7283,6 +7289,9 @@ export type Database = {
       }
       tenant_plan_change_requests: {
         Row: {
+          apply_at: string | null
+          billing_cycle: string | null
+          charge_amount_cents: number | null
           created_at: string
           current_plan: string | null
           decided_at: string | null
@@ -7293,10 +7302,14 @@ export type Database = {
           requested_by: string
           requested_plan: string
           status: string
+          stripe_session_id: string | null
           tenant_admin_id: string
           updated_at: string
         }
         Insert: {
+          apply_at?: string | null
+          billing_cycle?: string | null
+          charge_amount_cents?: number | null
           created_at?: string
           current_plan?: string | null
           decided_at?: string | null
@@ -7307,10 +7320,14 @@ export type Database = {
           requested_by: string
           requested_plan: string
           status?: string
+          stripe_session_id?: string | null
           tenant_admin_id: string
           updated_at?: string
         }
         Update: {
+          apply_at?: string | null
+          billing_cycle?: string | null
+          charge_amount_cents?: number | null
           created_at?: string
           current_plan?: string | null
           decided_at?: string | null
@@ -7321,6 +7338,7 @@ export type Database = {
           requested_by?: string
           requested_plan?: string
           status?: string
+          stripe_session_id?: string | null
           tenant_admin_id?: string
           updated_at?: string
         }
