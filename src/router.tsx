@@ -26,6 +26,14 @@ import {
   FinancialsSkeleton,
   AdminProfileSkeleton,
   PlatformOrdersSkeleton,
+  FinanceCommandSkeleton,
+  PayoutsSkeleton,
+  LedgerSkeleton,
+  TaxRulesSkeleton,
+  EarningsSkeleton,
+  InsuranceCommandSkeleton,
+  MetricRegistrySkeleton,
+  DashboardBuilderSkeleton,
 } from "@/components/app/skeletons";
 
 // Route → matching page skeleton. Every page-level skeleton mirrors the real
@@ -63,12 +71,38 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/health": AnalyticsSkeleton,
   "/platform/financials": FinancialsSkeleton,
   "/platform/orders": PlatformOrdersSkeleton,
+  "/platform/finance": FinanceCommandSkeleton,
+  "/platform/finance/payouts": PayoutsSkeleton,
+  "/platform/finance/ledger": LedgerSkeleton,
+  "/platform/finance/tax-rules": TaxRulesSkeleton,
+  "/earnings": EarningsSkeleton,
+  "/platform/insurance": InsuranceCommandSkeleton,
+  "/platform/insurance/audit": InsuranceCommandSkeleton,
+  "/platform/insurance/webhooks": InsuranceCommandSkeleton,
+  "/platform/metrics": MetricRegistrySkeleton,
+  "/platform/dashboard-builder": DashboardBuilderSkeleton,
+  "/platform/mobile-settings": AnalyticsSkeleton,
+  "/platform/mobile-deep-links": AnalyticsSkeleton,
+  "/platform/mobile-push-diagnostics": AnalyticsSkeleton,
+  "/platform/field-settings": AnalyticsSkeleton,
+  "/platform/field-incidents": AnalyticsSkeleton,
+  "/platform/marketplace-mobile": AnalyticsSkeleton,
+  "/platform/mobile-sync-monitor": AnalyticsSkeleton,
+  "/platform/commerce-mobile": AnalyticsSkeleton,
+  "/platform/logistics/command-center": AnalyticsSkeleton,
+  "/platform/logistics/fleet": AnalyticsSkeleton,
+  "/platform/logistics/carriers": AnalyticsSkeleton,
+  "/technician/installs": OrdersSkeleton,
+  "/sales": OrdersSkeleton,
+  "/listings": GrainBatchesSkeleton,
 };
 
 function AutoPending() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   let Skel = PAGE_SKELETONS[pathname];
   if (!Skel && pathname.startsWith("/admins/")) Skel = AdminProfileSkeleton;
+  if (!Skel && pathname.startsWith("/platform/orders/")) Skel = PlatformOrdersSkeleton;
+  if (!Skel && pathname.startsWith("/technician/installs/")) Skel = OrdersSkeleton;
   if (Skel) return <Skel />;
   return <DashboardSkeleton />;
 }

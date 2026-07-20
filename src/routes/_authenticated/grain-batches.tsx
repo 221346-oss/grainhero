@@ -10,6 +10,7 @@ import {
   Truck, AlertTriangle, Building2, User, Calendar, DollarSign, Wheat,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,16 +19,19 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { RowActions } from "@/components/app/RowActions";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
   dispatchGrainBatch, logSpoilageEvent, listSilos, listBuyers,
 } from "@/lib/operations.functions";
+import { listSuppliers } from "@/lib/suppliers.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-batches")({
   validateSearch: (search: Record<string, unknown>) => ({
     status: (search.status as string) ?? "all",
+    siloId: (search.siloId as string) ?? undefined,
   }),
   component: GrainBatchesPage,
 });
@@ -86,7 +90,9 @@ type Form = {
   moisture_content: string;
   protein_content: string;
   test_weight: string;
-  farmer_name: string;
+  supplier_id: string;
+  source_kind: "external" | "own_farm" | "internal_transfer" | "anonymous";
+  farmer_name: string; // fallback / anonymous label
   farmer_contact: string;
   source_location: string;
   harvest_date: string;
@@ -101,6 +107,7 @@ type Form = {
 const emptyForm: Form = {
   grain_type: "", variety: "", grade: "Standard", quantity_kg: "", silo_id: "",
   moisture_content: "", protein_content: "", test_weight: "",
+  supplier_id: "", source_kind: "external",
   farmer_name: "", farmer_contact: "", source_location: "",
   harvest_date: "", expected_dispatch_date: "",
   purchase_price_per_kg: "", intake_temperature: "", intake_humidity: "",
@@ -142,6 +149,7 @@ function GrainBatchesPage() {
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
   const listBuyerFn = useServerFn(listBuyers);
+  const listSupFn = useServerFn(listSuppliers);
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
   const dispatchFn = useServerFn(dispatchGrainBatch);
@@ -149,13 +157,20 @@ function GrainBatchesPage() {
   const qc = useQueryClient();
 
   // Seed statusFilter from ?status= URL search param (e.g. navigated from dashboard)
-  const { status: searchStatus } = useSearch({ from: "/_authenticated/grain-batches" });
+  const { status: searchStatus, siloId: searchSiloId } = useSearch({ from: "/_authenticated/grain-batches" });
 
   const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
   const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const silos = silosData ?? [];
   const buyers = buyersData ?? [];
+  const suppliersQ = useQuery({
+    queryKey: ["suppliers-mini"],
+    queryFn: () => listSupFn({ data: {} }),
+    retry: 1,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const suppliers: any[] = (suppliersQ.data?.suppliers ?? []) as any[];
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState(searchStatus ?? "all");
@@ -181,6 +196,7 @@ function GrainBatchesPage() {
     return all.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (grainFilter !== "all" && b.grain_type !== grainFilter) return false;
+      if (searchSiloId && b.silos?.id !== searchSiloId) return false;
       if (!q.trim()) return true;
       const t = q.toLowerCase();
       return (
@@ -191,7 +207,7 @@ function GrainBatchesPage() {
         b.buyers?.name?.toLowerCase().includes(t)
       );
     });
-  }, [data, q, statusFilter, grainFilter]);
+  }, [data, q, statusFilter, grainFilter, searchSiloId]);
 
   const stats = useMemo(() => {
     const total = rows.length;
@@ -214,6 +230,9 @@ function GrainBatchesPage() {
       protein_content: f.protein_content ? Number(f.protein_content) : null,
       test_weight: f.test_weight ? Number(f.test_weight) : null,
       farmer_name: f.farmer_name.trim() || null,
+      supplier_id: f.supplier_id || null,
+      source_kind: f.source_kind,
+      unit_cost: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
       farmer_contact: f.farmer_contact.trim() || null,
       source_location: f.source_location.trim() || null,
       harvest_date: f.harvest_date || null,
@@ -309,6 +328,8 @@ function GrainBatchesPage() {
       grade: b.grade ?? "Standard",
       quantity_kg: String(b.quantity_kg ?? ""),
       silo_id: b.silos?.id ?? "",
+      supplier_id: (b as { supplier_id?: string | null }).supplier_id ?? "",
+      source_kind: ((b as { source_kind?: string }).source_kind as Form["source_kind"]) ?? "external",
       moisture_content: b.moisture_content != null ? String(b.moisture_content) : "",
       protein_content: b.protein_content != null ? String(b.protein_content) : "",
       test_weight: b.test_weight != null ? String(b.test_weight) : "",
@@ -390,19 +411,60 @@ function GrainBatchesPage() {
             )}
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((b) => (
-            <BatchCard
-              key={b.id} batch={b}
-              onView={() => { setSelected(b); setViewOpen(true); }}
-              onEdit={() => openEdit(b)}
-              onDelete={() => setDeleteId(b.id)}
-              onQR={() => { setSelected(b); setQrOpen(true); }}
-              onDispatch={() => openDispatch(b)}
-              onSpoilage={() => openSpoilage(b)}
-            />
-          ))}
+       ) : (
+        <div className="rounded-xl border bg-card/60 overflow-hidden">
+          <div className="max-h-[70vh] overflow-auto">
+            <Table className="text-xs">
+              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
+                <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
+                  <TableHead>Batch</TableHead>
+                  <TableHead>Grain</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Silo</TableHead>
+                  <TableHead className="text-right">Intake (kg)</TableHead>
+                  <TableHead className="text-right">Remaining (kg)</TableHead>
+                  <TableHead>Intake date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((b) => {
+                  const supplier = b.farmer_name ?? "—";
+                  const intake = Number(b.quantity_kg ?? 0);
+                  const remaining = Math.max(0, intake - Number(b.dispatched_quantity_kg ?? 0));
+                  const intakeDate = b.harvest_date ?? b.intake_date ?? null;
+                  return (
+                    <TableRow key={b.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
+                      <TableCell className="font-medium">{b.batch_id}</TableCell>
+                      <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{supplier}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.silos?.name ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell><StatusBadge value={b.status} /></TableCell>
+                      <TableCell className="text-right">
+                        <RowActions
+                          actions={[
+                            { label: "View", icon: Eye, onClick: () => { setSelected(b); setViewOpen(true); } },
+                            { label: "Edit", icon: Edit2, onClick: () => openEdit(b) },
+                            { label: "QR code", icon: QrCode, onClick: () => { setSelected(b); setQrOpen(true); } },
+                            { label: "Log spoilage", icon: AlertTriangle, onClick: () => openSpoilage(b) },
+                            { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(b.id) },
+                          ]}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{rows.length} batch{rows.length === 1 ? "" : "es"}</span>
+            <span>Dispatch happens from <Link to="/silos" className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">Silos</Link></span>
+          </div>
         </div>
       )}
 
@@ -415,7 +477,23 @@ function GrainBatchesPage() {
               {form.id ? "Update batch details." : "Batch ID and QR code are generated automatically on intake."}
             </DialogDescription>
           </DialogHeader>
-          <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMut.mutate(form); }}>
+          <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => {
+            e.preventDefault();
+            // Source validation
+            if (form.source_kind === "anonymous") {
+              if (!form.farmer_name.trim()) { toast.error("Enter a walk-in name for anonymous source"); return; }
+            } else if (!form.supplier_id) {
+              toast.error("Pick a supplier or switch source to Anonymous");
+              return;
+            }
+            if (!form.silo_id) { toast.error("Pick a silo"); return; }
+            if (!form.grain_type) { toast.error("Pick a grain type"); return; }
+            if (!form.quantity_kg || Number(form.quantity_kg) <= 0) { toast.error("Enter a quantity"); return; }
+            if (!form.purchase_price_per_kg || Number(form.purchase_price_per_kg) <= 0) {
+              toast.error("Purchase price / kg is required for cost tracking"); return;
+            }
+            saveMut.mutate(form);
+          }}>
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <Label>Grain type *</Label>
@@ -478,12 +556,58 @@ function GrainBatchesPage() {
                 <Input type="number" step="0.01" value={form.purchase_price_per_kg} onChange={(e) => setForm({ ...form, purchase_price_per_kg: e.target.value })} />
               </div>
               <div>
-                <Label>Farmer name</Label>
-                <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} />
+                <Label>Source kind</Label>
+                <Select value={form.source_kind} onValueChange={(v) => setForm({ ...form, source_kind: v as Form["source_kind"], supplier_id: "" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="external">External supplier</SelectItem>
+                    <SelectItem value="own_farm">Own farm / harvest</SelectItem>
+                    <SelectItem value="internal_transfer">Internal transfer</SelectItem>
+                    <SelectItem value="anonymous">Anonymous / walk-in</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label>Farmer contact</Label>
-                <Input value={form.farmer_contact} onChange={(e) => setForm({ ...form, farmer_contact: e.target.value })} />
+                <Label>Supplier <span className="text-red-500">*</span></Label>
+                {form.source_kind === "anonymous" ? (
+                  <Input value={form.farmer_name} onChange={(e) => setForm({ ...form, farmer_name: e.target.value })} placeholder="Walk-in name (required)" required />
+                ) : suppliersQ.isLoading ? (
+                  <div className="h-9 flex items-center gap-2 rounded-md border border-input px-3 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading suppliers…
+                  </div>
+                ) : suppliersQ.isError ? (
+                  <div className="h-9 flex items-center gap-2 rounded-md border border-red-500/40 bg-red-500/5 px-3 text-xs text-red-600">
+                    <span className="flex-1">Failed to load suppliers</span>
+                    <button type="button" onClick={() => suppliersQ.refetch()} className="underline hover:text-red-700">Retry</button>
+                  </div>
+                ) : (
+                  (() => {
+                    const options = suppliers.filter((s) => s.kind === form.source_kind);
+                    if (options.length === 0) {
+                      return (
+                        <div className="h-9 flex items-center gap-2 rounded-md border border-dashed border-input px-3 text-xs text-muted-foreground">
+                          No {form.source_kind.replace("_", " ")} suppliers.
+                          <Link to="/suppliers" className="text-emerald-600 underline">Add one →</Link>
+                        </div>
+                      );
+                    }
+                    return (
+                      <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Pick from suppliers" /></SelectTrigger>
+                        <SelectContent>
+                          {options.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  })()
+                )}
+                <Link to="/suppliers" className="text-[10px] text-muted-foreground hover:text-emerald-600 underline mt-1 inline-block">Manage suppliers →</Link>
+              </div>
+              <div>
+                <Label>Contact (optional)</Label>
+                <Input value={form.farmer_contact} onChange={(e) => setForm({ ...form, farmer_contact: e.target.value })} placeholder="Override contact" />
               </div>
               <div className="sm:col-span-2">
                 <Label>Source location</Label>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
+import { logSecurityEvent } from "@/lib/security-events.functions";
 
 const search = z.object({
   email: z.string().email(),
@@ -80,6 +81,7 @@ function VerifyOtpPage() {
     }
 
     setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
+    void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
     setTimeout(() => navigate({ to: "/dashboard", replace: true }), 500);
   };
 

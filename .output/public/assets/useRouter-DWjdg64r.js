@@ -1,0 +1,1 @@
+import{n as e,s as t}from"./jsx-runtime-D8nDyRPw.js";function n(){throw Error(`Invariant failed`)}var r=t(e(),1),i=r.createContext(null);function a(e){return r.useContext(i)}export{i as n,n as r,a as t};

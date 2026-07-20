@@ -1,99 +1,82 @@
-# Plan: Admin Profiles, Financial Dashboard & IoT Install Tracking
+# Manager Dashboard Redesign
 
-Three self-contained feature blocks. All UI theme-aware (light/dark), aligned with existing PageHeader / StatBox conventions.
+Rebuild the Manager dashboard to mirror the Admin dashboard's structure (WelcomeBanner → QuickTabs → KpiSummary → Bento) while keeping the Manager's operational focus. Preserve the current "card-within-card-within-scrollable" pattern used by `ViewBatchesCard` — it is the interaction model for every action block.
 
----
+## Layout (top → bottom)
 
-## 1. Super-Admin → Admin Profile Page
-
-**New route:** `/_authenticated/admins/$adminId.tsx` (linked from existing admin list rows).
-
-**Layout** (image 3 style):
-- Header card: avatar initials, name, email, phone, "Active/Suspended" pill, `Edit Profile` and kebab menu (Impersonate / Suspend / Reactivate).
-- KPI row: Last Login · Total Revenue · Silos · Warehouses · Batches · Open Alerts.
-- Two-column: Contact & Address card (editable inline) + Order Frequency bar chart (last 6 months of grain batches OR hardware orders — toggle).
-- Recent Activity list (last 10 activity_logs entries).
-
-**Server fns** (`src/lib/admin-profile.functions.ts`, `requireSupabaseAuth`, super_admin check):
-- `getAdminProfile({ adminId })` — profile + role + aggregated stats
-- `updateAdminContact({ adminId, patch })` — name/phone/address/notes
-- `impersonateAdmin({ adminId })` — returns short-lived magic-link URL via `supabaseAdmin.auth.admin.generateLink`
-- `setAdminSuspended({ adminId, suspended })` — writes `profiles.suspended` flag
-- `getAdminOrderFrequency({ adminId, source })` — 6-month buckets
-
-**DB:** add `profiles.suspended boolean default false`, `profiles.notes text`. No new tables.
-
----
-
-## 2. Financial Dashboard (Revenue page upgrade)
-
-Enhance existing `/_authenticated/revenue` (or add if missing).
-
-**Widgets:**
-- KPI tiles: Total Revenue · Subscription MRR · IoT Hardware Revenue · Insurance Commission · Gross Profit · Net Profit % (each with MoM delta, numbers colored — cards neutral).
-- **P&L Summary card** — Sales, COGS, Gross Profit, Opex, Other Income, Net Profit, Net %.
-- **Revenue mix donut** — Subscriptions / IoT Hardware / Insurance Commission / Other.
-- **MRR trend line** — 12 months, plus churn %.
-- **Sales split by plan** — Starter/Pro/Enterprise horizontal bars.
-- **Reports section** — "Export PDF" buttons for: Monthly P&L, Revenue Breakdown, MRR Report. Generated server-side via a lightweight PDF (pdf-lib) server route `/api/reports/[type].pdf` gated to super_admin.
-
-**Data sources** (existing tables):
-- `subscriptions` (MRR, plan mix)
-- `hardware_orders` (IoT revenue)
-- `insurance_policies` — add `commission_rate numeric` and computed `commission_amount`
-- `buyer_invoices` / `invoices` (sales)
-
-**DB migration:**
-- `insurance_policies.commission_rate numeric(5,2) default 0`
-- optional `platform_settings` rows for default commission rate & COGS overrides
-
-**Server fns** (`src/lib/financials.functions.ts`): `getFinancialSummary`, `getRevenueMix`, `getMrrTrend`, `getPlanSplit`, `generateReportPdf`.
-
----
-
-## 3. IoT Installation Tracking (extends existing Orders page)
-
-**Where:** existing `/_authenticated/orders` — add **"Installation"** tab per order row (drawer or `/orders/$orderId` detail).
-
-**Fields super admin can add per hardware_order:**
-- Installer: name, phone, photo URL, company
-- Location: city, warehouse_id, silo_id, scheduled_visit_at, our_origin_address, customer_address (auto from tenant), lat/lng
-- Devices: array of `{ serial, model, status: shipped|en_route|installed|verified }`
-- Visit timeline: append-only notes with timestamp + optional photo
-
-**Map component** (image 1 style):
-- Mapbox GL JS (public token via connector) OR Google Maps if user prefers — we'll use Mapbox.
-- Shows origin marker (our warehouse) → destination marker (customer address) → directions polyline via Mapbox Directions API (server fn using secret token).
-- Purple styled route line, ETA/distance badge overlay.
-
-**Manager view:** same order detail is read-only for managers — they see installer profile, live status timeline, map, and device serials.
-
-**DB migration:** new table `hardware_order_installations`
+```text
+┌────────────────────────────────────────────────────────────┐
+│ WelcomeBanner  (typewriter, collapses after 4s)            │
+├────────────────────────────────────────────────────────────┤
+│ RangeChip (today/7d/30d/mtd/ytd)                           │
+├────────────────────────────────────────────────────────────┤
+│ ManagerKpiSummary   65 / 35 split                          │
+│  ┌─────── Hero: Silo Fill % ────┐ ┌── KPI list ───────┐    │
+│  │ big % + sparkline of avg     │ │ Batches (deltas)  │    │
+│  │ occupancy over range         │ │ Open Alerts       │    │
+│  │ CTA: Silo Management         │ │ Pending QC        │    │
+│  └──────────────────────────────┘ │ Dispatch ready    │    │
+│                                    │ Active Actuators  │    │
+│                                    └───────────────────┘    │
+├────────────────────────────────────────────────────────────┤
+│ ManagerBento  (2-col md, 3-col xl)                         │
+│ ┌── Ops split (LEFT) ──────┐  ┌── Fulfillment (RIGHT) ──┐  │
+│ │ Silos live list          │  │ Dispatch queue          │  │
+│ │  (scrollable, inline     │  │  (FIFO suggestions,     │  │
+│ │   temp/humidity chips)   │  │   Dispatch button)      │  │
+│ │ Alert triage             │  │ Pending QC queue        │  │
+│ │  (Ack / Resolve inline)  │  │  (Approve / Reject)     │  │
+│ │ Actuator quick toggles   │  │ Buyer orders to fulfill │  │
+│ │  (fan / heater on-off,   │  │  (compact rows)         │  │
+│ │   inside scrollable card)│  │                         │  │
+│ └──────────────────────────┘  └─────────────────────────┘  │
+├────────────────────────────────────────────────────────────┤
+│ Team & Tasks strip (full width)                            │
+│  Technician assignments · Open tasks · SLA countdown       │
+├────────────────────────────────────────────────────────────┤
+│ CustomWidgetsBand (kept, unchanged)                        │
+└────────────────────────────────────────────────────────────┘
 ```
-id, order_id (fk hardware_orders), installer_name, installer_phone, installer_photo_url,
-installer_company, city, warehouse_id, silo_id, scheduled_visit_at,
-origin_address, origin_lat, origin_lng, destination_address, destination_lat, destination_lng,
-status, created_at, updated_at
-```
-Plus `hardware_order_devices` (serial, model, status, order_id) and `hardware_order_visit_events` (order_id, note, photo_url, event_at, created_by).
 
-RLS: super_admin full; tenant admin/manager SELECT where `hardware_orders.admin_id = get_tenant_admin_id(auth.uid())`.
+## Interaction rules (per user)
 
-**Server fns** (`src/lib/installations.functions.ts`): `upsertInstallation`, `addVisitEvent`, `upsertDevices`, `getInstallation`, `getRouteGeometry` (Mapbox Directions via gateway).
+- **Cards-within-cards-within-scrollable** is the norm. Each bento block is a card whose body contains a bordered inner card with a `max-h` scroll region and inline row actions — same pattern as `ViewBatchesCard`.
+- Density: compact rows, small pills, medium padding (h-9 rows, text-xs/text-sm).
+- Every number is a link that deep-links to its filtered page.
+- Manager focus = management, not decoration → drop hero animations and the big `StatCard` grid; replace with `ManagerKpiSummary` and dense operational lists.
 
-**Connector:** requires Mapbox connector (public + secret token). I'll prompt to link.
+## Quick tabs (topbar)
 
----
+Add Manager preset in `DashboardQuickTabs.tsx`:
+default = `Overview, Silos, Batches, Alerts, Dispatch`, catalog also includes `Orders, Sensors, Actuators, Team, Warehouses, Reports, Marketplace, Buyers`. User can customize (max 5, Overview pinned).
 
-## Build order
+## Data
 
-1. Migrations (admin fields, insurance commission, installation tables).
-2. Mapbox connector link.
-3. Admin profile page + server fns.
-4. Financial dashboard widgets + PDF report route.
-5. Orders page → Installation tab + map.
+One new server fn `getManagerDashboard({ range })` in `src/lib/manager-dashboard.functions.ts`:
+- KPIs: silo fill %, batches counts + prior-window delta, open/critical alerts, pending QC count, dispatch-ready count, active actuators.
+- Rows: top 10 silos (name, fill %, temp, humidity, status), top 10 active alerts, top 10 pending-QC batches, top 10 dispatch-ready batches, top 10 buyer orders to fulfill, actuators (id, name, on/off, silo).
+- Team: technicians in tenant + open field_incidents/tasks for SLA.
 
-## Out of scope
-- Live GPS tracking of installer (only static route line).
-- Multi-stop routes.
-- Real-time collaboration on visit notes.
+Wire silo-fill sparkline from a simple time-bucket over `grain_batches` occupancy or `sensor_readings` averages (best-effort — fall back to current fill if no history).
+
+## Files
+
+**New**
+- `src/lib/manager-dashboard.functions.ts` — `getManagerDashboard` server fn.
+- `src/components/dashboards/ManagerKpiSummary.tsx` — 65/35 hero + KPI list (mirrors `KpiSummary.tsx`).
+- `src/components/dashboards/ManagerBento.tsx` — 2-column bento with 6 scrollable inner cards + inline actions.
+- `src/components/dashboards/ManagerTeamStrip.tsx` — technicians & open-task strip.
+
+**Edited**
+- `src/components/dashboards/ManagerDashboard.tsx` — replace body with `<WelcomeBanner /> <RangeChip /> <ManagerKpiSummary /> <ManagerBento /> <ManagerTeamStrip /> <CustomWidgetsBand />`. Keep `useDashboardStats` for backwards compat but source real data from new server fn.
+- `src/components/app/DashboardQuickTabs.tsx` — add Manager catalog + default, gate on role via `useMyProfile`/role hook already in tree.
+
+**Untouched**
+- Admin/SuperAdmin dashboards, sidebar, existing pages, business logic, DB schema.
+
+## Verification
+
+- Route: `/dashboard` as manager — visual check at 525px and desktop.
+- Deep-links: click every KPI + inline row → lands on correct filtered page.
+- Inline actions: Ack alert, Approve QC, Dispatch, toggle actuator — all use existing server fns already wired on their respective pages.
+- Typecheck via build.

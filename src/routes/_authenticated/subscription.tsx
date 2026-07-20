@@ -14,7 +14,7 @@ import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions
 import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
 import { changeMyPlan, cancelAtPeriodEnd, resumeSubscription } from "@/lib/subscription-management.functions";
 import { getAllSubscriptions } from "@/lib/platform-no-admin.functions";
-import { adminChangeUserPlan, adminCancelSubscription, adminResumeSubscription } from "@/lib/admin-subscriptions.functions";
+import { adminChangeUserPlan, adminCancelSubscription, adminResumeSubscription, adminSyncSubscription, adminReconcileAllSubscriptions } from "@/lib/admin-subscriptions.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import pricingData from "@/lib/pricing-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -64,6 +64,8 @@ function SubscriptionPage() {
   const adminChangeFn = useServerFn(adminChangeUserPlan);
   const adminCancelFn = useServerFn(adminCancelSubscription);
   const adminResumeFn = useServerFn(adminResumeSubscription);
+  const adminSyncFn = useServerFn(adminSyncSubscription);
+  const adminReconcileFn = useServerFn(adminReconcileAllSubscriptions);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
@@ -139,6 +141,11 @@ function SubscriptionPage() {
               <ArrowUpRight className="h-4 w-4 mr-2" /> Change plan
             </Button>
           )}
+          {isSuperAdmin && (
+            <Button variant="outline" size="sm" onClick={() => runAdmin(() => adminReconcileFn(), "Reconciled from Stripe")}>
+              <RotateCcw className="h-4 w-4 mr-2" /> Sync all from Stripe
+            </Button>
+          )}
           <Button asChild variant="outline" size="sm"><Link to="/plans">Browse plans</Link></Button>
         </>
       }
@@ -157,6 +164,19 @@ function SubscriptionPage() {
 
       {sub && (
         <>
+          {(sub as any).cancel_at && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                <Calendar className="h-4 w-4" />
+                Scheduled to cancel on {new Date((sub as any).cancel_at).toLocaleDateString()}
+              </div>
+              {canManage && (
+                <Button size="sm" variant="outline" onClick={() => resumeM.mutate()} disabled={resumeM.isPending}>
+                  <RotateCcw className="h-4 w-4 mr-2" /> Resume
+                </Button>
+              )}
+            </div>
+          )}
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -227,7 +247,7 @@ function SubscriptionPage() {
 
           {canManage && sub.status !== "cancelled" && (
             <div className="flex justify-end gap-2">
-              {(sub as any).cancel_at_period_end ? (
+              {(sub as any).cancel_at ? (
                 <Button variant="outline" onClick={() => resumeM.mutate()} disabled={resumeM.isPending}>
                   <RotateCcw className="h-4 w-4 mr-2" /> Resume subscription
                 </Button>
@@ -288,6 +308,10 @@ function SubscriptionPage() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-red-600" onClick={() => runAdmin(() => adminCancelFn({ data: { subscriptionId: s.id, immediate: true } }), "Subscription cancelled")}>
                         <XCircle className="h-3.5 w-3.5 mr-2" /> Cancel immediately
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => runAdmin(() => adminSyncFn({ data: { subscriptionId: s.id } }), "Synced from Stripe")}>
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Sync from Stripe
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

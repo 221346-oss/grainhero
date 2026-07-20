@@ -186,8 +186,8 @@ function WarehousesPage() {
             <SelectItem value="error">Error</SelectItem>
           </SelectContent>
         </Select>
-        <Button 
-          onClick={openCreate} 
+        <Button
+          onClick={openCreate}
           className="gap-2"
           disabled={!canAddWarehouse}
           title={warehouseLimitMessage ?? "Create new warehouse"}

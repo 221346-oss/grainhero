@@ -1445,3 +1445,36 @@ export function PlatformOrdersSkeleton() {
     </div>
   );
 }
+
+// ─── Phase 18 finance ───────────────────────────────────────────────────────
+export function FinanceCommandSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-56 rounded" />
+        <Skeleton className="h-4 w-72 rounded" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {Array(7).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border bg-card p-4 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-6 w-24 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <Skeleton className="h-5 w-40 rounded" />
+        <Skeleton className="h-[300px] w-full rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+export function PayoutsSkeleton() { return <PlatformOrdersSkeleton />; }
+export function LedgerSkeleton() { return <PlatformOrdersSkeleton />; }
+export function TaxRulesSkeleton() { return <PlatformOrdersSkeleton />; }
+export function EarningsSkeleton() { return <FinanceCommandSkeleton />; }
+export function InsuranceCommandSkeleton() { return <FinanceCommandSkeleton />; }
+export function ClaimsQueueSkeleton() { return <PlatformOrdersSkeleton />; }
+export function MetricRegistrySkeleton() { return <FinanceCommandSkeleton />; }
+export function DashboardBuilderSkeleton() { return <FinanceCommandSkeleton />; }

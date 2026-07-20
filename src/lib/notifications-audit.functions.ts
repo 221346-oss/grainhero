@@ -18,6 +18,7 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
 const listNotifInput = z.object({
   filter: z.enum(["all", "unread", "read"]).default("all"),
   limit: z.number().int().min(1).max(200).default(50),
+  categories: z.array(z.string().min(1).max(60)).optional(),
 });
 
 export const listNotifications = createServerFn({ method: "POST" })
@@ -33,6 +34,7 @@ export const listNotifications = createServerFn({ method: "POST" })
       .limit(limit);
     if (data.filter === "unread") q = q.eq("read", false);
     if (data.filter === "read") q = q.eq("read", true);
+    if (data.categories && data.categories.length) q = q.in("category", data.categories);
     const { data: rows, error } = await q;
     if (error) throw error;
     const { count } = await context.supabase
@@ -40,7 +42,15 @@ export const listNotifications = createServerFn({ method: "POST" })
       .select("id", { count: "exact", head: true })
       .eq("user_id", context.userId)
       .eq("read", false);
-    return { notifications: rows ?? [], unread_count: count ?? 0 };
+    // Distinct list of categories the user actually has, for the UI filter.
+    const { data: catRows } = await context.supabase
+      .from("notifications")
+      .select("category")
+      .eq("user_id", context.userId);
+    const availableCategories = Array.from(
+      new Set((catRows ?? []).map((r) => (r as { category?: string }).category ?? "system")),
+    ).sort();
+    return { notifications: rows ?? [], unread_count: count ?? 0, availableCategories };
   });
 
 export const markNotificationRead = createServerFn({ method: "POST" })

@@ -48,6 +48,7 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Platform · Leads", to: "/platform/leads", group: "Platform" },
   { label: "Platform · Install orders", to: "/platform/orders", group: "Platform", keywords: "hardware" },
   { label: "Platform · Health", to: "/platform/health", group: "Platform" },
+  { label: "Platform · Reporting", to: "/platform/reporting", group: "Platform", keywords: "bugs hardware queries support" },
   { label: "Platform · Audit logs", to: "/platform/audit-logs", group: "Platform" },
   { label: "Platform · System logs", to: "/platform/logs", group: "Platform" },
 ];

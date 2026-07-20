@@ -56,7 +56,7 @@ function PlatformPlansPage() {
   );
 
   const decideMut = useMutation({
-    mutationFn: (v: { id: string; approve: boolean }) => decide({ data: v }),
+    mutationFn: (v: { id: string; approve: boolean; reason?: string | null }) => decide({ data: v }),
     onSuccess: () => {
       toast.success("Decision recorded");
       qc.invalidateQueries({ queryKey: ["plan-change-requests"] });
@@ -182,7 +182,15 @@ function PlatformPlansPage() {
                     <td className="px-4 py-2 text-right">
                       {r.status === "pending" ? (
                         <div className="flex gap-2 justify-end">
-                          <Button size="sm" variant="outline" onClick={() => decideMut.mutate({ id: r.id, approve: false })}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const reason = window.prompt("Reason for rejection?");
+                              if (!reason || !reason.trim()) return;
+                              decideMut.mutate({ id: r.id, approve: false, reason: reason.trim() });
+                            }}
+                          >
                             Reject
                           </Button>
                           <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => decideMut.mutate({ id: r.id, approve: true })}>

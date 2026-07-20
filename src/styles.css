@@ -304,30 +304,3 @@ html { scroll-behavior: smooth; }
   50%  { width: 70%;  margin-left: 15%; }
   100% { width: 0%;   margin-left: 100%; }
 }
-
-/* Manager dashboard quadrant panels — consistent size, hidden scroll when overflow */
-@utility quad-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: white;
-  border: 1px solid #EAEAEA;
-  border-radius: 16px;
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.02);
-  aspect-ratio: 1 / 1;
-  min-height: 260px;
-  max-height: 340px;
-  transition: box-shadow 200ms ease, transform 200ms ease;
-}
-@utility quad-scroll {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  flex: 1 1 auto;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-right: 2px;
-}
-.quad-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
