@@ -105,13 +105,16 @@ export function DashboardSkeleton() {
           <div className="p-4 space-y-3">
             {/* Bar chart */}
             <div className="flex items-end justify-between h-48 gap-2">
-              {Array(7).fill(null).map((_, i) => (
-                <Skeleton 
-                  key={i} 
-                  className="flex-1 rounded-t" 
-                  style={{ height: `${30 + Math.random() * 70}%` }} 
-                />
-              ))}
+              {(() => {
+                const heights = ["60%", "40%", "75%", "50%", "90%", "65%", "80%"];
+                return Array(7).fill(null).map((_, i) => (
+                  <Skeleton 
+                    key={i} 
+                    className="flex-1 rounded-t" 
+                    style={{ height: heights[i] }} 
+                  />
+                ));
+              })()}
             </div>
             <div className="flex justify-between pt-2">
               {Array(7).fill(null).map((_, i) => (

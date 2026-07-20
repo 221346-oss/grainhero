@@ -2190,6 +2190,7 @@ var AlertDialogCancel = import_react.forwardRef((props, forwardedRef) => {
 });
 AlertDialogCancel.displayName = CANCEL_NAME;
 var Root2 = AlertDialog;
+var Trigger2 = AlertDialogTrigger;
 var Portal2 = AlertDialogPortal;
 var Overlay2 = AlertDialogOverlay;
 var Content2 = AlertDialogContent;
@@ -2198,4 +2199,4 @@ var Cancel = AlertDialogCancel;
 var Title2 = AlertDialogTitle;
 var Description2 = AlertDialogDescription;
 //#endregion
-export { __awaiter as A, useLayoutEffect2 as C, useCallbackRef$1 as D, DismissableLayer as E, useComposedRefs as F, require_jsx_runtime as I, Slot$1 as M, createSlot as N, Primitive as O, createSlottable as P, useId as S, useFocusGuards as T, ReactRemoveScroll as _, Overlay2 as a, Presence as b, Title2 as c, DialogContent as d, DialogDescription as f, DialogTrigger as g, DialogTitle as h, Description2 as i, __rest as j, createContextScope as k, Dialog as l, DialogPortal as m, Cancel as n, Portal2 as o, DialogOverlay as p, Content2 as r, Root2 as s, Action as t, DialogClose as u, hideOthers as v, FocusScope as w, Portal as x, useControllableState as y };
+export { dispatchDiscreteCustomEvent as A, useId as C, DismissableLayer as D, useFocusGuards as E, createSlot as F, createSlottable as I, useComposedRefs as L, __awaiter as M, __rest as N, useCallbackRef$1 as O, Slot$1 as P, require_jsx_runtime as R, Portal as S, FocusScope as T, DialogTrigger as _, Overlay2 as a, useControllableState as b, Title2 as c, DialogClose as d, DialogContent as f, DialogTitle as g, DialogPortal as h, Description2 as i, createContextScope as j, Primitive as k, Trigger2 as l, DialogOverlay as m, Cancel as n, Portal2 as o, DialogDescription as p, Content2 as r, Root2 as s, Action as t, Dialog as u, ReactRemoveScroll as v, useLayoutEffect2 as w, Presence as x, hideOthers as y };

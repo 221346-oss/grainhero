@@ -1,9 +1,9 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { l as require_react_dom, u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { I as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+[...].mjs";
+import { R as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+[...].mjs";
 import { t as Button } from "./button-OuFjfcpS.mjs";
 import { t as supabase } from "./client-CrfNFjZ6.mjs";
-import { Cn as ArrowRight, M as Sparkles, n as X, nt as PartyPopper, wn as ArrowLeft } from "../_libs/lucide-react.mjs";
+import { $n as ArrowLeft, I as Sparkles, Qn as ArrowRight, ht as PartyPopper, n as X } from "../_libs/lucide-react.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/OnboardingTour-xcIr4REW.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();

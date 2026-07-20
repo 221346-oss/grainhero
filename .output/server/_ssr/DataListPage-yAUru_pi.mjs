@@ -1,4 +1,4 @@
-import { I as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+[...].mjs";
+import { R as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+[...].mjs";
 import { t as Badge } from "./badge-D1Dupn2y.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/DataListPage-yAUru_pi.js
 var import_jsx_runtime = require_jsx_runtime();

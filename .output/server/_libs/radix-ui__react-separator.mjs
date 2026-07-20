@@ -1,6 +1,6 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "./@floating-ui/react-dom+[...].mjs";
-import { I as require_jsx_runtime, O as Primitive } from "./@radix-ui/react-alert-dialog+[...].mjs";
+import { R as require_jsx_runtime, k as Primitive } from "./@radix-ui/react-alert-dialog+[...].mjs";
 //#region node_modules/@radix-ui/react-separator/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();

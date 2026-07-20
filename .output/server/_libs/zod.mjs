@@ -3513,7 +3513,7 @@ ZodDate.create;
 ZodSymbol.create;
 ZodUndefined.create;
 ZodNull.create;
-ZodAny.create;
+var anyType = ZodAny.create;
 var unknownType = ZodUnknown.create;
 ZodNever.create;
 ZodVoid.create;
@@ -3538,5 +3538,27 @@ ZodOptional.create;
 ZodNullable.create;
 ZodEffects.createWithPreprocess;
 ZodPipeline.create;
+var coerce = {
+	string: ((arg) => ZodString.create({
+		...arg,
+		coerce: true
+	})),
+	number: ((arg) => ZodNumber.create({
+		...arg,
+		coerce: true
+	})),
+	boolean: ((arg) => ZodBoolean.create({
+		...arg,
+		coerce: true
+	})),
+	bigint: ((arg) => ZodBigInt.create({
+		...arg,
+		coerce: true
+	})),
+	date: ((arg) => ZodDate.create({
+		...arg,
+		coerce: true
+	}))
+};
 //#endregion
-export { numberType as a, stringType as c, literalType as i, unionType as l, booleanType as n, objectType as o, enumType as r, recordType as s, arrayType as t, unknownType as u };
+export { enumType as a, objectType as c, unionType as d, unknownType as f, coerce as i, recordType as l, arrayType as n, literalType as o, booleanType as r, numberType as s, anyType as t, stringType as u };

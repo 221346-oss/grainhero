@@ -1,6 +1,6 @@
 import { a as __toCommonJS, n as __esmMin, o as __toESM, r as __exportAll } from "../_runtime.mjs";
 import { u as require_react } from "./@floating-ui/react-dom+[...].mjs";
-import { I as require_jsx_runtime } from "./@radix-ui/react-alert-dialog+[...].mjs";
+import { R as require_jsx_runtime } from "./@radix-ui/react-alert-dialog+[...].mjs";
 
 //#region node_modules/unenv/dist/runtime/_internal/utils.mjs
 /* @__NO_SIDE_EFFECTS__ */

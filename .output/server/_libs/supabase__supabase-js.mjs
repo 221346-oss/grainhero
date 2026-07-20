@@ -1,10 +1,36 @@
+import { r as __exportAll } from "../_runtime.mjs";
 import { t as FunctionsClient } from "./supabase__functions-js.mjs";
 import { t as PostgrestClient } from "./supabase__postgrest-js.mjs";
 import { t as RealtimeClient } from "./supabase__realtime-js.mjs";
 import { t as StorageClient } from "./@supabase/storage-js+[...].mjs";
-import { t as AuthClient } from "./supabase__auth-js.mjs";
+import { S as isAuthSessionMissingError, _ as isAuthApiError, a as AuthImplicitGrantRedirectError, b as isAuthRefreshDiscardedError, c as AuthInvalidTokenResponseError, d as AuthRefreshDiscardedError, f as AuthRetryableFetchError, g as CustomAuthError, h as AuthWeakPasswordError, i as AuthError, l as AuthPKCECodeVerifierMissingError, m as AuthUnknownError, n as SIGN_OUT_SCOPES, o as AuthInvalidCredentialsError, p as AuthSessionMissingError, r as AuthApiError, s as AuthInvalidJwtError, t as AuthClient, u as AuthPKCEGrantCodeExchangeError, v as isAuthError, x as isAuthRetryableFetchError, y as isAuthImplicitGrantRedirectError } from "./supabase__auth-js.mjs";
 import processModule from "node:process";
 //#region node_modules/@supabase/supabase-js/dist/index.mjs
+var dist_exports = /* @__PURE__ */ __exportAll({
+	AuthApiError: () => AuthApiError,
+	AuthError: () => AuthError,
+	AuthImplicitGrantRedirectError: () => AuthImplicitGrantRedirectError,
+	AuthInvalidCredentialsError: () => AuthInvalidCredentialsError,
+	AuthInvalidJwtError: () => AuthInvalidJwtError,
+	AuthInvalidTokenResponseError: () => AuthInvalidTokenResponseError,
+	AuthPKCECodeVerifierMissingError: () => AuthPKCECodeVerifierMissingError,
+	AuthPKCEGrantCodeExchangeError: () => AuthPKCEGrantCodeExchangeError,
+	AuthRefreshDiscardedError: () => AuthRefreshDiscardedError,
+	AuthRetryableFetchError: () => AuthRetryableFetchError,
+	AuthSessionMissingError: () => AuthSessionMissingError,
+	AuthUnknownError: () => AuthUnknownError,
+	AuthWeakPasswordError: () => AuthWeakPasswordError,
+	CustomAuthError: () => CustomAuthError,
+	SIGN_OUT_SCOPES: () => SIGN_OUT_SCOPES,
+	SupabaseClient: () => SupabaseClient,
+	createClient: () => createClient,
+	isAuthApiError: () => isAuthApiError,
+	isAuthError: () => isAuthError,
+	isAuthImplicitGrantRedirectError: () => isAuthImplicitGrantRedirectError,
+	isAuthRefreshDiscardedError: () => isAuthRefreshDiscardedError,
+	isAuthRetryableFetchError: () => isAuthRetryableFetchError,
+	isAuthSessionMissingError: () => isAuthSessionMissingError
+});
 var version = "2.110.1";
 var JS_ENV = "";
 var JS_RUNTIME_VERSION;
@@ -836,4 +862,4 @@ function shouldShowDeprecationWarning() {
 }
 if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715");
 //#endregion
-export { createClient as t };
+export { dist_exports as n, createClient as t };

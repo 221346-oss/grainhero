@@ -41,9 +41,9 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .in("status", ["pending", "acknowledged", "escalated"] as never)
         .order("triggered_at", { ascending: false, nullsFirst: false }).limit(10),
       context.supabase.from("grain_batches")
-        .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id")
-        .in("status", ["intake", "processing", "treatment"] as never)
-        .order("created_at", { ascending: false }).limit(10),
+        .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id, qc_status, qc_assigned_to, qc_notes, moisture_content, protein_content, test_weight")
+        .in("qc_status", ["arrived", "testing", "pending"] as never)
+        .order("created_at", { ascending: false }).limit(15),
       context.supabase.from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, silo_id, purchase_price_per_kg")
         .in("status", ["ready", "stored"] as never)
@@ -60,9 +60,9 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .select("id, name, email, department, shift_pattern")
         .eq("admin_id", adminId).limit(20),
       context.supabase.from("field_incidents")
-        .select("id, title, severity, status, created_at, assigned_to")
-        .in("status", ["pending", "in_progress"] as never)
-        .order("created_at", { ascending: false }).limit(8),
+        .select("id, category, severity, status, created_at, assigned_to")
+        .in("status", ["open", "investigating"] as never)
+        .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true })
         .gte("created_at", startISO),

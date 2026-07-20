@@ -2250,6 +2250,8 @@ export type Database = {
       }
       field_incidents: {
         Row: {
+          assigned_at: string | null
+          assigned_to: string | null
           attachments: Json
           category: string
           created_at: string
@@ -2269,6 +2271,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           attachments?: Json
           category: string
           created_at?: string
@@ -2288,6 +2292,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           attachments?: Json
           category?: string
           created_at?: string
@@ -2671,6 +2677,11 @@ export type Database = {
           profit: number | null
           protein_content: number | null
           purchase_price_per_kg: number | null
+          qc_assigned_to: string | null
+          qc_completed_at: string | null
+          qc_completed_by: string | null
+          qc_notes: string | null
+          qc_status: string
           qr_code: string | null
           quality_snapshot: Json | null
           quality_tests: Json | null
@@ -2732,6 +2743,11 @@ export type Database = {
           profit?: number | null
           protein_content?: number | null
           purchase_price_per_kg?: number | null
+          qc_assigned_to?: string | null
+          qc_completed_at?: string | null
+          qc_completed_by?: string | null
+          qc_notes?: string | null
+          qc_status?: string | null
           qr_code?: string | null
           quality_snapshot?: Json | null
           quality_tests?: Json | null
@@ -2793,6 +2809,11 @@ export type Database = {
           profit?: number | null
           protein_content?: number | null
           purchase_price_per_kg?: number | null
+          qc_assigned_to?: string | null
+          qc_completed_at?: string | null
+          qc_completed_by?: string | null
+          qc_notes?: string | null
+          qc_status?: string | null
           qr_code?: string | null
           quality_snapshot?: Json | null
           quality_tests?: Json | null
