@@ -44,45 +44,11 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Platform · System logs", to: "/platform/logs", group: "Platform" },
 ];
 
-// Human-readable label per route prefix — for page-scoped placeholder.
-const PAGE_LABELS: Record<string, string> = {
-  "/grain-batches": "batches",
-  "/silos": "silos",
-  "/sensors": "sensors",
-  "/actuators": "actuators",
-  "/warehouses": "warehouses",
-  "/grain-alerts": "alerts",
-  "/buyers": "buyers",
-  "/incidents": "incidents",
-  "/maintenance": "maintenance tasks",
-  "/team-management": "team members",
-  "/notifications": "notifications",
-  "/orders": "orders",
-  "/activity-logs": "activity",
-  "/reports": "reports",
-  "/plans": "plans",
-  "/insurance": "policies",
-  "/subscription": "your subscription",
-  "/environmental": "environmental readings",
-  "/traceability": "batch traceability",
-  "/analytics": "analytics",
-  "/ai-predictions": "predictions",
-  "/ml-models": "models",
-  "/intelligence": "intelligence",
-  "/security-center": "security events",
-  "/administration": "administration",
-  "/server-monitoring": "server metrics",
-  "/revenue": "revenue records",
-  "/business": "business",
-  "/settings": "settings",
-};
-
 function scopeFor(pathname: string): { global: boolean; label: string } {
   if (pathname === "/dashboard" || pathname.startsWith("/platform")) {
-    return { global: true, label: pathname === "/dashboard" ? "Global search" : "Platform search" };
+    return { global: true, label: "Search anything or jump to a page…" };
   }
-  const key = Object.keys(PAGE_LABELS).find((k) => pathname.startsWith(k));
-  return { global: false, label: key ? `Search ${PAGE_LABELS[key]} on this page` : "Search this page" };
+  return { global: false, label: "Search this page" };
 }
 
 /**
@@ -190,7 +156,7 @@ export function AppSearch() {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onInputKeyDown}
-        placeholder={scope.global ? "Search anything or jump to a page…" : scope.label}
+        placeholder={scope.label}
         aria-label={scope.label}
         className={cn(
           "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-muted/60 hover:bg-muted focus:bg-background",
