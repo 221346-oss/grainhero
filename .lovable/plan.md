@@ -1,56 +1,78 @@
+# Plan Management — Prorated PKR Upgrades
 
-## Goal
+## Scope
+Rebuild `/plan-management` so tenant Admins can change their plan cleanly:
+- Admin-only (hidden + guarded for Manager / Technician / Buyer / Super Admin)
+- Monthly / Yearly toggle — yearly = 10 × monthly (2 months free)
+- Upgrade → charged prorated difference **immediately** via Stripe Checkout
+- Downgrade → scheduled at current period end (no immediate charge / no refund)
+- Cycle change (monthly ↔ yearly) → prorate the difference on the spot
+- Kill the auto-upgrade toggle (no auto upgrades)
+- Notify super admins + log activity for every change
 
-Fix two skeleton problems in one pass:
+## User answers driving this
+- Downgrade → schedule at period end
+- Yearly → 12 × monthly with 2 months free (i.e. 10× monthly)
+- Upgrade math → true daily proration on remaining days
+- Cycle switch → allowed anytime, prorated
 
-1. On **first load** of the app, users see a bare page body skeleton while the sidebar and topbar are still empty — the whole shell should skeleton together, then the real chrome and page snap in.
-2. On **route changes**, the pending skeleton for many pages doesn't match what actually loads (wrong grid, wrong column count, wrong sections). Every admin/manager/technician/super-admin page needs a skeleton that mirrors its real layout.
+## Data model (single migration)
+Extend `public.tenant_plan_change_requests`:
+- `billing_cycle text check (billing_cycle in ('monthly','yearly'))`
+- `apply_at timestamptz` (for scheduled downgrades)
+- `charge_amount_cents integer` (prorated PKR × 100 that we charged / will charge)
+- `stripe_session_id text`
+- extend `status` to allow `'scheduled'` and `'auto_applied'` already present
 
-## Answers locked in
+Extend `public.profiles`:
+- `billing_cycle text default 'monthly' check (billing_cycle in ('monthly','yearly'))`
+- `current_period_end timestamptz` (used to compute proration + schedule downgrades)
 
-- Chrome skeleton shows on **first load only**; after that, real sidebar/topbar stay mounted and only the page body swaps per-route.
-- **High fidelity**: each route gets a skeleton whose section shapes (KPI strip counts, bento tile positions, table columns, drawer widths) match the real page.
-- Roll across **all four roles**: Admin, Manager, Technician, SuperAdmin.
+Grants + RLS unchanged (columns added to existing tables).
 
-## Approach
+## Server (`src/lib/plan-upgrade.functions.ts`)
+1. `getMyPlanState` (admin only) — returns
+   `{ current_plan, current_cycle, current_period_end, plans: [{ plan_id, name, price_monthly_pkr, price_yearly_pkr, limits }], pending: {...} | null }`
+2. `previewPlanChange({ requested_plan, billing_cycle })` — pure calc, no writes:
+   - `direction = upgrade | downgrade | same_tier_cycle_change`
+   - `days_remaining = max(1, ceil((period_end - now)/day))`
+   - `days_in_cycle = 30 (monthly) | 365 (yearly)`
+   - `credit = current_price × days_remaining / days_in_cycle`
+   - `new_period_charge = new_price × days_remaining / days_in_cycle`
+   - `prorated_charge_pkr = max(0, round(new_period_charge - credit))`
+   - Returns amounts + `apply_now` boolean.
+3. `initiatePlanChange({ requested_plan, billing_cycle })` — admin only, rate-limited:
+   - Upgrade / same-tier upsize / cycle switch that raises price → create Stripe Checkout session `mode=payment`, currency `pkr`, one line item = `prorated_charge_pkr × 100`, `metadata.plan_change_request_id`, redirect URLs `/plan-management?status=success|cancel`. Insert a `tenant_plan_change_requests` row with `status='pending_payment'` + `stripe_session_id`. Return `{ url }`.
+   - Downgrade / neutral change → insert row with `status='scheduled'`, `apply_at = current_period_end`. Emit super-admin notification + activity log. Return `{ scheduled: true, apply_at }`.
+4. `cancelScheduledDowngrade` — admin cancels their own `status='scheduled'` row.
 
-### 1. Full-shell first-load skeleton (`AppShellSkeleton`)
+## Stripe webhook
+Extend the existing `checkout.session.completed` block in
+`src/routes/api/public/webhooks/stripe.ts`:
+- When `metadata.plan_change_request_id` is set → mark the request `approved`, update `profiles.subscription_plan` + `billing_cycle` + `current_period_end` (extend by 30/365 days from now for upgrades, keep period-end for cycle upgrades), keep any existing `subscriptions` row's `plan_name`/`billing_cycle` in sync, emit super-admin notification, activity log.
 
-- New `src/components/app/AppShellSkeleton.tsx` renders sidebar rail (56px), topbar bar (search pill, quick tabs pills, bell, avatar), and a generic page body placeholder — all in one composed layout so nothing is empty.
-- Mount in `src/routes/__root.tsx` as the app's `pendingComponent` / initial fallback (before the auth layout resolves). Once `_authenticated/route.tsx` mounts, real chrome takes over and per-route skeletons handle subsequent navigation.
-- Use `sessionStorage` flag `gh_shell_ready` to guarantee it only shows once per browser tab.
+## Cron for scheduled downgrades
+Add a lightweight endpoint `src/routes/api/public/cron/apply-scheduled-plan-changes.ts` (CRON_SECRET-protected) that:
+- Finds `tenant_plan_change_requests` where `status='scheduled'` and `apply_at <= now()`
+- Updates `profiles.subscription_plan` + `billing_cycle`, marks row `approved`, notifies super admin + activity log.
 
-### 2. High-fidelity per-page skeletons
+## UI (`src/routes/_authenticated/plan-management.tsx`)
+- Route `beforeLoad`: if effective role ≠ `admin`, redirect to `/dashboard`.
+- Hide the topbar “Upgrade” pill for non-admins in `_authenticated/route.tsx`.
+- New layout:
+  - Header with billing cycle toggle (Monthly · Yearly — “Save 2 months”).
+  - 3 plan cards (Starter / Professional / Enterprise) in PKR, showing current-plan badge.
+  - For non-current plans: “Preview cost” → server-side `previewPlanChange` fills a callout with proration math + a single primary CTA:
+    - Upgrade: **“Pay Rs. X now”** → opens Stripe Checkout in new tab.
+    - Downgrade: **“Schedule at period end (dd/mm/yyyy)”** → confirm dialog, then schedule.
+  - Pending downgrade banner with cancel button.
+  - Auto-upgrade toggle removed.
 
-- Audit every route file under `src/routes/_authenticated/` (93 files) and group by real layout signature:
-  - **Dashboard bento** (Admin/Manager/Technician/SuperAdmin dashboards): KPI strip + welcome banner + bento grid
-  - **Table + toolbar** (orders, grain-batches, silos, sensors, actuators, buyers, suppliers, listings, sales, returns, incidents, disputes, platform.orders, platform.users, platform.tenants, platform.sellers, platform.plans, platform.reviews, platform.sla-alerts, platform.pipeline, platform.leads, activity-logs, notifications, technician.installs, etc.)
-  - **KPI + chart hub** (financials, revenue, earnings, analytics, ai-predictions, ml-models, environmental, monitoring, business, intelligence, platform.finance, platform.finance.ledger, platform.finance.payouts, platform.marketplace-health, platform.dispatch-analytics)
-  - **Rail + list + drawer** (silos hub, warehouses, insurance)
-  - **Detail hub** (`silos.$siloId`, `admins.$adminId`, `platform.orders.$orderId`, `suppliers.$supplierId`, `buyer.orders.$orderId`, `insurance-claims.$claimId`, `technician.installs.$installId`)
-  - **Settings/form** (settings, settings.notifications, plan-management, subscription, security-center, platform.field-settings, platform.mobile-settings, platform.marketplace-settings)
-  - **Command console** (platform.logistics.command-center, platform.insurance, platform.health, platform.metrics, platform.dashboard-builder, platform.launch-readiness)
-  - **Log stream** (platform.audit-logs, platform.logs, platform.messages, platform.invoice-failures, platform.mobile-push-diagnostics, platform.mobile-sync-monitor)
-- Add each shape as a distinct component in `src/components/app/skeletons.tsx`. Reuse existing shapes where they already match; extend/replace where they don't.
+## Notifications & activity
+Use existing `emitToSuperAdmins` + `logActivity` on: preview→initiate, scheduled downgrade created / cancelled, webhook-confirmed upgrade, cron-applied downgrade.
 
-### 3. Route→skeleton map
-
-- Rewrite the `PAGE_SKELETONS` map in `src/router.tsx` so every one of the 93 routes maps to the correct shape (including `$param` routes handled via prefix fallbacks, technician + super-admin + manager pages, not just admin).
-- Fallback chain: exact match → prefix match (`/platform/orders/`, `/admins/`, `/silos/`, `/suppliers/`, `/buyer/orders/`, `/insurance-claims/`, `/insurance-policies/`, `/technician/installs/`, `/platform/insurance/claims/`) → role-inferred dashboard skeleton → generic.
-
-### 4. Verification
-
-- After changes, `bun run build` (auto-run) and spot-check 6 pages with the browser preview (dashboard, orders, silos, financials, platform.orders, technician.installs) to confirm the skeleton shape matches on hard refresh + route change.
-
-## Files
-
-- New: `src/components/app/AppShellSkeleton.tsx`
-- Extend: `src/components/app/skeletons.tsx` (add ~10 new shape components; consolidate near-duplicates)
-- Edit: `src/router.tsx` (rewrite `PAGE_SKELETONS`, add prefix resolver)
-- Edit: `src/routes/__root.tsx` (register `AppShellSkeleton` for the very first paint)
-
-## Non-goals
-
-- No changes to page content, business logic, or sidebar behavior.
-- No new dark/light rules (existing tokens already work).
-- Marketing / public routes stay untouched.
+## Out of scope
+- Full Stripe Subscription lifecycle rewrite. We keep proration explicit
+  (Checkout one-off) so it works for admins without an existing Stripe
+  subscription and for the existing PKR test data.
+- Refunds on downgrade — user chose “schedule at period end”, so no refund.
