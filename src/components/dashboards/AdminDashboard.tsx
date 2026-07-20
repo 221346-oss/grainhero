@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
-import { Wallet, Package, Cpu, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { useDashboardStats } from "./useDashboardStats";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 import { getAnalyticsOverview } from "@/lib/analytics.functions";
@@ -77,10 +77,10 @@ export function AdminDashboard({ name }: { name?: string }) {
   }, [trend]);
 
   const kpis = [
-    { label: "Revenue (dispatched)", value: money(extras?.revenue ?? 0), icon: Wallet, tint: "text-emerald-400 bg-emerald-500/15" },
-    { label: "Active Batches", value: `${s?.batches.active ?? "—"}`, sub: `of ${s?.batches.total ?? "—"} total`, icon: Package, tint: "text-indigo-400 bg-indigo-500/15" },
-    { label: "Sensors Online", value: `${s?.sensors.online ?? "—"}`, sub: `of ${s?.sensors.total ?? "—"} devices`, icon: Cpu, tint: "text-cyan-400 bg-cyan-500/15" },
-    { label: "Open Alerts", value: `${s?.alerts?.open ?? "—"}`, sub: `${s?.alerts?.critical ?? 0} critical`, icon: AlertTriangle, tint: "text-rose-400 bg-rose-500/15" },
+    { label: "Revenue (dispatched)", value: money(extras?.revenue ?? 0) },
+    { label: "Active Batches", value: `${s?.batches.active ?? "—"}`, sub: `of ${s?.batches.total ?? "—"} total` },
+    { label: "Sensors Online", value: `${s?.sensors.online ?? "—"}`, sub: `of ${s?.sensors.total ?? "—"} devices` },
+    { label: "Open Alerts", value: `${s?.alerts?.open ?? "—"}`, sub: `${s?.alerts?.critical ?? 0} critical` },
   ];
 
   const batches = extras?.recentBatches ?? [];
@@ -116,12 +116,7 @@ export function AdminDashboard({ name }: { name?: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {kpis.map((k) => (
             <div key={k.label} className="bg-[#111111] border border-white/8 rounded-2xl p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">{k.label}</p>
-                <span className={`grid h-8 w-8 place-items-center rounded-full ${k.tint}`}>
-                  <k.icon className="h-4 w-4" />
-                </span>
-              </div>
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">{k.label}</p>
               <p className="mt-3 text-2xl font-black tracking-tight text-white font-mono">{k.value}</p>
               {"sub" in k && k.sub && <p className="mt-1 text-xs text-white/40">{k.sub}</p>}
             </div>

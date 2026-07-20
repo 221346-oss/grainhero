@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   QrCode, MapPin, Clock, Package, Search, Eye, Download, Truck, Thermometer,
-  AlertTriangle, CheckCircle, Calendar,
+  AlertTriangle, Calendar,
 } from "lucide-react";
 import { listGrainBatches } from "@/lib/operations.functions";
 
@@ -125,19 +125,16 @@ function TraceabilityPage() {
       {/* Stats */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Total Batches", val: batches.length, icon: Package, color: "text-emerald-600" },
-          { label: "Stored", val: batches.filter((b) => b.status === "stored").length, icon: CheckCircle, color: "text-emerald-600" },
-          { label: "Dispatched", val: batches.filter((b) => b.status === "dispatched").length, icon: Truck, color: "text-blue-600" },
-          { label: "High Risk", val: batches.filter((b) => (b.risk_score ?? 0) >= 70).length, icon: AlertTriangle, color: "text-red-600" },
+          { label: "Total Batches", val: batches.length },
+          { label: "Stored", val: batches.filter((b) => b.status === "stored").length },
+          { label: "Dispatched", val: batches.filter((b) => b.status === "dispatched").length },
+          { label: "High Risk", val: batches.filter((b) => (b.risk_score ?? 0) >= 70).length },
         ].map((s) => (
           <Card key={s.label}>
             <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-slate-600">{s.label}</p>
-                  <p className="text-2xl font-bold text-slate-900">{s.val}</p>
-                </div>
-                <s.icon className={`h-6 w-6 sm:h-8 sm:w-8 shrink-0 ${s.color}`} />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-slate-600">{s.label}</p>
+                <p className="text-2xl font-bold text-slate-900">{s.val}</p>
               </div>
             </CardContent>
           </Card>

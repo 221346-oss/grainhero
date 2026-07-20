@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Inbox, AlertOctagon } from "lucide-react";
+import { Loader2, AlertOctagon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getIncidents } from "@/lib/monitoring.functions";
@@ -20,7 +20,6 @@ export function IncidentsSection() {
         </div>
       ) : incidents.length === 0 ? (
         <div className="py-12 text-center text-white/40">
-          <Inbox className="w-10 h-10 mb-2 mx-auto opacity-20" />
           <p className="text-sm">No incidents reported.</p>
         </div>
       ) : (
