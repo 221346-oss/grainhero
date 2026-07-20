@@ -337,3 +337,54 @@ button:hover > .vfh .vfh-letter {
   50%  { width: 70%;  margin-left: 15%; }
   100% { width: 0%;   margin-left: 100%; }
 }
+
+/*
+ * Dark-mode safety net for authenticated pages.
+ * Many older pages hardcode slate/gray/white utilities without dark: variants.
+ * Scope these overrides to `.app-scope` so marketing pages stay untouched.
+ */
+.dark .app-scope .bg-white { background-color: var(--card) !important; }
+.dark .app-scope .bg-white\/50 { background-color: color-mix(in oklab, var(--card) 60%, transparent) !important; }
+.dark .app-scope .bg-white\/80 { background-color: color-mix(in oklab, var(--card) 85%, transparent) !important; }
+
+.dark .app-scope .bg-slate-50,
+.dark .app-scope .bg-gray-50 { background-color: var(--muted) !important; }
+.dark .app-scope .bg-slate-100,
+.dark .app-scope .bg-gray-100 { background-color: var(--muted) !important; }
+.dark .app-scope .bg-slate-200,
+.dark .app-scope .bg-gray-200 { background-color: color-mix(in oklab, var(--muted) 85%, var(--foreground) 10%) !important; }
+
+.dark .app-scope .hover\:bg-slate-50:hover,
+.dark .app-scope .hover\:bg-gray-50:hover,
+.dark .app-scope .hover\:bg-slate-100:hover,
+.dark .app-scope .hover\:bg-gray-100:hover { background-color: color-mix(in oklab, var(--muted) 60%, transparent) !important; }
+
+.dark .app-scope .text-slate-400,
+.dark .app-scope .text-gray-400,
+.dark .app-scope .text-slate-500,
+.dark .app-scope .text-gray-500,
+.dark .app-scope .text-slate-600,
+.dark .app-scope .text-gray-600 { color: var(--muted-foreground) !important; }
+
+.dark .app-scope .text-slate-700,
+.dark .app-scope .text-gray-700,
+.dark .app-scope .text-slate-800,
+.dark .app-scope .text-gray-800,
+.dark .app-scope .text-slate-900,
+.dark .app-scope .text-gray-900,
+.dark .app-scope .text-black { color: var(--foreground) !important; }
+
+.dark .app-scope .hover\:text-slate-900:hover,
+.dark .app-scope .hover\:text-gray-900:hover { color: var(--foreground) !important; }
+
+.dark .app-scope .border-slate-100,
+.dark .app-scope .border-slate-200,
+.dark .app-scope .border-slate-300,
+.dark .app-scope .border-gray-100,
+.dark .app-scope .border-gray-200,
+.dark .app-scope .border-gray-300 { border-color: var(--border) !important; }
+
+.dark .app-scope .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }

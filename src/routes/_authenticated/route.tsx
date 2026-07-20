@@ -156,7 +156,7 @@ function AuthenticatedLayout() {
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SessionGuard />
       <OnboardingTour />
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="app-scope min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
           <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         </div>
