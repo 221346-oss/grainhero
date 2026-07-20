@@ -84,11 +84,9 @@ function AuthenticatedLayout() {
   const lastScrollY = useRef(0);
   const handleMainScroll = (e: React.UIEvent<HTMLElement>) => {
     const y = e.currentTarget.scrollTop;
-    if (y > lastScrollY.current && y > 72) {
-      setNavHidden(true);
-    } else if (y < lastScrollY.current) {
-      setNavHidden(false);
-    }
+    // Same rule as the landing page's nav: hide only while actively
+    // scrolling down past the threshold, show in every other case.
+    setNavHidden(y > lastScrollY.current && y > 72);
     lastScrollY.current = y;
   };
 
@@ -102,10 +100,14 @@ function AuthenticatedLayout() {
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
-          <header
-            className={`h-14 flex items-center gap-2 sm:gap-3 rounded-2xl border border-border/60 bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2 transition-transform duration-300 ease-out ${
-              navHidden ? "-translate-y-[calc(100%+1rem)]" : "translate-y-0"
-            }`}
+          <motion.header
+            initial="visible"
+            animate={navHidden ? "hidden" : "visible"}
+            variants={{
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
+              hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
+            }}
+            className="h-14 flex items-center gap-2 sm:gap-3 rounded-2xl border border-border/60 bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
           >
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
@@ -130,7 +132,7 @@ function AuthenticatedLayout() {
                 : <Moon className="h-4 w-4" />}
             </button>
             <NotificationBell />
-          </header>
+          </motion.header>
           <main className="flex-1 overflow-y-auto overflow-x-hidden" onScroll={handleMainScroll}>
             <AnimatedOutlet />
           </main>
