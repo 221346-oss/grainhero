@@ -214,7 +214,13 @@ export const previewPlanChange = createServerFn({ method: "POST" })
     else if (currentCycle !== data.billing_cycle) direction = "cycle_change";
     else direction = "same";
 
-    const { proratedRs, daysRemaining, periodEndIso } = computeProration({
+    const applyNow =
+      direction === "upgrade" ||
+      (direction === "cycle_change" && newPriceRs > currentPriceRs);
+
+    // Fallback estimate — used before a Stripe subscription exists or if the
+    // upcoming-invoice preview fails. UI shows this as "estimate".
+    const fallback = computeProration({
       currentPriceRs,
       newPriceRs,
       currentCycle,
@@ -222,9 +228,34 @@ export const previewPlanChange = createServerFn({ method: "POST" })
       currentPeriodEnd: profile.current_period_end,
     });
 
-    const applyNow =
-      direction === "upgrade" ||
-      (direction === "cycle_change" && newPriceRs > currentPriceRs);
+    let stripeQuoteCents: number | null = null;
+    let stripeQuoteCurrency: string | null = null;
+    let quoteSource: "stripe" | "estimate" = "estimate";
+
+    if (applyNow && profile.stripe_subscription_id && profile.stripe_subscription_item_id) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { ensurePlanStripeIds, priceIdForCycle, previewUpcomingInvoice } =
+          await import("@/lib/stripe-billing.server");
+        const ids = await ensurePlanStripeIds(supabaseAdmin, data.requested_plan);
+        const newPriceId = priceIdForCycle(ids, data.billing_cycle);
+        const quote = await previewUpcomingInvoice({
+          customerId: profile.stripe_customer_id!,
+          subscriptionId: profile.stripe_subscription_id,
+          subscriptionItemId: profile.stripe_subscription_item_id,
+          newPriceId,
+        });
+        stripeQuoteCents = quote.amountDueCents;
+        stripeQuoteCurrency = quote.currency.toUpperCase();
+        quoteSource = "stripe";
+      } catch (e) {
+        console.warn("[preview] Stripe upcoming-invoice failed, using estimate:", (e as Error).message);
+      }
+    }
+
+    const chargeRs = stripeQuoteCents !== null
+      ? Math.round(stripeQuoteCents / 100)
+      : (applyNow ? fallback.proratedRs : 0);
 
     return {
       direction,
@@ -235,9 +266,11 @@ export const previewPlanChange = createServerFn({ method: "POST" })
       new_cycle: data.billing_cycle,
       current_price_pkr: currentPriceRs,
       new_price_pkr: newPriceRs,
-      prorated_charge_pkr: applyNow ? proratedRs : 0,
-      days_remaining: daysRemaining,
-      current_period_end: periodEndIso,
+      prorated_charge_pkr: chargeRs,
+      quote_source: quoteSource,
+      quote_currency: stripeQuoteCurrency ?? "PKR",
+      days_remaining: fallback.daysRemaining,
+      current_period_end: fallback.periodEndIso,
     };
   });
 
