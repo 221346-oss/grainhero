@@ -146,6 +146,12 @@ const changeSchema = z.object({
   billing_cycle: z.enum(["monthly", "yearly"]),
 });
 
+const initiateSchema = changeSchema.extend({
+  downgrade_reason: z.string().max(120).optional(),
+  downgrade_reason_details: z.string().max(1000).optional(),
+  retention_offer_declined: z.boolean().optional(),
+});
+
 export const previewPlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => changeSchema.parse(d))
