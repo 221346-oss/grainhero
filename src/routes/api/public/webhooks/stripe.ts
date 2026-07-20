@@ -10,7 +10,11 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
     handlers: {
       POST: async ({ request }) => {
         const secret = process.env.STRIPE_WEBHOOK_SECRET;
-        if (!secret) return new Response("webhook secret not configured", { status: 500 });
+        if (!secret) {
+          // Return 200 so Stripe does not disable the endpoint while the secret is being configured.
+          console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET not configured — acknowledging without processing");
+          return new Response("secret_not_configured", { status: 200 });
+        }
 
         const sigHeader = request.headers.get("stripe-signature");
         if (!sigHeader) return new Response("missing signature", { status: 400 });
@@ -604,8 +608,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
           }
         } catch (err) {
           console.error("[stripe-webhook] handler error:", err);
-          // Return 500 so Stripe retries
-          return new Response("handler error", { status: 500 });
+          // Acknowledge with 200 so Stripe does not disable the endpoint after repeated retries.
+          // The error is logged for investigation; Stripe events are idempotent and can be replayed
+          // from the dashboard if needed.
+          return new Response("handler_error_logged", { status: 200 });
         }
 
         return new Response("ok");
