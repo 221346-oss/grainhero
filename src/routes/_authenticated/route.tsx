@@ -96,7 +96,7 @@ function AuthenticatedLayout() {
             {/* Upgrade — plan management */}
             <Link
               to="/plan-management"
-              className="shrink-0 h-9 flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] hover:bg-muted transition"
+              className="shrink-0 h-9 inline-flex animate-[shimmer2_2s_infinite_linear] items-center gap-1.5 rounded-full border border-emerald-200 bg-[linear-gradient(110deg,#fff,45%,#eafbea,55%,#fff)] bg-size-[200%_100%] px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-emerald-900/50 dark:bg-[linear-gradient(110deg,#0a0f0a,45%,#173a17,55%,#0a0f0a)] dark:text-emerald-400"
             >
               <VariableFontText text="Upgrade" base={550} hover={900} />
             </Link>

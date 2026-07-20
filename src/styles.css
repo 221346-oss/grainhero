@@ -319,6 +319,12 @@ button:hover > .vfh .vfh-letter {
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
+/* Shimmer button — emerald-ui ShimmerButton sweep */
+@keyframes shimmer2 {
+  0% { background-position: 0% 0%; }
+  100% { background-position: -200% 0%; }
+}
+
 /* Branded loader progress bar animation */
 @keyframes progress {
   0%   { width: 0%;   margin-left: 0; }
