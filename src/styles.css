@@ -325,6 +325,12 @@ button:hover > .vfh .vfh-letter {
   100% { background-position: -200% 0%; }
 }
 
+/* Text shimmer — emerald-ui TextShimmer sweep */
+@keyframes shimmer {
+  0% { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
 /* Branded loader progress bar animation */
 @keyframes progress {
   0%   { width: 0%;   margin-left: 0; }

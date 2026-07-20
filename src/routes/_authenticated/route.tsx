@@ -13,7 +13,7 @@ import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
-import { VariableFontText } from "@/components/app/VariableFontText";
+import TextShimmer from "@/components/ui/text-shimmer";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -98,7 +98,7 @@ function AuthenticatedLayout() {
               to="/plan-management"
               className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-emerald-900/50 dark:text-emerald-400"
             >
-              <VariableFontText text="Upgrade" base={550} hover={900} />
+              <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
             </Link>
             {/* Dark / Light toggle */}
             <button
