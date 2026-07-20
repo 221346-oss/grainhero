@@ -211,7 +211,7 @@ export const previewPlanChange = createServerFn({ method: "POST" })
 
 export const initiatePlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => changeSchema.parse(d))
+  .inputValidator((d: unknown) => initiateSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { checkRateLimit } = await import("@/lib/rate-limit");
