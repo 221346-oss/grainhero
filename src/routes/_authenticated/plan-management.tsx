@@ -794,20 +794,27 @@ function PreviewPanel({
             {preview.apply_now ? (
               <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4">
                 <div className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-400 font-semibold">
-                  Charged today (prorated)
+                  {preview.quote_source === "stripe"
+                    ? "Stripe-verified prorated charge"
+                    : "Estimated prorated charge"}
                 </div>
                 <div className="text-3xl font-black text-foreground mt-1">
                   {fmtPKR(preview.prorated_charge_pkr)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)} · credit for unused days in current cycle applied.
+                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)}. Stripe applies proration credit for unused days.
+                  {preview.quote_source !== "stripe" && " Final amount is confirmed on Stripe's invoice."}
                 </div>
                 <Button
                   onClick={onConfirm}
                   disabled={pending}
                   className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  {pending ? "Preparing Stripe…" : `Pay ${fmtPKR(preview.prorated_charge_pkr)} now`}
+                  {pending
+                    ? "Applying with Stripe…"
+                    : preview.quote_source === "stripe"
+                      ? `Charge ${fmtPKR(preview.prorated_charge_pkr)} to card on file`
+                      : `Subscribe — ${fmtPKR(preview.prorated_charge_pkr)}`}
                 </Button>
                 <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">Cancel</Button>
               </div>
