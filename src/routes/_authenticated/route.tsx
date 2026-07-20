@@ -16,6 +16,7 @@ import { NotificationBell } from "@/components/app/notifications/NotificationBel
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -178,13 +179,7 @@ function AuthenticatedLayout() {
               <AppSearch />
             </div>
             <DashboardQuickTabs />
-            {/* Upgrade — plan management */}
-            <Link
-              to="/plan-management"
-              className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
-            >
-              <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
-            </Link>
+            <AdminUpgradeLink />
             {/* Dark / Light toggle */}
             <button
               type="button"
@@ -205,6 +200,20 @@ function AuthenticatedLayout() {
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+// Only tenant admins see the Upgrade shortcut in the topbar.
+function AdminUpgradeLink() {
+  const { role } = useIsSuperAdmin();
+  if (role !== "admin") return null;
+  return (
+    <Link
+      to="/plan-management"
+      className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+    >
+      <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
+    </Link>
   );
 }
 
