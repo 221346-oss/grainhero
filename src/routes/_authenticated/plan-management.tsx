@@ -226,7 +226,7 @@ function PlanManagementPage() {
       <HeroBanner
         planName={currentPlanRow?.name ?? currentPlan}
         cycle={currentCycle}
-        periodEnd={state?.current_period_end}
+        periodEnd={state?.current_period_end ?? null}
         billing={billing}
         setBilling={setBilling}
         retention={retention}
