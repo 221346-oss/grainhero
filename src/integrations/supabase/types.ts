@@ -2250,6 +2250,8 @@ export type Database = {
       }
       field_incidents: {
         Row: {
+          assigned_at: string | null
+          assigned_to: string | null
           attachments: Json
           category: string
           created_at: string
@@ -2269,6 +2271,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           attachments?: Json
           category: string
           created_at?: string
@@ -2288,6 +2292,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           attachments?: Json
           category?: string
           created_at?: string
@@ -2307,6 +2313,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "field_incidents_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "field_incidents_silo_id_fkey"
             columns: ["silo_id"]
@@ -2671,6 +2684,11 @@ export type Database = {
           profit: number | null
           protein_content: number | null
           purchase_price_per_kg: number | null
+          qc_assigned_to: string | null
+          qc_completed_at: string | null
+          qc_completed_by: string | null
+          qc_notes: string | null
+          qc_status: string
           qr_code: string | null
           quality_snapshot: Json | null
           quality_tests: Json | null
@@ -2732,6 +2750,11 @@ export type Database = {
           profit?: number | null
           protein_content?: number | null
           purchase_price_per_kg?: number | null
+          qc_assigned_to?: string | null
+          qc_completed_at?: string | null
+          qc_completed_by?: string | null
+          qc_notes?: string | null
+          qc_status?: string
           qr_code?: string | null
           quality_snapshot?: Json | null
           quality_tests?: Json | null
@@ -2793,6 +2816,11 @@ export type Database = {
           profit?: number | null
           protein_content?: number | null
           purchase_price_per_kg?: number | null
+          qc_assigned_to?: string | null
+          qc_completed_at?: string | null
+          qc_completed_by?: string | null
+          qc_notes?: string | null
+          qc_status?: string
           qr_code?: string | null
           quality_snapshot?: Json | null
           quality_tests?: Json | null
@@ -2839,6 +2867,20 @@ export type Database = {
           {
             foreignKeyName: "grain_batches_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_qc_assigned_to_fkey"
+            columns: ["qc_assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_qc_completed_by_fkey"
+            columns: ["qc_completed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
