@@ -270,6 +270,9 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
           apply_at: applyAt,
           requested_by: context.userId,
           note: `Auto-scheduled ${direction} to apply at period end`,
+          downgrade_reason: data.downgrade_reason ?? null,
+          downgrade_reason_details: data.downgrade_reason_details ?? null,
+          retention_offer_declined: data.retention_offer_declined ?? false,
         } as never)
         .select("id")
         .single();
