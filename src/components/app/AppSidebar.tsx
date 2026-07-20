@@ -131,15 +131,8 @@ export function AppSidebar() {
     <Sidebar collapsible="none" className="sticky top-0 h-screen w-56 bg-transparent">
       <div className="flex h-full flex-col px-3">
 
-        {/* Logo — fixed at the top, outside the dock */}
-        <div className="px-2 py-4">
-          <span className="text-xl font-black tracking-tight select-none">
-            <span className="text-[#2FAC0C] text-2xl">G</span>
-            <span className="text-sidebar-foreground">rain</span>
-            <span className="text-[#2FAC0C] text-2xl">H</span>
-            <span className="text-sidebar-foreground">ero</span>
-          </span>
-        </div>
+        {/* Spacer for the fixed floating GrainHero brand button */}
+        <div className="h-14" aria-hidden />
 
         {/* Floating dock — curved rectangle, vertically centered on the left */}
         <div className="flex min-h-0 flex-1 items-center pb-6">
