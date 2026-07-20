@@ -117,6 +117,7 @@ export function SiloBatchesDrawer({
             </div>
             <Link
               to="/grain-operations"
+              search={{ tab: "batches" }}
               className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-0.5 text-xs font-medium"
             >
               Open full page <ArrowUpRight className="w-3 h-3" />
@@ -133,6 +134,7 @@ export function SiloBatchesDrawer({
               <p className="text-xs">No batches in this silo yet.</p>
               <Link
                 to="/grain-operations"
+                search={{ tab: "batches" }}
                 className="mt-3 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
               >
                 Add first batch →

@@ -382,7 +382,7 @@ export function BatchesSection() {
           <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
             <p className="text-sm mb-4">No batches yet.</p>
             {availableSilos.length === 0 ? (
-              <Link to="/grain-operations" className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a silo first →</Link>
+              <Link to="/grain-operations" search={{ tab: "silos" }} className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a silo first →</Link>
             ) : (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add batch</Button>
             )}
@@ -440,7 +440,7 @@ export function BatchesSection() {
           </div>
           <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
             <span>{rows.length} batch{rows.length === 1 ? "" : "es"}</span>
-            <span>Dispatch from the <Link to="/grain-operations" className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">Silos</Link> tab</span>
+            <span>Dispatch from the <Link to="/grain-operations" search={{ tab: "silos" }} className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">Silos</Link> tab</span>
           </div>
         </div>
       )}

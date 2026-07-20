@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, LogOut,
+  LogOut,
   Package,
   QrCode, Settings,
 } from "lucide-react";
@@ -27,11 +27,6 @@ type NavItem = {
   /** Section names inside this workspace — scrolled in the hover marquee. */
   marqueeItems?: string[];
 };
-
-// Group 1 — Home, alone at the top.
-const homeNav: NavItem[] = [
-  { name: "dashboard", label: "Home", to: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Recent Batches", "Alerts", "Silos", "Actuators", "Team"] },
-];
 
 // Group 2 — the five consolidated workspaces.
 const workspaceNav: NavItem[] = [
@@ -150,10 +145,8 @@ export function AppSidebar() {
         <div className="flex min-h-0 flex-1 items-center pb-6">
           <div className="flex w-full max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/30">
 
-            {/* Nav — Home / workspaces / standalone pages, separated by dividers */}
+            {/* Nav — workspaces / standalone pages, separated by dividers */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
-              <Section items={homeNav} role={role} currentPath={currentPath} showLabel={false} />
-              {hasVisible(workspaceNav, role) && <div className="mx-3 my-1.5 h-px bg-sidebar-border/80" />}
               <Section items={workspaceNav} role={role} currentPath={currentPath} showLabel={false} />
               {hasVisible(utilityNav, role) && <div className="mx-3 my-1.5 h-px bg-sidebar-border/80" />}
               <Section items={utilityNav} role={role} currentPath={currentPath} showLabel={false} />

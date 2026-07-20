@@ -87,7 +87,7 @@ export function BatchesTable({ rows }: { rows: Row[] }) {
               </button>
             ))}
           </div>
-          <Link to="/grain-operations" className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-0.5 text-xs font-medium">
+          <Link to="/grain-operations" search={{ tab: "batches" }} className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-0.5 text-xs font-medium">
             Open <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
@@ -125,7 +125,7 @@ export function BatchesTable({ rows }: { rows: Row[] }) {
                     <span className={`inline-block h-5 px-1.5 rounded-full text-[10px] font-medium border ${statusPill(String(r.status))}`}>{r.status}</span>
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <Link to="/grain-operations" aria-label={`Open batch ${r.batch_id}`} className="inline-grid h-6 w-6 place-items-center rounded-full text-muted-foreground hover:text-emerald-600 hover:bg-emerald-500/10 transition">
+                    <Link to="/grain-operations" search={{ tab: "batches" }} aria-label={`Open batch ${r.batch_id}`} className="inline-grid h-6 w-6 place-items-center rounded-full text-muted-foreground hover:text-emerald-600 hover:bg-emerald-500/10 transition">
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </Link>
                   </td>

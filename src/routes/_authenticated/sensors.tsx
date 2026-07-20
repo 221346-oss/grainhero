@@ -290,7 +290,7 @@ function SensorsPage() {
             <Inbox className="w-10 h-10 mb-3 opacity-60" />
             <p className="text-sm mb-4">No sensor devices.</p>
             {silos.length === 0 ? (
-              <Link to="/grain-operations" className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a silo first →</Link>
+              <Link to="/grain-operations" search={{ tab: "silos" }} className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a silo first →</Link>
             ) : (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add sensor</Button>
             )}
@@ -322,7 +322,7 @@ function SensorsPage() {
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">You have no warehouses yet.</div>
-                <Link to="/grain-operations" className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
+                <Link to="/grain-operations" search={{ tab: "warehouses" }} className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
               </div>
             </div>
           )}
@@ -331,7 +331,7 @@ function SensorsPage() {
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">This warehouse has no silos.</div>
-                <Link to="/grain-operations" className="underline">Add a silo</Link> before registering a sensor.
+                <Link to="/grain-operations" search={{ tab: "silos" }} className="underline">Add a silo</Link> before registering a sensor.
               </div>
             </div>
           )}

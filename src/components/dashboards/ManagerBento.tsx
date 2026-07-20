@@ -3,15 +3,16 @@ import { InfoDot } from "@/components/ui/InfoDot";
 import { AlertTriangle, ClipboardCheck, Truck, ToggleRight, Package, Container } from "lucide-react";
 import type { ReactNode } from "react";
 
-type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; to: string };
+type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; to: string; search?: { tab: string } };
 
 function BentoCard({
-  title, icon: Icon, count, to, tooltip, rows, empty,
+  title, icon: Icon, count, to, search, tooltip, rows, empty,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   count?: number;
   to: string;
+  search?: { tab: string };
   tooltip: string;
   rows: Row[];
   empty: string;
@@ -29,7 +30,7 @@ function BentoCard({
             </span>
           )}
         </div>
-        <Link to={to} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+        <Link to={to} search={search as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
           View all
         </Link>
       </header>
@@ -42,6 +43,7 @@ function BentoCard({
               <li key={r.id}>
                 <Link
                   to={r.to}
+                  search={r.search as never}
                   className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
                 >
                   <div className="flex-1 min-w-0">
@@ -115,6 +117,7 @@ export function ManagerBento({
       ? <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600">risk</span>
       : <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">ok</span>,
     to: "/grain-operations",
+    search: { tab: "batches" },
   }));
 
   const dispatchRows: Row[] = dispatchQueue.map((b) => ({
@@ -122,6 +125,7 @@ export function ManagerBento({
     primary: b.batch_id,
     secondary: `${b.grain_type} · ${Number(b.quantity_kg).toLocaleString()} kg`,
     to: "/grain-operations",
+    search: { tab: "silos" },
   }));
 
   const actRows: Row[] = actuators.map((a) => ({
@@ -145,16 +149,16 @@ export function ManagerBento({
 
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      <BentoCard title="Silos" icon={Container} count={silos.length} to="/grain-operations"
+      <BentoCard title="Silos" icon={Container} count={silos.length} to="/grain-operations" search={{ tab: "silos" }}
         tooltip="Silo utilisation, sorted by fill. Click any silo for full detail."
         rows={siloRows} empty="No silos yet — provision from install orders." />
       <BentoCard title="Alert triage" icon={AlertTriangle} count={alerts.length} to="/grain-alerts"
         tooltip="Open alerts awaiting acknowledgement or escalation."
         rows={alertRows} empty="All clear — no open alerts." />
-      <BentoCard title="QC queue" icon={ClipboardCheck} count={qcQueue.length} to="/grain-operations"
+      <BentoCard title="QC queue" icon={ClipboardCheck} count={qcQueue.length} to="/grain-operations" search={{ tab: "batches" }}
         tooltip="Batches currently in intake / processing / treatment awaiting QC sign-off."
         rows={qcRows} empty="No batches pending QC." />
-      <BentoCard title="Dispatch queue" icon={Truck} count={dispatchQueue.length} to="/grain-operations"
+      <BentoCard title="Dispatch queue" icon={Truck} count={dispatchQueue.length} to="/grain-operations" search={{ tab: "silos" }}
         tooltip="Batches ready to be dispatched to buyers."
         rows={dispatchRows} empty="Nothing ready to ship." />
       <BentoCard title="Actuators" icon={ToggleRight} count={actuators.length} to="/actuators"

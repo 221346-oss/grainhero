@@ -3,7 +3,7 @@ import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
 import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
@@ -11,11 +11,16 @@ import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { Package, Warehouse, Building2, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { listGrainBatches, listSilos, listWarehouses, listBuyers } from "@/lib/operations.functions";
 
+type Tab = "batches" | "silos" | "warehouses" | "buyers";
+
+const TAB_KEYS: Tab[] = ["batches", "silos", "warehouses", "buyers"];
+
 export const Route = createFileRoute("/_authenticated/grain-operations")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "batches",
+  }),
   component: GrainOperationsWorkspace,
 });
-
-type Tab = "batches" | "silos" | "warehouses" | "buyers";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "batches",    label: "Grain Batches", icon: Package   },
@@ -32,7 +37,18 @@ const BAR_COLORS = [
 ];
 
 function GrainOperationsWorkspace() {
-  const [activeTab, setActiveTab] = useState<Tab>("batches");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [activeTab, setActiveTabState] = useState<Tab>(tab);
+
+  useEffect(() => {
+    setActiveTabState(tab);
+  }, [tab]);
+
+  function setActiveTab(next: Tab) {
+    setActiveTabState(next);
+    navigate({ search: { tab: next } });
+  }
 
   const listBatchesFn   = useServerFn(listGrainBatches);
   const listSilosFn     = useServerFn(listSilos);

@@ -72,7 +72,7 @@ function SiloDetailPage() {
   if (!silo) {
     return (
       <div className="p-8 max-w-3xl mx-auto">
-        <Link to="/grain-operations" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link to="/grain-operations" search={{ tab: "silos" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="w-4 h-4" /> Back to silos
         </Link>
         <Card className="border-dashed"><CardContent className="py-12 text-center text-muted-foreground">Silo not found.</CardContent></Card>
@@ -87,7 +87,7 @@ function SiloDetailPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <Link to="/grain-operations" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/grain-operations" search={{ tab: "silos" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="w-4 h-4" /> Back to silos
       </Link>
 
@@ -130,7 +130,7 @@ function SiloDetailPage() {
                 <Truck className="w-3.5 h-3.5" /> Dispatch
               </Button>
               <Button size="sm" variant="outline" className="gap-1" asChild>
-                <Link to="/grain-operations">
+                <Link to="/grain-operations" search={{ tab: "batches" }}>
                   <Wheat className="w-3.5 h-3.5" /> Add batch
                 </Link>
               </Button>
@@ -146,7 +146,7 @@ function SiloDetailPage() {
               </div>
               {wh && (
                 <Button size="sm" variant="ghost" className="h-7 gap-1" asChild>
-                  <Link to="/grain-operations"><Eye className="w-3.5 h-3.5" /> Open</Link>
+                  <Link to="/grain-operations" search={{ tab: "warehouses" }}><Eye className="w-3.5 h-3.5" /> Open</Link>
                 </Button>
               )}
             </div>
@@ -179,14 +179,14 @@ function SiloDetailPage() {
               <Badge variant="secondary" className="ml-1">{batches.length}</Badge>
             </div>
             <Button size="sm" variant="outline" asChild className="gap-1 h-7">
-              <Link to="/grain-operations"><Edit2 className="w-3.5 h-3.5" /> Manage</Link>
+              <Link to="/grain-operations" search={{ tab: "batches" }}><Edit2 className="w-3.5 h-3.5" /> Manage</Link>
             </Button>
           </div>
           {batches.length === 0 ? (
             <div className="py-12 flex flex-col items-center text-muted-foreground text-sm">
               <Inbox className="w-8 h-8 mb-2 opacity-60" />
               No grain batches in this silo yet.
-              <Link to="/grain-operations" className="text-emerald-600 hover:underline mt-2">Add the first batch →</Link>
+              <Link to="/grain-operations" search={{ tab: "batches" }} className="text-emerald-600 hover:underline mt-2">Add the first batch →</Link>
             </div>
           ) : (
             <div className="overflow-auto max-h-[60vh]">
@@ -210,7 +210,7 @@ function SiloDetailPage() {
                     return (
                       <TableRow key={b.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5">
                         <TableCell className="font-medium">
-                          <Link to="/grain-operations" className="hover:text-emerald-700 hover:underline">{b.batch_id}</Link>
+                          <Link to="/grain-operations" search={{ tab: "batches" }} className="hover:text-emerald-700 hover:underline">{b.batch_id}</Link>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
                         <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.farmer_name ?? "—"}</TableCell>
