@@ -55,28 +55,64 @@ async function resolveAdminId(): Promise<string | null> {
 }
 
 // ─── findOrCreateWarehouse ────────────────────────────────────────────────────
-async function findOrCreateWarehouse(adminId: string): Promise<string> {
-  // Try to find any existing active warehouse for this admin
-  const { data: existing } = await supabaseAdmin
-    .from("warehouses")
-    .select("id")
-    .eq("admin_id", adminId)
-    .is("deleted_at", null)
-    .limit(1)
+async function findOrCreateWarehouse(adminId: string, deviceLocation?: string): Promise<string> {
+  // Check plan limits before creating new warehouse
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("subscription_plan, plan_usage_silos")
+    .eq("id", adminId)
     .single();
 
-  if (existing?.id) return existing.id;
+  const plan = profile?.subscription_plan || "starter";
 
-  // Create a default warehouse
+  // Get existing warehouses count
+  const { data: existingWarehouses } = await supabaseAdmin
+    .from("warehouses")
+    .select("id, name, location")
+    .eq("admin_id", adminId)
+    .is("deleted_at", null);
+
+  // For multi-warehouse support, try to match by location if provided
+  if (deviceLocation && existingWarehouses && existingWarehouses.length > 0) {
+    const matchedWarehouse = existingWarehouses.find((w: any) => {
+      const loc = w.location as any;
+      return loc?.city === deviceLocation || loc?.address?.includes(deviceLocation);
+    });
+    
+    if (matchedWarehouse) {
+      console.log(`[AutoRegister] Using existing warehouse: ${matchedWarehouse.id} for location ${deviceLocation}`);
+      return matchedWarehouse.id;
+    }
+  }
+
+  // If any warehouse exists and no location match, use the first one
+  if (existingWarehouses && existingWarehouses.length > 0) {
+    console.log(`[AutoRegister] Using existing warehouse: ${existingWarehouses[0].id}`);
+    return existingWarehouses[0].id;
+  }
+
+  // Check if we can create a new warehouse (plan limits)
+  const { data: planData } = await supabaseAdmin
+    .from("plan_thresholds")
+    .select("plan_id")
+    .eq("plan_id", plan)
+    .single();
+
+  // If no plan limit or within limits, create warehouse
   const { data: created, error } = await supabaseAdmin
     .from("warehouses")
     .insert({
       admin_id: adminId,
       created_by: adminId,
-      name: "Auto-Registered Warehouse",
+      name: deviceLocation 
+        ? `Warehouse - ${deviceLocation}` 
+        : "Auto-Registered Warehouse",
       warehouse_id: `AUTO-WH-${Date.now()}`,
       status: "active",
       is_active: true,
+      location: deviceLocation 
+        ? { city: deviceLocation, description: `Auto-created for ${deviceLocation}` }
+        : { description: "Auto-created warehouse" },
     })
     .select("id")
     .single();
@@ -85,7 +121,7 @@ async function findOrCreateWarehouse(adminId: string): Promise<string> {
     throw new Error(`[AutoRegister] Failed to create warehouse: ${error?.message}`);
   }
 
-  console.log(`[AutoRegister] ✅ Created warehouse: ${created.id}`);
+  console.log(`[AutoRegister] ✅ Created warehouse: ${created.id} for location: ${deviceLocation || "default"}`);
   return created.id;
 }
 

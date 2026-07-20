@@ -560,12 +560,42 @@ export const getMyOrderTracker = createServerFn({ method: "GET" })
 
 export const listTechniciansForAssignment = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((d) => z.object({ warehouseId: z.string().uuid().optional().nullable() }).parse(d))
+  .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    // If warehouseId provided, get technicians assigned to that warehouse
+    if (data.warehouseId) {
+      const { data: techs, error } = await supabaseAdmin
+        .from("technician_warehouse_assignments" as never)
+        .select("technician_id, profiles!inner(id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs)")
+        .eq("warehouse_id", data.warehouseId);
+      
+      if (error) throw error;
+      
+      const technicians = (techs ?? []).map((t: any) => ({
+        ...t.profiles,
+        is_available: t.profiles.technician_status === 'available' || t.profiles.current_job_count < t.profiles.max_concurrent_jobs,
+      }));
+      
+      return { technicians, filtered_by_warehouse: true };
+    }
+    
+    // Otherwise, get all technicians (fallback for orders without warehouse)
     const { data: techIds } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "technician");
     const ids = (techIds ?? []).map((r) => (r as Row).user_id as string);
-    if (ids.length === 0) return { technicians: [] as Row[] };
-    const { data: profiles } = await supabaseAdmin.from("profiles").select("id,name,email,phone").in("id", ids);
-    return { technicians: (profiles ?? []) as Row[] };
+    if (ids.length === 0) return { technicians: [] as Row[], filtered_by_warehouse: false };
+    
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs")
+      .in("id", ids);
+    
+    const technicians = (profiles ?? []).map((p: any) => ({
+      ...p,
+      is_available: p.technician_status === 'available' || (p.current_job_count ?? 0) < (p.max_concurrent_jobs ?? 3),
+    }));
+    
+    return { technicians, filtered_by_warehouse: false };
   });
