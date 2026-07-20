@@ -169,7 +169,7 @@ function AuthenticatedLayout() {
               visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
               hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
             }}
-            className="h-14 flex items-center gap-2 sm:gap-3 rounded-full border border-sidebar-border/60 bg-sidebar/95 backdrop-blur-md px-3 sm:px-5 shadow-2xl shadow-black/20 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
+            className="h-14 flex items-center gap-2 sm:gap-3 rounded-2xl bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
           >
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />

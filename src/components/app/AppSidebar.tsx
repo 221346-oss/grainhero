@@ -125,14 +125,14 @@ export function AppSidebar({ collapsed = true, onToggle }: { collapsed?: boolean
         collapsed ? "w-16" : "w-56",
       )}
     >
-      <div className="flex h-full flex-col items-center justify-center px-2 py-3">
+      <div className="flex h-full flex-col px-2">
         {/* Logo — click to toggle rail ↔ expanded */}
         <button
           type="button"
           onClick={onToggle}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "mx-auto mb-2 grid place-items-center rounded-2xl transition-all duration-200 hover:scale-[1.04] hover:bg-sidebar-accent/60 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+            "mx-auto mt-4 mb-2 grid place-items-center rounded-2xl transition-all duration-200 hover:scale-[1.04] hover:bg-sidebar-accent/60 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
             collapsed ? "h-11 w-11" : "h-11 w-[calc(100%-0.5rem)] justify-self-stretch px-3",
           )}
         >
@@ -151,14 +151,14 @@ export function AppSidebar({ collapsed = true, onToggle }: { collapsed?: boolean
           )}
         </button>
 
-        {/* Nav dock — compact, centered vertically, sized to content */}
-        <div className="flex w-full flex-col items-stretch">
+        {/* Nav dock */}
+        <div className="flex min-h-0 flex-1 flex-col pb-4">
           <div
             className={cn(
-              "flex w-full flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/20",
+              "flex w-full min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/20",
             )}
           >
-            <div className="max-h-[70vh] overflow-y-auto no-scrollbar">
+            <div className="flex-1 overflow-y-auto no-scrollbar">
               <Section items={workspaceNav} role={role} currentPath={currentPath} collapsed={collapsed} />
               {hasVisible(utilityNav, role) && (
                 <div className={cn("h-px bg-sidebar-border/80", collapsed ? "mx-3 my-1" : "mx-3 my-1.5")} />
