@@ -525,11 +525,12 @@ function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c
 /* ------------------------- Hero + Usage + Persuasion ------------------------- */
 
 function HeroBanner({
-  planName, cycle, periodEnd, billing, setBilling, retention,
+  planName, cycle, periodEnd, billing, setBilling, retention, onManageBilling, portalLoading,
 }: {
   planName: string; cycle: Cycle; periodEnd: string | null;
   billing: Cycle; setBilling: (c: Cycle) => void;
   retention: { discount_pct: number; active_until: string | null; offer_used_at: string | null; offer_available: boolean };
+  onManageBilling: () => void; portalLoading: boolean;
 }) {
   const hasDiscount = retention.discount_pct > 0 && retention.active_until && new Date(retention.active_until) > new Date();
   return (
@@ -558,6 +559,16 @@ function HeroBanner({
             <Zap className="h-3 w-3" /> Limited: 2 months free on yearly
           </div>
           <BillingToggle billing={billing} setBilling={setBilling} />
+          <button
+            type="button"
+            onClick={onManageBilling}
+            disabled={portalLoading}
+            className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
+          >
+            <CreditCard className="h-3.5 w-3.5" />
+            {portalLoading ? "Opening…" : "Manage billing & invoices"}
+            <ExternalLink className="h-3 w-3" />
+          </button>
         </div>
       </div>
     </div>
