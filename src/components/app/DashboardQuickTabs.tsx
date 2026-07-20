@@ -143,7 +143,7 @@ export function DashboardQuickTabs() {
                   : "w-8 justify-center text-muted-foreground hover:text-emerald-600")
               }
             >
-              <Icon className="h-3.5 w-3.5" />
+              {!isActive && <Icon className="h-3.5 w-3.5" />}
               {isActive && <span>{def.label}</span>}
             </Link>
           );
