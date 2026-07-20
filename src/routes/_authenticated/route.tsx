@@ -90,7 +90,7 @@ function AuthenticatedLayout() {
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
       const y = window.scrollY;
-      setNavHidden(y > lastScrollY && y > 72);
+      setNavHidden(y > lastScrollY && y > 4);
       lastScrollY = y;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
