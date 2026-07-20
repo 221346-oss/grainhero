@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -78,17 +78,35 @@ function AuthenticatedLayout() {
     const next = toggleThemeMode();
     setMode(next);
   };
+
+  // Floating header/sidebar — slide away on scroll-down, back on scroll-up.
+  const [navHidden, setNavHidden] = useState(false);
+  const lastScrollY = useRef(0);
+  const handleMainScroll = (e: React.UIEvent<HTMLElement>) => {
+    const y = e.currentTarget.scrollTop;
+    if (y > lastScrollY.current && y > 72) {
+      setNavHidden(true);
+    } else if (y < lastScrollY.current) {
+      setNavHidden(false);
+    }
+    lastScrollY.current = y;
+  };
+
   return (
     <SidebarProvider>
       <SessionGuard />
       <OnboardingTour />
       <div className="min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
-          <AppSidebar />
+          <AppSidebar hidden={navHidden} />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
-          <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
+          <header
+            className={`h-14 flex items-center gap-2 sm:gap-3 rounded-2xl border border-border/60 bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2 transition-transform duration-300 ease-out ${
+              navHidden ? "-translate-y-[calc(100%+1rem)]" : "translate-y-0"
+            }`}
+          >
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
@@ -113,7 +131,7 @@ function AuthenticatedLayout() {
             </button>
             <NotificationBell />
           </header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden" onScroll={handleMainScroll}>
             <AnimatedOutlet />
           </main>
         </div>

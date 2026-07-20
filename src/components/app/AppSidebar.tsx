@@ -81,7 +81,7 @@ function Section({ items, role, currentPath }: { label?: string; items: NavItem[
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ hidden = false }: { hidden?: boolean }) {
   const collapsed = false;
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
@@ -128,7 +128,12 @@ export function AppSidebar() {
   void collapsed;
 
   return (
-    <Sidebar collapsible="none" className="sticky top-0 h-screen w-56 bg-transparent">
+    <Sidebar
+      collapsible="none"
+      className={`sticky top-0 h-screen w-56 bg-transparent transition-transform duration-300 ease-out ${
+        hidden ? "-translate-x-full" : "translate-x-0"
+      }`}
+    >
       <div className="flex h-full flex-col px-3">
 
         {/* Logo — fixed at the top, outside the dock */}
