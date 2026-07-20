@@ -72,11 +72,11 @@ export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, 
             data-tour={dataTour}
             aria-label={label}
             className={cn(
-              "group/rail mx-auto my-1 grid h-10 w-10 place-items-center rounded-2xl text-sm font-black transition-all duration-200 will-change-transform",
-              "hover:scale-[1.08] hover:shadow-md",
+              "group/rail mx-auto my-1 grid h-10 w-10 place-items-center rounded-md text-sm font-black transition-all duration-200 will-change-transform",
+              "hover:scale-[1.12]",
               active
-                ? "bg-[--fusion-mint] text-[--fusion-ink] shadow-sm"
-                : "bg-sidebar-accent/50 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                ? "text-[--fusion-ink]"
+                : "text-sidebar-foreground/80 hover:text-sidebar-foreground",
             )}
           >
             {Icon ? (
