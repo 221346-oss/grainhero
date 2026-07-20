@@ -13,7 +13,7 @@ import { SignupOrderSummary } from "@/components/auth/SignupOrderSummary";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 import { validateSignupForm, validatePassword, type PasswordStrength } from "@/lib/validation";
 import { resolvePlanId, type PlanId } from "@/lib/pricing-data";
-import { getCheckoutSessionSummary } from "@/lib/stripe-checkout.functions";
+import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
 import { sendWelcomeEmail } from "@/lib/email-automation.functions";
 import { syncSignupToHubspot } from "@/lib/hubspot.functions";
@@ -67,6 +67,7 @@ function SignupPage() {
   const sessionId = useMemo(() => parseSessionId(redirect), [redirect]);
   const summaryFn = useServerFn(getCheckoutSessionSummary);
   const confirmEmailFn = useServerFn(autoConfirmUserEmail);
+  const claimFn = useServerFn(claimPaidCheckoutForUser);
   const summaryQuery = useQuery({
     queryKey: ["signup-checkout-summary", sessionId],
     queryFn: () => summaryFn({ data: { sessionId: sessionId! } }),
@@ -161,15 +162,37 @@ function SignupPage() {
           phone: form.phone.trim(),
           business_type: "farm",
         },
+        emailRedirectTo: `${window.location.origin}/auth/verify-otp`,
       },
     });
+    
     if (error) {
       setMsg({ type: "error", text: error.message });
       setLoading(false);
       return;
     }
 
-    // Step 2: Auto-confirm email + assign admin role on server
+    // Check if email confirmation is required
+    const needsEmailConfirmation = data?.user && !data.user.email_confirmed_at && data.user.identities?.length === 0;
+    
+    if (needsEmailConfirmation) {
+      // Store email for verification page
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("pendingVerificationEmail", normalizedEmail);
+      }
+      setMsg({ 
+        type: "success", 
+        text: "Account created! Please check your email to verify your account." 
+      });
+      setLoading(false);
+      // Redirect to verification page after 2 seconds
+      setTimeout(() => {
+        navigate({ to: "/auth/verify-otp", search: { email: normalizedEmail } });
+      }, 2000);
+      return;
+    }
+
+    // Step 2: Auto-confirm email + assign admin role on server (only if email confirmation is disabled)
     try {
       await confirmEmailFn({ data: { email: normalizedEmail } });
     } catch (e) {
@@ -185,6 +208,14 @@ function SignupPage() {
     if (signInError) {
       setMsg({ type: "error", text: `Account created but sign-in failed: ${signInError.message}` });
       return;
+    }
+
+    if (orderPaid || sessionId) {
+      try {
+        await claimFn({ data: sessionId ? { sessionId } : {} });
+      } catch (e) {
+        console.warn("[signup] claim checkout failed:", (e as Error).message);
+      }
     }
 
     // Fire-and-forget: welcome email + HubSpot sync (don't block the redirect).
