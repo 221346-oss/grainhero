@@ -139,8 +139,8 @@ export function DashboardQuickTabs() {
               className={
                 "h-8 inline-flex items-center gap-1.5 rounded-full text-xs font-medium transition " +
                 (isActive
-                  ? "bg-emerald-600 text-white px-3 shadow-sm"
-                  : "w-8 justify-center text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10")
+                  ? "px-3 text-emerald-600 dark:text-emerald-400"
+                  : "w-8 justify-center text-muted-foreground hover:text-emerald-600")
               }
             >
               <Icon className="h-3.5 w-3.5" />
@@ -162,7 +162,7 @@ export function DashboardQuickTabs() {
             <button
               type="button"
               aria-label="Customize tabs"
-              className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition"
+              className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-emerald-600 transition"
             >
               <Settings2 className="h-3.5 w-3.5" />
             </button>
