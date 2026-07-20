@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { listMyOrders } from "@/lib/buyer-portal.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/buyer/orders")({
   component: MyOrders,
@@ -41,7 +40,6 @@ function MyOrders() {
       ) : orders.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center space-y-3">
-            <Package className="h-10 w-10 mx-auto text-muted-foreground" />
             <div className="font-medium">No orders yet</div>
             <Link to="/marketplace" className="text-sm text-emerald-600 hover:underline">Explore the marketplace</Link>
           </CardContent>
@@ -54,10 +52,8 @@ function MyOrders() {
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-                      {o.grain_listings?.cover_image_url ? (
+                      {o.grain_listings?.cover_image_url && (
                         <img src={o.grain_listings.cover_image_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <Package className="h-5 w-5 text-muted-foreground" />
                       )}
                     </div>
                     <div className="min-w-0">

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, ArrowRight, ArrowLeft, Sparkles, PartyPopper } from "lucide-react";
+import { X, ArrowRight, ArrowLeft, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -400,11 +400,7 @@ export function OnboardingTour() {
           <div className="p-4 space-y-2">
             <div className="flex items-start gap-2">
               <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                {stepIdx === STEPS.length - 1 ? (
-                  <PartyPopper className="h-4 w-4" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
+                {stepIdx === STEPS.length - 1 && <PartyPopper className="h-4 w-4" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, TrendingUp, Package, AlertTriangle, DollarSign } from "lucide-react";
+import { Download, TrendingUp, AlertTriangle, DollarSign } from "lucide-react";
 import { getReportsData } from "@/lib/monitoring.functions";
 import { ReportsSkeleton } from "@/components/app/skeletons";
 
@@ -71,7 +71,7 @@ export function ReportsSection() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Batches</div><div className="text-2xl font-bold">{filtered.batches.length}</div><div className="text-xs text-slate-500">{(totalKg / 1000).toFixed(1)}t inventory</div></div><Package className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Batches</div><div className="text-2xl font-bold">{filtered.batches.length}</div><div className="text-xs text-slate-500">{(totalKg / 1000).toFixed(1)}t inventory</div></div></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Revenue</div><div className="text-2xl font-bold">${totalRev.toLocaleString()}</div><div className="text-xs text-emerald-600">${totalProfit.toLocaleString()} profit</div></div><DollarSign className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold">${collected.toLocaleString()}</div><div className="text-xs text-slate-500">{filtered.invoices.length} invoices</div></div><TrendingUp className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Alerts</div><div className="text-2xl font-bold">{filtered.alerts.length}</div><div className="text-xs text-slate-500">{alertsResolved} resolved · {spoiled} spoiled</div></div><AlertTriangle className="h-6 w-6 text-red-600" /></CardContent></Card>

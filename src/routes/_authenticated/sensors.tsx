@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import {
   Cpu, Plus, Search, Edit2, Trash2, Eye, Loader2, Inbox, Wifi, WifiOff,
-  Battery, Thermometer, Droplets, Wind, AlertTriangle, Radio, Package, Building2,
+  Battery, Thermometer, Droplets, Wind, AlertTriangle, Radio, Building2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -540,7 +540,6 @@ function SensorCard({ device, reading, onView, onEdit, onDelete, onThresholds }:
 
         {device.silos && (
           <div className="text-xs text-slate-600 flex items-center gap-1 min-w-0 flex-wrap">
-            <Package className="w-3 h-3 shrink-0" />
             <span className="truncate">{device.silos.name}</span>
             {device.warehouses && (<>
               <span className="text-slate-400">·</span>

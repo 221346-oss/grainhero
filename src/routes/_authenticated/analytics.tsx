@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BarChart3, TrendingUp, Package, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle } from "lucide-react";
 import { getAnalyticsOverview } from "@/lib/analytics.functions";
 import { getPlatformAnalyticsBreakdown } from "@/lib/platform-overviews.functions";
 import { getMyRole } from "@/lib/roles.functions";
@@ -94,7 +94,6 @@ function AnalyticsPage() {
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
             <div><div className="text-xs uppercase text-muted-foreground font-semibold">Total inventory</div><div className="text-2xl font-bold text-foreground">{fmtKg(t?.totalKg ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">{t?.batches ?? 0} batches</div></div>
-            <Package className="h-6 w-6 text-primary" />
           </CardContent>
         </Card>
         <Card>

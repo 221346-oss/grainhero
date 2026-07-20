@@ -19,7 +19,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  QrCode, MapPin, Clock, Package, Search, Eye, Download, Truck, Thermometer,
+  QrCode, MapPin, Clock, Search, Eye, Download, Truck, Thermometer,
   AlertTriangle, Calendar,
 } from "lucide-react";
 import { listGrainBatches } from "@/lib/operations.functions";
@@ -168,7 +168,6 @@ function TraceabilityPage() {
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
-            <Package className="h-12 w-12 mx-auto mb-4 text-slate-400" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">No batches found</h3>
             <p className="text-slate-600">Try adjusting your search criteria or filters.</p>
           </CardContent>
@@ -203,7 +202,7 @@ function TraceabilityPage() {
                     <MapPin className="h-4 w-4 text-slate-400" />{silo?.name ?? "No location"}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Package className="h-4 w-4 text-slate-400" />{Number(batch.quantity_kg).toLocaleString()} kg
+                    {Number(batch.quantity_kg).toLocaleString()} kg
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <AlertTriangle className="h-4 w-4 text-slate-400" />
@@ -237,7 +236,7 @@ function TraceabilityPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-emerald-700">
-              <Package className="h-5 w-5" /> Complete Traceability History
+              Complete Traceability History
             </DialogTitle>
             <DialogDescription>
               Full supply chain traceability for batch {selected?.batch_id}
@@ -271,7 +270,6 @@ function TimelineBody({ batch }: { batch: Batch }) {
     <div className="py-4 space-y-4">
       <Card className="border-emerald-500 bg-emerald-50">
         <CardContent className="p-4 flex items-center gap-4">
-          <Package className="h-10 w-10 text-emerald-600 shrink-0" />
           <div className="flex-1 min-w-0">
             <h4 className="font-semibold text-emerald-900">{batch.batch_id}</h4>
             <p className="text-sm text-emerald-700 truncate">
@@ -295,7 +293,7 @@ function TimelineBody({ batch }: { batch: Batch }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <TimelineStep
-            color="blue" icon={<Package className="h-5 w-5 text-white" />}
+            color="blue" icon={null}
             title="Farm Intake" date={batch.intake_date}
             desc={`Received from farm`}
             items={[

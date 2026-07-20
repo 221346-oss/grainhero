@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, Loader2, Package, Truck, Wheat, Inbox } from "lucide-react";
+import { ArrowUpRight, Loader2, Truck, Wheat, Inbox } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +67,6 @@ export function SiloBatchesDrawer({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <SheetTitle className="flex items-center gap-2 min-w-0">
-                <Package className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span className="truncate">{silo?.name ?? "Silo"}</span>
               </SheetTitle>
               <SheetDescription className="flex items-center gap-2 text-xs mt-0.5">
