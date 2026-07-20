@@ -5394,6 +5394,9 @@ export type Database = {
           plan_id: string
           price_cents: number
           sort_order: number
+          stripe_price_monthly_id: string | null
+          stripe_price_yearly_id: string | null
+          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -5415,6 +5418,9 @@ export type Database = {
           plan_id: string
           price_cents?: number
           sort_order?: number
+          stripe_price_monthly_id?: string | null
+          stripe_price_yearly_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -5436,6 +5442,9 @@ export type Database = {
           plan_id?: string
           price_cents?: number
           sort_order?: number
+          stripe_price_monthly_id?: string | null
+          stripe_price_yearly_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -5574,6 +5583,10 @@ export type Database = {
           shift_pattern: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id: string | null
+          stripe_schedule_id: string | null
+          stripe_subscription_id: string | null
+          stripe_subscription_item_id: string | null
+          stripe_subscription_status: string | null
           subscription_plan: string | null
           suspended: boolean
           technician_status:
@@ -5636,6 +5649,10 @@ export type Database = {
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
+          stripe_schedule_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_subscription_item_id?: string | null
+          stripe_subscription_status?: string | null
           subscription_plan?: string | null
           suspended?: boolean
           technician_status?:
@@ -5698,6 +5715,10 @@ export type Database = {
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
+          stripe_schedule_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_subscription_item_id?: string | null
+          stripe_subscription_status?: string | null
           subscription_plan?: string | null
           suspended?: boolean
           technician_status?:

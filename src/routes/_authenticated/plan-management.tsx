@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, Loader2, AlertTriangle, Clock, Sparkles, TrendingUp, Users, Boxes, Cpu,
-  ShieldCheck, Zap, Flame, HeartHandshake, ArrowRight,
+  ShieldCheck, Zap, Flame, HeartHandshake, ArrowRight, CreditCard, ExternalLink,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,6 +14,7 @@ import {
   initiatePlanChange,
   cancelScheduledPlanChange,
   acceptRetentionOffer,
+  openBillingPortal,
 } from "@/lib/plan-upgrade.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,6 +73,15 @@ function PlanManagementPage() {
   const initiate = useServerFn(initiatePlanChange);
   const cancelScheduled = useServerFn(cancelScheduledPlanChange);
   const acceptOffer = useServerFn(acceptRetentionOffer);
+  const openPortal = useServerFn(openBillingPortal);
+
+  const portalMut = useMutation({
+    mutationFn: () => openPortal(),
+    onSuccess: (res: any) => {
+      if (res?.url) window.open(res.url, "_blank");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not open billing portal"),
+  });
 
   const stateQ = useQuery({
     queryKey: ["my-plan-state"],
@@ -230,6 +240,8 @@ function PlanManagementPage() {
         billing={billing}
         setBilling={setBilling}
         retention={retention}
+        onManageBilling={() => portalMut.mutate()}
+        portalLoading={portalMut.isPending}
       />
 
       {currentPlanRow && (
@@ -513,11 +525,12 @@ function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c
 /* ------------------------- Hero + Usage + Persuasion ------------------------- */
 
 function HeroBanner({
-  planName, cycle, periodEnd, billing, setBilling, retention,
+  planName, cycle, periodEnd, billing, setBilling, retention, onManageBilling, portalLoading,
 }: {
   planName: string; cycle: Cycle; periodEnd: string | null;
   billing: Cycle; setBilling: (c: Cycle) => void;
   retention: { discount_pct: number; active_until: string | null; offer_used_at: string | null; offer_available: boolean };
+  onManageBilling: () => void; portalLoading: boolean;
 }) {
   const hasDiscount = retention.discount_pct > 0 && retention.active_until && new Date(retention.active_until) > new Date();
   return (
@@ -546,6 +559,16 @@ function HeroBanner({
             <Zap className="h-3 w-3" /> Limited: 2 months free on yearly
           </div>
           <BillingToggle billing={billing} setBilling={setBilling} />
+          <button
+            type="button"
+            onClick={onManageBilling}
+            disabled={portalLoading}
+            className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
+          >
+            <CreditCard className="h-3.5 w-3.5" />
+            {portalLoading ? "Opening…" : "Manage billing & invoices"}
+            <ExternalLink className="h-3 w-3" />
+          </button>
         </div>
       </div>
     </div>
@@ -771,20 +794,27 @@ function PreviewPanel({
             {preview.apply_now ? (
               <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4">
                 <div className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-400 font-semibold">
-                  Charged today (prorated)
+                  {preview.quote_source === "stripe"
+                    ? "Stripe-verified prorated charge"
+                    : "Estimated prorated charge"}
                 </div>
                 <div className="text-3xl font-black text-foreground mt-1">
                   {fmtPKR(preview.prorated_charge_pkr)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)} · credit for unused days in current cycle applied.
+                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)}. Stripe applies proration credit for unused days.
+                  {preview.quote_source !== "stripe" && " Final amount is confirmed on Stripe's invoice."}
                 </div>
                 <Button
                   onClick={onConfirm}
                   disabled={pending}
                   className="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  {pending ? "Preparing Stripe…" : `Pay ${fmtPKR(preview.prorated_charge_pkr)} now`}
+                  {pending
+                    ? "Applying with Stripe…"
+                    : preview.quote_source === "stripe"
+                      ? `Charge ${fmtPKR(preview.prorated_charge_pkr)} to card on file`
+                      : `Subscribe — ${fmtPKR(preview.prorated_charge_pkr)}`}
                 </Button>
                 <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">Cancel</Button>
               </div>
