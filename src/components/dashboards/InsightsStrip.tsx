@@ -8,6 +8,7 @@ type Tile = {
   value: string;
   hint: string;
   to: string;
+  search?: { tab: string };
   info: string;
   icon: LucideIcon;
   tone: "emerald" | "amber" | "slate";
@@ -45,7 +46,8 @@ export function InsightsStrip({
       label: "QC Health",
       value: `${qcHealth}%`,
       hint: `${i.readyToShip} ready · ${i.pendingQC} pending`,
-      to: "/grain-batches",
+      to: "/grain-operations",
+      search: { tab: "batches" },
       info: "Share of batches passing quality out of pending + rejected + ready.",
       icon: ShieldCheck,
       tone: qcHealth >= 70 ? "emerald" : "amber",
@@ -101,6 +103,7 @@ export function InsightsStrip({
             <Link
               key={t.key}
               to={t.to}
+              search={t.search as never}
               className="rounded-lg border bg-card px-3 py-2.5 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40"
             >
               <div className="flex items-center justify-between">

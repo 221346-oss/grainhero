@@ -282,6 +282,27 @@ html { scroll-behavior: smooth; }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
+/* Flowing menu sidebar — marquee band scroll */
+@keyframes gh-flow-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Variable-font hover — letters bolden outward from the center on hover */
+.vfh .vfh-letter {
+  font-weight: var(--vfh-base, 500);
+  font-variation-settings: "wght" var(--vfh-base, 500);
+  transition:
+    font-weight 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    font-variation-settings 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.vfh:hover .vfh-letter,
+a:hover > .vfh .vfh-letter,
+button:hover > .vfh .vfh-letter {
+  font-weight: var(--vfh-hover, 900);
+  font-variation-settings: "wght" var(--vfh-hover, 900);
+}
+
 /* Skeleton shimmer — LinkedIn / YouTube / GitHub style */
 @keyframes skeleton-shimmer {
   0% { background-position: -200% 0; }
@@ -296,6 +317,18 @@ html { scroll-behavior: smooth; }
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Shimmer button — emerald-ui ShimmerButton sweep */
+@keyframes shimmer2 {
+  0% { background-position: 0% 0%; }
+  100% { background-position: -200% 0%; }
+}
+
+/* Text shimmer — emerald-ui TextShimmer sweep */
+@keyframes shimmer {
+  0% { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
 }
 
 /* Branded loader progress bar animation */

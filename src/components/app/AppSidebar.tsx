@@ -1,37 +1,17 @@
 import React from "react";
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
+import { Sidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Users, Smartphone, LogOut,
-  Package, OctagonAlert, Zap, Building2, Warehouse,
-  QrCode, Bell, ClipboardList, Shield, Settings, UserCog,
-  Brain, Cpu, BarChart3,
-  CreditCard,
-  Activity, AlertOctagon, FileBarChart,
-  Wrench, Server, ShieldCheck, MoreHorizontal,
-  DollarSign, TrendingUp, UserPlus, ScrollText, Wallet,
-  Tag, ShoppingCart,
+  LogOut,
+  Package,
+  QrCode, Settings,
 } from "lucide-react";
-import { performSignOut } from "@/lib/auth/signOut";
+import { supabase } from "@/integrations/supabase/client";
+import { FlowingNavItem } from "@/components/app/FlowingNavItem";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
 import { countPendingOrders } from "@/lib/hardware-orders.functions";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,268 +21,68 @@ type NavItem = {
   name: string;
   label: string;
   to: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   roles: AppRole[];
   badge?: string;
+  /** Section names inside this workspace — scrolled in the hover marquee. */
+  marqueeItems?: string[];
 };
 
-// Pinned = strict per-role muscle-memory list. Max 6 items per role + Home.
-// Everything else lives in More or on the dashboard tiles.
-const pinnedNav: NavItem[] = [
-  // (Home lives in the topbar quick-tabs as "Overview" → /dashboard)
-
-  // Admin (4) — Warehouses & Batches accessible from the Silos hub
-  { name: "silos-admin", label: "Silos", to: "/silos", icon: Warehouse, roles: ["admin"] },
-  { name: "sensors-admin", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["admin"] },
-  { name: "grain-alerts-admin", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["admin"] },
-  { name: "marketplace-admin", label: "Marketplace", to: "/marketplace", icon: ShoppingCart, roles: ["admin"] },
-
-  // Manager (5) — Warehouses & Batches accessible from the Silos hub
-  { name: "silos-mgr", label: "Silos", to: "/silos", icon: Warehouse, roles: ["manager"] },
-  { name: "sensors-mgr", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["manager"] },
-  { name: "grain-alerts-mgr", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["manager"] },
-  { name: "orders-mgr", label: "Orders", to: "/orders", icon: ShoppingCart, roles: ["manager"] },
-
-  // Technician (5)
-  { name: "technician-installs", label: "My Installs", to: "/technician/installs", icon: Wrench, roles: ["technician"] },
-  { name: "sensors-tech", label: "Sensors", to: "/sensors", icon: Smartphone, roles: ["technician"] },
-  { name: "actuators-tech", label: "Actuators", to: "/actuators", icon: Zap, roles: ["technician"] },
-  { name: "grain-alerts-tech", label: "Alerts", to: "/grain-alerts", icon: OctagonAlert, roles: ["technician"] },
-
-  // Super Admin (6)
-  { name: "platform-financials", label: "Financials", to: "/platform/financials", icon: DollarSign, roles: ["super_admin"] },
-  { name: "platform-marketplace-health", label: "Marketplace Ops", to: "/platform/marketplace-health", icon: ShoppingCart, roles: ["super_admin"] },
-  { name: "platform-insurance", label: "Insurance", to: "/platform/insurance", icon: Shield, roles: ["super_admin"] },
-  { name: "platform-launch-readiness", label: "Launch Readiness", to: "/platform/launch-readiness", icon: ShieldCheck, roles: ["super_admin"] },
-  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"] },
+// Group 2 — the five consolidated workspaces.
+const workspaceNav: NavItem[] = [
+  { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
+  { name: "monitoring", label: "Monitoring", to: "/monitoring", roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Sensors", "Actuators", "Alerts", "Environmental", "Device Health", "Maintenance", "Incidents"] },
+  { name: "intelligence", label: "Intelligence", to: "/intelligence", roles: ["super_admin", "admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
+  { name: "business", label: "Business", to: "/business", roles: ["super_admin", "admin", "manager"], marqueeItems: ["Revenue", "Subscription", "Insurance"] },
+  { name: "administration", label: "Administration", to: "/administration", roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
 ];
 
-// Everything else lives behind a "More" popover, grouped like Slack's overflow menu.
-const moreGroups: { label: string; items: NavItem[] }[] = [
-  {
-    label: "Insights",
-    items: [
-      { name: "analytics-more", label: "Analytics", to: "/analytics", icon: BarChart3, roles: ["admin", "manager"] },
-      { name: "ai-predictions-more", label: "AI Predictions", to: "/ai-predictions", icon: Brain, roles: ["admin", "manager"] },
-      { name: "activity-logs-more", label: "Activity Logs", to: "/activity-logs", icon: ClipboardList, roles: ["admin", "manager"] },
-      { name: "actuators-more", label: "Actuators", to: "/actuators", icon: Zap, roles: ["admin", "manager"] },
-      { name: "silos-more", label: "Silos", to: "/silos", icon: Warehouse, roles: ["technician"] },
-      { name: "environmental", label: "Environmental", to: "/environmental", icon: Activity, roles: ["admin", "manager", "technician"] },
-      { name: "incidents", label: "Incidents", to: "/incidents", icon: AlertOctagon, roles: ["admin", "manager", "technician"] },
-      { name: "maintenance", label: "Maintenance", to: "/maintenance", icon: Wrench, roles: ["admin", "manager", "technician"] },
-      { name: "server-monitoring", label: "Device Health", to: "/server-monitoring", icon: Server, roles: ["admin", "manager", "technician"] },
-      { name: "data-visualization", label: "Data Visualization", to: "/data-visualization", icon: Activity, roles: ["admin", "manager", "technician"] },
-      { name: "reports", label: "Reports", to: "/reports", icon: FileBarChart, roles: ["admin", "manager"] },
-      { name: "ml-models", label: "ML Models", to: "/ml-models", icon: Cpu, roles: ["admin"], badge: "ML" },
-      { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"] },
-      { name: "notifications", label: "Notifications", to: "/notifications", icon: Bell, roles: ["admin", "manager", "technician"] },
-    ],
-  },
-  {
-    label: "Business",
-    items: [
-      { name: "revenue", label: "Revenue", to: "/revenue", icon: DollarSign, roles: ["admin", "manager"] },
-      { name: "buyers-more", label: "Buyers", to: "/buyers", icon: Users, roles: ["admin", "manager"] },
-      { name: "suppliers", label: "Suppliers", to: "/suppliers", icon: Users, roles: ["admin", "manager"] },
-      { name: "listings-more", label: "Listings", to: "/listings", icon: Tag, roles: ["admin", "manager"] },
-      { name: "sales-more", label: "Sales", to: "/sales", icon: ShoppingCart, roles: ["admin", "manager"] },
-      { name: "earnings-more", label: "Earnings", to: "/earnings", icon: Wallet, roles: ["admin", "manager"] },
-      { name: "insurance", label: "Insurance", to: "/insurance", icon: Shield, roles: ["super_admin", "admin", "manager"] },
-      { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["super_admin", "admin"] },
-      { name: "plan-management", label: "Plan Management", to: "/plan-management", icon: CreditCard, roles: ["admin"] },
-    ],
-  },
-  {
-    label: "Marketplace",
-    items: [
-      { name: "marketplace", label: "Browse Grain", to: "/marketplace", icon: ShoppingCart, roles: ["super_admin", "admin", "manager", "technician", "buyer"] },
-      { name: "buyer-orders", label: "My Orders", to: "/buyer/orders", icon: Package, roles: ["super_admin", "admin", "manager", "technician", "buyer"] },
-    ],
-  },
-  {
-    label: "Platform",
-    items: [
-      { name: "platform-users", label: "Users", to: "/platform/users", icon: Users, roles: ["super_admin"] },
-      { name: "platform-plans", label: "Plans & Thresholds", to: "/platform/plans", icon: CreditCard, roles: ["super_admin"] },
-      { name: "platform-pipeline", label: "Pipeline", to: "/platform/pipeline", icon: TrendingUp, roles: ["super_admin"] },
-      { name: "platform-leads", label: "Leads", to: "/platform/leads", icon: UserPlus, roles: ["super_admin"] },
-      { name: "platform-health", label: "System Health", to: "/platform/health", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-audit", label: "Audit Logs", to: "/platform/audit-logs", icon: ScrollText, roles: ["super_admin"] },
-      { name: "platform-activity", label: "Activity Feed", to: "/platform/logs", icon: ClipboardList, roles: ["super_admin"] },
-      { name: "platform-marketplace", label: "Marketplace Settings", to: "/platform/marketplace-settings", icon: ShoppingCart, roles: ["super_admin"] },
-      { name: "platform-reviews", label: "Review Moderation", to: "/platform/reviews", icon: ShoppingCart, roles: ["super_admin"] },
-      { name: "platform-disputes", label: "Disputes", to: "/platform/disputes", icon: ScrollText, roles: ["super_admin"] },
-      { name: "platform-dispatch-analytics", label: "Dispatch Analytics", to: "/platform/dispatch-analytics", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-sla-alerts", label: "SLA Alerts", to: "/platform/sla-alerts", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-invoice-failures", label: "Invoice Delivery", to: "/platform/invoice-failures", icon: ScrollText, roles: ["super_admin"] },
-      { name: "platform-sellers", label: "Sellers", to: "/platform/sellers", icon: Users, roles: ["super_admin"] },
-      { name: "platform-marketplace-health", label: "Marketplace Health", to: "/platform/marketplace-health", icon: TrendingUp, roles: ["super_admin"] },
-      { name: "platform-quality", label: "Quality Certificates", to: "/platform/quality", icon: ShoppingCart, roles: ["super_admin"] },
-      { name: "platform-messages", label: "Flagged Messages", to: "/platform/messages", icon: ScrollText, roles: ["super_admin"] },
-      { name: "returns", label: "Returns", to: "/returns", icon: ScrollText, roles: ["super_admin", "admin", "manager"] },
-      { name: "platform-logistics", label: "Logistics", to: "/platform/logistics/command-center", icon: Package, roles: ["super_admin"] },
-      { name: "platform-fleet", label: "Fleet", to: "/platform/logistics/fleet", icon: Wrench, roles: ["super_admin"] },
-      { name: "platform-carriers", label: "Carriers", to: "/platform/logistics/carriers", icon: Users, roles: ["super_admin"] },
-      { name: "platform-payouts", label: "Payouts", to: "/platform/finance/payouts", icon: Wallet, roles: ["super_admin"] },
-      { name: "platform-ledger", label: "Ledger", to: "/platform/finance/ledger", icon: ScrollText, roles: ["super_admin"] },
-      { name: "platform-tax", label: "Tax Rules", to: "/platform/finance/tax-rules", icon: DollarSign, roles: ["super_admin"] },
-      { name: "platform-insurance", label: "Insurance Center", to: "/platform/insurance", icon: Shield, roles: ["super_admin"] },
-      { name: "platform-metrics", label: "Metric Registry", to: "/platform/metrics", icon: ScrollText, roles: ["super_admin"] },
-      { name: "platform-dashboard-builder", label: "Dashboard Builder", to: "/platform/dashboard-builder", icon: LayoutDashboard, roles: ["super_admin", "admin", "manager", "technician"] },
-      { name: "platform-mobile-settings", label: "Mobile Settings", to: "/platform/mobile-settings", icon: Wrench, roles: ["super_admin"] },
-      { name: "platform-mobile-deep-links", label: "Mobile Deep Links", to: "/platform/mobile-deep-links", icon: Wrench, roles: ["super_admin"] },
-      { name: "platform-mobile-push", label: "Push Diagnostics", to: "/platform/mobile-push-diagnostics", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-field-settings", label: "Field Ops Mobile", to: "/platform/field-settings", icon: Wrench, roles: ["super_admin"] },
-      { name: "platform-field-incidents", label: "Field Incidents", to: "/platform/field-incidents", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-marketplace-mobile", label: "Marketplace Mobile", to: "/platform/marketplace-mobile", icon: Wrench, roles: ["super_admin"] },
-      { name: "platform-mobile-sync-monitor", label: "Mobile Sync Monitor", to: "/platform/mobile-sync-monitor", icon: Activity, roles: ["super_admin"] },
-      { name: "platform-commerce-mobile", label: "Mobile Commerce", to: "/platform/commerce-mobile", icon: Wrench, roles: ["super_admin"] },
-      { name: "platform-launch-readiness", label: "Launch Readiness", to: "/platform/launch-readiness", icon: ShieldCheck, roles: ["super_admin"] },
-    ],
-  },
+// Group 3 — standalone pages. Platform is a single entry to the platform area.
+const utilityNav: NavItem[] = [
+  { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
+  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
+  { name: "platform", label: "Platform", to: "/platform", roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Plans & Thresholds", "Pipeline", "Leads", "System Health", "Audit Logs", "Activity Feed"] },
 ];
 
 // Bottom "admin" strip — Slack shows Admin at the bottom of the workspace rail.
 const bottomNav: NavItem[] = [
-  { name: "team-management", label: "Team", to: "/team-management", icon: UserCog, roles: ["super_admin", "admin", "manager", "technician"] },
-  { name: "security-center", label: "Security", to: "/security-center", icon: ShieldCheck, roles: ["super_admin", "admin"] },
-  { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"] },
+  { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Profile", "Location", "Notifications", "Appearance"] },
 ];
 
-function NavRow({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        isActive={active}
-        tooltip={item.label}
-        className={cn(
-          "h-9 rounded-md transition-all",
-          collapsed && "justify-center px-0",
-          active
-            ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm hover:bg-emerald-50 hover:text-emerald-700"
-            : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        )}
-      >
-        <Link to={item.to} data-tour={`nav-${item.name}`} className="flex items-center gap-2.5">
-          <item.icon
-            className={cn(
-              "shrink-0 transition-transform duration-200",
-              active ? "h-4 w-4" : "h-4 w-4 group-hover/menu-item:scale-110",
-            )}
-            strokeWidth={active ? 2.4 : 2}
-          />
-          {!collapsed && <span className="truncate text-sm">{item.label}</span>}
-          {!collapsed && item.badge && (
-            <Badge
-              className={cn(
-                "ml-auto text-[10px] px-1.5 py-0 h-4 font-bold tracking-wide border-0",
-                item.badge === "AI" || item.badge === "ML"
-                  ? "bg-[--fusion-grape] text-white"
-                  : "bg-[--fusion-ink]/10 text-[--fusion-ink]",
-              )}
-            >
-              {item.badge}
-            </Badge>
-          )}
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
+function hasVisible(items: NavItem[], role: AppRole) {
+  return items.some((i) => i.roles.includes(role));
 }
 
-function Section({ label, items, role, currentPath, showLabel = true }: { label?: string; items: NavItem[]; role: AppRole; currentPath: string; showLabel?: boolean }) {
-  const { state, isMobile } = useSidebar();
-  const collapsed = !isMobile && state === "collapsed";
+function Section({ items, role, currentPath }: { label?: string; items: NavItem[]; role: AppRole; currentPath: string; showLabel?: boolean }) {
+  // Sidebar is permanently visible (collapsible="none") — never render collapsed.
+  const collapsed = false;
   const visible = items.filter((i) => i.roles.includes(role));
   if (visible.length === 0) return null;
   return (
-    <SidebarGroup className={cn(collapsed && "px-0 items-center")}>
-      {!collapsed && showLabel && label && (
-        <SidebarGroupLabel className="text-xs font-bold text-sidebar-foreground/55 uppercase tracking-[0.14em] px-2">
-          {label}
-        </SidebarGroupLabel>
-      )}
-      <SidebarGroupContent>
-        <SidebarMenu className={cn(collapsed && "items-center gap-1")}>
-          {visible.map((item) => {
-            const active = item.to === "/platform"
-              ? currentPath === "/platform" || currentPath.startsWith("/platform/")
-              : currentPath === item.to;
-            return <NavRow key={item.name} item={item} active={active} collapsed={collapsed} />;
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
-}
-
-function MoreButton({ role, currentPath }: { role: AppRole; currentPath: string }) {
-  const { state, isMobile } = useSidebar();
-  const collapsed = !isMobile && state === "collapsed";
-  const visibleGroups = moreGroups
-    .map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(role)) }))
-    .filter((g) => g.items.length > 0);
-  if (visibleGroups.length === 0) return null;
-  return (
-    <SidebarGroup className={cn(collapsed && "px-0 items-center")}>
-      <SidebarGroupContent>
-        <SidebarMenu className={cn(collapsed && "items-center")}>
-          <SidebarMenuItem>
-            <Popover>
-              <PopoverTrigger asChild>
-                <SidebarMenuButton
-                  tooltip="More"
-                  className={cn(
-                    "h-9 rounded-md text-sidebar-foreground/85 hover:bg-sidebar-accent",
-                    collapsed && "justify-center px-0",
-                  )}
-                >
-                  <MoreHorizontal className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span className="text-sm">More</span>}
-                </SidebarMenuButton>
-              </PopoverTrigger>
-              <PopoverContent side="right" align="start" sideOffset={8} className="w-64 p-2 max-h-[70vh] overflow-y-auto no-scrollbar">
-                {visibleGroups.map((g) => (
-                  <div key={g.label} className="mb-1 last:mb-0">
-                    <div className="px-2 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-[0.14em]">{g.label}</div>
-                    <div className="flex flex-col">
-                      {g.items.map((item) => {
-                        const active = currentPath === item.to;
-                        return (
-                          <Link
-                            key={item.name}
-                            to={item.to}
-                            className={cn(
-                              "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-                              active
-                                ? "bg-emerald-50 text-emerald-700 font-semibold"
-                                : "text-foreground hover:bg-muted",
-                            )}
-                          >
-                            <item.icon className="h-4 w-4 shrink-0" />
-                            <span className="truncate flex-1 text-sm">{item.label}</span>
-                            {item.badge && (
-                              <Badge className="text-[10px] px-1.5 h-4 border-0 bg-[--fusion-grape] text-white">{item.badge}</Badge>
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </PopoverContent>
-            </Popover>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <div className={cn(collapsed && "flex flex-col items-center py-1")}>
+      {visible.map((item) => {
+        const active = item.to === "/platform"
+          ? currentPath === "/platform" || currentPath.startsWith("/platform/")
+          : currentPath === item.to;
+        return (
+          <FlowingNavItem
+            key={item.name}
+            label={item.label}
+            to={item.to}
+            active={active}
+            collapsed={collapsed}
+            badge={item.badge}
+            dataTour={`nav-${item.name}`}
+            marqueeItems={item.marqueeItems}
+          />
+        );
+      })}
+    </div>
   );
 }
 
 export function AppSidebar() {
-  const { state, isMobile } = useSidebar();
-  const collapsed = !isMobile && state === "collapsed";
+  const collapsed = false;
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -339,40 +119,57 @@ export function AppSidebar() {
   void pending;
 
   async function handleSignOut() {
-    await performSignOut({ queryClient, navigate, reason: "user" });
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
   }
 
+  void collapsed;
+
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="h-14 border-b border-sidebar-border/60 justify-center">
-        <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between px-2")}>
-          {!collapsed && (
-            <span className="text-xs font-bold text-sidebar-foreground/60 uppercase tracking-[0.22em] truncate">
-              {role.replace("_", " ")}
-            </span>
-          )}
-          <SidebarTrigger className="shrink-0 h-8 w-8 text-sidebar-foreground/80 hover:text-sidebar-accent-foreground" />
+    <Sidebar collapsible="none" className="sticky top-0 h-screen w-56 bg-transparent">
+      <div className="flex h-full flex-col px-3">
+
+        {/* Logo — fixed at the top, outside the dock */}
+        <div className="px-2 py-4">
+          <span className="text-xl font-black tracking-tight select-none">
+            <span className="text-[#2FAC0C] text-2xl">G</span>
+            <span className="text-sidebar-foreground">rain</span>
+            <span className="text-[#2FAC0C] text-2xl">H</span>
+            <span className="text-sidebar-foreground">ero</span>
+          </span>
         </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <Section items={pinnedNav} role={role} currentPath={currentPath} showLabel={false} />
-        <MoreButton role={role} currentPath={currentPath} />
-      </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border/60 gap-0">
-        <Section items={bottomNav} role={role} currentPath={currentPath} showLabel={false} />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSignOut}
-          className={cn(
-            "h-9 text-sidebar-foreground/80 hover:text-red-600 hover:bg-red-500/10",
-            collapsed ? "justify-center px-0 w-9 mx-auto" : "justify-start",
-          )}
-        >
-          <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span className="ml-2 text-sm">Sign out</span>}
-        </Button>
-      </SidebarFooter>
+
+        {/* Floating dock — curved rectangle, vertically centered on the left */}
+        <div className="flex min-h-0 flex-1 items-center pb-6">
+          <div className="flex w-full max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/30">
+
+            {/* Nav — workspaces / standalone pages, separated by dividers */}
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <Section items={workspaceNav} role={role} currentPath={currentPath} showLabel={false} />
+              {hasVisible(utilityNav, role) && <div className="mx-3 my-1.5 h-px bg-sidebar-border/80" />}
+              <Section items={utilityNav} role={role} currentPath={currentPath} showLabel={false} />
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-sidebar-border/40">
+              <Section items={bottomNav} role={role} currentPath={currentPath} showLabel={false} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="h-9 w-full justify-start rounded-none px-4 text-sidebar-foreground/80 hover:text-red-600 hover:bg-red-500/10"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span className="ml-2">Sign out</span>
+              </Button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
     </Sidebar>
   );
 }

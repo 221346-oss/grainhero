@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileDown, TrendingUp, TrendingDown, DollarSign, Wallet, Package, Shield, LineChart as LineIcon } from "lucide-react";
+import { FileDown, TrendingUp, TrendingDown, DollarSign, Wallet, Shield, LineChart as LineIcon } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, BarChart, Bar } from "recharts";
 import { getFinancialSummary, generateFinancialPdf } from "@/lib/financials.functions";
 import { toast } from "sonner";
@@ -84,7 +84,7 @@ function FinancialsPage() {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         <KpiCard icon={<DollarSign className="h-4 w-4" />} label="Total revenue" value={money(kpis.totalRevenue)} accent="text-primary" />
         <KpiCard icon={<Wallet className="h-4 w-4" />} label="MRR" value={money(kpis.mrr)} delta={kpis.mrrDelta} accent="text-primary" />
-        <KpiCard icon={<Package className="h-4 w-4" />} label="IoT hardware" value={money(kpis.iotRevenue)} sub={`${kpis.totalOrders} orders`} />
+        <KpiCard icon={null} label="IoT hardware" value={money(kpis.iotRevenue)} sub={`${kpis.totalOrders} orders`} />
         <KpiCard icon={<Shield className="h-4 w-4" />} label="Insurance comm." value={money(kpis.insuranceCommission)} sub={`${kpis.totalPolicies} policies`} />
         <KpiCard icon={<TrendingUp className="h-4 w-4" />} label="Gross profit" value={money(kpis.grossProfit)} accent="text-emerald-600 dark:text-emerald-400" />
         <KpiCard icon={<LineIcon className="h-4 w-4" />} label="Net profit %" value={`${kpis.netProfitPct}%`} accent={kpis.netProfitPct >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} />
@@ -161,7 +161,6 @@ function FinancialsPage() {
         <CardContent>
           {planSplit.length === 0 ? (
             <div className="h-[160px] flex flex-col items-center justify-center text-center text-sm text-muted-foreground">
-              <Package className="h-8 w-8 mb-2 opacity-40" />
               No active paid subscriptions yet — plan breakdown will appear here once tenants subscribe.
             </div>
           ) : (

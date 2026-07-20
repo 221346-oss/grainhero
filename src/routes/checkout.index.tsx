@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Sparkles, Package, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Package, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -347,7 +347,7 @@ function CheckoutPage() {
 
         <div className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 shadow-sm border border-border">
-            <Sparkles className="h-3.5 w-3.5" /> Set up in under 3 minutes
+            Set up in under 3 minutes
           </div>
           <h1 className="mt-3 text-3xl md:text-4xl font-bold text-foreground">{stepMeta[step].label}</h1>
           <p className="text-muted-foreground mt-2">Step {step + 1} of 4 — {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.</p>

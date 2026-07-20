@@ -64,7 +64,7 @@ function PlatformOverviewPage() {
                 <th className="text-right px-4 py-2 font-medium">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="">
               {(w?.recentSignups ?? []).map((s: any) => (
                 <tr key={s.id} className="hover:bg-slate-50">
                   <td className="px-4 py-2">
@@ -100,7 +100,7 @@ function PlatformOverviewPage() {
                 <th className="text-right px-4 py-2 font-medium">When</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="">
               {(w?.systemAlerts ?? []).map((a: any) => (
                 <tr key={a.id} className="hover:bg-slate-50">
                   <td className="px-4 py-2">

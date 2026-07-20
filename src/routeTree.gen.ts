@@ -34,12 +34,10 @@ import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
-import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
 import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
-import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
@@ -53,21 +51,23 @@ import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authe
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
+import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
 import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
 import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
+import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
 import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
-import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
+import { Route as AuthenticatedGrainOperationsRouteImport } from './routes/_authenticated/grain-operations'
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
 import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
-import { Route as AuthenticatedDataVisualizationRouteImport } from './routes/_authenticated/data-visualization'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
+import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
 import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
+import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
@@ -305,11 +305,6 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthenticatedWarehousesRoute = AuthenticatedWarehousesRouteImport.update({
-  id: '/warehouses',
-  path: '/warehouses',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedTraceabilityRoute =
   AuthenticatedTraceabilityRouteImport.update({
     id: '/traceability',
@@ -333,11 +328,6 @@ const AuthenticatedSubscriptionRoute =
     path: '/subscription',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSilosRoute = AuthenticatedSilosRouteImport.update({
-  id: '/silos',
-  path: '/silos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -407,6 +397,11 @@ const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
   path: '/not-allowed',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMlModelsRoute = AuthenticatedMlModelsRouteImport.update({
   id: '/ml-models',
   path: '/ml-models',
@@ -423,6 +418,12 @@ const AuthenticatedListingsRoute = AuthenticatedListingsRouteImport.update({
   path: '/listings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIntelligenceRoute =
+  AuthenticatedIntelligenceRouteImport.update({
+    id: '/intelligence',
+    path: '/intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
   id: '/insurance',
   path: '/insurance',
@@ -433,10 +434,10 @@ const AuthenticatedIncidentsRoute = AuthenticatedIncidentsRouteImport.update({
   path: '/incidents',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedGrainBatchesRoute =
-  AuthenticatedGrainBatchesRouteImport.update({
-    id: '/grain-batches',
-    path: '/grain-batches',
+const AuthenticatedGrainOperationsRoute =
+  AuthenticatedGrainOperationsRouteImport.update({
+    id: '/grain-operations',
+    path: '/grain-operations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedGrainAlertsRoute =
@@ -456,20 +457,14 @@ const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
   path: '/earnings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedDataVisualizationRoute =
-  AuthenticatedDataVisualizationRouteImport.update({
-    id: '/data-visualization',
-    path: '/data-visualization',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBuyersRoute = AuthenticatedBuyersRouteImport.update({
-  id: '/buyers',
-  path: '/buyers',
+const AuthenticatedBusinessRoute = AuthenticatedBusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAttentionRoute = AuthenticatedAttentionRouteImport.update({
@@ -486,6 +481,12 @@ const AuthenticatedAiPredictionsRoute =
   AuthenticatedAiPredictionsRouteImport.update({
     id: '/ai-predictions',
     path: '/ai-predictions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdministrationRoute =
+  AuthenticatedAdministrationRouteImport.update({
+    id: '/administration',
+    path: '/administration',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
@@ -540,9 +541,9 @@ const AuthenticatedSuppliersSupplierIdRoute =
   } as any)
 const AuthenticatedSilosSiloIdRoute =
   AuthenticatedSilosSiloIdRouteImport.update({
-    id: '/$siloId',
-    path: '/$siloId',
-    getParentRoute: () => AuthenticatedSilosRoute,
+    id: '/silos/$siloId',
+    path: '/silos/$siloId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsRouteImport.update({
@@ -1164,21 +1165,23 @@ export interface FileRoutesByFullPath {
   '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
+  '/administration': typeof AuthenticatedAdministrationRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/attention': typeof AuthenticatedAttentionRoute
-  '/buyers': typeof AuthenticatedBuyersRoute
+  '/business': typeof AuthenticatedBusinessRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/data-visualization': typeof AuthenticatedDataVisualizationRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-  '/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
+  '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
@@ -1192,12 +1195,10 @@ export interface FileRoutesByFullPath {
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
-  '/silos': typeof AuthenticatedSilosRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
-  '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1334,21 +1335,23 @@ export interface FileRoutesByTo {
   '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
+  '/administration': typeof AuthenticatedAdministrationRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/attention': typeof AuthenticatedAttentionRoute
-  '/buyers': typeof AuthenticatedBuyersRoute
+  '/business': typeof AuthenticatedBusinessRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/data-visualization': typeof AuthenticatedDataVisualizationRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-  '/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
+  '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
@@ -1362,12 +1365,10 @@ export interface FileRoutesByTo {
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
-  '/silos': typeof AuthenticatedSilosRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
-  '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1508,21 +1509,23 @@ export interface FileRoutesById {
   '/theme-test': typeof ThemeTestRoute
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
+  '/_authenticated/administration': typeof AuthenticatedAdministrationRoute
   '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/attention': typeof AuthenticatedAttentionRoute
-  '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
+  '/_authenticated/business': typeof AuthenticatedBusinessRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/data-visualization': typeof AuthenticatedDataVisualizationRoute
   '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/environmental': typeof AuthenticatedEnvironmentalRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-  '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/_authenticated/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
+  '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
   '/_authenticated/listings': typeof AuthenticatedListingsRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
   '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
+  '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
@@ -1536,12 +1539,10 @@ export interface FileRoutesById {
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
-  '/_authenticated/silos': typeof AuthenticatedSilosRouteWithChildren
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
-  '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1682,21 +1683,23 @@ export interface FileRouteTypes {
     | '/theme-test'
     | '/activity-logs'
     | '/actuators'
+    | '/administration'
     | '/ai-predictions'
     | '/analytics'
     | '/attention'
-    | '/buyers'
+    | '/business'
     | '/dashboard'
-    | '/data-visualization'
     | '/earnings'
     | '/environmental'
     | '/grain-alerts'
-    | '/grain-batches'
+    | '/grain-operations'
     | '/incidents'
     | '/insurance'
+    | '/intelligence'
     | '/listings'
     | '/maintenance'
     | '/ml-models'
+    | '/monitoring'
     | '/not-allowed'
     | '/notifications'
     | '/orders'
@@ -1710,12 +1713,10 @@ export interface FileRouteTypes {
     | '/sensors'
     | '/server-monitoring'
     | '/settings'
-    | '/silos'
     | '/subscription'
     | '/suppliers'
     | '/team-management'
     | '/traceability'
-    | '/warehouses'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -1852,21 +1853,23 @@ export interface FileRouteTypes {
     | '/theme-test'
     | '/activity-logs'
     | '/actuators'
+    | '/administration'
     | '/ai-predictions'
     | '/analytics'
     | '/attention'
-    | '/buyers'
+    | '/business'
     | '/dashboard'
-    | '/data-visualization'
     | '/earnings'
     | '/environmental'
     | '/grain-alerts'
-    | '/grain-batches'
+    | '/grain-operations'
     | '/incidents'
     | '/insurance'
+    | '/intelligence'
     | '/listings'
     | '/maintenance'
     | '/ml-models'
+    | '/monitoring'
     | '/not-allowed'
     | '/notifications'
     | '/orders'
@@ -1880,12 +1883,10 @@ export interface FileRouteTypes {
     | '/sensors'
     | '/server-monitoring'
     | '/settings'
-    | '/silos'
     | '/subscription'
     | '/suppliers'
     | '/team-management'
     | '/traceability'
-    | '/warehouses'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -2025,21 +2026,23 @@ export interface FileRouteTypes {
     | '/theme-test'
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
+    | '/_authenticated/administration'
     | '/_authenticated/ai-predictions'
     | '/_authenticated/analytics'
     | '/_authenticated/attention'
-    | '/_authenticated/buyers'
+    | '/_authenticated/business'
     | '/_authenticated/dashboard'
-    | '/_authenticated/data-visualization'
     | '/_authenticated/earnings'
     | '/_authenticated/environmental'
     | '/_authenticated/grain-alerts'
-    | '/_authenticated/grain-batches'
+    | '/_authenticated/grain-operations'
     | '/_authenticated/incidents'
     | '/_authenticated/insurance'
+    | '/_authenticated/intelligence'
     | '/_authenticated/listings'
     | '/_authenticated/maintenance'
     | '/_authenticated/ml-models'
+    | '/_authenticated/monitoring'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
@@ -2053,12 +2056,10 @@ export interface FileRouteTypes {
     | '/_authenticated/sensors'
     | '/_authenticated/server-monitoring'
     | '/_authenticated/settings'
-    | '/_authenticated/silos'
     | '/_authenticated/subscription'
     | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
     | '/_authenticated/traceability'
-    | '/_authenticated/warehouses'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -2428,13 +2429,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_authenticated/warehouses': {
-      id: '/_authenticated/warehouses'
-      path: '/warehouses'
-      fullPath: '/warehouses'
-      preLoaderRoute: typeof AuthenticatedWarehousesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/traceability': {
       id: '/_authenticated/traceability'
       path: '/traceability'
@@ -2461,13 +2455,6 @@ declare module '@tanstack/react-router' {
       path: '/subscription'
       fullPath: '/subscription'
       preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/silos': {
-      id: '/_authenticated/silos'
-      path: '/silos'
-      fullPath: '/silos'
-      preLoaderRoute: typeof AuthenticatedSilosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -2561,6 +2548,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/monitoring': {
+      id: '/_authenticated/monitoring'
+      path: '/monitoring'
+      fullPath: '/monitoring'
+      preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ml-models': {
       id: '/_authenticated/ml-models'
       path: '/ml-models'
@@ -2582,6 +2576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedListingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/intelligence': {
+      id: '/_authenticated/intelligence'
+      path: '/intelligence'
+      fullPath: '/intelligence'
+      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/insurance': {
       id: '/_authenticated/insurance'
       path: '/insurance'
@@ -2596,11 +2597,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIncidentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/grain-batches': {
-      id: '/_authenticated/grain-batches'
-      path: '/grain-batches'
-      fullPath: '/grain-batches'
-      preLoaderRoute: typeof AuthenticatedGrainBatchesRouteImport
+    '/_authenticated/grain-operations': {
+      id: '/_authenticated/grain-operations'
+      path: '/grain-operations'
+      fullPath: '/grain-operations'
+      preLoaderRoute: typeof AuthenticatedGrainOperationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/grain-alerts': {
@@ -2624,13 +2625,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEarningsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/data-visualization': {
-      id: '/_authenticated/data-visualization'
-      path: '/data-visualization'
-      fullPath: '/data-visualization'
-      preLoaderRoute: typeof AuthenticatedDataVisualizationRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -2638,11 +2632,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/buyers': {
-      id: '/_authenticated/buyers'
-      path: '/buyers'
-      fullPath: '/buyers'
-      preLoaderRoute: typeof AuthenticatedBuyersRouteImport
+    '/_authenticated/business': {
+      id: '/_authenticated/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof AuthenticatedBusinessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/attention': {
@@ -2664,6 +2658,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-predictions'
       fullPath: '/ai-predictions'
       preLoaderRoute: typeof AuthenticatedAiPredictionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/administration': {
+      id: '/_authenticated/administration'
+      path: '/administration'
+      fullPath: '/administration'
+      preLoaderRoute: typeof AuthenticatedAdministrationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/actuators': {
@@ -2731,10 +2732,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/silos/$siloId': {
       id: '/_authenticated/silos/$siloId'
-      path: '/$siloId'
+      path: '/silos/$siloId'
       fullPath: '/silos/$siloId'
       preLoaderRoute: typeof AuthenticatedSilosSiloIdRouteImport
-      parentRoute: typeof AuthenticatedSilosRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings/notifications': {
       id: '/_authenticated/settings/notifications'
@@ -3467,17 +3468,6 @@ const AuthenticatedSettingsRouteWithChildren =
     AuthenticatedSettingsRouteChildren,
   )
 
-interface AuthenticatedSilosRouteChildren {
-  AuthenticatedSilosSiloIdRoute: typeof AuthenticatedSilosSiloIdRoute
-}
-
-const AuthenticatedSilosRouteChildren: AuthenticatedSilosRouteChildren = {
-  AuthenticatedSilosSiloIdRoute: AuthenticatedSilosSiloIdRoute,
-}
-
-const AuthenticatedSilosRouteWithChildren =
-  AuthenticatedSilosRoute._addFileChildren(AuthenticatedSilosRouteChildren)
-
 interface AuthenticatedSuppliersRouteChildren {
   AuthenticatedSuppliersSupplierIdRoute: typeof AuthenticatedSuppliersSupplierIdRoute
 }
@@ -3597,21 +3587,23 @@ const AuthenticatedTechnicianInstallsRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
+  AuthenticatedAdministrationRoute: typeof AuthenticatedAdministrationRoute
   AuthenticatedAiPredictionsRoute: typeof AuthenticatedAiPredictionsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedAttentionRoute: typeof AuthenticatedAttentionRoute
-  AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
+  AuthenticatedBusinessRoute: typeof AuthenticatedBusinessRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedDataVisualizationRoute: typeof AuthenticatedDataVisualizationRoute
   AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
   AuthenticatedEnvironmentalRoute: typeof AuthenticatedEnvironmentalRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
-  AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
+  AuthenticatedGrainOperationsRoute: typeof AuthenticatedGrainOperationsRoute
   AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
+  AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
   AuthenticatedListingsRoute: typeof AuthenticatedListingsRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
   AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
+  AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
@@ -3625,12 +3617,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
-  AuthenticatedSilosRoute: typeof AuthenticatedSilosRouteWithChildren
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRouteWithChildren
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
-  AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
@@ -3668,6 +3658,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
+  AuthenticatedSilosSiloIdRoute: typeof AuthenticatedSilosSiloIdRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
   AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
@@ -3679,21 +3670,23 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
+  AuthenticatedAdministrationRoute: AuthenticatedAdministrationRoute,
   AuthenticatedAiPredictionsRoute: AuthenticatedAiPredictionsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedAttentionRoute: AuthenticatedAttentionRoute,
-  AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
+  AuthenticatedBusinessRoute: AuthenticatedBusinessRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedDataVisualizationRoute: AuthenticatedDataVisualizationRoute,
   AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
   AuthenticatedEnvironmentalRoute: AuthenticatedEnvironmentalRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
-  AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
+  AuthenticatedGrainOperationsRoute: AuthenticatedGrainOperationsRoute,
   AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
+  AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
   AuthenticatedListingsRoute: AuthenticatedListingsRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
   AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
+  AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
@@ -3707,12 +3700,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
-  AuthenticatedSilosRoute: AuthenticatedSilosRouteWithChildren,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRouteWithChildren,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
-  AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
   AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRouteWithChildren,
   AuthenticatedInsuranceClaimsClaimIdRoute:
@@ -3768,6 +3759,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
+  AuthenticatedSilosSiloIdRoute: AuthenticatedSilosSiloIdRoute,
   AuthenticatedTechnicianInstallsRoute:
     AuthenticatedTechnicianInstallsRouteWithChildren,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
@@ -3925,3 +3917,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

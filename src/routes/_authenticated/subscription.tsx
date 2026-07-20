@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2 } from "lucide-react";
+import { Package, Warehouse, Users, Cpu, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2 } from "lucide-react";
 import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions";
 import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
 import { changeMyPlan, cancelAtPeriodEnd, resumeSubscription } from "@/lib/subscription-management.functions";
@@ -154,7 +154,6 @@ function SubscriptionPage() {
       {!sub && (
         <Card>
           <CardContent className="p-8 text-center space-y-3">
-            <Sparkles className="h-10 w-10 text-emerald-600 mx-auto" />
             <div className="text-lg font-semibold text-slate-900">No active subscription</div>
             <p className="text-sm text-slate-500 max-w-md mx-auto">You&apos;re not on a paid plan yet. Pick one to unlock warehouses, silos and AI predictions at scale.</p>
             <Button asChild><Link to="/plans">Choose a plan</Link></Button>

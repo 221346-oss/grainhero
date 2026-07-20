@@ -28,7 +28,7 @@ function Spark({ data }: { data: number[] }) {
   );
 }
 
-type Row = { label: string; value: number | string; to: string; delta?: number };
+type Row = { label: string; value: number | string; to: string; search?: { tab: string }; delta?: number };
 
 export function KpiSummary({
   range, onRange,
@@ -47,10 +47,10 @@ export function KpiSummary({
 }) {
   const { data: s } = useDashboardStats();
   const rows: Row[] = [
-    { label: "Buyers", value: s?.buyers ?? "—", to: "/buyers" },
-    { label: "Warehouses", value: s?.warehouses ?? "—", to: "/warehouses" },
-    { label: "Active Batches", value: s?.batches.active ?? "—", to: "/grain-batches", delta: deltaBatches },
-    { label: "Silos", value: s?.silos ?? "—", to: "/silos" },
+    { label: "Buyers", value: s?.buyers ?? "—", to: "/grain-operations", search: { tab: "buyers" } },
+    { label: "Warehouses", value: s?.warehouses ?? "—", to: "/grain-operations", search: { tab: "warehouses" } },
+    { label: "Active Batches", value: s?.batches.active ?? "—", to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches },
+    { label: "Silos", value: s?.silos ?? "—", to: "/grain-operations", search: { tab: "silos" } },
     { label: "Sensors Online", value: s?.sensors.online ?? "—", to: "/sensors", delta: deltaAlerts },
   ];
   const rev = revenueMtd ?? 0;
@@ -103,6 +103,7 @@ export function KpiSummary({
                 <li key={r.label}>
                   <Link
                     to={r.to}
+                    search={r.search as never}
                     className="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
                   >
                     <span className="text-xs text-foreground">{r.label}</span>

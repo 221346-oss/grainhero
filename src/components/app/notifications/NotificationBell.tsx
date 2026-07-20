@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { Bell, Check, CheckCheck, TriangleAlert } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useNotifications } from "@/hooks/useNotifications";
+import { listGrainAlerts } from "@/lib/operations.functions";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -12,6 +15,13 @@ const SEV_DOT: Record<string, string> = {
   success: "bg-emerald-500",
   warning: "bg-amber-500",
   critical: "bg-rose-500",
+};
+
+const PRIORITY_DOT: Record<string, string> = {
+  critical: "bg-rose-500",
+  high: "bg-orange-500",
+  medium: "bg-amber-500",
+  low: "bg-sky-500",
 };
 
 function timeAgo(iso: string) {
@@ -39,6 +49,12 @@ export function NotificationBell() {
 
   const { items, unreadCount, markRead, markAllRead } = useNotifications(userId);
   const badge = unreadCount > 99 ? "99+" : String(unreadCount);
+
+  const listAlertsFn = useServerFn(listGrainAlerts);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: alertsData } = useQuery({ queryKey: ["grain-alerts"], queryFn: () => listAlertsFn() as Promise<any[]> });
+  const openAlerts = (alertsData ?? []).filter((a) => a.status !== "resolved");
+  const alertsPreview = openAlerts.slice(0, 3);
 
   return (
     <Popover>
@@ -75,6 +91,37 @@ export function NotificationBell() {
             </button>
           )}
         </div>
+        {openAlerts.length > 0 && (
+          <div className="border-b border-border/60 bg-rose-50/40 dark:bg-rose-500/5">
+            <div className="flex items-center justify-between px-4 pt-2.5 pb-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-400 inline-flex items-center gap-1.5">
+                <TriangleAlert className="h-3 w-3" /> {openAlerts.length} open alert{openAlerts.length === 1 ? "" : "s"}
+              </p>
+              <Link
+                to="/grain-alerts"
+                search={{ priority: "all" }}
+                className="text-[11px] font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400"
+              >
+                View all
+              </Link>
+            </div>
+            <ul className="pb-1">
+              {alertsPreview.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    to="/grain-alerts"
+                    search={{ priority: "all" }}
+                    className="flex items-center gap-2 px-4 py-1.5 hover:bg-rose-100/50 dark:hover:bg-rose-500/10 transition-colors"
+                  >
+                    <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", PRIORITY_DOT[a.priority] ?? PRIORITY_DOT.low)} />
+                    <span className="text-xs text-foreground truncate flex-1">{a.title}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{timeAgo(a.triggered_at)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <ScrollArea className="max-h-[420px]">
           {items.length === 0 ? (
             <div className="py-10 grid place-items-center text-center text-muted-foreground">

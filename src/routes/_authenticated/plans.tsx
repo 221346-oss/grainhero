@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import pricingData from "@/lib/pricing-data";
 
 export const Route = createFileRoute("/_authenticated/plans")({
@@ -21,7 +21,7 @@ function PlansPage() {
         {pricingData.map((p: any) => (
           <Card key={p.id} className={p.popular ? "border-emerald-500 shadow-lg relative" : ""}>
             {p.popular && (
-              <Badge className="absolute -top-2 right-4 bg-emerald-600"><Sparkles className="h-3 w-3 mr-1" />Popular</Badge>
+              <Badge className="absolute -top-2 right-4 bg-emerald-600">Popular</Badge>
             )}
             <CardHeader>
               <CardTitle className="text-lg">{p.name}</CardTitle>

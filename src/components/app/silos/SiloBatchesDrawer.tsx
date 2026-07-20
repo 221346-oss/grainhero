@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, Loader2, Package, Truck, Wheat, Inbox } from "lucide-react";
+import { ArrowUpRight, Loader2, Truck, Wheat, Inbox } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +67,6 @@ export function SiloBatchesDrawer({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <SheetTitle className="flex items-center gap-2 min-w-0">
-                <Package className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span className="truncate">{silo?.name ?? "Silo"}</span>
               </SheetTitle>
               <SheetDescription className="flex items-center gap-2 text-xs mt-0.5">
@@ -117,8 +116,8 @@ export function SiloBatchesDrawer({
               <Badge variant="outline" className="h-4 px-1.5 text-[10px] tabular-nums">{rows.length}</Badge>
             </div>
             <Link
-              to="/grain-batches"
-              search={{ status: "all", siloId: silo?.id }}
+              to="/grain-operations"
+              search={{ tab: "batches" }}
               className="text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-0.5 text-xs font-medium"
             >
               Open full page <ArrowUpRight className="w-3 h-3" />
@@ -134,8 +133,8 @@ export function SiloBatchesDrawer({
               <Inbox className="w-8 h-8 opacity-50 mb-2" />
               <p className="text-xs">No batches in this silo yet.</p>
               <Link
-                to="/grain-batches"
-                search={{ status: "all", siloId: silo?.id }}
+                to="/grain-operations"
+                search={{ tab: "batches" }}
                 className="mt-3 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
               >
                 Add first batch →

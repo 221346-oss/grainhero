@@ -27,28 +27,28 @@ type SuperTabKey =
 
 type TabKey = AdminTabKey | SuperTabKey | ManagerTabKey;
 
-type Def<K extends string> = { key: K; label: string; icon: LucideIcon; to: string };
+type Def<K extends string> = { key: K; label: string; icon: LucideIcon; to: string; search?: { tab: string } };
 
 const CATALOG_ADMIN: Def<AdminTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "silos", label: "Silos", icon: Container, to: "/silos" },
-  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-batches" },
+  { key: "silos", label: "Silos", icon: Container, to: "/grain-operations", search: { tab: "silos" } },
+  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
   { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
-  { key: "marketplace", label: "Marketplace", icon: Store, to: "/marketplace" },
+  { key: "marketplace", label: "Marketplace", icon: Store, to: "/business" },
   { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
   { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
-  { key: "buyers", label: "Buyers", icon: Users, to: "/buyers" },
+  { key: "buyers", label: "Buyers", icon: Users, to: "/grain-operations", search: { tab: "buyers" } },
   { key: "orders", label: "Orders", icon: Package, to: "/orders" },
   { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
 ];
 
 const CATALOG_MANAGER: Def<ManagerTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "silos", label: "Silos", icon: Container, to: "/silos" },
-  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-batches" },
+  { key: "silos", label: "Silos", icon: Container, to: "/grain-operations", search: { tab: "silos" } },
+  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
   { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
-  { key: "dispatch", label: "Dispatch", icon: Truck, to: "/grain-batches" },
-  { key: "qc", label: "QC", icon: ClipboardCheck, to: "/grain-batches" },
+  { key: "dispatch", label: "Dispatch", icon: Truck, to: "/grain-operations", search: { tab: "silos" } },
+  { key: "qc", label: "QC", icon: ClipboardCheck, to: "/grain-operations", search: { tab: "batches" } },
   { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
   { key: "orders", label: "Orders", icon: Package, to: "/orders" },
   { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
@@ -69,7 +69,7 @@ const CATALOG_SUPER: Def<SuperTabKey>[] = [
   { key: "leads", label: "Leads", icon: UserPlus, to: "/platform/leads" },
   { key: "insurance", label: "Insurance", icon: Shield, to: "/insurance" },
   { key: "subscription", label: "Subscriptions", icon: CreditCard, to: "/subscription" },
-  { key: "security", label: "Security", icon: ShieldCheck, to: "/security" },
+  { key: "security", label: "Security", icon: ShieldCheck, to: "/security-center" },
   { key: "launch", label: "Launch readiness", icon: Rocket, to: "/platform/launch-readiness" },
 ];
 
@@ -97,6 +97,7 @@ function readStored(storage: string, def: TabKey[], validKeys: Set<string>): Tab
 export function DashboardQuickTabs() {
   const { isSuperAdmin, role } = useIsSuperAdmin();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const isManager = role === "manager";
   const CATALOG = (isSuperAdmin ? CATALOG_SUPER : isManager ? CATALOG_MANAGER : CATALOG_ADMIN) as Def<TabKey>[];
   const STORAGE = isSuperAdmin ? STORAGE_SUPER : isManager ? STORAGE_MANAGER : STORAGE_ADMIN;
@@ -128,19 +129,21 @@ export function DashboardQuickTabs() {
           const Icon = def.icon;
           const isActive = def.to === "/dashboard"
             ? path === "/dashboard"
-            : path === def.to || path.startsWith(def.to + "/");
+            : (path === def.to || path.startsWith(def.to + "/"))
+              && (!def.search || search.tab === def.search.tab);
           const pill = (
             <Link
               to={def.to}
+              search={def.search as never}
               aria-label={def.label}
               className={
                 "h-8 inline-flex items-center gap-1.5 rounded-full text-xs font-medium transition " +
                 (isActive
-                  ? "bg-emerald-600 text-white px-3 shadow-sm"
-                  : "w-8 justify-center text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10")
+                  ? "px-3 text-emerald-600 dark:text-emerald-400"
+                  : "w-8 justify-center text-muted-foreground hover:text-emerald-600")
               }
             >
-              <Icon className="h-3.5 w-3.5" />
+              {!isActive && <Icon className="h-3.5 w-3.5" />}
               {isActive && <span>{def.label}</span>}
             </Link>
           );
@@ -159,7 +162,7 @@ export function DashboardQuickTabs() {
             <button
               type="button"
               aria-label="Customize tabs"
-              className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition"
+              className="h-8 w-8 grid place-items-center rounded-full text-muted-foreground hover:text-emerald-600 transition"
             >
               <Settings2 className="h-3.5 w-3.5" />
             </button>

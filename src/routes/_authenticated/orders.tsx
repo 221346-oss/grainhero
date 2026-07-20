@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck, CheckCircle2 } from "lucide-react";
+import { MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck, CheckCircle2 } from "lucide-react";
 import { OrdersSkeleton } from "@/components/app/skeletons";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -61,9 +61,6 @@ function MyOrdersPage() {
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
-          <Package className="h-5 w-5 text-white" />
-        </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My install orders</h1>
           <p className="text-sm text-slate-500">Track the technician install for each subscription you purchased.</p>

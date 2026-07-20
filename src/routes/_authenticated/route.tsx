@@ -11,9 +11,9 @@ import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
-import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
+import TextShimmer from "@/components/ui/text-shimmer";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -30,7 +30,6 @@ export const Route = createFileRoute("/_authenticated")({
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
       "/team-management": "/platform/users",
-      "/data-visualization": "/analytics",
       "/traceability": "/dashboard",
       "/orders": "/platform/orders",
     };
@@ -66,9 +65,6 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-  const { data: profile } = useMyProfile();
-  const avatar = profile?.avatar ?? null;
-  const initials = initialsOf(profile?.name, profile?.email);
   const [mode, setMode] = useState<ThemeMode>(() =>
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
@@ -83,7 +79,7 @@ function AuthenticatedLayout() {
     setMode(next);
   };
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider>
       <SessionGuard />
       <OnboardingTour />
       <div className="min-h-screen flex w-full bg-background">
@@ -97,6 +93,13 @@ function AuthenticatedLayout() {
               <AppSearch />
             </div>
             <DashboardQuickTabs />
+            {/* Upgrade — plan management */}
+            <Link
+              to="/plan-management"
+              className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+            >
+              <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
+            </Link>
             {/* Dark / Light toggle */}
             <button
               type="button"
@@ -109,20 +112,6 @@ function AuthenticatedLayout() {
                 : <Moon className="h-4 w-4" />}
             </button>
             <NotificationBell />
-            <Link
-              to="/settings"
-              aria-label="Your profile"
-              data-tour="topbar-profile"
-              className="shrink-0 h-9 w-9 rounded-full grid place-items-center text-[12px] font-bold text-[--fusion-ink] shadow-sm relative overflow-hidden ring-1 ring-black/5 hover:ring-[--fusion-grape]/60 transition"
-              style={avatar ? undefined : { background: "var(--gradient-fusion)" }}
-            >
-              {avatar ? (
-                <img src={avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              ) : (
-                <span>{initials}</span>
-              )}
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
-            </Link>
           </header>
           <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <AnimatedOutlet />

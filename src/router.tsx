@@ -95,6 +95,11 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/technician/installs": OrdersSkeleton,
   "/sales": OrdersSkeleton,
   "/listings": GrainBatchesSkeleton,
+  "/grain-operations": GrainBatchesSkeleton,
+  "/monitoring": SensorsSkeleton,
+  "/intelligence": AnalyticsSkeleton,
+  "/business": SubscriptionSkeleton,
+  "/administration": SettingsSkeleton,
 };
 
 function AutoPending() {

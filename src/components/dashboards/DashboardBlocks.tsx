@@ -27,7 +27,7 @@ function priorityDot(p: string) {
         : "bg-slate-400";
 }
 
-function CardHeaderLink({ to, title, count }: { to: string; title: string; count?: number }) {
+function CardHeaderLink({ to, search, title, count }: { to: string; search?: Record<string, string>; title: string; count?: number }) {
   return (
     <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
       <CardTitle className="text-sm flex items-center gap-2">
@@ -36,7 +36,7 @@ function CardHeaderLink({ to, title, count }: { to: string; title: string; count
           <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono tabular-nums">{count}</Badge>
         )}
       </CardTitle>
-      <Link to={to} aria-label={`Open ${title}`} className="text-emerald-600 hover:text-emerald-700">
+      <Link to={to} search={search as never} aria-label={`Open ${title}`} className="text-emerald-600 hover:text-emerald-700">
         <ArrowUpRight className="h-3.5 w-3.5" />
       </Link>
     </CardHeader>
@@ -48,12 +48,12 @@ export function RecentBatchesCard() {
   const rows = data?.recentBatches ?? [];
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/grain-batches" title="Batches" count={rows.length} />
+      <CardHeaderLink to="/grain-operations" search={{ tab: "batches" }} title="Batches" count={rows.length} />
       <CardContent className="p-2 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">No batches</p>}
         <div className="divide-y divide-border/40">
           {rows.slice(0, 5).map((b) => (
-            <Link key={b.id} to="/grain-batches" className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
+            <Link key={b.id} to="/grain-operations" search={{ tab: "batches" }} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
               <span className="font-medium truncate">{b.batch_id}</span>
               <span className="tabular-nums text-muted-foreground text-[11px]">{Number(b.quantity_kg).toLocaleString()}kg</span>
               <span className={`h-2 w-2 rounded-full ${riskColor(Number(b.risk_score ?? 0))}`} title={`risk ${Number(b.risk_score ?? 0).toFixed(0)}`} />
@@ -75,7 +75,7 @@ export function RecentAlertsCard() {
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">All clear</p>}
         <div className="divide-y divide-border/40">
           {rows.slice(0, 5).map((a) => (
-            <Link key={a.id} to="/grain-alerts" className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
+            <Link key={a.id} to="/grain-alerts" search={{ priority: "all" }} className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
               <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot(String(a.priority))}`} />
               <span className="truncate flex-1">{a.title}</span>
             </Link>
@@ -142,7 +142,7 @@ export function SilosOccupancyCard() {
   const rows = data?.silos ?? [];
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/silos" title="Silos" count={rows.length} />
+      <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
         {rows.slice(0, 6).map((s) => {
@@ -151,7 +151,7 @@ export function SilosOccupancyCard() {
           const pct = cap ? Math.round((occ / cap) * 100) : 0;
           const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
           return (
-            <Link key={s.id} to="/silos" title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`} className="flex items-center gap-2 group">
+            <Link key={s.id} to="/grain-operations" search={{ tab: "silos" }} title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`} className="flex items-center gap-2 group">
               <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
               <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                 <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
