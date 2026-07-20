@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -80,15 +80,21 @@ function AuthenticatedLayout() {
   };
 
   // Floating header/sidebar — slide away on scroll-down, back on scroll-up.
+  // The page body (not <main>) is what actually scrolls here — the layout
+  // is min-h-screen, not h-screen, so <main>'s overflow-y-auto never gets
+  // short enough to scroll internally. Listen on window, same as the
+  // landing page's nav.
   const [navHidden, setNavHidden] = useState(false);
-  const lastScrollY = useRef(0);
-  const handleMainScroll = (e: React.UIEvent<HTMLElement>) => {
-    const y = e.currentTarget.scrollTop;
-    // Same rule as the landing page's nav: hide only while actively
-    // scrolling down past the threshold, show in every other case.
-    setNavHidden(y > lastScrollY.current && y > 72);
-    lastScrollY.current = y;
-  };
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      const y = window.scrollY;
+      setNavHidden(y > lastScrollY && y > 72);
+      lastScrollY = y;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <SidebarProvider>
@@ -133,7 +139,7 @@ function AuthenticatedLayout() {
             </button>
             <NotificationBell />
           </motion.header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden" onScroll={handleMainScroll}>
+          <main className="flex-1 overflow-x-hidden">
             <AnimatedOutlet />
           </main>
         </div>
