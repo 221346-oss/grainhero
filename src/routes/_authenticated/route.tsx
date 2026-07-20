@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -68,10 +68,41 @@ function AuthenticatedLayout() {
   const [mode, setMode] = useState<ThemeMode>(() =>
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const stored = getStoredThemeMode();
     setMode(stored);
+  }, []);
+
+  // Scroll-driven behavior on the main scroll container:
+  //  • hide header when scrolling down past 150px, show on scroll up
+  //  • auto-close sidebar if user scrolls down more than 20px
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    let lastY = el.scrollTop;
+    const onScroll = () => {
+      const y = el.scrollTop;
+      const dy = y - lastY;
+      if (dy > 0 && y > 150) setHeaderVisible(false);
+      else if (dy < 0) setHeaderVisible(true);
+      if (dy > 20) setSidebarOpen((open) => (open ? false : open));
+      lastY = y;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close sidebar on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   const handleToggle = () => {
@@ -79,44 +110,88 @@ function AuthenticatedLayout() {
     setMode(next);
   };
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SessionGuard />
       <OnboardingTour />
-      <div className="min-h-screen flex w-full bg-background">
-        <div data-tour="sidebar" className="contents">
-          <AppSidebar />
-        </div>
-        <div className="flex-1 flex flex-col min-w-0">
+      <div className="relative min-h-screen w-full bg-background">
+        {/* Floating GrainHero brand button — always visible, toggles the sidebar. */}
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((v) => !v)}
+          aria-label={sidebarOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={sidebarOpen}
+          className="fixed top-2.5 left-3 sm:left-4 z-[80] select-none rounded-lg px-2 py-1 hover:bg-muted/50 active:scale-[0.98] transition"
+        >
+          <span className="text-lg sm:text-xl font-black tracking-tight">
+            <span className="text-[#2FAC0C] text-xl sm:text-2xl">G</span>
+            <span className="text-foreground">rain</span>
+            <span className="text-[#2FAC0C] text-xl sm:text-2xl">H</span>
+            <span className="text-foreground">ero</span>
+          </span>
+        </button>
+
+        {/* Floating sidebar overlay */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <>
+              <motion.div
+                key="sidebar-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                onClick={() => setSidebarOpen(false)}
+                className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-[2px]"
+              />
+              <motion.div
+                key="sidebar-panel"
+                data-tour="sidebar"
+                initial={{ x: -24, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -24, opacity: 0 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                className="fixed top-0 left-0 z-[65] h-screen"
+              >
+                <AppSidebar />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Floating header — hides on scroll down, reappears on scroll up */}
+        <motion.header
+          animate={{ y: headerVisible ? 0 : -80, opacity: headerVisible ? 1 : 0 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed top-0 left-0 right-0 h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 pl-28 sm:pl-36 z-40"
+        >
+          <div className="flex-1 max-w-2xl mx-auto w-full">
+            <AppSearch />
+          </div>
+          <DashboardQuickTabs />
+          <Link
+            to="/plan-management"
+            className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+          >
+            <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
+          </Link>
+          <button
+            type="button"
+            onClick={handleToggle}
+            aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
+          >
+            {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+          <NotificationBell />
+        </motion.header>
+
+        <main
+          ref={mainRef}
+          className="h-screen overflow-y-auto overflow-x-hidden pt-14"
+        >
           <ImpersonationBanner />
-          <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
-            <div className="flex-1 max-w-2xl mx-auto w-full">
-              <AppSearch />
-            </div>
-            <DashboardQuickTabs />
-            {/* Upgrade — plan management */}
-            <Link
-              to="/plan-management"
-              className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
-            >
-              <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
-            </Link>
-            {/* Dark / Light toggle */}
-            <button
-              type="button"
-              onClick={handleToggle}
-              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
-            >
-              {mode === "dark"
-                ? <Sun className="h-4 w-4" />
-                : <Moon className="h-4 w-4" />}
-            </button>
-            <NotificationBell />
-          </header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">
-            <AnimatedOutlet />
-          </main>
-        </div>
+          <AnimatedOutlet />
+        </main>
       </div>
     </SidebarProvider>
   );
