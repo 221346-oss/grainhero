@@ -11,30 +11,36 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { computeMrr } = await import("@/lib/plan-pricing.server");
 
-    const [{ data: subs }, { data: invs }] = await Promise.all([
+    const [{ data: subs }, { data: invs }, { data: profs }, { data: hwOrders }] = await Promise.all([
       supabaseAdmin.from("subscriptions").select("*"),
       supabaseAdmin.from("invoices").select("*").order("billing_date", { ascending: false }).limit(500),
+      supabaseAdmin.from("profiles").select("id, subscription_plan, created_at"),
+      supabaseAdmin.from("hardware_orders").select("id, admin_id, plan_name, hardware_total, currency, status, created_at").not("status", "in", "(pending_payment,cancelled,refunded)"),
     ]);
 
     const subscriptions = subs ?? [];
     const invoices = invs ?? [];
+    const profiles = profs ?? [];
+    const hardware = hwOrders ?? [];
 
-    const activeSubs = subscriptions.filter((s: any) => s.status === "active");
+    // Canonical PKR MRR (plan_thresholds is the single source of truth).
+    const mrrResult = await computeMrr({
+      supabase: supabaseAdmin,
+      subscriptions,
+      profiles,
+    });
+    const mrr = mrrResult.mrr;
+    const arr = mrr * 12;
+
+    const activeSubs = mrrResult.entries;
     const trialSubs = subscriptions.filter((s: any) => s.status === "trial");
     const cancelledSubs = subscriptions.filter((s: any) => s.status === "cancelled");
 
-    // Normalize prices to monthly
-    const monthly = (s: any) => {
-      const p = Number(s.price_per_month ?? 0);
-      if (s.billing_cycle === "yearly") return p / 12;
-      return p;
-    };
-    const mrr = activeSubs.reduce((sum: number, s: any) => sum + monthly(s), 0);
-    const arr = mrr * 12;
-
     const paid = invoices.filter((i: any) => i.status === "paid");
-    const totalRevenue = paid.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0);
+    const hardwareRevenue = hardware.reduce((s: number, o: any) => s + Number(o.hardware_total ?? 0), 0);
+    const totalRevenue = paid.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0) + hardwareRevenue;
 
     // Revenue by month (last 12)
     const byMonth: Record<string, number> = {};
@@ -47,15 +53,21 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
       const key = String(inv.billing_date ?? inv.created_at ?? "").slice(0, 7);
       if (key in byMonth) byMonth[key] += Number(inv.amount ?? 0);
     }
+    for (const o of hardware) {
+      const key = String(o.created_at ?? "").slice(0, 7);
+      if (key in byMonth) byMonth[key] += Number(o.hardware_total ?? 0);
+    }
+    // Fold MRR into the historical trend so the sparkline reflects live
+    // subscribers even when no invoices/hardware orders exist yet.
+    // Each historical month gets the MRR of subscribers active on/before that month's end;
+    // when we don't have per-sub start dates, we conservatively add the full MRR to the
+    // current month only.
+    const currentKey = new Date().toISOString().slice(0, 7);
+    if (currentKey in byMonth) byMonth[currentKey] += mrr;
     const revenueSeries = Object.entries(byMonth).map(([month, revenue]) => ({ month, revenue }));
 
-    // Revenue by plan
-    const byPlan: Record<string, number> = {};
-    for (const s of activeSubs) {
-      const name = s.plan_name ?? "Unknown";
-      byPlan[name] = (byPlan[name] ?? 0) + monthly(s);
-    }
-    const planSeries = Object.entries(byPlan).map(([plan, mrr]) => ({ plan, mrr: Math.round(mrr) }));
+    // Revenue by plan (from the unified MRR entries — includes profile fallback).
+    const planSeries = Object.entries(mrrResult.byPlan).map(([plan, m]) => ({ plan, mrr: Math.round(m) }));
 
     // Subscriber growth (last 12 months, cumulative active)
     const growth: { month: string; subscribers: number }[] = [];

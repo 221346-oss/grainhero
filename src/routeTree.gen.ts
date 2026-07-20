@@ -36,6 +36,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
 import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
+import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
@@ -75,6 +76,7 @@ import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/tele
 import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
 import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
+import { Route as AuthenticatedSuppliersSupplierIdRouteImport } from './routes/_authenticated/suppliers.$supplierId'
 import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenticated/silos.$siloId'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
@@ -82,6 +84,7 @@ import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
 import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
+import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
 import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
@@ -314,6 +317,11 @@ const AuthenticatedTeamManagementRoute =
     path: '/team-management',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSubscriptionRoute =
   AuthenticatedSubscriptionRouteImport.update({
     id: '/subscription',
@@ -525,6 +533,12 @@ const AuthenticatedTechnicianInstallsRoute =
     path: '/technician/installs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSuppliersSupplierIdRoute =
+  AuthenticatedSuppliersSupplierIdRouteImport.update({
+    id: '/$supplierId',
+    path: '/$supplierId',
+    getParentRoute: () => AuthenticatedSuppliersRoute,
+  } as any)
 const AuthenticatedSilosSiloIdRoute =
   AuthenticatedSilosSiloIdRouteImport.update({
     id: '/silos/$siloId',
@@ -565,6 +579,12 @@ const AuthenticatedPlatformReviewsRoute =
   AuthenticatedPlatformReviewsRouteImport.update({
     id: '/platform/reviews',
     path: '/platform/reviews',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformReportingRoute =
+  AuthenticatedPlatformReportingRouteImport.update({
+    id: '/platform/reporting',
+    path: '/platform/reporting',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformQualityRoute =
@@ -1176,6 +1196,7 @@ export interface FileRoutesByFullPath {
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1218,6 +1239,7 @@ export interface FileRoutesByFullPath {
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -1225,6 +1247,7 @@ export interface FileRoutesByFullPath {
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
+  '/suppliers/$supplierId': typeof AuthenticatedSuppliersSupplierIdRoute
   '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
@@ -1343,6 +1366,7 @@ export interface FileRoutesByTo {
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1385,6 +1409,7 @@ export interface FileRoutesByTo {
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -1392,6 +1417,7 @@ export interface FileRoutesByTo {
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
+  '/suppliers/$supplierId': typeof AuthenticatedSuppliersSupplierIdRoute
   '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
@@ -1514,6 +1540,7 @@ export interface FileRoutesById {
   '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
+  '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -1556,6 +1583,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
   '/_authenticated/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/_authenticated/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
@@ -1563,6 +1591,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
+  '/_authenticated/suppliers/$supplierId': typeof AuthenticatedSuppliersSupplierIdRoute
   '/_authenticated/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
   '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
@@ -1685,6 +1714,7 @@ export interface FileRouteTypes {
     | '/server-monitoring'
     | '/settings'
     | '/subscription'
+    | '/suppliers'
     | '/team-management'
     | '/traceability'
     | '/auth/forgot-password'
@@ -1727,6 +1757,7 @@ export interface FileRouteTypes {
     | '/platform/pipeline'
     | '/platform/plans'
     | '/platform/quality'
+    | '/platform/reporting'
     | '/platform/reviews'
     | '/platform/sellers'
     | '/platform/sla-alerts'
@@ -1734,6 +1765,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/settings/notifications'
     | '/silos/$siloId'
+    | '/suppliers/$supplierId'
     | '/technician/installs'
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
@@ -1852,6 +1884,7 @@ export interface FileRouteTypes {
     | '/server-monitoring'
     | '/settings'
     | '/subscription'
+    | '/suppliers'
     | '/team-management'
     | '/traceability'
     | '/auth/forgot-password'
@@ -1894,6 +1927,7 @@ export interface FileRouteTypes {
     | '/platform/pipeline'
     | '/platform/plans'
     | '/platform/quality'
+    | '/platform/reporting'
     | '/platform/reviews'
     | '/platform/sellers'
     | '/platform/sla-alerts'
@@ -1901,6 +1935,7 @@ export interface FileRouteTypes {
     | '/platform/users'
     | '/settings/notifications'
     | '/silos/$siloId'
+    | '/suppliers/$supplierId'
     | '/technician/installs'
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
@@ -2022,6 +2057,7 @@ export interface FileRouteTypes {
     | '/_authenticated/server-monitoring'
     | '/_authenticated/settings'
     | '/_authenticated/subscription'
+    | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
     | '/_authenticated/traceability'
     | '/auth/forgot-password'
@@ -2064,6 +2100,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
     | '/_authenticated/platform/quality'
+    | '/_authenticated/platform/reporting'
     | '/_authenticated/platform/reviews'
     | '/_authenticated/platform/sellers'
     | '/_authenticated/platform/sla-alerts'
@@ -2071,6 +2108,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
     | '/_authenticated/silos/$siloId'
+    | '/_authenticated/suppliers/$supplierId'
     | '/_authenticated/technician/installs'
     | '/api/firebase/live-sensors'
     | '/api/public/actuator-ack'
@@ -2405,6 +2443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/suppliers': {
+      id: '/_authenticated/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/subscription': {
       id: '/_authenticated/subscription'
       path: '/subscription'
@@ -2678,6 +2723,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTechnicianInstallsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/suppliers/$supplierId': {
+      id: '/_authenticated/suppliers/$supplierId'
+      path: '/$supplierId'
+      fullPath: '/suppliers/$supplierId'
+      preLoaderRoute: typeof AuthenticatedSuppliersSupplierIdRouteImport
+      parentRoute: typeof AuthenticatedSuppliersRoute
+    }
     '/_authenticated/silos/$siloId': {
       id: '/_authenticated/silos/$siloId'
       path: '/silos/$siloId'
@@ -2725,6 +2777,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/reviews'
       fullPath: '/platform/reviews'
       preLoaderRoute: typeof AuthenticatedPlatformReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/reporting': {
+      id: '/_authenticated/platform/reporting'
+      path: '/platform/reporting'
+      fullPath: '/platform/reporting'
+      preLoaderRoute: typeof AuthenticatedPlatformReportingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/quality': {
@@ -3409,6 +3468,21 @@ const AuthenticatedSettingsRouteWithChildren =
     AuthenticatedSettingsRouteChildren,
   )
 
+interface AuthenticatedSuppliersRouteChildren {
+  AuthenticatedSuppliersSupplierIdRoute: typeof AuthenticatedSuppliersSupplierIdRoute
+}
+
+const AuthenticatedSuppliersRouteChildren: AuthenticatedSuppliersRouteChildren =
+  {
+    AuthenticatedSuppliersSupplierIdRoute:
+      AuthenticatedSuppliersSupplierIdRoute,
+  }
+
+const AuthenticatedSuppliersRouteWithChildren =
+  AuthenticatedSuppliersRoute._addFileChildren(
+    AuthenticatedSuppliersRouteChildren,
+  )
+
 interface AuthenticatedBuyerOrdersRouteChildren {
   AuthenticatedBuyerOrdersOrderIdRoute: typeof AuthenticatedBuyerOrdersOrderIdRoute
 }
@@ -3544,6 +3618,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
+  AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRouteWithChildren
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
@@ -3577,6 +3652,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
   AuthenticatedPlatformQualityRoute: typeof AuthenticatedPlatformQualityRoute
+  AuthenticatedPlatformReportingRoute: typeof AuthenticatedPlatformReportingRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
@@ -3625,6 +3701,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
+  AuthenticatedSuppliersRoute: AuthenticatedSuppliersRouteWithChildren,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
@@ -3676,6 +3753,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
   AuthenticatedPlatformQualityRoute: AuthenticatedPlatformQualityRoute,
+  AuthenticatedPlatformReportingRoute: AuthenticatedPlatformReportingRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,

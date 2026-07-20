@@ -1,46 +1,82 @@
-## Goal
-1) Fresh, realistic demo data for `atifnazir005@gmail.com` so every dashboard renders with meaningful numbers.
-2) Sidebar simplification per role (industry-standard agritech shell — max 6–8 pinned items) with the long tail surfaced from each dashboard.
-3) Sweep the top 4 recurring UI flaws.
+# Manager Dashboard Redesign
 
-## 1. Data population (idempotent SQL)
-Only insert what's missing so re-running is safe. For the tenant admin resolved from `atifnazir005@gmail.com`:
-- Ensure `subscription` = Pro active, `plan_thresholds` row exists.
-- Backfill 2 warehouses, 4 silos, 3 grain batches, 3 sensor devices with 72h hourly readings, 3 actuators, 8 alerts (mix open/resolved).
-- Marketplace: 3 listings, 4 buyer orders (paid/dispatched/delivered/disputed), shipment events, 2 reviews, 1 dispute, 1 return.
-- Hardware: 1 completed install order + devices, 1 in-progress install.
-- Finance: 6 months of invoices + payments; ledger entries.
-- Insurance: 1 active policy + 1 open claim.
-- Notifications, activity logs, mobile devices.
-- Super-admin visibility: seed 4 additional demo admins (existing profiles) with sample subscriptions so `/platform/financials` and `/platform/users` are populated.
+Rebuild the Manager dashboard to mirror the Admin dashboard's structure (WelcomeBanner → QuickTabs → KpiSummary → Bento) while keeping the Manager's operational focus. Preserve the current "card-within-card-within-scrollable" pattern used by `ViewBatchesCard` — it is the interaction model for every action block.
 
-## 2. Sidebar redesign (per-role, industry standard)
-Replace the current 20+ pinned items with a compact role-scoped rail. Everything else lives in a `More` popover, but each dash surfaces its own deep-links via clickable tiles (already partly in place).
+## Layout (top → bottom)
 
-**Admin / Manager (6 items):**
-Home · Batches · Silos · Sensors · Alerts · Marketplace · More
+```text
+┌────────────────────────────────────────────────────────────┐
+│ WelcomeBanner  (typewriter, collapses after 4s)            │
+├────────────────────────────────────────────────────────────┤
+│ RangeChip (today/7d/30d/mtd/ytd)                           │
+├────────────────────────────────────────────────────────────┤
+│ ManagerKpiSummary   65 / 35 split                          │
+│  ┌─────── Hero: Silo Fill % ────┐ ┌── KPI list ───────┐    │
+│  │ big % + sparkline of avg     │ │ Batches (deltas)  │    │
+│  │ occupancy over range         │ │ Open Alerts       │    │
+│  │ CTA: Silo Management         │ │ Pending QC        │    │
+│  └──────────────────────────────┘ │ Dispatch ready    │    │
+│                                    │ Active Actuators  │    │
+│                                    └───────────────────┘    │
+├────────────────────────────────────────────────────────────┤
+│ ManagerBento  (2-col md, 3-col xl)                         │
+│ ┌── Ops split (LEFT) ──────┐  ┌── Fulfillment (RIGHT) ──┐  │
+│ │ Silos live list          │  │ Dispatch queue          │  │
+│ │  (scrollable, inline     │  │  (FIFO suggestions,     │  │
+│ │   temp/humidity chips)   │  │   Dispatch button)      │  │
+│ │ Alert triage             │  │ Pending QC queue        │  │
+│ │  (Ack / Resolve inline)  │  │  (Approve / Reject)     │  │
+│ │ Actuator quick toggles   │  │ Buyer orders to fulfill │  │
+│ │  (fan / heater on-off,   │  │  (compact rows)         │  │
+│ │   inside scrollable card)│  │                         │  │
+│ └──────────────────────────┘  └─────────────────────────┘  │
+├────────────────────────────────────────────────────────────┤
+│ Team & Tasks strip (full width)                            │
+│  Technician assignments · Open tasks · SLA countdown       │
+├────────────────────────────────────────────────────────────┤
+│ CustomWidgetsBand (kept, unchanged)                        │
+└────────────────────────────────────────────────────────────┘
+```
 
-**Technician (5):**
-Home · My Installs · Sensors · Actuators · Alerts · More
+## Interaction rules (per user)
 
-**Super Admin (6):**
-Home · Tenants (via /platform/users) · Financials · Marketplace Ops · Insurance · Launch Readiness · More
+- **Cards-within-cards-within-scrollable** is the norm. Each bento block is a card whose body contains a bordered inner card with a `max-h` scroll region and inline row actions — same pattern as `ViewBatchesCard`.
+- Density: compact rows, small pills, medium padding (h-9 rows, text-xs/text-sm).
+- Every number is a link that deep-links to its filtered page.
+- Manager focus = management, not decoration → drop hero animations and the big `StatCard` grid; replace with `ManagerKpiSummary` and dense operational lists.
 
-Bottom rail (all roles): Team · Settings.
-Everything removed from the rail (Warehouses, Buyers, Listings, Sales, Revenue, Earnings, Activity Logs, Analytics, AI Predictions, Insurance, Subscription, all `/platform/*` deep pages) is:
-- Grouped in `More` popover (already exists, just repopulated), AND
-- Surfaced as a clickable KPI tile / quick-action button on the relevant dashboard.
+## Quick tabs (topbar)
 
-## 3. UI flaw sweep
-- Duplicate `revenue` nav entry (present twice in pinned + more).
-- `financials.tsx` "Revenue by plan" pie hover text overflow (tooltip formatter).
-- Empty-state cards on dashboards that still hardcode `text-gray-500` (dark-mode invisible).
-- Skeleton container width mismatch on 2 remaining platform pages (`launch-readiness`, `finance`).
+Add Manager preset in `DashboardQuickTabs.tsx`:
+default = `Overview, Silos, Batches, Alerts, Dispatch`, catalog also includes `Orders, Sensors, Actuators, Team, Warehouses, Reports, Marketplace, Buyers`. User can customize (max 5, Overview pinned).
 
-## Deliverables
-- 1 SQL insert script (via `supabase--insert`, idempotent `ON CONFLICT`).
-- `AppSidebar.tsx` rewrite: shrink `pinnedNav` to role-scoped small sets, move rest into `moreGroups`.
-- Small patches to `financials.tsx` tooltip + 3–4 empty-state cards.
-- No new pages, no route changes — only sidebar surface + dashboard tile links.
+## Data
 
-After apply I run typecheck and confirm the dev preview loads.
+One new server fn `getManagerDashboard({ range })` in `src/lib/manager-dashboard.functions.ts`:
+- KPIs: silo fill %, batches counts + prior-window delta, open/critical alerts, pending QC count, dispatch-ready count, active actuators.
+- Rows: top 10 silos (name, fill %, temp, humidity, status), top 10 active alerts, top 10 pending-QC batches, top 10 dispatch-ready batches, top 10 buyer orders to fulfill, actuators (id, name, on/off, silo).
+- Team: technicians in tenant + open field_incidents/tasks for SLA.
+
+Wire silo-fill sparkline from a simple time-bucket over `grain_batches` occupancy or `sensor_readings` averages (best-effort — fall back to current fill if no history).
+
+## Files
+
+**New**
+- `src/lib/manager-dashboard.functions.ts` — `getManagerDashboard` server fn.
+- `src/components/dashboards/ManagerKpiSummary.tsx` — 65/35 hero + KPI list (mirrors `KpiSummary.tsx`).
+- `src/components/dashboards/ManagerBento.tsx` — 2-column bento with 6 scrollable inner cards + inline actions.
+- `src/components/dashboards/ManagerTeamStrip.tsx` — technicians & open-task strip.
+
+**Edited**
+- `src/components/dashboards/ManagerDashboard.tsx` — replace body with `<WelcomeBanner /> <RangeChip /> <ManagerKpiSummary /> <ManagerBento /> <ManagerTeamStrip /> <CustomWidgetsBand />`. Keep `useDashboardStats` for backwards compat but source real data from new server fn.
+- `src/components/app/DashboardQuickTabs.tsx` — add Manager catalog + default, gate on role via `useMyProfile`/role hook already in tree.
+
+**Untouched**
+- Admin/SuperAdmin dashboards, sidebar, existing pages, business logic, DB schema.
+
+## Verification
+
+- Route: `/dashboard` as manager — visual check at 525px and desktop.
+- Deep-links: click every KPI + inline row → lands on correct filtered page.
+- Inline actions: Ack alert, Approve QC, Dispatch, toggle actuator — all use existing server fns already wired on their respective pages.
+- Typecheck via build.

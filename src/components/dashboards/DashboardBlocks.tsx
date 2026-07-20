@@ -1,10 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { ArrowUpRight } from "lucide-react";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
 function useExtras() {
@@ -13,47 +12,54 @@ function useExtras() {
 }
 
 function riskColor(score: number) {
-  if (score >= 70) return "bg-red-100 text-red-800";
-  if (score >= 40) return "bg-amber-100 text-amber-800";
-  return "bg-emerald-100 text-emerald-800";
+  if (score >= 70) return "bg-red-500";
+  if (score >= 40) return "bg-amber-500";
+  return "bg-emerald-500";
 }
 
-function priorityColor(p: string) {
+function priorityDot(p: string) {
   return p === "critical"
-    ? "bg-red-100 text-red-800"
+    ? "bg-red-500"
     : p === "high"
-      ? "bg-orange-100 text-orange-800"
+      ? "bg-orange-500"
       : p === "medium"
-        ? "bg-amber-100 text-amber-800"
-        : "bg-slate-100 text-slate-700";
+        ? "bg-amber-500"
+        : "bg-slate-400";
+}
+
+function CardHeaderLink({ to, title, count }: { to: string; title: string; count?: number }) {
+  return (
+    <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
+      <CardTitle className="text-sm flex items-center gap-2">
+        {title}
+        {typeof count === "number" && (
+          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono tabular-nums">{count}</Badge>
+        )}
+      </CardTitle>
+      <Link to={to} aria-label={`Open ${title}`} className="text-emerald-600 hover:text-emerald-700">
+        <ArrowUpRight className="h-3.5 w-3.5" />
+      </Link>
+    </CardHeader>
+  );
 }
 
 export function RecentBatchesCard() {
   const { data } = useExtras();
   const rows = data?.recentBatches ?? [];
   return (
-    <Card className="border-slate-200/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-base">Recent batches</CardTitle>
-          <CardDescription>Latest 5 intake / dispatch</CardDescription>
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/grain-operations" title="Batches" count={rows.length} />
+      <CardContent className="p-2 pt-0">
+        {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">No batches</p>}
+        <div className="divide-y divide-border/40">
+          {rows.slice(0, 5).map((b) => (
+            <Link key={b.id} to="/grain-operations" className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
+              <span className="font-medium truncate">{b.batch_id}</span>
+              <span className="tabular-nums text-muted-foreground text-[11px]">{Number(b.quantity_kg).toLocaleString()}kg</span>
+              <span className={`h-2 w-2 rounded-full ${riskColor(Number(b.risk_score ?? 0))}`} title={`risk ${Number(b.risk_score ?? 0).toFixed(0)}`} />
+            </Link>
+          ))}
         </div>
-        <Button asChild size="sm" variant="outline"><Link to="/grain-operations">View all</Link></Button>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No batches yet</p>}
-        {rows.map((b) => (
-          <div key={b.id} className="flex items-center justify-between gap-3 p-2 rounded-md border hover:bg-slate-50">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-sm truncate">{b.batch_id}</span>
-                <Badge variant="outline" className="text-[10px]">{b.grain_type}</Badge>
-                <Badge className={`text-[10px] ${riskColor(Number(b.risk_score ?? 0))}`}>risk {Number(b.risk_score ?? 0).toFixed(0)}</Badge>
-              </div>
-              <div className="text-xs text-slate-500 mt-0.5">{Number(b.quantity_kg).toLocaleString()} kg · {b.status}</div>
-            </div>
-          </div>
-        ))}
       </CardContent>
     </Card>
   );
@@ -63,26 +69,18 @@ export function RecentAlertsCard() {
   const { data } = useExtras();
   const rows = data?.recentAlerts ?? [];
   return (
-    <Card className="border-slate-200/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-base">Recent alerts</CardTitle>
-          <CardDescription>Latest 5 grain alerts</CardDescription>
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/grain-alerts" title="Alerts" count={rows.length} />
+      <CardContent className="p-2 pt-0">
+        {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">All clear</p>}
+        <div className="divide-y divide-border/40">
+          {rows.slice(0, 5).map((a) => (
+            <Link key={a.id} to="/grain-alerts" search={{ priority: "all" }} className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
+              <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot(String(a.priority))}`} />
+              <span className="truncate flex-1">{a.title}</span>
+            </Link>
+          ))}
         </div>
-        <Button asChild size="sm" variant="outline"><Link to="/grain-alerts" search={{ priority: "all" }}>View all</Link></Button>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No open alerts 🎉</p>}
-        {rows.map((a) => (
-          <div key={a.id} className="p-2 rounded-md border">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge className={`text-[10px] uppercase ${priorityColor(String(a.priority))}`}>{a.priority}</Badge>
-              <span className="text-sm font-medium truncate">{a.title}</span>
-            </div>
-            <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{a.message}</p>
-            <p className="text-[10px] text-slate-400 mt-1">{a.triggered_at ? new Date(a.triggered_at).toLocaleString() : ""}</p>
-          </div>
-        ))}
       </CardContent>
     </Card>
   );
@@ -92,24 +90,17 @@ export function TeamCard() {
   const { data } = useExtras();
   const rows = data?.team ?? [];
   return (
-    <Card className="border-slate-200/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-base">Team</CardTitle>
-          <CardDescription>Recent activity</CardDescription>
-        </div>
-        <Button asChild size="sm" variant="outline"><Link to="/team-management">Manage</Link></Button>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No members yet</p>}
-        {rows.map((u) => (
-          <div key={u.id} className="flex items-center gap-3 p-2 rounded-md border">
-            <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-xs font-semibold">{(u.name ?? u.email ?? "?").slice(0, 2).toUpperCase()}</div>
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/team-management" title="Team" count={rows.length} />
+      <CardContent className="p-3 pt-0 space-y-1.5">
+        {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No members yet</p>}
+        {rows.slice(0, 4).map((u) => (
+          <div key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-border/50">
+            <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[10px] font-semibold shrink-0">{(u.name ?? u.email ?? "?").slice(0, 2).toUpperCase()}</div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">{u.name ?? "—"}</p>
-              <p className="text-xs text-slate-500 truncate">{u.email}</p>
+              <p className="text-xs font-medium truncate">{u.name ?? "—"}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
             </div>
-            <span className="text-[10px] text-slate-400">{u.updated_at ? new Date(u.updated_at).toLocaleDateString() : "—"}</span>
           </div>
         ))}
       </CardContent>
@@ -121,25 +112,26 @@ export function ActuatorsCard() {
   const { data } = useExtras();
   const rows = data?.actuators ?? [];
   return (
-    <Card className="border-slate-200/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-base">Actuators</CardTitle>
-          <CardDescription>Live device state</CardDescription>
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/actuators" title="Actuators" count={rows.length} />
+      <CardContent className="p-3 pt-0">
+        {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No devices</p>}
+        <div className="flex flex-wrap gap-1.5">
+          {rows.map((a) => (
+            <Link
+              key={a.id}
+              to="/actuators"
+              title={`${a.name} · ${a.is_on ? `On ${a.power_level ?? 0}%` : "Off"}`}
+              className={`h-3 w-3 rounded-full transition hover:scale-125 ${a.is_on ? "bg-emerald-500" : "bg-muted-foreground/30"}`}
+            />
+          ))}
         </div>
-        <Button asChild size="sm" variant="outline"><Link to="/actuators">Control</Link></Button>
-      </CardHeader>
-      <CardContent className="grid gap-2 sm:grid-cols-2">
-        {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6 sm:col-span-2">No actuators yet</p>}
-        {rows.map((a) => (
-          <div key={a.id} className="flex items-center justify-between p-2 rounded-md border">
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{a.name}</p>
-              <p className="text-xs text-slate-500 truncate">{a.actuator_type} · {a.silos?.name ?? "—"}</p>
-            </div>
-            <Badge className={a.is_on ? "bg-emerald-500" : "bg-slate-200 text-slate-700"}>{a.is_on ? `On ${a.power_level ?? 0}%` : "Off"}</Badge>
+        {rows.length > 0 && (
+          <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" />on {rows.filter(r => r.is_on).length}</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted-foreground/30" />off {rows.filter(r => !r.is_on).length}</span>
           </div>
-        ))}
+        )}
       </CardContent>
     </Card>
   );
@@ -149,29 +141,23 @@ export function SilosOccupancyCard() {
   const { data } = useExtras();
   const rows = data?.silos ?? [];
   return (
-    <Card className="border-slate-200/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-base">Silo occupancy</CardTitle>
-          <CardDescription>Storage utilisation</CardDescription>
-        </div>
-        <Button asChild size="sm" variant="outline"><Link to="/grain-operations">Details</Link></Button>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {rows.length === 0 && <p className="text-sm text-slate-500 text-center py-6">No silos yet</p>}
-        {rows.map((s) => {
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/grain-operations" title="Silos" count={rows.length} />
+      <CardContent className="p-3 pt-0 space-y-1.5">
+        {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
+        {rows.slice(0, 6).map((s) => {
           const cap = Number(s.capacity_kg ?? 0);
           const occ = Number(s.current_occupancy_kg ?? 0);
           const pct = cap ? Math.round((occ / cap) * 100) : 0;
+          const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
           return (
-            <div key={s.id} className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-700 truncate">{s.name} <span className="text-slate-400 text-xs">({s.silo_id})</span></span>
-                <span className="font-semibold text-slate-900">{pct}%</span>
+            <Link key={s.id} to="/grain-operations" title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`} className="flex items-center gap-2 group">
+              <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
+              <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
               </div>
-              <Progress value={pct} />
-              <p className="text-[10px] text-slate-500">{occ.toLocaleString()} / {cap.toLocaleString()} kg · {s.status}</p>
-            </div>
+              <span className="text-[11px] tabular-nums font-semibold w-8 text-right">{pct}%</span>
+            </Link>
           );
         })}
       </CardContent>

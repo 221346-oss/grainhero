@@ -1,9 +1,11 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
+import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
@@ -90,6 +92,7 @@ function AuthenticatedLayout() {
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
+            <DashboardQuickTabs />
             {/* Upgrade — plan management */}
             <Link
               to="/plan-management"
@@ -111,10 +114,27 @@ function AuthenticatedLayout() {
             <NotificationBell />
           </header>
           <main className="flex-1 overflow-y-auto overflow-x-hidden">
-            <Outlet />
+            <AnimatedOutlet />
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+function AnimatedOutlet() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+      >
+        <Outlet />
+      </motion.div>
+    </AnimatePresence>
   );
 }

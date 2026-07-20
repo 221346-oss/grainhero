@@ -45,23 +45,23 @@ export function DataListPage<T extends Record<string, unknown>>({
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-slate-200/70 shadow-sm overflow-hidden">
+        <Card className="shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-muted/50 border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   {columns.map((c) => (
-                    <th key={c.key} className="px-4 py-3 text-left font-semibold text-slate-600 text-xs uppercase tracking-wider">
+                    <th key={c.key} className="px-4 py-3 text-left font-semibold">
                       {c.label}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="">
+              <tbody className="divide-y divide-border">
                 {rows.map((row, i) => (
-                  <tr key={(row.id as string) ?? i} className="hover:bg-slate-50/50">
+                  <tr key={(row.id as string) ?? i} className="hover:bg-muted/40 transition-colors">
                     {columns.map((c) => (
-                      <td key={c.key} className="px-4 py-3 text-slate-700">
+                      <td key={c.key} className="px-4 py-3 text-foreground/80">
                         {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key] ?? "—")}
                       </td>
                     ))}

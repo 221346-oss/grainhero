@@ -65,14 +65,68 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email.trim().toLowerCase(), {
-      data: { name: data.name ?? "", invited_role: data.role, admin_id },
+    const email = data.email.trim().toLowerCase();
+    let uid: string | undefined;
+    // 1) Ensure an auth user exists. Prefer createUser (doesn't require SMTP);
+    //    fall back to locating an existing user if the email is already registered.
+    const createRes = await supabaseAdmin.auth.admin.createUser({
+      email,
+      email_confirm: false,
+      user_metadata: { name: data.name ?? "", invited_role: data.role, admin_id },
     });
-    if (error) throw new Error(error.message);
-    const uid = invited.user?.id;
+    if (createRes.error) {
+      const msg = createRes.error.message || (createRes.error as { code?: string }).code || "";
+      const already = /already|registered|exists|duplicate/i.test(msg);
+      if (!already) {
+        console.error("[inviteTeamMember] createUser failed", createRes.error);
+        throw new Error(msg || "Could not create the user in Supabase Auth.");
+      }
+      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      if (listErr) throw new Error(listErr.message || "Failed to look up existing user");
+      uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
+      if (!uid) throw new Error("A user with that email already exists but could not be located.");
+    } else {
+      uid = createRes.data.user?.id;
+    }
+
+    // 2) Generate an invite/magic link (does not send email; we send via Resend).
+    let inviteLink: string | null = null;
+    try {
+      const linkRes = await supabaseAdmin.auth.admin.generateLink({
+        type: "invite",
+        email,
+        options: { data: { name: data.name ?? "", invited_role: data.role, admin_id } },
+      });
+      if (!linkRes.error) inviteLink = linkRes.data.properties?.action_link ?? null;
+    } catch (e) {
+      console.warn("[inviteTeamMember] generateLink failed (non-fatal)", e);
+    }
+
+    // 3) Send the invitation email via Resend (already configured in this project).
+    try {
+      const { sendEmailViaResend } = await import("@/lib/resend.server");
+      const cta = inviteLink
+        ? `<p><a href="${inviteLink}" style="display:inline-block;background:#059669;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Accept invitation</a></p>`
+        : `<p>Sign in at <a href="https://grainheroo.lovable.app/auth">grainheroo.lovable.app/auth</a> using this email to accept.</p>`;
+      await sendEmailViaResend({
+        to: email,
+        subject: `You've been invited to GrainHero as ${data.role}`,
+        html: `<div style="font-family:Inter,Arial,sans-serif;color:#0f172a;max-width:520px;margin:auto">
+          <h2 style="color:#065f46">You're invited to GrainHero</h2>
+          <p>Hi ${data.name ?? "there"}, you've been added to a GrainHero tenant as <strong>${data.role}</strong>.</p>
+          ${cta}
+          <p style="color:#64748b;font-size:12px;margin-top:24px">If you didn't expect this, you can ignore this email.</p>
+        </div>`,
+      });
+    } catch (e) {
+      console.warn("[inviteTeamMember] email send failed (non-fatal)", e);
+    }
     if (uid) {
-      await supabaseAdmin.from("profiles").upsert({ id: uid, email: data.email.trim().toLowerCase(), name: data.name ?? data.email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
-      await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: data.role }, { onConflict: "user_id,role" });
+      const { error: pErr } = await supabaseAdmin.from("profiles").upsert({ id: uid, email, name: data.name ?? email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
+      if (pErr) { console.error("[inviteTeamMember] profiles upsert failed", pErr); throw new Error(pErr.message || "Failed to save profile"); }
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+      const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
+      if (rErr) { console.error("[inviteTeamMember] user_roles insert failed", rErr); throw new Error(rErr.message || "Failed to assign role"); }
     }
     return { ok: true };
   });

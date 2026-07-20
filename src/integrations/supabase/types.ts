@@ -2646,6 +2646,7 @@ export type Database = {
           buyer_id: string | null
           created_at: string | null
           created_by: string
+          currency: string | null
           deleted_at: string | null
           dispatch_details: Json | null
           dispatched_quantity_kg: number | null
@@ -2661,6 +2662,7 @@ export type Database = {
           insured: boolean | null
           intake_conditions: Json | null
           intake_date: string | null
+          intake_source: string | null
           last_risk_assessment: string | null
           moisture_content: number | null
           net_weight_kg: number | null
@@ -2673,19 +2675,25 @@ export type Database = {
           quality_snapshot: Json | null
           quality_tests: Json | null
           quantity_kg: number
+          remaining_kg: number | null
           revenue: number | null
           risk_score: number | null
           sell_price_per_kg: number | null
           sensor_summary: Json | null
           silo_id: string
+          source_kind: Database["public"]["Enums"]["supplier_kind"] | null
           source_location: string | null
           spoilage_events: Json | null
           spoilage_label: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at: string | null
           status: Database["public"]["Enums"]["batch_status"] | null
+          supplier_contact: string | null
+          supplier_id: string | null
+          supplier_name: string | null
           tags: string[] | null
           test_weight: number | null
           total_purchase_value: number | null
+          unit_cost: number | null
           updated_at: string | null
           updated_by: string | null
           variety: string | null
@@ -2699,6 +2707,7 @@ export type Database = {
           buyer_id?: string | null
           created_at?: string | null
           created_by: string
+          currency?: string | null
           deleted_at?: string | null
           dispatch_details?: Json | null
           dispatched_quantity_kg?: number | null
@@ -2714,6 +2723,7 @@ export type Database = {
           insured?: boolean | null
           intake_conditions?: Json | null
           intake_date?: string | null
+          intake_source?: string | null
           last_risk_assessment?: string | null
           moisture_content?: number | null
           net_weight_kg?: number | null
@@ -2726,19 +2736,25 @@ export type Database = {
           quality_snapshot?: Json | null
           quality_tests?: Json | null
           quantity_kg: number
+          remaining_kg?: number | null
           revenue?: number | null
           risk_score?: number | null
           sell_price_per_kg?: number | null
           sensor_summary?: Json | null
           silo_id: string
+          source_kind?: Database["public"]["Enums"]["supplier_kind"] | null
           source_location?: string | null
           spoilage_events?: Json | null
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
+          supplier_contact?: string | null
+          supplier_id?: string | null
+          supplier_name?: string | null
           tags?: string[] | null
           test_weight?: number | null
           total_purchase_value?: number | null
+          unit_cost?: number | null
           updated_at?: string | null
           updated_by?: string | null
           variety?: string | null
@@ -2752,6 +2768,7 @@ export type Database = {
           buyer_id?: string | null
           created_at?: string | null
           created_by?: string
+          currency?: string | null
           deleted_at?: string | null
           dispatch_details?: Json | null
           dispatched_quantity_kg?: number | null
@@ -2767,6 +2784,7 @@ export type Database = {
           insured?: boolean | null
           intake_conditions?: Json | null
           intake_date?: string | null
+          intake_source?: string | null
           last_risk_assessment?: string | null
           moisture_content?: number | null
           net_weight_kg?: number | null
@@ -2779,19 +2797,25 @@ export type Database = {
           quality_snapshot?: Json | null
           quality_tests?: Json | null
           quantity_kg?: number
+          remaining_kg?: number | null
           revenue?: number | null
           risk_score?: number | null
           sell_price_per_kg?: number | null
           sensor_summary?: Json | null
           silo_id?: string
+          source_kind?: Database["public"]["Enums"]["supplier_kind"] | null
           source_location?: string | null
           spoilage_events?: Json | null
           spoilage_label?: Database["public"]["Enums"]["spoilage_label"] | null
           state_changed_at?: string | null
           status?: Database["public"]["Enums"]["batch_status"] | null
+          supplier_contact?: string | null
+          supplier_id?: string | null
+          supplier_name?: string | null
           tags?: string[] | null
           test_weight?: number | null
           total_purchase_value?: number | null
+          unit_cost?: number | null
           updated_at?: string | null
           updated_by?: string | null
           variety?: string | null
@@ -2834,6 +2858,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "grain_batches_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grain_batches_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
@@ -2842,6 +2873,183 @@ export type Database = {
           },
           {
             foreignKeyName: "grain_batches_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grain_dispatch_allocations: {
+        Row: {
+          batch_id: string
+          created_at: string
+          dispatch_id: string
+          id: string
+          qty_kg: number
+          unit_cost: number | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          dispatch_id: string
+          id?: string
+          qty_kg: number
+          unit_cost?: number | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          dispatch_id?: string
+          id?: string
+          qty_kg?: number
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_dispatch_allocations_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatch_allocations_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_dispatches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grain_dispatches: {
+        Row: {
+          admin_id: string
+          avg_cost_snapshot: number | null
+          avg_unit_cost: number | null
+          buyer_id: string | null
+          buyer_order_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          destination: string | null
+          dispatch_number: string
+          dispatched_at: string | null
+          driver_contact: string | null
+          driver_name: string | null
+          expected_date: string | null
+          grain_type: string
+          id: string
+          market_price_snapshot: number | null
+          notes: string | null
+          price_basis: string | null
+          price_per_kg: number
+          profit: number | null
+          silo_id: string
+          stage: string
+          status: string
+          total_amount: number
+          total_cost: number | null
+          total_qty_kg: number
+          updated_at: string
+          vehicle_number: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          admin_id: string
+          avg_cost_snapshot?: number | null
+          avg_unit_cost?: number | null
+          buyer_id?: string | null
+          buyer_order_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          destination?: string | null
+          dispatch_number: string
+          dispatched_at?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          expected_date?: string | null
+          grain_type: string
+          id?: string
+          market_price_snapshot?: number | null
+          notes?: string | null
+          price_basis?: string | null
+          price_per_kg: number
+          profit?: number | null
+          silo_id: string
+          stage?: string
+          status?: string
+          total_amount?: number
+          total_cost?: number | null
+          total_qty_kg: number
+          updated_at?: string
+          vehicle_number?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          admin_id?: string
+          avg_cost_snapshot?: number | null
+          avg_unit_cost?: number | null
+          buyer_id?: string | null
+          buyer_order_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          destination?: string | null
+          dispatch_number?: string
+          dispatched_at?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          expected_date?: string | null
+          grain_type?: string
+          id?: string
+          market_price_snapshot?: number | null
+          notes?: string | null
+          price_basis?: string | null
+          price_per_kg?: number
+          profit?: number | null
+          silo_id?: string
+          stage?: string
+          status?: string
+          total_amount?: number
+          total_cost?: number | null
+          total_qty_kg?: number
+          updated_at?: string
+          vehicle_number?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_dispatches_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_buyer_order_id_fkey"
+            columns: ["buyer_order_id"]
+            isOneToOne: false
+            referencedRelation: "buyer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_warehouse_id_fkey"
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
@@ -2983,6 +3191,10 @@ export type Database = {
       }
       hardware_order_installations: {
         Row: {
+          admin_signed_off_at: string | null
+          admin_signed_off_by: string | null
+          admin_signoff_note: string | null
+          assigned_at: string | null
           blocker_note: string | null
           city: string | null
           completed_at: string | null
@@ -2990,11 +3202,14 @@ export type Database = {
           destination_address: string | null
           destination_lat: number | null
           destination_lng: number | null
+          en_route_at: string | null
           id: string
+          installed_at: string | null
           installer_company: string | null
           installer_name: string | null
           installer_phone: string | null
           installer_photo_url: string | null
+          onsite_at: string | null
           order_id: string
           origin_address: string | null
           origin_lat: number | null
@@ -3008,6 +3223,10 @@ export type Database = {
           warehouse_id: string | null
         }
         Insert: {
+          admin_signed_off_at?: string | null
+          admin_signed_off_by?: string | null
+          admin_signoff_note?: string | null
+          assigned_at?: string | null
           blocker_note?: string | null
           city?: string | null
           completed_at?: string | null
@@ -3015,11 +3234,14 @@ export type Database = {
           destination_address?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
+          en_route_at?: string | null
           id?: string
+          installed_at?: string | null
           installer_company?: string | null
           installer_name?: string | null
           installer_phone?: string | null
           installer_photo_url?: string | null
+          onsite_at?: string | null
           order_id: string
           origin_address?: string | null
           origin_lat?: number | null
@@ -3033,6 +3255,10 @@ export type Database = {
           warehouse_id?: string | null
         }
         Update: {
+          admin_signed_off_at?: string | null
+          admin_signed_off_by?: string | null
+          admin_signoff_note?: string | null
+          assigned_at?: string | null
           blocker_note?: string | null
           city?: string | null
           completed_at?: string | null
@@ -3040,11 +3266,14 @@ export type Database = {
           destination_address?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
+          en_route_at?: string | null
           id?: string
+          installed_at?: string | null
           installer_company?: string | null
           installer_name?: string | null
           installer_phone?: string | null
           installer_photo_url?: string | null
+          onsite_at?: string | null
           order_id?: string
           origin_address?: string | null
           origin_lat?: number | null
@@ -3248,6 +3477,8 @@ export type Database = {
           install_address: string | null
           install_city: string | null
           install_country: string | null
+          install_lat: number | null
+          install_lng: number | null
           installed_at: string | null
           notes: string | null
           plan_id: string | null
@@ -3290,6 +3521,8 @@ export type Database = {
           install_address?: string | null
           install_city?: string | null
           install_country?: string | null
+          install_lat?: number | null
+          install_lng?: number | null
           installed_at?: string | null
           notes?: string | null
           plan_id?: string | null
@@ -3332,6 +3565,8 @@ export type Database = {
           install_address?: string | null
           install_city?: string | null
           install_country?: string | null
+          install_lat?: number | null
+          install_lng?: number | null
           installed_at?: string | null
           notes?: string | null
           plan_id?: string | null
@@ -5885,6 +6120,8 @@ export type Database = {
           name: string
           next_inspection_date: string | null
           notes: string | null
+          origin_device_serial: string | null
+          origin_order_id: string | null
           sensors: Json | null
           silo_id: string
           statistics: Json | null
@@ -5918,6 +6155,8 @@ export type Database = {
           name: string
           next_inspection_date?: string | null
           notes?: string | null
+          origin_device_serial?: string | null
+          origin_order_id?: string | null
           sensors?: Json | null
           silo_id: string
           statistics?: Json | null
@@ -5951,6 +6190,8 @@ export type Database = {
           name?: string
           next_inspection_date?: string | null
           notes?: string | null
+          origin_device_serial?: string | null
+          origin_order_id?: string | null
           sensors?: Json | null
           silo_id?: string
           statistics?: Json | null
@@ -5983,6 +6224,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "silos_origin_order_id_fkey"
+            columns: ["origin_order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
             referencedColumns: ["id"]
           },
           {
@@ -6184,6 +6432,60 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          address: string | null
+          admin_id: string
+          city: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          kind: Database["public"]["Enums"]["supplier_kind"]
+          metadata: Json
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          admin_id: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["supplier_kind"]
+          metadata?: Json
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          admin_id?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["supplier_kind"]
+          metadata?: Json
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tax_registrations: {
         Row: {
           created_at: string
@@ -6327,6 +6629,36 @@ export type Database = {
           },
         ]
       }
+      tenant_price_settings: {
+        Row: {
+          admin_id: string
+          created_at: string
+          currency: string
+          default_margin_pct: number
+          per_grain_margin: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          currency?: string
+          default_margin_pct?: number
+          per_grain_margin?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          currency?: string
+          default_margin_pct?: number
+          per_grain_margin?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -6435,6 +6767,7 @@ export type Database = {
           manager_id: string | null
           name: string
           notes: string | null
+          origin_order_id: string | null
           statistics: Json | null
           status: Database["public"]["Enums"]["device_status"] | null
           tags: string[] | null
@@ -6457,6 +6790,7 @@ export type Database = {
           manager_id?: string | null
           name: string
           notes?: string | null
+          origin_order_id?: string | null
           statistics?: Json | null
           status?: Database["public"]["Enums"]["device_status"] | null
           tags?: string[] | null
@@ -6479,6 +6813,7 @@ export type Database = {
           manager_id?: string | null
           name?: string
           notes?: string | null
+          origin_order_id?: string | null
           statistics?: Json | null
           status?: Database["public"]["Enums"]["device_status"] | null
           tags?: string[] | null
@@ -6509,6 +6844,13 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouses_origin_order_id_fkey"
+            columns: ["origin_order_id"]
+            isOneToOne: false
+            referencedRelation: "hardware_orders"
             referencedColumns: ["id"]
           },
           {
@@ -6668,8 +7010,45 @@ export type Database = {
         }
         Relationships: []
       }
+      silo_pool_summary: {
+        Row: {
+          active_batch_count: number | null
+          admin_id: string | null
+          oldest_intake_at: string | null
+          silo_id: string | null
+          total_on_hand_kg: number | null
+          weighted_avg_cost: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_batches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      advance_install_stage: {
+        Args: { _next: string; _note?: string; _order_id: string }
+        Returns: Json
+      }
       get_my_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -6683,6 +7062,19 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      notify_install_progress: {
+        Args: {
+          _event: string
+          _message: string
+          _order_id: string
+          _title: string
+        }
+        Returns: undefined
+      }
+      recalc_batch_remaining: {
+        Args: { _batch_id: string }
+        Returns: undefined
+      }
       record_governance_audit: {
         Args: {
           _action: string
@@ -6782,6 +7174,7 @@ export type Database = {
         | "cancelled"
         | "expired"
         | "trial"
+      supplier_kind: "external" | "own_farm" | "internal_transfer" | "anonymous"
       user_status: "active" | "inactive" | "deleted"
     }
     CompositeTypes: {
@@ -7004,6 +7397,7 @@ export const Constants = {
         "expired",
         "trial",
       ],
+      supplier_kind: ["external", "own_farm", "internal_transfer", "anonymous"],
       user_status: ["active", "inactive", "deleted"],
     },
   },
