@@ -81,7 +81,7 @@ function Section({ items, role, currentPath }: { label?: string; items: NavItem[
   );
 }
 
-export function AppSidebar() {
+export function AppSidebar({ hidden = false }: { hidden?: boolean }) {
   const collapsed = false;
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
@@ -131,11 +131,22 @@ export function AppSidebar() {
     <Sidebar collapsible="none" className="sticky top-0 h-screen w-56 bg-transparent">
       <div className="flex h-full flex-col px-3">
 
-        {/* Spacer for the fixed floating GrainHero brand button */}
-        <div className="h-14" aria-hidden />
+        {/* Logo — fixed at the top, outside the dock, never hidden by scroll */}
+        <div className="px-2 py-4">
+          <span className="text-xl font-black tracking-tight select-none">
+            <span className="text-[#2FAC0C] text-2xl">G</span>
+            <span className="text-sidebar-foreground">rain</span>
+            <span className="text-[#2FAC0C] text-2xl">H</span>
+            <span className="text-sidebar-foreground">ero</span>
+          </span>
+        </div>
 
         {/* Floating dock — curved rectangle, vertically centered on the left */}
-        <div className="flex min-h-0 flex-1 items-center pb-6">
+        <div
+          className={`flex min-h-0 flex-1 items-center pb-6 transition-transform duration-300 ease-out ${
+            hidden ? "-translate-x-[120%]" : "translate-x-0"
+          }`}
+        >
           <div className="flex w-full max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/30">
 
             {/* Nav — workspaces / standalone pages, separated by dividers */}

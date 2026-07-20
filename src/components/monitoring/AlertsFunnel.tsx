@@ -61,9 +61,9 @@ export function AlertsFunnel() {
   if (list.length === 0) return null;
 
   const metrics = [
-    { label: "Mean Time to Acknowledge", value: fmtMinutes(mtta), icon: Clock, tint: "text-amber-400 bg-amber-500/15" },
-    { label: "Mean Time to Resolve", value: fmtMinutes(mttr), icon: CheckCircle2, tint: "text-emerald-400 bg-emerald-500/15" },
-    { label: "Critical Open", value: `${criticalOpen}`, icon: AlertTriangle, tint: "text-rose-400 bg-rose-500/15" },
+    { label: "Mean Time to Acknowledge", value: fmtMinutes(mtta), icon: Clock, tint: "text-amber-400" },
+    { label: "Mean Time to Resolve", value: fmtMinutes(mttr), icon: CheckCircle2, tint: "text-emerald-400" },
+    { label: "Critical Open", value: `${criticalOpen}`, icon: AlertTriangle, tint: "text-rose-400" },
   ];
 
   return (
@@ -115,9 +115,7 @@ export function AlertsFunnel() {
         {metrics.map((m) => (
           <div key={m.label} className="flex items-center justify-between py-3">
             <div className="flex items-center gap-2.5 text-sm text-white/60">
-              <span className={`w-7 h-7 rounded-full flex items-center justify-center ${m.tint}`}>
-                <m.icon className="w-3.5 h-3.5" />
-              </span>
+              <m.icon className={`w-3.5 h-3.5 ${m.tint}`} />
               {m.label}
             </div>
             <span className="text-base font-bold text-white tabular-nums">{m.value}</span>

@@ -160,16 +160,10 @@ function IntelligenceWorkspace() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-white font-black text-base font-mono">{s.value}</span>
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                        s.up ? "bg-emerald-500/20" : "bg-rose-500/20"
-                      }`}
-                    >
-                      {s.up
-                        ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                        : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                      }
-                    </div>
+                    {s.up
+                      ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                      : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+                    }
                   </div>
                 </div>
               ))}

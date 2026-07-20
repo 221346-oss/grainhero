@@ -72,9 +72,7 @@ function LaunchReadinessPage() {
         {data?.checks.map((c) => (
           <Card key={c.key} className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${c.ok ? "bg-emerald-500/15 text-emerald-500" : "bg-rose-500/15 text-rose-500"}`}>
-                {c.ok ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-              </div>
+              {c.ok ? <Check className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-rose-500" />}
               <div>
                 <div className="font-medium">{c.label}</div>
                 <div className="text-xs text-muted-foreground">{c.detail}</div>
