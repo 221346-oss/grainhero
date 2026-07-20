@@ -124,7 +124,18 @@ export const getMyPlanState = createServerFn({ method: "GET" })
           sensors: p.max_sensors ?? 0,
         },
       })),
-      pending: (pending?.[0] ?? null) as Record<string, unknown> | null,
+      pending: (pending?.[0] ?? null) as unknown as {
+        id: string;
+        status: string;
+        direction: string;
+        requested_plan: string;
+        current_plan: string | null;
+        billing_cycle: string | null;
+        apply_at: string | null;
+        charge_amount_cents: number | null;
+        stripe_session_id: string | null;
+        created_at: string;
+      } | null,
     };
   });
 
@@ -271,7 +282,7 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
         action: "billing.plan_change_scheduled",
         targetType: "plan_change_request",
         targetId: (inserted as { id?: string } | null)?.id ?? null,
-        metadata: { direction, from: currentPlanId, to: data.requested_plan, apply_at: applyAt },
+        meta: { direction, from: currentPlanId, to: data.requested_plan, apply_at: applyAt },
       });
       return { scheduled: true, apply_at: applyAt, id: (inserted as { id?: string } | null)?.id };
     }
@@ -366,7 +377,7 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
       action: "billing.plan_change_checkout_started",
       targetType: "plan_change_request",
       targetId: requestId,
-      metadata: { direction, from: currentPlanId, to: data.requested_plan, amount_pkr: proration.proratedRs },
+        meta: { direction, from: currentPlanId, to: data.requested_plan, amount_pkr: proration.proratedRs },
     });
 
     return { scheduled: false, apply_now: true, url: session.url, prorated_pkr: proration.proratedRs, id: requestId };
