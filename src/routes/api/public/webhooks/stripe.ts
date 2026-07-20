@@ -86,7 +86,15 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 amount_total?: number;
                 currency?: string;
               };
-              const userId = s.metadata?.user_id ?? null;
+              let userId = s.metadata?.user_id ?? null;
+              if (!userId && s.metadata?.customer_email) {
+                const { data: profByEmail } = await supabaseAdmin
+                  .from("profiles")
+                  .select("id")
+                  .ilike("email", s.metadata.customer_email.trim())
+                  .maybeSingle();
+                userId = (profByEmail as { id?: string } | null)?.id ?? null;
+              }
               const planId = s.metadata?.plan_id ?? null;
               const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
               const buyerOrderId = s.metadata?.buyer_order_id ?? null;

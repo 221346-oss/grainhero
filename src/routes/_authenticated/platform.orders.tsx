@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   listAllHardwareOrders,
   updateHardwareOrder,
@@ -24,9 +24,11 @@ import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
-import { Truck, MoreHorizontal } from "lucide-react";
+import { TechnicianAssignmentDialog } from "@/components/app/orders/TechnicianAssignmentDialog";
+import { Truck, MoreHorizontal, Bell, Users } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/platform/orders")({
   head: () => ({ meta: [{ title: "Install orders — Platform" }] }),
@@ -54,12 +56,60 @@ function PlatformOrdersPage() {
   const messageFn = useServerFn(sendOrderMessage);
   const [filter, setFilter] = useState<string>("all");
   const [installOrderId, setInstallOrderId] = useState<string | null>(null);
+  const [assignTechOrder, setAssignTechOrder] = useState<any>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["platform-orders"],
     queryFn: () => fetchFn(),
   });
   const orders = (data?.orders ?? []).filter((o) => filter === "all" || o.status === filter);
+
+  // Real-time subscription for new orders
+  useEffect(() => {
+    const channel = supabase
+      .channel('platform-orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'hardware_orders',
+        },
+        (payload) => {
+          console.log('New order received:', payload);
+          toast.success('New install order received!', {
+            description: `Order from ${(payload.new as any).customer_name || (payload.new as any).customer_email || 'customer'}`,
+            action: {
+              label: 'View',
+              onClick: () => {
+                qc.invalidateQueries({ queryKey: ["platform-orders"] });
+              },
+            },
+            icon: <Bell className="h-4 w-4" />,
+          });
+          // Automatically refresh the orders list
+          qc.invalidateQueries({ queryKey: ["platform-orders"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'hardware_orders',
+        },
+        (payload) => {
+          console.log('Order updated:', payload);
+          // Silently refresh the list
+          qc.invalidateQueries({ queryKey: ["platform-orders"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, qc]);
 
   const update = useMutation({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,6 +196,7 @@ function PlatformOrdersPage() {
                     onMessage={(v) => sendMsg.mutate({ orderId: o.id as string, ...v })}
                     busy={update.isPending || sendMsg.isPending}
                     onOpenInstall={() => setInstallOrderId(o.id as string)}
+                    onAssignTechnician={() => setAssignTechOrder(o)}
                   />
                 ))}
               </TableBody>
@@ -159,12 +210,19 @@ function PlatformOrdersPage() {
         onOpenChange={(v) => !v && setInstallOrderId(null)}
         canEdit
       />
+      {assignTechOrder && (
+        <TechnicianAssignmentDialog
+          open={!!assignTechOrder}
+          onOpenChange={(open) => !open && setAssignTechOrder(null)}
+          order={assignTechOrder}
+        />
+      )}
     </AdminPageShell>
   );
 }
 
 function OrderTableRow({
-  order, onUpdate, onMessage, busy, onOpenInstall,
+  order, onUpdate, onMessage, busy, onOpenInstall, onAssignTechnician,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   order: any;
@@ -172,6 +230,7 @@ function OrderTableRow({
   onMessage: (v: { message: string; emailBuyer: boolean }) => void;
   busy: boolean;
   onOpenInstall: () => void;
+  onAssignTechnician: () => void;
 }) {
   const [status, setStatus] = useState<(typeof STATUSES)[number]>(order.status);
   const [techName, setTechName] = useState<string>(order.technician_name ?? "");
@@ -213,17 +272,34 @@ function OrderTableRow({
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={() => setDetailsOpen(true)}>Details & assignment</DropdownMenuItem>
-              <DropdownMenuItem onClick={onOpenInstall}><Truck className="h-3.5 w-3.5 mr-1.5" /> Installation tracking</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setMsgOpen(true)}>Message buyer</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setDetailsOpen(true)}>
+                Order details
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAssignTechnician}>
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                Assign technician (Multi-warehouse)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenInstall}>
+                <Truck className="h-3.5 w-3.5 mr-1.5" />
+                Installation tracking
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setMsgOpen(true)}>
+                Message buyer
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "installed" })}>Mark installed</DropdownMenuItem>
-              <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "live" })}>Mark live</DropdownMenuItem>
+              <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "installed" })}>
+                Mark installed
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "live" })}>
+                Mark live
+              </DropdownMenuItem>
               {order.status !== "cancelled" && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>Cancel order</DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>
+                    Cancel order
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>

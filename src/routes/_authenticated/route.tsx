@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -69,10 +69,41 @@ function AuthenticatedLayout() {
   const [mode, setMode] = useState<ThemeMode>(() =>
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const stored = getStoredThemeMode();
     setMode(stored);
+  }, []);
+
+  // Scroll-driven behavior on the main scroll container:
+  //  • hide header when scrolling down past 150px, show on scroll up
+  //  • auto-close sidebar if user scrolls down more than 20px
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    let lastY = el.scrollTop;
+    const onScroll = () => {
+      const y = el.scrollTop;
+      const dy = y - lastY;
+      if (dy > 0 && y > 150) setHeaderVisible(false);
+      else if (dy < 0) setHeaderVisible(true);
+      if (dy > 20) setSidebarOpen((open) => (open ? false : open));
+      lastY = y;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close sidebar on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   const handleToggle = () => {
@@ -107,7 +138,7 @@ function AuthenticatedLayout() {
   }, [pathname]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SessionGuard />
       <OnboardingTour />
       <div className="min-h-screen flex w-full bg-background">

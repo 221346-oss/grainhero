@@ -1,12 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { z } from "zod";
+import { useServerFn } from "@tanstack/react-start";
 import { Loader2, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
 import { logSecurityEvent } from "@/lib/security-events.functions";
+import { claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
+
+const PENDING_SESSION_KEY = "grainhero.pendingCheckoutSession";
 
 const search = z.object({
   email: z.string().email(),
@@ -23,6 +27,7 @@ export const Route = createFileRoute("/auth/verify-otp")({
 function VerifyOtpPage() {
   const navigate = useNavigate();
   const { email } = Route.useSearch();
+  const claimFn = useServerFn(claimPaidCheckoutForUser);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -92,6 +97,16 @@ function VerifyOtpPage() {
 
     setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
     void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
+
+    let pendingSessionId: string | null = null;
+    try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
+    try {
+      await claimFn({ data: pendingSessionId ? { sessionId: pendingSessionId } : {} });
+      if (pendingSessionId) window.localStorage.removeItem(PENDING_SESSION_KEY);
+    } catch (e) {
+      console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
+    }
+
     setTimeout(() => navigate({ to: "/dashboard", replace: true }), 500);
   };
 

@@ -57,22 +57,37 @@ export function SuperKpiSummary({
           className="group rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">MRR</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monthly Revenue</span>
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
               {activeSubs} active
             </span>
           </div>
-          <div className="mt-1">
-            <div className="text-3xl md:text-4xl font-bold tabular-nums text-emerald-600 leading-tight">
-              {fmtPKR.format(mrr)}
+          <div className="mt-1 flex-1 flex flex-col justify-between gap-3">
+            <div>
+              <div className="text-3xl md:text-4xl font-bold tabular-nums text-emerald-600 leading-tight">
+                {fmtPKR.format(mrr)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Total Revenue</p>
             </div>
-            <div className="flex items-center justify-between mt-0.5">
-              <span className={`text-[10px] font-medium ${positive ? "text-emerald-600" : "text-amber-600"}`}>
-                {positive ? "+" : ""}{mrrDeltaPct ?? 0}% vs prev
-              </span>
-              <span className="text-[10px] text-muted-foreground">12-mo trend</span>
+            <div className="pt-3 border-t border-border/60">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-foreground">Growth vs Last Month</span>
+                <span className={`text-sm font-semibold ${positive ? "text-emerald-600" : "text-red-600"}`}>
+                  {positive ? "+" : ""}{mrrDeltaPct ?? 0}%
+                </span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2 mt-2 overflow-hidden">
+                <div
+                  className={`h-2 rounded-full transition-all duration-500 ${positive ? "bg-emerald-500" : "bg-red-500"}`}
+                  style={{ width: `${Math.min(100, Math.abs(mrrDeltaPct ?? 0))}%` }}
+                />
+              </div>
+              {mrrSpark && mrrSpark.length > 0 && (
+                <div className="mt-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                  <Spark data={mrrSpark} />
+                </div>
+              )}
             </div>
-            <Spark data={mrrSpark ?? []} />
           </div>
         </Link>
 
