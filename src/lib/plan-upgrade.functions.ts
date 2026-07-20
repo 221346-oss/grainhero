@@ -55,7 +55,7 @@ async function loadPlans(supabase: any) {
 async function loadProfile(supabase: any, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, admin_id, subscription_plan, billing_cycle, current_period_end")
+    .select("id, admin_id, subscription_plan, billing_cycle, current_period_end, plan_usage_silos, plan_usage_users, plan_usage_sensors, plan_usage_actuators, retention_discount_pct, retention_discount_until, retention_offer_used_at")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -66,6 +66,13 @@ async function loadProfile(supabase: any, userId: string) {
     subscription_plan: string | null;
     billing_cycle: Cycle | null;
     current_period_end: string | null;
+    plan_usage_silos: number | null;
+    plan_usage_users: number | null;
+    plan_usage_sensors: number | null;
+    plan_usage_actuators: number | null;
+    retention_discount_pct: number | null;
+    retention_discount_until: string | null;
+    retention_offer_used_at: string | null;
   };
 }
 
