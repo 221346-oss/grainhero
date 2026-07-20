@@ -159,8 +159,8 @@ export function AppSearch() {
         placeholder={scope.label}
         aria-label={scope.label}
         className={cn(
-          "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-muted/60 hover:bg-muted focus:bg-background",
-          "border border-transparent focus:border-[--fusion-grape]/50 focus:outline-none transition placeholder:text-muted-foreground",
+          "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-transparent hover:bg-muted focus:bg-background",
+          "border-0 focus:outline-none transition placeholder:text-muted-foreground",
         )}
       />
       <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-0.5 text-[10px] text-muted-foreground border border-border/60 rounded px-1.5 py-0.5">
