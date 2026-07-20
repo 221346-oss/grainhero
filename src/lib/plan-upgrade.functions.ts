@@ -1,11 +1,16 @@
 /**
- * Admin-only prorated plan change flow (PKR).
+ * Admin-only plan change flow — Stripe is the source of truth for pricing,
+ * proration, and cycle math.
  *
- *  - Upgrade / cycle upsize → Stripe Checkout for the prorated PKR difference.
- *    Applied to the profile only after `checkout.session.completed` webhook.
- *  - Downgrade / neutral change → scheduled at current_period_end; cron applies.
+ *  - First-time subscribe  → Stripe Checkout in mode=subscription.
+ *  - Upgrade / cycle upsize on an existing subscription
+ *      → `subscription.update` with `proration_behavior=always_invoice`.
+ *        Stripe issues a prorated invoice immediately on the customer's
+ *        saved payment method.
+ *  - Downgrade / same-price cycle switch
+ *      → subscription schedule that swaps price at `current_period_end`.
  *
- *  Yearly = 10 × monthly (12 months, 2 free).
+ *  Yearly price = 10 × monthly (2 months free).
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -55,7 +60,7 @@ async function loadPlans(supabase: any) {
 async function loadProfile(supabase: any, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, admin_id, subscription_plan, billing_cycle, current_period_end, plan_usage_silos, plan_usage_users, plan_usage_sensors, plan_usage_actuators, retention_discount_pct, retention_discount_until, retention_offer_used_at")
+    .select("id, admin_id, subscription_plan, billing_cycle, current_period_end, plan_usage_silos, plan_usage_users, plan_usage_sensors, plan_usage_actuators, retention_discount_pct, retention_discount_until, retention_offer_used_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_item_id, stripe_subscription_status, stripe_schedule_id")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -73,6 +78,11 @@ async function loadProfile(supabase: any, userId: string) {
     retention_discount_pct: number | null;
     retention_discount_until: string | null;
     retention_offer_used_at: string | null;
+    stripe_customer_id: string | null;
+    stripe_subscription_id: string | null;
+    stripe_subscription_item_id: string | null;
+    stripe_subscription_status: string | null;
+    stripe_schedule_id: string | null;
   };
 }
 
