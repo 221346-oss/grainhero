@@ -419,11 +419,14 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
       const success = `${origin}/plan-management?upgrade=success`;
       const cancel = `${origin}/plan-management?upgrade=cancel`;
 
-      const { data: req } = await supabaseAdmin.from("tenant_plan_change_requests").insert({
+      const { data: req, error: reqErr } = await supabaseAdmin.from("tenant_plan_change_requests").insert({
         tenant_admin_id: tenantAdminId, requested_plan: data.requested_plan,
         current_plan: currentPlanId, direction, status: "pending_payment",
         billing_cycle: data.billing_cycle, requested_by: context.userId,
       } as never).select("id").single();
+      if (reqErr || !req) {
+        throw new Error(`Failed to create plan change request: ${reqErr?.message ?? "no row returned"}`);
+      }
       const requestId = (req as { id: string }).id;
 
       const body = new URLSearchParams();
