@@ -575,3 +575,25 @@ export const acceptRetentionOffer = createServerFn({ method: "POST" })
     });
     return { ok: true, discount_pct: 20, active_until: until };
   });
+
+/* -------------------- openBillingPortal -------------------- */
+// Returns a short-lived Stripe Billing Portal URL so admins can update
+// payment methods, download invoices, and manage their subscription.
+export const openBillingPortal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { ensureStripeCustomer } = await import("@/lib/stripe-billing.server");
+    const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
+    const customerId = await ensureStripeCustomer(supabaseAdmin, context.userId);
+    const originHeader = (context as any)?.request?.headers?.get?.("origin")
+      ?? (context as any)?.request?.headers?.get?.("referer")
+      ?? process.env.PUBLIC_APP_URL ?? "";
+    const origin = originHeader ? new URL(originHeader).origin : "";
+    const session = await stripeFetch("/billing_portal/sessions", stripeForm({
+      customer: customerId,
+      return_url: `${origin}/plan-management`,
+    })) as { url: string };
+    return { url: session.url };
+  });
