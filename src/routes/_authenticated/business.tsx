@@ -23,11 +23,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "insurance",    label: "Insurance",    icon: Shield },
 ];
 
-const BAR_COLORS = [
-  "from-[#10b981] to-[#34d399]",   // emerald
-  "from-[#6366f1] to-[#818cf8]",   // indigo
-  "from-[#f59e0b] to-[#fbbf24]",   // amber
-];
+const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function money(n: number) {
   return `PKR ${Number(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;

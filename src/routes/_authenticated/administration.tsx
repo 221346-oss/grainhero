@@ -24,11 +24,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "activity", label: "Activity Logs",   icon: ClipboardList },
 ];
 
-const BAR_COLORS = [
-  "from-[#6366f1] to-[#818cf8]",   // indigo
-  "from-[#ef4444] to-[#f87171]",   // red
-  "from-[#f59e0b] to-[#fbbf24]",   // amber
-];
+const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function AdministrationWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("team");

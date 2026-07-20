@@ -32,15 +32,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "incidents",     label: "Incidents",      icon: AlertOctagon },
 ];
 
-const BAR_COLORS = [
-  "from-[#6366f1] to-[#818cf8]",   // indigo
-  "from-[#06b6d4] to-[#22d3ee]",   // cyan/teal
-  "from-[#ef4444] to-[#f87171]",   // red
-  "from-[#10b981] to-[#34d399]",   // emerald
-  "from-[#f59e0b] to-[#fbbf24]",   // amber
-  "from-[#a855f7] to-[#c084fc]",   // purple
-  "from-[#ec4899] to-[#f472b6]",   // pink
-];
+const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function MonitoringWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("sensors");
