@@ -427,3 +427,65 @@ export const cancelScheduledPlanChange = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+/* -------------------- acceptRetentionOffer -------------------- */
+// 20% off current plan for the next 3 billing cycles. One-time per tenant.
+export const acceptRetentionOffer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { logActivity } = await import("@/lib/activity");
+    const { emitToSuperAdmins } = await import("@/lib/notify");
+
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("id, admin_id, subscription_plan, billing_cycle, retention_offer_used_at")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (!prof) throw new Error("Profile not found");
+    const p = prof as {
+      id: string; admin_id: string | null;
+      subscription_plan: string | null; billing_cycle: Cycle | null;
+      retention_offer_used_at: string | null;
+    };
+    if (p.retention_offer_used_at) throw new Error("Retention offer already used");
+
+    const cycle: Cycle = p.billing_cycle ?? "monthly";
+    const cycles = 3;
+    const until = new Date(Date.now() + cycles * cycleDays(cycle) * 86400_000).toISOString();
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        retention_discount_pct: 20,
+        retention_discount_until: until,
+        retention_offer_used_at: new Date().toISOString(),
+      } as never)
+      .eq("id", p.id);
+    if (error) throw error;
+
+    // cancel any scheduled downgrade in-flight
+    await supabaseAdmin
+      .from("tenant_plan_change_requests")
+      .update({ status: "cancelled", note: "Cancelled — retention offer accepted" } as never)
+      .eq("tenant_admin_id", p.admin_id ?? p.id)
+      .eq("status", "scheduled");
+
+    await logActivity({
+      sb: supabaseAdmin, tenantAdminId: p.admin_id ?? p.id, actorId: context.userId,
+      action: "billing.retention_offer_accepted",
+      targetType: "profile", targetId: p.id,
+      meta: { discount_pct: 20, until, plan: p.subscription_plan, cycle },
+    });
+    await emitToSuperAdmins(supabaseAdmin, {
+      category: "plan",
+      severity: "info",
+      title: "Retention offer accepted",
+      body: `Tenant kept ${p.subscription_plan} plan with 20% off for 3 cycles.`,
+      link: "/platform/plans",
+      entityType: "profile",
+      entityId: p.id,
+    });
+    return { ok: true, discount_pct: 20, active_until: until };
+  });
