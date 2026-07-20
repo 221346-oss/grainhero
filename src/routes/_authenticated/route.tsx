@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
+import { ProfileMenu } from "@/components/app/ProfileMenu";
 import { Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
@@ -70,6 +71,10 @@ function AuthenticatedLayout() {
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("gh_sidebar_collapsed") !== "false";
+  });
   const [headerVisible, setHeaderVisible] = useState(true);
   const mainRef = useRef<HTMLElement | null>(null);
 
@@ -78,9 +83,17 @@ function AuthenticatedLayout() {
     setMode(stored);
   }, []);
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed((c) => {
+      const next = !c;
+      try { localStorage.setItem("gh_sidebar_collapsed", String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
   // Scroll-driven behavior on the main scroll container:
   //  • hide header when scrolling down past 150px, show on scroll up
-  //  • auto-close sidebar if user scrolls down more than 20px
+  //  • auto-collapse sidebar to icon rail when user scrolls down
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
@@ -90,7 +103,7 @@ function AuthenticatedLayout() {
       const dy = y - lastY;
       if (dy > 0 && y > 150) setHeaderVisible(false);
       else if (dy < 0) setHeaderVisible(true);
-      if (dy > 20) setSidebarOpen((open) => (open ? false : open));
+      if (dy > 20) setSidebarCollapsed(true);
       lastY = y;
     };
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -121,7 +134,9 @@ function AuthenticatedLayout() {
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
       const y = window.scrollY;
-      setNavHidden(y > lastScrollY && y > 4);
+      const scrollingDown = y > lastScrollY && y > 4;
+      setNavHidden(scrollingDown);
+      if (scrollingDown) setSidebarCollapsed(true);
       lastScrollY = y;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -143,7 +158,7 @@ function AuthenticatedLayout() {
       <OnboardingTour />
       <div className="min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
-          <AppSidebar hidden={navHidden} />
+          <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
@@ -179,6 +194,7 @@ function AuthenticatedLayout() {
                 : <Moon className="h-4 w-4" />}
             </button>
             <NotificationBell />
+            <ProfileMenu />
           </motion.header>
           <main className="flex-1 overflow-x-hidden">
             <AnimatedOutlet />
