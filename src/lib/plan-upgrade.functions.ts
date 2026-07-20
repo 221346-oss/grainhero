@@ -55,7 +55,7 @@ async function loadPlans(supabase: any) {
 async function loadProfile(supabase: any, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, admin_id, subscription_plan, billing_cycle, current_period_end")
+    .select("id, admin_id, subscription_plan, billing_cycle, current_period_end, plan_usage_silos, plan_usage_users, plan_usage_sensors, plan_usage_actuators, retention_discount_pct, retention_discount_until, retention_offer_used_at")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -66,6 +66,13 @@ async function loadProfile(supabase: any, userId: string) {
     subscription_plan: string | null;
     billing_cycle: Cycle | null;
     current_period_end: string | null;
+    plan_usage_silos: number | null;
+    plan_usage_users: number | null;
+    plan_usage_sensors: number | null;
+    plan_usage_actuators: number | null;
+    retention_discount_pct: number | null;
+    retention_discount_until: string | null;
+    retention_offer_used_at: string | null;
   };
 }
 
@@ -111,6 +118,18 @@ export const getMyPlanState = createServerFn({ method: "GET" })
       current_plan: (profile.subscription_plan ?? "basic") as string,
       current_cycle: (profile.billing_cycle ?? "monthly") as Cycle,
       current_period_end: profile.current_period_end,
+      usage: {
+        silos: profile.plan_usage_silos ?? 0,
+        users: profile.plan_usage_users ?? 0,
+        sensors: profile.plan_usage_sensors ?? 0,
+        actuators: profile.plan_usage_actuators ?? 0,
+      },
+      retention: {
+        discount_pct: profile.retention_discount_pct ?? 0,
+        active_until: profile.retention_discount_until,
+        offer_used_at: profile.retention_offer_used_at,
+        offer_available: !profile.retention_offer_used_at,
+      },
       plans: plans.map((p) => ({
         plan_id: p.plan_id,
         name: p.name ?? p.plan_id,
@@ -144,6 +163,12 @@ export const getMyPlanState = createServerFn({ method: "GET" })
 const changeSchema = z.object({
   requested_plan: z.enum(PLAN_IDS),
   billing_cycle: z.enum(["monthly", "yearly"]),
+});
+
+const initiateSchema = changeSchema.extend({
+  downgrade_reason: z.string().max(120).optional(),
+  downgrade_reason_details: z.string().max(1000).optional(),
+  retention_offer_declined: z.boolean().optional(),
 });
 
 export const previewPlanChange = createServerFn({ method: "POST" })
@@ -205,7 +230,7 @@ export const previewPlanChange = createServerFn({ method: "POST" })
 
 export const initiatePlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => changeSchema.parse(d))
+  .inputValidator((d: unknown) => initiateSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { checkRateLimit } = await import("@/lib/rate-limit");
@@ -264,6 +289,9 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
           apply_at: applyAt,
           requested_by: context.userId,
           note: `Auto-scheduled ${direction} to apply at period end`,
+          downgrade_reason: data.downgrade_reason ?? null,
+          downgrade_reason_details: data.downgrade_reason_details ?? null,
+          retention_offer_declined: data.retention_offer_declined ?? false,
         } as never)
         .select("id")
         .single();
@@ -398,4 +426,66 @@ export const cancelScheduledPlanChange = createServerFn({ method: "POST" })
       .in("status", ["scheduled", "pending_payment"]);
     if (error) throw error;
     return { ok: true };
+  });
+
+/* -------------------- acceptRetentionOffer -------------------- */
+// 20% off current plan for the next 3 billing cycles. One-time per tenant.
+export const acceptRetentionOffer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { logActivity } = await import("@/lib/activity");
+    const { emitToSuperAdmins } = await import("@/lib/notify");
+
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("id, admin_id, subscription_plan, billing_cycle, retention_offer_used_at")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (!prof) throw new Error("Profile not found");
+    const p = prof as {
+      id: string; admin_id: string | null;
+      subscription_plan: string | null; billing_cycle: Cycle | null;
+      retention_offer_used_at: string | null;
+    };
+    if (p.retention_offer_used_at) throw new Error("Retention offer already used");
+
+    const cycle: Cycle = p.billing_cycle ?? "monthly";
+    const cycles = 3;
+    const until = new Date(Date.now() + cycles * cycleDays(cycle) * 86400_000).toISOString();
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        retention_discount_pct: 20,
+        retention_discount_until: until,
+        retention_offer_used_at: new Date().toISOString(),
+      } as never)
+      .eq("id", p.id);
+    if (error) throw error;
+
+    // cancel any scheduled downgrade in-flight
+    await supabaseAdmin
+      .from("tenant_plan_change_requests")
+      .update({ status: "cancelled", note: "Cancelled — retention offer accepted" } as never)
+      .eq("tenant_admin_id", p.admin_id ?? p.id)
+      .eq("status", "scheduled");
+
+    await logActivity({
+      sb: supabaseAdmin, tenantAdminId: p.admin_id ?? p.id, actorId: context.userId,
+      action: "billing.retention_offer_accepted",
+      targetType: "profile", targetId: p.id,
+      meta: { discount_pct: 20, until, plan: p.subscription_plan, cycle },
+    });
+    await emitToSuperAdmins(supabaseAdmin, {
+      category: "plan",
+      severity: "info",
+      title: "Retention offer accepted",
+      body: `Tenant kept ${p.subscription_plan} plan with 20% off for 3 cycles.`,
+      link: "/platform/plans",
+      entityType: "profile",
+      entityId: p.id,
+    });
+    return { ok: true, discount_pct: 20, active_until: until };
   });

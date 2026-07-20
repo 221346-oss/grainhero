@@ -5567,6 +5567,9 @@ export type Database = {
           plan_usage_users: number | null
           preferences: Json | null
           price_id: string | null
+          retention_discount_pct: number | null
+          retention_discount_until: string | null
+          retention_offer_used_at: string | null
           service_areas: string[] | null
           shift_pattern: string | null
           status: Database["public"]["Enums"]["user_status"] | null
@@ -5626,6 +5629,9 @@ export type Database = {
           plan_usage_users?: number | null
           preferences?: Json | null
           price_id?: string | null
+          retention_discount_pct?: number | null
+          retention_discount_until?: string | null
+          retention_offer_used_at?: string | null
           service_areas?: string[] | null
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
@@ -5685,6 +5691,9 @@ export type Database = {
           plan_usage_users?: number | null
           preferences?: Json | null
           price_id?: string | null
+          retention_discount_pct?: number | null
+          retention_discount_until?: string | null
+          retention_offer_used_at?: string | null
           service_areas?: string[] | null
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
@@ -7297,10 +7306,13 @@ export type Database = {
           decided_at: string | null
           decided_by: string | null
           direction: string
+          downgrade_reason: string | null
+          downgrade_reason_details: string | null
           id: string
           note: string | null
           requested_by: string
           requested_plan: string
+          retention_offer_declined: boolean | null
           status: string
           stripe_session_id: string | null
           tenant_admin_id: string
@@ -7315,10 +7327,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           direction: string
+          downgrade_reason?: string | null
+          downgrade_reason_details?: string | null
           id?: string
           note?: string | null
           requested_by: string
           requested_plan: string
+          retention_offer_declined?: boolean | null
           status?: string
           stripe_session_id?: string | null
           tenant_admin_id: string
@@ -7333,10 +7348,13 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           direction?: string
+          downgrade_reason?: string | null
+          downgrade_reason_details?: string | null
           id?: string
           note?: string | null
           requested_by?: string
           requested_plan?: string
+          retention_offer_declined?: boolean | null
           status?: string
           stripe_session_id?: string | null
           tenant_admin_id?: string
