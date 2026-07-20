@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { gsap } from "gsap";
 import { Badge } from "@/components/ui/badge";
 import { VariableFontText } from "@/components/app/VariableFontText";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -14,6 +15,8 @@ type Props = {
   dataTour?: string;
   /** Names scrolled in the hover marquee — the group's sections. Falls back to the label. */
   marqueeItems?: string[];
+  /** Optional icon shown in the collapsed rail. */
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 };
 
 /**
@@ -22,7 +25,7 @@ type Props = {
  * above the band at all times (flipping to ink for contrast), so the row
  * remains readable at every point of the animation.
  */
-export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, marqueeItems }: Props) {
+export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, marqueeItems, icon: Icon }: Props) {
   const rowRef = React.useRef<HTMLDivElement>(null);
   const marqueeRef = React.useRef<HTMLDivElement>(null);
   const innerRef = React.useRef<HTMLDivElement>(null);
@@ -62,19 +65,31 @@ export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, 
 
   if (collapsed) {
     return (
-      <Link
-        to={to}
-        data-tour={dataTour}
-        title={label}
-        className={cn(
-          "mx-auto my-1 flex h-9 w-9 items-center justify-center rounded-full text-xs font-black transition-colors",
-          active
-            ? "bg-[--fusion-mint] text-[--fusion-ink]"
-            : "bg-sidebar-accent/60 text-sidebar-foreground/80 hover:bg-sidebar-accent",
-        )}
-      >
-        {label.slice(0, 1)}
-      </Link>
+      <Tooltip delayDuration={120}>
+        <TooltipTrigger asChild>
+          <Link
+            to={to}
+            data-tour={dataTour}
+            aria-label={label}
+            className={cn(
+              "group/rail mx-auto my-1 grid h-10 w-10 place-items-center rounded-2xl text-sm font-black transition-all duration-200 will-change-transform",
+              "hover:scale-[1.08] hover:shadow-md",
+              active
+                ? "bg-[--fusion-mint] text-[--fusion-ink] shadow-sm"
+                : "bg-sidebar-accent/50 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+            )}
+          >
+            {Icon ? (
+              <Icon className="h-4.5 w-4.5" strokeWidth={2.25} />
+            ) : (
+              <span className="text-[13px]">{label.slice(0, 1)}</span>
+            )}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="font-semibold">
+          {label}
+        </TooltipContent>
+      </Tooltip>
     );
   }
 
