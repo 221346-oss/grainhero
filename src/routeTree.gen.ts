@@ -132,6 +132,7 @@ import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/pu
 import { Route as ApiPublicCronDriverLicenseExpiryRouteImport } from './routes/api/public/cron/driver-license-expiry'
 import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
 import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
+import { Route as ApiPublicCronApplyScheduledPlanChangesRouteImport } from './routes/api/public/cron/apply-scheduled-plan-changes'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
 import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
@@ -865,6 +866,12 @@ const ApiPublicCronDeliveryDelayScanRoute =
     path: '/api/public/cron/delivery-delay-scan',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronApplyScheduledPlanChangesRoute =
+  ApiPublicCronApplyScheduledPlanChangesRouteImport.update({
+    id: '/api/public/cron/apply-scheduled-plan-changes',
+    path: '/api/public/cron/apply-scheduled-plan-changes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedTechnicianInstallsInstallIdRoute =
   AuthenticatedTechnicianInstallsInstallIdRouteImport.update({
     id: '/$installId',
@@ -1266,6 +1273,7 @@ export interface FileRoutesByFullPath {
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
@@ -1436,6 +1444,7 @@ export interface FileRoutesByTo {
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
@@ -1610,6 +1619,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
   '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
   '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
@@ -1784,6 +1794,7 @@ export interface FileRouteTypes {
     | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/driver-license-expiry'
@@ -1954,6 +1965,7 @@ export interface FileRouteTypes {
     | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
     | '/technician/installs/$installId'
+    | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/driver-license-expiry'
@@ -2127,6 +2139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/logistics/fleet'
     | '/_authenticated/platform/orders/$orderId'
     | '/_authenticated/technician/installs/$installId'
+    | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
     | '/api/public/cron/dispatch-sla-sweep'
     | '/api/public/cron/driver-license-expiry'
@@ -2201,6 +2214,7 @@ export interface RootRouteChildren {
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
+  ApiPublicCronApplyScheduledPlanChangesRoute: typeof ApiPublicCronApplyScheduledPlanChangesRoute
   ApiPublicCronDeliveryDelayScanRoute: typeof ApiPublicCronDeliveryDelayScanRoute
   ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
   ApiPublicCronDriverLicenseExpiryRoute: typeof ApiPublicCronDriverLicenseExpiryRoute
@@ -3115,6 +3129,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronDeliveryDelayScanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/apply-scheduled-plan-changes': {
+      id: '/api/public/cron/apply-scheduled-plan-changes'
+      path: '/api/public/cron/apply-scheduled-plan-changes'
+      fullPath: '/api/public/cron/apply-scheduled-plan-changes'
+      preLoaderRoute: typeof ApiPublicCronApplyScheduledPlanChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/technician/installs/$installId': {
       id: '/_authenticated/technician/installs/$installId'
       path: '/$installId'
@@ -3859,6 +3880,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
+  ApiPublicCronApplyScheduledPlanChangesRoute:
+    ApiPublicCronApplyScheduledPlanChangesRoute,
   ApiPublicCronDeliveryDelayScanRoute: ApiPublicCronDeliveryDelayScanRoute,
   ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
   ApiPublicCronDriverLicenseExpiryRoute: ApiPublicCronDriverLicenseExpiryRoute,
