@@ -91,7 +91,12 @@ function computeProration(args: {
   const curDays = cycleDays(args.currentCycle);
   const newDays = cycleDays(args.newCycle);
   const credit = (args.currentPriceRs * daysRemaining) / curDays;
-  const newCharge = (args.newPriceRs * daysRemaining) / newDays;
+  // Yearly plans are billed as a full annual charge up front (with credit for
+  // any unused portion of the current cycle). Monthly plans stay prorated
+  // over the days remaining in the new cycle.
+  const newCharge = args.newCycle === "yearly"
+    ? args.newPriceRs
+    : (args.newPriceRs * daysRemaining) / newDays;
   const proratedRs = Math.max(0, Math.round(newCharge - credit));
   return { daysRemaining, proratedRs, periodEndIso: new Date(periodEnd).toISOString() };
 }
