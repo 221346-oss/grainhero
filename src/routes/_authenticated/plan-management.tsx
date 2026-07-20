@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check, Loader2, AlertTriangle, Clock, Sparkles, TrendingUp, Users, Boxes, Cpu,
-  ShieldCheck, Zap, Flame, HeartHandshake, ArrowRight,
+  ShieldCheck, Zap, Flame, HeartHandshake, ArrowRight, CreditCard, ExternalLink,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,6 +14,7 @@ import {
   initiatePlanChange,
   cancelScheduledPlanChange,
   acceptRetentionOffer,
+  openBillingPortal,
 } from "@/lib/plan-upgrade.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,6 +73,15 @@ function PlanManagementPage() {
   const initiate = useServerFn(initiatePlanChange);
   const cancelScheduled = useServerFn(cancelScheduledPlanChange);
   const acceptOffer = useServerFn(acceptRetentionOffer);
+  const openPortal = useServerFn(openBillingPortal);
+
+  const portalMut = useMutation({
+    mutationFn: () => openPortal(),
+    onSuccess: (res: any) => {
+      if (res?.url) window.open(res.url, "_blank");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not open billing portal"),
+  });
 
   const stateQ = useQuery({
     queryKey: ["my-plan-state"],
@@ -230,6 +240,8 @@ function PlanManagementPage() {
         billing={billing}
         setBilling={setBilling}
         retention={retention}
+        onManageBilling={() => portalMut.mutate()}
+        portalLoading={portalMut.isPending}
       />
 
       {currentPlanRow && (
