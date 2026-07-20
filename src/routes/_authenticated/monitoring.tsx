@@ -32,15 +32,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "incidents",     label: "Incidents",      icon: AlertOctagon },
 ];
 
-const BAR_COLORS = [
-  "from-[#6366f1] to-[#818cf8]",   // indigo
-  "from-[#06b6d4] to-[#22d3ee]",   // cyan/teal
-  "from-[#ef4444] to-[#f87171]",   // red
-  "from-[#10b981] to-[#34d399]",   // emerald
-  "from-[#f59e0b] to-[#fbbf24]",   // amber
-  "from-[#a855f7] to-[#c084fc]",   // purple
-  "from-[#ec4899] to-[#f472b6]",   // pink
-];
+const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function MonitoringWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("sensors");
@@ -105,8 +97,8 @@ function MonitoringWorkspace() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Bar Chart Panel */}
-          <div className="lg:col-span-2 bg-[#111111] border border-white/8 rounded-2xl p-6">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-5">
+          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
               Monitoring Overview
             </p>
             <div className="space-y-4">
@@ -115,10 +107,10 @@ function MonitoringWorkspace() {
                 const pct = Math.max((count / maxCount) * 100, count > 0 ? 4 : 0);
                 return (
                   <div key={tab.key} className="flex items-center gap-4">
-                    <span className="w-24 text-xs text-white/50 font-mono truncate text-right shrink-0">
+                    <span className="w-24 text-xs text-muted-foreground font-mono truncate text-right shrink-0">
                       {tab.label.split(" ")[0]}…
                     </span>
-                    <div className="flex-1 h-8 bg-white/5 rounded-md overflow-hidden relative">
+                    <div className="flex-1 h-8 bg-muted rounded-md overflow-hidden relative">
                       <div
                         className={`h-full rounded-md bg-gradient-to-r ${BAR_COLORS[i]} transition-all duration-700`}
                         style={{ width: `${pct}%`, boxShadow: "0 0 12px rgba(99,102,241,0.3)" }}
@@ -132,7 +124,7 @@ function MonitoringWorkspace() {
                         }}
                       />
                     </div>
-                    <span className="w-8 text-right text-xs text-white/60 font-mono shrink-0">
+                    <span className="w-8 text-right text-xs text-muted-foreground font-mono shrink-0">
                       {count}
                     </span>
                   </div>
@@ -142,15 +134,15 @@ function MonitoringWorkspace() {
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-[#111111] border border-white/8 rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
             <div className="space-y-0 divide-y divide-white/8 flex-1">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-2 text-white/50 text-sm font-mono">
-                    <span className="text-white/30">◇</span>
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
+                    <span className="text-muted-foreground/60">◇</span>
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -167,10 +159,10 @@ function MonitoringWorkspace() {
         </div>
 
         {/* Tabbed Sections */}
-        <div className="bg-[#111111] border border-white/8 rounded-2xl overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
 
           {/* Tab Bar — variable-font hover nav */}
-          <div className="border-b border-white/8 px-4 md:px-6 overflow-x-auto no-scrollbar">
+          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key;
@@ -179,13 +171,13 @@ function MonitoringWorkspace() {
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
                     className={`relative flex items-center gap-2 py-4 text-sm uppercase tracking-[0.15em] whitespace-nowrap transition-colors ${
-                      isActive ? "text-white" : "text-white/40 hover:text-white"
+                      isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <VariableFontText text={tab.label} base={isActive ? 850 : 350} hover={850} staggerMs={30} />
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${
-                        isActive ? "bg-[#006400]/30 text-[#7ccd7c]" : "bg-white/5 text-white/30"
+                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"
                       }`}
                     >
                       {counts[tab.key]}
@@ -193,7 +185,7 @@ function MonitoringWorkspace() {
                     {isActive && (
                       <motion.div
                         layoutId="monitoring-tab-underline"
-                        className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[#2FAC0C]"
+                        className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-primary"
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
                     )}

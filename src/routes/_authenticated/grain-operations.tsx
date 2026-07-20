@@ -29,12 +29,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "buyers",     label: "Buyers",        icon: Users     },
 ];
 
-const BAR_COLORS = [
-  "from-[#6366f1] to-[#818cf8]",   // indigo
-  "from-[#06b6d4] to-[#22d3ee]",   // cyan/teal
-  "from-[#10b981] to-[#34d399]",   // emerald
-  "from-[#a855f7] to-[#c084fc]",   // purple
-];
+const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function GrainOperationsWorkspace() {
   const { tab } = Route.useSearch();

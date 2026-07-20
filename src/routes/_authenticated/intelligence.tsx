@@ -107,8 +107,8 @@ function IntelligenceWorkspace() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Bar Chart Panel */}
-          <div className="lg:col-span-2 bg-[#111111] border border-white/8 rounded-2xl p-6">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-5">
+          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
               Intelligence Overview
             </p>
             <div className="space-y-1">
@@ -121,14 +121,14 @@ function IntelligenceWorkspace() {
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
-                    className="w-full flex items-center gap-4 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-white/5 group"
+                    className="w-full flex items-center gap-4 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-muted group"
                     title={`${count} ${tab.label.toLowerCase()} — view ${tab.label}`}
                   >
-                    <span className="w-36 flex items-center gap-2 text-sm text-white/70 shrink-0 group-hover:text-white transition-colors">
-                      <Icon className="w-4 h-4 text-white/30 group-hover:text-emerald-400 transition-colors shrink-0" />
+                    <span className="w-36 flex items-center gap-2 text-sm text-foreground/80 shrink-0 group-hover:text-foreground transition-colors">
+                      <Icon className="w-4 h-4 text-muted-foreground/60 group-hover:text-emerald-400 transition-colors shrink-0" />
                       {tab.label}
                     </span>
-                    <div className="flex-1 h-2.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full bg-emerald-500 transition-all duration-700"
                         style={{ width: count > 0 ? `${Math.max(pct, 3)}%` : "0%" }}
@@ -141,21 +141,21 @@ function IntelligenceWorkspace() {
                 );
               })}
             </div>
-            <p className="mt-4 text-[11px] text-white/30">
+            <p className="mt-4 text-[11px] text-muted-foreground/60">
               Items per area — click a row to open it
             </p>
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-[#111111] border border-white/8 rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
             <div className="space-y-0 divide-y divide-white/8 flex-1">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-2 text-white/50 text-sm font-mono">
-                    <span className="text-white/30">◇</span>
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
+                    <span className="text-muted-foreground/60">◇</span>
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -172,10 +172,10 @@ function IntelligenceWorkspace() {
         </div>
 
         {/* Tabbed Sections */}
-        <div className="bg-[#111111] border border-white/8 rounded-2xl overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
 
           {/* Tab Bar — variable-font hover nav */}
-          <div className="border-b border-white/8 px-4 md:px-6 overflow-x-auto no-scrollbar">
+          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key;
@@ -184,13 +184,13 @@ function IntelligenceWorkspace() {
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
                     className={`relative flex items-center gap-2 py-4 text-sm uppercase tracking-[0.15em] whitespace-nowrap transition-colors ${
-                      isActive ? "text-white" : "text-white/40 hover:text-white"
+                      isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <VariableFontText text={tab.label} base={isActive ? 850 : 350} hover={850} staggerMs={30} />
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${
-                        isActive ? "bg-[#006400]/30 text-[#7ccd7c]" : "bg-white/5 text-white/30"
+                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"
                       }`}
                     >
                       {counts[tab.key]}
@@ -198,7 +198,7 @@ function IntelligenceWorkspace() {
                     {isActive && (
                       <motion.div
                         layoutId="intelligence-tab-underline"
-                        className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[#2FAC0C]"
+                        className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-primary"
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
                     )}
