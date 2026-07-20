@@ -65,6 +65,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mode, setMode] = useState<ThemeMode>(() =>
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
@@ -95,6 +96,15 @@ function AuthenticatedLayout() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Every page should start the same way: header visible, scrolled to top —
+  // otherwise leftover scroll state from the previous page (e.g. hidden
+  // header from scrolling down on Grain Operations) carries over and makes
+  // the next page look different on arrival.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setNavHidden(false);
+  }, [pathname]);
 
   return (
     <SidebarProvider>
