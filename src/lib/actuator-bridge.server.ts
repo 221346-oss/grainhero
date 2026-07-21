@@ -26,7 +26,7 @@ export async function writeFirebaseControl(
   if (!dbUrl) return;
 
   const token = await getFirebaseAccessToken();
-  const url = `${dbUrl.replace(/\/$/, "")}/control/${encodeURIComponent(deviceId)}.json`;
+  const url = `${dbUrl.replace(/\/$/, "")}/control/${encodeURIComponent(deviceId)}.json?auth=${token}`;
 
   // Build the update object with dual field names (snake_case + camelCase)
   // so both old and new ESP32 firmware revisions can read the commands.
@@ -61,7 +61,7 @@ export async function writeFirebaseControl(
 
   const res = await fetch(url, {
     method: "PATCH",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updates),
   });
 
@@ -88,7 +88,7 @@ export async function publishActuatorCommand(
 
   const token = await getFirebaseAccessToken();
   const path = `control/${encodeURIComponent(actuatorCode)}.json`;
-  const url = `${dbUrl.replace(/\/$/, "")}/${path}`;
+  const url = `${dbUrl.replace(/\/$/, "")}/${path}?auth=${token}`;
 
   // Map GH2 action to GH1 flat state structure
   const updates: Record<string, any> = {
@@ -137,7 +137,7 @@ export async function publishActuatorCommand(
 
   const res = await fetch(url, {
     method: "PATCH",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updates),
   });
   

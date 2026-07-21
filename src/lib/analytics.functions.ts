@@ -215,7 +215,7 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
         .limit(500),
       context.supabase
         .from("silos")
-        .select("id, name, capacity_kg, current_stock_kg, status")
+        .select("id, name, capacity_kg, current_occupancy_kg, status")
         .limit(200),
       context.supabase
         .from("sensor_readings")
@@ -262,7 +262,7 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
     }
 
     const totalCapacity = s.reduce((sum, x) => sum + Number(x.capacity_kg ?? 0), 0);
-    const usedCapacity = s.reduce((sum, x) => sum + Number(x.current_stock_kg ?? 0), 0);
+    const usedCapacity = s.reduce((sum, x) => sum + Number(x.current_occupancy_kg ?? 0), 0);
 
     const avgTemp = r.length ? r.reduce((sum, x) => sum + Number(x.temperature_value ?? 0), 0) / r.length : 0;
     const avgHum = r.length ? r.reduce((sum, x) => sum + Number(x.humidity_value ?? 0), 0) / r.length : 0;
