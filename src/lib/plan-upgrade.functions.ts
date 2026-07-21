@@ -377,7 +377,7 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
           requested_plan: data.requested_plan,
           current_plan: currentPlanId,
           direction,
-          status: "scheduled",
+          status: "pending",
           billing_cycle: data.billing_cycle,
           apply_at: applyAt,
           requested_by: context.userId,
@@ -421,8 +421,9 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
 
       const { data: req, error: reqErr } = await supabaseAdmin.from("tenant_plan_change_requests").insert({
         tenant_admin_id: tenantAdminId, requested_plan: data.requested_plan,
-        current_plan: currentPlanId, direction, status: "pending_payment",
+        current_plan: currentPlanId, direction, status: "pending",
         billing_cycle: data.billing_cycle, requested_by: context.userId,
+        note: "Awaiting Stripe checkout payment",
       } as never).select("id").single();
       if (reqErr || !req) {
         throw new Error(`Failed to create plan change request: ${reqErr?.message ?? "no row returned"}`);
