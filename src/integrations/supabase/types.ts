@@ -2289,6 +2289,119 @@ export type Database = {
         }
         Relationships: []
       }
+      dispatches: {
+        Row: {
+          admin_id: string
+          avg_cost_at_dispatch: number | null
+          buyer_id: string | null
+          created_at: string | null
+          created_by: string
+          destination: string | null
+          dispatch_date: string | null
+          driver_contact: string | null
+          driver_name: string | null
+          id: string
+          notes: string | null
+          price_per_kg: number
+          profit: number | null
+          quantity_kg: number
+          revenue: number | null
+          silo_id: string
+          updated_at: string | null
+          vehicle_number: string | null
+        }
+        Insert: {
+          admin_id: string
+          avg_cost_at_dispatch?: number | null
+          buyer_id?: string | null
+          created_at?: string | null
+          created_by: string
+          destination?: string | null
+          dispatch_date?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          price_per_kg: number
+          profit?: number | null
+          quantity_kg: number
+          revenue?: number | null
+          silo_id: string
+          updated_at?: string | null
+          vehicle_number?: string | null
+        }
+        Update: {
+          admin_id?: string
+          avg_cost_at_dispatch?: number | null
+          buyer_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          destination?: string | null
+          dispatch_date?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          price_per_kg?: number
+          profit?: number | null
+          quantity_kg?: number
+          revenue?: number | null
+          silo_id?: string
+          updated_at?: string | null
+          vehicle_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "dispatches_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           active: boolean
