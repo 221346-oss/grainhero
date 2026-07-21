@@ -22,7 +22,7 @@ import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
 import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
-  dispatchGrainBatch, logSpoilageEvent, listSilos, listBuyers,
+  logSpoilageEvent, listSilos,
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-batches")({
@@ -74,7 +74,6 @@ type Batch = {
 };
 
 type Silo = { id: string; silo_id: string; name: string; capacity_kg: number; current_occupancy_kg: number | null; warehouse_id: string | null; warehouses?: { name: string } | null };
-type Buyer = { id: string; name: string; company_name: string | null };
 
 type Form = {
   id?: string;
@@ -107,26 +106,6 @@ const emptyForm: Form = {
   status: "stored", notes: "",
 };
 
-type Dispatch = {
-  buyer_id: string;
-  new_buyer_name: string;
-  new_buyer_phone: string;
-  new_buyer_email: string;
-  sell_price_per_kg: string;
-  dispatched_quantity_kg: string;
-  vehicle_number: string;
-  driver_name: string;
-  driver_contact: string;
-  destination: string;
-  notes: string;
-};
-
-const emptyDispatch: Dispatch = {
-  buyer_id: "", new_buyer_name: "", new_buyer_phone: "", new_buyer_email: "",
-  sell_price_per_kg: "", dispatched_quantity_kg: "",
-  vehicle_number: "", driver_name: "", driver_contact: "", destination: "", notes: "",
-};
-
 type Spoilage = {
   type: string; severity: "low"|"medium"|"high"|"critical";
   description: string; estimated_loss_kg: string;
@@ -141,10 +120,8 @@ const emptySpoilage: Spoilage = {
 function GrainBatchesPage() {
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
-  const listBuyerFn = useServerFn(listBuyers);
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
-  const dispatchFn = useServerFn(dispatchGrainBatch);
   const spoilageFn = useServerFn(logSpoilageEvent);
   const qc = useQueryClient();
 
@@ -153,9 +130,7 @@ function GrainBatchesPage() {
 
   const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
-  const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const silos = silosData ?? [];
-  const buyers = buyersData ?? [];
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState(searchStatus ?? "all");
@@ -164,7 +139,6 @@ function GrainBatchesPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [dispatchOpen, setDispatchOpen] = useState(false);
   const [spoilageOpen, setSpoilageOpen] = useState(false);
 
   // Sync filter whenever the URL search param changes (back/forward navigation)
@@ -173,7 +147,6 @@ function GrainBatchesPage() {
   }, [searchStatus]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
-  const [dispatch, setDispatch] = useState<Dispatch>(emptyDispatch);
   const [spoilage, setSpoilage] = useState<Spoilage>(emptySpoilage);
 
   const rows = useMemo(() => {
@@ -246,37 +219,6 @@ function GrainBatchesPage() {
     onError: (e: Error) => toast.error(e.message || "Delete failed"),
   });
 
-  const dispatchMut = useMutation({
-    mutationFn: (payload: { id: string; d: Dispatch }) => {
-      const useExisting = !!payload.d.buyer_id;
-      return dispatchFn({ data: {
-        id: payload.id,
-        buyer_id: useExisting ? payload.d.buyer_id : null,
-        new_buyer: useExisting ? null : {
-          name: payload.d.new_buyer_name,
-          contact_phone: payload.d.new_buyer_phone || null,
-          contact_email: payload.d.new_buyer_email || null,
-        },
-        sell_price_per_kg: Number(payload.d.sell_price_per_kg),
-        dispatched_quantity_kg: Number(payload.d.dispatched_quantity_kg),
-        vehicle_number: payload.d.vehicle_number || null,
-        driver_name: payload.d.driver_name || null,
-        driver_contact: payload.d.driver_contact || null,
-        destination: payload.d.destination || null,
-        notes: payload.d.notes || null,
-      }});
-    },
-    onSuccess: () => {
-      toast.success("Batch dispatched");
-      qc.invalidateQueries({ queryKey: ["grain-batches"] });
-      qc.invalidateQueries({ queryKey: ["silos"] });
-      qc.invalidateQueries({ queryKey: ["buyers"] });
-      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      setDispatchOpen(false); setDispatch(emptyDispatch);
-    },
-    onError: (e: Error) => toast.error(e.message || "Dispatch failed"),
-  });
-
   const spoilageMut = useMutation({
     mutationFn: (payload: { id: string; s: Spoilage }) => spoilageFn({ data: {
       id: payload.id,
@@ -325,12 +267,6 @@ function GrainBatchesPage() {
     });
     setEditOpen(true);
   }
-  function openDispatch(b: Batch) {
-    setSelected(b);
-    const remaining = Number(b.quantity_kg) - Number(b.dispatched_quantity_kg ?? 0);
-    setDispatch({ ...emptyDispatch, dispatched_quantity_kg: String(remaining) });
-    setDispatchOpen(true);
-  }
   function openSpoilage(b: Batch) {
     setSelected(b);
     setSpoilage(emptySpoilage);
@@ -343,7 +279,7 @@ function GrainBatchesPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <PageHeader title="Grain Batches" subtitle="Intake, storage tracking & dispatch" badge={isLoading ? "…" : `${rows.length}`} />
+      <PageHeader title="Grain Batches" subtitle="Intake & storage tracking — dispatch happens from the silo" badge={isLoading ? "…" : `${rows.length}`} />
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <MiniStat icon={Package} label="Total" value={stats.total} tint="emerald" />
@@ -399,7 +335,6 @@ function GrainBatchesPage() {
               onEdit={() => openEdit(b)}
               onDelete={() => setDeleteId(b.id)}
               onQR={() => { setSelected(b); setQrOpen(true); }}
-              onDispatch={() => openDispatch(b)}
               onSpoilage={() => openSpoilage(b)}
             />
           ))}
@@ -604,10 +539,12 @@ function GrainBatchesPage() {
               <DialogFooter className="gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => setQrOpen(true)} className="gap-1"><QrCode className="w-4 h-4" /> QR</Button>
                 <Button variant="outline" size="sm" onClick={() => { setViewOpen(false); openSpoilage(selected); }} className="gap-1"><AlertTriangle className="w-4 h-4" /> Log spoilage</Button>
-                {selected.status !== "dispatched" && selected.status !== "sold" && (
-                  <Button size="sm" onClick={() => { setViewOpen(false); openDispatch(selected); }} className="gap-1"><Truck className="w-4 h-4" /> Dispatch</Button>
-                )}
                 <Button variant="outline" size="sm" onClick={() => { setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
+                {selected.silos && (
+                  <Link to="/silos" className="inline-flex items-center gap-1 text-xs text-emerald-700 underline underline-offset-2 ml-1">
+                    <Truck className="w-3.5 h-3.5" /> Dispatch from {selected.silos.name} →
+                  </Link>
+                )}
               </DialogFooter>
             </>
           )}
@@ -624,80 +561,6 @@ function GrainBatchesPage() {
           onClose={() => setQrOpen(false)}
         />
       )}
-
-      {/* Dispatch */}
-      <Dialog open={dispatchOpen} onOpenChange={(o) => { setDispatchOpen(o); if (!o) setDispatch(emptyDispatch); }}>
-        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Truck className="w-5 h-5 text-emerald-600" /> Dispatch batch</DialogTitle>
-            <DialogDescription>{selected?.batch_id} · {selected?.grain_type}</DialogDescription>
-          </DialogHeader>
-          <form id="dispatch-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); if (selected) dispatchMut.mutate({ id: selected.id, d: dispatch }); }}>
-            <div>
-              <Label>Buyer</Label>
-              <Select value={dispatch.buyer_id} onValueChange={(v) => setDispatch({ ...dispatch, buyer_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select existing buyer" /></SelectTrigger>
-                <SelectContent>
-                  {buyers.map(b => <SelectItem key={b.id} value={b.id}>{b.name}{b.company_name ? ` · ${b.company_name}` : ""}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-slate-500 mt-1">Or enter a new buyer below</p>
-            </div>
-            {!dispatch.buyer_id && (
-              <div className="grid sm:grid-cols-2 gap-2 rounded-md border border-slate-200 p-3 bg-slate-50">
-                <div className="sm:col-span-2">
-                  <Label className="text-xs">New buyer name</Label>
-                  <Input value={dispatch.new_buyer_name} onChange={(e) => setDispatch({ ...dispatch, new_buyer_name: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Phone</Label>
-                  <Input value={dispatch.new_buyer_phone} onChange={(e) => setDispatch({ ...dispatch, new_buyer_phone: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Email</Label>
-                  <Input value={dispatch.new_buyer_email} onChange={(e) => setDispatch({ ...dispatch, new_buyer_email: e.target.value })} />
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Quantity (kg) *</Label>
-                <Input type="number" min={1} required value={dispatch.dispatched_quantity_kg} onChange={(e) => setDispatch({ ...dispatch, dispatched_quantity_kg: e.target.value })} />
-              </div>
-              <div>
-                <Label>Sell $/kg *</Label>
-                <Input type="number" step="0.01" min={0.01} required value={dispatch.sell_price_per_kg} onChange={(e) => setDispatch({ ...dispatch, sell_price_per_kg: e.target.value })} />
-              </div>
-              <div>
-                <Label>Vehicle #</Label>
-                <Input value={dispatch.vehicle_number} onChange={(e) => setDispatch({ ...dispatch, vehicle_number: e.target.value })} />
-              </div>
-              <div>
-                <Label>Destination</Label>
-                <Input value={dispatch.destination} onChange={(e) => setDispatch({ ...dispatch, destination: e.target.value })} />
-              </div>
-              <div>
-                <Label>Driver</Label>
-                <Input value={dispatch.driver_name} onChange={(e) => setDispatch({ ...dispatch, driver_name: e.target.value })} />
-              </div>
-              <div>
-                <Label>Driver phone</Label>
-                <Input value={dispatch.driver_contact} onChange={(e) => setDispatch({ ...dispatch, driver_contact: e.target.value })} />
-              </div>
-              <div className="col-span-2">
-                <Label>Notes</Label>
-                <Textarea rows={2} value={dispatch.notes} onChange={(e) => setDispatch({ ...dispatch, notes: e.target.value })} />
-              </div>
-            </div>
-          </form>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDispatchOpen(false)}>Cancel</Button>
-            <Button form="dispatch-form" type="submit" disabled={dispatchMut.isPending || !dispatch.sell_price_per_kg || !dispatch.dispatched_quantity_kg || (!dispatch.buyer_id && !dispatch.new_buyer_name)}>
-              {dispatchMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm dispatch"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Spoilage */}
       <Dialog open={spoilageOpen} onOpenChange={(o) => { setSpoilageOpen(o); if (!o) setSpoilage(emptySpoilage); }}>
@@ -786,14 +649,12 @@ function GrainBatchesPage() {
   );
 }
 
-function BatchCard({ batch, onView, onEdit, onDelete, onQR, onDispatch, onSpoilage }: {
+function BatchCard({ batch, onView, onEdit, onDelete, onQR, onSpoilage }: {
   batch: Batch; onView: () => void; onEdit: () => void; onDelete: () => void;
-  onQR: () => void; onDispatch: () => void; onSpoilage: () => void;
+  onQR: () => void; onSpoilage: () => void;
 }) {
   const dispatched = Number(batch.dispatched_quantity_kg ?? 0);
   const total = Number(batch.quantity_kg);
-  const remaining = Math.max(0, total - dispatched);
-  const canDispatch = batch.status !== "dispatched" && batch.status !== "sold" && remaining > 0;
   const risk = Number(batch.risk_score ?? 0);
   const riskTone = risk >= 60 ? "bg-rose-50 text-rose-700 border-rose-100" : risk >= 30 ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-emerald-50 text-emerald-700 border-emerald-100";
 
@@ -865,10 +726,12 @@ function BatchCard({ batch, onView, onEdit, onDelete, onQR, onDispatch, onSpoila
           <Button variant="outline" size="sm" onClick={onEdit} className="h-8 px-0" title="Edit"><Edit2 className="w-3.5 h-3.5" /></Button>
           <Button variant="outline" size="sm" onClick={onDelete} className="h-8 px-0 text-rose-600 hover:text-rose-700" title="Delete"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
-        <div className="grid grid-cols-2 gap-1">
-          <Button variant="outline" size="sm" onClick={onSpoilage} className="h-8 text-amber-700 border-amber-200 hover:bg-amber-50 text-xs"><AlertTriangle className="w-3.5 h-3.5 mr-1" />Spoilage</Button>
-          <Button size="sm" onClick={onDispatch} disabled={!canDispatch} className="h-8 text-xs"><Truck className="w-3.5 h-3.5 mr-1" />Dispatch</Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={onSpoilage} className="w-full h-8 text-amber-700 border-amber-200 hover:bg-amber-50 text-xs"><AlertTriangle className="w-3.5 h-3.5 mr-1" />Log spoilage</Button>
+        {batch.silos && (
+          <Link to="/silos" className="flex items-center justify-center gap-1 text-[11px] text-emerald-700 underline underline-offset-2">
+            <Truck className="w-3 h-3" /> Dispatch from {batch.silos.name} →
+          </Link>
+        )}
       </CardContent>
     </Card>
   );

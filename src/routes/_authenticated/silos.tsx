@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Thermometer, Droplets, Wind,
-  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff,
+  Clock, CalendarDays, Loader2, Inbox, Building2, WifiOff, Truck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
-import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
+import { listSilos, upsertSilo, deleteSilo, listWarehouses, dispatchFromSilo, listBuyers } from "@/lib/operations.functions";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 export const Route = createFileRoute("/_authenticated/silos")({
@@ -49,6 +49,7 @@ type Silo = {
 };
 
 type Warehouse = { id: string; name: string; warehouse_id: string };
+type Buyer = { id: string; name: string; company_name: string | null };
 
 type FormState = {
   id?: string;
@@ -67,28 +68,54 @@ const emptyForm: FormState = {
   notes: "",
 };
 
+type DispatchForm = {
+  buyer_id: string;
+  new_buyer_name: string;
+  new_buyer_phone: string;
+  new_buyer_email: string;
+  quantity_kg: string;
+  price_per_kg: string;
+  vehicle_number: string;
+  driver_name: string;
+  driver_contact: string;
+  destination: string;
+  notes: string;
+};
+
+const emptyDispatchForm: DispatchForm = {
+  buyer_id: "", new_buyer_name: "", new_buyer_phone: "", new_buyer_email: "",
+  quantity_kg: "", price_per_kg: "",
+  vehicle_number: "", driver_name: "", driver_contact: "", destination: "", notes: "",
+};
+
 function SilosPage() {
   const list = useServerFn(listSilos);
   const listWh = useServerFn(listWarehouses);
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
+  const listBuyerFn = useServerFn(listBuyers);
+  const dispatchFn = useServerFn(dispatchFromSilo);
   const qc = useQueryClient();
-  
+
   // Plan limits check
   const { canAddSilo, siloLimitMessage } = usePlanLimits();
 
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
+  const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const warehouses = warehousesData ?? [];
+  const buyers = buyersData ?? [];
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [warehouseFilter, setWarehouseFilter] = useState("all");
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [dispatchOpen, setDispatchOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Silo | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [dispatchForm, setDispatchForm] = useState<DispatchForm>(emptyDispatchForm);
 
   // Live tick for storage-duration counter
   const [, setTick] = useState(0);
@@ -146,6 +173,39 @@ function SilosPage() {
     onError: (e: Error) => toast.error(e.message || "Delete failed"),
   });
 
+  const dispatchMutation = useMutation({
+    mutationFn: (payload: { silo_id: string; f: DispatchForm }) => {
+      const useExisting = !!payload.f.buyer_id;
+      return dispatchFn({
+        data: {
+          silo_id: payload.silo_id,
+          buyer_id: useExisting ? payload.f.buyer_id : null,
+          new_buyer: useExisting ? null : {
+            name: payload.f.new_buyer_name,
+            contact_phone: payload.f.new_buyer_phone || null,
+            contact_email: payload.f.new_buyer_email || null,
+          },
+          quantity_kg: Number(payload.f.quantity_kg),
+          price_per_kg: Number(payload.f.price_per_kg),
+          vehicle_number: payload.f.vehicle_number || null,
+          driver_name: payload.f.driver_name || null,
+          driver_contact: payload.f.driver_contact || null,
+          destination: payload.f.destination || null,
+          notes: payload.f.notes || null,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Dispatched from silo");
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["buyers"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      setDispatchOpen(false);
+      setDispatchForm(emptyDispatchForm);
+    },
+    onError: (e: Error) => toast.error(e.message || "Dispatch failed"),
+  });
+
   function openCreate() {
     setForm({ ...emptyForm, warehouse_id: warehouses[0]?.id ?? "" });
     setEditOpen(true);
@@ -161,6 +221,12 @@ function SilosPage() {
       notes: s.notes ?? "",
     });
     setEditOpen(true);
+  }
+
+  function openDispatch(s: Silo) {
+    setSelected(s);
+    setDispatchForm(emptyDispatchForm);
+    setDispatchOpen(true);
   }
 
   if (isLoading) return <SilosSkeleton />;
@@ -247,7 +313,14 @@ function SilosPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((s) => (
-            <SiloCard key={s.id} silo={s} onView={() => { setSelected(s); setViewOpen(true); }} onEdit={() => openEdit(s)} onDelete={() => setDeleteId(s.id)} />
+            <SiloCard
+              key={s.id}
+              silo={s}
+              onView={() => { setSelected(s); setViewOpen(true); }}
+              onEdit={() => openEdit(s)}
+              onDelete={() => setDeleteId(s.id)}
+              onDispatch={() => openDispatch(s)}
+            />
           ))}
         </div>
       )}
@@ -359,10 +432,113 @@ function SilosPage() {
               )}
             </div>
           )}
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setViewOpen(false)}>Close</Button>
+            {selected && (selected.current_occupancy_kg ?? 0) > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => { setViewOpen(false); openDispatch(selected); }}
+                className="gap-2"
+              >
+                <Truck className="w-4 h-4" /> Dispatch
+              </Button>
+            )}
             <Button onClick={() => { setViewOpen(false); if (selected) openEdit(selected); }} className="gap-2">
               <Edit2 className="w-4 h-4" /> Edit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dispatch from silo */}
+      <Dialog open={dispatchOpen} onOpenChange={(o) => { setDispatchOpen(o); if (!o) setDispatchForm(emptyDispatchForm); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Truck className="w-5 h-5 text-emerald-600" /> Dispatch from silo</DialogTitle>
+            <DialogDescription>
+              {selected?.name} · {(selected?.current_occupancy_kg ?? 0).toLocaleString()} kg in stock
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            id="silo-dispatch-form"
+            className="grid gap-3 py-2"
+            onSubmit={(e) => { e.preventDefault(); if (selected) dispatchMutation.mutate({ silo_id: selected.id, f: dispatchForm }); }}
+          >
+            <div>
+              <Label>Buyer</Label>
+              <Select value={dispatchForm.buyer_id} onValueChange={(v) => setDispatchForm({ ...dispatchForm, buyer_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select existing buyer" /></SelectTrigger>
+                <SelectContent>
+                  {buyers.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}{b.company_name ? ` · ${b.company_name}` : ""}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-slate-500 mt-1">Or enter a new buyer below</p>
+            </div>
+            {!dispatchForm.buyer_id && (
+              <div className="grid sm:grid-cols-2 gap-2 rounded-md border border-slate-200 p-3 bg-slate-50">
+                <div className="sm:col-span-2">
+                  <Label className="text-xs">New buyer name</Label>
+                  <Input value={dispatchForm.new_buyer_name} onChange={(e) => setDispatchForm({ ...dispatchForm, new_buyer_name: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">Phone</Label>
+                  <Input value={dispatchForm.new_buyer_phone} onChange={(e) => setDispatchForm({ ...dispatchForm, new_buyer_phone: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">Email</Label>
+                  <Input value={dispatchForm.new_buyer_email} onChange={(e) => setDispatchForm({ ...dispatchForm, new_buyer_email: e.target.value })} />
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Quantity (kg) *</Label>
+                <Input
+                  type="number" min={1} max={selected?.current_occupancy_kg ?? undefined} required
+                  value={dispatchForm.quantity_kg}
+                  onChange={(e) => setDispatchForm({ ...dispatchForm, quantity_kg: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Sell $/kg *</Label>
+                <Input type="number" step="0.01" min={0.01} required value={dispatchForm.price_per_kg} onChange={(e) => setDispatchForm({ ...dispatchForm, price_per_kg: e.target.value })} />
+              </div>
+              <div>
+                <Label>Vehicle #</Label>
+                <Input value={dispatchForm.vehicle_number} onChange={(e) => setDispatchForm({ ...dispatchForm, vehicle_number: e.target.value })} />
+              </div>
+              <div>
+                <Label>Destination</Label>
+                <Input value={dispatchForm.destination} onChange={(e) => setDispatchForm({ ...dispatchForm, destination: e.target.value })} />
+              </div>
+              <div>
+                <Label>Driver</Label>
+                <Input value={dispatchForm.driver_name} onChange={(e) => setDispatchForm({ ...dispatchForm, driver_name: e.target.value })} />
+              </div>
+              <div>
+                <Label>Driver phone</Label>
+                <Input value={dispatchForm.driver_contact} onChange={(e) => setDispatchForm({ ...dispatchForm, driver_contact: e.target.value })} />
+              </div>
+              <div className="col-span-2">
+                <Label>Notes</Label>
+                <Textarea rows={2} value={dispatchForm.notes} onChange={(e) => setDispatchForm({ ...dispatchForm, notes: e.target.value })} />
+              </div>
+            </div>
+          </form>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDispatchOpen(false)}>Cancel</Button>
+            <Button
+              form="silo-dispatch-form"
+              type="submit"
+              disabled={
+                dispatchMutation.isPending ||
+                !dispatchForm.quantity_kg ||
+                !dispatchForm.price_per_kg ||
+                (!dispatchForm.buyer_id && !dispatchForm.new_buyer_name) ||
+                Number(dispatchForm.quantity_kg) > (selected?.current_occupancy_kg ?? 0)
+              }
+            >
+              {dispatchMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm dispatch"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -389,11 +565,12 @@ function SilosPage() {
   );
 }
 
-function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () => void; onEdit: () => void; onDelete: () => void }) {
+function SiloCard({ silo, onView, onEdit, onDelete, onDispatch }: { silo: Silo; onView: () => void; onEdit: () => void; onDelete: () => void; onDispatch: () => void }) {
   const cap = silo.capacity_kg ?? 0;
   const occ = silo.current_occupancy_kg ?? 0;
   const pct = cap > 0 ? Math.min(100, Math.round((occ / cap) * 100)) : 0;
   const duration = getStorageDuration(silo);
+  const canDispatch = occ > 0;
 
   const t = silo.current_conditions?.temperature?.value;
   const h = silo.current_conditions?.humidity?.value;
@@ -488,6 +665,7 @@ function SiloCard({ silo, onView, onEdit, onDelete }: { silo: Silo; onView: () =
           <Button variant="outline" size="sm" onClick={onEdit} className="flex-1 h-8"><Edit2 className="w-3.5 h-3.5 mr-1" />Edit</Button>
           <Button variant="outline" size="sm" onClick={onDelete} className="h-8 w-8 p-0 text-rose-600 hover:text-rose-700 shrink-0"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
+        <Button size="sm" onClick={onDispatch} disabled={!canDispatch} className="w-full h-8 text-xs"><Truck className="w-3.5 h-3.5 mr-1" />Dispatch</Button>
       </CardContent>
     </Card>
   );

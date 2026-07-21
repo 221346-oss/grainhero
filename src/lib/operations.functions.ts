@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireRole } from "./rbac.server";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -258,6 +259,19 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       return row;
     }
 
+    // Intake capacity check: a silo now holds many mixed batches, so every
+    // new intake must fit in whatever room is left (capacity - current stock).
+    if (data.silo_id != null) {
+      const currentOccupancy = Number(silo.current_occupancy_kg ?? 0);
+      const capacity = silo.capacity_kg != null ? Number(silo.capacity_kg) : null;
+      if (capacity != null && currentOccupancy + data.quantity_kg > capacity) {
+        const free = Math.max(0, capacity - currentOccupancy);
+        throw new Error(
+          `Silo capacity exceeded: only ${free.toLocaleString()}kg free (capacity ${capacity.toLocaleString()}kg, already holding ${currentOccupancy.toLocaleString()}kg), tried to add ${data.quantity_kg.toLocaleString()}kg.`
+        );
+      }
+    }
+
     const batchId = data.batch_id ?? `${data.grain_type.slice(0,3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const qrPayload = `GH-${batchId}-${Date.now()}`;
     const { data: row, error } = await context.supabase
@@ -290,12 +304,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       .select("*").single();
     if (error) throw error;
 
-    // update silo occupancy and current_batch link
+    // Update silo stock only. A silo now holds many mixed batches, so we no
+    // longer point current_batch_id/batch_loaded_date at a single intake.
     await context.supabase.from("silos").update({
       current_occupancy_kg: (silo.current_occupancy_kg ?? 0) + data.quantity_kg,
-      current_batch_id: row.id,
-      batch_loaded_date: new Date().toISOString(),
-      batch_dispatched_date: null,
       updated_by: context.userId,
     }).eq("id", data.silo_id);
 
@@ -338,6 +350,12 @@ const dispatchInput = z.object({
   notes: z.string().optional().nullable(),
 });
 
+/**
+ * @deprecated Batch-based dispatch. Silos now hold mixed grain from many
+ * intake batches, so dispatching "a batch" no longer models reality. Use
+ * `dispatchFromSilo` instead. Kept only for backward compatibility with any
+ * remaining callers/legacy data — do not wire new UI to this.
+ */
 export const dispatchGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(dispatchInput, d))
@@ -406,6 +424,156 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
     }
 
     return row;
+  });
+
+// Weighted-average purchase cost of grain currently attributed to a silo,
+// derived from every intake batch ever assigned to it (weighted by intake
+// quantity_kg). Batches with no recorded purchase price are excluded.
+async function getSiloWeightedAvgCost(supabase: any, siloId: string): Promise<number | null> {
+  const { data, error } = await supabase
+    .from("grain_batches")
+    .select("quantity_kg, purchase_price_per_kg")
+    .eq("silo_id", siloId);
+  if (error) throw error;
+  const priced = ((data ?? []) as Array<{ quantity_kg: number; purchase_price_per_kg: number | null }>).filter(
+    (b) => b.purchase_price_per_kg != null && Number(b.quantity_kg) > 0
+  );
+  if (priced.length === 0) return null;
+  const totalQty = priced.reduce((s, b) => s + Number(b.quantity_kg), 0);
+  if (totalQty <= 0) return null;
+  const totalCost = priced.reduce((s, b) => s + Number(b.quantity_kg) * Number(b.purchase_price_per_kg), 0);
+  return Number((totalCost / totalQty).toFixed(4));
+}
+
+// Aggregate `dispatches` (new silo-based model) revenue/profit per tenant.
+// Shared by analytics/dashboard reads that need to merge legacy per-batch
+// numbers (grain_batches.revenue/profit) with the new model — see the
+// dispatch-refactor TODOs in analytics.functions.ts / dashboard-extras.functions.ts /
+// platform-overviews.functions.ts.
+export async function fetchDispatchTotals(
+  supabase: any,
+): Promise<Array<{ admin_id: string; revenue: number; profit: number }>> {
+  const { data, error } = await supabase.from("dispatches").select("admin_id, revenue, profit").limit(10000);
+  if (error) throw error;
+  const map = new Map<string, { admin_id: string; revenue: number; profit: number }>();
+  for (const d of (data ?? []) as Array<{ admin_id: string; revenue: number | null; profit: number | null }>) {
+    const key = d.admin_id ?? "unknown";
+    const cur = map.get(key) ?? { admin_id: key, revenue: 0, profit: 0 };
+    cur.revenue += Number(d.revenue ?? 0);
+    cur.profit += Number(d.profit ?? 0);
+    map.set(key, cur);
+  }
+  return Array.from(map.values());
+}
+
+const dispatchFromSiloInput = z.object({
+  silo_id: z.string().uuid(),
+  quantity_kg: z.number().positive(),
+  buyer_id: z.string().uuid().optional().nullable(),
+  new_buyer: z.object({
+    name: z.string().min(1),
+    contact_phone: z.string().optional().nullable(),
+    contact_email: z.string().optional().nullable(),
+  }).optional().nullable(),
+  price_per_kg: z.number().positive(),
+  dispatch_date: z.string().optional().nullable(),
+  vehicle_number: z.string().optional().nullable(),
+  driver_name: z.string().optional().nullable(),
+  driver_contact: z.string().optional().nullable(),
+  destination: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+// Silo-based dispatch: trucks dump into a silo and grain mixes, so dispatch
+// now happens FROM the silo (amount-out) instead of from a single batch.
+// Only admin/manager may dispatch — technicians are blocked server-side.
+export const dispatchFromSilo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => parseOrThrow(dispatchFromSiloInput, d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, ["super_admin", "admin", "manager"]);
+
+    const { data: silo, error: siloErr } = await context.supabase
+      .from("silos")
+      .select("id, current_occupancy_kg")
+      .eq("id", data.silo_id)
+      .single();
+    if (siloErr) throw siloErr;
+    if (!silo) throw new Error("Silo not found");
+
+    const currentOccupancy = Number(silo.current_occupancy_kg ?? 0);
+    if (data.quantity_kg > currentOccupancy) {
+      throw new Error(
+        `Cannot dispatch ${data.quantity_kg.toLocaleString()}kg: silo only has ${currentOccupancy.toLocaleString()}kg in stock.`
+      );
+    }
+
+    let buyerId = data.buyer_id ?? null;
+    if (!buyerId && data.new_buyer?.name) {
+      const { data: b, error: bErr } = await context.supabase.from("buyers").insert({
+        admin_id: context.userId,
+        name: data.new_buyer.name,
+        contact_name: data.new_buyer.name,
+        contact_phone: data.new_buyer.contact_phone ?? null,
+        contact_email: data.new_buyer.contact_email ?? null,
+        buyer_type: "retailer",
+        status: "active",
+      }).select("id").single();
+      if (bErr) throw bErr;
+      buyerId = b.id;
+    }
+
+    const avgCost = await getSiloWeightedAvgCost(context.supabase, data.silo_id);
+    const revenue = Number((data.price_per_kg * data.quantity_kg).toFixed(2));
+    const profit = avgCost != null ? Number(((data.price_per_kg - avgCost) * data.quantity_kg).toFixed(2)) : null;
+
+    const { data: row, error } = await context.supabase
+      .from("dispatches")
+      .insert({
+        admin_id: context.userId,
+        silo_id: data.silo_id,
+        buyer_id: buyerId,
+        quantity_kg: data.quantity_kg,
+        price_per_kg: data.price_per_kg,
+        avg_cost_at_dispatch: avgCost,
+        revenue,
+        profit,
+        dispatch_date: data.dispatch_date || new Date().toISOString(),
+        vehicle_number: data.vehicle_number ?? null,
+        driver_name: data.driver_name ?? null,
+        driver_contact: data.driver_contact ?? null,
+        destination: data.destination ?? null,
+        notes: data.notes ?? null,
+        created_by: context.userId,
+      })
+      .select("*, buyers:buyer_id(id, name, company_name)")
+      .single();
+    if (error) throw error;
+
+    const { error: siloUpdateErr } = await context.supabase
+      .from("silos")
+      .update({
+        current_occupancy_kg: Math.max(0, currentOccupancy - data.quantity_kg),
+        updated_by: context.userId,
+      })
+      .eq("id", data.silo_id);
+    if (siloUpdateErr) throw siloUpdateErr;
+
+    return row;
+  });
+
+export const listSiloDispatches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ silo_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("dispatches")
+      .select("*, buyers:buyer_id(id, name, company_name)")
+      .eq("silo_id", data.silo_id)
+      .order("dispatch_date", { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    return rows ?? [];
   });
 
 const spoilageInput = z.object({

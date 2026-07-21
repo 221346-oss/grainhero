@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
+import { fetchDispatchTotals } from "./operations.functions";
 
 async function assertSuper(supabase: any, userId: string) {
   if ((await getEffectiveRole(supabase, userId)) !== "super_admin") {
@@ -48,6 +49,20 @@ export const getPlatformAnalyticsBreakdown = createServerFn({ method: "GET" })
       cur.profit += Number(b.profit ?? 0);
       if (b.spoilage_label && String(b.spoilage_label).toLowerCase() !== "safe") cur.spoiled += 1;
       agg.set(k, cur);
+    }
+
+    // TODO(dispatch-refactor): grain_batches.revenue/profit above are the legacy per-batch
+    // dispatch model and will stop growing now that dispatch happens from silos
+    // (dispatchFromSilo in operations.functions.ts, writing to the `dispatches` table).
+    // Merging both per-tenant so platform analytics doesn't undercount tenants that have
+    // moved to silo-based dispatch — replace with a dispatches-only query once legacy
+    // batch-level dispatch data is fully migrated.
+    const dispatchTotals = await fetchDispatchTotals(sa);
+    for (const d of dispatchTotals) {
+      const cur = agg.get(d.admin_id) ?? { admin_id: d.admin_id, batches: 0, kg: 0, revenue: 0, profit: 0, spoiled: 0 };
+      cur.revenue += d.revenue;
+      cur.profit += d.profit;
+      agg.set(d.admin_id, cur);
     }
 
     const rows = Array.from(agg.values()).map((t) => ({

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { fetchDispatchTotals } from "./operations.functions";
 
 export const getDashboardExtras = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -32,9 +33,16 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     ]);
 
     const batches = batchesRes.data ?? [];
-    const revenue = batches
+    const legacyRevenue = batches
       .filter((b) => b.status === "dispatched")
       .reduce((s, b) => s + Number(b.revenue ?? (Number(b.purchase_price_per_kg ?? 0) * Number(b.quantity_kg ?? 0))), 0);
+    // TODO(dispatch-refactor): legacyRevenue above is the old per-batch dispatch model
+    // (grain_batches.revenue) and will stop growing now that dispatch happens from silos
+    // (dispatchFromSilo in operations.functions.ts, writing to the `dispatches` table).
+    // Merging both here so this dashboard tile doesn't silently drop to zero — replace with
+    // a dispatches-only query once legacy batch-level dispatch data is fully migrated.
+    const dispatchTotals = await fetchDispatchTotals(context.supabase);
+    const revenue = legacyRevenue + dispatchTotals.reduce((s, d) => s + d.revenue, 0);
 
     return {
       recentBatches: batches,
