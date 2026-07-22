@@ -4803,6 +4803,69 @@ export type Database = {
           },
         ]
       }
+      live_sensor_readings: {
+        Row: {
+          airflow: number | null
+          ambient_light: number | null
+          confidence: number | null
+          created_at: string | null
+          dew_point: number | null
+          grain_moisture: number
+          grain_type: string
+          humidity: number
+          id: number
+          pest_presence: number | null
+          prediction: string | null
+          rainfall: number | null
+          risk_score: number | null
+          silo_id: string | null
+          source: string | null
+          storage_days: number
+          temperature: number
+          tvoc_ppb: number | null
+        }
+        Insert: {
+          airflow?: number | null
+          ambient_light?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          dew_point?: number | null
+          grain_moisture: number
+          grain_type: string
+          humidity: number
+          id?: number
+          pest_presence?: number | null
+          prediction?: string | null
+          rainfall?: number | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          storage_days?: number
+          temperature: number
+          tvoc_ppb?: number | null
+        }
+        Update: {
+          airflow?: number | null
+          ambient_light?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          dew_point?: number | null
+          grain_moisture?: number
+          grain_type?: string
+          humidity?: number
+          id?: number
+          pest_presence?: number | null
+          prediction?: string | null
+          rainfall?: number | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          storage_days?: number
+          temperature?: number
+          tvoc_ppb?: number | null
+        }
+        Relationships: []
+      }
       logistics_cost_entries: {
         Row: {
           amount: number
@@ -4951,6 +5014,36 @@ export type Database = {
           sql_template?: string
           unit?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ml_model_metadata: {
+        Row: {
+          active_accuracy: number | null
+          active_model_version: string | null
+          best_params: Json | null
+          grain_type: string
+          last_fast_run: string | null
+          last_nightly_run: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_accuracy?: number | null
+          active_model_version?: string | null
+          best_params?: Json | null
+          grain_type: string
+          last_fast_run?: string | null
+          last_nightly_run?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_accuracy?: number | null
+          active_model_version?: string | null
+          best_params?: Json | null
+          grain_type?: string
+          last_fast_run?: string | null
+          last_nightly_run?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -5311,6 +5404,48 @@ export type Database = {
           row_count?: number | null
           started_at?: string
           status?: string
+        }
+        Relationships: []
+      }
+      model_versions: {
+        Row: {
+          accuracy: number | null
+          created_at: string | null
+          f1_score: number | null
+          file_hash: string | null
+          grain_type: string
+          id: number
+          is_active: boolean | null
+          sanity_pass_rate: number | null
+          storage_path: string
+          trained_by: string | null
+          version: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string | null
+          f1_score?: number | null
+          file_hash?: string | null
+          grain_type: string
+          id?: number
+          is_active?: boolean | null
+          sanity_pass_rate?: number | null
+          storage_path: string
+          trained_by?: string | null
+          version: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string | null
+          f1_score?: number | null
+          file_hash?: string | null
+          grain_type?: string
+          id?: number
+          is_active?: boolean | null
+          sanity_pass_rate?: number | null
+          storage_path?: string
+          trained_by?: string | null
+          version?: string
         }
         Relationships: []
       }
@@ -5912,6 +6047,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "technician_performance_v"
             referencedColumns: ["technician_id"]
+          },
+        ]
+      }
+      retrain_log: {
+        Row: {
+          accuracy: number | null
+          duration_seconds: number | null
+          fail_reason: string | null
+          finished_at: string | null
+          grain_type: string
+          id: number
+          model_version_id: number | null
+          rows_used: number | null
+          sanity_pass_rate: number | null
+          started_at: string | null
+          status: string
+          trigger: string
+        }
+        Insert: {
+          accuracy?: number | null
+          duration_seconds?: number | null
+          fail_reason?: string | null
+          finished_at?: string | null
+          grain_type: string
+          id?: number
+          model_version_id?: number | null
+          rows_used?: number | null
+          sanity_pass_rate?: number | null
+          started_at?: string | null
+          status: string
+          trigger: string
+        }
+        Update: {
+          accuracy?: number | null
+          duration_seconds?: number | null
+          fail_reason?: string | null
+          finished_at?: string | null
+          grain_type?: string
+          id?: number
+          model_version_id?: number | null
+          rows_used?: number | null
+          sanity_pass_rate?: number | null
+          started_at?: string | null
+          status?: string
+          trigger?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retrain_log_model_version_id_fkey"
+            columns: ["model_version_id"]
+            isOneToOne: false
+            referencedRelation: "model_versions"
+            referencedColumns: ["id"]
           },
         ]
       }
