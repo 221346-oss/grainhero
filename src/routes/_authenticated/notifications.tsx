@@ -16,6 +16,9 @@ import {
 import {
   listNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification,
 } from "@/lib/notifications-audit.functions";
+import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
+import { Switch } from "@/components/ui/switch";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   component: NotificationsPage,
@@ -38,6 +41,9 @@ const CATEGORY_ICON: Record<string, React.ReactNode> = {
   insurance: <Shield className="h-3.5 w-3.5" />,
   invoice: <FileText className="h-3.5 w-3.5" />,
   system: <Settings className="h-3.5 w-3.5" />,
+  moderation: <Shield className="h-3.5 w-3.5" />,
+  messaging: <Bell className="h-3.5 w-3.5" />,
+  audit: <FileText className="h-3.5 w-3.5" />,
 };
 
 function formatTime(dateStr: string) {
@@ -50,8 +56,63 @@ function formatTime(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+const PREF_ROWS = [
+  { key: "email_alerts", label: "Email alerts" },
+  { key: "sms_alerts", label: "SMS alerts" },
+  { key: "push_notifications", label: "Push notifications" },
+  { key: "weekly_reports", label: "Weekly reports" },
+  { key: "expiry_email_alerts", label: "Email me when my plan is about to expire (7 / 3 / 1 days)" },
+  { key: "expiry_push_alerts", label: "In-app notification when my plan is about to expire" },
+] as const;
+
+const PREF_DEFAULTS: Record<string, boolean> = {
+  email_alerts: true, sms_alerts: false, push_notifications: true,
+  weekly_reports: true, expiry_email_alerts: true, expiry_push_alerts: true,
+};
+
+function NotificationPreferences() {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getMySettings);
+  const saveFn = useServerFn(updateMySettings);
+  const { data } = useQuery({ queryKey: ["my-settings"], queryFn: () => getFn() });
+
+  const prefs: Record<string, boolean> = { ...PREF_DEFAULTS };
+  const stored = (data?.preferences ?? {}) as Record<string, unknown>;
+  for (const k of Object.keys(PREF_DEFAULTS)) {
+    if (typeof stored[k] === "boolean") prefs[k] = stored[k] as boolean;
+  }
+
+  const saveMut = useMutation({
+    mutationFn: (next: Record<string, boolean>) => saveFn({ data: { preferences: { ...stored, ...next } } }),
+    onSuccess: () => { toast.success("Preferences saved"); qc.invalidateQueries({ queryKey: ["my-settings"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="border-slate-200/70">
+      <CardHeader>
+        <CardTitle className="text-base">Notification preferences</CardTitle>
+        <CardDescription>Choose how we contact you. Changes save automatically.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {PREF_ROWS.map((row) => (
+          <div key={row.key} className="flex items-center justify-between rounded-lg border border-border p-3">
+            <span className="text-sm font-medium text-foreground">{row.label}</span>
+            <Switch
+              checked={prefs[row.key]}
+              disabled={saveMut.isPending || !data}
+              onCheckedChange={(v) => saveMut.mutate({ ...prefs, [row.key]: v })}
+            />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 function NotificationsPage() {
   const [filter, setFilter] = useState<Filter>("all");
+  const [categories, setCategories] = useState<Set<string>>(new Set());
   const qc = useQueryClient();
   useRealtimeInvalidate("notifications", [["notifications"]]);
   const list = useServerFn(listNotifications);
@@ -60,8 +121,14 @@ function NotificationsPage() {
   const del = useServerFn(deleteNotification);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["notifications", filter],
-    queryFn: () => list({ data: { filter, limit: 50 } }),
+    queryKey: ["notifications", filter, Array.from(categories).sort().join(",")],
+    queryFn: () => list({
+      data: {
+        filter,
+        limit: 50,
+        categories: categories.size ? Array.from(categories) : undefined,
+      },
+    }),
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["notifications"] });
@@ -125,6 +192,33 @@ function NotificationsPage() {
           </Button>
         ))}
       </div>
+
+      {(data?.availableCategories?.length ?? 0) > 0 && (
+        <div className="flex gap-1.5 flex-wrap items-center">
+          <span className="text-xs text-slate-500 uppercase tracking-wide mr-1">Categories:</span>
+          {(data?.availableCategories ?? []).map((c) => {
+            const on = categories.has(c);
+            return (
+              <button
+                key={c}
+                onClick={() => setCategories((s) => {
+                  const n = new Set(s); n.has(c) ? n.delete(c) : n.add(c); return n;
+                })}
+                className={`text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1 transition-colors ${
+                  on ? "bg-emerald-600 text-white border-emerald-600" : "border-slate-300 text-slate-600 hover:border-emerald-500 hover:text-emerald-700"
+                }`}
+              >
+                {CATEGORY_ICON[c] ?? CATEGORY_ICON.system}
+                {c}
+              </button>
+            );
+          })}
+          {categories.size > 0 && (
+            <button className="text-[11px] text-slate-400 hover:text-slate-700 underline"
+              onClick={() => setCategories(new Set())}>clear</button>
+          )}
+        </div>
+      )}
 
       <Card className="border-slate-200/70">
         <CardContent className="p-0">
@@ -192,6 +286,8 @@ function NotificationsPage() {
           )}
         </CardContent>
       </Card>
+
+      <NotificationPreferences />
     </div>
   );
 }

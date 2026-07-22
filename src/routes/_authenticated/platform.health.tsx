@@ -100,7 +100,7 @@ function PlatformHealthPage() {
             <p className="text-sm">No incidents recorded</p>
           </div>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="">
             {events.map((e) => (
               <li key={e.id} className="px-4 py-3 flex items-center justify-between hover:bg-slate-50">
                 <span className="text-sm font-medium text-slate-800">{e.event}</span>

@@ -6,16 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, Save, Send, User, Phone, Building2, Calendar as CalIcon } from "lucide-react";
+import { Plus, Trash2, Save, Send, Calendar as CalIcon, Warehouse, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { getInstallation, upsertInstallation, upsertDevices, addVisitEvent } from "@/lib/installations.functions";
+import { getInstallation, upsertInstallation, upsertDevices, addVisitEvent, advanceInstallStage } from "@/lib/installations.functions";
 import { RouteMapCard } from "./RouteMapCard";
+import { Link } from "@tanstack/react-router";
+import { InstallStageTracker, deriveStage } from "./InstallStageTracker";
+import { useMyProfile } from "@/hooks/useMyProfile";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 interface Props { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void; canEdit: boolean }
 
-const STATUS_OPTIONS = ["scheduled", "en_route", "on_site", "installed", "verified", "cancelled"];
 const DEVICE_STATUS = ["shipped", "en_route", "installed", "verified"];
 
 export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Props) {
@@ -24,6 +26,9 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const saveFn = useServerFn(upsertInstallation);
   const devFn = useServerFn(upsertDevices);
   const eventFn = useServerFn(addVisitEvent);
+  const advanceFn = useServerFn(advanceInstallStage);
+  const myProfile = useMyProfile();
+  const isSuper = useIsSuperAdmin();
 
   const q = useQuery({
     queryKey: ["installation", orderId],
@@ -33,6 +38,14 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
 
   const install = q.data?.installation as any;
   const order = q.data?.order as any;
+  const companyOrigin = (q.data as any)?.companyOrigin as string | undefined;
+  const adminId = order?.admin_id as string | undefined;
+  const events = ((q.data as any)?.events ?? []) as Array<Record<string, unknown>>;
+  const { stage, blocked, blockerNote, history } = deriveStage(order, install, events);
+  const canAdvanceAs = {
+    superAdmin: !!isSuper.isSuperAdmin,
+    admin: !!(myProfile.data as any)?.profile?.id && (myProfile.data as any)?.profile?.id === adminId,
+  };
 
   // form state
   const [form, setForm] = useState<any>({});
@@ -40,20 +53,21 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const [note, setNote] = useState("");
 
   useEffect(() => {
-    setForm(install ?? {});
+    setForm({
+      ...(install ?? {}),
+      origin_address: install?.origin_address || companyOrigin || "",
+    });
     setDevices((q.data?.devices as any[])?.map((d) => ({ serial: d.serial, model: d.model ?? "", status: d.status })) ?? []);
-  }, [q.data, install]);
+  }, [q.data, install, companyOrigin]);
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
   const saveM = useMutation({
     mutationFn: () => saveFn({ data: { orderId: orderId!, patch: {
-      installer_name: form.installer_name, installer_phone: form.installer_phone, installer_photo_url: form.installer_photo_url, installer_company: form.installer_company,
       city: form.city, warehouse_id: form.warehouse_id ?? null, silo_id: form.silo_id ?? null,
       scheduled_visit_at: form.scheduled_visit_at ? new Date(form.scheduled_visit_at).toISOString() : null,
       origin_address: form.origin_address, origin_lat: form.origin_lat ? Number(form.origin_lat) : null, origin_lng: form.origin_lng ? Number(form.origin_lng) : null,
       destination_address: form.destination_address, destination_lat: form.destination_lat ? Number(form.destination_lat) : null, destination_lng: form.destination_lng ? Number(form.destination_lng) : null,
-      status: form.status ?? "scheduled",
     } } }),
     onSuccess: () => { toast.success("Installation saved"); qc.invalidateQueries({ queryKey: ["installation", orderId] }); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -90,57 +104,64 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
           <div className="p-6 text-sm text-muted-foreground">Loading…</div>
         ) : (
           <div className="mt-4 space-y-6">
-            {/* Installer card */}
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    {form.installer_photo_url ? <AvatarImage src={form.installer_photo_url} /> : null}
-                    <AvatarFallback className="bg-primary/10 text-primary"><User className="h-5 w-5" /></AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-foreground truncate">{form.installer_name || "No installer assigned"}</div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-3">
-                      {form.installer_phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {form.installer_phone}</span>}
-                      {form.installer_company && <span className="inline-flex items-center gap-1"><Building2 className="h-3 w-3" /> {form.installer_company}</span>}
-                    </div>
-                  </div>
-                  <Badge className="bg-primary/10 text-primary border-transparent capitalize">{(form.status ?? "scheduled").replace("_", " ")}</Badge>
-                </div>
-                {canEdit && (
-                  <div className="grid grid-cols-2 gap-2 pt-2">
-                    <Field label="Installer name" v={form.installer_name} onChange={(v) => set("installer_name", v)} />
-                    <Field label="Phone" v={form.installer_phone} onChange={(v) => set("installer_phone", v)} />
-                    <Field label="Company" v={form.installer_company} onChange={(v) => set("installer_company", v)} />
-                    <Field label="Photo URL" v={form.installer_photo_url} onChange={(v) => set("installer_photo_url", v)} />
+            <InstallStageTracker
+              stage={stage}
+              blocked={blocked}
+              blockerNote={blockerNote}
+              history={history}
+              variant="full"
+              canAdvanceAs={canAdvanceAs}
+              onAdvance={async (next, note) => {
+                if (next === "completed") {
+                  // ensure devices are persisted so the provision trigger sees them
+                  if (devices.filter((d) => d.serial.trim()).length === 0) {
+                    toast.error("Add at least one device serial before completing — one silo is provisioned per serial.");
+                    return;
+                  }
+                  await saveDevM.mutateAsync();
+                }
+                try {
+                  await advanceFn({ data: { orderId: orderId!, next, note } });
+                  toast.success(next === "completed" ? "Confirmed — warehouse & silos provisioned." : `Advanced to ${next.replace("_", " ")}`);
+                  qc.invalidateQueries({ queryKey: ["installation", orderId] });
+                  qc.invalidateQueries({ queryKey: ["platform-orders"] });
+                  qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+                } catch (e: any) {
+                  toast.error(e.message ?? "Failed to advance");
+                }
+              }}
+            />
+            {canEdit && (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <Field label="City" v={form.city} onChange={(v) => set("city", v)} />
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Status</label>
-                      <select className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm" value={form.status ?? "scheduled"} onChange={(e) => set("status", e.target.value)}>
-                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
                       <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><CalIcon className="h-3 w-3" /> Scheduled visit</label>
                       <Input type="datetime-local" value={form.scheduled_visit_at ? new Date(form.scheduled_visit_at).toISOString().slice(0, 16) : ""} onChange={(e) => set("scheduled_visit_at", e.target.value)} />
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  {adminId && (
+                    <Button asChild size="sm" variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
+                      <Link to="/admins/$adminId" params={{ adminId }}>
+                        <Warehouse className="h-3.5 w-3.5 mr-1" /> Open admin profile
+                        <ExternalLink className="h-3 w-3 ml-1 opacity-60" />
+                      </Link>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Map */}
             <div>
               <div className="text-sm font-semibold text-foreground mb-2">Route</div>
               <RouteMapCard {...mapProps} />
               {canEdit && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  <Field label="Origin address" v={form.origin_address} onChange={(v) => set("origin_address", v)} full />
-                  <Field label="Origin lat" v={form.origin_lat} onChange={(v) => set("origin_lat", v)} />
-                  <Field label="Origin lng" v={form.origin_lng} onChange={(v) => set("origin_lng", v)} />
-                  <Field label="Destination address" v={form.destination_address} onChange={(v) => set("destination_address", v)} full />
-                  <Field label="Dest lat" v={form.destination_lat} onChange={(v) => set("destination_lat", v)} />
-                  <Field label="Dest lng" v={form.destination_lng} onChange={(v) => set("destination_lng", v)} />
+                <div className="grid grid-cols-1 gap-2 mt-3">
+                  <Field label="Origin address (company HQ — editable in Platform settings)" v={form.origin_address} onChange={(v) => set("origin_address", v)} full />
+                  <Field label="Destination address (from buyer's install order)" v={form.destination_address} onChange={(v) => set("destination_address", v)} full />
+                  <div className="text-[11px] text-muted-foreground">Coordinates are captured from the buyer's map pin at checkout; no need to enter lat/lng manually.</div>
                 </div>
               )}
             </div>

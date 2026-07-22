@@ -1,11 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { z } from "zod";
+import { useServerFn } from "@tanstack/react-start";
 import { Loader2, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
+import { logSecurityEvent } from "@/lib/security-events.functions";
+import { claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
+
+const PENDING_SESSION_KEY = "grainhero.pendingCheckoutSession";
 
 const search = z.object({
   email: z.string().email(),
@@ -22,6 +27,7 @@ export const Route = createFileRoute("/auth/verify-otp")({
 function VerifyOtpPage() {
   const navigate = useNavigate();
   const { email } = Route.useSearch();
+  const claimFn = useServerFn(claimPaidCheckoutForUser);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -36,6 +42,9 @@ function VerifyOtpPage() {
     setOtp(next);
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
+    }
+    if (next.every(Boolean)) {
+      verify(next.join(""));
     }
   };
 
@@ -53,11 +62,18 @@ function VerifyOtpPage() {
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
     setOtp(next);
     inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+    if (pasted.length === 6) {
+      verify(pasted);
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = otp.join("");
+    verify(otp.join(""));
+  };
+
+  const verify = async (token: string) => {
+    if (loading) return;
     if (token.length < 6) {
       setMsg({ type: "error", text: "Enter the full 6-digit code." });
       return;
@@ -80,6 +96,17 @@ function VerifyOtpPage() {
     }
 
     setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
+    void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
+
+    let pendingSessionId: string | null = null;
+    try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
+    try {
+      await claimFn({ data: pendingSessionId ? { sessionId: pendingSessionId } : {} });
+      if (pendingSessionId) window.localStorage.removeItem(PENDING_SESSION_KEY);
+    } catch (e) {
+      console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
+    }
+
     setTimeout(() => navigate({ to: "/dashboard", replace: true }), 500);
   };
 

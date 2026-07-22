@@ -1445,3 +1445,456 @@ export function PlatformOrdersSkeleton() {
     </div>
   );
 }
+
+// ─── Phase 18 finance ───────────────────────────────────────────────────────
+export function FinanceCommandSkeleton() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-56 rounded" />
+        <Skeleton className="h-4 w-72 rounded" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {Array(7).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border bg-card p-4 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-6 w-24 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <Skeleton className="h-5 w-40 rounded" />
+        <Skeleton className="h-[300px] w-full rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+export function PayoutsSkeleton() { return <PlatformOrdersSkeleton />; }
+export function LedgerSkeleton() { return <PlatformOrdersSkeleton />; }
+export function TaxRulesSkeleton() { return <PlatformOrdersSkeleton />; }
+export function EarningsSkeleton() { return <FinanceCommandSkeleton />; }
+export function InsuranceCommandSkeleton() { return <FinanceCommandSkeleton />; }
+export function ClaimsQueueSkeleton() { return <PlatformOrdersSkeleton />; }
+export function MetricRegistrySkeleton() { return <FinanceCommandSkeleton />; }
+export function DashboardBuilderSkeleton() { return <FinanceCommandSkeleton />; }
+
+// ────────────────────────────────────────────────────────────────────────────
+// High-fidelity role dashboards & shared shapes (per-page skeletons)
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Welcome banner + 4-tile KPI strip + 65/35 hero + 2×3 bento — Admin dash. */
+export function AdminDashSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-5">
+      {/* Welcome + tabs */}
+      <div className="flex items-center justify-between gap-4">
+        <Skeleton className="h-9 w-64 rounded-lg" />
+        <div className="hidden md:flex gap-2">
+          {Array(4).fill(null).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-20 rounded-full" />
+          ))}
+        </div>
+      </div>
+      {/* KPI strip — 4 compact tiles */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array(4).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border/40 bg-card p-3 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-7 w-24 rounded" />
+            <Skeleton className="h-3 w-12 rounded" />
+          </div>
+        ))}
+      </div>
+      {/* 65/35 hero */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.85fr_1fr] gap-4">
+        <div className="rounded-2xl border border-border/40 bg-card p-4 h-64 space-y-3">
+          <div className="flex justify-between">
+            <Skeleton className="h-5 w-32 rounded" />
+            <Skeleton className="h-7 w-24 rounded-full" />
+          </div>
+          <Skeleton className="h-40 w-full rounded-lg" />
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-card p-4 space-y-3">
+          {Array(4).fill(null).map((_, i) => (
+            <div key={i} className="flex justify-between items-center">
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-20 rounded" />
+                <Skeleton className="h-4 w-28 rounded" />
+              </div>
+              <Skeleton className="h-4 w-12 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Bento 2×3 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array(6).fill(null).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border/40 bg-card p-4 space-y-3 h-44">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="h-6 w-6 rounded-full" />
+            </div>
+            <Skeleton className="h-7 w-20 rounded" />
+            <Skeleton className="h-3 w-full rounded" />
+            <Skeleton className="h-3 w-4/5 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Manager: fewer KPIs, scrollable card-in-card management stack. */
+export function ManagerDashSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-5">
+      <Skeleton className="h-9 w-64 rounded-lg" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array(4).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border/40 bg-card p-3 space-y-2">
+            <Skeleton className="h-3 w-14 rounded" />
+            <Skeleton className="h-6 w-20 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {Array(4).fill(null).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border/40 bg-card p-4 space-y-3 h-56">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-7 w-20 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              {Array(4).fill(null).map((_, j) => (
+                <div key={j} className="flex gap-3 items-center">
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-3 w-3/5 rounded" />
+                    <Skeleton className="h-3 w-2/5 rounded" />
+                  </div>
+                  <Skeleton className="h-6 w-14 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Technician: today strip + install queue stack. */
+export function TechnicianDashSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-5">
+      <Skeleton className="h-9 w-56 rounded-lg" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {Array(3).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border/40 bg-card p-4 space-y-2">
+            <Skeleton className="h-3 w-20 rounded" />
+            <Skeleton className="h-8 w-16 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+        <div className="p-4 border-b border-border/40 flex justify-between">
+          <Skeleton className="h-5 w-40 rounded" />
+          <Skeleton className="h-8 w-24 rounded-full" />
+        </div>
+        <div className="divide-y divide-border/40">
+          {Array(6).fill(null).map((_, i) => (
+            <div key={i} className="p-4 flex items-center gap-4">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-2/5 rounded" />
+                <Skeleton className="h-3 w-3/5 rounded" />
+              </div>
+              <Skeleton className="h-8 w-24 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Super-admin dash: platform KPIs + insight strip + platform bento. */
+export function SuperAdminDashSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-5">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-9 w-72 rounded-lg" />
+        <Skeleton className="h-8 w-32 rounded-full" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {Array(5).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border/40 bg-card p-3 space-y-2">
+            <Skeleton className="h-3 w-14 rounded" />
+            <Skeleton className="h-7 w-20 rounded" />
+            <Skeleton className="h-2 w-10 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 rounded-2xl border border-border/40 bg-card p-4 h-72">
+          <Skeleton className="h-5 w-40 rounded mb-3" />
+          <Skeleton className="h-56 w-full rounded-lg" />
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-32 rounded" />
+          {Array(5).fill(null).map((_, i) => (
+            <div key={i} className="flex justify-between items-center">
+              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="h-4 w-16 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array(6).fill(null).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border/40 bg-card p-4 space-y-3 h-40">
+            <Skeleton className="h-4 w-28 rounded" />
+            <Skeleton className="h-8 w-24 rounded" />
+            <Skeleton className="h-3 w-full rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Generic Table hub: header + toolbar (search + filters + New) + dense table. */
+export function TableHubSkeleton({ rows = 8, cols = 6 }: { rows?: number; cols?: number }) {
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-40 rounded" />
+          <Skeleton className="h-3 w-64 rounded" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-28 rounded-lg" />
+          <Skeleton className="h-9 w-32 rounded-lg" />
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Skeleton className="h-9 w-64 rounded-lg" />
+        {Array(3).fill(null).map((_, i) => (
+          <Skeleton key={i} className="h-8 w-24 rounded-full" />
+        ))}
+      </div>
+      <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
+        <div className="p-3 border-b border-border/40 grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}>
+          {Array(cols).fill(null).map((_, i) => <Skeleton key={i} className="h-3 w-2/3 rounded" />)}
+        </div>
+        <div className="divide-y divide-border/40">
+          {Array(rows).fill(null).map((_, r) => (
+            <div key={r} className="p-3 grid gap-3 items-center" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}>
+              {Array(cols).fill(null).map((_, c) => (
+                <Skeleton key={c} className={c === 0 ? "h-4 w-3/5 rounded" : "h-4 w-4/5 rounded"} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** KPI + chart hub: header + 4 KPI + big chart + side list. */
+export function KpiChartHubSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-5">
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-48 rounded" />
+        <Skeleton className="h-3 w-72 rounded" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array(4).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border/40 bg-card p-3 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-7 w-24 rounded" />
+            <Skeleton className="h-2 w-12 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 rounded-2xl border border-border/40 bg-card p-4 h-80">
+          <Skeleton className="h-5 w-40 rounded mb-3" />
+          <Skeleton className="h-64 w-full rounded-lg" />
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-card p-4 space-y-3">
+          <Skeleton className="h-5 w-32 rounded" />
+          {Array(6).fill(null).map((_, i) => (
+            <div key={i} className="flex justify-between items-center">
+              <Skeleton className="h-3 w-24 rounded" />
+              <Skeleton className="h-3 w-14 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Detail hub: back link + title + tabs + 2-col content. */
+export function DetailHubSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-5">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-8 w-24 rounded-lg" />
+        <Skeleton className="h-7 w-56 rounded" />
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        {Array(4).fill(null).map((_, i) => (
+          <Skeleton key={i} className="h-8 w-24 rounded-full" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+        <div className="rounded-2xl border border-border/40 bg-card p-4 space-y-4">
+          {Array(6).fill(null).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-3 w-24 rounded" />
+              <Skeleton className="h-5 w-full rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-3">
+          {Array(3).fill(null).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border/40 bg-card p-4 space-y-3">
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-16 w-full rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Rail + list + drawer: silo management, warehouse hubs. */
+export function RailListDrawerSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-7 w-48 rounded" />
+        <Skeleton className="h-9 w-32 rounded-lg" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_320px] gap-4">
+        <div className="rounded-2xl border border-border/40 bg-card p-3 space-y-2">
+          {Array(6).fill(null).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full rounded-lg" />
+          ))}
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+          <div className="p-3 border-b border-border/40 grid grid-cols-5 gap-3">
+            {Array(5).fill(null).map((_, i) => <Skeleton key={i} className="h-3 w-2/3 rounded" />)}
+          </div>
+          <div className="divide-y divide-border/40">
+            {Array(8).fill(null).map((_, i) => (
+              <div key={i} className="p-3 grid grid-cols-5 gap-3 items-center">
+                {Array(5).fill(null).map((_, c) => <Skeleton key={c} className="h-4 w-4/5 rounded" />)}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border/40 bg-card p-3 space-y-3">
+          <Skeleton className="h-5 w-36 rounded" />
+          {Array(5).fill(null).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Command console: header + KPI strip + 3-col wide grid of panels. */
+export function CommandConsoleSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-5">
+      <div className="flex justify-between items-center">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-64 rounded" />
+          <Skeleton className="h-3 w-80 rounded" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24 rounded-lg" />
+          <Skeleton className="h-9 w-32 rounded-lg" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array(4).fill(null).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border/40 bg-card p-3 space-y-2">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-7 w-24 rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Array(6).fill(null).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border/40 bg-card p-4 space-y-3 h-56">
+            <Skeleton className="h-4 w-32 rounded" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Log stream: header + toolbar + vertical dense log rows. */
+export function LogStreamSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-7 w-44 rounded" />
+        <Skeleton className="h-9 w-28 rounded-lg" />
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <Skeleton className="h-9 w-64 rounded-lg" />
+        {Array(4).fill(null).map((_, i) => (
+          <Skeleton key={i} className="h-8 w-20 rounded-full" />
+        ))}
+      </div>
+      <div className="rounded-2xl border border-border/40 bg-card divide-y divide-border/40">
+        {Array(12).fill(null).map((_, i) => (
+          <div key={i} className="p-3 flex items-center gap-3">
+            <Skeleton className="h-2 w-2 rounded-full" />
+            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="h-3 flex-1 rounded" />
+            <Skeleton className="h-3 w-14 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Wide form (Settings, plan-management, etc.) — 2-col with side card. */
+export function FormPageSkeleton() {
+  return (
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-48 rounded" />
+        <Skeleton className="h-3 w-72 rounded" />
+      </div>
+      <div className="rounded-2xl border border-border/40 bg-card p-5 space-y-5">
+        {Array(6).fill(null).map((_, i) => (
+          <div key={i} className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4 items-start">
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-3 w-40 rounded" />
+            </div>
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
+        ))}
+        <div className="flex justify-end gap-2 pt-2">
+          <Skeleton className="h-9 w-24 rounded-lg" />
+          <Skeleton className="h-9 w-28 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}

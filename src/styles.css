@@ -282,6 +282,27 @@ html { scroll-behavior: smooth; }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
+/* Flowing menu sidebar — marquee band scroll */
+@keyframes gh-flow-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Variable-font hover — letters bolden outward from the center on hover */
+.vfh .vfh-letter {
+  font-weight: var(--vfh-base, 500);
+  font-variation-settings: "wght" var(--vfh-base, 500);
+  transition:
+    font-weight 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    font-variation-settings 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.vfh:hover .vfh-letter,
+a:hover > .vfh .vfh-letter,
+button:hover > .vfh .vfh-letter {
+  font-weight: var(--vfh-hover, 900);
+  font-variation-settings: "wght" var(--vfh-hover, 900);
+}
+
 /* Skeleton shimmer — LinkedIn / YouTube / GitHub style */
 @keyframes skeleton-shimmer {
   0% { background-position: -200% 0; }
@@ -298,6 +319,18 @@ html { scroll-behavior: smooth; }
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
+/* Shimmer button — emerald-ui ShimmerButton sweep */
+@keyframes shimmer2 {
+  0% { background-position: 0% 0%; }
+  100% { background-position: -200% 0%; }
+}
+
+/* Text shimmer — emerald-ui TextShimmer sweep */
+@keyframes shimmer {
+  0% { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
 /* Branded loader progress bar animation */
 @keyframes progress {
   0%   { width: 0%;   margin-left: 0; }
@@ -305,29 +338,53 @@ html { scroll-behavior: smooth; }
   100% { width: 0%;   margin-left: 100%; }
 }
 
-/* Manager dashboard quadrant panels — consistent size, hidden scroll when overflow */
-@utility quad-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: white;
-  border: 1px solid #EAEAEA;
-  border-radius: 16px;
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.02);
-  aspect-ratio: 1 / 1;
-  min-height: 260px;
-  max-height: 340px;
-  transition: box-shadow 200ms ease, transform 200ms ease;
-}
-@utility quad-scroll {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  flex: 1 1 auto;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-right: 2px;
-}
-.quad-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/*
+ * Dark-mode safety net for authenticated pages.
+ * Many older pages hardcode slate/gray/white utilities without dark: variants.
+ * Scope these overrides to `.app-scope` so marketing pages stay untouched.
+ */
+.dark .app-scope .bg-white { background-color: var(--card) !important; }
+.dark .app-scope .bg-white\/50 { background-color: color-mix(in oklab, var(--card) 60%, transparent) !important; }
+.dark .app-scope .bg-white\/80 { background-color: color-mix(in oklab, var(--card) 85%, transparent) !important; }
+
+.dark .app-scope .bg-slate-50,
+.dark .app-scope .bg-gray-50 { background-color: var(--muted) !important; }
+.dark .app-scope .bg-slate-100,
+.dark .app-scope .bg-gray-100 { background-color: var(--muted) !important; }
+.dark .app-scope .bg-slate-200,
+.dark .app-scope .bg-gray-200 { background-color: color-mix(in oklab, var(--muted) 85%, var(--foreground) 10%) !important; }
+
+.dark .app-scope .hover\:bg-slate-50:hover,
+.dark .app-scope .hover\:bg-gray-50:hover,
+.dark .app-scope .hover\:bg-slate-100:hover,
+.dark .app-scope .hover\:bg-gray-100:hover { background-color: color-mix(in oklab, var(--muted) 60%, transparent) !important; }
+
+.dark .app-scope .text-slate-400,
+.dark .app-scope .text-gray-400,
+.dark .app-scope .text-slate-500,
+.dark .app-scope .text-gray-500,
+.dark .app-scope .text-slate-600,
+.dark .app-scope .text-gray-600 { color: var(--muted-foreground) !important; }
+
+.dark .app-scope .text-slate-700,
+.dark .app-scope .text-gray-700,
+.dark .app-scope .text-slate-800,
+.dark .app-scope .text-gray-800,
+.dark .app-scope .text-slate-900,
+.dark .app-scope .text-gray-900,
+.dark .app-scope .text-black { color: var(--foreground) !important; }
+
+.dark .app-scope .hover\:text-slate-900:hover,
+.dark .app-scope .hover\:text-gray-900:hover { color: var(--foreground) !important; }
+
+.dark .app-scope .border-slate-100,
+.dark .app-scope .border-slate-200,
+.dark .app-scope .border-slate-300,
+.dark .app-scope .border-gray-100,
+.dark .app-scope .border-gray-200,
+.dark .app-scope .border-gray-300 { border-color: var(--border) !important; }
+
+.dark .app-scope .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }

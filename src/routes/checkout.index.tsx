@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Sparkles, Package, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Package, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createStripeCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
 import { validateEmail } from "@/lib/validation";
+import { AddressMapPicker } from "@/components/checkout/AddressMapPicker";
 
 const DRAFT_KEY = "grainhero.checkoutDraft.v1";
 type Draft = {
@@ -75,6 +76,8 @@ function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("Pakistan");
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
   const [phone, setPhone] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -243,6 +246,8 @@ function CheckoutPage() {
             address: address.trim(),
             city: city.trim(),
             country: country.trim(),
+            lat,
+            lng,
             phone: normalizePhone(phone).trim(),
             preferredDate: preferredDate || null,
             notes: notes.trim() || null,
@@ -342,7 +347,7 @@ function CheckoutPage() {
 
         <div className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 shadow-sm border border-border">
-            <Sparkles className="h-3.5 w-3.5" /> Set up in under 3 minutes
+            Set up in under 3 minutes
           </div>
           <h1 className="mt-3 text-3xl md:text-4xl font-bold text-foreground">{stepMeta[step].label}</h1>
           <p className="text-muted-foreground mt-2">Step {step + 1} of 4 — {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.</p>
@@ -596,8 +601,19 @@ function CheckoutPage() {
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2">
-                      <Label htmlFor="addr">Office address *</Label>
-                      <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, area, landmark" maxLength={300} />
+                      <Label htmlFor="addr">Install location *</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Search for an address, drop a pin on the map, or use your current location. Our technician will be routed here.</p>
+                      <AddressMapPicker
+                        value={{ address, lat, lng }}
+                        onChange={(loc) => {
+                          setAddress(loc.address);
+                          setLat(loc.lat);
+                          setLng(loc.lng);
+                          if (loc.city) setCity(loc.city);
+                          if (loc.country) setCountry(loc.country);
+                          if (touched.address) validateField("address", loc.address);
+                        }}
+                      />
                     </div>
                     <div>
                       <Label htmlFor="country">Country *</Label>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Brain, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Search, Sparkles, Loader2, Building2 } from "lucide-react";
+import { Brain, RefreshCw, AlertTriangle, ShieldCheck, TrendingUp, Search, Loader2, Building2 } from "lucide-react";
 import { getBatchPredictions, getPlatformSpoilageOverview } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { getSpoilageInsight } from "@/lib/ai-insights.functions";
@@ -156,8 +156,7 @@ function TenantView() {
                     disabled={!p.silo_id || (runInsight.isPending && runInsight.variables?.batch_id === p.batch_id)}
                     onClick={() => runInsight.mutate({ siloId: p.silo_id, batch_id: p.batch_id })}>
                     {runInsight.isPending && runInsight.variables?.batch_id === p.batch_id
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <Sparkles className="h-3.5 w-3.5" />}
+                      && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     AI Insight
                   </Button>
                 </div>
@@ -173,7 +172,7 @@ function TenantView() {
       <Dialog open={!!insight} onOpenChange={(o) => !o && setInsight(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> AI Spoilage Insight</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">AI Spoilage Insight</DialogTitle>
             <DialogDescription>{insight?.batch_id} — risk level <Badge className={levelBadge(insight?.risk_level ?? "low")}>{insight?.risk_level}</Badge></DialogDescription>
           </DialogHeader>
           <p className="text-sm text-foreground/80 whitespace-pre-wrap">{insight?.insight}</p>

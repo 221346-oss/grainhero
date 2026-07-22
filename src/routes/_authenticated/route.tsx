@@ -1,19 +1,27 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
-import { Bell, Sun, Moon } from "lucide-react";
+import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
+import { ProfileMenu } from "@/components/app/ProfileMenu";
+import { Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
-import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
+import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
+import TextShimmer from "@/components/ui/text-shimmer";
+import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  // Full app-chrome skeleton while the auth check runs on first paint.
+  pendingComponent: AppShellSkeleton,
   beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth/login" });
@@ -27,7 +35,6 @@ export const Route = createFileRoute("/_authenticated")({
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
       "/team-management": "/platform/users",
-      "/data-visualization": "/analytics",
       "/traceability": "/dashboard",
       "/orders": "/platform/orders",
     };
@@ -63,37 +70,116 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-  const { data: profile } = useMyProfile();
-  const avatar = profile?.avatar ?? null;
-  const initials = initialsOf(profile?.name, profile?.email);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mode, setMode] = useState<ThemeMode>(() =>
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("gh_sidebar_collapsed") !== "false";
+  });
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const stored = getStoredThemeMode();
     setMode(stored);
   }, []);
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed((c) => {
+      const next = !c;
+      try { localStorage.setItem("gh_sidebar_collapsed", String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  // Scroll-driven behavior on the main scroll container:
+  //  • hide header when scrolling down past 150px, show on scroll up
+  //  • auto-collapse sidebar to icon rail when user scrolls down
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    let lastY = el.scrollTop;
+    const onScroll = () => {
+      const y = el.scrollTop;
+      const dy = y - lastY;
+      if (dy > 0 && y > 150) setHeaderVisible(false);
+      else if (dy < 0) setHeaderVisible(true);
+      if (dy > 20) setSidebarCollapsed(true);
+      lastY = y;
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close sidebar on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const handleToggle = () => {
     const next = toggleThemeMode();
     setMode(next);
   };
+
+  // Floating header/sidebar — slide away on scroll-down, back on scroll-up.
+  // The page body (not <main>) is what actually scrolls here — the layout
+  // is min-h-screen, not h-screen, so <main>'s overflow-y-auto never gets
+  // short enough to scroll internally. Listen on window, same as the
+  // landing page's nav.
+  const [navHidden, setNavHidden] = useState(false);
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      const y = window.scrollY;
+      const scrollingDown = y > lastScrollY && y > 4;
+      setNavHidden(scrollingDown);
+      if (scrollingDown) setSidebarCollapsed(true);
+      lastScrollY = y;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Every page should start the same way: header visible, scrolled to top —
+  // otherwise leftover scroll state from the previous page (e.g. hidden
+  // header from scrolling down on Grain Operations) carries over and makes
+  // the next page look different on arrival.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setNavHidden(false);
+  }, [pathname]);
+
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SessionGuard />
       <OnboardingTour />
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="app-scope min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
-          <AppSidebar />
+          <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
-          <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
-            <SidebarTrigger className="shrink-0" />
+          <motion.header
+            initial="visible"
+            animate={navHidden ? "hidden" : "visible"}
+            variants={{
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
+              hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
+            }}
+            className="h-14 flex items-center gap-2 sm:gap-3 rounded-2xl bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
+          >
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
+            <DashboardQuickTabs />
+            <AdminUpgradeLink />
             {/* Dark / Light toggle */}
             <button
               type="button"
@@ -105,35 +191,45 @@ function AuthenticatedLayout() {
                 ? <Sun className="h-4 w-4" />
                 : <Moon className="h-4 w-4" />}
             </button>
-            <Link
-              to="/notifications"
-              aria-label="Notifications"
-              data-tour="topbar-notifications"
-              className="relative shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition"
-            >
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
-            </Link>
-            <Link
-              to="/settings"
-              aria-label="Your profile"
-              data-tour="topbar-profile"
-              className="shrink-0 h-9 w-9 rounded-full grid place-items-center text-[12px] font-bold text-[--fusion-ink] shadow-sm relative overflow-hidden ring-1 ring-black/5 hover:ring-[--fusion-grape]/60 transition"
-              style={avatar ? undefined : { background: "var(--gradient-fusion)" }}
-            >
-              {avatar ? (
-                <img src={avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              ) : (
-                <span>{initials}</span>
-              )}
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
-            </Link>
-          </header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">
-            <Outlet />
+            <NotificationBell />
+            <ProfileMenu />
+          </motion.header>
+          <main className="flex-1 overflow-x-hidden">
+            <AnimatedOutlet />
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+// Only tenant admins see the Upgrade shortcut in the topbar.
+function AdminUpgradeLink() {
+  const { role } = useIsSuperAdmin();
+  if (role !== "admin") return null;
+  return (
+    <Link
+      to="/plan-management"
+      className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+    >
+      <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
+    </Link>
+  );
+}
+
+function AnimatedOutlet() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pathname}
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+      >
+        <Outlet />
+      </motion.div>
+    </AnimatePresence>
   );
 }

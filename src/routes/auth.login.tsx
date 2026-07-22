@@ -56,7 +56,10 @@ function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
-      options: { shouldCreateUser: false },
+      options: { 
+        shouldCreateUser: true,
+        emailRedirectTo: window.location.origin + (redirect ?? "/dashboard"),
+      },
     });
     setLoading(false);
     if (error) {

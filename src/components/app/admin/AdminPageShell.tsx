@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { InfoDot } from "@/components/ui/InfoDot";
 
 export function AdminPageShell({
   title,
@@ -23,10 +24,12 @@ export function AdminPageShell({
     >
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-            {title}
-          </h1>
-          {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="truncate text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              {title}
+            </h1>
+            {subtitle && <InfoDot text={subtitle} />}
+          </div>
         </div>
         {actions && <div className="flex flex-wrap gap-2 shrink-0">{actions}</div>}
       </header>

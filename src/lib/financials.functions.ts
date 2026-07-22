@@ -1,19 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import pricingData, { resolvePlanId } from "@/lib/pricing-data";
-
-// Map any raw plan string coming from subscriptions.plan_name or
-// profiles.subscription_plan to a canonical { id, name, price } entry.
-function planFor(raw?: string | null): { id: string; name: string; price: number } {
-  const id = resolvePlanId(raw ?? "") ?? (raw ?? "unknown");
-  const match = pricingData.find((p) => p.id === id);
-  return {
-    id,
-    name: match?.name ?? (raw ?? "Unknown"),
-    price: Number(match?.price ?? 0),
-  };
-}
 
 const AssumptionSchema = z
   .object({
@@ -33,6 +20,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     await assertSuperAdmin(context);
     const supabaseAdmin = context.supabase;
+    const { computeMrr } = await import("@/lib/plan-pricing.server");
     const iotCostPct = Number(data?.iotCostPct ?? 55);
     const opexPct = Number(data?.opexPct ?? 25);
     const now = new Date();
@@ -40,40 +28,43 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     const startOfPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
     const [subs, orders, policies, invoices] = await Promise.all([
-      supabaseAdmin.from("subscriptions").select("price_per_month, status, plan_name, created_at"),
-      supabaseAdmin.from("hardware_orders").select("hardware_total, status, created_at"),
+      supabaseAdmin.from("subscriptions").select("admin_id, price_per_month, status, plan_id, plan_name, created_at"),
+      supabaseAdmin.from("hardware_orders").select("hardware_total, hardware_quantity, hardware_unit_cost, status, created_at"),
       supabaseAdmin.from("insurance_policies").select("premium_amount, commission_rate, created_at"),
       supabaseAdmin.from("buyer_invoices").select("total_amount, amount_paid, currency, created_at, payment_status"),
     ]);
 
-    // Normalise subscription rows from the subscriptions table.
-    const activeSubsRaw = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
-    const subRows = activeSubsRaw.map((s: any) => {
-      const p = planFor(s.plan_name);
-      const price = Number(s.price_per_month ?? 0) || p.price;
-      return { plan_id: p.id, plan_name: p.name, price, created_at: s.created_at };
-    });
+    // Logistics operating costs (Phase 17) — subtracted from gross profit.
+    const { data: logisticsRows } = await supabaseAdmin
+      .from("logistics_cost_entries")
+      .select("amount, category, incurred_at");
+    const logisticsCost = (logisticsRows ?? []).reduce(
+      (s: number, r: any) => s + Number(r.amount ?? 0),
+      0,
+    );
 
-    // Fallback / supplement: profiles.subscription_plan is the source of
-    // truth in this project (Stripe checkout hasn't populated the
-    // subscriptions table yet). Fetch tenants that carry a plan and
-    // synthesise "active subscription" rows for them.
+    // Unified PKR MRR — plan_thresholds is the single source of truth.
     const { data: planProfiles } = await supabaseAdmin
       .from("profiles")
       .select("id, subscription_plan, created_at")
       .not("subscription_plan", "is", null);
-    const profileRows = (planProfiles ?? []).map((row: any) => {
-      const p = planFor(row.subscription_plan);
-      return { plan_id: p.id, plan_name: p.name, price: p.price, created_at: row.created_at };
+    const mrrResult = await computeMrr({
+      supabase: supabaseAdmin,
+      subscriptions: subs.data ?? [],
+      profiles: planProfiles ?? [],
     });
+    const activeSubs = mrrResult.entries;
+    const mrr = mrrResult.mrr;
 
-    // Merge — prefer subscription table rows, fill the rest from profiles.
-    const activeSubs = [...subRows, ...profileRows];
-    const mrr = activeSubs.reduce((sum: number, s: any) => sum + Number(s.price ?? 0), 0);
-
-    const iotRevenue = (orders.data ?? [])
-      .filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
-      .reduce((s: number, o: any) => s + Number(o.hardware_total ?? 0), 0);
+    const activeOrders = (orders.data ?? []).filter(
+      (o: any) => o.status !== "cancelled" && o.status !== "pending_payment",
+    );
+    const iotRevenue = activeOrders.reduce((s: number, o: any) => s + Number(o.hardware_total ?? 0), 0);
+    // Precise hardware COGS from recorded unit cost × quantity.
+    const hardwareUnitCogs = activeOrders.reduce(
+      (s: number, o: any) => s + Number(o.hardware_unit_cost ?? 0) * Number(o.hardware_quantity ?? 0),
+      0,
+    );
 
     const insuranceCommission = (policies.data ?? []).reduce(
       (s: number, p: any) => s + (Number(p.premium_amount ?? 0) * Number(p.commission_rate ?? 0)) / 100,
@@ -84,11 +75,11 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
     const collectedTotal = (invoices.data ?? []).reduce((s: number, i: any) => s + Number(i.amount_paid ?? 0), 0);
 
     const totalRevenue = mrr + iotRevenue + insuranceCommission;
-    // COGS: configurable IoT hardware cost as % of iot revenue
-    const cogs = iotRevenue * (iotCostPct / 100);
+    // Prefer per-unit recorded cost when we have it; fall back to iotCostPct assumption.
+    const cogs = hardwareUnitCogs > 0 ? hardwareUnitCogs : iotRevenue * (iotCostPct / 100);
     const grossProfit = totalRevenue - cogs;
     // Opex simplification: configurable % of total revenue
-    const opex = totalRevenue * (opexPct / 100);
+    const opex = totalRevenue * (opexPct / 100) + logisticsCost;
     const otherIncome = 0;
     const netProfit = grossProfit - opex + otherIncome;
     const netProfitPct = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
@@ -146,6 +137,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
         cogs: Math.round(cogs),
         grossProfit: Math.round(grossProfit),
         opex: Math.round(opex),
+        logisticsCost: Math.round(logisticsCost),
         otherIncome: Math.round(otherIncome),
         netProfit: Math.round(netProfit),
         netProfitPct: Number(netProfitPct.toFixed(2)),
@@ -166,23 +158,23 @@ export const generateFinancialPdf = createServerFn({ method: "POST" })
     const iotCostPct = Number(data.iotCostPct ?? 55);
     const opexPct = Number(data.opexPct ?? 25);
 
+    const { computeMrr } = await import("@/lib/plan-pricing.server");
     const [subs, orders, policies] = await Promise.all([
-      supabaseAdmin.from("subscriptions").select("price_per_month, status, plan_name"),
+      supabaseAdmin.from("subscriptions").select("admin_id, price_per_month, status, plan_id, plan_name, created_at"),
       supabaseAdmin.from("hardware_orders").select("hardware_total, status"),
       supabaseAdmin.from("insurance_policies").select("premium_amount, commission_rate"),
     ]);
-    const activeSubsRaw = (subs.data ?? []).filter((s: any) => s.status === "active" || s.status === "trialing");
-    const subRows = activeSubsRaw.map((s: any) => {
-      const p = planFor(s.plan_name);
-      return { price: Number(s.price_per_month ?? 0) || p.price };
-    });
-    const { data: planProfiles } = await supabaseAdmin
+    const { data: planProfilesFull } = await supabaseAdmin
       .from("profiles")
-      .select("subscription_plan")
+      .select("id, subscription_plan, created_at")
       .not("subscription_plan", "is", null);
-    const profileRows = (planProfiles ?? []).map((row: any) => ({ price: planFor(row.subscription_plan).price }));
-    const activeSubs = [...subRows, ...profileRows];
-    const mrr = activeSubs.reduce((s: number, x: any) => s + Number(x.price ?? 0), 0);
+    const mrrResult = await computeMrr({
+      supabase: supabaseAdmin,
+      subscriptions: subs.data ?? [],
+      profiles: planProfilesFull ?? [],
+    });
+    const activeSubs = mrrResult.entries;
+    const mrr = mrrResult.mrr;
     const iot = (orders.data ?? []).filter((o: any) => o.status !== "cancelled" && o.status !== "pending_payment")
       .reduce((s: number, x: any) => s + Number(x.hardware_total ?? 0), 0);
     const ins = (policies.data ?? []).reduce((s: number, p: any) => s + Number(p.premium_amount ?? 0) * Number(p.commission_rate ?? 0) / 100, 0);

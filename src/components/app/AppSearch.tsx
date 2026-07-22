@@ -19,24 +19,15 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Maintenance", to: "/maintenance", group: "Operations" },
   { label: "Environmental", to: "/environmental", group: "Operations", keywords: "climate weather" },
   // Insights
-  { label: "AI Predictions", to: "/ai-predictions", group: "Insights" },
-  { label: "Analytics", to: "/analytics", group: "Insights" },
-  { label: "Reports", to: "/reports", group: "Insights" },
-  { label: "ML Models", to: "/ml-models", group: "Insights" },
-  { label: "Data Visualization", to: "/data-visualization", group: "Insights", keywords: "charts graphs" },
+  { label: "Intelligence", to: "/intelligence", group: "Insights", keywords: "ai predictions analytics ml models reports charts graphs data visualization" },
   { label: "Traceability", to: "/traceability", group: "Insights" },
-  { label: "Notifications", to: "/notifications", group: "Insights" },
-  { label: "Activity Logs", to: "/activity-logs", group: "Insights", keywords: "audit history" },
+  { label: "Administration", to: "/administration", group: "Admin", keywords: "team members users security activity logs audit history" },
   // Business
   { label: "Buyers", to: "/buyers", group: "Business", keywords: "customers" },
   { label: "Orders", to: "/orders", group: "Business", keywords: "hardware install" },
-  { label: "Revenue", to: "/revenue", group: "Business", keywords: "income" },
-  { label: "Subscription", to: "/subscription", group: "Business" },
+  { label: "Business", to: "/business", group: "Business", keywords: "revenue income subscription insurance policies claims plan management billing" },
   { label: "Plans", to: "/plans", group: "Business", keywords: "pricing" },
-  { label: "Insurance", to: "/insurance", group: "Business" },
   // Admin
-  { label: "Team", to: "/team-management", group: "Admin", keywords: "members users" },
-  { label: "Security Center", to: "/security-center", group: "Admin" },
   { label: "Server Monitoring", to: "/server-monitoring", group: "Admin" },
   { label: "Settings", to: "/settings", group: "Admin" },
   // Platform (super_admin)
@@ -48,47 +39,16 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Platform · Leads", to: "/platform/leads", group: "Platform" },
   { label: "Platform · Install orders", to: "/platform/orders", group: "Platform", keywords: "hardware" },
   { label: "Platform · Health", to: "/platform/health", group: "Platform" },
+  { label: "Platform · Reporting", to: "/platform/reporting", group: "Platform", keywords: "bugs hardware queries support" },
   { label: "Platform · Audit logs", to: "/platform/audit-logs", group: "Platform" },
   { label: "Platform · System logs", to: "/platform/logs", group: "Platform" },
 ];
 
-// Human-readable label per route prefix — for page-scoped placeholder.
-const PAGE_LABELS: Record<string, string> = {
-  "/grain-batches": "batches",
-  "/silos": "silos",
-  "/sensors": "sensors",
-  "/actuators": "actuators",
-  "/warehouses": "warehouses",
-  "/grain-alerts": "alerts",
-  "/buyers": "buyers",
-  "/incidents": "incidents",
-  "/maintenance": "maintenance tasks",
-  "/team-management": "team members",
-  "/notifications": "notifications",
-  "/orders": "orders",
-  "/activity-logs": "activity",
-  "/reports": "reports",
-  "/plans": "plans",
-  "/insurance": "policies",
-  "/subscription": "your subscription",
-  "/environmental": "environmental readings",
-  "/traceability": "batch traceability",
-  "/analytics": "analytics",
-  "/ai-predictions": "predictions",
-  "/ml-models": "models",
-  "/data-visualization": "visualisations",
-  "/security-center": "security events",
-  "/server-monitoring": "server metrics",
-  "/revenue": "revenue records",
-  "/settings": "settings",
-};
-
 function scopeFor(pathname: string): { global: boolean; label: string } {
   if (pathname === "/dashboard" || pathname.startsWith("/platform")) {
-    return { global: true, label: pathname === "/dashboard" ? "Global search" : "Platform search" };
+    return { global: true, label: "Search anything or jump to a page…" };
   }
-  const key = Object.keys(PAGE_LABELS).find((k) => pathname.startsWith(k));
-  return { global: false, label: key ? `Search ${PAGE_LABELS[key]} on this page` : "Search this page" };
+  return { global: false, label: "Search this page" };
 }
 
 /**
@@ -196,11 +156,11 @@ export function AppSearch() {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onInputKeyDown}
-        placeholder={scope.global ? "Search anything or jump to a page…" : scope.label}
+        placeholder={scope.label}
         aria-label={scope.label}
         className={cn(
-          "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-muted/60 hover:bg-muted focus:bg-background",
-          "border border-transparent focus:border-[--fusion-grape]/50 focus:outline-none transition placeholder:text-muted-foreground",
+          "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-transparent hover:bg-muted focus:bg-background",
+          "border-0 focus:outline-none transition placeholder:text-muted-foreground",
         )}
       />
       <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-0.5 text-[10px] text-muted-foreground border border-border/60 rounded px-1.5 py-0.5">

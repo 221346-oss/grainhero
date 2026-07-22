@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import {
   Cpu, Plus, Search, Edit2, Trash2, Eye, Loader2, Inbox, Wifi, WifiOff,
-  Battery, Thermometer, Droplets, Wind, AlertTriangle, Radio, Package, Building2,
+  Battery, Thermometer, Droplets, Wind, AlertTriangle, Radio, Building2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
+import { LiveReadingChart } from "@/components/app/sensors/LiveReadingChart";
+import { ThresholdDrawer } from "@/components/app/sensors/ThresholdDrawer";
+import { QualityBadge } from "@/components/app/sensors/QualityBadge";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listSensorDevices, upsertSensorDevice, deleteSensorDevice,
@@ -143,6 +146,7 @@ function SensorsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [thresholdSilo, setThresholdSilo] = useState<{ id: string; name: string } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Device | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
@@ -286,7 +290,7 @@ function SensorsPage() {
             <Inbox className="w-10 h-10 mb-3 opacity-60" />
             <p className="text-sm mb-4">No sensor devices.</p>
             {silos.length === 0 ? (
-              <Link to="/silos" className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a silo first →</Link>
+              <Link to="/grain-operations" search={{ tab: "silos" }} className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a silo first →</Link>
             ) : (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add sensor</Button>
             )}
@@ -300,6 +304,7 @@ function SensorsPage() {
               onView={() => { setSelected(d); setViewOpen(true); }}
               onEdit={() => openEdit(d)}
               onDelete={() => setDeleteId(d.id)}
+              onThresholds={d.silos ? () => setThresholdSilo({ id: d.silos!.id, name: d.silos!.name }) : undefined}
             />
           ))}
         </div>
@@ -317,7 +322,7 @@ function SensorsPage() {
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">You have no warehouses yet.</div>
-                <Link to="/warehouses" className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
+                <Link to="/grain-operations" search={{ tab: "warehouses" }} className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
               </div>
             </div>
           )}
@@ -326,7 +331,7 @@ function SensorsPage() {
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">This warehouse has no silos.</div>
-                <Link to="/silos" className="underline">Add a silo</Link> before registering a sensor.
+                <Link to="/grain-operations" search={{ tab: "silos" }} className="underline">Add a silo</Link> before registering a sensor.
               </div>
             </div>
           )}
@@ -455,15 +460,35 @@ function SensorsPage() {
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
           {selected && (
-            <DeviceDetail
-              device={selected}
-              reading={readingByDevice.get(selected.id) ?? null}
-              historyFn={historyFn as (arg: { data: { device_id: string; limit: number } }) => Promise<Reading[]>}
-              onEdit={() => { setViewOpen(false); openEdit(selected); }}
-            />
+            <>
+              <DeviceDetail
+                device={selected}
+                reading={readingByDevice.get(selected.id) ?? null}
+                historyFn={historyFn as (arg: { data: { device_id: string; limit: number } }) => Promise<Reading[]>}
+                onEdit={() => { setViewOpen(false); openEdit(selected); }}
+              />
+              {selected.silo_id && (
+                <div className="mt-4 rounded-lg border p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">Live readings</div>
+                    <QualityBadge flag={readingByDevice.get(selected.id) ? "ok" : "missing"} />
+                  </div>
+                  <LiveReadingChart siloId={selected.silo_id} deviceId={selected.id} metric="temperature" />
+                </div>
+              )}
+            </>
           )}
         </DialogContent>
       </Dialog>
+
+      {thresholdSilo && (
+        <ThresholdDrawer
+          open={!!thresholdSilo}
+          onOpenChange={(o) => { if (!o) setThresholdSilo(null); }}
+          siloId={thresholdSilo.id}
+          siloName={thresholdSilo.name}
+        />
+      )}
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
@@ -483,7 +508,7 @@ function SensorsPage() {
   );
 }
 
-function SensorCard({ device, reading, onView, onEdit, onDelete }: { device: Device; reading: Reading | null; onView: () => void; onEdit: () => void; onDelete: () => void }) {
+function SensorCard({ device, reading, onView, onEdit, onDelete, onThresholds }: { device: Device; reading: Reading | null; onView: () => void; onEdit: () => void; onDelete: () => void; onThresholds?: () => void }) {
   const heartbeatAge = device.last_heartbeat ? Math.round((Date.now() - new Date(device.last_heartbeat).getTime()) / 60000) : null;
   const live = reading ? (Date.now() - new Date(reading.reading_timestamp).getTime()) < 5 * 60_000 : false;
   const batt = reading?.battery_level ?? device.battery_level;
@@ -515,7 +540,6 @@ function SensorCard({ device, reading, onView, onEdit, onDelete }: { device: Dev
 
         {device.silos && (
           <div className="text-xs text-slate-600 flex items-center gap-1 min-w-0 flex-wrap">
-            <Package className="w-3 h-3 shrink-0" />
             <span className="truncate">{device.silos.name}</span>
             {device.warehouses && (<>
               <span className="text-slate-400">·</span>
@@ -551,9 +575,10 @@ function SensorCard({ device, reading, onView, onEdit, onDelete }: { device: Dev
           <span>{heartbeatAge != null ? `${heartbeatAge}m ago` : "no beat"}</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           <Button variant="outline" size="sm" onClick={onView} className="h-8"><Eye className="w-3.5 h-3.5 mr-1" />View</Button>
           <Button variant="outline" size="sm" onClick={onEdit} className="h-8"><Edit2 className="w-3.5 h-3.5 mr-1" />Edit</Button>
+          <Button variant="outline" size="sm" onClick={onThresholds} disabled={!onThresholds} className="h-8"><AlertTriangle className="w-3.5 h-3.5 mr-1" />Rules</Button>
           <Button variant="outline" size="sm" onClick={onDelete} className="h-8 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </CardContent>

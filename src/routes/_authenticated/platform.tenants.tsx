@@ -66,7 +66,7 @@ function TenantsPage() {
             <p className="text-sm">No tenants found</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div>
             {filtered.map((t) => (
               <Link
                 key={t.id}

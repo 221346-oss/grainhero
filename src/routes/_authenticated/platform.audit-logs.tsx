@@ -39,7 +39,7 @@ function AuditLogsPage() {
               <p className="text-sm">No activity logs yet</p>
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="">
               {(data?.activity ?? []).map((row) => {
                 const r = row as Record<string, unknown>;
                 return (
@@ -61,7 +61,7 @@ function AuditLogsPage() {
               <p className="text-sm">No security events</p>
             </div>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="">
               {(data?.security ?? []).map((row) => {
                 const r = row as Record<string, unknown>;
                 return (

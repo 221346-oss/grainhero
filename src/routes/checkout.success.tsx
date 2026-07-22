@@ -6,7 +6,7 @@ import { Loader2, CheckCircle2, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { getCheckoutSessionSummary } from "@/lib/stripe-checkout.functions";
+import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
 import { sendCheckoutConfirmationEmail } from "@/lib/checkout-emails.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
 
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/checkout/success")({
 });
 
 const DRAFT_KEY = "grainhero.checkoutDraft.v1";
+const PENDING_SESSION_KEY = "grainhero.pendingCheckoutSession";
 
 function readDraft() {
   try {
@@ -49,6 +50,7 @@ function SuccessPage() {
   const { session_id: sessionId } = Route.useSearch();
   const summaryFn = useServerFn(getCheckoutSessionSummary);
   const confirmFn = useServerFn(autoConfirmUserEmail);
+  const claimFn = useServerFn(claimPaidCheckoutForUser);
   const sendConfirmFn = useServerFn(sendCheckoutConfirmationEmail);
 
   const [status, setStatus] = useState<Status>("loading");
@@ -70,6 +72,10 @@ function SuccessPage() {
     ran.current = true;
 
     (async () => {
+      if (sessionId) {
+        try { window.localStorage.setItem(PENDING_SESSION_KEY, sessionId); } catch { /* ignore */ }
+      }
+
       const draft = readDraft();
       let email = draft.customerEmail;
       const password = draft.customerPassword;
@@ -84,23 +90,25 @@ function SuccessPage() {
       }
 
       if (!email) {
-        // No email found — send to login
         navigate({ to: "/auth/login", replace: true });
         return;
       }
 
       if (!password) {
-        // Has email but no password — send to login with email pre-filled
+        // Payment succeeded but password wasn't saved — finish signup manually.
         try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
         navigate({
-          to: "/auth/login",
-          search: { prefill: email } as never,
+          to: "/auth/signup",
+          search: {
+            email,
+            redirect: sessionId ? `/checkout/success?session_id=${sessionId}` : undefined,
+          } as never,
           replace: true,
         });
         return;
       }
 
-      // Create account in background
+      // Create account, link the paid order, and sign in.
       setStatus("creating_account");
 
       const { error: signUpError } = await supabase.auth.signUp({
@@ -109,31 +117,42 @@ function SuccessPage() {
         options: { data: { name, business_type: "farm" } },
       });
 
-      if (signUpError && !signUpError.message.toLowerCase().includes("already registered")) {
+      const alreadyRegistered = signUpError?.message.toLowerCase().includes("already registered");
+
+      if (signUpError && !alreadyRegistered) {
         setStatus("error");
         setErrorMsg(signUpError.message);
         return;
       }
 
-      // Auto-confirm email + admin role
       try {
         await confirmFn({ data: { email } });
       } catch (e) {
         console.warn("[success] auto-confirm failed:", (e as Error).message);
       }
 
-      // Clear draft (password especially)
-      try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setStatus("error");
+        setErrorMsg(`Payment received but sign-in failed: ${signInError.message}. Try logging in with your email.`);
+        return;
+      }
+
+      try {
+        await claimFn({ data: sessionId ? { sessionId } : {} });
+      } catch (e) {
+        console.warn("[success] claim checkout failed:", (e as Error).message);
+      }
+
+      try {
+        window.localStorage.removeItem(DRAFT_KEY);
+        window.localStorage.removeItem(PENDING_SESSION_KEY);
+      } catch { /* ignore */ }
 
       setStatus("done");
 
-      // Send to login with email pre-filled — user enters password → OTP → dashboard
       setTimeout(() => {
-        navigate({
-          to: "/auth/login",
-          search: { prefill: email } as never,
-          replace: true,
-        });
+        navigate({ to: "/dashboard", replace: true });
       }, 800);
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -141,7 +160,7 @@ function SuccessPage() {
   const statusMessages: Record<Status, string> = {
     loading: "Confirming your payment…",
     creating_account: "Setting up your account…",
-    done: "Account ready! Taking you to login…",
+    done: "Account ready! Taking you to your dashboard…",
     error: errorMsg || "Something went wrong.",
   };
 
@@ -169,7 +188,7 @@ function SuccessPage() {
                 <CheckCircle2 className="h-7 w-7 text-emerald-600" />
               </div>
               <h1 className="text-xl font-bold text-slate-900">Payment confirmed!</h1>
-              <p className="text-sm text-slate-600">Taking you to login…</p>
+              <p className="text-sm text-slate-600">Taking you to your dashboard…</p>
             </>
           ) : (
             <>

@@ -14,6 +14,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as CookiesRouteImport } from './routes/cookies'
@@ -24,62 +25,162 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
+import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
-import { Route as AuthenticatedWarehousesRouteImport } from './routes/_authenticated/warehouses'
 import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
 import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
+import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
-import { Route as AuthenticatedSilosRouteImport } from './routes/_authenticated/silos'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
+import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
+import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
+import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
 import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
+import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
+import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
 import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
-import { Route as AuthenticatedGrainBatchesRouteImport } from './routes/_authenticated/grain-batches'
+import { Route as AuthenticatedGrainOperationsRouteImport } from './routes/_authenticated/grain-operations'
 import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
-import { Route as AuthenticatedDataVisualizationRouteImport } from './routes/_authenticated/data-visualization'
+import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedBuyersRouteImport } from './routes/_authenticated/buyers'
+import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
+import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
+import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
+import { Route as MarketplaceSellerAdminIdRouteImport } from './routes/marketplace.seller.$adminId'
+import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
 import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
+import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
+import { Route as AuthenticatedSuppliersSupplierIdRouteImport } from './routes/_authenticated/suppliers.$supplierId'
+import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenticated/silos.$siloId'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
+import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
+import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
+import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
+import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
+import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
+import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
+import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
+import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
+import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
+import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
+import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './routes/_authenticated/platform.marketplace-mobile'
+import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
+import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
+import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
+import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
+import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
+import { Route as AuthenticatedPlatformFieldIncidentsRouteImport } from './routes/_authenticated/platform.field-incidents'
+import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
+import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
+import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
+import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
+import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
 import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
+import { Route as ApiPublicV1StatusRouteImport } from './routes/api/public/v1/status'
+import { Route as ApiPublicV1MetaRouteImport } from './routes/api/public/v1/meta'
 import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
 import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
+import { Route as ApiPublicHooksAnalyticsRefreshRouteImport } from './routes/api/public/hooks/analytics-refresh'
 import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
 import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
+import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
+import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/public/cron/review-prompts'
+import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api/public/cron/return-auto-approve'
 import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
+import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
+import { Route as ApiPublicCronDriverLicenseExpiryRouteImport } from './routes/api/public/cron/driver-license-expiry'
+import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
+import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
+import { Route as ApiPublicCronApplyScheduledPlanChangesRouteImport } from './routes/api/public/cron/apply-scheduled-plan-changes'
+import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
+import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
+import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
+import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
+import { Route as AuthenticatedPlatformInsuranceWebhooksRouteImport } from './routes/_authenticated/platform.insurance.webhooks'
+import { Route as AuthenticatedPlatformInsuranceAuditRouteImport } from './routes/_authenticated/platform.insurance.audit'
+import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
+import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
+import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
+import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
+import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
+import { Route as ApiPublicV1NotificationsIndexRouteImport } from './routes/api/public/v1/notifications/index'
+import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
+import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
+import { Route as ApiPublicV1UploadsSignRouteImport } from './routes/api/public/v1/uploads/sign'
+import { Route as ApiPublicV1SyncSilosCockpitRouteImport } from './routes/api/public/v1/sync/silos-cockpit'
+import { Route as ApiPublicV1SyncSilosRouteImport } from './routes/api/public/v1/sync/silos'
+import { Route as ApiPublicV1SyncSensorsRouteImport } from './routes/api/public/v1/sync/sensors'
+import { Route as ApiPublicV1SyncNotificationsRouteImport } from './routes/api/public/v1/sync/notifications'
+import { Route as ApiPublicV1SyncMarketplaceRouteImport } from './routes/api/public/v1/sync/marketplace'
+import { Route as ApiPublicV1SyncHardwareOrdersRouteImport } from './routes/api/public/v1/sync/hardware-orders'
+import { Route as ApiPublicV1SyncFieldTasksRouteImport } from './routes/api/public/v1/sync/field-tasks'
+import { Route as ApiPublicV1SyncFieldIncidentsRouteImport } from './routes/api/public/v1/sync/field-incidents'
+import { Route as ApiPublicV1SyncBuyerSummaryRouteImport } from './routes/api/public/v1/sync/buyer-summary'
+import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/public/v1/sync/buyer-orders'
+import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
+import { Route as ApiPublicV1NotificationsReadRouteImport } from './routes/api/public/v1/notifications/read'
+import { Route as ApiPublicV1NotificationsPreferencesRouteImport } from './routes/api/public/v1/notifications/preferences'
+import { Route as ApiPublicV1FieldMutationsRouteImport } from './routes/api/public/v1/field/mutations'
+import { Route as ApiPublicV1FieldBundleRouteImport } from './routes/api/public/v1/field/bundle'
+import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
+import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
+import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
+import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
+import { Route as ApiPublicV1CommerceQuoteRouteImport } from './routes/api/public/v1/commerce/quote'
+import { Route as ApiPublicV1CommerceOrdersRouteImport } from './routes/api/public/v1/commerce/orders'
+import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/public/v1/commerce/config'
+import { Route as ApiPublicV1CommerceCheckoutRouteImport } from './routes/api/public/v1/commerce/checkout'
+import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
+import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
+import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
+import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
+import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
+import { Route as ApiPublicV1ActionsAckAlertRouteImport } from './routes/api/public/v1/actions/ack-alert'
+import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
+import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
+import { Route as ApiPublicV1CommerceOrdersOrderIdRouteImport } from './routes/api/public/v1/commerce/orders.$orderId'
 
 const ThemeTestRoute = ThemeTestRouteImport.update({
   id: '/theme-test',
@@ -104,6 +205,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HelpRoute = HelpRouteImport.update({
@@ -155,10 +261,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
 const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CheckoutRoute,
+} as any)
+const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => MarketplaceRoute,
 } as any)
 const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
@@ -190,11 +306,6 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => AuthRoute,
 } as any)
-const AuthenticatedWarehousesRoute = AuthenticatedWarehousesRouteImport.update({
-  id: '/warehouses',
-  path: '/warehouses',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedTraceabilityRoute =
   AuthenticatedTraceabilityRouteImport.update({
     id: '/traceability',
@@ -207,17 +318,17 @@ const AuthenticatedTeamManagementRoute =
     path: '/team-management',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSubscriptionRoute =
   AuthenticatedSubscriptionRouteImport.update({
     id: '/subscription',
     path: '/subscription',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSilosRoute = AuthenticatedSilosRouteImport.update({
-  id: '/silos',
-  path: '/silos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -240,9 +351,19 @@ const AuthenticatedSecurityCenterRoute =
     path: '/security-center',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
   id: '/revenue',
   path: '/revenue',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReturnsRoute = AuthenticatedReturnsRouteImport.update({
+  id: '/returns',
+  path: '/returns',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
@@ -277,6 +398,11 @@ const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
   path: '/not-allowed',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMlModelsRoute = AuthenticatedMlModelsRouteImport.update({
   id: '/ml-models',
   path: '/ml-models',
@@ -286,6 +412,17 @@ const AuthenticatedMaintenanceRoute =
   AuthenticatedMaintenanceRouteImport.update({
     id: '/maintenance',
     path: '/maintenance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedListingsRoute = AuthenticatedListingsRouteImport.update({
+  id: '/listings',
+  path: '/listings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedIntelligenceRoute =
+  AuthenticatedIntelligenceRouteImport.update({
+    id: '/intelligence',
+    path: '/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
@@ -298,10 +435,10 @@ const AuthenticatedIncidentsRoute = AuthenticatedIncidentsRouteImport.update({
   path: '/incidents',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedGrainBatchesRoute =
-  AuthenticatedGrainBatchesRouteImport.update({
-    id: '/grain-batches',
-    path: '/grain-batches',
+const AuthenticatedGrainOperationsRoute =
+  AuthenticatedGrainOperationsRouteImport.update({
+    id: '/grain-operations',
+    path: '/grain-operations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedGrainAlertsRoute =
@@ -316,20 +453,24 @@ const AuthenticatedEnvironmentalRoute =
     path: '/environmental',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDataVisualizationRoute =
-  AuthenticatedDataVisualizationRouteImport.update({
-    id: '/data-visualization',
-    path: '/data-visualization',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBuyersRoute = AuthenticatedBuyersRouteImport.update({
-  id: '/buyers',
-  path: '/buyers',
+const AuthenticatedBusinessRoute = AuthenticatedBusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAttentionRoute = AuthenticatedAttentionRouteImport.update({
+  id: '/attention',
+  path: '/attention',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
@@ -341,6 +482,12 @@ const AuthenticatedAiPredictionsRoute =
   AuthenticatedAiPredictionsRouteImport.update({
     id: '/ai-predictions',
     path: '/ai-predictions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdministrationRoute =
+  AuthenticatedAdministrationRouteImport.update({
+    id: '/administration',
+    path: '/administration',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
@@ -360,11 +507,51 @@ const AuthenticatedPlatformIndexRoute =
     path: '/platform/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const MarketplaceSellerAdminIdRoute =
+  MarketplaceSellerAdminIdRouteImport.update({
+    id: '/seller/$adminId',
+    path: '/seller/$adminId',
+    getParentRoute: () => MarketplaceRoute,
+  } as any)
+const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
+  id: '/api/public/telemetry',
+  path: '/api/public/telemetry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicActuatorAckRoute = ApiPublicActuatorAckRouteImport.update({
+  id: '/api/public/actuator-ack',
+  path: '/api/public/actuator-ack',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
   id: '/api/firebase/live-sensors',
   path: '/api/firebase/live-sensors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTechnicianInstallsRoute =
+  AuthenticatedTechnicianInstallsRouteImport.update({
+    id: '/technician/installs',
+    path: '/technician/installs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSuppliersSupplierIdRoute =
+  AuthenticatedSuppliersSupplierIdRouteImport.update({
+    id: '/$supplierId',
+    path: '/$supplierId',
+    getParentRoute: () => AuthenticatedSuppliersRoute,
+  } as any)
+const AuthenticatedSilosSiloIdRoute =
+  AuthenticatedSilosSiloIdRouteImport.update({
+    id: '/silos/$siloId',
+    path: '/silos/$siloId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedPlatformUsersRoute =
   AuthenticatedPlatformUsersRouteImport.update({
     id: '/platform/users',
@@ -375,6 +562,36 @@ const AuthenticatedPlatformTenantsRoute =
   AuthenticatedPlatformTenantsRouteImport.update({
     id: '/platform/tenants',
     path: '/platform/tenants',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformSlaAlertsRoute =
+  AuthenticatedPlatformSlaAlertsRouteImport.update({
+    id: '/platform/sla-alerts',
+    path: '/platform/sla-alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformSellersRoute =
+  AuthenticatedPlatformSellersRouteImport.update({
+    id: '/platform/sellers',
+    path: '/platform/sellers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformReviewsRoute =
+  AuthenticatedPlatformReviewsRouteImport.update({
+    id: '/platform/reviews',
+    path: '/platform/reviews',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformReportingRoute =
+  AuthenticatedPlatformReportingRouteImport.update({
+    id: '/platform/reporting',
+    path: '/platform/reporting',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformQualityRoute =
+  AuthenticatedPlatformQualityRouteImport.update({
+    id: '/platform/quality',
+    path: '/platform/quality',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformPlansRoute =
@@ -395,6 +612,60 @@ const AuthenticatedPlatformOrdersRoute =
     path: '/platform/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMobileSyncMonitorRoute =
+  AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
+    id: '/platform/mobile-sync-monitor',
+    path: '/platform/mobile-sync-monitor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobileSettingsRoute =
+  AuthenticatedPlatformMobileSettingsRouteImport.update({
+    id: '/platform/mobile-settings',
+    path: '/platform/mobile-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobilePushDiagnosticsRoute =
+  AuthenticatedPlatformMobilePushDiagnosticsRouteImport.update({
+    id: '/platform/mobile-push-diagnostics',
+    path: '/platform/mobile-push-diagnostics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobileDeepLinksRoute =
+  AuthenticatedPlatformMobileDeepLinksRouteImport.update({
+    id: '/platform/mobile-deep-links',
+    path: '/platform/mobile-deep-links',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMetricsRoute =
+  AuthenticatedPlatformMetricsRouteImport.update({
+    id: '/platform/metrics',
+    path: '/platform/metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMessagesRoute =
+  AuthenticatedPlatformMessagesRouteImport.update({
+    id: '/platform/messages',
+    path: '/platform/messages',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMarketplaceSettingsRoute =
+  AuthenticatedPlatformMarketplaceSettingsRouteImport.update({
+    id: '/platform/marketplace-settings',
+    path: '/platform/marketplace-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMarketplaceMobileRoute =
+  AuthenticatedPlatformMarketplaceMobileRouteImport.update({
+    id: '/platform/marketplace-mobile',
+    path: '/platform/marketplace-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMarketplaceHealthRoute =
+  AuthenticatedPlatformMarketplaceHealthRouteImport.update({
+    id: '/platform/marketplace-health',
+    path: '/platform/marketplace-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformLogsRoute =
   AuthenticatedPlatformLogsRouteImport.update({
     id: '/platform/logs',
@@ -405,6 +676,24 @@ const AuthenticatedPlatformLeadsRoute =
   AuthenticatedPlatformLeadsRouteImport.update({
     id: '/platform/leads',
     path: '/platform/leads',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLaunchReadinessRoute =
+  AuthenticatedPlatformLaunchReadinessRouteImport.update({
+    id: '/platform/launch-readiness',
+    path: '/platform/launch-readiness',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformInvoiceFailuresRoute =
+  AuthenticatedPlatformInvoiceFailuresRouteImport.update({
+    id: '/platform/invoice-failures',
+    path: '/platform/invoice-failures',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceRoute =
+  AuthenticatedPlatformInsuranceRouteImport.update({
+    id: '/platform/insurance',
+    path: '/platform/insurance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformHealthRoute =
@@ -419,10 +708,64 @@ const AuthenticatedPlatformFinancialsRoute =
     path: '/platform/financials',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformFinanceRoute =
+  AuthenticatedPlatformFinanceRouteImport.update({
+    id: '/platform/finance',
+    path: '/platform/finance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldSettingsRoute =
+  AuthenticatedPlatformFieldSettingsRouteImport.update({
+    id: '/platform/field-settings',
+    path: '/platform/field-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsRoute =
+  AuthenticatedPlatformFieldIncidentsRouteImport.update({
+    id: '/platform/field-incidents',
+    path: '/platform/field-incidents',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformDisputesRoute =
+  AuthenticatedPlatformDisputesRouteImport.update({
+    id: '/platform/disputes',
+    path: '/platform/disputes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformDispatchAnalyticsRoute =
+  AuthenticatedPlatformDispatchAnalyticsRouteImport.update({
+    id: '/platform/dispatch-analytics',
+    path: '/platform/dispatch-analytics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformDashboardBuilderRoute =
+  AuthenticatedPlatformDashboardBuilderRouteImport.update({
+    id: '/platform/dashboard-builder',
+    path: '/platform/dashboard-builder',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformCommerceMobileRoute =
+  AuthenticatedPlatformCommerceMobileRouteImport.update({
+    id: '/platform/commerce-mobile',
+    path: '/platform/commerce-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformAuditLogsRoute =
   AuthenticatedPlatformAuditLogsRouteImport.update({
     id: '/platform/audit-logs',
     path: '/platform/audit-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInsuranceClaimsClaimIdRoute =
+  AuthenticatedInsuranceClaimsClaimIdRouteImport.update({
+    id: '/insurance-claims/$claimId',
+    path: '/insurance-claims/$claimId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBuyerOrdersRoute =
+  AuthenticatedBuyerOrdersRouteImport.update({
+    id: '/buyer/orders',
+    path: '/buyer/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminsAdminIdRoute =
@@ -434,6 +777,16 @@ const AuthenticatedAdminsAdminIdRoute =
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
   path: '/api/public/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1StatusRoute = ApiPublicV1StatusRouteImport.update({
+  id: '/api/public/v1/status',
+  path: '/api/public/v1/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1MetaRoute = ApiPublicV1MetaRouteImport.update({
+  id: '/api/public/v1/meta',
+  path: '/api/public/v1/meta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksSensorOfflineDetectorRoute =
@@ -448,6 +801,12 @@ const ApiPublicHooksExpiryRemindersRoute =
     path: '/api/public/hooks/expiry-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAnalyticsRefreshRoute =
+  ApiPublicHooksAnalyticsRefreshRouteImport.update({
+    id: '/api/public/hooks/analytics-refresh',
+    path: '/api/public/hooks/analytics-refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAlertsEscalationRoute =
   ApiPublicHooksAlertsEscalationRouteImport.update({
     id: '/api/public/hooks/alerts-escalation',
@@ -460,11 +819,339 @@ const ApiPublicCronSyncFirebaseRoute =
     path: '/api/public/cron/sync-firebase',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronSlaDigestRoute = ApiPublicCronSlaDigestRouteImport.update({
+  id: '/api/public/cron/sla-digest',
+  path: '/api/public/cron/sla-digest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCronReviewPromptsRoute =
+  ApiPublicCronReviewPromptsRouteImport.update({
+    id: '/api/public/cron/review-prompts',
+    path: '/api/public/cron/review-prompts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronReturnAutoApproveRoute =
+  ApiPublicCronReturnAutoApproveRouteImport.update({
+    id: '/api/public/cron/return-auto-approve',
+    path: '/api/public/cron/return-auto-approve',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLifecycleEmailsRoute =
   ApiPublicCronLifecycleEmailsRouteImport.update({
     id: '/api/public/cron/lifecycle-emails',
     path: '/api/public/cron/lifecycle-emails',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronHeartbeatSweepRoute =
+  ApiPublicCronHeartbeatSweepRouteImport.update({
+    id: '/api/public/cron/heartbeat-sweep',
+    path: '/api/public/cron/heartbeat-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDriverLicenseExpiryRoute =
+  ApiPublicCronDriverLicenseExpiryRouteImport.update({
+    id: '/api/public/cron/driver-license-expiry',
+    path: '/api/public/cron/driver-license-expiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDispatchSlaSweepRoute =
+  ApiPublicCronDispatchSlaSweepRouteImport.update({
+    id: '/api/public/cron/dispatch-sla-sweep',
+    path: '/api/public/cron/dispatch-sla-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDeliveryDelayScanRoute =
+  ApiPublicCronDeliveryDelayScanRouteImport.update({
+    id: '/api/public/cron/delivery-delay-scan',
+    path: '/api/public/cron/delivery-delay-scan',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronApplyScheduledPlanChangesRoute =
+  ApiPublicCronApplyScheduledPlanChangesRouteImport.update({
+    id: '/api/public/cron/apply-scheduled-plan-changes',
+    path: '/api/public/cron/apply-scheduled-plan-changes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedTechnicianInstallsInstallIdRoute =
+  AuthenticatedTechnicianInstallsInstallIdRouteImport.update({
+    id: '/$installId',
+    path: '/$installId',
+    getParentRoute: () => AuthenticatedTechnicianInstallsRoute,
+  } as any)
+const AuthenticatedPlatformOrdersOrderIdRoute =
+  AuthenticatedPlatformOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedPlatformOrdersRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsFleetRoute =
+  AuthenticatedPlatformLogisticsFleetRouteImport.update({
+    id: '/platform/logistics/fleet',
+    path: '/platform/logistics/fleet',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsCommandCenterRoute =
+  AuthenticatedPlatformLogisticsCommandCenterRouteImport.update({
+    id: '/platform/logistics/command-center',
+    path: '/platform/logistics/command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsCarriersRoute =
+  AuthenticatedPlatformLogisticsCarriersRouteImport.update({
+    id: '/platform/logistics/carriers',
+    path: '/platform/logistics/carriers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceWebhooksRoute =
+  AuthenticatedPlatformInsuranceWebhooksRouteImport.update({
+    id: '/webhooks',
+    path: '/webhooks',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceAuditRoute =
+  AuthenticatedPlatformInsuranceAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
+  } as any)
+const AuthenticatedPlatformFinanceTaxRulesRoute =
+  AuthenticatedPlatformFinanceTaxRulesRouteImport.update({
+    id: '/tax-rules',
+    path: '/tax-rules',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
+const AuthenticatedPlatformFinancePayoutsRoute =
+  AuthenticatedPlatformFinancePayoutsRouteImport.update({
+    id: '/payouts',
+    path: '/payouts',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
+const AuthenticatedPlatformFinanceLedgerRoute =
+  AuthenticatedPlatformFinanceLedgerRouteImport.update({
+    id: '/ledger',
+    path: '/ledger',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+  } as any)
+const AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute =
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport.update({
+    id: '/insurance-policies/$policyId/documents',
+    path: '/insurance-policies/$policyId/documents',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBuyerOrdersOrderIdRoute =
+  AuthenticatedBuyerOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedBuyerOrdersRoute,
+  } as any)
+const ApiPublicV1NotificationsIndexRoute =
+  ApiPublicV1NotificationsIndexRouteImport.update({
+    id: '/api/public/v1/notifications/',
+    path: '/api/public/v1/notifications/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksInsuranceCarrierCodeRoute =
+  ApiPublicWebhooksInsuranceCarrierCodeRouteImport.update({
+    id: '/api/public/webhooks/insurance/$carrierCode',
+    path: '/api/public/webhooks/insurance/$carrierCode',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksCarrierCarrierCodeRoute =
+  ApiPublicWebhooksCarrierCarrierCodeRouteImport.update({
+    id: '/api/public/webhooks/carrier/$carrierCode',
+    path: '/api/public/webhooks/carrier/$carrierCode',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1UploadsSignRoute = ApiPublicV1UploadsSignRouteImport.update({
+  id: '/api/public/v1/uploads/sign',
+  path: '/api/public/v1/uploads/sign',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SyncSilosCockpitRoute =
+  ApiPublicV1SyncSilosCockpitRouteImport.update({
+    id: '/api/public/v1/sync/silos-cockpit',
+    path: '/api/public/v1/sync/silos-cockpit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncSilosRoute = ApiPublicV1SyncSilosRouteImport.update({
+  id: '/api/public/v1/sync/silos',
+  path: '/api/public/v1/sync/silos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SyncSensorsRoute = ApiPublicV1SyncSensorsRouteImport.update({
+  id: '/api/public/v1/sync/sensors',
+  path: '/api/public/v1/sync/sensors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SyncNotificationsRoute =
+  ApiPublicV1SyncNotificationsRouteImport.update({
+    id: '/api/public/v1/sync/notifications',
+    path: '/api/public/v1/sync/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncMarketplaceRoute =
+  ApiPublicV1SyncMarketplaceRouteImport.update({
+    id: '/api/public/v1/sync/marketplace',
+    path: '/api/public/v1/sync/marketplace',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncHardwareOrdersRoute =
+  ApiPublicV1SyncHardwareOrdersRouteImport.update({
+    id: '/api/public/v1/sync/hardware-orders',
+    path: '/api/public/v1/sync/hardware-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncFieldTasksRoute =
+  ApiPublicV1SyncFieldTasksRouteImport.update({
+    id: '/api/public/v1/sync/field-tasks',
+    path: '/api/public/v1/sync/field-tasks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncFieldIncidentsRoute =
+  ApiPublicV1SyncFieldIncidentsRouteImport.update({
+    id: '/api/public/v1/sync/field-incidents',
+    path: '/api/public/v1/sync/field-incidents',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncBuyerSummaryRoute =
+  ApiPublicV1SyncBuyerSummaryRouteImport.update({
+    id: '/api/public/v1/sync/buyer-summary',
+    path: '/api/public/v1/sync/buyer-summary',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncBuyerOrdersRoute =
+  ApiPublicV1SyncBuyerOrdersRouteImport.update({
+    id: '/api/public/v1/sync/buyer-orders',
+    path: '/api/public/v1/sync/buyer-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncAlertsRoute = ApiPublicV1SyncAlertsRouteImport.update({
+  id: '/api/public/v1/sync/alerts',
+  path: '/api/public/v1/sync/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1NotificationsReadRoute =
+  ApiPublicV1NotificationsReadRouteImport.update({
+    id: '/api/public/v1/notifications/read',
+    path: '/api/public/v1/notifications/read',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1NotificationsPreferencesRoute =
+  ApiPublicV1NotificationsPreferencesRouteImport.update({
+    id: '/api/public/v1/notifications/preferences',
+    path: '/api/public/v1/notifications/preferences',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1FieldMutationsRoute =
+  ApiPublicV1FieldMutationsRouteImport.update({
+    id: '/api/public/v1/field/mutations',
+    path: '/api/public/v1/field/mutations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1FieldBundleRoute = ApiPublicV1FieldBundleRouteImport.update({
+  id: '/api/public/v1/field/bundle',
+  path: '/api/public/v1/field/bundle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1DevicesRevokeRoute =
+  ApiPublicV1DevicesRevokeRouteImport.update({
+    id: '/api/public/v1/devices/revoke',
+    path: '/api/public/v1/devices/revoke',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesRegisterRoute =
+  ApiPublicV1DevicesRegisterRouteImport.update({
+    id: '/api/public/v1/devices/register',
+    path: '/api/public/v1/devices/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesHeartbeatRoute =
+  ApiPublicV1DevicesHeartbeatRouteImport.update({
+    id: '/api/public/v1/devices/heartbeat',
+    path: '/api/public/v1/devices/heartbeat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DeeplinkKeyRoute = ApiPublicV1DeeplinkKeyRouteImport.update({
+  id: '/api/public/v1/deeplink/$key',
+  path: '/api/public/v1/deeplink/$key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1CommerceQuoteRoute =
+  ApiPublicV1CommerceQuoteRouteImport.update({
+    id: '/api/public/v1/commerce/quote',
+    path: '/api/public/v1/commerce/quote',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceOrdersRoute =
+  ApiPublicV1CommerceOrdersRouteImport.update({
+    id: '/api/public/v1/commerce/orders',
+    path: '/api/public/v1/commerce/orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceConfigRoute =
+  ApiPublicV1CommerceConfigRouteImport.update({
+    id: '/api/public/v1/commerce/config',
+    path: '/api/public/v1/commerce/config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceCheckoutRoute =
+  ApiPublicV1CommerceCheckoutRouteImport.update({
+    id: '/api/public/v1/commerce/checkout',
+    path: '/api/public/v1/commerce/checkout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceCartRoute = ApiPublicV1CommerceCartRouteImport.update({
+  id: '/api/public/v1/commerce/cart',
+  path: '/api/public/v1/commerce/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1CommerceAddressesRoute =
+  ApiPublicV1CommerceAddressesRouteImport.update({
+    id: '/api/public/v1/commerce/addresses',
+    path: '/api/public/v1/commerce/addresses',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsReplayRoute =
+  ApiPublicV1ActionsReplayRouteImport.update({
+    id: '/api/public/v1/actions/replay',
+    path: '/api/public/v1/actions/replay',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsInstallStepRoute =
+  ApiPublicV1ActionsInstallStepRouteImport.update({
+    id: '/api/public/v1/actions/install-step',
+    path: '/api/public/v1/actions/install-step',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsConfirmDeliveryRoute =
+  ApiPublicV1ActionsConfirmDeliveryRouteImport.update({
+    id: '/api/public/v1/actions/confirm-delivery',
+    path: '/api/public/v1/actions/confirm-delivery',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsAckAlertRoute =
+  ApiPublicV1ActionsAckAlertRouteImport.update({
+    id: '/api/public/v1/actions/ack-alert',
+    path: '/api/public/v1/actions/ack-alert',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedPlatformOrdersOrderIdAuditRoute =
+  AuthenticatedPlatformOrdersOrderIdAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
+    getParentRoute: () => AuthenticatedPlatformOrdersOrderIdRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceClaimsClaimIdRoute =
+  AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport.update({
+    id: '/claims/$claimId',
+    path: '/claims/$claimId',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
+  } as any)
+const ApiPublicV1CommerceOrdersOrderIdRoute =
+  ApiPublicV1CommerceOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => ApiPublicV1CommerceOrdersRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -477,6 +1164,7 @@ export interface FileRoutesByFullPath {
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
   '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
@@ -484,60 +1172,160 @@ export interface FileRoutesByFullPath {
   '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
+  '/administration': typeof AuthenticatedAdministrationRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
-  '/buyers': typeof AuthenticatedBuyersRoute
+  '/attention': typeof AuthenticatedAttentionRoute
+  '/business': typeof AuthenticatedBusinessRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/data-visualization': typeof AuthenticatedDataVisualizationRoute
+  '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-  '/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/intelligence': typeof AuthenticatedIntelligenceRoute
+  '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
+  '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/returns': typeof AuthenticatedReturnsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
+  '/sales': typeof AuthenticatedSalesRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
-  '/settings': typeof AuthenticatedSettingsRoute
-  '/silos': typeof AuthenticatedSilosRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
-  '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
+  '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
+  '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
+  '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
+  '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
+  '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
+  '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
-  '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
+  '/platform/marketplace-mobile': typeof AuthenticatedPlatformMarketplaceMobileRoute
+  '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
+  '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
+  '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
+  '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
+  '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
+  '/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
+  '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
+  '/suppliers/$supplierId': typeof AuthenticatedSuppliersSupplierIdRoute
+  '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
+  '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
+  '/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
+  '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
+  '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
+  '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
+  '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
+  '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
+  '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
+  '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
+  '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
+  '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
+  '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
+  '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
+  '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
+  '/api/public/v1/commerce/orders': typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  '/api/public/v1/commerce/quote': typeof ApiPublicV1CommerceQuoteRoute
+  '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
+  '/api/public/v1/field/mutations': typeof ApiPublicV1FieldMutationsRoute
+  '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
+  '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
+  '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
+  '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/buyer-summary': typeof ApiPublicV1SyncBuyerSummaryRoute
+  '/api/public/v1/sync/field-incidents': typeof ApiPublicV1SyncFieldIncidentsRoute
+  '/api/public/v1/sync/field-tasks': typeof ApiPublicV1SyncFieldTasksRoute
+  '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/marketplace': typeof ApiPublicV1SyncMarketplaceRoute
+  '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
+  '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/sync/silos-cockpit': typeof ApiPublicV1SyncSilosCockpitRoute
+  '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  '/api/public/v1/notifications/': typeof ApiPublicV1NotificationsIndexRoute
+  '/api/public/v1/commerce/orders/$orderId': typeof ApiPublicV1CommerceOrdersOrderIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -555,60 +1343,160 @@ export interface FileRoutesByTo {
   '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
+  '/administration': typeof AuthenticatedAdministrationRoute
   '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
-  '/buyers': typeof AuthenticatedBuyersRoute
+  '/attention': typeof AuthenticatedAttentionRoute
+  '/business': typeof AuthenticatedBusinessRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/data-visualization': typeof AuthenticatedDataVisualizationRoute
+  '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
   '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-  '/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
+  '/intelligence': typeof AuthenticatedIntelligenceRoute
+  '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/ml-models': typeof AuthenticatedMlModelsRoute
+  '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/plan-management': typeof AuthenticatedPlanManagementRoute
   '/plans': typeof AuthenticatedPlansRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/returns': typeof AuthenticatedReturnsRoute
   '/revenue': typeof AuthenticatedRevenueRoute
+  '/sales': typeof AuthenticatedSalesRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
-  '/settings': typeof AuthenticatedSettingsRoute
-  '/silos': typeof AuthenticatedSilosRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
-  '/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
+  '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
+  '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
+  '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
+  '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
+  '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
+  '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
-  '/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
+  '/platform/marketplace-mobile': typeof AuthenticatedPlatformMarketplaceMobileRoute
+  '/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
+  '/platform/messages': typeof AuthenticatedPlatformMessagesRoute
+  '/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
+  '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
+  '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
+  '/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
+  '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
+  '/suppliers/$supplierId': typeof AuthenticatedSuppliersSupplierIdRoute
+  '/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/platform': typeof AuthenticatedPlatformIndexRoute
+  '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
+  '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
+  '/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
+  '/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
+  '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
+  '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
+  '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
+  '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
+  '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
+  '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
+  '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
+  '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
+  '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
+  '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
+  '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
+  '/api/public/v1/commerce/orders': typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  '/api/public/v1/commerce/quote': typeof ApiPublicV1CommerceQuoteRoute
+  '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
+  '/api/public/v1/field/mutations': typeof ApiPublicV1FieldMutationsRoute
+  '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
+  '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
+  '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
+  '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/buyer-summary': typeof ApiPublicV1SyncBuyerSummaryRoute
+  '/api/public/v1/sync/field-incidents': typeof ApiPublicV1SyncFieldIncidentsRoute
+  '/api/public/v1/sync/field-tasks': typeof ApiPublicV1SyncFieldTasksRoute
+  '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/marketplace': typeof ApiPublicV1SyncMarketplaceRoute
+  '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
+  '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/sync/silos-cockpit': typeof ApiPublicV1SyncSilosCockpitRoute
+  '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  '/api/public/v1/notifications': typeof ApiPublicV1NotificationsIndexRoute
+  '/api/public/v1/commerce/orders/$orderId': typeof ApiPublicV1CommerceOrdersOrderIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -622,6 +1510,7 @@ export interface FileRoutesById {
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
   '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
@@ -629,60 +1518,160 @@ export interface FileRoutesById {
   '/theme-test': typeof ThemeTestRoute
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
+  '/_authenticated/administration': typeof AuthenticatedAdministrationRoute
   '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
-  '/_authenticated/buyers': typeof AuthenticatedBuyersRoute
+  '/_authenticated/attention': typeof AuthenticatedAttentionRoute
+  '/_authenticated/business': typeof AuthenticatedBusinessRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/data-visualization': typeof AuthenticatedDataVisualizationRoute
+  '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/environmental': typeof AuthenticatedEnvironmentalRoute
   '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-  '/_authenticated/grain-batches': typeof AuthenticatedGrainBatchesRoute
+  '/_authenticated/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
+  '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
+  '/_authenticated/listings': typeof AuthenticatedListingsRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
   '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
+  '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/plan-management': typeof AuthenticatedPlanManagementRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/returns': typeof AuthenticatedReturnsRoute
   '/_authenticated/revenue': typeof AuthenticatedRevenueRoute
+  '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/security-center': typeof AuthenticatedSecurityCenterRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/silos': typeof AuthenticatedSilosRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
+  '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
-  '/_authenticated/warehouses': typeof AuthenticatedWarehousesRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
+  '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
+  '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
+  '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
+  '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
+  '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/_authenticated/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
+  '/_authenticated/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
+  '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
+  '/_authenticated/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/_authenticated/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
-  '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRoute
+  '/_authenticated/platform/marketplace-health': typeof AuthenticatedPlatformMarketplaceHealthRoute
+  '/_authenticated/platform/marketplace-mobile': typeof AuthenticatedPlatformMarketplaceMobileRoute
+  '/_authenticated/platform/marketplace-settings': typeof AuthenticatedPlatformMarketplaceSettingsRoute
+  '/_authenticated/platform/messages': typeof AuthenticatedPlatformMessagesRoute
+  '/_authenticated/platform/metrics': typeof AuthenticatedPlatformMetricsRoute
+  '/_authenticated/platform/mobile-deep-links': typeof AuthenticatedPlatformMobileDeepLinksRoute
+  '/_authenticated/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
+  '/_authenticated/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
+  '/_authenticated/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
+  '/_authenticated/platform/quality': typeof AuthenticatedPlatformQualityRoute
+  '/_authenticated/platform/reporting': typeof AuthenticatedPlatformReportingRoute
+  '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
+  '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/_authenticated/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
+  '/_authenticated/suppliers/$supplierId': typeof AuthenticatedSuppliersSupplierIdRoute
+  '/_authenticated/technician/installs': typeof AuthenticatedTechnicianInstallsRouteWithChildren
   '/api/firebase/live-sensors': typeof ApiFirebaseLiveSensorsRoute
+  '/api/public/actuator-ack': typeof ApiPublicActuatorAckRoute
+  '/api/public/telemetry': typeof ApiPublicTelemetryRoute
+  '/marketplace/seller/$adminId': typeof MarketplaceSellerAdminIdRoute
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
+  '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
+  '/_authenticated/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
+  '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
+  '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
+  '/_authenticated/platform/insurance/audit': typeof AuthenticatedPlatformInsuranceAuditRoute
+  '/_authenticated/platform/insurance/webhooks': typeof AuthenticatedPlatformInsuranceWebhooksRoute
+  '/_authenticated/platform/logistics/carriers': typeof AuthenticatedPlatformLogisticsCarriersRoute
+  '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
+  '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
+  '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
+  '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
+  '/api/public/cron/dispatch-sla-sweep': typeof ApiPublicCronDispatchSlaSweepRoute
+  '/api/public/cron/driver-license-expiry': typeof ApiPublicCronDriverLicenseExpiryRoute
+  '/api/public/cron/heartbeat-sweep': typeof ApiPublicCronHeartbeatSweepRoute
   '/api/public/cron/lifecycle-emails': typeof ApiPublicCronLifecycleEmailsRoute
+  '/api/public/cron/return-auto-approve': typeof ApiPublicCronReturnAutoApproveRoute
+  '/api/public/cron/review-prompts': typeof ApiPublicCronReviewPromptsRoute
+  '/api/public/cron/sla-digest': typeof ApiPublicCronSlaDigestRoute
   '/api/public/cron/sync-firebase': typeof ApiPublicCronSyncFirebaseRoute
   '/api/public/hooks/alerts-escalation': typeof ApiPublicHooksAlertsEscalationRoute
+  '/api/public/hooks/analytics-refresh': typeof ApiPublicHooksAnalyticsRefreshRoute
   '/api/public/hooks/expiry-reminders': typeof ApiPublicHooksExpiryRemindersRoute
   '/api/public/hooks/sensor-offline-detector': typeof ApiPublicHooksSensorOfflineDetectorRoute
+  '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
+  '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
+  '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+  '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
+  '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
+  '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
+  '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
+  '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
+  '/api/public/v1/commerce/config': typeof ApiPublicV1CommerceConfigRoute
+  '/api/public/v1/commerce/orders': typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  '/api/public/v1/commerce/quote': typeof ApiPublicV1CommerceQuoteRoute
+  '/api/public/v1/deeplink/$key': typeof ApiPublicV1DeeplinkKeyRoute
+  '/api/public/v1/devices/heartbeat': typeof ApiPublicV1DevicesHeartbeatRoute
+  '/api/public/v1/devices/register': typeof ApiPublicV1DevicesRegisterRoute
+  '/api/public/v1/devices/revoke': typeof ApiPublicV1DevicesRevokeRoute
+  '/api/public/v1/field/bundle': typeof ApiPublicV1FieldBundleRoute
+  '/api/public/v1/field/mutations': typeof ApiPublicV1FieldMutationsRoute
+  '/api/public/v1/notifications/preferences': typeof ApiPublicV1NotificationsPreferencesRoute
+  '/api/public/v1/notifications/read': typeof ApiPublicV1NotificationsReadRoute
+  '/api/public/v1/sync/alerts': typeof ApiPublicV1SyncAlertsRoute
+  '/api/public/v1/sync/buyer-orders': typeof ApiPublicV1SyncBuyerOrdersRoute
+  '/api/public/v1/sync/buyer-summary': typeof ApiPublicV1SyncBuyerSummaryRoute
+  '/api/public/v1/sync/field-incidents': typeof ApiPublicV1SyncFieldIncidentsRoute
+  '/api/public/v1/sync/field-tasks': typeof ApiPublicV1SyncFieldTasksRoute
+  '/api/public/v1/sync/hardware-orders': typeof ApiPublicV1SyncHardwareOrdersRoute
+  '/api/public/v1/sync/marketplace': typeof ApiPublicV1SyncMarketplaceRoute
+  '/api/public/v1/sync/notifications': typeof ApiPublicV1SyncNotificationsRoute
+  '/api/public/v1/sync/sensors': typeof ApiPublicV1SyncSensorsRoute
+  '/api/public/v1/sync/silos': typeof ApiPublicV1SyncSilosRoute
+  '/api/public/v1/sync/silos-cockpit': typeof ApiPublicV1SyncSilosCockpitRoute
+  '/api/public/v1/uploads/sign': typeof ApiPublicV1UploadsSignRoute
+  '/api/public/webhooks/carrier/$carrierCode': typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  '/api/public/webhooks/insurance/$carrierCode': typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  '/api/public/v1/notifications/': typeof ApiPublicV1NotificationsIndexRoute
+  '/api/public/v1/commerce/orders/$orderId': typeof ApiPublicV1CommerceOrdersOrderIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -696,6 +1685,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/docs'
     | '/help'
+    | '/marketplace'
     | '/privacy'
     | '/sitemap.xml'
     | '/team'
@@ -703,60 +1693,160 @@ export interface FileRouteTypes {
     | '/theme-test'
     | '/activity-logs'
     | '/actuators'
+    | '/administration'
     | '/ai-predictions'
     | '/analytics'
-    | '/buyers'
+    | '/attention'
+    | '/business'
     | '/dashboard'
-    | '/data-visualization'
+    | '/earnings'
     | '/environmental'
     | '/grain-alerts'
-    | '/grain-batches'
+    | '/grain-operations'
     | '/incidents'
     | '/insurance'
+    | '/intelligence'
+    | '/listings'
     | '/maintenance'
     | '/ml-models'
+    | '/monitoring'
     | '/not-allowed'
     | '/notifications'
     | '/orders'
     | '/plan-management'
     | '/plans'
     | '/reports'
+    | '/returns'
     | '/revenue'
+    | '/sales'
     | '/security-center'
     | '/sensors'
     | '/server-monitoring'
     | '/settings'
-    | '/silos'
     | '/subscription'
+    | '/suppliers'
     | '/team-management'
     | '/traceability'
-    | '/warehouses'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout/'
+    | '/marketplace/'
     | '/admins/$adminId'
+    | '/buyer/orders'
+    | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/commerce-mobile'
+    | '/platform/dashboard-builder'
+    | '/platform/dispatch-analytics'
+    | '/platform/disputes'
+    | '/platform/field-incidents'
+    | '/platform/field-settings'
+    | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
+    | '/platform/insurance'
+    | '/platform/invoice-failures'
+    | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
+    | '/platform/marketplace-health'
+    | '/platform/marketplace-mobile'
+    | '/platform/marketplace-settings'
+    | '/platform/messages'
+    | '/platform/metrics'
+    | '/platform/mobile-deep-links'
+    | '/platform/mobile-push-diagnostics'
+    | '/platform/mobile-settings'
+    | '/platform/mobile-sync-monitor'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
+    | '/platform/quality'
+    | '/platform/reporting'
+    | '/platform/reviews'
+    | '/platform/sellers'
+    | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
+    | '/settings/notifications'
+    | '/silos/$siloId'
+    | '/suppliers/$supplierId'
+    | '/technician/installs'
     | '/api/firebase/live-sensors'
+    | '/api/public/actuator-ack'
+    | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/platform/'
+    | '/buyer/orders/$orderId'
+    | '/insurance-policies/$policyId/documents'
+    | '/platform/finance/ledger'
+    | '/platform/finance/payouts'
+    | '/platform/finance/tax-rules'
+    | '/platform/insurance/audit'
+    | '/platform/insurance/webhooks'
+    | '/platform/logistics/carriers'
+    | '/platform/logistics/command-center'
+    | '/platform/logistics/fleet'
+    | '/platform/orders/$orderId'
+    | '/technician/installs/$installId'
+    | '/api/public/cron/apply-scheduled-plan-changes'
+    | '/api/public/cron/delivery-delay-scan'
+    | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
+    | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/return-auto-approve'
+    | '/api/public/cron/review-prompts'
+    | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
+    | '/api/public/v1/meta'
+    | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
+    | '/platform/insurance/claims/$claimId'
+    | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/actions/ack-alert'
+    | '/api/public/v1/actions/confirm-delivery'
+    | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
+    | '/api/public/v1/commerce/checkout'
+    | '/api/public/v1/commerce/config'
+    | '/api/public/v1/commerce/orders'
+    | '/api/public/v1/commerce/quote'
+    | '/api/public/v1/deeplink/$key'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
+    | '/api/public/v1/field/mutations'
+    | '/api/public/v1/notifications/preferences'
+    | '/api/public/v1/notifications/read'
+    | '/api/public/v1/sync/alerts'
+    | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/buyer-summary'
+    | '/api/public/v1/sync/field-incidents'
+    | '/api/public/v1/sync/field-tasks'
+    | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/marketplace'
+    | '/api/public/v1/sync/notifications'
+    | '/api/public/v1/sync/sensors'
+    | '/api/public/v1/sync/silos'
+    | '/api/public/v1/sync/silos-cockpit'
+    | '/api/public/v1/uploads/sign'
+    | '/api/public/webhooks/carrier/$carrierCode'
+    | '/api/public/webhooks/insurance/$carrierCode'
+    | '/api/public/v1/notifications/'
+    | '/api/public/v1/commerce/orders/$orderId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -774,60 +1864,160 @@ export interface FileRouteTypes {
     | '/theme-test'
     | '/activity-logs'
     | '/actuators'
+    | '/administration'
     | '/ai-predictions'
     | '/analytics'
-    | '/buyers'
+    | '/attention'
+    | '/business'
     | '/dashboard'
-    | '/data-visualization'
+    | '/earnings'
     | '/environmental'
     | '/grain-alerts'
-    | '/grain-batches'
+    | '/grain-operations'
     | '/incidents'
     | '/insurance'
+    | '/intelligence'
+    | '/listings'
     | '/maintenance'
     | '/ml-models'
+    | '/monitoring'
     | '/not-allowed'
     | '/notifications'
     | '/orders'
     | '/plan-management'
     | '/plans'
     | '/reports'
+    | '/returns'
     | '/revenue'
+    | '/sales'
     | '/security-center'
     | '/sensors'
     | '/server-monitoring'
     | '/settings'
-    | '/silos'
     | '/subscription'
+    | '/suppliers'
     | '/team-management'
     | '/traceability'
-    | '/warehouses'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout'
+    | '/marketplace'
     | '/admins/$adminId'
+    | '/buyer/orders'
+    | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/commerce-mobile'
+    | '/platform/dashboard-builder'
+    | '/platform/dispatch-analytics'
+    | '/platform/disputes'
+    | '/platform/field-incidents'
+    | '/platform/field-settings'
+    | '/platform/finance'
     | '/platform/financials'
     | '/platform/health'
+    | '/platform/insurance'
+    | '/platform/invoice-failures'
+    | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
+    | '/platform/marketplace-health'
+    | '/platform/marketplace-mobile'
+    | '/platform/marketplace-settings'
+    | '/platform/messages'
+    | '/platform/metrics'
+    | '/platform/mobile-deep-links'
+    | '/platform/mobile-push-diagnostics'
+    | '/platform/mobile-settings'
+    | '/platform/mobile-sync-monitor'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
+    | '/platform/quality'
+    | '/platform/reporting'
+    | '/platform/reviews'
+    | '/platform/sellers'
+    | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
+    | '/settings/notifications'
+    | '/silos/$siloId'
+    | '/suppliers/$supplierId'
+    | '/technician/installs'
     | '/api/firebase/live-sensors'
+    | '/api/public/actuator-ack'
+    | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/platform'
+    | '/buyer/orders/$orderId'
+    | '/insurance-policies/$policyId/documents'
+    | '/platform/finance/ledger'
+    | '/platform/finance/payouts'
+    | '/platform/finance/tax-rules'
+    | '/platform/insurance/audit'
+    | '/platform/insurance/webhooks'
+    | '/platform/logistics/carriers'
+    | '/platform/logistics/command-center'
+    | '/platform/logistics/fleet'
+    | '/platform/orders/$orderId'
+    | '/technician/installs/$installId'
+    | '/api/public/cron/apply-scheduled-plan-changes'
+    | '/api/public/cron/delivery-delay-scan'
+    | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
+    | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/return-auto-approve'
+    | '/api/public/cron/review-prompts'
+    | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
+    | '/api/public/v1/meta'
+    | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
+    | '/platform/insurance/claims/$claimId'
+    | '/platform/orders/$orderId/audit'
+    | '/api/public/v1/actions/ack-alert'
+    | '/api/public/v1/actions/confirm-delivery'
+    | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
+    | '/api/public/v1/commerce/checkout'
+    | '/api/public/v1/commerce/config'
+    | '/api/public/v1/commerce/orders'
+    | '/api/public/v1/commerce/quote'
+    | '/api/public/v1/deeplink/$key'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
+    | '/api/public/v1/field/mutations'
+    | '/api/public/v1/notifications/preferences'
+    | '/api/public/v1/notifications/read'
+    | '/api/public/v1/sync/alerts'
+    | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/buyer-summary'
+    | '/api/public/v1/sync/field-incidents'
+    | '/api/public/v1/sync/field-tasks'
+    | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/marketplace'
+    | '/api/public/v1/sync/notifications'
+    | '/api/public/v1/sync/sensors'
+    | '/api/public/v1/sync/silos'
+    | '/api/public/v1/sync/silos-cockpit'
+    | '/api/public/v1/uploads/sign'
+    | '/api/public/webhooks/carrier/$carrierCode'
+    | '/api/public/webhooks/insurance/$carrierCode'
+    | '/api/public/v1/notifications'
+    | '/api/public/v1/commerce/orders/$orderId'
   id:
     | '__root__'
     | '/'
@@ -840,6 +2030,7 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/docs'
     | '/help'
+    | '/marketplace'
     | '/privacy'
     | '/sitemap.xml'
     | '/team'
@@ -847,60 +2038,160 @@ export interface FileRouteTypes {
     | '/theme-test'
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
+    | '/_authenticated/administration'
     | '/_authenticated/ai-predictions'
     | '/_authenticated/analytics'
-    | '/_authenticated/buyers'
+    | '/_authenticated/attention'
+    | '/_authenticated/business'
     | '/_authenticated/dashboard'
-    | '/_authenticated/data-visualization'
+    | '/_authenticated/earnings'
     | '/_authenticated/environmental'
     | '/_authenticated/grain-alerts'
-    | '/_authenticated/grain-batches'
+    | '/_authenticated/grain-operations'
     | '/_authenticated/incidents'
     | '/_authenticated/insurance'
+    | '/_authenticated/intelligence'
+    | '/_authenticated/listings'
     | '/_authenticated/maintenance'
     | '/_authenticated/ml-models'
+    | '/_authenticated/monitoring'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
     | '/_authenticated/orders'
     | '/_authenticated/plan-management'
     | '/_authenticated/plans'
     | '/_authenticated/reports'
+    | '/_authenticated/returns'
     | '/_authenticated/revenue'
+    | '/_authenticated/sales'
     | '/_authenticated/security-center'
     | '/_authenticated/sensors'
     | '/_authenticated/server-monitoring'
     | '/_authenticated/settings'
-    | '/_authenticated/silos'
     | '/_authenticated/subscription'
+    | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
     | '/_authenticated/traceability'
-    | '/_authenticated/warehouses'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/marketplace/$slug'
     | '/checkout/'
+    | '/marketplace/'
     | '/_authenticated/admins/$adminId'
+    | '/_authenticated/buyer/orders'
+    | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/commerce-mobile'
+    | '/_authenticated/platform/dashboard-builder'
+    | '/_authenticated/platform/dispatch-analytics'
+    | '/_authenticated/platform/disputes'
+    | '/_authenticated/platform/field-incidents'
+    | '/_authenticated/platform/field-settings'
+    | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
+    | '/_authenticated/platform/insurance'
+    | '/_authenticated/platform/invoice-failures'
+    | '/_authenticated/platform/launch-readiness'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
+    | '/_authenticated/platform/marketplace-health'
+    | '/_authenticated/platform/marketplace-mobile'
+    | '/_authenticated/platform/marketplace-settings'
+    | '/_authenticated/platform/messages'
+    | '/_authenticated/platform/metrics'
+    | '/_authenticated/platform/mobile-deep-links'
+    | '/_authenticated/platform/mobile-push-diagnostics'
+    | '/_authenticated/platform/mobile-settings'
+    | '/_authenticated/platform/mobile-sync-monitor'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
+    | '/_authenticated/platform/quality'
+    | '/_authenticated/platform/reporting'
+    | '/_authenticated/platform/reviews'
+    | '/_authenticated/platform/sellers'
+    | '/_authenticated/platform/sla-alerts'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
+    | '/_authenticated/settings/notifications'
+    | '/_authenticated/silos/$siloId'
+    | '/_authenticated/suppliers/$supplierId'
+    | '/_authenticated/technician/installs'
     | '/api/firebase/live-sensors'
+    | '/api/public/actuator-ack'
+    | '/api/public/telemetry'
+    | '/marketplace/seller/$adminId'
     | '/_authenticated/platform/'
+    | '/_authenticated/buyer/orders/$orderId'
+    | '/_authenticated/insurance-policies/$policyId/documents'
+    | '/_authenticated/platform/finance/ledger'
+    | '/_authenticated/platform/finance/payouts'
+    | '/_authenticated/platform/finance/tax-rules'
+    | '/_authenticated/platform/insurance/audit'
+    | '/_authenticated/platform/insurance/webhooks'
+    | '/_authenticated/platform/logistics/carriers'
+    | '/_authenticated/platform/logistics/command-center'
+    | '/_authenticated/platform/logistics/fleet'
+    | '/_authenticated/platform/orders/$orderId'
+    | '/_authenticated/technician/installs/$installId'
+    | '/api/public/cron/apply-scheduled-plan-changes'
+    | '/api/public/cron/delivery-delay-scan'
+    | '/api/public/cron/dispatch-sla-sweep'
+    | '/api/public/cron/driver-license-expiry'
+    | '/api/public/cron/heartbeat-sweep'
     | '/api/public/cron/lifecycle-emails'
+    | '/api/public/cron/return-auto-approve'
+    | '/api/public/cron/review-prompts'
+    | '/api/public/cron/sla-digest'
     | '/api/public/cron/sync-firebase'
     | '/api/public/hooks/alerts-escalation'
+    | '/api/public/hooks/analytics-refresh'
     | '/api/public/hooks/expiry-reminders'
     | '/api/public/hooks/sensor-offline-detector'
+    | '/api/public/v1/meta'
+    | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
+    | '/_authenticated/platform/insurance/claims/$claimId'
+    | '/_authenticated/platform/orders/$orderId/audit'
+    | '/api/public/v1/actions/ack-alert'
+    | '/api/public/v1/actions/confirm-delivery'
+    | '/api/public/v1/actions/install-step'
+    | '/api/public/v1/actions/replay'
+    | '/api/public/v1/commerce/addresses'
+    | '/api/public/v1/commerce/cart'
+    | '/api/public/v1/commerce/checkout'
+    | '/api/public/v1/commerce/config'
+    | '/api/public/v1/commerce/orders'
+    | '/api/public/v1/commerce/quote'
+    | '/api/public/v1/deeplink/$key'
+    | '/api/public/v1/devices/heartbeat'
+    | '/api/public/v1/devices/register'
+    | '/api/public/v1/devices/revoke'
+    | '/api/public/v1/field/bundle'
+    | '/api/public/v1/field/mutations'
+    | '/api/public/v1/notifications/preferences'
+    | '/api/public/v1/notifications/read'
+    | '/api/public/v1/sync/alerts'
+    | '/api/public/v1/sync/buyer-orders'
+    | '/api/public/v1/sync/buyer-summary'
+    | '/api/public/v1/sync/field-incidents'
+    | '/api/public/v1/sync/field-tasks'
+    | '/api/public/v1/sync/hardware-orders'
+    | '/api/public/v1/sync/marketplace'
+    | '/api/public/v1/sync/notifications'
+    | '/api/public/v1/sync/sensors'
+    | '/api/public/v1/sync/silos'
+    | '/api/public/v1/sync/silos-cockpit'
+    | '/api/public/v1/uploads/sign'
+    | '/api/public/webhooks/carrier/$carrierCode'
+    | '/api/public/webhooks/insurance/$carrierCode'
+    | '/api/public/v1/notifications/'
+    | '/api/public/v1/commerce/orders/$orderId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -914,18 +2205,65 @@ export interface RootRouteChildren {
   CookiesRoute: typeof CookiesRoute
   DocsRoute: typeof DocsRoute
   HelpRoute: typeof HelpRoute
+  MarketplaceRoute: typeof MarketplaceRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   ThemeTestRoute: typeof ThemeTestRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
+  ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
+  ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
+  ApiPublicCronApplyScheduledPlanChangesRoute: typeof ApiPublicCronApplyScheduledPlanChangesRoute
+  ApiPublicCronDeliveryDelayScanRoute: typeof ApiPublicCronDeliveryDelayScanRoute
+  ApiPublicCronDispatchSlaSweepRoute: typeof ApiPublicCronDispatchSlaSweepRoute
+  ApiPublicCronDriverLicenseExpiryRoute: typeof ApiPublicCronDriverLicenseExpiryRoute
+  ApiPublicCronHeartbeatSweepRoute: typeof ApiPublicCronHeartbeatSweepRoute
   ApiPublicCronLifecycleEmailsRoute: typeof ApiPublicCronLifecycleEmailsRoute
+  ApiPublicCronReturnAutoApproveRoute: typeof ApiPublicCronReturnAutoApproveRoute
+  ApiPublicCronReviewPromptsRoute: typeof ApiPublicCronReviewPromptsRoute
+  ApiPublicCronSlaDigestRoute: typeof ApiPublicCronSlaDigestRoute
   ApiPublicCronSyncFirebaseRoute: typeof ApiPublicCronSyncFirebaseRoute
   ApiPublicHooksAlertsEscalationRoute: typeof ApiPublicHooksAlertsEscalationRoute
+  ApiPublicHooksAnalyticsRefreshRoute: typeof ApiPublicHooksAnalyticsRefreshRoute
   ApiPublicHooksExpiryRemindersRoute: typeof ApiPublicHooksExpiryRemindersRoute
   ApiPublicHooksSensorOfflineDetectorRoute: typeof ApiPublicHooksSensorOfflineDetectorRoute
+  ApiPublicV1MetaRoute: typeof ApiPublicV1MetaRoute
+  ApiPublicV1StatusRoute: typeof ApiPublicV1StatusRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiPublicV1ActionsAckAlertRoute: typeof ApiPublicV1ActionsAckAlertRoute
+  ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
+  ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
+  ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
+  ApiPublicV1CommerceAddressesRoute: typeof ApiPublicV1CommerceAddressesRoute
+  ApiPublicV1CommerceCartRoute: typeof ApiPublicV1CommerceCartRoute
+  ApiPublicV1CommerceCheckoutRoute: typeof ApiPublicV1CommerceCheckoutRoute
+  ApiPublicV1CommerceConfigRoute: typeof ApiPublicV1CommerceConfigRoute
+  ApiPublicV1CommerceOrdersRoute: typeof ApiPublicV1CommerceOrdersRouteWithChildren
+  ApiPublicV1CommerceQuoteRoute: typeof ApiPublicV1CommerceQuoteRoute
+  ApiPublicV1DeeplinkKeyRoute: typeof ApiPublicV1DeeplinkKeyRoute
+  ApiPublicV1DevicesHeartbeatRoute: typeof ApiPublicV1DevicesHeartbeatRoute
+  ApiPublicV1DevicesRegisterRoute: typeof ApiPublicV1DevicesRegisterRoute
+  ApiPublicV1DevicesRevokeRoute: typeof ApiPublicV1DevicesRevokeRoute
+  ApiPublicV1FieldBundleRoute: typeof ApiPublicV1FieldBundleRoute
+  ApiPublicV1FieldMutationsRoute: typeof ApiPublicV1FieldMutationsRoute
+  ApiPublicV1NotificationsPreferencesRoute: typeof ApiPublicV1NotificationsPreferencesRoute
+  ApiPublicV1NotificationsReadRoute: typeof ApiPublicV1NotificationsReadRoute
+  ApiPublicV1SyncAlertsRoute: typeof ApiPublicV1SyncAlertsRoute
+  ApiPublicV1SyncBuyerOrdersRoute: typeof ApiPublicV1SyncBuyerOrdersRoute
+  ApiPublicV1SyncBuyerSummaryRoute: typeof ApiPublicV1SyncBuyerSummaryRoute
+  ApiPublicV1SyncFieldIncidentsRoute: typeof ApiPublicV1SyncFieldIncidentsRoute
+  ApiPublicV1SyncFieldTasksRoute: typeof ApiPublicV1SyncFieldTasksRoute
+  ApiPublicV1SyncHardwareOrdersRoute: typeof ApiPublicV1SyncHardwareOrdersRoute
+  ApiPublicV1SyncMarketplaceRoute: typeof ApiPublicV1SyncMarketplaceRoute
+  ApiPublicV1SyncNotificationsRoute: typeof ApiPublicV1SyncNotificationsRoute
+  ApiPublicV1SyncSensorsRoute: typeof ApiPublicV1SyncSensorsRoute
+  ApiPublicV1SyncSilosRoute: typeof ApiPublicV1SyncSilosRoute
+  ApiPublicV1SyncSilosCockpitRoute: typeof ApiPublicV1SyncSilosCockpitRoute
+  ApiPublicV1UploadsSignRoute: typeof ApiPublicV1UploadsSignRoute
+  ApiPublicWebhooksCarrierCarrierCodeRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRoute
+  ApiPublicWebhooksInsuranceCarrierCodeRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRoute
+  ApiPublicV1NotificationsIndexRoute: typeof ApiPublicV1NotificationsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -963,6 +2301,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/help': {
@@ -1035,12 +2380,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
     '/checkout/': {
       id: '/checkout/'
       path: '/'
       fullPath: '/checkout/'
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/marketplace/$slug': {
+      id: '/marketplace/$slug'
+      path: '/$slug'
+      fullPath: '/marketplace/$slug'
+      preLoaderRoute: typeof MarketplaceSlugRouteImport
+      parentRoute: typeof MarketplaceRoute
     }
     '/checkout/success': {
       id: '/checkout/success'
@@ -1084,13 +2443,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_authenticated/warehouses': {
-      id: '/_authenticated/warehouses'
-      path: '/warehouses'
-      fullPath: '/warehouses'
-      preLoaderRoute: typeof AuthenticatedWarehousesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/traceability': {
       id: '/_authenticated/traceability'
       path: '/traceability'
@@ -1105,18 +2457,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/suppliers': {
+      id: '/_authenticated/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/subscription': {
       id: '/_authenticated/subscription'
       path: '/subscription'
       fullPath: '/subscription'
       preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/silos': {
-      id: '/_authenticated/silos'
-      path: '/silos'
-      fullPath: '/silos'
-      preLoaderRoute: typeof AuthenticatedSilosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -1147,11 +2499,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSecurityCenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sales': {
+      id: '/_authenticated/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof AuthenticatedSalesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/revenue': {
       id: '/_authenticated/revenue'
       path: '/revenue'
       fullPath: '/revenue'
       preLoaderRoute: typeof AuthenticatedRevenueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/returns': {
+      id: '/_authenticated/returns'
+      path: '/returns'
+      fullPath: '/returns'
+      preLoaderRoute: typeof AuthenticatedReturnsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports': {
@@ -1196,6 +2562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/monitoring': {
+      id: '/_authenticated/monitoring'
+      path: '/monitoring'
+      fullPath: '/monitoring'
+      preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ml-models': {
       id: '/_authenticated/ml-models'
       path: '/ml-models'
@@ -1208,6 +2581,20 @@ declare module '@tanstack/react-router' {
       path: '/maintenance'
       fullPath: '/maintenance'
       preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/listings': {
+      id: '/_authenticated/listings'
+      path: '/listings'
+      fullPath: '/listings'
+      preLoaderRoute: typeof AuthenticatedListingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/intelligence': {
+      id: '/_authenticated/intelligence'
+      path: '/intelligence'
+      fullPath: '/intelligence'
+      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/insurance': {
@@ -1224,11 +2611,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIncidentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/grain-batches': {
-      id: '/_authenticated/grain-batches'
-      path: '/grain-batches'
-      fullPath: '/grain-batches'
-      preLoaderRoute: typeof AuthenticatedGrainBatchesRouteImport
+    '/_authenticated/grain-operations': {
+      id: '/_authenticated/grain-operations'
+      path: '/grain-operations'
+      fullPath: '/grain-operations'
+      preLoaderRoute: typeof AuthenticatedGrainOperationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/grain-alerts': {
@@ -1245,11 +2632,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEnvironmentalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/data-visualization': {
-      id: '/_authenticated/data-visualization'
-      path: '/data-visualization'
-      fullPath: '/data-visualization'
-      preLoaderRoute: typeof AuthenticatedDataVisualizationRouteImport
+    '/_authenticated/earnings': {
+      id: '/_authenticated/earnings'
+      path: '/earnings'
+      fullPath: '/earnings'
+      preLoaderRoute: typeof AuthenticatedEarningsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -1259,11 +2646,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/buyers': {
-      id: '/_authenticated/buyers'
-      path: '/buyers'
-      fullPath: '/buyers'
-      preLoaderRoute: typeof AuthenticatedBuyersRouteImport
+    '/_authenticated/business': {
+      id: '/_authenticated/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof AuthenticatedBusinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/attention': {
+      id: '/_authenticated/attention'
+      path: '/attention'
+      fullPath: '/attention'
+      preLoaderRoute: typeof AuthenticatedAttentionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/analytics': {
@@ -1278,6 +2672,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-predictions'
       fullPath: '/ai-predictions'
       preLoaderRoute: typeof AuthenticatedAiPredictionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/administration': {
+      id: '/_authenticated/administration'
+      path: '/administration'
+      fullPath: '/administration'
+      preLoaderRoute: typeof AuthenticatedAdministrationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/actuators': {
@@ -1301,12 +2702,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/marketplace/seller/$adminId': {
+      id: '/marketplace/seller/$adminId'
+      path: '/seller/$adminId'
+      fullPath: '/marketplace/seller/$adminId'
+      preLoaderRoute: typeof MarketplaceSellerAdminIdRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/api/public/telemetry': {
+      id: '/api/public/telemetry'
+      path: '/api/public/telemetry'
+      fullPath: '/api/public/telemetry'
+      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/actuator-ack': {
+      id: '/api/public/actuator-ack'
+      path: '/api/public/actuator-ack'
+      fullPath: '/api/public/actuator-ack'
+      preLoaderRoute: typeof ApiPublicActuatorAckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/firebase/live-sensors': {
       id: '/api/firebase/live-sensors'
       path: '/api/firebase/live-sensors'
       fullPath: '/api/firebase/live-sensors'
       preLoaderRoute: typeof ApiFirebaseLiveSensorsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/technician/installs': {
+      id: '/_authenticated/technician/installs'
+      path: '/technician/installs'
+      fullPath: '/technician/installs'
+      preLoaderRoute: typeof AuthenticatedTechnicianInstallsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/suppliers/$supplierId': {
+      id: '/_authenticated/suppliers/$supplierId'
+      path: '/$supplierId'
+      fullPath: '/suppliers/$supplierId'
+      preLoaderRoute: typeof AuthenticatedSuppliersSupplierIdRouteImport
+      parentRoute: typeof AuthenticatedSuppliersRoute
+    }
+    '/_authenticated/silos/$siloId': {
+      id: '/_authenticated/silos/$siloId'
+      path: '/silos/$siloId'
+      fullPath: '/silos/$siloId'
+      preLoaderRoute: typeof AuthenticatedSilosSiloIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
     }
     '/_authenticated/platform/users': {
       id: '/_authenticated/platform/users'
@@ -1320,6 +2770,41 @@ declare module '@tanstack/react-router' {
       path: '/platform/tenants'
       fullPath: '/platform/tenants'
       preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/sla-alerts': {
+      id: '/_authenticated/platform/sla-alerts'
+      path: '/platform/sla-alerts'
+      fullPath: '/platform/sla-alerts'
+      preLoaderRoute: typeof AuthenticatedPlatformSlaAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/sellers': {
+      id: '/_authenticated/platform/sellers'
+      path: '/platform/sellers'
+      fullPath: '/platform/sellers'
+      preLoaderRoute: typeof AuthenticatedPlatformSellersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/reviews': {
+      id: '/_authenticated/platform/reviews'
+      path: '/platform/reviews'
+      fullPath: '/platform/reviews'
+      preLoaderRoute: typeof AuthenticatedPlatformReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/reporting': {
+      id: '/_authenticated/platform/reporting'
+      path: '/platform/reporting'
+      fullPath: '/platform/reporting'
+      preLoaderRoute: typeof AuthenticatedPlatformReportingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/quality': {
+      id: '/_authenticated/platform/quality'
+      path: '/platform/quality'
+      fullPath: '/platform/quality'
+      preLoaderRoute: typeof AuthenticatedPlatformQualityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/plans': {
@@ -1343,6 +2828,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/mobile-sync-monitor': {
+      id: '/_authenticated/platform/mobile-sync-monitor'
+      path: '/platform/mobile-sync-monitor'
+      fullPath: '/platform/mobile-sync-monitor'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileSyncMonitorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-settings': {
+      id: '/_authenticated/platform/mobile-settings'
+      path: '/platform/mobile-settings'
+      fullPath: '/platform/mobile-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-push-diagnostics': {
+      id: '/_authenticated/platform/mobile-push-diagnostics'
+      path: '/platform/mobile-push-diagnostics'
+      fullPath: '/platform/mobile-push-diagnostics'
+      preLoaderRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-deep-links': {
+      id: '/_authenticated/platform/mobile-deep-links'
+      path: '/platform/mobile-deep-links'
+      fullPath: '/platform/mobile-deep-links'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileDeepLinksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/metrics': {
+      id: '/_authenticated/platform/metrics'
+      path: '/platform/metrics'
+      fullPath: '/platform/metrics'
+      preLoaderRoute: typeof AuthenticatedPlatformMetricsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/messages': {
+      id: '/_authenticated/platform/messages'
+      path: '/platform/messages'
+      fullPath: '/platform/messages'
+      preLoaderRoute: typeof AuthenticatedPlatformMessagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/marketplace-settings': {
+      id: '/_authenticated/platform/marketplace-settings'
+      path: '/platform/marketplace-settings'
+      fullPath: '/platform/marketplace-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/marketplace-mobile': {
+      id: '/_authenticated/platform/marketplace-mobile'
+      path: '/platform/marketplace-mobile'
+      fullPath: '/platform/marketplace-mobile'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/marketplace-health': {
+      id: '/_authenticated/platform/marketplace-health'
+      path: '/platform/marketplace-health'
+      fullPath: '/platform/marketplace-health'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/logs': {
       id: '/_authenticated/platform/logs'
       path: '/platform/logs'
@@ -1355,6 +2903,27 @@ declare module '@tanstack/react-router' {
       path: '/platform/leads'
       fullPath: '/platform/leads'
       preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/launch-readiness': {
+      id: '/_authenticated/platform/launch-readiness'
+      path: '/platform/launch-readiness'
+      fullPath: '/platform/launch-readiness'
+      preLoaderRoute: typeof AuthenticatedPlatformLaunchReadinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/invoice-failures': {
+      id: '/_authenticated/platform/invoice-failures'
+      path: '/platform/invoice-failures'
+      fullPath: '/platform/invoice-failures'
+      preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/insurance': {
+      id: '/_authenticated/platform/insurance'
+      path: '/platform/insurance'
+      fullPath: '/platform/insurance'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/health': {
@@ -1371,11 +2940,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFinancialsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/finance': {
+      id: '/_authenticated/platform/finance'
+      path: '/platform/finance'
+      fullPath: '/platform/finance'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-settings': {
+      id: '/_authenticated/platform/field-settings'
+      path: '/platform/field-settings'
+      fullPath: '/platform/field-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents': {
+      id: '/_authenticated/platform/field-incidents'
+      path: '/platform/field-incidents'
+      fullPath: '/platform/field-incidents'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/disputes': {
+      id: '/_authenticated/platform/disputes'
+      path: '/platform/disputes'
+      fullPath: '/platform/disputes'
+      preLoaderRoute: typeof AuthenticatedPlatformDisputesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/dispatch-analytics': {
+      id: '/_authenticated/platform/dispatch-analytics'
+      path: '/platform/dispatch-analytics'
+      fullPath: '/platform/dispatch-analytics'
+      preLoaderRoute: typeof AuthenticatedPlatformDispatchAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/dashboard-builder': {
+      id: '/_authenticated/platform/dashboard-builder'
+      path: '/platform/dashboard-builder'
+      fullPath: '/platform/dashboard-builder'
+      preLoaderRoute: typeof AuthenticatedPlatformDashboardBuilderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/commerce-mobile': {
+      id: '/_authenticated/platform/commerce-mobile'
+      path: '/platform/commerce-mobile'
+      fullPath: '/platform/commerce-mobile'
+      preLoaderRoute: typeof AuthenticatedPlatformCommerceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/audit-logs': {
       id: '/_authenticated/platform/audit-logs'
       path: '/platform/audit-logs'
       fullPath: '/platform/audit-logs'
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/insurance-claims/$claimId': {
+      id: '/_authenticated/insurance-claims/$claimId'
+      path: '/insurance-claims/$claimId'
+      fullPath: '/insurance-claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/buyer/orders': {
+      id: '/_authenticated/buyer/orders'
+      path: '/buyer/orders'
+      fullPath: '/buyer/orders'
+      preLoaderRoute: typeof AuthenticatedBuyerOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admins/$adminId': {
@@ -1392,6 +3024,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/status': {
+      id: '/api/public/v1/status'
+      path: '/api/public/v1/status'
+      fullPath: '/api/public/v1/status'
+      preLoaderRoute: typeof ApiPublicV1StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/meta': {
+      id: '/api/public/v1/meta'
+      path: '/api/public/v1/meta'
+      fullPath: '/api/public/v1/meta'
+      preLoaderRoute: typeof ApiPublicV1MetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/sensor-offline-detector': {
       id: '/api/public/hooks/sensor-offline-detector'
       path: '/api/public/hooks/sensor-offline-detector'
@@ -1404,6 +3050,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/expiry-reminders'
       fullPath: '/api/public/hooks/expiry-reminders'
       preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/analytics-refresh': {
+      id: '/api/public/hooks/analytics-refresh'
+      path: '/api/public/hooks/analytics-refresh'
+      fullPath: '/api/public/hooks/analytics-refresh'
+      preLoaderRoute: typeof ApiPublicHooksAnalyticsRefreshRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/alerts-escalation': {
@@ -1420,6 +3073,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronSyncFirebaseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/sla-digest': {
+      id: '/api/public/cron/sla-digest'
+      path: '/api/public/cron/sla-digest'
+      fullPath: '/api/public/cron/sla-digest'
+      preLoaderRoute: typeof ApiPublicCronSlaDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/review-prompts': {
+      id: '/api/public/cron/review-prompts'
+      path: '/api/public/cron/review-prompts'
+      fullPath: '/api/public/cron/review-prompts'
+      preLoaderRoute: typeof ApiPublicCronReviewPromptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/return-auto-approve': {
+      id: '/api/public/cron/return-auto-approve'
+      path: '/api/public/cron/return-auto-approve'
+      fullPath: '/api/public/cron/return-auto-approve'
+      preLoaderRoute: typeof ApiPublicCronReturnAutoApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/lifecycle-emails': {
       id: '/api/public/cron/lifecycle-emails'
       path: '/api/public/cron/lifecycle-emails'
@@ -1427,97 +3101,697 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronLifecycleEmailsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/heartbeat-sweep': {
+      id: '/api/public/cron/heartbeat-sweep'
+      path: '/api/public/cron/heartbeat-sweep'
+      fullPath: '/api/public/cron/heartbeat-sweep'
+      preLoaderRoute: typeof ApiPublicCronHeartbeatSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/driver-license-expiry': {
+      id: '/api/public/cron/driver-license-expiry'
+      path: '/api/public/cron/driver-license-expiry'
+      fullPath: '/api/public/cron/driver-license-expiry'
+      preLoaderRoute: typeof ApiPublicCronDriverLicenseExpiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/dispatch-sla-sweep': {
+      id: '/api/public/cron/dispatch-sla-sweep'
+      path: '/api/public/cron/dispatch-sla-sweep'
+      fullPath: '/api/public/cron/dispatch-sla-sweep'
+      preLoaderRoute: typeof ApiPublicCronDispatchSlaSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/delivery-delay-scan': {
+      id: '/api/public/cron/delivery-delay-scan'
+      path: '/api/public/cron/delivery-delay-scan'
+      fullPath: '/api/public/cron/delivery-delay-scan'
+      preLoaderRoute: typeof ApiPublicCronDeliveryDelayScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/apply-scheduled-plan-changes': {
+      id: '/api/public/cron/apply-scheduled-plan-changes'
+      path: '/api/public/cron/apply-scheduled-plan-changes'
+      fullPath: '/api/public/cron/apply-scheduled-plan-changes'
+      preLoaderRoute: typeof ApiPublicCronApplyScheduledPlanChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/technician/installs/$installId': {
+      id: '/_authenticated/technician/installs/$installId'
+      path: '/$installId'
+      fullPath: '/technician/installs/$installId'
+      preLoaderRoute: typeof AuthenticatedTechnicianInstallsInstallIdRouteImport
+      parentRoute: typeof AuthenticatedTechnicianInstallsRoute
+    }
+    '/_authenticated/platform/orders/$orderId': {
+      id: '/_authenticated/platform/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/platform/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformOrdersRoute
+    }
+    '/_authenticated/platform/logistics/fleet': {
+      id: '/_authenticated/platform/logistics/fleet'
+      path: '/platform/logistics/fleet'
+      fullPath: '/platform/logistics/fleet'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsFleetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/logistics/command-center': {
+      id: '/_authenticated/platform/logistics/command-center'
+      path: '/platform/logistics/command-center'
+      fullPath: '/platform/logistics/command-center'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/logistics/carriers': {
+      id: '/_authenticated/platform/logistics/carriers'
+      path: '/platform/logistics/carriers'
+      fullPath: '/platform/logistics/carriers'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/insurance/webhooks': {
+      id: '/_authenticated/platform/insurance/webhooks'
+      path: '/webhooks'
+      fullPath: '/platform/insurance/webhooks'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceWebhooksRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
+    }
+    '/_authenticated/platform/insurance/audit': {
+      id: '/_authenticated/platform/insurance/audit'
+      path: '/audit'
+      fullPath: '/platform/insurance/audit'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceAuditRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
+    }
+    '/_authenticated/platform/finance/tax-rules': {
+      id: '/_authenticated/platform/finance/tax-rules'
+      path: '/tax-rules'
+      fullPath: '/platform/finance/tax-rules'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceTaxRulesRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
+    '/_authenticated/platform/finance/payouts': {
+      id: '/_authenticated/platform/finance/payouts'
+      path: '/payouts'
+      fullPath: '/platform/finance/payouts'
+      preLoaderRoute: typeof AuthenticatedPlatformFinancePayoutsRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
+    '/_authenticated/platform/finance/ledger': {
+      id: '/_authenticated/platform/finance/ledger'
+      path: '/ledger'
+      fullPath: '/platform/finance/ledger'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
+    }
+    '/_authenticated/insurance-policies/$policyId/documents': {
+      id: '/_authenticated/insurance-policies/$policyId/documents'
+      path: '/insurance-policies/$policyId/documents'
+      fullPath: '/insurance-policies/$policyId/documents'
+      preLoaderRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/buyer/orders/$orderId': {
+      id: '/_authenticated/buyer/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/buyer/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedBuyerOrdersRoute
+    }
+    '/api/public/v1/notifications/': {
+      id: '/api/public/v1/notifications/'
+      path: '/api/public/v1/notifications'
+      fullPath: '/api/public/v1/notifications/'
+      preLoaderRoute: typeof ApiPublicV1NotificationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/insurance/$carrierCode': {
+      id: '/api/public/webhooks/insurance/$carrierCode'
+      path: '/api/public/webhooks/insurance/$carrierCode'
+      fullPath: '/api/public/webhooks/insurance/$carrierCode'
+      preLoaderRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/carrier/$carrierCode': {
+      id: '/api/public/webhooks/carrier/$carrierCode'
+      path: '/api/public/webhooks/carrier/$carrierCode'
+      fullPath: '/api/public/webhooks/carrier/$carrierCode'
+      preLoaderRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/uploads/sign': {
+      id: '/api/public/v1/uploads/sign'
+      path: '/api/public/v1/uploads/sign'
+      fullPath: '/api/public/v1/uploads/sign'
+      preLoaderRoute: typeof ApiPublicV1UploadsSignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/silos-cockpit': {
+      id: '/api/public/v1/sync/silos-cockpit'
+      path: '/api/public/v1/sync/silos-cockpit'
+      fullPath: '/api/public/v1/sync/silos-cockpit'
+      preLoaderRoute: typeof ApiPublicV1SyncSilosCockpitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/silos': {
+      id: '/api/public/v1/sync/silos'
+      path: '/api/public/v1/sync/silos'
+      fullPath: '/api/public/v1/sync/silos'
+      preLoaderRoute: typeof ApiPublicV1SyncSilosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/sensors': {
+      id: '/api/public/v1/sync/sensors'
+      path: '/api/public/v1/sync/sensors'
+      fullPath: '/api/public/v1/sync/sensors'
+      preLoaderRoute: typeof ApiPublicV1SyncSensorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/notifications': {
+      id: '/api/public/v1/sync/notifications'
+      path: '/api/public/v1/sync/notifications'
+      fullPath: '/api/public/v1/sync/notifications'
+      preLoaderRoute: typeof ApiPublicV1SyncNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/marketplace': {
+      id: '/api/public/v1/sync/marketplace'
+      path: '/api/public/v1/sync/marketplace'
+      fullPath: '/api/public/v1/sync/marketplace'
+      preLoaderRoute: typeof ApiPublicV1SyncMarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/hardware-orders': {
+      id: '/api/public/v1/sync/hardware-orders'
+      path: '/api/public/v1/sync/hardware-orders'
+      fullPath: '/api/public/v1/sync/hardware-orders'
+      preLoaderRoute: typeof ApiPublicV1SyncHardwareOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/field-tasks': {
+      id: '/api/public/v1/sync/field-tasks'
+      path: '/api/public/v1/sync/field-tasks'
+      fullPath: '/api/public/v1/sync/field-tasks'
+      preLoaderRoute: typeof ApiPublicV1SyncFieldTasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/field-incidents': {
+      id: '/api/public/v1/sync/field-incidents'
+      path: '/api/public/v1/sync/field-incidents'
+      fullPath: '/api/public/v1/sync/field-incidents'
+      preLoaderRoute: typeof ApiPublicV1SyncFieldIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/buyer-summary': {
+      id: '/api/public/v1/sync/buyer-summary'
+      path: '/api/public/v1/sync/buyer-summary'
+      fullPath: '/api/public/v1/sync/buyer-summary'
+      preLoaderRoute: typeof ApiPublicV1SyncBuyerSummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/buyer-orders': {
+      id: '/api/public/v1/sync/buyer-orders'
+      path: '/api/public/v1/sync/buyer-orders'
+      fullPath: '/api/public/v1/sync/buyer-orders'
+      preLoaderRoute: typeof ApiPublicV1SyncBuyerOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/alerts': {
+      id: '/api/public/v1/sync/alerts'
+      path: '/api/public/v1/sync/alerts'
+      fullPath: '/api/public/v1/sync/alerts'
+      preLoaderRoute: typeof ApiPublicV1SyncAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/notifications/read': {
+      id: '/api/public/v1/notifications/read'
+      path: '/api/public/v1/notifications/read'
+      fullPath: '/api/public/v1/notifications/read'
+      preLoaderRoute: typeof ApiPublicV1NotificationsReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/notifications/preferences': {
+      id: '/api/public/v1/notifications/preferences'
+      path: '/api/public/v1/notifications/preferences'
+      fullPath: '/api/public/v1/notifications/preferences'
+      preLoaderRoute: typeof ApiPublicV1NotificationsPreferencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/field/mutations': {
+      id: '/api/public/v1/field/mutations'
+      path: '/api/public/v1/field/mutations'
+      fullPath: '/api/public/v1/field/mutations'
+      preLoaderRoute: typeof ApiPublicV1FieldMutationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/field/bundle': {
+      id: '/api/public/v1/field/bundle'
+      path: '/api/public/v1/field/bundle'
+      fullPath: '/api/public/v1/field/bundle'
+      preLoaderRoute: typeof ApiPublicV1FieldBundleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/revoke': {
+      id: '/api/public/v1/devices/revoke'
+      path: '/api/public/v1/devices/revoke'
+      fullPath: '/api/public/v1/devices/revoke'
+      preLoaderRoute: typeof ApiPublicV1DevicesRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/register': {
+      id: '/api/public/v1/devices/register'
+      path: '/api/public/v1/devices/register'
+      fullPath: '/api/public/v1/devices/register'
+      preLoaderRoute: typeof ApiPublicV1DevicesRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/heartbeat': {
+      id: '/api/public/v1/devices/heartbeat'
+      path: '/api/public/v1/devices/heartbeat'
+      fullPath: '/api/public/v1/devices/heartbeat'
+      preLoaderRoute: typeof ApiPublicV1DevicesHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/deeplink/$key': {
+      id: '/api/public/v1/deeplink/$key'
+      path: '/api/public/v1/deeplink/$key'
+      fullPath: '/api/public/v1/deeplink/$key'
+      preLoaderRoute: typeof ApiPublicV1DeeplinkKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/quote': {
+      id: '/api/public/v1/commerce/quote'
+      path: '/api/public/v1/commerce/quote'
+      fullPath: '/api/public/v1/commerce/quote'
+      preLoaderRoute: typeof ApiPublicV1CommerceQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/orders': {
+      id: '/api/public/v1/commerce/orders'
+      path: '/api/public/v1/commerce/orders'
+      fullPath: '/api/public/v1/commerce/orders'
+      preLoaderRoute: typeof ApiPublicV1CommerceOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/config': {
+      id: '/api/public/v1/commerce/config'
+      path: '/api/public/v1/commerce/config'
+      fullPath: '/api/public/v1/commerce/config'
+      preLoaderRoute: typeof ApiPublicV1CommerceConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/checkout': {
+      id: '/api/public/v1/commerce/checkout'
+      path: '/api/public/v1/commerce/checkout'
+      fullPath: '/api/public/v1/commerce/checkout'
+      preLoaderRoute: typeof ApiPublicV1CommerceCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/cart': {
+      id: '/api/public/v1/commerce/cart'
+      path: '/api/public/v1/commerce/cart'
+      fullPath: '/api/public/v1/commerce/cart'
+      preLoaderRoute: typeof ApiPublicV1CommerceCartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/addresses': {
+      id: '/api/public/v1/commerce/addresses'
+      path: '/api/public/v1/commerce/addresses'
+      fullPath: '/api/public/v1/commerce/addresses'
+      preLoaderRoute: typeof ApiPublicV1CommerceAddressesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/replay': {
+      id: '/api/public/v1/actions/replay'
+      path: '/api/public/v1/actions/replay'
+      fullPath: '/api/public/v1/actions/replay'
+      preLoaderRoute: typeof ApiPublicV1ActionsReplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/install-step': {
+      id: '/api/public/v1/actions/install-step'
+      path: '/api/public/v1/actions/install-step'
+      fullPath: '/api/public/v1/actions/install-step'
+      preLoaderRoute: typeof ApiPublicV1ActionsInstallStepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/confirm-delivery': {
+      id: '/api/public/v1/actions/confirm-delivery'
+      path: '/api/public/v1/actions/confirm-delivery'
+      fullPath: '/api/public/v1/actions/confirm-delivery'
+      preLoaderRoute: typeof ApiPublicV1ActionsConfirmDeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/ack-alert': {
+      id: '/api/public/v1/actions/ack-alert'
+      path: '/api/public/v1/actions/ack-alert'
+      fullPath: '/api/public/v1/actions/ack-alert'
+      preLoaderRoute: typeof ApiPublicV1ActionsAckAlertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/platform/orders/$orderId/audit': {
+      id: '/_authenticated/platform/orders/$orderId/audit'
+      path: '/audit'
+      fullPath: '/platform/orders/$orderId/audit'
+      preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdAuditRouteImport
+      parentRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
+    }
+    '/_authenticated/platform/insurance/claims/$claimId': {
+      id: '/_authenticated/platform/insurance/claims/$claimId'
+      path: '/claims/$claimId'
+      fullPath: '/platform/insurance/claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
+    }
+    '/api/public/v1/commerce/orders/$orderId': {
+      id: '/api/public/v1/commerce/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/api/public/v1/commerce/orders/$orderId'
+      preLoaderRoute: typeof ApiPublicV1CommerceOrdersOrderIdRouteImport
+      parentRoute: typeof ApiPublicV1CommerceOrdersRoute
+    }
   }
 }
+
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
+
+interface AuthenticatedSuppliersRouteChildren {
+  AuthenticatedSuppliersSupplierIdRoute: typeof AuthenticatedSuppliersSupplierIdRoute
+}
+
+const AuthenticatedSuppliersRouteChildren: AuthenticatedSuppliersRouteChildren =
+  {
+    AuthenticatedSuppliersSupplierIdRoute:
+      AuthenticatedSuppliersSupplierIdRoute,
+  }
+
+const AuthenticatedSuppliersRouteWithChildren =
+  AuthenticatedSuppliersRoute._addFileChildren(
+    AuthenticatedSuppliersRouteChildren,
+  )
+
+interface AuthenticatedBuyerOrdersRouteChildren {
+  AuthenticatedBuyerOrdersOrderIdRoute: typeof AuthenticatedBuyerOrdersOrderIdRoute
+}
+
+const AuthenticatedBuyerOrdersRouteChildren: AuthenticatedBuyerOrdersRouteChildren =
+  {
+    AuthenticatedBuyerOrdersOrderIdRoute: AuthenticatedBuyerOrdersOrderIdRoute,
+  }
+
+const AuthenticatedBuyerOrdersRouteWithChildren =
+  AuthenticatedBuyerOrdersRoute._addFileChildren(
+    AuthenticatedBuyerOrdersRouteChildren,
+  )
+
+interface AuthenticatedPlatformFinanceRouteChildren {
+  AuthenticatedPlatformFinanceLedgerRoute: typeof AuthenticatedPlatformFinanceLedgerRoute
+  AuthenticatedPlatformFinancePayoutsRoute: typeof AuthenticatedPlatformFinancePayoutsRoute
+  AuthenticatedPlatformFinanceTaxRulesRoute: typeof AuthenticatedPlatformFinanceTaxRulesRoute
+}
+
+const AuthenticatedPlatformFinanceRouteChildren: AuthenticatedPlatformFinanceRouteChildren =
+  {
+    AuthenticatedPlatformFinanceLedgerRoute:
+      AuthenticatedPlatformFinanceLedgerRoute,
+    AuthenticatedPlatformFinancePayoutsRoute:
+      AuthenticatedPlatformFinancePayoutsRoute,
+    AuthenticatedPlatformFinanceTaxRulesRoute:
+      AuthenticatedPlatformFinanceTaxRulesRoute,
+  }
+
+const AuthenticatedPlatformFinanceRouteWithChildren =
+  AuthenticatedPlatformFinanceRoute._addFileChildren(
+    AuthenticatedPlatformFinanceRouteChildren,
+  )
+
+interface AuthenticatedPlatformInsuranceRouteChildren {
+  AuthenticatedPlatformInsuranceAuditRoute: typeof AuthenticatedPlatformInsuranceAuditRoute
+  AuthenticatedPlatformInsuranceWebhooksRoute: typeof AuthenticatedPlatformInsuranceWebhooksRoute
+  AuthenticatedPlatformInsuranceClaimsClaimIdRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
+}
+
+const AuthenticatedPlatformInsuranceRouteChildren: AuthenticatedPlatformInsuranceRouteChildren =
+  {
+    AuthenticatedPlatformInsuranceAuditRoute:
+      AuthenticatedPlatformInsuranceAuditRoute,
+    AuthenticatedPlatformInsuranceWebhooksRoute:
+      AuthenticatedPlatformInsuranceWebhooksRoute,
+    AuthenticatedPlatformInsuranceClaimsClaimIdRoute:
+      AuthenticatedPlatformInsuranceClaimsClaimIdRoute,
+  }
+
+const AuthenticatedPlatformInsuranceRouteWithChildren =
+  AuthenticatedPlatformInsuranceRoute._addFileChildren(
+    AuthenticatedPlatformInsuranceRouteChildren,
+  )
+
+interface AuthenticatedPlatformOrdersOrderIdRouteChildren {
+  AuthenticatedPlatformOrdersOrderIdAuditRoute: typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
+}
+
+const AuthenticatedPlatformOrdersOrderIdRouteChildren: AuthenticatedPlatformOrdersOrderIdRouteChildren =
+  {
+    AuthenticatedPlatformOrdersOrderIdAuditRoute:
+      AuthenticatedPlatformOrdersOrderIdAuditRoute,
+  }
+
+const AuthenticatedPlatformOrdersOrderIdRouteWithChildren =
+  AuthenticatedPlatformOrdersOrderIdRoute._addFileChildren(
+    AuthenticatedPlatformOrdersOrderIdRouteChildren,
+  )
+
+interface AuthenticatedPlatformOrdersRouteChildren {
+  AuthenticatedPlatformOrdersOrderIdRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+}
+
+const AuthenticatedPlatformOrdersRouteChildren: AuthenticatedPlatformOrdersRouteChildren =
+  {
+    AuthenticatedPlatformOrdersOrderIdRoute:
+      AuthenticatedPlatformOrdersOrderIdRouteWithChildren,
+  }
+
+const AuthenticatedPlatformOrdersRouteWithChildren =
+  AuthenticatedPlatformOrdersRoute._addFileChildren(
+    AuthenticatedPlatformOrdersRouteChildren,
+  )
+
+interface AuthenticatedTechnicianInstallsRouteChildren {
+  AuthenticatedTechnicianInstallsInstallIdRoute: typeof AuthenticatedTechnicianInstallsInstallIdRoute
+}
+
+const AuthenticatedTechnicianInstallsRouteChildren: AuthenticatedTechnicianInstallsRouteChildren =
+  {
+    AuthenticatedTechnicianInstallsInstallIdRoute:
+      AuthenticatedTechnicianInstallsInstallIdRoute,
+  }
+
+const AuthenticatedTechnicianInstallsRouteWithChildren =
+  AuthenticatedTechnicianInstallsRoute._addFileChildren(
+    AuthenticatedTechnicianInstallsRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
+  AuthenticatedAdministrationRoute: typeof AuthenticatedAdministrationRoute
   AuthenticatedAiPredictionsRoute: typeof AuthenticatedAiPredictionsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
-  AuthenticatedBuyersRoute: typeof AuthenticatedBuyersRoute
+  AuthenticatedAttentionRoute: typeof AuthenticatedAttentionRoute
+  AuthenticatedBusinessRoute: typeof AuthenticatedBusinessRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedDataVisualizationRoute: typeof AuthenticatedDataVisualizationRoute
+  AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
   AuthenticatedEnvironmentalRoute: typeof AuthenticatedEnvironmentalRoute
   AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
-  AuthenticatedGrainBatchesRoute: typeof AuthenticatedGrainBatchesRoute
+  AuthenticatedGrainOperationsRoute: typeof AuthenticatedGrainOperationsRoute
   AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
+  AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
+  AuthenticatedListingsRoute: typeof AuthenticatedListingsRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
   AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
+  AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPlanManagementRoute: typeof AuthenticatedPlanManagementRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedReturnsRoute: typeof AuthenticatedReturnsRoute
   AuthenticatedRevenueRoute: typeof AuthenticatedRevenueRoute
+  AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSecurityCenterRoute: typeof AuthenticatedSecurityCenterRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedSilosRoute: typeof AuthenticatedSilosRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
+  AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRouteWithChildren
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
-  AuthenticatedWarehousesRoute: typeof AuthenticatedWarehousesRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
+  AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
+  AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformCommerceMobileRoute: typeof AuthenticatedPlatformCommerceMobileRoute
+  AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
+  AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
+  AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
+  AuthenticatedPlatformFieldIncidentsRoute: typeof AuthenticatedPlatformFieldIncidentsRoute
+  AuthenticatedPlatformFieldSettingsRoute: typeof AuthenticatedPlatformFieldSettingsRoute
+  AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
+  AuthenticatedPlatformInsuranceRoute: typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
+  AuthenticatedPlatformLaunchReadinessRoute: typeof AuthenticatedPlatformLaunchReadinessRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
-  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRoute
+  AuthenticatedPlatformMarketplaceHealthRoute: typeof AuthenticatedPlatformMarketplaceHealthRoute
+  AuthenticatedPlatformMarketplaceMobileRoute: typeof AuthenticatedPlatformMarketplaceMobileRoute
+  AuthenticatedPlatformMarketplaceSettingsRoute: typeof AuthenticatedPlatformMarketplaceSettingsRoute
+  AuthenticatedPlatformMessagesRoute: typeof AuthenticatedPlatformMessagesRoute
+  AuthenticatedPlatformMetricsRoute: typeof AuthenticatedPlatformMetricsRoute
+  AuthenticatedPlatformMobileDeepLinksRoute: typeof AuthenticatedPlatformMobileDeepLinksRoute
+  AuthenticatedPlatformMobilePushDiagnosticsRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
+  AuthenticatedPlatformMobileSettingsRoute: typeof AuthenticatedPlatformMobileSettingsRoute
+  AuthenticatedPlatformMobileSyncMonitorRoute: typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
+  AuthenticatedPlatformQualityRoute: typeof AuthenticatedPlatformQualityRoute
+  AuthenticatedPlatformReportingRoute: typeof AuthenticatedPlatformReportingRoute
+  AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
+  AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
+  AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
+  AuthenticatedSilosSiloIdRoute: typeof AuthenticatedSilosSiloIdRoute
+  AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
+  AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
+  AuthenticatedPlatformLogisticsFleetRoute: typeof AuthenticatedPlatformLogisticsFleetRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
+  AuthenticatedAdministrationRoute: AuthenticatedAdministrationRoute,
   AuthenticatedAiPredictionsRoute: AuthenticatedAiPredictionsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
-  AuthenticatedBuyersRoute: AuthenticatedBuyersRoute,
+  AuthenticatedAttentionRoute: AuthenticatedAttentionRoute,
+  AuthenticatedBusinessRoute: AuthenticatedBusinessRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedDataVisualizationRoute: AuthenticatedDataVisualizationRoute,
+  AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
   AuthenticatedEnvironmentalRoute: AuthenticatedEnvironmentalRoute,
   AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
-  AuthenticatedGrainBatchesRoute: AuthenticatedGrainBatchesRoute,
+  AuthenticatedGrainOperationsRoute: AuthenticatedGrainOperationsRoute,
   AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
+  AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
+  AuthenticatedListingsRoute: AuthenticatedListingsRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
   AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
+  AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPlanManagementRoute: AuthenticatedPlanManagementRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedReturnsRoute: AuthenticatedReturnsRoute,
   AuthenticatedRevenueRoute: AuthenticatedRevenueRoute,
+  AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSecurityCenterRoute: AuthenticatedSecurityCenterRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedSilosRoute: AuthenticatedSilosRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
+  AuthenticatedSuppliersRoute: AuthenticatedSuppliersRouteWithChildren,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
-  AuthenticatedWarehousesRoute: AuthenticatedWarehousesRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
+  AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRouteWithChildren,
+  AuthenticatedInsuranceClaimsClaimIdRoute:
+    AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformCommerceMobileRoute:
+    AuthenticatedPlatformCommerceMobileRoute,
+  AuthenticatedPlatformDashboardBuilderRoute:
+    AuthenticatedPlatformDashboardBuilderRoute,
+  AuthenticatedPlatformDispatchAnalyticsRoute:
+    AuthenticatedPlatformDispatchAnalyticsRoute,
+  AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
+  AuthenticatedPlatformFieldIncidentsRoute:
+    AuthenticatedPlatformFieldIncidentsRoute,
+  AuthenticatedPlatformFieldSettingsRoute:
+    AuthenticatedPlatformFieldSettingsRoute,
+  AuthenticatedPlatformFinanceRoute:
+    AuthenticatedPlatformFinanceRouteWithChildren,
   AuthenticatedPlatformFinancialsRoute: AuthenticatedPlatformFinancialsRoute,
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
+  AuthenticatedPlatformInsuranceRoute:
+    AuthenticatedPlatformInsuranceRouteWithChildren,
+  AuthenticatedPlatformInvoiceFailuresRoute:
+    AuthenticatedPlatformInvoiceFailuresRoute,
+  AuthenticatedPlatformLaunchReadinessRoute:
+    AuthenticatedPlatformLaunchReadinessRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
   AuthenticatedPlatformLogsRoute: AuthenticatedPlatformLogsRoute,
-  AuthenticatedPlatformOrdersRoute: AuthenticatedPlatformOrdersRoute,
+  AuthenticatedPlatformMarketplaceHealthRoute:
+    AuthenticatedPlatformMarketplaceHealthRoute,
+  AuthenticatedPlatformMarketplaceMobileRoute:
+    AuthenticatedPlatformMarketplaceMobileRoute,
+  AuthenticatedPlatformMarketplaceSettingsRoute:
+    AuthenticatedPlatformMarketplaceSettingsRoute,
+  AuthenticatedPlatformMessagesRoute: AuthenticatedPlatformMessagesRoute,
+  AuthenticatedPlatformMetricsRoute: AuthenticatedPlatformMetricsRoute,
+  AuthenticatedPlatformMobileDeepLinksRoute:
+    AuthenticatedPlatformMobileDeepLinksRoute,
+  AuthenticatedPlatformMobilePushDiagnosticsRoute:
+    AuthenticatedPlatformMobilePushDiagnosticsRoute,
+  AuthenticatedPlatformMobileSettingsRoute:
+    AuthenticatedPlatformMobileSettingsRoute,
+  AuthenticatedPlatformMobileSyncMonitorRoute:
+    AuthenticatedPlatformMobileSyncMonitorRoute,
+  AuthenticatedPlatformOrdersRoute:
+    AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
   AuthenticatedPlatformPlansRoute: AuthenticatedPlatformPlansRoute,
+  AuthenticatedPlatformQualityRoute: AuthenticatedPlatformQualityRoute,
+  AuthenticatedPlatformReportingRoute: AuthenticatedPlatformReportingRoute,
+  AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
+  AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
+  AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
   AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
+  AuthenticatedSilosSiloIdRoute: AuthenticatedSilosSiloIdRoute,
+  AuthenticatedTechnicianInstallsRoute:
+    AuthenticatedTechnicianInstallsRouteWithChildren,
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute:
+    AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute,
+  AuthenticatedPlatformLogisticsCarriersRoute:
+    AuthenticatedPlatformLogisticsCarriersRoute,
+  AuthenticatedPlatformLogisticsCommandCenterRoute:
+    AuthenticatedPlatformLogisticsCommandCenterRoute,
+  AuthenticatedPlatformLogisticsFleetRoute:
+    AuthenticatedPlatformLogisticsFleetRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1555,6 +3829,37 @@ const CheckoutRouteWithChildren = CheckoutRoute._addFileChildren(
   CheckoutRouteChildren,
 )
 
+interface MarketplaceRouteChildren {
+  MarketplaceSlugRoute: typeof MarketplaceSlugRoute
+  MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+  MarketplaceSellerAdminIdRoute: typeof MarketplaceSellerAdminIdRoute
+}
+
+const MarketplaceRouteChildren: MarketplaceRouteChildren = {
+  MarketplaceSlugRoute: MarketplaceSlugRoute,
+  MarketplaceIndexRoute: MarketplaceIndexRoute,
+  MarketplaceSellerAdminIdRoute: MarketplaceSellerAdminIdRoute,
+}
+
+const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
+  MarketplaceRouteChildren,
+)
+
+interface ApiPublicV1CommerceOrdersRouteChildren {
+  ApiPublicV1CommerceOrdersOrderIdRoute: typeof ApiPublicV1CommerceOrdersOrderIdRoute
+}
+
+const ApiPublicV1CommerceOrdersRouteChildren: ApiPublicV1CommerceOrdersRouteChildren =
+  {
+    ApiPublicV1CommerceOrdersOrderIdRoute:
+      ApiPublicV1CommerceOrdersOrderIdRoute,
+  }
+
+const ApiPublicV1CommerceOrdersRouteWithChildren =
+  ApiPublicV1CommerceOrdersRoute._addFileChildren(
+    ApiPublicV1CommerceOrdersRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1566,19 +3871,71 @@ const rootRouteChildren: RootRouteChildren = {
   CookiesRoute: CookiesRoute,
   DocsRoute: DocsRoute,
   HelpRoute: HelpRoute,
+  MarketplaceRoute: MarketplaceRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   ThemeTestRoute: ThemeTestRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
+  ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
+  ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
+  ApiPublicCronApplyScheduledPlanChangesRoute:
+    ApiPublicCronApplyScheduledPlanChangesRoute,
+  ApiPublicCronDeliveryDelayScanRoute: ApiPublicCronDeliveryDelayScanRoute,
+  ApiPublicCronDispatchSlaSweepRoute: ApiPublicCronDispatchSlaSweepRoute,
+  ApiPublicCronDriverLicenseExpiryRoute: ApiPublicCronDriverLicenseExpiryRoute,
+  ApiPublicCronHeartbeatSweepRoute: ApiPublicCronHeartbeatSweepRoute,
   ApiPublicCronLifecycleEmailsRoute: ApiPublicCronLifecycleEmailsRoute,
+  ApiPublicCronReturnAutoApproveRoute: ApiPublicCronReturnAutoApproveRoute,
+  ApiPublicCronReviewPromptsRoute: ApiPublicCronReviewPromptsRoute,
+  ApiPublicCronSlaDigestRoute: ApiPublicCronSlaDigestRoute,
   ApiPublicCronSyncFirebaseRoute: ApiPublicCronSyncFirebaseRoute,
   ApiPublicHooksAlertsEscalationRoute: ApiPublicHooksAlertsEscalationRoute,
+  ApiPublicHooksAnalyticsRefreshRoute: ApiPublicHooksAnalyticsRefreshRoute,
   ApiPublicHooksExpiryRemindersRoute: ApiPublicHooksExpiryRemindersRoute,
   ApiPublicHooksSensorOfflineDetectorRoute:
     ApiPublicHooksSensorOfflineDetectorRoute,
+  ApiPublicV1MetaRoute: ApiPublicV1MetaRoute,
+  ApiPublicV1StatusRoute: ApiPublicV1StatusRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiPublicV1ActionsAckAlertRoute: ApiPublicV1ActionsAckAlertRoute,
+  ApiPublicV1ActionsConfirmDeliveryRoute:
+    ApiPublicV1ActionsConfirmDeliveryRoute,
+  ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
+  ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
+  ApiPublicV1CommerceAddressesRoute: ApiPublicV1CommerceAddressesRoute,
+  ApiPublicV1CommerceCartRoute: ApiPublicV1CommerceCartRoute,
+  ApiPublicV1CommerceCheckoutRoute: ApiPublicV1CommerceCheckoutRoute,
+  ApiPublicV1CommerceConfigRoute: ApiPublicV1CommerceConfigRoute,
+  ApiPublicV1CommerceOrdersRoute: ApiPublicV1CommerceOrdersRouteWithChildren,
+  ApiPublicV1CommerceQuoteRoute: ApiPublicV1CommerceQuoteRoute,
+  ApiPublicV1DeeplinkKeyRoute: ApiPublicV1DeeplinkKeyRoute,
+  ApiPublicV1DevicesHeartbeatRoute: ApiPublicV1DevicesHeartbeatRoute,
+  ApiPublicV1DevicesRegisterRoute: ApiPublicV1DevicesRegisterRoute,
+  ApiPublicV1DevicesRevokeRoute: ApiPublicV1DevicesRevokeRoute,
+  ApiPublicV1FieldBundleRoute: ApiPublicV1FieldBundleRoute,
+  ApiPublicV1FieldMutationsRoute: ApiPublicV1FieldMutationsRoute,
+  ApiPublicV1NotificationsPreferencesRoute:
+    ApiPublicV1NotificationsPreferencesRoute,
+  ApiPublicV1NotificationsReadRoute: ApiPublicV1NotificationsReadRoute,
+  ApiPublicV1SyncAlertsRoute: ApiPublicV1SyncAlertsRoute,
+  ApiPublicV1SyncBuyerOrdersRoute: ApiPublicV1SyncBuyerOrdersRoute,
+  ApiPublicV1SyncBuyerSummaryRoute: ApiPublicV1SyncBuyerSummaryRoute,
+  ApiPublicV1SyncFieldIncidentsRoute: ApiPublicV1SyncFieldIncidentsRoute,
+  ApiPublicV1SyncFieldTasksRoute: ApiPublicV1SyncFieldTasksRoute,
+  ApiPublicV1SyncHardwareOrdersRoute: ApiPublicV1SyncHardwareOrdersRoute,
+  ApiPublicV1SyncMarketplaceRoute: ApiPublicV1SyncMarketplaceRoute,
+  ApiPublicV1SyncNotificationsRoute: ApiPublicV1SyncNotificationsRoute,
+  ApiPublicV1SyncSensorsRoute: ApiPublicV1SyncSensorsRoute,
+  ApiPublicV1SyncSilosRoute: ApiPublicV1SyncSilosRoute,
+  ApiPublicV1SyncSilosCockpitRoute: ApiPublicV1SyncSilosCockpitRoute,
+  ApiPublicV1UploadsSignRoute: ApiPublicV1UploadsSignRoute,
+  ApiPublicWebhooksCarrierCarrierCodeRoute:
+    ApiPublicWebhooksCarrierCarrierCodeRoute,
+  ApiPublicWebhooksInsuranceCarrierCodeRoute:
+    ApiPublicWebhooksInsuranceCarrierCodeRoute,
+  ApiPublicV1NotificationsIndexRoute: ApiPublicV1NotificationsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

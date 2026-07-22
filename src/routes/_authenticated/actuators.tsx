@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CommandConsole } from "@/components/app/actuators/CommandConsole";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -504,6 +505,10 @@ function ActuatorsPage() {
                     <pre className="whitespace-pre-wrap">{JSON.stringify(viewing.current_operation, null, 2)}</pre>
                   </div>
                 )}
+                <div className="pt-2">
+                  <div className="text-sm font-medium mb-2">Command queue</div>
+                  <CommandConsole actuatorId={viewing.id} />
+                </div>
               </div>
             </>
           )}

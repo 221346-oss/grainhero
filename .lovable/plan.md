@@ -1,99 +1,78 @@
-# Plan: Admin Profiles, Financial Dashboard & IoT Install Tracking
+# Plan Management — Prorated PKR Upgrades
 
-Three self-contained feature blocks. All UI theme-aware (light/dark), aligned with existing PageHeader / StatBox conventions.
+## Scope
+Rebuild `/plan-management` so tenant Admins can change their plan cleanly:
+- Admin-only (hidden + guarded for Manager / Technician / Buyer / Super Admin)
+- Monthly / Yearly toggle — yearly = 10 × monthly (2 months free)
+- Upgrade → charged prorated difference **immediately** via Stripe Checkout
+- Downgrade → scheduled at current period end (no immediate charge / no refund)
+- Cycle change (monthly ↔ yearly) → prorate the difference on the spot
+- Kill the auto-upgrade toggle (no auto upgrades)
+- Notify super admins + log activity for every change
 
----
+## User answers driving this
+- Downgrade → schedule at period end
+- Yearly → 12 × monthly with 2 months free (i.e. 10× monthly)
+- Upgrade math → true daily proration on remaining days
+- Cycle switch → allowed anytime, prorated
 
-## 1. Super-Admin → Admin Profile Page
+## Data model (single migration)
+Extend `public.tenant_plan_change_requests`:
+- `billing_cycle text check (billing_cycle in ('monthly','yearly'))`
+- `apply_at timestamptz` (for scheduled downgrades)
+- `charge_amount_cents integer` (prorated PKR × 100 that we charged / will charge)
+- `stripe_session_id text`
+- extend `status` to allow `'scheduled'` and `'auto_applied'` already present
 
-**New route:** `/_authenticated/admins/$adminId.tsx` (linked from existing admin list rows).
+Extend `public.profiles`:
+- `billing_cycle text default 'monthly' check (billing_cycle in ('monthly','yearly'))`
+- `current_period_end timestamptz` (used to compute proration + schedule downgrades)
 
-**Layout** (image 3 style):
-- Header card: avatar initials, name, email, phone, "Active/Suspended" pill, `Edit Profile` and kebab menu (Impersonate / Suspend / Reactivate).
-- KPI row: Last Login · Total Revenue · Silos · Warehouses · Batches · Open Alerts.
-- Two-column: Contact & Address card (editable inline) + Order Frequency bar chart (last 6 months of grain batches OR hardware orders — toggle).
-- Recent Activity list (last 10 activity_logs entries).
+Grants + RLS unchanged (columns added to existing tables).
 
-**Server fns** (`src/lib/admin-profile.functions.ts`, `requireSupabaseAuth`, super_admin check):
-- `getAdminProfile({ adminId })` — profile + role + aggregated stats
-- `updateAdminContact({ adminId, patch })` — name/phone/address/notes
-- `impersonateAdmin({ adminId })` — returns short-lived magic-link URL via `supabaseAdmin.auth.admin.generateLink`
-- `setAdminSuspended({ adminId, suspended })` — writes `profiles.suspended` flag
-- `getAdminOrderFrequency({ adminId, source })` — 6-month buckets
+## Server (`src/lib/plan-upgrade.functions.ts`)
+1. `getMyPlanState` (admin only) — returns
+   `{ current_plan, current_cycle, current_period_end, plans: [{ plan_id, name, price_monthly_pkr, price_yearly_pkr, limits }], pending: {...} | null }`
+2. `previewPlanChange({ requested_plan, billing_cycle })` — pure calc, no writes:
+   - `direction = upgrade | downgrade | same_tier_cycle_change`
+   - `days_remaining = max(1, ceil((period_end - now)/day))`
+   - `days_in_cycle = 30 (monthly) | 365 (yearly)`
+   - `credit = current_price × days_remaining / days_in_cycle`
+   - `new_period_charge = new_price × days_remaining / days_in_cycle`
+   - `prorated_charge_pkr = max(0, round(new_period_charge - credit))`
+   - Returns amounts + `apply_now` boolean.
+3. `initiatePlanChange({ requested_plan, billing_cycle })` — admin only, rate-limited:
+   - Upgrade / same-tier upsize / cycle switch that raises price → create Stripe Checkout session `mode=payment`, currency `pkr`, one line item = `prorated_charge_pkr × 100`, `metadata.plan_change_request_id`, redirect URLs `/plan-management?status=success|cancel`. Insert a `tenant_plan_change_requests` row with `status='pending_payment'` + `stripe_session_id`. Return `{ url }`.
+   - Downgrade / neutral change → insert row with `status='scheduled'`, `apply_at = current_period_end`. Emit super-admin notification + activity log. Return `{ scheduled: true, apply_at }`.
+4. `cancelScheduledDowngrade` — admin cancels their own `status='scheduled'` row.
 
-**DB:** add `profiles.suspended boolean default false`, `profiles.notes text`. No new tables.
+## Stripe webhook
+Extend the existing `checkout.session.completed` block in
+`src/routes/api/public/webhooks/stripe.ts`:
+- When `metadata.plan_change_request_id` is set → mark the request `approved`, update `profiles.subscription_plan` + `billing_cycle` + `current_period_end` (extend by 30/365 days from now for upgrades, keep period-end for cycle upgrades), keep any existing `subscriptions` row's `plan_name`/`billing_cycle` in sync, emit super-admin notification, activity log.
 
----
+## Cron for scheduled downgrades
+Add a lightweight endpoint `src/routes/api/public/cron/apply-scheduled-plan-changes.ts` (CRON_SECRET-protected) that:
+- Finds `tenant_plan_change_requests` where `status='scheduled'` and `apply_at <= now()`
+- Updates `profiles.subscription_plan` + `billing_cycle`, marks row `approved`, notifies super admin + activity log.
 
-## 2. Financial Dashboard (Revenue page upgrade)
+## UI (`src/routes/_authenticated/plan-management.tsx`)
+- Route `beforeLoad`: if effective role ≠ `admin`, redirect to `/dashboard`.
+- Hide the topbar “Upgrade” pill for non-admins in `_authenticated/route.tsx`.
+- New layout:
+  - Header with billing cycle toggle (Monthly · Yearly — “Save 2 months”).
+  - 3 plan cards (Starter / Professional / Enterprise) in PKR, showing current-plan badge.
+  - For non-current plans: “Preview cost” → server-side `previewPlanChange` fills a callout with proration math + a single primary CTA:
+    - Upgrade: **“Pay Rs. X now”** → opens Stripe Checkout in new tab.
+    - Downgrade: **“Schedule at period end (dd/mm/yyyy)”** → confirm dialog, then schedule.
+  - Pending downgrade banner with cancel button.
+  - Auto-upgrade toggle removed.
 
-Enhance existing `/_authenticated/revenue` (or add if missing).
-
-**Widgets:**
-- KPI tiles: Total Revenue · Subscription MRR · IoT Hardware Revenue · Insurance Commission · Gross Profit · Net Profit % (each with MoM delta, numbers colored — cards neutral).
-- **P&L Summary card** — Sales, COGS, Gross Profit, Opex, Other Income, Net Profit, Net %.
-- **Revenue mix donut** — Subscriptions / IoT Hardware / Insurance Commission / Other.
-- **MRR trend line** — 12 months, plus churn %.
-- **Sales split by plan** — Starter/Pro/Enterprise horizontal bars.
-- **Reports section** — "Export PDF" buttons for: Monthly P&L, Revenue Breakdown, MRR Report. Generated server-side via a lightweight PDF (pdf-lib) server route `/api/reports/[type].pdf` gated to super_admin.
-
-**Data sources** (existing tables):
-- `subscriptions` (MRR, plan mix)
-- `hardware_orders` (IoT revenue)
-- `insurance_policies` — add `commission_rate numeric` and computed `commission_amount`
-- `buyer_invoices` / `invoices` (sales)
-
-**DB migration:**
-- `insurance_policies.commission_rate numeric(5,2) default 0`
-- optional `platform_settings` rows for default commission rate & COGS overrides
-
-**Server fns** (`src/lib/financials.functions.ts`): `getFinancialSummary`, `getRevenueMix`, `getMrrTrend`, `getPlanSplit`, `generateReportPdf`.
-
----
-
-## 3. IoT Installation Tracking (extends existing Orders page)
-
-**Where:** existing `/_authenticated/orders` — add **"Installation"** tab per order row (drawer or `/orders/$orderId` detail).
-
-**Fields super admin can add per hardware_order:**
-- Installer: name, phone, photo URL, company
-- Location: city, warehouse_id, silo_id, scheduled_visit_at, our_origin_address, customer_address (auto from tenant), lat/lng
-- Devices: array of `{ serial, model, status: shipped|en_route|installed|verified }`
-- Visit timeline: append-only notes with timestamp + optional photo
-
-**Map component** (image 1 style):
-- Mapbox GL JS (public token via connector) OR Google Maps if user prefers — we'll use Mapbox.
-- Shows origin marker (our warehouse) → destination marker (customer address) → directions polyline via Mapbox Directions API (server fn using secret token).
-- Purple styled route line, ETA/distance badge overlay.
-
-**Manager view:** same order detail is read-only for managers — they see installer profile, live status timeline, map, and device serials.
-
-**DB migration:** new table `hardware_order_installations`
-```
-id, order_id (fk hardware_orders), installer_name, installer_phone, installer_photo_url,
-installer_company, city, warehouse_id, silo_id, scheduled_visit_at,
-origin_address, origin_lat, origin_lng, destination_address, destination_lat, destination_lng,
-status, created_at, updated_at
-```
-Plus `hardware_order_devices` (serial, model, status, order_id) and `hardware_order_visit_events` (order_id, note, photo_url, event_at, created_by).
-
-RLS: super_admin full; tenant admin/manager SELECT where `hardware_orders.admin_id = get_tenant_admin_id(auth.uid())`.
-
-**Server fns** (`src/lib/installations.functions.ts`): `upsertInstallation`, `addVisitEvent`, `upsertDevices`, `getInstallation`, `getRouteGeometry` (Mapbox Directions via gateway).
-
-**Connector:** requires Mapbox connector (public + secret token). I'll prompt to link.
-
----
-
-## Build order
-
-1. Migrations (admin fields, insurance commission, installation tables).
-2. Mapbox connector link.
-3. Admin profile page + server fns.
-4. Financial dashboard widgets + PDF report route.
-5. Orders page → Installation tab + map.
+## Notifications & activity
+Use existing `emitToSuperAdmins` + `logActivity` on: preview→initiate, scheduled downgrade created / cancelled, webhook-confirmed upgrade, cron-applied downgrade.
 
 ## Out of scope
-- Live GPS tracking of installer (only static route line).
-- Multi-stop routes.
-- Real-time collaboration on visit notes.
+- Full Stripe Subscription lifecycle rewrite. We keep proration explicit
+  (Checkout one-off) so it works for admins without an existing Stripe
+  subscription and for the existing PKR test data.
+- Refunds on downgrade — user chose “schedule at period end”, so no refund.

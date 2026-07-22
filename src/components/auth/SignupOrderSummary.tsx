@@ -1,6 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { getCheckoutTotals, type PlanId } from "@/lib/pricing-data";
-import { Cpu, Package } from "lucide-react";
+import { Cpu } from "lucide-react";
 
 type Props = {
   planId: PlanId;
@@ -19,7 +19,6 @@ export function SignupOrderSummary({ planId, iotQuantity, paid = false }: Props)
       </p>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2 min-w-0">
-          <Package className="h-4 w-4 text-emerald-700 shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-slate-900">{totals.plan.name} plan</p>
             <p className="text-xs text-slate-600">Monthly subscription</p>
