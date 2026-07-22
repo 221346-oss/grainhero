@@ -1,10 +1,10 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
-import { AppSidebar } from "@/components/app/AppSidebar";
+import { AppSidebar, type SidebarMode } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
 import { Sun, Moon } from "lucide-react";
@@ -28,9 +28,14 @@ export const Route = createFileRoute("/_authenticated")({
 
     // Role-aware guardrails: block super_admins from tenant-operational
     // routes, and redirect them off tenant pages that have a canonical
-    // platform equivalent (avoid two lenses on the same data).
+    // platform equivalent (avoid two lenses on the same data). Silos,
+    // warehouses, and grain batches were consolidated into the tabbed
+    // /grain-operations workspace — that's what's blocked now, not the old
+    // standalone paths. /silos/:siloId (the detail view) is still a real
+    // standalone route (linked from attention.tsx, ManagerBento.tsx), so it
+    // stays blocked too, via the "/silos/" sub-route prefix.
     const OPERATIONAL_PREFIXES = [
-      "/silos", "/warehouses", "/grain-batches", "/sensors", "/actuators",
+      "/grain-operations", "/silos/", "/sensors", "/actuators",
     ];
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
@@ -75,43 +80,28 @@ function AuthenticatedLayout() {
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return localStorage.getItem("gh_sidebar_collapsed") !== "false";
+  // Desktop sidebar tri-state (expanded / collapsed-icon-rail / hidden),
+  // persisted so it survives reloads. Falls back to the legacy boolean key
+  // so existing users' saved preference carries over.
+  const [sidebarMode, setSidebarModeState] = useState<SidebarMode>(() => {
+    if (typeof window === "undefined") return "collapsed";
+    const stored = localStorage.getItem("gh_sidebar_mode");
+    if (stored === "expanded" || stored === "collapsed" || stored === "hidden") return stored;
+    return localStorage.getItem("gh_sidebar_collapsed") === "false" ? "expanded" : "collapsed";
   });
+  // Persisted mode changes — explicit user actions (logo click, collapse,
+  // hide, show-from-hidden). Scroll-driven auto-collapse below intentionally
+  // bypasses this and writes state only, so it doesn't clobber the user's
+  // saved preference for next visit.
+  const setSidebarMode = (next: SidebarMode) => {
+    setSidebarModeState(next);
+    try { localStorage.setItem("gh_sidebar_mode", next); } catch { /* ignore */ }
+  };
   const [headerVisible, setHeaderVisible] = useState(true);
-  const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const stored = getStoredThemeMode();
     setMode(stored);
-  }, []);
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed((c) => {
-      const next = !c;
-      try { localStorage.setItem("gh_sidebar_collapsed", String(next)); } catch { /* ignore */ }
-      return next;
-    });
-  };
-
-  // Scroll-driven behavior on the main scroll container:
-  //  • hide header when scrolling down past 150px, show on scroll up
-  //  • auto-collapse sidebar to icon rail when user scrolls down
-  useEffect(() => {
-    const el = mainRef.current;
-    if (!el) return;
-    let lastY = el.scrollTop;
-    const onScroll = () => {
-      const y = el.scrollTop;
-      const dy = y - lastY;
-      if (dy > 0 && y > 150) setHeaderVisible(false);
-      else if (dy < 0) setHeaderVisible(true);
-      if (dy > 20) setSidebarCollapsed(true);
-      lastY = y;
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   // Close sidebar on Escape
@@ -140,7 +130,7 @@ function AuthenticatedLayout() {
       const y = window.scrollY;
       const scrollingDown = y > lastScrollY && y > 4;
       setNavHidden(scrollingDown);
-      if (scrollingDown) setSidebarCollapsed(true);
+      if (scrollingDown) setSidebarModeState((m) => (m === "expanded" ? "collapsed" : m));
       lastScrollY = y;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -162,7 +152,7 @@ function AuthenticatedLayout() {
       <OnboardingTour />
       <div className="app-scope min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
-          <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+          <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />

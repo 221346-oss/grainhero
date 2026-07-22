@@ -64,6 +64,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       prevBatchesCount,
       curAlertsCount,
       prevAlertsCount,
+      siloAlertsRes,
     ] = await Promise.all([
       context.supabase
         .from("grain_batches")
@@ -72,7 +73,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .limit(5),
       context.supabase
         .from("grain_alerts")
-        .select("id, alert_id, title, message, priority, status, alert_type, triggered_at")
+        .select("id, alert_id, title, message, priority, status, alert_type, silo_id, triggered_at")
         .order("triggered_at", { ascending: false, nullsFirst: false })
         .limit(5),
       context.supabase
@@ -132,6 +133,16 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .select("id", { count: "exact", head: true })
         .gte("triggered_at", priorStartISO)
         .lt("triggered_at", priorEndISO),
+      // All active (non-resolved) alerts tied to a silo, for the dashboard's
+      // combined silo-occupancy + alerts widget — not capped to the most
+      // recent 5 like `recentAlerts`, since a silo with an older open alert
+      // still needs to show it.
+      context.supabase
+        .from("grain_alerts")
+        .select("id, silo_id, title, priority, status")
+        .not("silo_id", "is", null)
+        .neq("status", "resolved")
+        .limit(200),
     ]);
 
     const batches = batchesRes.data ?? [];
@@ -156,13 +167,38 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const sub = subRes.data?.[0] ?? null;
 
     const allBatches = allBatchesRes.data ?? [];
+    // NOTE: the batch status enum has drifted from what this dashboard
+    // originally assumed — "qc_pending"/"quality_check"/"qc"/"ready_to_ship"/
+    // "dispatch_pending" were never real values (see grain_batches.status /
+    // public.batch_status), so those filters always matched zero rows. Fixed
+    // to use the real, currently-populated values below. There is no true
+    // "awaiting technician QC" status in the data model today — every batch
+    // is written as "stored" at creation, with a silo already assigned — so
+    // "on_hold" (a manual flag) is the closest real signal for "needs
+    // review," not a genuine pre-storage QC gate. See the dashboard's
+    // insights strip / "why stuck" widget for the fuller explanation.
     const insights = {
-      pendingQC: allBatches.filter((b) => ["qc_pending", "quality_check", "qc"].includes(String(b.status))).length,
+      pendingQC: allBatches.filter((b) => String(b.status) === "on_hold").length,
       rejectedQC: allBatches.filter((b) => String(b.status) === "rejected").length,
       atRisk: allBatches.filter((b) => Number(b.risk_score ?? 0) >= 70).length,
-      readyToShip: allBatches.filter((b) => ["ready", "ready_to_ship", "dispatch_pending"].includes(String(b.status))).length,
+      readyToShip: allBatches.filter((b) => String(b.status) === "ready").length,
       actuatorsOn: (actuatorsRes.data ?? []).filter((a) => a.is_on).length,
       actuatorsTotal: (actuatorsRes.data ?? []).length,
+    };
+
+    // "Why stuck" pipeline breakdown — kg + count per real, reachable status
+    // group, for the dashboard's status-aware insight (see report: the
+    // literal 3-step intake/QC/stored pipeline isn't buildable from today's
+    // schema, this is the closest honest approximation from real data).
+    function sumKg(pred: (b: (typeof allBatches)[number]) => boolean) {
+      const rows = allBatches.filter(pred);
+      return { count: rows.length, kg: rows.reduce((s, b) => s + Number(b.quantity_kg ?? 0), 0) };
+    }
+    const pipeline = {
+      onHold: sumKg((b) => String(b.status) === "on_hold"),
+      atRisk: sumKg((b) => Number(b.risk_score ?? 0) >= 70 && !["damaged", "expired"].includes(String(b.status))),
+      damaged: sumKg((b) => ["damaged", "expired"].includes(String(b.status))),
+      stored: sumKg((b) => String(b.status) === "stored" && Number(b.risk_score ?? 0) < 70),
     };
 
     // 12-month revenue sparkline from dispatched batches
@@ -212,11 +248,13 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       team: profilesRes.data ?? [],
       actuators: actuatorsRes.data ?? [],
       silos: silosRes.data ?? [],
+      siloAlerts: siloAlertsRes.data ?? [],
       revenue,
       installCounts,
       subscription: sub,
       allBatches,
       insights,
+      pipeline,
       deltas,
       range,
       revenueSpark,

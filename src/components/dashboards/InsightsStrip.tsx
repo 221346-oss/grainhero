@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
-import { ShieldCheck, AlertTriangle, Truck, Cpu, type LucideIcon } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Truck, Cpu, PauseCircle, AlertOctagon, type LucideIcon } from "lucide-react";
 
 type Tile = {
   key: string;
   label: string;
   value: string;
-  hint: string;
+  hint?: string;
   to: string;
   search?: { tab: string };
   info: string;
@@ -14,6 +14,17 @@ type Tile = {
   tone: "emerald" | "amber" | "slate";
   ratio: number; // 0..1 for the tiny progress bar
 };
+
+type PipelineStat = { count: number; kg: number };
+export type PipelineInsight = {
+  onHold: PipelineStat;
+  atRisk: PipelineStat;
+  damaged: PipelineStat;
+};
+
+function fmtKg(kg: number) {
+  return `${Math.round(kg).toLocaleString()}kg`;
+}
 
 const toneVal: Record<Tile["tone"], string> = {
   emerald: "text-emerald-600",
@@ -30,10 +41,12 @@ export function InsightsStrip({
   insights,
   ordersOpen,
   alertsOpen,
+  pipeline,
 }: {
   insights?: { pendingQC: number; rejectedQC: number; atRisk: number; readyToShip: number; actuatorsOn: number; actuatorsTotal: number };
   ordersOpen?: number;
   alertsOpen?: number;
+  pipeline?: PipelineInsight;
 }) {
   const i = insights ?? { pendingQC: 0, rejectedQC: 0, atRisk: 0, readyToShip: 0, actuatorsOn: 0, actuatorsTotal: 0 };
   const qcTotal = Math.max(1, i.pendingQC + i.rejectedQC + i.readyToShip);
@@ -79,7 +92,6 @@ export function InsightsStrip({
       key: "auto",
       label: "Automation",
       value: `${i.actuatorsOn}/${i.actuatorsTotal}`,
-      hint: "Actuators currently active",
       to: "/actuators",
       info: "Live actuators reporting an 'on' state versus total provisioned.",
       icon: Cpu,
@@ -115,7 +127,7 @@ export function InsightsStrip({
               </div>
               <div className="mt-1 flex items-baseline justify-between gap-2">
                 <span className={`text-xl font-bold tabular-nums leading-none ${toneVal[t.tone]}`}>{t.value}</span>
-                <span className="text-[10px] text-muted-foreground truncate">{t.hint}</span>
+                {t.hint && <span className="text-[10px] text-muted-foreground truncate">{t.hint}</span>}
               </div>
               <div className="mt-2 h-1 rounded bg-muted overflow-hidden">
                 <div
@@ -127,6 +139,56 @@ export function InsightsStrip({
           );
         })}
       </div>
+
+      {pipeline && (pipeline.onHold.count > 0 || pipeline.atRisk.count > 0 || pipeline.damaged.count > 0) && (
+        <div className="mt-2 pt-2 border-t border-border/60">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Why it's stuck</span>
+            <InfoDot text="Grain batches currently flagged, at risk, or unusable — with the reason and weight involved, not just a count." />
+          </div>
+          <div className="space-y-1">
+            {pipeline.onHold.count > 0 && (
+              <Link
+                to="/grain-operations"
+                search={{ tab: "batches", status: "on_hold" }}
+                className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-amber-500/10 transition"
+              >
+                <PauseCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span className="flex-1 text-foreground">
+                  <span className="font-semibold tabular-nums">{fmtKg(pipeline.onHold.kg)}</span> on hold, flagged for review
+                </span>
+                <span className="text-muted-foreground tabular-nums">{pipeline.onHold.count}</span>
+              </Link>
+            )}
+            {pipeline.atRisk.count > 0 && (
+              <Link
+                to="/grain-operations"
+                search={{ tab: "batches" }}
+                className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-amber-500/10 transition"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span className="flex-1 text-foreground">
+                  <span className="font-semibold tabular-nums">{fmtKg(pipeline.atRisk.kg)}</span> at risk (score ≥ 70)
+                </span>
+                <span className="text-muted-foreground tabular-nums">{pipeline.atRisk.count}</span>
+              </Link>
+            )}
+            {pipeline.damaged.count > 0 && (
+              <Link
+                to="/grain-operations"
+                search={{ tab: "batches", status: "damaged" }}
+                className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-red-500/10 transition"
+              >
+                <AlertOctagon className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                <span className="flex-1 text-foreground">
+                  <span className="font-semibold tabular-nums">{fmtKg(pipeline.damaged.kg)}</span> damaged or expired
+                </span>
+                <span className="text-muted-foreground tabular-nums">{pipeline.damaged.count}</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

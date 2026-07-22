@@ -5,8 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WelcomeBanner } from "./WelcomeBanner";
 import { KpiSummary } from "./KpiSummary";
 import { InsightsStrip } from "./InsightsStrip";
-import { BatchesTable } from "./BatchesTable";
-import { SilosOccupancyCard, RecentAlertsCard } from "./DashboardBlocks";
+import { AdminSilosCard, RecentBatchesCard } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
@@ -40,11 +39,11 @@ export function AdminDashboard({ name }: { name?: string }) {
             insights={extras?.insights}
             ordersOpen={extras?.installCounts?.pending}
             alertsOpen={extras?.deltas?.alerts?.cur}
+            pipeline={extras?.pipeline}
           />
-          <BatchesTable rows={(extras?.allBatches ?? []) as never} />
           <div className="grid gap-3 lg:grid-cols-2">
-            <SilosOccupancyCard />
-            <RecentAlertsCard />
+            <AdminSilosCard />
+            <RecentBatchesCard />
           </div>
         </div>
       </div>

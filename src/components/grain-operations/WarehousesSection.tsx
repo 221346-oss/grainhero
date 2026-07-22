@@ -13,7 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
-import { listWarehouses, upsertWarehouse, deleteWarehouse } from "@/lib/operations.functions";
+import { InlineRename } from "@/components/app/InlineRename";
+import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse } from "@/lib/operations.functions";
+import { parsePlanLimitError } from "@/lib/plan-gate";
+import { getMyRole } from "@/lib/roles.functions";
+
+function friendlySaveError(e: Error): string {
+  const limit = parsePlanLimitError(e);
+  if (limit) return `Your plan allows up to ${limit.limit} warehouses (${limit.used} in use). Upgrade to add more.`;
+  return e.message || "Save failed";
+}
+
+// Same allow-list used for team invite/manage — technicians can't rename.
+const RENAME_ROLES = ["super_admin", "admin", "manager"];
 
 type Warehouse = {
   id: string;
@@ -52,12 +64,16 @@ export function WarehousesSection() {
   const list = useServerFn(listWarehouses);
   const upsert = useServerFn(upsertWarehouse);
   const del = useServerFn(deleteWarehouse);
+  const rename = useServerFn(renameWarehouse);
+  const fetchRole = useServerFn(getMyRole);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["warehouses"],
     queryFn: () => list() as Promise<Warehouse[]>,
   });
+  const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
+  const canRename = RENAME_ROLES.includes(me?.role ?? "");
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -103,7 +119,17 @@ export function WarehousesSection() {
       setEditOpen(false);
       setForm(emptyForm);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    onError: (e: Error) => toast.error(friendlySaveError(e)),
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: (payload: { id: string; name: string }) => rename({ data: payload }),
+    onSuccess: () => {
+      toast.success("Warehouse renamed");
+      qc.invalidateQueries({ queryKey: ["warehouses"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Rename failed"),
   });
 
   const deleteMutation = useMutation({
@@ -178,7 +204,14 @@ export function WarehousesSection() {
               <tbody className="divide-y divide-white/5">
                 {rows.map((w) => (
                   <tr key={w.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-3 py-2 text-white font-medium">{w.name}</td>
+                    <td className="px-3 py-2 text-white font-medium">
+                      <InlineRename
+                        value={w.name}
+                        canRename={canRename}
+                        textClassName="text-white font-medium"
+                        onSave={async (next) => { await renameMutation.mutateAsync({ id: w.id, name: next }); }}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-white/70 text-xs">{w.location?.description ?? w.location?.address ?? "—"}</td>
                     <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(w.total_capacity_kg ?? 0).toLocaleString()} kg</td>
                     <td className="px-3 py-2"><StatusBadge value={w.status} /></td>
@@ -208,7 +241,11 @@ export function WarehousesSection() {
           <form id="warehouse-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
             <div>
               <Label>Name *</Label>
-              <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Main Storage" />
+              {form.id && !canRename ? (
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">{form.name || "—"}</div>
+              ) : (
+                <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Main Storage" />
+              )}
             </div>
             <div>
               <Label>Capacity (kg) *</Label>
@@ -254,7 +291,16 @@ export function WarehousesSection() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle>{selected.name}</DialogTitle>
+                <DialogTitle>
+                  <InlineRename
+                    value={selected.name}
+                    canRename={canRename}
+                    onSave={async (next) => {
+                      await renameMutation.mutateAsync({ id: selected.id, name: next });
+                      setSelected((prev) => (prev ? { ...prev, name: next } : prev));
+                    }}
+                  />
+                </DialogTitle>
                 <DialogDescription>{selected.warehouse_id}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">

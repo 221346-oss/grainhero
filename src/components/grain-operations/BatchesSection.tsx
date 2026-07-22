@@ -107,37 +107,6 @@ const emptyForm: Form = {
   status: "stored", notes: "",
 };
 
-type Dispatch = {
-  buyer_id: string;
-  new_buyer_name: string;
-  new_buyer_phone: string;
-  new_buyer_email: string;
-  sell_price_per_kg: string;
-  dispatched_quantity_kg: string;
-  vehicle_number: string;
-  driver_name: string;
-  driver_contact: string;
-  destination: string;
-  notes: string;
-};
-
-const emptyDispatch: Dispatch = {
-  buyer_id: "", new_buyer_name: "", new_buyer_phone: "", new_buyer_email: "",
-  sell_price_per_kg: "", dispatched_quantity_kg: "",
-  vehicle_number: "", driver_name: "", driver_contact: "", destination: "", notes: "",
-};
-
-type Spoilage = {
-  type: string; severity: "low"|"medium"|"high"|"critical";
-  description: string; estimated_loss_kg: string;
-  temperature: string; humidity: string; action_taken: string;
-};
-
-const emptySpoilage: Spoilage = {
-  type: "pests", severity: "low", description: "", estimated_loss_kg: "",
-  temperature: "", humidity: "", action_taken: "",
-};
-
 type FormErrors = Partial<Record<keyof Form, string>>;
 
 // Mirrors the bounds enforced server-side in operations.functions.ts' batchInput
@@ -234,7 +203,38 @@ function validateSpoilageForm(s: Spoilage, maxLossKg: number | null): SpoilageEr
   return errors;
 }
 
-export function BatchesSection() {
+type Dispatch = {
+  buyer_id: string;
+  new_buyer_name: string;
+  new_buyer_phone: string;
+  new_buyer_email: string;
+  sell_price_per_kg: string;
+  dispatched_quantity_kg: string;
+  vehicle_number: string;
+  driver_name: string;
+  driver_contact: string;
+  destination: string;
+  notes: string;
+};
+
+const emptyDispatch: Dispatch = {
+  buyer_id: "", new_buyer_name: "", new_buyer_phone: "", new_buyer_email: "",
+  sell_price_per_kg: "", dispatched_quantity_kg: "",
+  vehicle_number: "", driver_name: "", driver_contact: "", destination: "", notes: "",
+};
+
+type Spoilage = {
+  type: string; severity: "low"|"medium"|"high"|"critical";
+  description: string; estimated_loss_kg: string;
+  temperature: string; humidity: string; action_taken: string;
+};
+
+const emptySpoilage: Spoilage = {
+  type: "pests", severity: "low", description: "", estimated_loss_kg: "",
+  temperature: "", humidity: "", action_taken: "",
+};
+
+export function BatchesSection({ initialStatus }: { initialStatus?: string } = {}) {
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
   const listBuyerFn = useServerFn(listBuyers);
@@ -259,7 +259,9 @@ export function BatchesSection() {
   const suppliers: any[] = (suppliersQ.data?.suppliers ?? []) as any[];
 
   const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>(
+    initialStatus && (STATUSES as readonly string[]).includes(initialStatus) ? initialStatus : "all",
+  );
   const [grainFilter, setGrainFilter] = useState("all");
   const [selected, setSelected] = useState<Batch | null>(null);
   const [editOpen, setEditOpen] = useState(false);

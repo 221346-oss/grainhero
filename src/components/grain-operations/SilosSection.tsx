@@ -13,7 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
-import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
+import { InlineRename } from "@/components/app/InlineRename";
+import { listSilos, upsertSilo, deleteSilo, listWarehouses, renameSilo } from "@/lib/operations.functions";
+import { parsePlanLimitError } from "@/lib/plan-gate";
+import { getMyRole } from "@/lib/roles.functions";
+
+function friendlySaveError(e: Error): string {
+  const limit = parsePlanLimitError(e);
+  if (limit) return `Your plan allows up to ${limit.limit} silos (${limit.used} in use). Upgrade to add more.`;
+  return e.message || "Save failed";
+}
+
+// Same allow-list used for team invite/manage — technicians can't rename.
+const RENAME_ROLES = ["super_admin", "admin", "manager"];
 
 type Silo = {
   id: string;
@@ -40,6 +52,7 @@ type Warehouse = { id: string; name: string; warehouse_id: string };
 
 type FormState = {
   id?: string;
+  name: string;
   warehouse_id: string;
   capacity_kg: string;
   location_description: string;
@@ -48,6 +61,7 @@ type FormState = {
 };
 
 const emptyForm: FormState = {
+  name: "",
   warehouse_id: "",
   capacity_kg: "",
   location_description: "",
@@ -60,11 +74,15 @@ export function SilosSection() {
   const listWh = useServerFn(listWarehouses);
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
+  const rename = useServerFn(renameSilo);
+  const fetchRole = useServerFn(getMyRole);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
+  const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const warehouses = warehousesData ?? [];
+  const canRename = RENAME_ROLES.includes(me?.role ?? "");
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -89,6 +107,7 @@ export function SilosSection() {
       upsert({
         data: {
           id: fs.id,
+          name: fs.name.trim() || undefined,
           warehouse_id: fs.warehouse_id,
           capacity_kg: Number(fs.capacity_kg),
           location_description: fs.location_description.trim() || null,
@@ -104,7 +123,17 @@ export function SilosSection() {
       setEditOpen(false);
       setForm(emptyForm);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    onError: (e: Error) => toast.error(friendlySaveError(e)),
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: (payload: { id: string; name: string }) => rename({ data: payload }),
+    onSuccess: () => {
+      toast.success("Silo renamed");
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Rename failed"),
   });
 
   const deleteMutation = useMutation({
@@ -125,6 +154,7 @@ export function SilosSection() {
   function openEdit(s: Silo) {
     setForm({
       id: s.id,
+      name: s.name ?? "",
       warehouse_id: s.warehouse_id ?? "",
       capacity_kg: String(s.capacity_kg ?? ""),
       location_description: s.location?.description ?? "",
@@ -178,7 +208,14 @@ export function SilosSection() {
               <tbody className="divide-y divide-white/5">
                 {rows.map((s) => (
                   <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-3 py-2 text-white font-medium">{s.name}</td>
+                    <td className="px-3 py-2 text-white font-medium">
+                      <InlineRename
+                        value={s.name}
+                        canRename={canRename}
+                        textClassName="text-white font-medium"
+                        onSave={async (next) => { await renameMutation.mutateAsync({ id: s.id, name: next }); }}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-white/70">{s.warehouses?.name ?? "—"}</td>
                     <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(s.capacity_kg ?? 0).toLocaleString()} kg</td>
                     <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(s.current_occupancy_kg ?? 0).toLocaleString()} kg</td>
@@ -207,6 +244,14 @@ export function SilosSection() {
             </DialogDescription>
           </DialogHeader>
           <form id="silo-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
+            <div>
+              <Label>Name</Label>
+              {form.id && !canRename ? (
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">{form.name || "—"}</div>
+              ) : (
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Auto-generated if left blank" />
+              )}
+            </div>
             <div>
               <Label>Warehouse *</Label>
               <Select value={form.warehouse_id} onValueChange={(v) => setForm({ ...form, warehouse_id: v })}>
@@ -258,7 +303,16 @@ export function SilosSection() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle>{selected.name}</DialogTitle>
+                <DialogTitle>
+                  <InlineRename
+                    value={selected.name}
+                    canRename={canRename}
+                    onSave={async (next) => {
+                      await renameMutation.mutateAsync({ id: selected.id, name: next });
+                      setSelected((prev) => (prev ? { ...prev, name: next } : prev));
+                    }}
+                  />
+                </DialogTitle>
                 <DialogDescription>{selected.silo_id}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">

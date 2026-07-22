@@ -15,9 +15,17 @@ type Tab = "batches" | "silos" | "warehouses" | "buyers";
 
 const TAB_KEYS: Tab[] = ["batches", "silos", "warehouses", "buyers"];
 
+// `status` is genuinely optional here (not just runtime-undefined) so every
+// other page that links to /grain-operations?tab=... without a status
+// param still type-checks.
+type GrainOpsSearch = { tab: Tab; status?: string };
+
 export const Route = createFileRoute("/_authenticated/grain-operations")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): GrainOpsSearch => ({
     tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "batches",
+    // Optional deep-link filter for the Batches tab (e.g. the global search
+    // bar sending "spoiled batches" straight to ?tab=batches&status=damaged).
+    ...(typeof search.status === "string" ? { status: search.status } : {}),
   }),
   component: GrainOperationsWorkspace,
 });
@@ -32,7 +40,7 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function GrainOperationsWorkspace() {
-  const { tab } = Route.useSearch();
+  const { tab, status } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTabState] = useState<Tab>(tab);
 
@@ -198,7 +206,7 @@ function GrainOperationsWorkspace() {
 
           {/* Tab Content */}
           <div className="p-4 md:p-6">
-            {activeTab === "batches"    && <BatchesSection />}
+            {activeTab === "batches"    && <BatchesSection initialStatus={status} />}
             {activeTab === "silos"      && <SilosSection />}
             {activeTab === "warehouses" && <WarehousesSection />}
             {activeTab === "buyers"     && <BuyersSection />}

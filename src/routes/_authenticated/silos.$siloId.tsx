@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Package, ArrowLeft, Building2, MapPin, Truck, Wheat, Loader2, Inbox, Edit2, Eye,
 } from "lucide-react";
@@ -10,10 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PageHeader } from "@/components/dashboards/_shared";
+import { InfoDot } from "@/components/ui/InfoDot";
 import { StatusBadge } from "@/components/app/DataListPage";
-import { listSilos, listGrainBatches } from "@/lib/operations.functions";
+import { InlineRename } from "@/components/app/InlineRename";
+import { listSilos, listGrainBatches, renameSilo } from "@/lib/operations.functions";
+import { getMyRole } from "@/lib/roles.functions";
 import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
+
+// Same allow-list used for team invite/manage — technicians can't rename.
+const RENAME_ROLES = ["super_admin", "admin", "manager"];
 
 export const Route = createFileRoute("/_authenticated/silos/$siloId")({
   component: SiloDetailPage,
@@ -52,9 +58,24 @@ function SiloDetailPage() {
   const { siloId } = Route.useParams();
   const listS = useServerFn(listSilos);
   const listB = useServerFn(listGrainBatches);
+  const renameFn = useServerFn(renameSilo);
+  const fetchRole = useServerFn(getMyRole);
+  const qc = useQueryClient();
   const silosQ = useQuery({ queryKey: ["silos"], queryFn: () => listS() as Promise<Silo[]> });
   const batchesQ = useQuery({ queryKey: ["grain-batches"], queryFn: () => listB() as Promise<Batch[]> });
+  const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
+  const canRename = RENAME_ROLES.includes(me?.role ?? "");
   const [dispatchOpen, setDispatchOpen] = useState(false);
+
+  const renameMutation = useMutation({
+    mutationFn: (payload: { id: string; name: string }) => renameFn({ data: payload }),
+    onSuccess: () => {
+      toast.success("Silo renamed");
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Rename failed"),
+  });
 
   const silo = useMemo(() => silosQ.data?.find((s) => s.id === siloId) ?? null, [silosQ.data, siloId]);
   const batches = useMemo(
@@ -92,10 +113,18 @@ function SiloDetailPage() {
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader
-          title={silo.name}
-          subtitle={`${silo.silo_id} · ${cap.toLocaleString()} kg capacity`}
-        />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="truncate text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+              <InlineRename
+                value={silo.name}
+                canRename={canRename}
+                onSave={async (next) => { await renameMutation.mutateAsync({ id: silo.id, name: next }); }}
+              />
+            </h1>
+            <InfoDot text={`${silo.silo_id} · ${cap.toLocaleString()} kg capacity`} />
+          </div>
+        </div>
         <StatusBadge value={silo.status} />
       </div>
 
