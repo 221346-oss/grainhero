@@ -371,7 +371,7 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
         spoiled,
         spoilageRate: b.length ? spoiled / b.length : 0,
         avgRisk,
-        openAlerts: a.filter((x) => x.status === "open" || x.status === "active").length,
+        openAlerts: a.filter((x) => x.status !== "resolved").length,
         totalCapacity,
         usedCapacity,
         utilization: totalCapacity > 0 ? usedCapacity / totalCapacity : 0,

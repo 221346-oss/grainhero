@@ -24,7 +24,7 @@ import { RowActions } from "@/components/app/RowActions";
 import { StatusBadge } from "@/components/app/DataListPage";
 import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
-  dispatchGrainBatch, logSpoilageEvent, listSilos, listBuyers,
+  logSpoilageEvent, listSilos,
 } from "@/lib/operations.functions";
 import { listSuppliers } from "@/lib/suppliers.functions";
 import { cn } from "@/lib/utils";
@@ -50,8 +50,6 @@ type Batch = {
   spoilage_label: string | null;
   risk_score: number | null;
   intake_date: string | null;
-  harvest_date: string | null;
-  expected_dispatch_date: string | null;
   actual_dispatch_date: string | null;
   farmer_name: string | null;
   farmer_contact: string | null;
@@ -71,7 +69,6 @@ type Batch = {
 };
 
 type Silo = { id: string; silo_id: string; name: string; capacity_kg: number; current_occupancy_kg: number | null; warehouse_id: string | null; warehouses?: { name: string } | null };
-type Buyer = { id: string; name: string; company_name: string | null };
 
 type Form = {
   id?: string;
@@ -88,8 +85,6 @@ type Form = {
   farmer_name: string; // fallback / anonymous label
   farmer_contact: string;
   source_location: string;
-  harvest_date: string;
-  expected_dispatch_date: string;
   purchase_price_per_kg: string;
   intake_temperature: string;
   intake_humidity: string;
@@ -102,7 +97,6 @@ const emptyForm: Form = {
   moisture_content: "", protein_content: "", test_weight: "",
   supplier_id: "", source_kind: "external",
   farmer_name: "", farmer_contact: "", source_location: "",
-  harvest_date: "", expected_dispatch_date: "",
   purchase_price_per_kg: "", intake_temperature: "", intake_humidity: "",
   status: "stored", notes: "",
 };
@@ -157,27 +151,6 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-xs text-red-600 mt-1">{message}</p>;
 }
 
-type DispatchErrors = Partial<Record<keyof Dispatch, string>>;
-
-function validateDispatchForm(d: Dispatch, maxQtyKg: number | null): DispatchErrors {
-  const errors: DispatchErrors = {};
-
-  if (d.dispatched_quantity_kg.trim() !== "") {
-    const qty = Number(d.dispatched_quantity_kg);
-    if (Number.isNaN(qty)) errors.dispatched_quantity_kg = "Quantity must be a number";
-    else if (qty <= 0) errors.dispatched_quantity_kg = "Quantity must be greater than 0";
-    else if (maxQtyKg != null && qty > maxQtyKg) errors.dispatched_quantity_kg = `Only ${maxQtyKg.toLocaleString()} kg remaining in this batch`;
-  }
-
-  if (d.sell_price_per_kg.trim() !== "") {
-    const price = Number(d.sell_price_per_kg);
-    if (Number.isNaN(price)) errors.sell_price_per_kg = "Price must be a number";
-    else if (price <= 0) errors.sell_price_per_kg = "Sell price must be greater than 0";
-  }
-
-  return errors;
-}
-
 type SpoilageErrors = Partial<Record<keyof Spoilage, string>>;
 
 function validateSpoilageForm(s: Spoilage, maxLossKg: number | null): SpoilageErrors {
@@ -203,26 +176,6 @@ function validateSpoilageForm(s: Spoilage, maxLossKg: number | null): SpoilageEr
   return errors;
 }
 
-type Dispatch = {
-  buyer_id: string;
-  new_buyer_name: string;
-  new_buyer_phone: string;
-  new_buyer_email: string;
-  sell_price_per_kg: string;
-  dispatched_quantity_kg: string;
-  vehicle_number: string;
-  driver_name: string;
-  driver_contact: string;
-  destination: string;
-  notes: string;
-};
-
-const emptyDispatch: Dispatch = {
-  buyer_id: "", new_buyer_name: "", new_buyer_phone: "", new_buyer_email: "",
-  sell_price_per_kg: "", dispatched_quantity_kg: "",
-  vehicle_number: "", driver_name: "", driver_contact: "", destination: "", notes: "",
-};
-
 type Spoilage = {
   type: string; severity: "low"|"medium"|"high"|"critical";
   description: string; estimated_loss_kg: string;
@@ -237,19 +190,15 @@ const emptySpoilage: Spoilage = {
 export function BatchesSection({ initialStatus }: { initialStatus?: string } = {}) {
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
-  const listBuyerFn = useServerFn(listBuyers);
   const listSupFn = useServerFn(listSuppliers);
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
-  const dispatchFn = useServerFn(dispatchGrainBatch);
   const spoilageFn = useServerFn(logSpoilageEvent);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
-  const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const silos = silosData ?? [];
-  const buyers = buyersData ?? [];
   const suppliersQ = useQuery({
     queryKey: ["suppliers-mini"],
     queryFn: () => listSupFn({ data: {} }),
@@ -267,21 +216,13 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [dispatchOpen, setDispatchOpen] = useState(false);
   const [spoilageOpen, setSpoilageOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
-  const [dispatch, setDispatch] = useState<Dispatch>(emptyDispatch);
   const [spoilage, setSpoilage] = useState<Spoilage>(emptySpoilage);
 
   const formErrors = useMemo(() => validateBatchForm(form), [form]);
   const hasFormErrors = Object.keys(formErrors).length > 0;
-
-  const remainingKg = selected != null
-    ? Math.max(0, Number(selected.quantity_kg) - Number(selected.dispatched_quantity_kg ?? 0))
-    : null;
-  const dispatchErrors = useMemo(() => validateDispatchForm(dispatch, remainingKg), [dispatch, remainingKg]);
-  const hasDispatchErrors = Object.keys(dispatchErrors).length > 0;
 
   const spoilageErrors = useMemo(
     () => validateSpoilageForm(spoilage, selected != null ? Number(selected.quantity_kg) : null),
@@ -332,8 +273,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       unit_cost: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
       farmer_contact: f.farmer_contact.trim() || null,
       source_location: f.source_location.trim() || null,
-      harvest_date: f.harvest_date || null,
-      expected_dispatch_date: f.expected_dispatch_date || null,
       purchase_price_per_kg: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
       intake_temperature: f.intake_temperature ? Number(f.intake_temperature) : null,
       intake_humidity: f.intake_humidity ? Number(f.intake_humidity) : null,
@@ -373,41 +312,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       setDeleteId(null);
     },
     onError: (e: Error) => toast.error(e.message || "Delete failed"),
-  });
-
-  const dispatchMut = useMutation({
-    mutationFn: (payload: { id: string; d: Dispatch }) => {
-      const useExisting = !!payload.d.buyer_id;
-      return dispatchFn({ data: {
-        id: payload.id,
-        buyer_id: useExisting ? payload.d.buyer_id : null,
-        new_buyer: useExisting ? null : {
-          name: payload.d.new_buyer_name,
-          contact_phone: payload.d.new_buyer_phone || null,
-          contact_email: payload.d.new_buyer_email || null,
-        },
-        sell_price_per_kg: Number(payload.d.sell_price_per_kg),
-        dispatched_quantity_kg: Number(payload.d.dispatched_quantity_kg),
-        vehicle_number: payload.d.vehicle_number || null,
-        driver_name: payload.d.driver_name || null,
-        driver_contact: payload.d.driver_contact || null,
-        destination: payload.d.destination || null,
-        notes: payload.d.notes || null,
-      }});
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSuccess: (row: any) => {
-      const softError = row?.error ?? (row == null ? "Dispatch failed — no data returned" : null);
-      if (softError) { toast.error(typeof softError === "string" ? softError : "Dispatch failed"); return; }
-      toast.success("Batch dispatched");
-      qc.invalidateQueries({ queryKey: ["grain-batches"] });
-      qc.invalidateQueries({ queryKey: ["silos"] });
-      qc.invalidateQueries({ queryKey: ["buyers"] });
-      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      setDispatchOpen(false); setDispatch(emptyDispatch);
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onError: (e: any) => toast.error(e?.message || (typeof e === "string" ? e : null) || "Dispatch failed"),
   });
 
   const spoilageMut = useMutation({
@@ -454,8 +358,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       farmer_name: b.farmer_name ?? "",
       farmer_contact: b.farmer_contact ?? "",
       source_location: b.source_location ?? "",
-      harvest_date: b.harvest_date ?? "",
-      expected_dispatch_date: b.expected_dispatch_date ?? "",
       purchase_price_per_kg: b.purchase_price_per_kg != null ? String(b.purchase_price_per_kg) : "",
       intake_temperature: b.intake_conditions?.temperature != null ? String(b.intake_conditions.temperature) : "",
       intake_humidity: b.intake_conditions?.humidity != null ? String(b.intake_conditions.humidity) : "",
@@ -463,12 +365,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       notes: b.notes ?? "",
     });
     setEditOpen(true);
-  }
-  function openDispatch(b: Batch) {
-    setSelected(b);
-    const remaining = Number(b.quantity_kg) - Number(b.dispatched_quantity_kg ?? 0);
-    setDispatch({ ...emptyDispatch, dispatched_quantity_kg: String(remaining) });
-    setDispatchOpen(true);
   }
   function openSpoilage(b: Batch) {
     setSelected(b);
@@ -545,7 +441,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   const supplier = b.farmer_name ?? "—";
                   const intake = Number(b.quantity_kg ?? 0);
                   const remaining = Math.max(0, intake - Number(b.dispatched_quantity_kg ?? 0));
-                  const intakeDate = b.harvest_date ?? b.intake_date ?? null;
+                  const intakeDate = b.intake_date ?? null;
                   return (
                     <TableRow key={b.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
                       <TableCell className="font-medium">{b.batch_id}</TableCell>
@@ -756,14 +652,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                 <Input value={form.source_location} onChange={(e) => setForm({ ...form, source_location: e.target.value })} placeholder="Village, district, region" />
               </div>
               <div>
-                <Label>Harvest date</Label>
-                <Input type="date" value={form.harvest_date} onChange={(e) => setForm({ ...form, harvest_date: e.target.value })} />
-              </div>
-              <div>
-                <Label>Expected dispatch</Label>
-                <Input type="date" value={form.expected_dispatch_date} onChange={(e) => setForm({ ...form, expected_dispatch_date: e.target.value })} />
-              </div>
-              <div>
                 <Label>Intake temp °C</Label>
                 <Input
                   type="number" step="0.1" value={form.intake_temperature}
@@ -829,7 +717,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                 <Row label="Silo">{selected.silos?.name ?? "—"}</Row>
                 <Row label="Farmer">{selected.farmer_name ?? "—"}{selected.farmer_contact ? ` · ${selected.farmer_contact}` : ""}</Row>
                 <Row label="Source">{selected.source_location ?? "—"}</Row>
-                <Row label="Harvest">{selected.harvest_date ? new Date(selected.harvest_date).toLocaleDateString() : "—"}</Row>
                 {selected.intake_date && <Row label="Intake">{new Date(selected.intake_date).toLocaleDateString()}</Row>}
                 {selected.moisture_content != null && <Row label="Moisture">{selected.moisture_content}%</Row>}
                 {selected.protein_content != null && <Row label="Protein">{selected.protein_content}%</Row>}
@@ -837,7 +724,14 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
               </div>
               <DialogFooter className="gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => { setSelected(b => b); setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
-                <Button size="sm" onClick={() => { setViewOpen(false); openDispatch(selected); }} className="gap-1"><Truck className="w-4 h-4" /> Dispatch</Button>
+                {/* Dispatch happens from the silo's mixed stock, not a single batch — see dispatchFromSilo/createDispatchFromSilo. */}
+                {selected.silos && (
+                  <Button size="sm" asChild className="gap-1">
+                    <Link to="/silos/$siloId" params={{ siloId: selected.silos.id }} onClick={() => setViewOpen(false)}>
+                      <Truck className="w-4 h-4" /> Dispatch from {selected.silos.name}
+                    </Link>
+                  </Button>
+                )}
               </DialogFooter>
             </>
           )}
@@ -862,93 +756,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Dispatch Dialog */}
-      <Dialog open={dispatchOpen} onOpenChange={(o) => { setDispatchOpen(o); if (!o) setDispatch(emptyDispatch); }}>
-        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Truck className="w-5 h-5 text-emerald-600" /> Dispatch batch</DialogTitle>
-            <DialogDescription>{selected?.batch_id} · {selected?.grain_type}</DialogDescription>
-          </DialogHeader>
-          <form id="dispatch-form" className="grid gap-3 py-2" onSubmit={(e) => {
-            e.preventDefault();
-            if (hasDispatchErrors) { toast.error("Fix the highlighted fields before submitting"); return; }
-            if (selected) dispatchMut.mutate({ id: selected.id, d: dispatch });
-          }}>
-            <div>
-              <Label>Buyer</Label>
-              <Select value={dispatch.buyer_id} onValueChange={(v) => setDispatch({ ...dispatch, buyer_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select existing buyer" /></SelectTrigger>
-                <SelectContent>
-                  {buyers.map(b => <SelectItem key={b.id} value={b.id}>{b.name}{b.company_name ? ` · ${b.company_name}` : ""}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-slate-500 mt-1">Or enter a new buyer below</p>
-            </div>
-            {!dispatch.buyer_id && (
-              <div className="grid sm:grid-cols-2 gap-2 rounded-md border border-slate-200 p-3 bg-slate-50">
-                <div className="sm:col-span-2">
-                  <Label className="text-xs">New buyer name</Label>
-                  <Input value={dispatch.new_buyer_name} onChange={(e) => setDispatch({ ...dispatch, new_buyer_name: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Phone</Label>
-                  <Input value={dispatch.new_buyer_phone} onChange={(e) => setDispatch({ ...dispatch, new_buyer_phone: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Email</Label>
-                  <Input value={dispatch.new_buyer_email} onChange={(e) => setDispatch({ ...dispatch, new_buyer_email: e.target.value })} />
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Quantity (kg) *</Label>
-                <Input
-                  type="number" min={1} max={remainingKg ?? undefined} required value={dispatch.dispatched_quantity_kg}
-                  onChange={(e) => setDispatch({ ...dispatch, dispatched_quantity_kg: e.target.value })}
-                  className={cn(dispatchErrors.dispatched_quantity_kg && "border-red-500 focus-visible:ring-red-500")}
-                />
-                <FieldError message={dispatchErrors.dispatched_quantity_kg} />
-              </div>
-              <div>
-                <Label>Sell $/kg *</Label>
-                <Input
-                  type="number" step="0.01" min={0.01} required value={dispatch.sell_price_per_kg}
-                  onChange={(e) => setDispatch({ ...dispatch, sell_price_per_kg: e.target.value })}
-                  className={cn(dispatchErrors.sell_price_per_kg && "border-red-500 focus-visible:ring-red-500")}
-                />
-                <FieldError message={dispatchErrors.sell_price_per_kg} />
-              </div>
-              <div>
-                <Label>Vehicle #</Label>
-                <Input value={dispatch.vehicle_number} onChange={(e) => setDispatch({ ...dispatch, vehicle_number: e.target.value })} />
-              </div>
-              <div>
-                <Label>Destination</Label>
-                <Input value={dispatch.destination} onChange={(e) => setDispatch({ ...dispatch, destination: e.target.value })} />
-              </div>
-              <div>
-                <Label>Driver</Label>
-                <Input value={dispatch.driver_name} onChange={(e) => setDispatch({ ...dispatch, driver_name: e.target.value })} />
-              </div>
-              <div>
-                <Label>Driver phone</Label>
-                <Input value={dispatch.driver_contact} onChange={(e) => setDispatch({ ...dispatch, driver_contact: e.target.value })} />
-              </div>
-              <div className="col-span-2">
-                <Label>Notes</Label>
-                <Textarea rows={2} value={dispatch.notes} onChange={(e) => setDispatch({ ...dispatch, notes: e.target.value })} />
-              </div>
-            </div>
-          </form>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDispatchOpen(false)}>Cancel</Button>
-            <Button form="dispatch-form" type="submit" disabled={dispatchMut.isPending || !dispatch.sell_price_per_kg || !dispatch.dispatched_quantity_kg || (!dispatch.buyer_id && !dispatch.new_buyer_name) || hasDispatchErrors}>
-              {dispatchMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm dispatch"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Spoilage Dialog */}
       <Dialog open={spoilageOpen} onOpenChange={(o) => { setSpoilageOpen(o); if (!o) setSpoilage(emptySpoilage); }}>

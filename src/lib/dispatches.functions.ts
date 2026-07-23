@@ -42,15 +42,25 @@ export const listSiloAvailableBatches = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("grain_batches")
-      .select("id, batch_id, grain_type, quantity_kg, remaining_kg, purchase_price_per_kg, harvest_date, created_at, supplier_name, farmer_name")
+      .select("id, batch_id, grain_type, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, harvest_date, created_at, supplier_name, farmer_name")
       .eq("silo_id", data.siloId)
-      .gt("remaining_kg", 0)
       .order("harvest_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true });
     if (data.grainType) q = q.eq("grain_type", data.grainType as never);
     const { data: rows, error } = await q;
     if (error) throw error;
-    return { batches: (rows ?? []) as Row[] };
+    // remaining_kg is only backfilled once a batch has been through the
+    // dispatch-allocation trigger — a batch that's never been dispatched
+    // from still has remaining_kg = NULL even though it clearly has stock,
+    // so fall back to quantity_kg - dispatched_quantity_kg like the silo
+    // detail page's own batches table already does.
+    const batches: Row[] = ((rows ?? []) as Row[])
+      .map((b) => ({
+        ...b,
+        remaining_kg: b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
+      }))
+      .filter((b) => Number(b.remaining_kg) > 0);
+    return { batches };
   });
 
 export const createDispatchFromSilo = createServerFn({ method: "POST" })
@@ -70,14 +80,21 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     // 2. FIFO batches (oldest first)
     const { data: batchesRaw, error: bErr } = await sb
       .from("grain_batches")
-      .select("id, batch_id, quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
+      .select("id, batch_id, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
       .eq("silo_id", data.siloId)
       .eq("grain_type", data.grainType as never)
-      .gt("remaining_kg", 0)
       .order("harvest_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true });
     if (bErr) throw bErr;
-    const batches = (batchesRaw ?? []) as Row[];
+    // Same remaining_kg-can-be-NULL fallback as listSiloAvailableBatches —
+    // see comment there. Without this, a batch that's never been dispatched
+    // from is invisible to FIFO allocation too, not just the picker list.
+    const batches: Row[] = ((batchesRaw ?? []) as Row[])
+      .map((b) => ({
+        ...b,
+        remaining_kg: b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
+      }))
+      .filter((b) => Number(b.remaining_kg) > 0);
     const totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
     if (totalAvailable < data.qtyKg) {
       throw new Error(`Not enough ${data.grainType} in silo (have ${totalAvailable} kg, need ${data.qtyKg} kg)`);

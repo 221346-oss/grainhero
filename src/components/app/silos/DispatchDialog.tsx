@@ -107,6 +107,7 @@ export function DispatchDialog({
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
       qc.invalidateQueries({ queryKey: ["silo-batches", siloId] });
+      qc.invalidateQueries({ queryKey: ["silo-dispatches", siloId] });
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),

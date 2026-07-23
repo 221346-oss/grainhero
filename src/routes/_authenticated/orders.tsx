@@ -2,15 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
+import { createSiloAddonCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck, CheckCircle2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck, CheckCircle2, PlusCircle, Loader2 } from "lucide-react";
 import { OrdersSkeleton } from "@/components/app/skeletons";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -33,9 +38,33 @@ const STATUS_STYLE: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
 };
 
+const emptyAddonForm = { address: "", city: "", country: "", phone: "", notes: "" };
+
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
   const qc = useQueryClient();
+  const addonFn = useServerFn(createSiloAddonCheckoutSession);
+  const [addonOpen, setAddonOpen] = useState(false);
+  const [addonForm, setAddonForm] = useState(emptyAddonForm);
+  const addonMut = useMutation({
+    mutationFn: () =>
+      addonFn({
+        data: {
+          install: {
+            address: addonForm.address.trim(),
+            city: addonForm.city.trim() || null,
+            country: addonForm.country.trim(),
+            phone: addonForm.phone.trim(),
+            notes: addonForm.notes.trim() || null,
+          },
+        },
+      }),
+    onSuccess: (res) => {
+      if (!res?.url) { toast.error("Could not start checkout"); return; }
+      window.location.href = res.url;
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not start checkout"),
+  });
   const advanceFn = useServerFn(advanceInstallStage);
   const completeMut = useMutation({
     mutationFn: (orderId: string) => advanceFn({ data: { orderId, next: "completed" } }),
@@ -60,11 +89,14 @@ function MyOrdersPage() {
       <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>
-      <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My install orders</h1>
           <p className="text-sm text-slate-500">Track the technician install for each subscription you purchased.</p>
         </div>
+        <Button onClick={() => { setAddonForm(emptyAddonForm); setAddonOpen(true); }} className="gap-2">
+          <PlusCircle className="h-4 w-4" /> Request new silo
+        </Button>
       </div>
 
       {isLoading ? (
@@ -141,6 +173,76 @@ function MyOrdersPage() {
         onOpenChange={(v) => !v && setOpenOrderId(null)}
         canEdit={false}
       />
+
+      <Dialog open={addonOpen} onOpenChange={(o) => { setAddonOpen(o); if (!o) setAddonForm(emptyAddonForm); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request a new silo</DialogTitle>
+            <DialogDescription>
+              One-time hardware &amp; install fee for one additional silo beyond your plan's included limit.
+              We'll charge you now and dispatch a technician to install it.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="grid gap-3 py-1"
+            onSubmit={(e) => { e.preventDefault(); addonMut.mutate(); }}
+          >
+            <div className="grid gap-1.5">
+              <Label htmlFor="addon-address">Install address</Label>
+              <Input
+                id="addon-address"
+                value={addonForm.address}
+                onChange={(e) => setAddonForm((f) => ({ ...f, address: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="addon-city">City</Label>
+                <Input
+                  id="addon-city"
+                  value={addonForm.city}
+                  onChange={(e) => setAddonForm((f) => ({ ...f, city: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="addon-country">Country</Label>
+                <Input
+                  id="addon-country"
+                  value={addonForm.country}
+                  onChange={(e) => setAddonForm((f) => ({ ...f, country: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="addon-phone">Contact phone</Label>
+              <Input
+                id="addon-phone"
+                value={addonForm.phone}
+                onChange={(e) => setAddonForm((f) => ({ ...f, phone: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="addon-notes">Notes (optional)</Label>
+              <Textarea
+                id="addon-notes"
+                rows={2}
+                value={addonForm.notes}
+                onChange={(e) => setAddonForm((f) => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+            <DialogFooter className="mt-2">
+              <Button type="button" variant="outline" onClick={() => setAddonOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={addonMut.isPending} className="gap-2">
+                {addonMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                {addonMut.isPending ? "Starting checkout…" : "Continue to payment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -182,38 +182,38 @@ export function WarehousesSection() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-white/40">
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-white/40">
+          <div className="py-8 text-center text-muted-foreground">
             <p className="text-sm">No warehouses yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-white/5 border-b border-white/10">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Warehouse</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Location</th>
-                  <th className="px-3 py-2 text-right font-semibold text-white/50 text-xs uppercase tracking-wider">Capacity</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-white/50 text-xs uppercase tracking-wider">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Warehouse</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Location</th>
+                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Capacity</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {rows.map((w) => (
-                  <tr key={w.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-3 py-2 text-white font-medium">
+                  <tr key={w.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
+                    <td className="px-3 py-2 text-foreground font-medium">
                       <InlineRename
                         value={w.name}
                         canRename={canRename}
-                        textClassName="text-white font-medium"
+                        textClassName="text-foreground font-medium"
                         onSave={async (next) => { await renameMutation.mutateAsync({ id: w.id, name: next }); }}
                       />
                     </td>
-                    <td className="px-3 py-2 text-white/70 text-xs">{w.location?.description ?? w.location?.address ?? "—"}</td>
-                    <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(w.total_capacity_kg ?? 0).toLocaleString()} kg</td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">{w.location?.description ?? w.location?.address ?? "—"}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(w.total_capacity_kg ?? 0).toLocaleString()} kg</td>
                     <td className="px-3 py-2"><StatusBadge value={w.status} /></td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1">

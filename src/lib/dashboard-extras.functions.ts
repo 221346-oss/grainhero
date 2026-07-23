@@ -124,13 +124,17 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .select("id", { count: "exact", head: true })
         .gte("created_at", priorStartISO)
         .lt("created_at", priorEndISO),
+      // "Open alerts" — status enum is pending|acknowledged|resolved|escalated,
+      // so "open" means not yet resolved (see InsightsStrip's "X open alerts").
       context.supabase
         .from("grain_alerts")
         .select("id", { count: "exact", head: true })
+        .neq("status", "resolved")
         .gte("triggered_at", startISO),
       context.supabase
         .from("grain_alerts")
         .select("id", { count: "exact", head: true })
+        .neq("status", "resolved")
         .gte("triggered_at", priorStartISO)
         .lt("triggered_at", priorEndISO),
       // All active (non-resolved) alerts tied to a silo, for the dashboard's

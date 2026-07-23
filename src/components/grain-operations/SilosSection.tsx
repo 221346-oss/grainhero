@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Warehouse, Plus, Search, Edit2, Trash2, Eye, Loader2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Warehouse, Plus, Search, Edit2, Trash2, Eye, Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ import { InlineRename } from "@/components/app/InlineRename";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses, renameSilo } from "@/lib/operations.functions";
 import { parsePlanLimitError } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -83,6 +85,7 @@ export function SilosSection() {
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const warehouses = warehousesData ?? [];
   const canRename = RENAME_ROLES.includes(me?.role ?? "");
+  const { canAddSilo, siloLimitMessage } = usePlanLimits();
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -181,44 +184,55 @@ export function SilosSection() {
               <SelectItem value="maintenance">Maintenance</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New silo</Button>
+          {canAddSilo ? (
+            <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New silo</Button>
+          ) : (
+            <Button asChild variant="outline" className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30">
+              <Link to="/orders" title={siloLimitMessage ?? "Silo limit reached"}>
+                <ShoppingCart className="w-4 h-4" /> Request new silo
+              </Link>
+            </Button>
+          )}
         </div>
+        {!canAddSilo && siloLimitMessage && (
+          <p className="text-xs text-amber-700 dark:text-amber-400 -mt-1">{siloLimitMessage}</p>
+        )}
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-white/40">
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-white/40">
+          <div className="py-8 text-center text-muted-foreground">
             <p className="text-sm">No silos yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-white/5 border-b border-white/10">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Silo</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Warehouse</th>
-                  <th className="px-3 py-2 text-right font-semibold text-white/50 text-xs uppercase tracking-wider">Capacity</th>
-                  <th className="px-3 py-2 text-right font-semibold text-white/50 text-xs uppercase tracking-wider">Current</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-white/50 text-xs uppercase tracking-wider">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Silo</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Warehouse</th>
+                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Capacity</th>
+                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Current</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {rows.map((s) => (
-                  <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-3 py-2 text-white font-medium">
+                  <tr key={s.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
+                    <td className="px-3 py-2 text-foreground font-medium">
                       <InlineRename
                         value={s.name}
                         canRename={canRename}
-                        textClassName="text-white font-medium"
+                        textClassName="text-foreground font-medium"
                         onSave={async (next) => { await renameMutation.mutateAsync({ id: s.id, name: next }); }}
                       />
                     </td>
-                    <td className="px-3 py-2 text-white/70">{s.warehouses?.name ?? "—"}</td>
-                    <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(s.capacity_kg ?? 0).toLocaleString()} kg</td>
-                    <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(s.current_occupancy_kg ?? 0).toLocaleString()} kg</td>
+                    <td className="px-3 py-2 text-muted-foreground">{s.warehouses?.name ?? "—"}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(s.capacity_kg ?? 0).toLocaleString()} kg</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(s.current_occupancy_kg ?? 0).toLocaleString()} kg</td>
                     <td className="px-3 py-2"><StatusBadge value={s.status} /></td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1">

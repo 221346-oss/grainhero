@@ -13,6 +13,7 @@ import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
+import { BugReportButton } from "@/components/app/BugReportButton";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
@@ -150,6 +151,7 @@ function AuthenticatedLayout() {
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SessionGuard />
       <OnboardingTour />
+      <BugReportButton />
       <div className="app-scope min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
           <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
