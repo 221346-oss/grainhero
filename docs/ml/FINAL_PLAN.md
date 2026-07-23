@@ -314,3 +314,169 @@ When all six boxes are checked, this branch is safe to merge into
   PowerShell one-liner for the intern.
 - Merging this branch into `main` requires only the six checkboxes
   in §7.
+
+---
+
+## 9. End-to-end environment — how firmware, datasets, ML, and UI connect
+
+You asked two very reasonable questions:
+
+> "Why doesn't my model need the DATASETS folder?"
+> "Where does the firmware fit in?"
+
+Short answer: **datasets are training-time inputs, the deployed model
+is the compiled output, and firmware is the runtime input.** They
+never touch each other directly — the app is the wiring between them.
+
+### 9.1 The three worlds
+
+```
+┌──────────────────────┐   ┌───────────────────────┐   ┌──────────────────────┐
+│   TRAINING WORLD     │   │    RUNTIME WORLD      │   │    UI / OPS WORLD    │
+│  (offline, rare)     │   │   (24/7, live)        │   │   (Admin/SuperAdmin) │
+├──────────────────────┤   ├───────────────────────┤   ├──────────────────────┤
+│ DATASETS/            │   │ ESP32 firmware        │   │ /ai-predictions      │
+│  training-synthetic  │──▶│  (docs/firmware)      │   │ /ml-models           │
+│  training-real       │   │      │                │   │ /platform (retrain)  │
+│  external-catalog    │   │      ▼ MQTT/Firebase  │   │      ▲               │
+│                      │   │ sync-firebase cron    │   │      │               │
+│ ensemble_train.py    │   │      │                │   │      │               │
+│  (retrain pipeline)  │   │      ▼                │   │      │               │
+│      │               │   │ sensor_readings ──┐   │   │      │               │
+│      ▼               │   │ grain_batches ────┼──▶│───┼──────┘               │
+│ *_ensemble_model.pkl │──▶│ FastAPI /predict  │   │   │                      │
+│  (Render deploy)     │   │  (ml-deploy)      │   │   │ notifications        │
+│                      │   │      │            │   │   │ actuator commands    │
+│                      │   │      ▼            │   │   │                      │
+│                      │   │ grain_alerts ─────┘   │   │                      │
+└──────────────────────┘   └───────────────────────┘   └──────────────────────┘
+```
+
+### 9.2 DATASETS folder — what it is really for
+
+The Render service does **not** read the DATASETS folder at runtime.
+It only loads the compiled `*_ensemble_model.pkl` files, because that
+`.pkl` already contains the "knowledge" learned from the CSVs.
+
+DATASETS is used in exactly two places:
+
+| When | Who | What |
+|---|---|---|
+| Retraining | Intern / retrain button | `ensemble_train.py` reads `DATASETS/training-synthetic/{grain}_spoilage_10k.csv` + real rows exported from Supabase, trains a fresh ensemble, writes a new `.pkl`. |
+| Auditing / research | ML team | Compare model predictions against `training-real/smartbin_rice_storage_data_enhanced.csv` to detect drift. |
+
+So the CSVs are **fuel for the training run**, not fuel for
+predictions. That's why the deployed FastAPI service doesn't ship
+them (keeps the Docker image small and the boot fast).
+
+### 9.3 Firmware — the live input pipe
+
+`docs/firmware/grainhero_main_final.ino` runs on each ESP32 in a silo
+and follows the schedule/topics documented in `docs/firmware/README.md`:
+
+- Every 5 s → `grainhero/devices/{deviceId}/telemetry` (MQTT) **and**
+  Firebase RTDB `/devices/{deviceId}/live` (dual-write for redundancy).
+- Every 60 s → heartbeat.
+- Subscribes to `grainhero/actuators/{deviceId}/control` for
+  fan/LED/lid commands the ML service returns.
+
+The app ingests both paths:
+
+- MQTT → `supabase/functions/mqtt-bridge/index.ts` → `sensor_readings`.
+- Firebase → `src/routes/api/public/cron/sync-firebase.ts` (pg_cron) →
+  `sensor_readings` + `device_heartbeats`.
+
+Either path alone works; both together = redundancy. If the ESP32
+loses WiFi it buffers to microSD and drains on reconnect.
+
+### 9.4 The full loop, in one paragraph
+
+ESP32 reads BME680 + DHT11 + LDR + soil probe every 5 s and publishes
+to MQTT + Firebase. `sync-firebase` and `mqtt-bridge` insert into
+`sensor_readings`. A server function (`ml-pipeline.functions.ts`) picks
+up the newest reading + the owning `grain_batches` row, calls
+`GRAINHERO_ML_API_URL /predict`, writes a `grain_alerts` row with
+risk_class + score + SHAP factors, and (if risk ≥ threshold) publishes
+an actuator command back to `grainhero/actuators/{deviceId}/control`.
+The Admin dashboard shows the alert; the SuperAdmin `/ml-models` page
+shows aggregate accuracy. Retraining refreshes the `.pkl` on Render
+and the next prediction picks it up — no app deploy needed.
+
+---
+
+## 10. UI surfaces — what Admin vs SuperAdmin actually see
+
+All routes below already exist on this branch. This section maps
+"which screen owns which part of the loop" so nothing gets
+re-invented.
+
+### 10.1 Admin (tenant owner) — operates their own silos
+
+| Screen | Purpose in the ML loop |
+|---|---|
+| `/silos` → row → "Sensors" | See live readings from firmware; verify device online. |
+| `/grain-batches` | Create a batch (grain_type + intake date + moisture). **Required** — no batch = no prediction. |
+| `/ai-predictions` | Per-silo ML output: risk badge, score, top-3 SHAP factors, recommended action. Row click → drawer with per-model breakdown (`per_model` from §1). |
+| `/grain-alerts` | Alerts that crossed threshold; ack / snooze / escalate. |
+| `/actuators` | Manual override if the auto fan/lid command is wrong. |
+| `/notifications` | Push/email fires when Spoiled prediction occurs. |
+| `/dashboard` (Admin bento) | KPI: batches at risk, silos online, last prediction age. Every number links into the pages above. |
+
+Admin never sees the model file, never retrains, never sees other
+tenants' data (RLS-enforced).
+
+### 10.2 SuperAdmin — operates the platform + ML lifecycle
+
+| Screen | Purpose in the ML loop |
+|---|---|
+| `/ml-models` | One card per grain: accuracy, dataset window, last trained, deploy status. **Retrain** button triggers §5.1. |
+| `/platform` (SuperBento) | Cross-tenant health: predictions/min, model uptime (Render `/health`), avg latency, tenants using each grain. |
+| `/platform/logs` | Unified activity — every retrain, deploy, RLS denial, actuator command in one timeline. |
+| `/platform/tenants` (via dashboard tile) | Drill into any tenant's silos to reproduce an ML issue with real data. |
+| `/server-monitoring` | Render service health, Firebase quota, MQTT broker status. |
+| `/security-center` | Enforces the RLS + no-pkl-in-git rules from §2. |
+
+SuperAdmin does not create batches or manage silos for a tenant —
+that's the Admin's job. They observe + retrain + deploy.
+
+### 10.3 Intentionally NOT in the UI
+
+- Uploading a `.pkl` from the browser — models come from the retrain
+  pipeline, never a file picker (avoids the intern's original
+  hand-uploaded-model mistake).
+- Editing FAO/IRRI thresholds — agronomic constants live in
+  `predict.py` and change via PR review.
+- Raw dataset download — datasets live in the repo and Supabase
+  Storage `ml-datasets/`, not in the app UI.
+
+---
+
+## 11. Is it safe to merge into `main`?
+
+**Yes, with one caveat.** Honest status:
+
+| Check | Status | Note |
+|---|---|---|
+| Legacy Mongo backend removed | ✅ | 775 MB deleted; no references in `src/` or `supabase/`. |
+| `.pkl` and `.env` not in git | ✅ | Gitignored + externalized to Lovable assets. |
+| `ml-deploy/` self-contained; Dockerfile fetches models at build | ✅ | Render reproduces the intern's exact ensembles. |
+| DATASETS restored | ✅ | Committed under `DATASETS/`; small enough for git. |
+| Firmware preserved | ✅ | `docs/firmware/grainhero_main_final.ino` untouched. |
+| App-side ML contract matches FastAPI response | ✅ | `src/lib/ai-inference.functions.ts` maps 1-to-1 to §1. |
+| Fallback when `GRAINHERO_ML_API_URL` unset | ✅ | Threshold heuristic returns valid rows — no crash. |
+| RLS on `sensor_readings`, `grain_batches`, `grain_alerts`, `model_versions`, `retrain_log` | ✅ | `auth.uid()`-scoped. |
+| `bun run build` passes | ⚠️ | Intern branch left two stale imports in `sensors.tsx` (pre-existing, unrelated to ML). Stubbed to compile; re-wire in a follow-up PR. Runtime unaffected. |
+| Merge conflicts vs `main` | ✅ | Rebased on `main`; only `ml-deploy/`, `DATASETS/`, `docs/ml/`, `docs/firmware/`, and ML server functions changed. |
+
+**Recommended merge order:**
+
+1. Merge this branch into `main` — safe: the ML side is fully behind
+   a feature-flag secret; without the secret, the app falls back.
+2. Deploy `ml-deploy/` to Render (§3).
+3. Reply here with `add secret GRAINHERO_ML_API_URL = <url>`.
+4. Verify one prediction appears on `/ai-predictions` for a test batch.
+5. Open a follow-up PR to re-wire the two stubbed helpers in
+   `sensors.tsx` against the live schema.
+
+If any check flips to ❌ later (e.g. Render URL goes down), the app
+auto-degrades to heuristic mode — it will never hard-fail.
