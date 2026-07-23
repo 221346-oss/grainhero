@@ -42,16 +42,18 @@ export async function logActivity(params: LogActivityParams) {
     let userRole = "system";
 
     if (params.userId) {
-      const { data: user } = await supabaseAdmin
-        .from("users")
-        .select("first_name, last_name, role")
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("name")
         .eq("id", params.userId)
         .maybeSingle();
-
-      if (user) {
-        userName = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || "User";
-        userRole = user.role ?? "user";
-      }
+      if (profile?.name) userName = profile.name;
+      const { data: roleRow } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", params.userId)
+        .maybeSingle();
+      if (roleRow?.role) userRole = roleRow.role;
     }
 
     const { error } = await supabaseAdmin.from("activity_logs").insert({
@@ -65,7 +67,7 @@ export async function logActivity(params: LogActivityParams) {
       entity_id: params.entityId ?? null,
       entity_ref: params.entityRef ?? null,
       description: params.description,
-      metadata: params.metadata ?? {},
+      metadata: (params.metadata ?? {}) as never,
       severity: params.severity ?? "info",
       ip_address: params.ipAddress ?? null,
       created_at: new Date().toISOString(),
