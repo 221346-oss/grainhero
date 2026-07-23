@@ -218,8 +218,10 @@ function GrainBatchesPage() {
       toast.success("Technician assigned to QC task! Status changed to Testing.");
       setAssigningBatchId(null);
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      qc.invalidateQueries({ queryKey: ["tenant-technicians"] });
       qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -229,8 +231,10 @@ function GrainBatchesPage() {
     onSuccess: (_, variables) => {
       toast.success(variables.passed ? "QC Approved! Batch stored." : "QC Rejected! Batch placed on hold.");
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      qc.invalidateQueries({ queryKey: ["tenant-technicians"] });
       qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -519,34 +523,43 @@ function GrainBatchesPage() {
                                 <UserCheck className="w-3 h-3" /> Assign Tech
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-56 p-2" align="start">
-                              <p className="text-xs font-semibold mb-2 text-slate-700 dark:text-slate-300">Assign 1 Technician</p>
+                            <PopoverContent className="w-64 p-2" align="start">
+                              <p className="text-xs font-semibold mb-2 text-slate-700 dark:text-slate-300">Assign 1 Technician (1-to-1)</p>
                               {technicians.length === 0 ? (
                                 <p className="text-xs text-muted-foreground p-2">No technicians available.</p>
                               ) : (
-                                <ul className="space-y-1 max-h-40 overflow-auto">
-                                  {technicians.map((t) => (
-                                    <li key={t.id}>
-                                      <Button
-                                        variant="ghost" size="sm"
-                                        className="w-full justify-start gap-2 h-auto py-1.5"
-                                        disabled={assignMut.isPending}
-                                        onClick={() => assignMut.mutate({ batchId: b.id, techId: t.id })}
-                                      >
-                                        {assignMut.isPending && assignMut.variables?.techId === t.id ? (
-                                          <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-                                        ) : (
-                                          <div className="h-5 w-5 grid place-items-center rounded-full bg-sky-500/15 text-[8px] font-bold text-sky-700 shrink-0">
-                                            {(t.name ?? t.email ?? "?").slice(0, 2).toUpperCase()}
+                                <ul className="space-y-1 max-h-48 overflow-auto">
+                                  {technicians.map((t) => {
+                                    const techObj = t as { id: string; name: string | null; email: string | null; is_busy?: boolean; active_batch_id?: string | null };
+                                    const isBusy = Boolean(techObj.is_busy);
+                                    return (
+                                      <li key={techObj.id}>
+                                        <Button
+                                          variant="ghost" size="sm"
+                                          className={`w-full justify-start gap-2 h-auto py-1.5 ${isBusy ? "opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900" : ""}`}
+                                          disabled={assignMut.isPending || isBusy}
+                                          onClick={() => assignMut.mutate({ batchId: b.id, techId: techObj.id })}
+                                          title={isBusy ? `Busy on batch ${techObj.active_batch_id}` : "Available for assignment"}
+                                        >
+                                          {assignMut.isPending && assignMut.variables?.techId === techObj.id ? (
+                                            <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                                          ) : (
+                                            <div className={`h-5 w-5 grid place-items-center rounded-full text-[8px] font-bold shrink-0 ${isBusy ? "bg-amber-500/20 text-amber-700 dark:text-amber-300" : "bg-sky-500/15 text-sky-700 dark:text-sky-300"}`}>
+                                              {(techObj.name ?? techObj.email ?? "?").slice(0, 2).toUpperCase()}
+                                            </div>
+                                          )}
+                                          <div className="flex-1 min-w-0 text-left">
+                                            <div className="text-xs truncate">{techObj.name ?? techObj.email}</div>
+                                            {isBusy && <div className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">Busy: {techObj.active_batch_id}</div>}
                                           </div>
-                                        )}
-                                        <span className="text-xs truncate">{t.name ?? t.email}</span>
-                                      </Button>
-                                    </li>
-                                  ))}
+                                        </Button>
+                                      </li>
+                                    );
+                                  })}
                                 </ul>
                               )}
                             </PopoverContent>
+
                           </Popover>
                         )}
                       </TableCell>

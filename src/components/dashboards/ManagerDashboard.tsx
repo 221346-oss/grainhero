@@ -37,7 +37,9 @@ export function ManagerDashboard({ name }: { name?: string }) {
             actuators={(data?.actuators ?? []) as never}
             orders={(data?.orders ?? []) as never}
             technicians={(data?.technicians ?? []) as never}
+            incidents={(data?.incidents ?? []) as never}
           />
+
           <ManagerTeamStrip
             technicians={(data?.technicians ?? []) as never}
             incidents={(data?.incidents ?? []) as never}

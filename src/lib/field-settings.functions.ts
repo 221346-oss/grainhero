@@ -62,8 +62,31 @@ export const assignFieldIncident = createServerFn({ method: "POST" })
     assigned_to: z.string().uuid(),
   }).parse(v))
   .handler(async ({ data, context }) => {
+
     const { requireRole } = await import("./rbac.server");
     await requireRole(context.supabase, context.userId, ["admin", "manager", "super_admin"]);
+
+    // Policy: A technician can only work on 1 active task (QC batch or field incident) at a time
+    const { data: activeIncidents } = await context.supabase
+      .from("field_incidents")
+      .select("id, category")
+      .eq("assigned_to", data.assigned_to)
+      .in("status", ["open", "investigating"] as never)
+      .neq("id", data.id);
+
+    if (activeIncidents && activeIncidents.length > 0) {
+      throw new Error(`Technician is already working on an active incident (${activeIncidents[0].category}). Each technician can only handle 1 incident at a time.`);
+    }
+
+    const { data: activeQCBatches } = await context.supabase
+      .from("grain_batches")
+      .select("id, batch_id")
+      .eq("qc_assigned_to", data.assigned_to)
+      .in("qc_status", ["testing", "pending"] as never);
+
+    if (activeQCBatches && activeQCBatches.length > 0) {
+      throw new Error(`Technician is already busy with active QC batch ${activeQCBatches[0].batch_id}.`);
+    }
 
     const { error } = await context.supabase.from("field_incidents")
       .update({
@@ -75,6 +98,8 @@ export const assignFieldIncident = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+
 
 export const getMyAssignedIncidents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

@@ -60,9 +60,10 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .select("id, name, email, department, shift_pattern")
         .eq("admin_id", adminId).limit(20),
       context.supabase.from("field_incidents")
-        .select("id, category, severity, status, created_at, assigned_to")
+        .select("id, category, severity, status, created_at, assigned_to, silo_id, notes")
         .in("status", ["open", "investigating"] as never)
         .order("created_at", { ascending: false }).limit(10),
+
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true })
         .gte("created_at", startISO),
@@ -91,6 +92,25 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
     });
 
     const actuators = actuatorsRes.data ?? [];
+    const rawTechs = techsRes.data ?? [];
+    const activeQC = qcRes.data ?? [];
+    const activeIncidents = incidentsRes.data ?? [];
+    const busyTechMap: Record<string, string> = {};
+    activeQC.forEach((b) => {
+      if (b.qc_assigned_to) busyTechMap[b.qc_assigned_to] = `QC: ${b.batch_id}`;
+    });
+    activeIncidents.forEach((inc) => {
+      if (inc.assigned_to) busyTechMap[inc.assigned_to] = `Incident: ${inc.category}`;
+    });
+
+    const technicians = rawTechs.map((t) => ({
+      ...t,
+      is_busy: Boolean(busyTechMap[t.id]),
+      active_batch_id: busyTechMap[t.id] ?? null,
+    }));
+
+
+
     return {
       range,
       kpis: {
@@ -112,7 +132,8 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       dispatchQueue: dispatchReadyRes.data ?? [],
       actuators,
       orders: ordersRes.data ?? [],
-      technicians: techsRes.data ?? [],
+      technicians,
       incidents: incidentsRes.data ?? [],
     };
+
   });

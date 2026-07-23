@@ -21,6 +21,19 @@ export const assignQCTask = createServerFn({ method: "POST" })
       "super_admin",
     ]);
 
+    // Policy: A technician can only be assigned to 1 active batch (testing/pending) at a time
+    const { data: activeTasks, error: activeErr } = await context.supabase
+      .from("grain_batches")
+      .select("id, batch_id")
+      .eq("qc_assigned_to", data.assigned_to)
+      .in("qc_status", ["testing", "pending"])
+      .neq("id", data.id);
+
+    if (activeErr) throw new Error(activeErr.message);
+    if (activeTasks && activeTasks.length > 0) {
+      throw new Error(`Technician is already assigned to active batch ${activeTasks[0].batch_id}. Each technician can only work on 1 batch at a time.`);
+    }
+
     const { error } = await context.supabase
       .from("grain_batches")
       .update({
@@ -32,6 +45,7 @@ export const assignQCTask = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 // ─── Technician submits quality measurements ──────────────────────────────
 export const submitQCResult = createServerFn({ method: "POST" })
@@ -117,7 +131,7 @@ export const getMyQCTasks = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-// ─── List technicians for manager assignment ─────────────────────────────
+// ─── List technicians for manager assignment (with 1-to-1 availability flag) ─────────────
 export const listTenantTechnicians = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -128,14 +142,49 @@ export const listTenantTechnicians = createServerFn({ method: "GET" })
       .maybeSingle();
     const adminId = prof?.admin_id ?? prof?.id ?? context.userId;
 
-    const { data, error } = await context.supabase
+    const { data: profiles, error } = await context.supabase
       .from("profiles")
       .select("id, name, email, phone")
       .or(`admin_id.eq.${adminId},id.eq.${adminId}`)
       .limit(100);
 
     if (error) throw new Error(error.message);
-    return data ?? [];
+    if (!profiles || profiles.length === 0) return [];
+
+    // Check which technicians have active QC tasks OR active field incidents
+    const techIds = profiles.map((p) => p.id);
+    const [{ data: activeBatches }, { data: activeIncidents }] = await Promise.all([
+      context.supabase
+        .from("grain_batches")
+        .select("qc_assigned_to, batch_id")
+        .in("qc_assigned_to", techIds)
+        .in("qc_status", ["testing", "pending"]),
+      context.supabase
+        .from("field_incidents")
+        .select("assigned_to, category")
+        .in("assigned_to", techIds)
+        .in("status", ["open", "investigating"] as never),
+    ]);
+
+    const busyMap: Record<string, string> = {};
+    if (activeBatches) {
+      activeBatches.forEach((b) => {
+        if (b.qc_assigned_to) busyMap[b.qc_assigned_to] = `QC: ${b.batch_id}`;
+      });
+    }
+    if (activeIncidents) {
+      activeIncidents.forEach((inc) => {
+        if (inc.assigned_to) busyMap[inc.assigned_to] = `Incident: ${inc.category}`;
+      });
+    }
+
+    return profiles.map((p) => ({
+      ...p,
+      is_busy: Boolean(busyMap[p.id]),
+      active_batch_id: busyMap[p.id] ?? null,
+    }));
   });
+
+
 
 

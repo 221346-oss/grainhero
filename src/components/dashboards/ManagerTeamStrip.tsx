@@ -166,13 +166,12 @@ function AssignButton({
 
 export function ManagerTeamStrip({
   technicians,
-  incidents,
 }: {
   technicians: Technician[];
-  incidents: Incident[];
+  incidents?: Incident[];
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="w-full">
       {/* ── Team on shift ── */}
       <div className="rounded-xl border bg-card/60">
         <header className="flex items-center justify-between px-3 py-2 border-b">
@@ -197,11 +196,11 @@ export function ManagerTeamStrip({
               Invite team members to see them here.
             </p>
           ) : (
-            <ul className="grid grid-cols-2 gap-1.5">
+            <ul className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {technicians.map((t) => (
                 <li
                   key={t.id}
-                  className="flex items-center gap-2 rounded-lg border bg-card/50 px-2 py-1.5"
+                  className="flex items-center gap-2 rounded-lg border bg-card/50 px-2.5 py-2"
                 >
                   <div className="h-7 w-7 grid place-items-center rounded-full bg-emerald-500/10 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
                     {initialsOf(t.name, t.email)}
@@ -220,45 +219,6 @@ export function ManagerTeamStrip({
           )}
         </div>
       </div>
-
-      {/* ── Open field incidents ── */}
-      <div className="rounded-xl border bg-card/60">
-        <header className="flex items-center justify-between px-3 py-2 border-b">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="h-3.5 w-3.5 text-emerald-600" />
-            <h3 className="text-xs font-semibold">Open field incidents</h3>
-            <InfoDot text="Field incidents currently open or investigating. Assign a technician directly from this panel." />
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-              {incidents.length}
-            </span>
-          </div>
-        </header>
-        <div className="max-h-[220px] overflow-auto">
-          {incidents.length === 0 ? (
-            <p className="text-xs text-muted-foreground px-3 py-4">
-              No open incidents.
-            </p>
-          ) : (
-            <ul className="divide-y">
-              {incidents.map((i) => (
-                <li
-                  key={i.id}
-                  className="flex items-center justify-between gap-2 px-3 py-2"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-medium truncate capitalize">{i.category.replace(/_/g, " ")}</div>
-                    <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                      <StatusPill s={i.status} />
-                      <SevPill s={i.severity} />
-                    </div>
-                  </div>
-                  <AssignButton incident={i} technicians={technicians} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
     </div>
   );
-}
+}
