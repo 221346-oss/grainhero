@@ -10,6 +10,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Download large model .pkl files (kept out of git; hosted as Lovable assets)
+RUN xargs -n2 -a MODEL_URLS.txt sh -c 'curl -fsSL "$0" -o "$1"' && ls -lh *.pkl
+
 ENV PORT=7860
 EXPOSE 7860
 
