@@ -57,7 +57,7 @@ export function KpiSummary({
   const revPositive = (revenueDeltaPct ?? 0) >= 0;
 
   return (
-    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
+    <section className="rounded-xl bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">KPI Summary</h2>
@@ -70,7 +70,7 @@ export function KpiSummary({
         {/* Revenue hero (65%, LEFT) */}
         <Link
           to="/subscription"
-          className="group rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between"
+          className="group rounded-lg bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Revenue</span>
@@ -95,7 +95,7 @@ export function KpiSummary({
         </Link>
 
         {/* Compact KPI list (35%, RIGHT) */}
-        <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="rounded-lg bg-card overflow-hidden">
           <ul className="divide-y">
             {rows.map((r) => {
               const positive = (r.delta ?? 0) >= 0;

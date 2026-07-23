@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSearch } from "@/components/app/AppSearch";
+import { HeaderSearch } from "@/components/app/HeaderSearch";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { Sun, Moon } from "lucide-react";
@@ -156,8 +156,8 @@ function AuthenticatedLayout() {
             }}
             className="h-14 flex items-center gap-2 sm:gap-3 rounded-2xl bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
           >
-            <div className="flex-1 max-w-2xl mx-auto w-full">
-              <AppSearch />
+            <div className="flex-1 flex items-center justify-center">
+              <HeaderSearch />
             </div>
             <DashboardQuickTabs />
             {/* Upgrade — plan management */}

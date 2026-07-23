@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, Search } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { Badge } from "@/components/ui/badge";
+import { Search } from "lucide-react";
 
 type Row = {
   id: string;
@@ -54,7 +55,7 @@ export function BatchesTable({ rows }: { rows: Row[] }) {
   }, [rows, q, status]);
 
   return (
-    <section className="rounded-xl border bg-card/60 backdrop-blur-sm">
+    <section className="rounded-xl bg-card/60 backdrop-blur-sm">
       <div className="flex flex-wrap items-center gap-2 p-3 border-b border-border/60">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">Your batches</h2>
@@ -68,7 +69,7 @@ export function BatchesTable({ rows }: { rows: Row[] }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search batch, grain, silo"
-              className="pl-7 pr-2 h-7 w-56 max-w-full rounded-full border bg-background text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+              className="pl-7 pr-2 h-7 w-56 max-w-full rounded-full bg-background text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
             />
           </div>
           <div className="flex items-center gap-1">
@@ -80,7 +81,7 @@ export function BatchesTable({ rows }: { rows: Row[] }) {
                   "h-7 px-2.5 rounded-full text-[11px] font-medium capitalize transition " +
                   (status === s
                     ? "bg-emerald-600 text-white"
-                    : "bg-muted/60 text-muted-foreground hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-500/10")
+                    : "text-muted-foreground hover:text-emerald-700 dark:hover:text-emerald-400")
                 }
               >
                 {s}

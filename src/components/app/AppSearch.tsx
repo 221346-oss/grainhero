@@ -3,10 +3,10 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Search, ArrowRight, Command, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NavTarget = { label: string; to: string; group: string; keywords?: string };
+export type NavTarget = { label: string; to: string; group: string; keywords?: string };
 
 // Global nav catalog — every authenticated destination.
-const NAV_TARGETS: NavTarget[] = [
+export const NAV_TARGETS: NavTarget[] = [
   { label: "Dashboard", to: "/dashboard", group: "Home", keywords: "home overview" },
   // Operations
   { label: "Grain Batches", to: "/grain-batches", group: "Operations", keywords: "lots inventory" },

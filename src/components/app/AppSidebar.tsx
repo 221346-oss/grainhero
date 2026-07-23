@@ -1,5 +1,5 @@
 import React from "react";
-import { useRouterState, useNavigate } from "@tanstack/react-router";
+import { useRouterState, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Sidebar } from "@/components/ui/sidebar";
@@ -133,12 +133,16 @@ export function AppSidebar({ hidden = false }: { hidden?: boolean }) {
 
         {/* Logo — fixed at the top, outside the dock, never hidden by scroll */}
         <div className="px-2 py-4">
-          <span className="text-xl font-black tracking-tight select-none">
+          <Link
+            to="/dashboard"
+            aria-label="GrainHero dashboard"
+            className="text-xl font-black tracking-tight select-none inline-block rounded-md transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+          >
             <span className="text-[#2FAC0C] text-2xl">G</span>
             <span className="text-sidebar-foreground">rain</span>
             <span className="text-[#2FAC0C] text-2xl">H</span>
             <span className="text-sidebar-foreground">ero</span>
-          </span>
+          </Link>
         </div>
 
         {/* Floating dock — curved rectangle, vertically centered on the left */}

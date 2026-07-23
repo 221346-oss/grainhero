@@ -47,7 +47,7 @@ export function RecentBatchesCard() {
   const { data } = useExtras();
   const rows = data?.recentBatches ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="border-0 shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "batches" }} title="Batches" count={rows.length} />
       <CardContent className="p-2 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">No batches</p>}
@@ -69,7 +69,7 @@ export function RecentAlertsCard() {
   const { data } = useExtras();
   const rows = data?.recentAlerts ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="border-0 shadow-sm">
       <CardHeaderLink to="/grain-alerts" title="Alerts" count={rows.length} />
       <CardContent className="p-2 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">All clear</p>}
@@ -90,12 +90,12 @@ export function TeamCard() {
   const { data } = useExtras();
   const rows = data?.team ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="border-0 shadow-sm">
       <CardHeaderLink to="/team-management" title="Team" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No members yet</p>}
         {rows.slice(0, 4).map((u) => (
-          <div key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-border/50">
+          <div key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-muted/40">
             <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[10px] font-semibold shrink-0">{(u.name ?? u.email ?? "?").slice(0, 2).toUpperCase()}</div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium truncate">{u.name ?? "—"}</p>
@@ -112,7 +112,7 @@ export function ActuatorsCard() {
   const { data } = useExtras();
   const rows = data?.actuators ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="border-0 shadow-sm">
       <CardHeaderLink to="/actuators" title="Actuators" count={rows.length} />
       <CardContent className="p-3 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No devices</p>}
@@ -141,7 +141,7 @@ export function SilosOccupancyCard() {
   const { data } = useExtras();
   const rows = data?.silos ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="border-0 shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
