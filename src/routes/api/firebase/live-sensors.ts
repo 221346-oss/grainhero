@@ -3,12 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 /**
  * GET /api/firebase/live-sensors
  *
- * Replaces GH1 dashboard.js GET /api/firebase/live-sensors handler (line 1872).
- * Consumed by:
- *   - GH2 frontend_code/hooks/useFirebaseSensor.ts
- *   - GH1 frontend farmHomeFrontend-main/hooks/useFirebaseSensor.ts
- *
- * Returns the same JSON shape GH1 returned:
+ * Consumed by `src/hooks/use-firebase-sensor.ts`.
+ * Returns:
  *   { success: true, devices: { [deviceId]: { temperature, humidity, tvoc_ppb, timestamp } } }
  *
  * Auth: requires valid Supabase session cookie (same as all authenticated routes).
