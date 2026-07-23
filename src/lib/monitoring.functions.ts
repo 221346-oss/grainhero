@@ -102,7 +102,7 @@ export const getIncidents = createServerFn({ method: "GET" })
     const list = (alerts ?? []) as any[];
     const totals = {
       total: list.length,
-      open: list.filter((x) => x.status === "open" || x.status === "active").length,
+      open: list.filter((x) => x.status !== "resolved").length,
       resolved: list.filter((x) => x.status === "resolved").length,
       acknowledged: list.filter((x) => x.acknowledged_at && !x.resolved_at).length,
     };

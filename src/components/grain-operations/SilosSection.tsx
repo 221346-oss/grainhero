@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Warehouse, Plus, Search, Edit2, Trash2, Eye, Loader2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Warehouse, Plus, Search, Edit2, Trash2, Eye, Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
-import { listSilos, upsertSilo, deleteSilo, listWarehouses } from "@/lib/operations.functions";
+import { InlineRename } from "@/components/app/InlineRename";
+import { listSilos, upsertSilo, deleteSilo, listWarehouses, renameSilo } from "@/lib/operations.functions";
+import { parsePlanLimitError } from "@/lib/plan-gate";
+import { getMyRole } from "@/lib/roles.functions";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
+
+function friendlySaveError(e: Error): string {
+  const limit = parsePlanLimitError(e);
+  if (limit) return `Your plan allows up to ${limit.limit} silos (${limit.used} in use). Upgrade to add more.`;
+  return e.message || "Save failed";
+}
+
+// Same allow-list used for team invite/manage — technicians can't rename.
+const RENAME_ROLES = ["super_admin", "admin", "manager"];
 
 type Silo = {
   id: string;
@@ -40,6 +54,7 @@ type Warehouse = { id: string; name: string; warehouse_id: string };
 
 type FormState = {
   id?: string;
+  name: string;
   warehouse_id: string;
   capacity_kg: string;
   location_description: string;
@@ -48,6 +63,7 @@ type FormState = {
 };
 
 const emptyForm: FormState = {
+  name: "",
   warehouse_id: "",
   capacity_kg: "",
   location_description: "",
@@ -60,11 +76,16 @@ export function SilosSection() {
   const listWh = useServerFn(listWarehouses);
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
+  const rename = useServerFn(renameSilo);
+  const fetchRole = useServerFn(getMyRole);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
+  const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const warehouses = warehousesData ?? [];
+  const canRename = RENAME_ROLES.includes(me?.role ?? "");
+  const { canAddSilo, siloLimitMessage } = usePlanLimits();
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -89,6 +110,7 @@ export function SilosSection() {
       upsert({
         data: {
           id: fs.id,
+          name: fs.name.trim() || undefined,
           warehouse_id: fs.warehouse_id,
           capacity_kg: Number(fs.capacity_kg),
           location_description: fs.location_description.trim() || null,
@@ -104,7 +126,17 @@ export function SilosSection() {
       setEditOpen(false);
       setForm(emptyForm);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    onError: (e: Error) => toast.error(friendlySaveError(e)),
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: (payload: { id: string; name: string }) => rename({ data: payload }),
+    onSuccess: () => {
+      toast.success("Silo renamed");
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Rename failed"),
   });
 
   const deleteMutation = useMutation({
@@ -125,6 +157,7 @@ export function SilosSection() {
   function openEdit(s: Silo) {
     setForm({
       id: s.id,
+      name: s.name ?? "",
       warehouse_id: s.warehouse_id ?? "",
       capacity_kg: String(s.capacity_kg ?? ""),
       location_description: s.location?.description ?? "",
@@ -151,37 +184,55 @@ export function SilosSection() {
               <SelectItem value="maintenance">Maintenance</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New silo</Button>
+          {canAddSilo ? (
+            <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New silo</Button>
+          ) : (
+            <Button asChild variant="outline" className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30">
+              <Link to="/orders" title={siloLimitMessage ?? "Silo limit reached"}>
+                <ShoppingCart className="w-4 h-4" /> Request new silo
+              </Link>
+            </Button>
+          )}
         </div>
+        {!canAddSilo && siloLimitMessage && (
+          <p className="text-xs text-amber-700 dark:text-amber-400 -mt-1">{siloLimitMessage}</p>
+        )}
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-white/40">
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-white/40">
+          <div className="py-8 text-center text-muted-foreground">
             <p className="text-sm">No silos yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-white/5 border-b border-white/10">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Silo</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Warehouse</th>
-                  <th className="px-3 py-2 text-right font-semibold text-white/50 text-xs uppercase tracking-wider">Capacity</th>
-                  <th className="px-3 py-2 text-right font-semibold text-white/50 text-xs uppercase tracking-wider">Current</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-white/50 text-xs uppercase tracking-wider">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Silo</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Warehouse</th>
+                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Capacity</th>
+                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Current</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {rows.map((s) => (
-                  <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-3 py-2 text-white font-medium">{s.name}</td>
-                    <td className="px-3 py-2 text-white/70">{s.warehouses?.name ?? "—"}</td>
-                    <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(s.capacity_kg ?? 0).toLocaleString()} kg</td>
-                    <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(s.current_occupancy_kg ?? 0).toLocaleString()} kg</td>
+                  <tr key={s.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
+                    <td className="px-3 py-2 text-foreground font-medium">
+                      <InlineRename
+                        value={s.name}
+                        canRename={canRename}
+                        textClassName="text-foreground font-medium"
+                        onSave={async (next) => { await renameMutation.mutateAsync({ id: s.id, name: next }); }}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{s.warehouses?.name ?? "—"}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(s.capacity_kg ?? 0).toLocaleString()} kg</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(s.current_occupancy_kg ?? 0).toLocaleString()} kg</td>
                     <td className="px-3 py-2"><StatusBadge value={s.status} /></td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1">
@@ -207,6 +258,14 @@ export function SilosSection() {
             </DialogDescription>
           </DialogHeader>
           <form id="silo-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
+            <div>
+              <Label>Name</Label>
+              {form.id && !canRename ? (
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">{form.name || "—"}</div>
+              ) : (
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Auto-generated if left blank" />
+              )}
+            </div>
             <div>
               <Label>Warehouse *</Label>
               <Select value={form.warehouse_id} onValueChange={(v) => setForm({ ...form, warehouse_id: v })}>
@@ -258,7 +317,16 @@ export function SilosSection() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle>{selected.name}</DialogTitle>
+                <DialogTitle>
+                  <InlineRename
+                    value={selected.name}
+                    canRename={canRename}
+                    onSave={async (next) => {
+                      await renameMutation.mutateAsync({ id: selected.id, name: next });
+                      setSelected((prev) => (prev ? { ...prev, name: next } : prev));
+                    }}
+                  />
+                </DialogTitle>
                 <DialogDescription>{selected.silo_id}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">

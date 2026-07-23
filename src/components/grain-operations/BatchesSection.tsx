@@ -24,9 +24,10 @@ import { RowActions } from "@/components/app/RowActions";
 import { StatusBadge } from "@/components/app/DataListPage";
 import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
-  dispatchGrainBatch, logSpoilageEvent, listSilos, listBuyers,
+  logSpoilageEvent, listSilos,
 } from "@/lib/operations.functions";
 import { listSuppliers } from "@/lib/suppliers.functions";
+import { cn } from "@/lib/utils";
 
 const GRAIN_TYPES = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
 const STATUSES = ["stored","dispatched","sold","damaged","expired","on_hold","processing"] as const;
@@ -49,8 +50,6 @@ type Batch = {
   spoilage_label: string | null;
   risk_score: number | null;
   intake_date: string | null;
-  harvest_date: string | null;
-  expected_dispatch_date: string | null;
   actual_dispatch_date: string | null;
   farmer_name: string | null;
   farmer_contact: string | null;
@@ -70,7 +69,6 @@ type Batch = {
 };
 
 type Silo = { id: string; silo_id: string; name: string; capacity_kg: number; current_occupancy_kg: number | null; warehouse_id: string | null; warehouses?: { name: string } | null };
-type Buyer = { id: string; name: string; company_name: string | null };
 
 type Form = {
   id?: string;
@@ -87,8 +85,6 @@ type Form = {
   farmer_name: string; // fallback / anonymous label
   farmer_contact: string;
   source_location: string;
-  harvest_date: string;
-  expected_dispatch_date: string;
   purchase_price_per_kg: string;
   intake_temperature: string;
   intake_humidity: string;
@@ -101,30 +97,84 @@ const emptyForm: Form = {
   moisture_content: "", protein_content: "", test_weight: "",
   supplier_id: "", source_kind: "external",
   farmer_name: "", farmer_contact: "", source_location: "",
-  harvest_date: "", expected_dispatch_date: "",
   purchase_price_per_kg: "", intake_temperature: "", intake_humidity: "",
   status: "stored", notes: "",
 };
 
-type Dispatch = {
-  buyer_id: string;
-  new_buyer_name: string;
-  new_buyer_phone: string;
-  new_buyer_email: string;
-  sell_price_per_kg: string;
-  dispatched_quantity_kg: string;
-  vehicle_number: string;
-  driver_name: string;
-  driver_contact: string;
-  destination: string;
-  notes: string;
-};
+type FormErrors = Partial<Record<keyof Form, string>>;
 
-const emptyDispatch: Dispatch = {
-  buyer_id: "", new_buyer_name: "", new_buyer_phone: "", new_buyer_email: "",
-  sell_price_per_kg: "", dispatched_quantity_kg: "",
-  vehicle_number: "", driver_name: "", driver_contact: "", destination: "", notes: "",
-};
+// Mirrors the bounds enforced server-side in operations.functions.ts' batchInput
+// zod schema, so bad values are caught before they ever leave the browser.
+function validateBatchForm(f: Form): FormErrors {
+  const errors: FormErrors = {};
+
+  const checkRange = (raw: string, min: number | null, max: number | null, label: string): string | undefined => {
+    if (raw.trim() === "") return undefined; // optional fields — empty is valid
+    const n = Number(raw);
+    if (Number.isNaN(n)) return `${label} must be a number`;
+    if (min !== null && n < min) return `${label} must be at least ${min}`;
+    if (max !== null && n > max) return `${label} must be at most ${max}`;
+    return undefined;
+  };
+
+  if (f.quantity_kg.trim() !== "") {
+    const qty = Number(f.quantity_kg);
+    if (Number.isNaN(qty)) errors.quantity_kg = "Quantity must be a number";
+    else if (qty <= 0) errors.quantity_kg = "Quantity must be greater than 0";
+  }
+
+  const moistureErr = checkRange(f.moisture_content, 0, 100, "Moisture");
+  if (moistureErr) errors.moisture_content = moistureErr;
+
+  const proteinErr = checkRange(f.protein_content, 0, 100, "Protein");
+  if (proteinErr) errors.protein_content = proteinErr;
+
+  const testWeightErr = checkRange(f.test_weight, 0, null, "Test weight");
+  if (testWeightErr) errors.test_weight = testWeightErr;
+
+  const priceErr = checkRange(f.purchase_price_per_kg, 0, null, "Purchase price");
+  if (priceErr) errors.purchase_price_per_kg = priceErr;
+
+  const humidityErr = checkRange(f.intake_humidity, 0, 100, "Intake humidity");
+  if (humidityErr) errors.intake_humidity = humidityErr;
+
+  // Intake temperature has no real bound (cold storage can be well below 0°C) — just must be numeric.
+  if (f.intake_temperature.trim() !== "" && Number.isNaN(Number(f.intake_temperature))) {
+    errors.intake_temperature = "Intake temp must be a number";
+  }
+
+  return errors;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-xs text-red-600 mt-1">{message}</p>;
+}
+
+type SpoilageErrors = Partial<Record<keyof Spoilage, string>>;
+
+function validateSpoilageForm(s: Spoilage, maxLossKg: number | null): SpoilageErrors {
+  const errors: SpoilageErrors = {};
+
+  if (s.estimated_loss_kg.trim() !== "") {
+    const loss = Number(s.estimated_loss_kg);
+    if (Number.isNaN(loss)) errors.estimated_loss_kg = "Loss must be a number";
+    else if (loss < 0) errors.estimated_loss_kg = "Loss can't be negative";
+    else if (maxLossKg != null && loss > maxLossKg) errors.estimated_loss_kg = `Can't exceed batch quantity (${maxLossKg.toLocaleString()} kg)`;
+  }
+
+  if (s.temperature.trim() !== "" && Number.isNaN(Number(s.temperature))) {
+    errors.temperature = "Temp must be a number";
+  }
+
+  if (s.humidity.trim() !== "") {
+    const h = Number(s.humidity);
+    if (Number.isNaN(h)) errors.humidity = "Humidity must be a number";
+    else if (h < 0 || h > 100) errors.humidity = "Humidity must be between 0 and 100";
+  }
+
+  return errors;
+}
 
 type Spoilage = {
   type: string; severity: "low"|"medium"|"high"|"critical";
@@ -137,22 +187,18 @@ const emptySpoilage: Spoilage = {
   temperature: "", humidity: "", action_taken: "",
 };
 
-export function BatchesSection() {
+export function BatchesSection({ initialStatus }: { initialStatus?: string } = {}) {
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
-  const listBuyerFn = useServerFn(listBuyers);
   const listSupFn = useServerFn(listSuppliers);
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
-  const dispatchFn = useServerFn(dispatchGrainBatch);
   const spoilageFn = useServerFn(logSpoilageEvent);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
-  const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
   const silos = silosData ?? [];
-  const buyers = buyersData ?? [];
   const suppliersQ = useQuery({
     queryKey: ["suppliers-mini"],
     queryFn: () => listSupFn({ data: {} }),
@@ -162,18 +208,27 @@ export function BatchesSection() {
   const suppliers: any[] = (suppliersQ.data?.suppliers ?? []) as any[];
 
   const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>(
+    initialStatus && (STATUSES as readonly string[]).includes(initialStatus) ? initialStatus : "all",
+  );
   const [grainFilter, setGrainFilter] = useState("all");
   const [selected, setSelected] = useState<Batch | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [dispatchOpen, setDispatchOpen] = useState(false);
   const [spoilageOpen, setSpoilageOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
-  const [dispatch, setDispatch] = useState<Dispatch>(emptyDispatch);
   const [spoilage, setSpoilage] = useState<Spoilage>(emptySpoilage);
+
+  const formErrors = useMemo(() => validateBatchForm(form), [form]);
+  const hasFormErrors = Object.keys(formErrors).length > 0;
+
+  const spoilageErrors = useMemo(
+    () => validateSpoilageForm(spoilage, selected != null ? Number(selected.quantity_kg) : null),
+    [spoilage, selected],
+  );
+  const hasSpoilageErrors = Object.keys(spoilageErrors).length > 0;
 
   const rows = useMemo(() => {
     const all = (data ?? []) as Batch[];
@@ -218,22 +273,33 @@ export function BatchesSection() {
       unit_cost: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
       farmer_contact: f.farmer_contact.trim() || null,
       source_location: f.source_location.trim() || null,
-      harvest_date: f.harvest_date || null,
-      expected_dispatch_date: f.expected_dispatch_date || null,
       purchase_price_per_kg: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
       intake_temperature: f.intake_temperature ? Number(f.intake_temperature) : null,
       intake_humidity: f.intake_humidity ? Number(f.intake_humidity) : null,
       status: f.status,
       notes: f.notes.trim() || null,
     }}),
-    onSuccess: () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess: (row: any) => {
+      // Safety net: some server-fn error shapes resolve instead of rejecting
+      // (e.g. an { error } payload survives serialization as a 200). Treat those
+      // — and a missing row — as a failure rather than silently "succeeding".
+      const softError = row?.error ?? (row == null ? "Save failed — no data returned" : null);
+      if (softError) {
+        toast.error(typeof softError === "string" ? softError : "Save failed");
+        return;
+      }
       toast.success(form.id ? "Batch updated" : "Batch created");
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setEditOpen(false); setForm(emptyForm);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (e: any) => {
+      const message = e?.message || (typeof e === "string" ? e : null) || "Save failed";
+      toast.error(message);
+    },
   });
 
   const deleteMut = useMutation({
@@ -248,37 +314,6 @@ export function BatchesSection() {
     onError: (e: Error) => toast.error(e.message || "Delete failed"),
   });
 
-  const dispatchMut = useMutation({
-    mutationFn: (payload: { id: string; d: Dispatch }) => {
-      const useExisting = !!payload.d.buyer_id;
-      return dispatchFn({ data: {
-        id: payload.id,
-        buyer_id: useExisting ? payload.d.buyer_id : null,
-        new_buyer: useExisting ? null : {
-          name: payload.d.new_buyer_name,
-          contact_phone: payload.d.new_buyer_phone || null,
-          contact_email: payload.d.new_buyer_email || null,
-        },
-        sell_price_per_kg: Number(payload.d.sell_price_per_kg),
-        dispatched_quantity_kg: Number(payload.d.dispatched_quantity_kg),
-        vehicle_number: payload.d.vehicle_number || null,
-        driver_name: payload.d.driver_name || null,
-        driver_contact: payload.d.driver_contact || null,
-        destination: payload.d.destination || null,
-        notes: payload.d.notes || null,
-      }});
-    },
-    onSuccess: () => {
-      toast.success("Batch dispatched");
-      qc.invalidateQueries({ queryKey: ["grain-batches"] });
-      qc.invalidateQueries({ queryKey: ["silos"] });
-      qc.invalidateQueries({ queryKey: ["buyers"] });
-      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      setDispatchOpen(false); setDispatch(emptyDispatch);
-    },
-    onError: (e: Error) => toast.error(e.message || "Dispatch failed"),
-  });
-
   const spoilageMut = useMutation({
     mutationFn: (payload: { id: string; s: Spoilage }) => spoilageFn({ data: {
       id: payload.id,
@@ -290,13 +325,17 @@ export function BatchesSection() {
       humidity: payload.s.humidity ? Number(payload.s.humidity) : null,
       action_taken: payload.s.action_taken || null,
     }}),
-    onSuccess: () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess: (row: any) => {
+      const softError = row?.error ?? (row == null ? "Log failed — no data returned" : null);
+      if (softError) { toast.error(typeof softError === "string" ? softError : "Log failed"); return; }
       toast.success("Spoilage event logged");
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
       qc.invalidateQueries({ queryKey: ["grain-alerts"] });
       setSpoilageOpen(false); setSpoilage(emptySpoilage);
     },
-    onError: (e: Error) => toast.error(e.message || "Log failed"),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (e: any) => toast.error(e?.message || (typeof e === "string" ? e : null) || "Log failed"),
   });
 
   function openCreate() {
@@ -319,8 +358,6 @@ export function BatchesSection() {
       farmer_name: b.farmer_name ?? "",
       farmer_contact: b.farmer_contact ?? "",
       source_location: b.source_location ?? "",
-      harvest_date: b.harvest_date ?? "",
-      expected_dispatch_date: b.expected_dispatch_date ?? "",
       purchase_price_per_kg: b.purchase_price_per_kg != null ? String(b.purchase_price_per_kg) : "",
       intake_temperature: b.intake_conditions?.temperature != null ? String(b.intake_conditions.temperature) : "",
       intake_humidity: b.intake_conditions?.humidity != null ? String(b.intake_conditions.humidity) : "",
@@ -328,12 +365,6 @@ export function BatchesSection() {
       notes: b.notes ?? "",
     });
     setEditOpen(true);
-  }
-  function openDispatch(b: Batch) {
-    setSelected(b);
-    const remaining = Number(b.quantity_kg) - Number(b.dispatched_quantity_kg ?? 0);
-    setDispatch({ ...emptyDispatch, dispatched_quantity_kg: String(remaining) });
-    setDispatchOpen(true);
   }
   function openSpoilage(b: Batch) {
     setSelected(b);
@@ -410,7 +441,7 @@ export function BatchesSection() {
                   const supplier = b.farmer_name ?? "—";
                   const intake = Number(b.quantity_kg ?? 0);
                   const remaining = Math.max(0, intake - Number(b.dispatched_quantity_kg ?? 0));
-                  const intakeDate = b.harvest_date ?? b.intake_date ?? null;
+                  const intakeDate = b.intake_date ?? null;
                   return (
                     <TableRow key={b.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
                       <TableCell className="font-medium">{b.batch_id}</TableCell>
@@ -469,6 +500,11 @@ export function BatchesSection() {
             if (!form.purchase_price_per_kg || Number(form.purchase_price_per_kg) <= 0) {
               toast.error("Purchase price / kg is required for cost tracking"); return;
             }
+            if (hasFormErrors) {
+              // Enter-to-submit bypasses the disabled submit button, so re-check here too.
+              toast.error("Fix the highlighted fields before submitting");
+              return;
+            }
             saveMut.mutate(form);
           }}>
             <div className="grid sm:grid-cols-2 gap-3">
@@ -487,7 +523,12 @@ export function BatchesSection() {
               </div>
               <div>
                 <Label>Quantity (kg) *</Label>
-                <Input type="number" min={1} required value={form.quantity_kg} onChange={(e) => setForm({ ...form, quantity_kg: e.target.value })} />
+                <Input
+                  type="number" min={1} required value={form.quantity_kg}
+                  onChange={(e) => setForm({ ...form, quantity_kg: e.target.value })}
+                  className={cn(formErrors.quantity_kg && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={formErrors.quantity_kg} />
               </div>
               <div>
                 <Label>Grade</Label>
@@ -518,19 +559,39 @@ export function BatchesSection() {
               </div>
               <div>
                 <Label>Moisture %</Label>
-                <Input type="number" step="0.1" value={form.moisture_content} onChange={(e) => setForm({ ...form, moisture_content: e.target.value })} />
+                <Input
+                  type="number" step="0.1" min={0} max={100} value={form.moisture_content}
+                  onChange={(e) => setForm({ ...form, moisture_content: e.target.value })}
+                  className={cn(formErrors.moisture_content && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={formErrors.moisture_content} />
               </div>
               <div>
                 <Label>Protein %</Label>
-                <Input type="number" step="0.1" value={form.protein_content} onChange={(e) => setForm({ ...form, protein_content: e.target.value })} />
+                <Input
+                  type="number" step="0.1" min={0} max={100} value={form.protein_content}
+                  onChange={(e) => setForm({ ...form, protein_content: e.target.value })}
+                  className={cn(formErrors.protein_content && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={formErrors.protein_content} />
               </div>
               <div>
                 <Label>Test weight</Label>
-                <Input type="number" step="0.1" value={form.test_weight} onChange={(e) => setForm({ ...form, test_weight: e.target.value })} />
+                <Input
+                  type="number" step="0.1" min={0} value={form.test_weight}
+                  onChange={(e) => setForm({ ...form, test_weight: e.target.value })}
+                  className={cn(formErrors.test_weight && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={formErrors.test_weight} />
               </div>
               <div>
                 <Label>Purchase $/kg</Label>
-                <Input type="number" step="0.01" value={form.purchase_price_per_kg} onChange={(e) => setForm({ ...form, purchase_price_per_kg: e.target.value })} />
+                <Input
+                  type="number" step="0.01" min={0} value={form.purchase_price_per_kg}
+                  onChange={(e) => setForm({ ...form, purchase_price_per_kg: e.target.value })}
+                  className={cn(formErrors.purchase_price_per_kg && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={formErrors.purchase_price_per_kg} />
               </div>
               <div>
                 <Label>Source kind</Label>
@@ -591,20 +652,22 @@ export function BatchesSection() {
                 <Input value={form.source_location} onChange={(e) => setForm({ ...form, source_location: e.target.value })} placeholder="Village, district, region" />
               </div>
               <div>
-                <Label>Harvest date</Label>
-                <Input type="date" value={form.harvest_date} onChange={(e) => setForm({ ...form, harvest_date: e.target.value })} />
-              </div>
-              <div>
-                <Label>Expected dispatch</Label>
-                <Input type="date" value={form.expected_dispatch_date} onChange={(e) => setForm({ ...form, expected_dispatch_date: e.target.value })} />
-              </div>
-              <div>
                 <Label>Intake temp °C</Label>
-                <Input type="number" step="0.1" value={form.intake_temperature} onChange={(e) => setForm({ ...form, intake_temperature: e.target.value })} />
+                <Input
+                  type="number" step="0.1" value={form.intake_temperature}
+                  onChange={(e) => setForm({ ...form, intake_temperature: e.target.value })}
+                  className={cn(formErrors.intake_temperature && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={formErrors.intake_temperature} />
               </div>
               <div>
                 <Label>Intake humidity %</Label>
-                <Input type="number" step="0.1" value={form.intake_humidity} onChange={(e) => setForm({ ...form, intake_humidity: e.target.value })} />
+                <Input
+                  type="number" step="0.1" min={0} max={100} value={form.intake_humidity}
+                  onChange={(e) => setForm({ ...form, intake_humidity: e.target.value })}
+                  className={cn(formErrors.intake_humidity && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={formErrors.intake_humidity} />
               </div>
               {form.id && (
                 <div className="sm:col-span-2">
@@ -625,7 +688,7 @@ export function BatchesSection() {
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button form="batch-form" type="submit" disabled={saveMut.isPending || !form.grain_type || !form.quantity_kg || !form.silo_id}>
+            <Button form="batch-form" type="submit" disabled={saveMut.isPending || !form.grain_type || !form.quantity_kg || !form.silo_id || hasFormErrors}>
               {saveMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : form.id ? "Save changes" : "Create batch"}
             </Button>
           </DialogFooter>
@@ -654,7 +717,6 @@ export function BatchesSection() {
                 <Row label="Silo">{selected.silos?.name ?? "—"}</Row>
                 <Row label="Farmer">{selected.farmer_name ?? "—"}{selected.farmer_contact ? ` · ${selected.farmer_contact}` : ""}</Row>
                 <Row label="Source">{selected.source_location ?? "—"}</Row>
-                <Row label="Harvest">{selected.harvest_date ? new Date(selected.harvest_date).toLocaleDateString() : "—"}</Row>
                 {selected.intake_date && <Row label="Intake">{new Date(selected.intake_date).toLocaleDateString()}</Row>}
                 {selected.moisture_content != null && <Row label="Moisture">{selected.moisture_content}%</Row>}
                 {selected.protein_content != null && <Row label="Protein">{selected.protein_content}%</Row>}
@@ -662,7 +724,14 @@ export function BatchesSection() {
               </div>
               <DialogFooter className="gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => { setSelected(b => b); setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
-                <Button size="sm" onClick={() => { setViewOpen(false); openDispatch(selected); }} className="gap-1"><Truck className="w-4 h-4" /> Dispatch</Button>
+                {/* Dispatch happens from the silo's mixed stock, not a single batch — see dispatchFromSilo/createDispatchFromSilo. */}
+                {selected.silos && (
+                  <Button size="sm" asChild className="gap-1">
+                    <Link to="/silos/$siloId" params={{ siloId: selected.silos.id }} onClick={() => setViewOpen(false)}>
+                      <Truck className="w-4 h-4" /> Dispatch from {selected.silos.name}
+                    </Link>
+                  </Button>
+                )}
               </DialogFooter>
             </>
           )}
@@ -687,79 +756,6 @@ export function BatchesSection() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Dispatch Dialog */}
-      <Dialog open={dispatchOpen} onOpenChange={(o) => { setDispatchOpen(o); if (!o) setDispatch(emptyDispatch); }}>
-        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Truck className="w-5 h-5 text-emerald-600" /> Dispatch batch</DialogTitle>
-            <DialogDescription>{selected?.batch_id} · {selected?.grain_type}</DialogDescription>
-          </DialogHeader>
-          <form id="dispatch-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); if (selected) dispatchMut.mutate({ id: selected.id, d: dispatch }); }}>
-            <div>
-              <Label>Buyer</Label>
-              <Select value={dispatch.buyer_id} onValueChange={(v) => setDispatch({ ...dispatch, buyer_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select existing buyer" /></SelectTrigger>
-                <SelectContent>
-                  {buyers.map(b => <SelectItem key={b.id} value={b.id}>{b.name}{b.company_name ? ` · ${b.company_name}` : ""}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-slate-500 mt-1">Or enter a new buyer below</p>
-            </div>
-            {!dispatch.buyer_id && (
-              <div className="grid sm:grid-cols-2 gap-2 rounded-md border border-slate-200 p-3 bg-slate-50">
-                <div className="sm:col-span-2">
-                  <Label className="text-xs">New buyer name</Label>
-                  <Input value={dispatch.new_buyer_name} onChange={(e) => setDispatch({ ...dispatch, new_buyer_name: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Phone</Label>
-                  <Input value={dispatch.new_buyer_phone} onChange={(e) => setDispatch({ ...dispatch, new_buyer_phone: e.target.value })} />
-                </div>
-                <div>
-                  <Label className="text-xs">Email</Label>
-                  <Input value={dispatch.new_buyer_email} onChange={(e) => setDispatch({ ...dispatch, new_buyer_email: e.target.value })} />
-                </div>
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Quantity (kg) *</Label>
-                <Input type="number" min={1} required value={dispatch.dispatched_quantity_kg} onChange={(e) => setDispatch({ ...dispatch, dispatched_quantity_kg: e.target.value })} />
-              </div>
-              <div>
-                <Label>Sell $/kg *</Label>
-                <Input type="number" step="0.01" min={0.01} required value={dispatch.sell_price_per_kg} onChange={(e) => setDispatch({ ...dispatch, sell_price_per_kg: e.target.value })} />
-              </div>
-              <div>
-                <Label>Vehicle #</Label>
-                <Input value={dispatch.vehicle_number} onChange={(e) => setDispatch({ ...dispatch, vehicle_number: e.target.value })} />
-              </div>
-              <div>
-                <Label>Destination</Label>
-                <Input value={dispatch.destination} onChange={(e) => setDispatch({ ...dispatch, destination: e.target.value })} />
-              </div>
-              <div>
-                <Label>Driver</Label>
-                <Input value={dispatch.driver_name} onChange={(e) => setDispatch({ ...dispatch, driver_name: e.target.value })} />
-              </div>
-              <div>
-                <Label>Driver phone</Label>
-                <Input value={dispatch.driver_contact} onChange={(e) => setDispatch({ ...dispatch, driver_contact: e.target.value })} />
-              </div>
-              <div className="col-span-2">
-                <Label>Notes</Label>
-                <Textarea rows={2} value={dispatch.notes} onChange={(e) => setDispatch({ ...dispatch, notes: e.target.value })} />
-              </div>
-            </div>
-          </form>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDispatchOpen(false)}>Cancel</Button>
-            <Button form="dispatch-form" type="submit" disabled={dispatchMut.isPending || !dispatch.sell_price_per_kg || !dispatch.dispatched_quantity_kg || (!dispatch.buyer_id && !dispatch.new_buyer_name)}>
-              {dispatchMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm dispatch"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Spoilage Dialog */}
       <Dialog open={spoilageOpen} onOpenChange={(o) => { setSpoilageOpen(o); if (!o) setSpoilage(emptySpoilage); }}>
@@ -768,7 +764,11 @@ export function BatchesSection() {
             <DialogTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-rose-600" /> Log spoilage event</DialogTitle>
             <DialogDescription>{selected?.batch_id}</DialogDescription>
           </DialogHeader>
-          <form id="spoilage-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); if (selected) spoilageMut.mutate({ id: selected.id, s: spoilage }); }}>
+          <form id="spoilage-form" className="grid gap-3 py-2" onSubmit={(e) => {
+            e.preventDefault();
+            if (hasSpoilageErrors) { toast.error("Fix the highlighted fields before submitting"); return; }
+            if (selected) spoilageMut.mutate({ id: selected.id, s: spoilage });
+          }}>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label>Type</Label>
@@ -798,15 +798,30 @@ export function BatchesSection() {
               </div>
               <div>
                 <Label>Est. loss (kg)</Label>
-                <Input type="number" value={spoilage.estimated_loss_kg} onChange={(e) => setSpoilage({ ...spoilage, estimated_loss_kg: e.target.value })} />
+                <Input
+                  type="number" min={0} value={spoilage.estimated_loss_kg}
+                  onChange={(e) => setSpoilage({ ...spoilage, estimated_loss_kg: e.target.value })}
+                  className={cn(spoilageErrors.estimated_loss_kg && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={spoilageErrors.estimated_loss_kg} />
               </div>
               <div>
                 <Label>Temp °C</Label>
-                <Input type="number" step="0.1" value={spoilage.temperature} onChange={(e) => setSpoilage({ ...spoilage, temperature: e.target.value })} />
+                <Input
+                  type="number" step="0.1" value={spoilage.temperature}
+                  onChange={(e) => setSpoilage({ ...spoilage, temperature: e.target.value })}
+                  className={cn(spoilageErrors.temperature && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={spoilageErrors.temperature} />
               </div>
               <div>
                 <Label>Humidity %</Label>
-                <Input type="number" step="0.1" value={spoilage.humidity} onChange={(e) => setSpoilage({ ...spoilage, humidity: e.target.value })} />
+                <Input
+                  type="number" step="0.1" min={0} max={100} value={spoilage.humidity}
+                  onChange={(e) => setSpoilage({ ...spoilage, humidity: e.target.value })}
+                  className={cn(spoilageErrors.humidity && "border-red-500 focus-visible:ring-red-500")}
+                />
+                <FieldError message={spoilageErrors.humidity} />
               </div>
               <div className="col-span-2">
                 <Label>Description</Label>
@@ -820,7 +835,7 @@ export function BatchesSection() {
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setSpoilageOpen(false)}>Cancel</Button>
-            <Button form="spoilage-form" type="submit" disabled={spoilageMut.isPending}>
+            <Button form="spoilage-form" type="submit" disabled={spoilageMut.isPending || hasSpoilageErrors}>
               {spoilageMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Log event"}
             </Button>
           </DialogFooter>

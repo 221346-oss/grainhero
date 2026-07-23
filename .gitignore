@@ -1,5 +1,5 @@
 # Lock files — causes merge conflicts between developers; use bun.lock instead
-package-lock.json
+./package-lock.json
 
 # Logs
 logs

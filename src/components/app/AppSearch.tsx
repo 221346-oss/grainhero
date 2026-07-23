@@ -1,17 +1,40 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Search, ArrowRight, Command, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getMyRole } from "@/lib/roles.functions";
 
-export type NavTarget = { label: string; to: string; group: string; keywords?: string };
+export type NavTarget = {
+  label: string;
+  to: string;
+  /** Query-string params to land with, e.g. { tab: "silos" }. */
+  search?: Record<string, string>;
+  group: string;
+  keywords?: string;
+  /** Hidden from pure super_admins (no other role) — mirrors the
+   * /grain-operations block in _authenticated/route.tsx's beforeLoad guard,
+   * so this bar never offers a destination the guard would then reject. */
+  operationalOnly?: true;
+};
 
-// Global nav catalog — every authenticated destination.
+// Global nav catalog — every authenticated destination. This is the ONLY
+// place this bar can send you; it never filters in-page content. Each
+// page's own table/list search (e.g. the Batches search inside
+// /grain-operations) is a separate, unrelated input — see BatchesSection.tsx
+// etc. Do not wire this bar to page-level state.
+// Kept exported so the animated HeaderSearch can consume the same catalog.
 export const NAV_TARGETS: NavTarget[] = [
   { label: "Dashboard", to: "/dashboard", group: "Home", keywords: "home overview" },
-  // Operations
-  { label: "Grain Batches", to: "/grain-batches", group: "Operations", keywords: "lots inventory" },
-  { label: "Silos", to: "/silos", group: "Operations" },
-  { label: "Warehouses", to: "/warehouses", group: "Operations" },
+  // Operations — Grain Batches / Silos / Warehouses / Buyers all live as
+  // tabs on the single /grain-operations workspace.
+  { label: "Grain Operations", to: "/grain-operations", group: "Operations", keywords: "workspace batches silos warehouses buyers", operationalOnly: true },
+  { label: "Grain Batches", to: "/grain-operations", search: { tab: "batches" }, group: "Operations", keywords: "lots inventory", operationalOnly: true },
+  { label: "Spoiled / Damaged Batches", to: "/grain-operations", search: { tab: "batches", status: "damaged" }, group: "Operations", keywords: "spoiled rotten loss risk", operationalOnly: true },
+  { label: "Silos", to: "/grain-operations", search: { tab: "silos" }, group: "Operations", operationalOnly: true },
+  { label: "Warehouses", to: "/grain-operations", search: { tab: "warehouses" }, group: "Operations", operationalOnly: true },
+  { label: "Buyers", to: "/grain-operations", search: { tab: "buyers" }, group: "Operations", keywords: "customers dispatch", operationalOnly: true },
   { label: "Sensors", to: "/sensors", group: "Operations", keywords: "iot devices" },
   { label: "Actuators", to: "/actuators", group: "Operations", keywords: "iot control" },
   { label: "Alerts", to: "/grain-alerts", group: "Operations" },
@@ -23,7 +46,6 @@ export const NAV_TARGETS: NavTarget[] = [
   { label: "Traceability", to: "/traceability", group: "Insights" },
   { label: "Administration", to: "/administration", group: "Admin", keywords: "team members users security activity logs audit history" },
   // Business
-  { label: "Buyers", to: "/buyers", group: "Business", keywords: "customers" },
   { label: "Orders", to: "/orders", group: "Business", keywords: "hardware install" },
   { label: "Business", to: "/business", group: "Business", keywords: "revenue income subscription insurance policies claims plan management billing" },
   { label: "Plans", to: "/plans", group: "Business", keywords: "pricing" },
@@ -44,38 +66,23 @@ export const NAV_TARGETS: NavTarget[] = [
   { label: "Platform · System logs", to: "/platform/logs", group: "Platform" },
 ];
 
-function scopeFor(pathname: string): { global: boolean; label: string } {
-  if (pathname === "/dashboard" || pathname.startsWith("/platform")) {
-    return { global: true, label: "Search anything or jump to a page…" };
-  }
-  return { global: false, label: "Search this page" };
-}
-
-/**
- * Broadcasts the current search query to page-level listeners.
- * Pages can subscribe via `useAppSearchQuery()` to filter their own lists.
- */
-export function useAppSearchQuery() {
-  const [q, setQ] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    return (window as unknown as { __appSearch?: string }).__appSearch ?? "";
-  });
-  useEffect(() => {
-    const handler = (e: Event) => setQ((e as CustomEvent<string>).detail ?? "");
-    window.addEventListener("app:search", handler as EventListener);
-    return () => window.removeEventListener("app:search", handler as EventListener);
-  }, []);
-  return q;
-}
-
 export function AppSearch() {
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
-  const scope = useMemo(() => scopeFor(pathname), [pathname]);
+
+  // Same query key AppSidebar/useIsSuperAdmin use — shares the cache, no
+  // extra request. "Pure" super_admin (no other role) matches the
+  // beforeLoad guard's isSuperAdmin && !alsoOperational check exactly.
+  const fetchRole = useServerFn(getMyRole);
+  const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
+  const isPureSuperAdmin = useMemo(() => {
+    const roles = roleData?.roles ?? [];
+    return roles.includes("super_admin") && !roles.some((r) => ["admin", "manager", "technician"].includes(r));
+  }, [roleData]);
 
   // Global shortcuts: "/" and ⌘K / Ctrl+K focus the bar. Esc clears + closes.
   useEffect(() => {
@@ -97,13 +104,6 @@ export function AppSearch() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Broadcast query for page-scoped searches (debounced-lite via effect).
-  useEffect(() => {
-    if (scope.global) return;
-    (window as unknown as { __appSearch?: string }).__appSearch = q;
-    window.dispatchEvent(new CustomEvent("app:search", { detail: q }));
-  }, [q, scope.global]);
-
   // Reset on route change.
   useEffect(() => {
     setQ("");
@@ -112,20 +112,27 @@ export function AppSearch() {
   }, [pathname]);
 
   const matches = useMemo(() => {
-    if (!scope.global || !q.trim()) return [];
+    if (!q.trim()) return [];
     const needle = q.trim().toLowerCase();
     return NAV_TARGETS.filter((t) =>
-      t.label.toLowerCase().includes(needle) ||
-      t.group.toLowerCase().includes(needle) ||
-      (t.keywords ?? "").toLowerCase().includes(needle),
+      !(isPureSuperAdmin && t.operationalOnly) && (
+        t.label.toLowerCase().includes(needle) ||
+        t.group.toLowerCase().includes(needle) ||
+        (t.keywords ?? "").toLowerCase().includes(needle)
+      ),
     ).slice(0, 10);
-  }, [q, scope.global]);
+  }, [q, isPureSuperAdmin]);
 
   // Keep highlight in bounds when the result list changes.
   useEffect(() => { setHighlight(0); }, [q]);
 
+  function goTo(target: NavTarget) {
+    setOpen(false);
+    setQ("");
+    navigate({ to: target.to as never, search: (target.search ?? {}) as never });
+  }
+
   const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!scope.global) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setOpen(true);
@@ -138,9 +145,7 @@ export function AppSearch() {
       const target = matches[highlight] ?? matches[0];
       if (target) {
         e.preventDefault();
-        setOpen(false);
-        setQ("");
-        navigate({ to: target.to as never });
+        goTo(target);
       }
     }
   };
@@ -156,8 +161,8 @@ export function AppSearch() {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onInputKeyDown}
-        placeholder={scope.label}
-        aria-label={scope.label}
+        placeholder="Search anything or jump to a page…"
+        aria-label="Search anything or jump to a page"
         className={cn(
           "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-transparent hover:bg-muted focus:bg-background",
           "border-0 focus:outline-none transition placeholder:text-muted-foreground",
@@ -167,7 +172,7 @@ export function AppSearch() {
         <Command className="h-2.5 w-2.5" />K
       </kbd>
 
-      {open && scope.global && q.trim() && (
+      {open && q.trim() && (
         <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-border bg-background shadow-lg overflow-hidden z-40">
           {matches.length === 0 ? (
             <div className="p-4 text-sm text-muted-foreground">No matching pages.</div>
@@ -175,9 +180,10 @@ export function AppSearch() {
             <>
               <ul className="max-h-80 overflow-y-auto">
                 {matches.map((m, i) => (
-                  <li key={m.to}>
+                  <li key={`${m.to}:${m.label}`}>
                     <Link
                       to={m.to as never}
+                      search={(m.search ?? {}) as never}
                       onMouseDown={(e) => e.preventDefault()}
                       onMouseEnter={() => setHighlight(i)}
                       onClick={() => { setOpen(false); setQ(""); }}
@@ -204,21 +210,6 @@ export function AppSearch() {
               </div>
             </>
           )}
-        </div>
-      )}
-
-      {open && !scope.global && q.trim() && (
-        <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-border bg-background shadow-lg z-40 p-3 text-xs text-muted-foreground">
-          Filtering this page by <span className="font-semibold text-foreground">"{q}"</span>. Press
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => navigate({ to: "/dashboard" })}
-            className="ml-1 text-[#00a63e] hover:underline"
-          >
-            search everywhere
-          </button>{" "}
-          to jump to global search.
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -13,6 +13,7 @@ import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
+import { BugReportButton } from "@/components/app/BugReportButton";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
@@ -28,9 +29,14 @@ export const Route = createFileRoute("/_authenticated")({
 
     // Role-aware guardrails: block super_admins from tenant-operational
     // routes, and redirect them off tenant pages that have a canonical
-    // platform equivalent (avoid two lenses on the same data).
+    // platform equivalent (avoid two lenses on the same data). Silos,
+    // warehouses, and grain batches were consolidated into the tabbed
+    // /grain-operations workspace — that's what's blocked now, not the old
+    // standalone paths. /silos/:siloId (the detail view) is still a real
+    // standalone route (linked from attention.tsx, ManagerBento.tsx), so it
+    // stays blocked too, via the "/silos/" sub-route prefix.
     const OPERATIONAL_PREFIXES = [
-      "/silos", "/warehouses", "/grain-batches", "/sensors", "/actuators",
+      "/grain-operations", "/silos/", "/sensors", "/actuators",
     ];
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
@@ -75,31 +81,10 @@ function AuthenticatedLayout() {
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const stored = getStoredThemeMode();
     setMode(stored);
-  }, []);
-
-  // Scroll-driven behavior on the main scroll container:
-  //  • hide header when scrolling down past 150px, show on scroll up
-  //  • auto-close sidebar if user scrolls down more than 20px
-  useEffect(() => {
-    const el = mainRef.current;
-    if (!el) return;
-    let lastY = el.scrollTop;
-    const onScroll = () => {
-      const y = el.scrollTop;
-      const dy = y - lastY;
-      if (dy > 0 && y > 150) setHeaderVisible(false);
-      else if (dy < 0) setHeaderVisible(true);
-      if (dy > 20) setSidebarOpen((open) => (open ? false : open));
-      lastY = y;
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
   // Close sidebar on Escape
@@ -146,6 +131,7 @@ function AuthenticatedLayout() {
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SessionGuard />
       <OnboardingTour />
+      <BugReportButton />
       <div className="app-scope min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
           <AppSidebar hidden={navHidden} />

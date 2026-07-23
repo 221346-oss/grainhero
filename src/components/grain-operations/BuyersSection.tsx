@@ -184,33 +184,33 @@ export function BuyersSection() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-white/40">
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-white/40">
+          <div className="py-8 text-center text-muted-foreground">
             <p className="text-sm">No buyers yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-white/5 border-b border-white/10">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Buyer</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Contact</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Company</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Type</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-white/50 text-xs uppercase tracking-wider">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Buyer</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Contact</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Company</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {rows.map((b) => (
-                  <tr key={b.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-3 py-2 text-white font-medium">{b.name}</td>
-                    <td className="px-3 py-2 text-white/70 text-xs">{b.contact_phone ?? b.contact_email ?? "—"}</td>
-                    <td className="px-3 py-2 text-white/70 text-xs">{b.company_name ?? "—"}</td>
-                    <td className="px-3 py-2 text-white/70 text-xs">{b.buyer_type?.replace("_", " ") ?? "—"}</td>
+                  <tr key={b.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
+                    <td className="px-3 py-2 text-foreground font-medium">{b.name}</td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.contact_phone ?? b.contact_email ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.company_name ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.buyer_type?.replace("_", " ") ?? "—"}</td>
                     <td className="px-3 py-2"><StatusBadgeCustom value={b.status} /></td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1">

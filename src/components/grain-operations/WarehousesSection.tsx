@@ -13,7 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
-import { listWarehouses, upsertWarehouse, deleteWarehouse } from "@/lib/operations.functions";
+import { InlineRename } from "@/components/app/InlineRename";
+import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse } from "@/lib/operations.functions";
+import { parsePlanLimitError } from "@/lib/plan-gate";
+import { getMyRole } from "@/lib/roles.functions";
+
+function friendlySaveError(e: Error): string {
+  const limit = parsePlanLimitError(e);
+  if (limit) return `Your plan allows up to ${limit.limit} warehouses (${limit.used} in use). Upgrade to add more.`;
+  return e.message || "Save failed";
+}
+
+// Same allow-list used for team invite/manage — technicians can't rename.
+const RENAME_ROLES = ["super_admin", "admin", "manager"];
 
 type Warehouse = {
   id: string;
@@ -52,12 +64,16 @@ export function WarehousesSection() {
   const list = useServerFn(listWarehouses);
   const upsert = useServerFn(upsertWarehouse);
   const del = useServerFn(deleteWarehouse);
+  const rename = useServerFn(renameWarehouse);
+  const fetchRole = useServerFn(getMyRole);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["warehouses"],
     queryFn: () => list() as Promise<Warehouse[]>,
   });
+  const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
+  const canRename = RENAME_ROLES.includes(me?.role ?? "");
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -103,7 +119,17 @@ export function WarehousesSection() {
       setEditOpen(false);
       setForm(emptyForm);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    onError: (e: Error) => toast.error(friendlySaveError(e)),
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: (payload: { id: string; name: string }) => rename({ data: payload }),
+    onSuccess: () => {
+      toast.success("Warehouse renamed");
+      qc.invalidateQueries({ queryKey: ["warehouses"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Rename failed"),
   });
 
   const deleteMutation = useMutation({
@@ -156,31 +182,38 @@ export function WarehousesSection() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-white/40">
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
           </div>
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-white/40">
+          <div className="py-8 text-center text-muted-foreground">
             <p className="text-sm">No warehouses yet.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-white/5 border-b border-white/10">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Warehouse</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Location</th>
-                  <th className="px-3 py-2 text-right font-semibold text-white/50 text-xs uppercase tracking-wider">Capacity</th>
-                  <th className="px-3 py-2 text-left font-semibold text-white/50 text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-white/50 text-xs uppercase tracking-wider">Actions</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Warehouse</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Location</th>
+                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Capacity</th>
+                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {rows.map((w) => (
-                  <tr key={w.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-3 py-2 text-white font-medium">{w.name}</td>
-                    <td className="px-3 py-2 text-white/70 text-xs">{w.location?.description ?? w.location?.address ?? "—"}</td>
-                    <td className="px-3 py-2 text-right text-white/70 tabular-nums">{(w.total_capacity_kg ?? 0).toLocaleString()} kg</td>
+                  <tr key={w.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
+                    <td className="px-3 py-2 text-foreground font-medium">
+                      <InlineRename
+                        value={w.name}
+                        canRename={canRename}
+                        textClassName="text-foreground font-medium"
+                        onSave={async (next) => { await renameMutation.mutateAsync({ id: w.id, name: next }); }}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">{w.location?.description ?? w.location?.address ?? "—"}</td>
+                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(w.total_capacity_kg ?? 0).toLocaleString()} kg</td>
                     <td className="px-3 py-2"><StatusBadge value={w.status} /></td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1">
@@ -208,7 +241,11 @@ export function WarehousesSection() {
           <form id="warehouse-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
             <div>
               <Label>Name *</Label>
-              <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Main Storage" />
+              {form.id && !canRename ? (
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">{form.name || "—"}</div>
+              ) : (
+                <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Main Storage" />
+              )}
             </div>
             <div>
               <Label>Capacity (kg) *</Label>
@@ -254,7 +291,16 @@ export function WarehousesSection() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle>{selected.name}</DialogTitle>
+                <DialogTitle>
+                  <InlineRename
+                    value={selected.name}
+                    canRename={canRename}
+                    onSave={async (next) => {
+                      await renameMutation.mutateAsync({ id: selected.id, name: next });
+                      setSelected((prev) => (prev ? { ...prev, name: next } : prev));
+                    }}
+                  />
+                </DialogTitle>
                 <DialogDescription>{selected.warehouse_id}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">
