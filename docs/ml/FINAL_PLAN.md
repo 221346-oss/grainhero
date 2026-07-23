@@ -1,3 +1,39 @@
+
+## Update — Intern Alignment (2026-07-23)
+
+**Fully restored the intern's `huggingface_deployment/` bundle into `ml-deploy/`:**
+
+- `app.py`, `predict.py`, `requirements.txt` — byte-identical to the intern's originals.
+- `Dockerfile` — Render-compatible variant (uses `$PORT`) and now auto-downloads model `.pkl` files at build time.
+- All 5 grain metadata JSONs + label encoders committed (`rice`, `wheat`, `maize`, `sorghum`, `barley`) plus the legacy `smartbin`, `ensemble`, and default `label_encoder`.
+- 7 large `.pkl` ensemble models (40–70 MB each, ~400 MB total) exceed the git per-file limit. They are hosted as Lovable assets and listed in `ml-deploy/MODEL_URLS.txt`; `Dockerfile` fetches them via `curl` during `docker build`, so Render deploys reproduce the intern's exact models with no manual upload.
+- Asset pointers live in `ml-deploy/assets/*.asset.json` for reference / future rehosting.
+
+**Restored the intern's `DATASETS/` folder** (small enough to commit):
+
+- `DATASETS/training-synthetic/{rice,wheat,maize,sorghum,barley}_spoilage_10k.csv` (~700 KB each) + `grain_spoilage_dataset.csv`.
+- `DATASETS/training-real/smartbin_rice_storage_data_enhanced.csv`.
+- `DATASETS/external-catalog/{download_instructions.md,download_weather.py}`.
+- Root `DATASETS/README.md` preserved.
+
+**Firmware** already lives at `docs/firmware/grainhero_main_final.ino` + `README.md` — no change needed.
+
+### Deploy on Render (unchanged 3 steps)
+
+1. Create a new **Web Service** on render.com, connect the repo, root = `ml-deploy/`.
+2. Render auto-detects the `Dockerfile`; build downloads all model `.pkl` files from `MODEL_URLS.txt` automatically.
+3. Copy the service URL and reply with `add secret GRAINHERO_ML_API_URL = https://<your-service>.onrender.com`.
+
+### Retraining
+
+- **UI (SuperAdmin)** — `/ml-models` shows live accuracy; the "Retrain" action queues a job that pulls fresh `sensor_readings` + `grain_batches` from Supabase, retrains via `predict.py`'s pipeline, and uploads new `.pkl` files as Lovable assets (updating `MODEL_URLS.txt`).
+- **CLI (intern / ML team)** — `python DATASETS/external-catalog/download_weather.py` refreshes external inputs, then run the intern's original notebook against the CSVs in `DATASETS/training-synthetic/` to regenerate any `<grain>_ensemble_model.pkl`.
+
+### Team responsibilities
+
+- **Web/App team** — consume `GRAINHERO_ML_API_URL` via `src/lib/ai-inference.functions.ts`; no model files in the web repo.
+- **Intern / ML team** — own `ml-deploy/` + `DATASETS/`; regenerate `.pkl` files locally and re-upload with `lovable-assets create` when models change.
+- **You (owner)** — approve merges, hold the Render URL secret.
 # GrainHero ML — Finalized Production Plan
 
 This is the single source of truth for the AI/ML side of GrainHero.
