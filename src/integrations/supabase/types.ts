@@ -2289,6 +2289,119 @@ export type Database = {
         }
         Relationships: []
       }
+      dispatches: {
+        Row: {
+          admin_id: string
+          avg_cost_at_dispatch: number | null
+          buyer_id: string | null
+          created_at: string | null
+          created_by: string
+          destination: string | null
+          dispatch_date: string | null
+          driver_contact: string | null
+          driver_name: string | null
+          id: string
+          notes: string | null
+          price_per_kg: number
+          profit: number | null
+          quantity_kg: number
+          revenue: number | null
+          silo_id: string
+          updated_at: string | null
+          vehicle_number: string | null
+        }
+        Insert: {
+          admin_id: string
+          avg_cost_at_dispatch?: number | null
+          buyer_id?: string | null
+          created_at?: string | null
+          created_by: string
+          destination?: string | null
+          dispatch_date?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          price_per_kg: number
+          profit?: number | null
+          quantity_kg: number
+          revenue?: number | null
+          silo_id: string
+          updated_at?: string | null
+          vehicle_number?: string | null
+        }
+        Update: {
+          admin_id?: string
+          avg_cost_at_dispatch?: number | null
+          buyer_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          destination?: string | null
+          dispatch_date?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          price_per_kg?: number
+          profit?: number | null
+          quantity_kg?: number
+          revenue?: number | null
+          silo_id?: string
+          updated_at?: string | null
+          vehicle_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "dispatches_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           active: boolean
@@ -4690,6 +4803,69 @@ export type Database = {
           },
         ]
       }
+      live_sensor_readings: {
+        Row: {
+          airflow: number | null
+          ambient_light: number | null
+          confidence: number | null
+          created_at: string | null
+          dew_point: number | null
+          grain_moisture: number
+          grain_type: string
+          humidity: number
+          id: number
+          pest_presence: number | null
+          prediction: string | null
+          rainfall: number | null
+          risk_score: number | null
+          silo_id: string | null
+          source: string | null
+          storage_days: number
+          temperature: number
+          tvoc_ppb: number | null
+        }
+        Insert: {
+          airflow?: number | null
+          ambient_light?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          dew_point?: number | null
+          grain_moisture: number
+          grain_type: string
+          humidity: number
+          id?: number
+          pest_presence?: number | null
+          prediction?: string | null
+          rainfall?: number | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          storage_days?: number
+          temperature: number
+          tvoc_ppb?: number | null
+        }
+        Update: {
+          airflow?: number | null
+          ambient_light?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          dew_point?: number | null
+          grain_moisture?: number
+          grain_type?: string
+          humidity?: number
+          id?: number
+          pest_presence?: number | null
+          prediction?: string | null
+          rainfall?: number | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          storage_days?: number
+          temperature?: number
+          tvoc_ppb?: number | null
+        }
+        Relationships: []
+      }
       logistics_cost_entries: {
         Row: {
           amount: number
@@ -4838,6 +5014,36 @@ export type Database = {
           sql_template?: string
           unit?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ml_model_metadata: {
+        Row: {
+          active_accuracy: number | null
+          active_model_version: string | null
+          best_params: Json | null
+          grain_type: string
+          last_fast_run: string | null
+          last_nightly_run: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_accuracy?: number | null
+          active_model_version?: string | null
+          best_params?: Json | null
+          grain_type: string
+          last_fast_run?: string | null
+          last_nightly_run?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_accuracy?: number | null
+          active_model_version?: string | null
+          best_params?: Json | null
+          grain_type?: string
+          last_fast_run?: string | null
+          last_nightly_run?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -5201,6 +5407,48 @@ export type Database = {
         }
         Relationships: []
       }
+      model_versions: {
+        Row: {
+          accuracy: number | null
+          created_at: string | null
+          f1_score: number | null
+          file_hash: string | null
+          grain_type: string
+          id: number
+          is_active: boolean | null
+          sanity_pass_rate: number | null
+          storage_path: string
+          trained_by: string | null
+          version: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string | null
+          f1_score?: number | null
+          file_hash?: string | null
+          grain_type: string
+          id?: number
+          is_active?: boolean | null
+          sanity_pass_rate?: number | null
+          storage_path: string
+          trained_by?: string | null
+          version: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string | null
+          f1_score?: number | null
+          file_hash?: string | null
+          grain_type?: string
+          id?: number
+          is_active?: boolean | null
+          sanity_pass_rate?: number | null
+          storage_path?: string
+          trained_by?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       notification_channel_prefs: {
         Row: {
           categories: Json
@@ -5394,6 +5642,9 @@ export type Database = {
           plan_id: string
           price_cents: number
           sort_order: number
+          stripe_price_monthly_id: string | null
+          stripe_price_yearly_id: string | null
+          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -5415,6 +5666,9 @@ export type Database = {
           plan_id: string
           price_cents?: number
           sort_order?: number
+          stripe_price_monthly_id?: string | null
+          stripe_price_yearly_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -5436,6 +5690,9 @@ export type Database = {
           plan_id?: string
           price_cents?: number
           sort_order?: number
+          stripe_price_monthly_id?: string | null
+          stripe_price_yearly_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -5527,12 +5784,14 @@ export type Database = {
           admin_id: string | null
           auto_upgrade_enabled: boolean
           avatar: string | null
+          billing_cycle: string | null
           blocked: boolean | null
           business_type: string | null
           certification_level: string | null
           created_at: string | null
           created_by: string | null
           current_job_count: number | null
+          current_period_end: string | null
           customer_id: string | null
           deleted_at: string | null
           department: string | null
@@ -5565,10 +5824,17 @@ export type Database = {
           plan_usage_users: number | null
           preferences: Json | null
           price_id: string | null
+          retention_discount_pct: number | null
+          retention_discount_until: string | null
+          retention_offer_used_at: string | null
           service_areas: string[] | null
           shift_pattern: string | null
           status: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id: string | null
+          stripe_schedule_id: string | null
+          stripe_subscription_id: string | null
+          stripe_subscription_item_id: string | null
+          stripe_subscription_status: string | null
           subscription_plan: string | null
           suspended: boolean
           technician_status:
@@ -5584,12 +5850,14 @@ export type Database = {
           admin_id?: string | null
           auto_upgrade_enabled?: boolean
           avatar?: string | null
+          billing_cycle?: string | null
           blocked?: boolean | null
           business_type?: string | null
           certification_level?: string | null
           created_at?: string | null
           created_by?: string | null
           current_job_count?: number | null
+          current_period_end?: string | null
           customer_id?: string | null
           deleted_at?: string | null
           department?: string | null
@@ -5622,10 +5890,17 @@ export type Database = {
           plan_usage_users?: number | null
           preferences?: Json | null
           price_id?: string | null
+          retention_discount_pct?: number | null
+          retention_discount_until?: string | null
+          retention_offer_used_at?: string | null
           service_areas?: string[] | null
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
+          stripe_schedule_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_subscription_item_id?: string | null
+          stripe_subscription_status?: string | null
           subscription_plan?: string | null
           suspended?: boolean
           technician_status?:
@@ -5641,12 +5916,14 @@ export type Database = {
           admin_id?: string | null
           auto_upgrade_enabled?: boolean
           avatar?: string | null
+          billing_cycle?: string | null
           blocked?: boolean | null
           business_type?: string | null
           certification_level?: string | null
           created_at?: string | null
           created_by?: string | null
           current_job_count?: number | null
+          current_period_end?: string | null
           customer_id?: string | null
           deleted_at?: string | null
           department?: string | null
@@ -5679,10 +5956,17 @@ export type Database = {
           plan_usage_users?: number | null
           preferences?: Json | null
           price_id?: string | null
+          retention_discount_pct?: number | null
+          retention_discount_until?: string | null
+          retention_offer_used_at?: string | null
           service_areas?: string[] | null
           shift_pattern?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
           stripe_customer_id?: string | null
+          stripe_schedule_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_subscription_item_id?: string | null
+          stripe_subscription_status?: string | null
           subscription_plan?: string | null
           suspended?: boolean
           technician_status?:
@@ -5763,6 +6047,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "technician_performance_v"
             referencedColumns: ["technician_id"]
+          },
+        ]
+      }
+      retrain_log: {
+        Row: {
+          accuracy: number | null
+          duration_seconds: number | null
+          fail_reason: string | null
+          finished_at: string | null
+          grain_type: string
+          id: number
+          model_version_id: number | null
+          rows_used: number | null
+          sanity_pass_rate: number | null
+          started_at: string | null
+          status: string
+          trigger: string
+        }
+        Insert: {
+          accuracy?: number | null
+          duration_seconds?: number | null
+          fail_reason?: string | null
+          finished_at?: string | null
+          grain_type: string
+          id?: number
+          model_version_id?: number | null
+          rows_used?: number | null
+          sanity_pass_rate?: number | null
+          started_at?: string | null
+          status: string
+          trigger: string
+        }
+        Update: {
+          accuracy?: number | null
+          duration_seconds?: number | null
+          fail_reason?: string | null
+          finished_at?: string | null
+          grain_type?: string
+          id?: number
+          model_version_id?: number | null
+          rows_used?: number | null
+          sanity_pass_rate?: number | null
+          started_at?: string | null
+          status?: string
+          trigger?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retrain_log_model_version_id_fkey"
+            columns: ["model_version_id"]
+            isOneToOne: false
+            referencedRelation: "model_versions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -7283,44 +7620,65 @@ export type Database = {
       }
       tenant_plan_change_requests: {
         Row: {
+          apply_at: string | null
+          billing_cycle: string | null
+          charge_amount_cents: number | null
           created_at: string
           current_plan: string | null
           decided_at: string | null
           decided_by: string | null
           direction: string
+          downgrade_reason: string | null
+          downgrade_reason_details: string | null
           id: string
           note: string | null
           requested_by: string
           requested_plan: string
+          retention_offer_declined: boolean | null
           status: string
+          stripe_session_id: string | null
           tenant_admin_id: string
           updated_at: string
         }
         Insert: {
+          apply_at?: string | null
+          billing_cycle?: string | null
+          charge_amount_cents?: number | null
           created_at?: string
           current_plan?: string | null
           decided_at?: string | null
           decided_by?: string | null
           direction: string
+          downgrade_reason?: string | null
+          downgrade_reason_details?: string | null
           id?: string
           note?: string | null
           requested_by: string
           requested_plan: string
+          retention_offer_declined?: boolean | null
           status?: string
+          stripe_session_id?: string | null
           tenant_admin_id: string
           updated_at?: string
         }
         Update: {
+          apply_at?: string | null
+          billing_cycle?: string | null
+          charge_amount_cents?: number | null
           created_at?: string
           current_plan?: string | null
           decided_at?: string | null
           decided_by?: string | null
           direction?: string
+          downgrade_reason?: string | null
+          downgrade_reason_details?: string | null
           id?: string
           note?: string | null
           requested_by?: string
           requested_plan?: string
+          retention_offer_declined?: boolean | null
           status?: string
+          stripe_session_id?: string | null
           tenant_admin_id?: string
           updated_at?: string
         }

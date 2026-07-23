@@ -67,8 +67,8 @@ export function AlertsFunnel() {
   ];
 
   return (
-    <div className="bg-[#111111] border border-white/8 rounded-2xl p-6 space-y-5">
-      <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">
+    <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
         Alert Pipeline
       </p>
 
@@ -82,7 +82,7 @@ export function AlertsFunnel() {
           return (
             <div
               key={s.label}
-              className={`relative flex-1 flex items-center ${i > 0 ? "border-l border-white/20" : ""}`}
+              className={`relative flex-1 flex items-center ${i > 0 ? "border-l border-border" : ""}`}
               title={`${s.count} ${s.label.toLowerCase()}${keep !== null ? ` — ${keep}% of previous stage` : ""}`}
             >
               <div
@@ -99,11 +99,11 @@ export function AlertsFunnel() {
                   {s.count}
                 </span>
                 <span
-                  className="text-xs text-white/70"
+                  className="text-xs text-foreground/80"
                   style={{ textShadow: "0 1px 4px rgba(0,0,0,0.55)" }}
                 >
                   {s.label}
-                  {keep !== null && <span className="text-white/45"> · {keep}%</span>}
+                  {keep !== null && <span className="text-muted-foreground"> · {keep}%</span>}
                 </span>
               </div>
             </div>
@@ -114,7 +114,7 @@ export function AlertsFunnel() {
       <div className="divide-y divide-white/8">
         {metrics.map((m) => (
           <div key={m.label} className="flex items-center justify-between py-3">
-            <div className="flex items-center gap-2.5 text-sm text-white/60">
+            <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
               <m.icon className={`w-3.5 h-3.5 ${m.tint}`} />
               {m.label}
             </div>

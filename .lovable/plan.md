@@ -1,82 +1,78 @@
-# Manager Dashboard Redesign
+# Plan Management — Prorated PKR Upgrades
 
-Rebuild the Manager dashboard to mirror the Admin dashboard's structure (WelcomeBanner → QuickTabs → KpiSummary → Bento) while keeping the Manager's operational focus. Preserve the current "card-within-card-within-scrollable" pattern used by `ViewBatchesCard` — it is the interaction model for every action block.
+## Scope
+Rebuild `/plan-management` so tenant Admins can change their plan cleanly:
+- Admin-only (hidden + guarded for Manager / Technician / Buyer / Super Admin)
+- Monthly / Yearly toggle — yearly = 10 × monthly (2 months free)
+- Upgrade → charged prorated difference **immediately** via Stripe Checkout
+- Downgrade → scheduled at current period end (no immediate charge / no refund)
+- Cycle change (monthly ↔ yearly) → prorate the difference on the spot
+- Kill the auto-upgrade toggle (no auto upgrades)
+- Notify super admins + log activity for every change
 
-## Layout (top → bottom)
+## User answers driving this
+- Downgrade → schedule at period end
+- Yearly → 12 × monthly with 2 months free (i.e. 10× monthly)
+- Upgrade math → true daily proration on remaining days
+- Cycle switch → allowed anytime, prorated
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│ WelcomeBanner  (typewriter, collapses after 4s)            │
-├────────────────────────────────────────────────────────────┤
-│ RangeChip (today/7d/30d/mtd/ytd)                           │
-├────────────────────────────────────────────────────────────┤
-│ ManagerKpiSummary   65 / 35 split                          │
-│  ┌─────── Hero: Silo Fill % ────┐ ┌── KPI list ───────┐    │
-│  │ big % + sparkline of avg     │ │ Batches (deltas)  │    │
-│  │ occupancy over range         │ │ Open Alerts       │    │
-│  │ CTA: Silo Management         │ │ Pending QC        │    │
-│  └──────────────────────────────┘ │ Dispatch ready    │    │
-│                                    │ Active Actuators  │    │
-│                                    └───────────────────┘    │
-├────────────────────────────────────────────────────────────┤
-│ ManagerBento  (2-col md, 3-col xl)                         │
-│ ┌── Ops split (LEFT) ──────┐  ┌── Fulfillment (RIGHT) ──┐  │
-│ │ Silos live list          │  │ Dispatch queue          │  │
-│ │  (scrollable, inline     │  │  (FIFO suggestions,     │  │
-│ │   temp/humidity chips)   │  │   Dispatch button)      │  │
-│ │ Alert triage             │  │ Pending QC queue        │  │
-│ │  (Ack / Resolve inline)  │  │  (Approve / Reject)     │  │
-│ │ Actuator quick toggles   │  │ Buyer orders to fulfill │  │
-│ │  (fan / heater on-off,   │  │  (compact rows)         │  │
-│ │   inside scrollable card)│  │                         │  │
-│ └──────────────────────────┘  └─────────────────────────┘  │
-├────────────────────────────────────────────────────────────┤
-│ Team & Tasks strip (full width)                            │
-│  Technician assignments · Open tasks · SLA countdown       │
-├────────────────────────────────────────────────────────────┤
-│ CustomWidgetsBand (kept, unchanged)                        │
-└────────────────────────────────────────────────────────────┘
-```
+## Data model (single migration)
+Extend `public.tenant_plan_change_requests`:
+- `billing_cycle text check (billing_cycle in ('monthly','yearly'))`
+- `apply_at timestamptz` (for scheduled downgrades)
+- `charge_amount_cents integer` (prorated PKR × 100 that we charged / will charge)
+- `stripe_session_id text`
+- extend `status` to allow `'scheduled'` and `'auto_applied'` already present
 
-## Interaction rules (per user)
+Extend `public.profiles`:
+- `billing_cycle text default 'monthly' check (billing_cycle in ('monthly','yearly'))`
+- `current_period_end timestamptz` (used to compute proration + schedule downgrades)
 
-- **Cards-within-cards-within-scrollable** is the norm. Each bento block is a card whose body contains a bordered inner card with a `max-h` scroll region and inline row actions — same pattern as `ViewBatchesCard`.
-- Density: compact rows, small pills, medium padding (h-9 rows, text-xs/text-sm).
-- Every number is a link that deep-links to its filtered page.
-- Manager focus = management, not decoration → drop hero animations and the big `StatCard` grid; replace with `ManagerKpiSummary` and dense operational lists.
+Grants + RLS unchanged (columns added to existing tables).
 
-## Quick tabs (topbar)
+## Server (`src/lib/plan-upgrade.functions.ts`)
+1. `getMyPlanState` (admin only) — returns
+   `{ current_plan, current_cycle, current_period_end, plans: [{ plan_id, name, price_monthly_pkr, price_yearly_pkr, limits }], pending: {...} | null }`
+2. `previewPlanChange({ requested_plan, billing_cycle })` — pure calc, no writes:
+   - `direction = upgrade | downgrade | same_tier_cycle_change`
+   - `days_remaining = max(1, ceil((period_end - now)/day))`
+   - `days_in_cycle = 30 (monthly) | 365 (yearly)`
+   - `credit = current_price × days_remaining / days_in_cycle`
+   - `new_period_charge = new_price × days_remaining / days_in_cycle`
+   - `prorated_charge_pkr = max(0, round(new_period_charge - credit))`
+   - Returns amounts + `apply_now` boolean.
+3. `initiatePlanChange({ requested_plan, billing_cycle })` — admin only, rate-limited:
+   - Upgrade / same-tier upsize / cycle switch that raises price → create Stripe Checkout session `mode=payment`, currency `pkr`, one line item = `prorated_charge_pkr × 100`, `metadata.plan_change_request_id`, redirect URLs `/plan-management?status=success|cancel`. Insert a `tenant_plan_change_requests` row with `status='pending_payment'` + `stripe_session_id`. Return `{ url }`.
+   - Downgrade / neutral change → insert row with `status='scheduled'`, `apply_at = current_period_end`. Emit super-admin notification + activity log. Return `{ scheduled: true, apply_at }`.
+4. `cancelScheduledDowngrade` — admin cancels their own `status='scheduled'` row.
 
-Add Manager preset in `DashboardQuickTabs.tsx`:
-default = `Overview, Silos, Batches, Alerts, Dispatch`, catalog also includes `Orders, Sensors, Actuators, Team, Warehouses, Reports, Marketplace, Buyers`. User can customize (max 5, Overview pinned).
+## Stripe webhook
+Extend the existing `checkout.session.completed` block in
+`src/routes/api/public/webhooks/stripe.ts`:
+- When `metadata.plan_change_request_id` is set → mark the request `approved`, update `profiles.subscription_plan` + `billing_cycle` + `current_period_end` (extend by 30/365 days from now for upgrades, keep period-end for cycle upgrades), keep any existing `subscriptions` row's `plan_name`/`billing_cycle` in sync, emit super-admin notification, activity log.
 
-## Data
+## Cron for scheduled downgrades
+Add a lightweight endpoint `src/routes/api/public/cron/apply-scheduled-plan-changes.ts` (CRON_SECRET-protected) that:
+- Finds `tenant_plan_change_requests` where `status='scheduled'` and `apply_at <= now()`
+- Updates `profiles.subscription_plan` + `billing_cycle`, marks row `approved`, notifies super admin + activity log.
 
-One new server fn `getManagerDashboard({ range })` in `src/lib/manager-dashboard.functions.ts`:
-- KPIs: silo fill %, batches counts + prior-window delta, open/critical alerts, pending QC count, dispatch-ready count, active actuators.
-- Rows: top 10 silos (name, fill %, temp, humidity, status), top 10 active alerts, top 10 pending-QC batches, top 10 dispatch-ready batches, top 10 buyer orders to fulfill, actuators (id, name, on/off, silo).
-- Team: technicians in tenant + open field_incidents/tasks for SLA.
+## UI (`src/routes/_authenticated/plan-management.tsx`)
+- Route `beforeLoad`: if effective role ≠ `admin`, redirect to `/dashboard`.
+- Hide the topbar “Upgrade” pill for non-admins in `_authenticated/route.tsx`.
+- New layout:
+  - Header with billing cycle toggle (Monthly · Yearly — “Save 2 months”).
+  - 3 plan cards (Starter / Professional / Enterprise) in PKR, showing current-plan badge.
+  - For non-current plans: “Preview cost” → server-side `previewPlanChange` fills a callout with proration math + a single primary CTA:
+    - Upgrade: **“Pay Rs. X now”** → opens Stripe Checkout in new tab.
+    - Downgrade: **“Schedule at period end (dd/mm/yyyy)”** → confirm dialog, then schedule.
+  - Pending downgrade banner with cancel button.
+  - Auto-upgrade toggle removed.
 
-Wire silo-fill sparkline from a simple time-bucket over `grain_batches` occupancy or `sensor_readings` averages (best-effort — fall back to current fill if no history).
+## Notifications & activity
+Use existing `emitToSuperAdmins` + `logActivity` on: preview→initiate, scheduled downgrade created / cancelled, webhook-confirmed upgrade, cron-applied downgrade.
 
-## Files
-
-**New**
-- `src/lib/manager-dashboard.functions.ts` — `getManagerDashboard` server fn.
-- `src/components/dashboards/ManagerKpiSummary.tsx` — 65/35 hero + KPI list (mirrors `KpiSummary.tsx`).
-- `src/components/dashboards/ManagerBento.tsx` — 2-column bento with 6 scrollable inner cards + inline actions.
-- `src/components/dashboards/ManagerTeamStrip.tsx` — technicians & open-task strip.
-
-**Edited**
-- `src/components/dashboards/ManagerDashboard.tsx` — replace body with `<WelcomeBanner /> <RangeChip /> <ManagerKpiSummary /> <ManagerBento /> <ManagerTeamStrip /> <CustomWidgetsBand />`. Keep `useDashboardStats` for backwards compat but source real data from new server fn.
-- `src/components/app/DashboardQuickTabs.tsx` — add Manager catalog + default, gate on role via `useMyProfile`/role hook already in tree.
-
-**Untouched**
-- Admin/SuperAdmin dashboards, sidebar, existing pages, business logic, DB schema.
-
-## Verification
-
-- Route: `/dashboard` as manager — visual check at 525px and desktop.
-- Deep-links: click every KPI + inline row → lands on correct filtered page.
-- Inline actions: Ack alert, Approve QC, Dispatch, toggle actuator — all use existing server fns already wired on their respective pages.
-- Typecheck via build.
+## Out of scope
+- Full Stripe Subscription lifecycle rewrite. We keep proration explicit
+  (Checkout one-off) so it works for admins without an existing Stripe
+  subscription and for the existing PKR test data.
+- Refunds on downgrade — user chose “schedule at period end”, so no refund.
