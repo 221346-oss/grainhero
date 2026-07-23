@@ -36,10 +36,12 @@ export function ManagerDashboard({ name }: { name?: string }) {
             dispatchQueue={(data?.dispatchQueue ?? []) as never}
             actuators={(data?.actuators ?? []) as never}
             orders={(data?.orders ?? []) as never}
-          />
-          <ManagerTeamStrip
             technicians={(data?.technicians ?? []) as never}
             incidents={(data?.incidents ?? []) as never}
+          />
+
+          <ManagerTeamStrip
+            technicians={(data?.technicians ?? []) as never}
           />
         </div>
       </div>

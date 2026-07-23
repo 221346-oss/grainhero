@@ -55,6 +55,64 @@ export const listFieldIncidents = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const assignFieldIncident = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v) => z.object({
+    id: z.string().uuid(),
+    assigned_to: z.string().uuid(),
+  }).parse(v))
+  .handler(async ({ data, context }) => {
+
+    const { requireRole } = await import("./rbac.server");
+    await requireRole(context.supabase, context.userId, ["admin", "manager", "super_admin"]);
+
+    // Policy: A technician can only work on 1 active task (QC batch or field incident) at a time
+    const { data: activeIncidents } = await context.supabase
+      .from("field_incidents")
+      .select("id, category")
+      .eq("assigned_to", data.assigned_to)
+      .in("status", ["open", "investigating"] as never)
+      .neq("id", data.id);
+
+    if (activeIncidents && activeIncidents.length > 0) {
+      throw new Error(`Technician is already working on an active incident (${activeIncidents[0].category}). Each technician can only handle 1 incident at a time.`);
+    }
+
+    const { data: activeQCBatches } = await context.supabase
+      .from("grain_batches")
+      .select("id, batch_id")
+      .eq("assigned_technician_id" as never, data.assigned_to)
+      .in("status", ["pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never);
+
+    if (activeQCBatches && activeQCBatches.length > 0) {
+      throw new Error(`Technician is already busy with active QC batch ${activeQCBatches[0].batch_id}.`);
+    }
+
+    const { error } = await context.supabase.from("field_incidents")
+      .update({
+        assigned_to: data.assigned_to,
+        assigned_at: new Date().toISOString(),
+        status: "investigating",
+      } as never)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getMyAssignedIncidents = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("field_incidents")
+      .select("id, category, severity, status, notes, silo_id, created_at, assigned_at, reporter_user_id")
+      .eq("assigned_to", context.userId)
+      .in("status", ["investigating", "open"] as never)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
 export const resolveFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v) => z.object({

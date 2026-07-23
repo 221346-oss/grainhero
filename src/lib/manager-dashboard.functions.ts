@@ -41,7 +41,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .in("status", ["pending", "acknowledged", "escalated"] as never)
         .order("triggered_at", { ascending: false, nullsFirst: false }).limit(10),
       context.supabase.from("grain_batches")
-        .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id")
+        .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id, assigned_technician_id")
         .in("status", ["intake", "processing", "treatment", "pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never)
         .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("grain_batches")
@@ -60,9 +60,9 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .select("id, name, email, department, shift_pattern")
         .eq("admin_id", adminId).limit(20),
       context.supabase.from("field_incidents")
-        .select("id, title, severity, status, created_at, assigned_to")
-        .in("status", ["pending", "in_progress"] as never)
-        .order("created_at", { ascending: false }).limit(8),
+        .select("id, category, severity, status, created_at, assigned_to, silo_id, notes")
+        .in("status", ["open", "investigating"] as never)
+        .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true })
         .gte("created_at", startISO),
@@ -91,6 +91,25 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
     });
 
     const actuators = actuatorsRes.data ?? [];
+    const rawTechs = techsRes.data ?? [];
+    const activeQC = qcRes.data ?? [];
+    const activeIncidents = incidentsRes.data ?? [];
+    const busyTechMap: Record<string, string> = {};
+    activeQC.forEach((b) => {
+      if (b.assigned_technician_id) busyTechMap[b.assigned_technician_id] = `QC: ${b.batch_id}`;
+    });
+    activeIncidents.forEach((inc) => {
+      if (inc.assigned_to) busyTechMap[inc.assigned_to] = `Incident: ${inc.category}`;
+    });
+
+    const technicians = rawTechs.map((t) => ({
+      ...t,
+      is_busy: Boolean(busyTechMap[t.id]),
+      active_batch_id: busyTechMap[t.id] ?? null,
+    }));
+
+
+
     return {
       range,
       kpis: {
@@ -112,7 +131,8 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       dispatchQueue: dispatchReadyRes.data ?? [],
       actuators,
       orders: ordersRes.data ?? [],
-      technicians: techsRes.data ?? [],
+      technicians,
       incidents: incidentsRes.data ?? [],
     };
+
   });
