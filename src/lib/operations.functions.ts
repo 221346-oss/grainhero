@@ -183,7 +183,7 @@ export const deleteSilo = createServerFn({ method: "POST" })
       .select("id", { count: "exact", head: true })
       .eq("silo_id", data.id)
       .in("status", ["stored", "on_hold", "processing", "damaged", "expired"]);
-      
+
     if (countError) throw countError;
     if (count && count > 0) {
       throw new Error("Cannot delete silo: it contains active grain batches. Dispatch or reassign them first.");
@@ -197,17 +197,36 @@ export const deleteSilo = createServerFn({ method: "POST" })
 export const listGrainBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { data: batches, error } = await context.supabase
       .from("grain_batches")
       .select("*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)")
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
-    return data ?? [];
+    if (!batches || batches.length === 0) return [];
+
+    const techIds = Array.from(new Set(batches.map((b) => b.qc_assigned_to).filter(Boolean))) as string[];
+    let techMap: Record<string, { id: string; name: string | null; email: string | null }> = {};
+    if (techIds.length > 0) {
+      const { data: techs } = await context.supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", techIds);
+      if (techs) {
+        techMap = Object.fromEntries(techs.map((t) => [t.id, t]));
+      }
+    }
+
+    return batches.map((b) => ({
+      ...b,
+      assigned_technician: b.qc_assigned_to ? techMap[b.qc_assigned_to] ?? null : null,
+    }));
   });
 
-const grainTypes = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
-const batchStatuses = ["stored","dispatched","sold","damaged","expired","on_hold","processing"] as const;
+
+
+const grainTypes = ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"] as const;
+const batchStatuses = ["stored", "dispatched", "sold", "damaged", "expired", "on_hold", "processing"] as const;
 
 const batchInput = z.object({
   id: z.string().uuid().optional(),
@@ -231,7 +250,7 @@ const batchInput = z.object({
   status: z.enum(batchStatuses).optional(),
   notes: z.string().max(2000).optional().nullable(),
   supplier_id: z.string().uuid().optional().nullable(),
-  source_kind: z.enum(["external","own_farm","internal_transfer","anonymous"]).optional().nullable(),
+  source_kind: z.enum(["external", "own_farm", "internal_transfer", "anonymous"]).optional().nullable(),
   unit_cost: z.number().nonnegative().optional().nullable(),
   currency: z.string().min(3).max(3).optional().nullable(),
 });
@@ -292,14 +311,22 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       return row;
     }
 
-    const batchId = data.batch_id ?? `${data.grain_type.slice(0,3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
+
+    const batchId = data.batch_id ?? `${data.grain_type.slice(0, 3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const qrPayload = `GH-${batchId}-${Date.now()}`;
     const { data: row, error } = await context.supabase
       .from("grain_batches")
       .insert({
         batch_id: batchId,
         qr_code: qrPayload,
-        admin_id: context.userId,
+        admin_id: tenantAdminId,
+
         silo_id: data.silo_id,
         warehouse_id: silo.warehouse_id,
         grain_type: data.grain_type,
@@ -450,7 +477,7 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
 const spoilageInput = z.object({
   id: z.string().uuid(),
   type: z.string().min(1),
-  severity: z.enum(["low","medium","high","critical"]),
+  severity: z.enum(["low", "medium", "high", "critical"]),
   description: z.string().optional().nullable(),
   estimated_loss_kg: z.number().nonnegative().optional().nullable(),
   temperature: z.number().optional().nullable(),
@@ -507,7 +534,7 @@ export const listSensorDevices = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-const sensorTypeEnum = z.enum(["co2","humidity","light","moisture","ph","pressure","temperature","voc"]);
+const sensorTypeEnum = z.enum(["co2", "humidity", "light", "moisture", "ph", "pressure", "temperature", "voc"]);
 const sensorInput = z.object({
   id: z.string().uuid().optional(),
   device_id: z.string().min(1).max(80).optional(),
@@ -521,8 +548,8 @@ const sensorInput = z.object({
   sensor_types: z.array(sensorTypeEnum).optional().nullable(),
   warehouse_id: z.string().uuid(),
   silo_id: z.string().uuid(),
-  status: z.enum(["active","offline","error","maintenance"]).default("active"),
-  power_source: z.enum(["solar","battery","direct","hybrid"]).optional().nullable(),
+  status: z.enum(["active", "offline", "error", "maintenance"]).default("active"),
+  power_source: z.enum(["solar", "battery", "direct", "hybrid"]).optional().nullable(),
   data_transmission_interval: z.number().int().positive().optional().nullable(),
   calibration_interval_days: z.number().int().positive().optional().nullable(),
   last_calibration_date: z.string().optional().nullable(),
@@ -937,13 +964,13 @@ const buyerInput = z.object({
   contact_phone: z.string().max(50).optional().nullable(),
   contact_designation: z.string().max(120).optional().nullable(),
   company_name: z.string().max(200).optional().nullable(),
-  buyer_type: z.enum(["local_mill","exporter","wholesaler","retailer","government"]).optional().nullable(),
-  status: z.enum(["active","paused","inactive"]).default("active"),
+  buyer_type: z.enum(["local_mill", "exporter", "wholesaler", "retailer", "government"]).optional().nullable(),
+  status: z.enum(["active", "paused", "inactive"]).default("active"),
   address: z.string().max(500).optional().nullable(),
   city: z.string().max(120).optional().nullable(),
   state: z.string().max(120).optional().nullable(),
   country: z.string().max(120).optional().nullable(),
-  preferred_grain_types: z.array(z.enum(["Wheat","Rice","Maize","Corn","Barley","Sorghum"])).optional().nullable(),
+  preferred_grain_types: z.array(z.enum(["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"])).optional().nullable(),
   preferred_payment_terms: z.string().max(120).optional().nullable(),
   rating: z.number().min(0).max(5).optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),

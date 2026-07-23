@@ -203,7 +203,10 @@ function QCTaskCard({ task }: { task: QCTask }) {
       toast.success("QC report submitted — awaiting manager review");
       setExpanded(false);
       qc.invalidateQueries({ queryKey: ["my-qc-tasks"] });
+      qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 

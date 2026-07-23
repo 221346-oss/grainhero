@@ -47,7 +47,9 @@ function AssignQCButton({
       toast.success("QC task assigned to technician");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
+      qc.invalidateQueries({ queryKey: ["grain-batches"] });
     },
+
     onError: (e: Error) => toast.error(e.message),
   });
 

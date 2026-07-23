@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Loader2, Inbox, QrCode,
   Truck, AlertTriangle, Building2, User, Calendar, DollarSign, Wheat,
+  UserCheck, ClipboardCheck, CheckCircle, XCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RowActions } from "@/components/app/RowActions";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { StatusBadge } from "@/components/app/DataListPage";
@@ -27,17 +29,21 @@ import {
   dispatchGrainBatch, logSpoilageEvent, listSilos, listBuyers,
 } from "@/lib/operations.functions";
 import { listSuppliers } from "@/lib/suppliers.functions";
+import { listTenantTechnicians, assignQCTask, approveQCResult } from "@/lib/qc.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-batches")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { status?: string; siloId?: string; qcStatus?: string } => ({
     status: (search.status as string) ?? "all",
-    siloId: (search.siloId as string) ?? undefined,
+    siloId: search.siloId ? (search.siloId as string) : undefined,
+    qcStatus: search.qcStatus ? (search.qcStatus as string) : undefined,
   }),
   component: GrainBatchesPage,
 });
 
-const GRAIN_TYPES = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
-const STATUSES = ["stored","dispatched","sold","damaged","expired","on_hold","processing"] as const;
+
+const GRAIN_TYPES = ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"] as const;
+const STATUSES = ["stored", "dispatched", "sold", "damaged", "expired", "on_hold", "processing"] as const;
+const QC_STAGES = ["arrived", "testing", "pending", "passed", "failed"] as const;
 type GrainType = typeof GRAIN_TYPES[number];
 type Status = typeof STATUSES[number];
 
@@ -54,6 +60,10 @@ type Batch = {
   protein_content: number | null;
   test_weight: number | null;
   status: Status;
+  qc_status?: string | null;
+  qc_assigned_to?: string | null;
+  qc_notes?: string | null;
+  assigned_technician?: { id: string; name: string | null; email: string | null } | null;
   spoilage_label: string | null;
   risk_score: number | null;
   intake_date: string | null;
@@ -76,6 +86,7 @@ type Batch = {
   warehouses?: { id: string; name: string; warehouse_id: string } | null;
   buyers?: { id: string; name: string; company_name: string | null; contact_phone: string | null } | null;
 };
+
 
 type Silo = { id: string; silo_id: string; name: string; capacity_kg: number; current_occupancy_kg: number | null; warehouse_id: string | null; warehouses?: { name: string } | null };
 type Buyer = { id: string; name: string; company_name: string | null };
@@ -135,7 +146,7 @@ const emptyDispatch: Dispatch = {
 };
 
 type Spoilage = {
-  type: string; severity: "low"|"medium"|"high"|"critical";
+  type: string; severity: "low" | "medium" | "high" | "critical";
   description: string; estimated_loss_kg: string;
   temperature: string; humidity: string; action_taken: string;
 };
@@ -156,14 +167,20 @@ function GrainBatchesPage() {
   const spoilageFn = useServerFn(logSpoilageEvent);
   const qc = useQueryClient();
 
+  const listTechFn = useServerFn(listTenantTechnicians);
+  const assignQCFn = useServerFn(assignQCTask);
+  const approveQCFn = useServerFn(approveQCResult);
+
   // Seed statusFilter from ?status= URL search param (e.g. navigated from dashboard)
-  const { status: searchStatus, siloId: searchSiloId } = useSearch({ from: "/_authenticated/grain-batches" });
+  const { status: searchStatus, siloId: searchSiloId, qcStatus: searchQCStatus } = useSearch({ from: "/_authenticated/grain-batches" });
 
   const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
   const { data: buyersData } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyerFn() as Promise<Buyer[]> });
+  const { data: techsData } = useQuery({ queryKey: ["tenant-technicians"], queryFn: () => listTechFn() });
   const silos = silosData ?? [];
   const buyers = buyersData ?? [];
+  const technicians = techsData ?? [];
   const suppliersQ = useQuery({
     queryKey: ["suppliers-mini"],
     queryFn: () => listSupFn({ data: {} }),
@@ -174,6 +191,7 @@ function GrainBatchesPage() {
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState(searchStatus ?? "all");
+  const [qcStageFilter, setQCStageFilter] = useState(searchQCStatus ?? "all");
   const [grainFilter, setGrainFilter] = useState("all");
   const [selected, setSelected] = useState<Batch | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -181,20 +199,46 @@ function GrainBatchesPage() {
   const [qrOpen, setQrOpen] = useState(false);
   const [dispatchOpen, setDispatchOpen] = useState(false);
   const [spoilageOpen, setSpoilageOpen] = useState(false);
+  const [assigningBatchId, setAssigningBatchId] = useState<string | null>(null);
 
   // Sync filter whenever the URL search param changes (back/forward navigation)
   useEffect(() => {
     setStatusFilter(searchStatus ?? "all");
-  }, [searchStatus]);
+    if (searchQCStatus) setQCStageFilter(searchQCStatus);
+  }, [searchStatus, searchQCStatus]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
   const [dispatch, setDispatch] = useState<Dispatch>(emptyDispatch);
   const [spoilage, setSpoilage] = useState<Spoilage>(emptySpoilage);
 
+  const assignMut = useMutation({
+    mutationFn: ({ batchId, techId }: { batchId: string; techId: string }) =>
+      assignQCFn({ data: { id: batchId, assigned_to: techId } }),
+    onSuccess: () => {
+      toast.success("Technician assigned to QC task! Status changed to Testing.");
+      setAssigningBatchId(null);
+      qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const approveMut = useMutation({
+    mutationFn: ({ batchId, passed }: { batchId: string; passed: boolean }) =>
+      approveQCFn({ data: { id: batchId, passed } }),
+    onSuccess: (_, variables) => {
+      toast.success(variables.passed ? "QC Approved! Batch stored." : "QC Rejected! Batch placed on hold.");
+      qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const rows = useMemo(() => {
     const all = (data ?? []) as Batch[];
     return all.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
+      if (qcStageFilter !== "all" && (b.qc_status ?? "arrived") !== qcStageFilter) return false;
       if (grainFilter !== "all" && b.grain_type !== grainFilter) return false;
       if (searchSiloId && b.silos?.id !== searchSiloId) return false;
       if (!q.trim()) return true;
@@ -204,10 +248,11 @@ function GrainBatchesPage() {
         b.grain_type?.toLowerCase().includes(t) ||
         b.farmer_name?.toLowerCase().includes(t) ||
         b.silos?.name?.toLowerCase().includes(t) ||
-        b.buyers?.name?.toLowerCase().includes(t)
+        b.buyers?.name?.toLowerCase().includes(t) ||
+        b.assigned_technician?.name?.toLowerCase().includes(t)
       );
     });
-  }, [data, q, statusFilter, grainFilter, searchSiloId]);
+  }, [data, q, statusFilter, qcStageFilter, grainFilter, searchSiloId]);
 
   const stats = useMemo(() => {
     const total = rows.length;
@@ -219,32 +264,34 @@ function GrainBatchesPage() {
   }, [rows]);
 
   const saveMut = useMutation({
-    mutationFn: (f: Form) => upsertFn({ data: {
-      id: f.id,
-      grain_type: f.grain_type as GrainType,
-      variety: f.variety.trim() || null,
-      grade: f.grade || "Standard",
-      quantity_kg: Number(f.quantity_kg),
-      silo_id: f.silo_id,
-      moisture_content: f.moisture_content ? Number(f.moisture_content) : null,
-      protein_content: f.protein_content ? Number(f.protein_content) : null,
-      test_weight: f.test_weight ? Number(f.test_weight) : null,
-      farmer_name: f.farmer_name.trim() || null,
-      supplier_id: f.supplier_id || null,
-      source_kind: f.source_kind,
-      unit_cost: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
-      farmer_contact: f.farmer_contact.trim() || null,
-      source_location: f.source_location.trim() || null,
-      harvest_date: f.harvest_date || null,
-      expected_dispatch_date: f.expected_dispatch_date || null,
-      purchase_price_per_kg: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
-      intake_temperature: f.intake_temperature ? Number(f.intake_temperature) : null,
-      intake_humidity: f.intake_humidity ? Number(f.intake_humidity) : null,
-      status: f.status,
-      notes: f.notes.trim() || null,
-    }}),
+    mutationFn: (f: Form) => upsertFn({
+      data: {
+        id: f.id,
+        grain_type: f.grain_type as GrainType,
+        variety: f.variety.trim() || null,
+        grade: f.grade || "Standard",
+        quantity_kg: Number(f.quantity_kg),
+        silo_id: f.silo_id,
+        moisture_content: f.moisture_content ? Number(f.moisture_content) : null,
+        protein_content: f.protein_content ? Number(f.protein_content) : null,
+        test_weight: f.test_weight ? Number(f.test_weight) : null,
+        farmer_name: f.farmer_name.trim() || null,
+        supplier_id: f.supplier_id || null,
+        source_kind: f.source_kind,
+        unit_cost: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
+        farmer_contact: f.farmer_contact.trim() || null,
+        source_location: f.source_location.trim() || null,
+        harvest_date: f.harvest_date || null,
+        expected_dispatch_date: f.expected_dispatch_date || null,
+        purchase_price_per_kg: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
+        intake_temperature: f.intake_temperature ? Number(f.intake_temperature) : null,
+        intake_humidity: f.intake_humidity ? Number(f.intake_humidity) : null,
+        status: f.status,
+        notes: f.notes.trim() || null,
+      }
+    }),
     onSuccess: () => {
-      toast.success(form.id ? "Batch updated" : "Batch created");
+      toast.success(form.id ? "Batch updated" : "Batch created & added to QC Queue");
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
@@ -266,25 +313,24 @@ function GrainBatchesPage() {
   });
 
   const dispatchMut = useMutation({
-    mutationFn: (payload: { id: string; d: Dispatch }) => {
-      const useExisting = !!payload.d.buyer_id;
-      return dispatchFn({ data: {
-        id: payload.id,
-        buyer_id: useExisting ? payload.d.buyer_id : null,
-        new_buyer: useExisting ? null : {
-          name: payload.d.new_buyer_name,
-          contact_phone: payload.d.new_buyer_phone || null,
-          contact_email: payload.d.new_buyer_email || null,
-        },
-        sell_price_per_kg: Number(payload.d.sell_price_per_kg),
-        dispatched_quantity_kg: Number(payload.d.dispatched_quantity_kg),
-        vehicle_number: payload.d.vehicle_number || null,
-        driver_name: payload.d.driver_name || null,
-        driver_contact: payload.d.driver_contact || null,
-        destination: payload.d.destination || null,
-        notes: payload.d.notes || null,
-      }});
-    },
+    mutationFn: (d: Dispatch) => dispatchFn({
+      data: {
+        id: selected!.id,
+        buyer_id: d.buyer_id || null,
+        new_buyer: !d.buyer_id && d.new_buyer_name ? {
+          name: d.new_buyer_name.trim(),
+          contact_phone: d.new_buyer_phone.trim() || null,
+          contact_email: d.new_buyer_email.trim() || null,
+        } : null,
+        sell_price_per_kg: Number(d.sell_price_per_kg),
+        dispatched_quantity_kg: Number(d.dispatched_quantity_kg),
+        vehicle_number: d.vehicle_number.trim() || null,
+        driver_name: d.driver_name.trim() || null,
+        driver_contact: d.driver_contact.trim() || null,
+        destination: d.destination.trim() || null,
+        notes: d.notes.trim() || null,
+      }
+    }),
     onSuccess: () => {
       toast.success("Batch dispatched");
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
@@ -292,26 +338,30 @@ function GrainBatchesPage() {
       qc.invalidateQueries({ queryKey: ["buyers"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setDispatchOpen(false); setDispatch(emptyDispatch);
+      setSelected(null);
     },
     onError: (e: Error) => toast.error(e.message || "Dispatch failed"),
   });
 
   const spoilageMut = useMutation({
-    mutationFn: (payload: { id: string; s: Spoilage }) => spoilageFn({ data: {
-      id: payload.id,
-      type: payload.s.type,
-      severity: payload.s.severity,
-      description: payload.s.description || null,
-      estimated_loss_kg: payload.s.estimated_loss_kg ? Number(payload.s.estimated_loss_kg) : null,
-      temperature: payload.s.temperature ? Number(payload.s.temperature) : null,
-      humidity: payload.s.humidity ? Number(payload.s.humidity) : null,
-      action_taken: payload.s.action_taken || null,
-    }}),
+    mutationFn: (s: Spoilage) => spoilageFn({
+      data: {
+        batch_id: selected!.id,
+        type: s.type,
+        severity: s.severity,
+        description: s.description.trim() || null,
+        estimated_loss_kg: s.estimated_loss_kg ? Number(s.estimated_loss_kg) : null,
+        intake_temperature: s.temperature ? Number(s.temperature) : null,
+        intake_humidity: s.humidity ? Number(s.humidity) : null,
+        action_taken: s.action_taken.trim() || null,
+      }
+    }),
     onSuccess: () => {
       toast.success("Spoilage event logged");
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
       qc.invalidateQueries({ queryKey: ["grain-alerts"] });
       setSpoilageOpen(false); setSpoilage(emptySpoilage);
+      setSelected(null);
     },
     onError: (e: Error) => toast.error(e.message || "Log failed"),
   });
@@ -321,6 +371,7 @@ function GrainBatchesPage() {
     setEditOpen(true);
   }
   function openEdit(b: Batch) {
+    setSelected(b);
     setForm({
       id: b.id,
       grain_type: b.grain_type,
@@ -364,7 +415,7 @@ function GrainBatchesPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <PageHeader title="Grain Batches" subtitle="Intake, storage tracking & dispatch" badge={isLoading ? "…" : `${rows.length}`} />
+      <PageHeader title="Grain Batches & QC Queue" subtitle="Intake, 1-to-1 technician quality checking & dispatch" badge={isLoading ? "…" : `${rows.length}`} />
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <MiniStat icon={Package} label="Total" value={stats.total} tint="emerald" />
@@ -378,21 +429,30 @@ function GrainBatchesPage() {
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search batch, farmer, buyer…" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search batch, farmer, tech, buyer…" className="pl-9" />
         </div>
-        <div className="grid grid-cols-2 sm:flex gap-2">
+        <div className="grid grid-cols-3 sm:flex gap-2">
           <Select value={grainFilter} onValueChange={setGrainFilter}>
-            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder="Grain" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-32"><SelectValue placeholder="Grain" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All grains</SelectItem>
               {GRAIN_TYPES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-32"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               {STATUSES.map(s => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={qcStageFilter} onValueChange={setQCStageFilter}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder="QC Stage" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All QC Stages</SelectItem>
+              {QC_STAGES.map(s => (
+                <SelectItem key={s} value={s}>QC: {s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -411,7 +471,7 @@ function GrainBatchesPage() {
             )}
           </CardContent>
         </Card>
-       ) : (
+      ) : (
         <div className="rounded-xl border bg-card/60 overflow-hidden">
           <div className="max-h-[70vh] overflow-auto">
             <Table className="text-xs">
@@ -422,8 +482,8 @@ function GrainBatchesPage() {
                   <TableHead>Supplier</TableHead>
                   <TableHead>Silo</TableHead>
                   <TableHead className="text-right">Intake (kg)</TableHead>
-                  <TableHead className="text-right">Remaining (kg)</TableHead>
-                  <TableHead>Intake date</TableHead>
+                  <TableHead>QC Stage</TableHead>
+                  <TableHead>Assigned Technician (1-to-1)</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -432,28 +492,103 @@ function GrainBatchesPage() {
                 {rows.map((b) => {
                   const supplier = b.farmer_name ?? "—";
                   const intake = Number(b.quantity_kg ?? 0);
-                  const remaining = Math.max(0, intake - Number(b.dispatched_quantity_kg ?? 0));
-                  const intakeDate = b.harvest_date ?? b.intake_date ?? null;
+                  const qcStatus = b.qc_status ?? "arrived";
+                  const tech = b.assigned_technician;
                   return (
                     <TableRow key={b.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition">
-                      <TableCell className="font-medium">{b.batch_id}</TableCell>
+                      <TableCell className="font-medium font-mono text-xs">{b.batch_id}</TableCell>
                       <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{supplier}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.silos?.name ?? "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[120px]">{supplier}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[120px]">{b.silos?.name ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{intake.toLocaleString()}</TableCell>
+                      <TableCell><QCStagePill stage={qcStatus} /></TableCell>
+                      <TableCell>
+                        {tech ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-5 w-5 grid place-items-center rounded-full bg-emerald-500/15 text-[8px] font-bold text-emerald-700 dark:text-emerald-300">
+                              {(tech.name ?? tech.email ?? "T").slice(0, 2).toUpperCase()}
+                            </div>
+                            <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate max-w-[120px]">
+                              {tech.name ?? tech.email}
+                            </span>
+                          </div>
+                        ) : (
+                          <Popover open={assigningBatchId === b.id} onOpenChange={(o) => setAssigningBatchId(o ? b.id : null)}>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1 text-sky-700 dark:text-sky-400 border-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/40">
+                                <UserCheck className="w-3 h-3" /> Assign Tech
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-56 p-2" align="start">
+                              <p className="text-xs font-semibold mb-2 text-slate-700 dark:text-slate-300">Assign 1 Technician</p>
+                              {technicians.length === 0 ? (
+                                <p className="text-xs text-muted-foreground p-2">No technicians available.</p>
+                              ) : (
+                                <ul className="space-y-1 max-h-40 overflow-auto">
+                                  {technicians.map((t) => (
+                                    <li key={t.id}>
+                                      <Button
+                                        variant="ghost" size="sm"
+                                        className="w-full justify-start gap-2 h-auto py-1.5"
+                                        disabled={assignMut.isPending}
+                                        onClick={() => assignMut.mutate({ batchId: b.id, techId: t.id })}
+                                      >
+                                        {assignMut.isPending && assignMut.variables?.techId === t.id ? (
+                                          <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                                        ) : (
+                                          <div className="h-5 w-5 grid place-items-center rounded-full bg-sky-500/15 text-[8px] font-bold text-sky-700 shrink-0">
+                                            {(t.name ?? t.email ?? "?").slice(0, 2).toUpperCase()}
+                                          </div>
+                                        )}
+                                        <span className="text-xs truncate">{t.name ?? t.email}</span>
+                                      </Button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </TableCell>
                       <TableCell><StatusBadge value={b.status} /></TableCell>
                       <TableCell className="text-right">
-                        <RowActions
-                          actions={[
-                            { label: "View", icon: Eye, onClick: () => { setSelected(b); setViewOpen(true); } },
-                            { label: "Edit", icon: Edit2, onClick: () => openEdit(b) },
-                            { label: "QR code", icon: QrCode, onClick: () => { setSelected(b); setQrOpen(true); } },
-                            { label: "Log spoilage", icon: AlertTriangle, onClick: () => openSpoilage(b) },
-                            { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(b.id) },
-                          ]}
-                        />
+                        <div className="flex items-center justify-end gap-1">
+                          {qcStatus === "pending" && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 bg-violet-500/10 text-violet-700 dark:text-violet-400 hover:bg-violet-500/20 border-violet-300">
+                                  Review QC
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-64 p-3" align="end">
+                                <div className="text-xs font-bold mb-2">Review Technician QC Report</div>
+                                <div className="grid grid-cols-3 gap-1 mb-2 text-center text-[10px]">
+                                  <div className="bg-muted p-1.5 rounded"><div className="font-bold text-xs">{b.moisture_content ?? "—"}%</div>Moisture</div>
+                                  <div className="bg-muted p-1.5 rounded"><div className="font-bold text-xs">{b.protein_content ?? "—"}%</div>Protein</div>
+                                  <div className="bg-muted p-1.5 rounded"><div className="font-bold text-xs">{b.test_weight ?? "—"}</div>Test Wt</div>
+                                </div>
+                                {b.qc_notes && <p className="text-[11px] text-muted-foreground bg-muted/40 p-2 rounded mb-3 italic">"{b.qc_notes}"</p>}
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="destructive" className="flex-1 h-7 text-xs gap-1" disabled={approveMut.isPending} onClick={() => approveMut.mutate({ batchId: b.id, passed: false })}>
+                                    <XCircle className="w-3.5 h-3.5" /> Fail
+                                  </Button>
+                                  <Button size="sm" className="flex-1 h-7 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white" disabled={approveMut.isPending} onClick={() => approveMut.mutate({ batchId: b.id, passed: true })}>
+                                    <CheckCircle className="w-3.5 h-3.5" /> Pass
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                          <RowActions
+                            actions={[
+                              { label: "View", icon: Eye, onClick: () => { setSelected(b); setViewOpen(true); } },
+                              { label: "Edit", icon: Edit2, onClick: () => openEdit(b) },
+                              { label: "QR code", icon: QrCode, onClick: () => { setSelected(b); setQrOpen(true); } },
+                              { label: "Log spoilage", icon: AlertTriangle, onClick: () => openSpoilage(b) },
+                              { label: "Delete", icon: Trash2, destructive: true, onClick: () => setDeleteId(b.id) },
+                            ]}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -462,8 +597,8 @@ function GrainBatchesPage() {
             </Table>
           </div>
           <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>{rows.length} batch{rows.length === 1 ? "" : "es"}</span>
-            <span>Dispatch happens from <Link to="/silos" className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">Silos</Link></span>
+            <span>{rows.length} batch{rows.length === 1 ? "" : "es"} in queue</span>
+            <span>Technicians inspect assigned batches & submit QC tests</span>
           </div>
         </div>
       )}
@@ -669,6 +804,16 @@ function GrainBatchesPage() {
               </DialogHeader>
               <div className="space-y-3 text-sm py-2">
                 <Row label="Status"><StatusBadge value={selected.status} /></Row>
+                <Row label="QC Stage"><QCStagePill stage={selected.qc_status ?? "arrived"} /></Row>
+                <Row label="QC Tech">
+                  {selected.assigned_technician ? (
+                    <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                      {selected.assigned_technician.name ?? selected.assigned_technician.email}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 italic">Unassigned (1-to-1 pending)</span>
+                  )}
+                </Row>
                 <Row label="Quality">
                   {selected.spoilage_label && (
                     <Badge variant={selected.spoilage_label === "Spoiled" ? "destructive" : selected.spoilage_label === "Risky" ? "secondary" : "outline"} className="mr-1">{selected.spoilage_label}</Badge>
@@ -756,7 +901,8 @@ function GrainBatchesPage() {
             <DialogTitle className="flex items-center gap-2"><Truck className="w-5 h-5 text-emerald-600" /> Dispatch batch</DialogTitle>
             <DialogDescription>{selected?.batch_id} · {selected?.grain_type}</DialogDescription>
           </DialogHeader>
-          <form id="dispatch-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); if (selected) dispatchMut.mutate({ id: selected.id, d: dispatch }); }}>
+          <form id="dispatch-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); if (selected) dispatchMut.mutate(dispatch); }}>
+
             <div>
               <Label>Buyer</Label>
               <Select value={dispatch.buyer_id} onValueChange={(v) => setDispatch({ ...dispatch, buyer_id: v })}>
@@ -830,7 +976,8 @@ function GrainBatchesPage() {
             <DialogTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-rose-600" /> Log spoilage event</DialogTitle>
             <DialogDescription>{selected?.batch_id}</DialogDescription>
           </DialogHeader>
-          <form id="spoilage-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); if (selected) spoilageMut.mutate({ id: selected.id, s: spoilage }); }}>
+          <form id="spoilage-form" className="grid gap-3 py-2" onSubmit={(e) => { e.preventDefault(); if (selected) spoilageMut.mutate(spoilage); }}>
+
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label>Type</Label>
@@ -1027,3 +1174,21 @@ function MiniStat({ icon: Icon, label, value, tint }: { icon: React.ElementType;
     </Card>
   );
 }
+
+function QCStagePill({ stage }: { stage?: string | null }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    arrived: { label: "Arrived", cls: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-300" },
+    testing: { label: "Investigating / Testing", cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300" },
+    pending: { label: "Pending Review", cls: "bg-violet-500/15 text-violet-700 dark:text-violet-400 border-violet-300" },
+    passed: { label: "Passed", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-300" },
+    failed: { label: "Failed", cls: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-300" },
+  };
+  const key = stage ?? "arrived";
+  const { label, cls } = map[key] ?? map.arrived;
+  return (
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cls}`}>
+      {label}
+    </span>
+  );
+}
+

@@ -116,3 +116,26 @@ export const getMyQCTasks = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+// ─── List technicians for manager assignment ─────────────────────────────
+export const listTenantTechnicians = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const adminId = prof?.admin_id ?? prof?.id ?? context.userId;
+
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .select("id, name, email, phone")
+      .or(`admin_id.eq.${adminId},id.eq.${adminId}`)
+      .limit(100);
+
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+
