@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Users, BarChart3, Cloud, Smartphone, Settings, LogOut,
   Package, OctagonAlert, ChevronDown, ChevronRight, Sparkles, QrCode,
   CreditCard, Shield, Brain, Zap, ClipboardList, Menu,
-  Building2, Activity, Warehouse,
+  Building2, Activity, Warehouse, PanelLeftClose, EyeOff,
 } from "lucide-react"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useTranslations } from "next-intl"
@@ -89,7 +89,13 @@ export function Sidebar() {
   const { currentLanguage } = useLanguage()
   const userRole = user?.role || "technician"
 
-  const [isExpandedState, setIsExpandedState] = useState(true)
+  // Desktop sidebar has 3 committed states: "expanded" (full width), "collapsed"
+  // (icon-only rail), "hidden" (fully gone, edge handle to bring back).
+  // `isPeeking` is a transient hover-only visual expansion of a collapsed rail —
+  // it never changes the committed `mode`.
+  type SidebarMode = "expanded" | "collapsed" | "hidden"
+  const [mode, setMode] = useState<SidebarMode>("expanded")
+  const [isPeeking, setIsPeeking] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [grainOpsExpanded, setGrainOpsExpanded] = useState(true)
   const [aiAnalyticsExpanded, setAiAnalyticsExpanded] = useState(false)
@@ -99,7 +105,13 @@ export function Sidebar() {
   const [alertStats, setAlertStats] = useState({ unresolved: 0, critical: 0 })
   const sidebarRef = useRef<HTMLElement>(null)
 
-  const isExpanded = isMobile ? true : isExpandedState
+  const isHidden = !isMobile && mode === "hidden"
+  // Drives content rendering (labels vs icon-only) — true for the committed
+  // expanded state AND while peeking a collapsed rail on hover.
+  const isExpanded = isMobile ? true : (mode === "expanded" || (mode === "collapsed" && isPeeking))
+  // Drives the manual collapse/hide header controls — only shown when the
+  // sidebar is *committed* to expanded, not during a transient hover peek.
+  const isCommittedExpanded = !isMobile && mode === "expanded"
 
   // Close mobile sidebar on route change
   useEffect(() => { if (isMobile) setIsMobileOpen(false) }, [pathname, isMobile])
@@ -112,16 +124,22 @@ export function Sidebar() {
     }
   }, [isMobile, isMobileOpen])
 
-  // Click outside to collapse
+  // Auto-collapse to icon rail when the page content scrolls (desktop only).
+  // Uses a capture-phase listener on `document` because `scroll` doesn't
+  // bubble — this still catches scrolling on the `<main>` content area
+  // (see app/[locale]/(authenticated)/layout.tsx) without needing a ref
+  // into that layout. Scrolling inside the sidebar's own nav list is
+  // excluded so it doesn't collapse itself.
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (isExpandedState && !isMobile && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        setIsExpandedState(false)
-      }
+    if (isMobile) return
+    function handleContentScroll(event: Event) {
+      if (sidebarRef.current && event.target instanceof Node && sidebarRef.current.contains(event.target)) return
+      setMode(prev => (prev === "expanded" ? "collapsed" : prev))
+      setIsPeeking(false)
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [isExpandedState, isMobile])
+    document.addEventListener("scroll", handleContentScroll, true)
+    return () => document.removeEventListener("scroll", handleContentScroll, true)
+  }, [isMobile])
 
   // Escape key closes mobile
   useEffect(() => {
@@ -130,7 +148,24 @@ export function Sidebar() {
     return () => document.removeEventListener('keydown', h)
   }, [])
 
-  // Removed hover handlers
+  // Hover-to-peek: temporarily reveal a collapsed rail on hover without
+  // changing the committed mode. Click-to-stick: clicking anywhere on a
+  // collapsed rail commits it open until scroll-collapse or manual collapse.
+  const handleRailMouseEnter = useCallback(() => {
+    if (isMobile || mode !== "collapsed") return
+    setIsPeeking(true)
+  }, [isMobile, mode])
+
+  const handleRailMouseLeave = useCallback(() => {
+    if (isMobile) return
+    setIsPeeking(false)
+  }, [isMobile])
+
+  const handleRailClick = useCallback(() => {
+    if (isMobile || mode !== "collapsed") return
+    setMode("expanded")
+    setIsPeeking(false)
+  }, [isMobile, mode])
 
   // ── Fetch Stats ──
   const fetchStats = useCallback(async () => {
@@ -305,11 +340,37 @@ export function Sidebar() {
                 <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">Enterprise</span>
               </div>
             </Link>
+            {isCommittedExpanded && (
+              <div className="flex items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => setMode("collapsed")}
+                      className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-all">
+                      <PanelLeftClose className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={8} className="bg-slate-900 text-white font-bold border-none shadow-xl">
+                    Collapse to icons
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button onClick={() => setMode("hidden")}
+                      className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-all">
+                      <EyeOff className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={8} className="bg-slate-900 text-white font-bold border-none shadow-xl">
+                    Hide sidebar
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            )}
           </>
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
-              <button onClick={() => setIsExpandedState(true)} className="group mt-2">
+              <button onClick={handleRailClick} className="group mt-2">
                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-200 group-hover:scale-110 transition-all duration-300 ring-2 ring-white">
                   <span className="text-white font-black text-xl">G</span>
                 </div>
@@ -431,15 +492,38 @@ export function Sidebar() {
       {/* Sidebar Aside */}
       <aside
         ref={sidebarRef}
+        onMouseEnter={handleRailMouseEnter}
+        onMouseLeave={handleRailMouseLeave}
+        onClick={handleRailClick}
+        aria-hidden={isHidden}
         className={cn(
           "flex flex-col bg-white border-r border-slate-100 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shrink-0 overflow-hidden shadow-[4px_0_24px_rgba(0,0,0,0.02)]",
           isMobile ? "fixed inset-y-0 left-0 z-50 shadow-2xl" : "relative h-screen",
-          isMobile && !isMobileOpen ? "-translate-x-full" : "translate-x-0"
+          isMobile && !isMobileOpen ? "-translate-x-full" : "translate-x-0",
+          isHidden && "border-r-0 shadow-none"
         )}
-        style={{ width: isExpanded ? (isMobile ? 290 : 280) : 80 }}
+        style={{
+          width: isMobile ? (isExpanded ? 290 : 0) : isHidden ? 0 : isExpanded ? 280 : 80,
+          pointerEvents: isHidden ? "none" : undefined,
+        }}
       >
         {sidebarContent}
       </aside>
+
+      {/* Edge handle to bring a fully-hidden sidebar back to the icon rail (desktop only) */}
+      {!isMobile && mode === "hidden" && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={() => setMode("collapsed")} aria-label="Show sidebar"
+              className="fixed left-0 top-1/2 -translate-y-1/2 z-40 flex items-center justify-center w-5 h-16 bg-white border border-l-0 border-slate-200 rounded-r-lg shadow-md hover:w-6 hover:bg-slate-50 transition-all duration-200">
+              <ChevronRight className="h-4 w-4 text-slate-500" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8} className="bg-slate-900 text-white font-bold border-none shadow-xl">
+            Show sidebar
+          </TooltipContent>
+        </Tooltip>
+      )}
     </TooltipProvider>
   )
 }

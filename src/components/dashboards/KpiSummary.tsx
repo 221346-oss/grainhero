@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Users, Building2, Package, Container, Radio, Wallet, type LucideIcon } from "lucide-react";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { RangeChip, type RangeKey } from "./RangeChip";
 import { useDashboardStats } from "./useDashboardStats";
@@ -28,7 +29,7 @@ function Spark({ data }: { data: number[] }) {
   );
 }
 
-type Row = { label: string; value: number | string; to: string; search?: { tab: string }; delta?: number };
+type Row = { label: string; value: number | string; to: string; search?: { tab: string }; delta?: number; icon: LucideIcon };
 
 export function KpiSummary({
   range, onRange,
@@ -47,17 +48,17 @@ export function KpiSummary({
 }) {
   const { data: s } = useDashboardStats();
   const rows: Row[] = [
-    { label: "Buyers", value: s?.buyers ?? "—", to: "/grain-operations", search: { tab: "buyers" } },
-    { label: "Warehouses", value: s?.warehouses ?? "—", to: "/grain-operations", search: { tab: "warehouses" } },
-    { label: "Active Batches", value: s?.batches.active ?? "—", to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches },
-    { label: "Silos", value: s?.silos ?? "—", to: "/grain-operations", search: { tab: "silos" } },
-    { label: "Sensors Online", value: s?.sensors.online ?? "—", to: "/sensors", delta: deltaAlerts },
+    { label: "Buyers", value: s?.buyers ?? "—", to: "/grain-operations", search: { tab: "buyers" }, icon: Users },
+    { label: "Warehouses", value: s?.warehouses ?? "—", to: "/grain-operations", search: { tab: "warehouses" }, icon: Building2 },
+    { label: "Active Batches", value: s?.batches.active ?? "—", to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches, icon: Package },
+    { label: "Silos", value: s?.silos ?? "—", to: "/grain-operations", search: { tab: "silos" }, icon: Container },
+    { label: "Sensors Online", value: s?.sensors.online ?? "—", to: "/sensors", delta: deltaAlerts, icon: Radio },
   ];
   const rev = revenueMtd ?? 0;
   const revPositive = (revenueDeltaPct ?? 0) >= 0;
 
   return (
-    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
+    <section className="rounded-xl border bg-card/60 p-4 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">KPI Summary</h2>
@@ -70,10 +71,12 @@ export function KpiSummary({
         {/* Revenue hero (65%, LEFT) */}
         <Link
           to="/subscription"
-          className="group rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between"
+          className="group rounded-lg border bg-card p-4 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Revenue</span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Wallet className="h-3 w-3" /> Revenue
+            </span>
             {planName && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                 {planName}
@@ -84,11 +87,11 @@ export function KpiSummary({
             <div className="text-3xl md:text-4xl font-bold tabular-nums text-emerald-600 leading-tight">
               {fmtPKR.format(rev)}
             </div>
-            <div className="flex items-center justify-between mt-0.5">
+            <div className="flex items-center gap-1 mt-0.5">
               <span className={`text-[10px] font-medium ${revPositive ? "text-emerald-600" : "text-amber-600"}`}>
                 {revPositive ? "+" : ""}{revenueDeltaPct ?? 0}% vs prev
               </span>
-              <span className="text-[10px] text-muted-foreground">12-mo trend</span>
+              <InfoDot text="12-month revenue trend, shown below." />
             </div>
             <Spark data={revenueSpark ?? []} />
           </div>
@@ -99,6 +102,7 @@ export function KpiSummary({
           <ul className="divide-y">
             {rows.map((r) => {
               const positive = (r.delta ?? 0) >= 0;
+              const Icon = r.icon;
               return (
                 <li key={r.label}>
                   <Link
@@ -106,7 +110,10 @@ export function KpiSummary({
                     search={r.search as never}
                     className="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
                   >
-                    <span className="text-xs text-foreground">{r.label}</span>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
+                      <Icon className="h-3.5 w-3.5 text-emerald-600" />
+                      {r.label}
+                    </span>
                     <div className="flex items-center gap-2">
                       {typeof r.delta === "number" && (
                         <span className={`text-[10px] font-medium ${positive ? "text-emerald-600" : "text-amber-600"}`}>

@@ -72,7 +72,7 @@ export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, 
             data-tour={dataTour}
             aria-label={label}
             className={cn(
-              "group/rail mx-auto my-1 grid h-10 w-10 place-items-center rounded-md text-sm font-black transition-all duration-200 will-change-transform",
+              "group/rail mx-auto grid h-10 w-10 place-items-center rounded-md text-sm font-black transition-all duration-200 will-change-transform",
               "hover:scale-[1.12]",
               active
                 ? "text-[--fusion-ink]"

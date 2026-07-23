@@ -14,11 +14,19 @@ import {
   Briefcase,
   ShieldCheck,
   Building2,
+  EyeOff,
+  ChevronRight,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FlowingNavItem } from "@/components/app/FlowingNavItem";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
 import { countPendingOrders } from "@/lib/hardware-orders.functions";
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
+
+// Desktop sidebar has 3 committed states: "expanded" (full width, labels),
+// "collapsed" (icon-only rail), "hidden" (fully gone, edge handle to bring
+// back). Owned by the authenticated layout (persisted + scroll-driven).
+export type SidebarMode = "expanded" | "collapsed" | "hidden";
 
 type NavItem = {
   name: string;
@@ -31,18 +39,19 @@ type NavItem = {
   marqueeItems?: string[];
 };
 
-// Group 2 — the five consolidated workspaces.
+// Group 2 — the five consolidated workspaces, plus Traceability as a tab
+// alongside them.
 const workspaceNav: NavItem[] = [
-  { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", icon: Wheat, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
+  { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", icon: Wheat, roles: ["admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
   { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Sensors", "Actuators", "Alerts", "Environmental", "Device Health", "Maintenance", "Incidents"] },
   { name: "intelligence", label: "Intelligence", to: "/intelligence", icon: Sparkles, roles: ["super_admin", "admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
   { name: "business", label: "Business", to: "/business", icon: Briefcase, roles: ["super_admin", "admin", "manager"], marqueeItems: ["Revenue", "Subscription", "Insurance"] },
   { name: "administration", label: "Administration", to: "/administration", icon: ShieldCheck, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
+  { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
 ];
 
-// Group 3 — standalone pages. Platform is a single entry to the platform area.
+// Group 3 — super-admin-only platform entries.
 const utilityNav: NavItem[] = [
-  { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
   { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
   { name: "platform", label: "Platform", to: "/platform", icon: Building2, roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Plans & Thresholds", "Pipeline", "Leads", "System Health", "Audit Logs", "Activity Feed"] },
 ];
@@ -52,15 +61,11 @@ const bottomNav: NavItem[] = [
   { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Profile", "Location", "Notifications", "Appearance"] },
 ];
 
-function hasVisible(items: NavItem[], role: AppRole) {
-  return items.some((i) => i.roles.includes(role));
-}
-
 function Section({ items, role, currentPath, collapsed }: { label?: string; items: NavItem[]; role: AppRole; currentPath: string; showLabel?: boolean; collapsed: boolean }) {
   const visible = items.filter((i) => i.roles.includes(role));
   if (visible.length === 0) return null;
   return (
-    <div className={cn(collapsed && "flex flex-col items-center py-2 gap-0.5")}>
+    <div className={cn(collapsed && "flex flex-col items-center gap-0.5")}>
       {visible.map((item) => {
         const active = item.to === "/platform"
           ? currentPath === "/platform" || currentPath.startsWith("/platform/")
@@ -83,8 +88,29 @@ function Section({ items, role, currentPath, collapsed }: { label?: string; item
   );
 }
 
-export function AppSidebar({ collapsed = true, onToggle }: { collapsed?: boolean; onToggle?: () => void }) {
+export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeChange: (mode: SidebarMode) => void }) {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+  const collapsed = mode !== "expanded";
+  const isHidden = mode === "hidden";
+
+  // Click anywhere on a collapsed rail commits it open (stays open until
+  // scroll-collapse or a manual collapse/hide action). No hover-expand —
+  // only a click opens it.
+  const handleRailClick = () => {
+    if (mode !== "collapsed") return;
+    onModeChange("expanded");
+  };
+  // Logo button: expanded -> manually collapse to icon rail. When collapsed,
+  // the click bubbles to handleRailClick above, which expands+sticks.
+  const handleLogoClick = () => {
+    if (mode === "expanded") onModeChange("collapsed");
+  };
+  // Hide is only rendered while collapsed (enforcing full -> collapse ->
+  // hide) and must not also trigger the rail's click-to-stick handler above.
+  const handleHideClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onModeChange("hidden");
+  };
   const fetchRole = useServerFn(getMyRole);
   const { data } = useQuery({
     queryKey: ["my-role"],
@@ -118,18 +144,22 @@ export function AppSidebar({ collapsed = true, onToggle }: { collapsed?: boolean
   void useNavigate;
 
   return (
+    <>
     <Sidebar
       collapsible="none"
+      onClick={handleRailClick}
+      aria-hidden={isHidden}
       className={cn(
-        "sticky top-0 h-screen bg-transparent transition-[width] duration-300 ease-out",
-        collapsed ? "w-16" : "w-56",
+        "sticky top-0 h-screen bg-transparent transition-[width] duration-300 ease-out overflow-hidden",
+        isHidden ? "w-0" : collapsed ? "w-16" : "w-56",
       )}
+      style={isHidden ? { pointerEvents: "none" } : undefined}
     >
       <div className="flex h-full flex-col px-2">
         {/* Logo — click to toggle rail ↔ expanded */}
         <button
           type="button"
-          onClick={onToggle}
+          onClick={handleLogoClick}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
             "mx-auto mt-4 mb-2 grid place-items-center rounded-2xl transition-all duration-200 hover:scale-[1.04] hover:bg-sidebar-accent/60 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
@@ -151,26 +181,74 @@ export function AppSidebar({ collapsed = true, onToggle }: { collapsed?: boolean
           )}
         </button>
 
-        {/* Nav dock */}
-        <div className="flex min-h-0 flex-1 flex-col pb-4">
-          <div
-            className={cn(
-              "flex w-full min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/20",
-            )}
-          >
-            <div className="flex-1 overflow-y-auto no-scrollbar">
+        {/* Nav dock — sized to its content and vertically centered in the
+            remaining space. Three groups — workspaces (incl. Traceability),
+            platform+Hide, Settings last — separated by fixed-size spacers
+            that don't change between collapsed/expanded, so the card is the
+            same height in both states instead of jumping on toggle. */}
+        <div className="flex min-h-0 flex-1 flex-col justify-center py-2">
+          <div className="flex w-full max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/20">
+            <div className="overflow-y-auto no-scrollbar py-3">
               <Section items={workspaceNav} role={role} currentPath={currentPath} collapsed={collapsed} />
-              {hasVisible(utilityNav, role) && (
-                <div className={cn("h-px bg-sidebar-border/80", collapsed ? "mx-3 my-1" : "mx-3 my-1.5")} />
-              )}
-              <Section items={utilityNav} role={role} currentPath={currentPath} collapsed={collapsed} />
-            </div>
-            <div className="border-t border-sidebar-border/40 py-1">
+
+              <div className="h-4 shrink-0" />
+
+              {/* Platform (super-admin only) + Hide — occupies the slot
+                  Traceability used to sit in on its own. Hide only appears
+                  once already collapsed, so the flow is strictly
+                  full -> collapse -> hide (never a direct full -> hide
+                  jump). A same-size placeholder keeps this group's height
+                  identical between the two states. */}
+              <div className={cn(collapsed && "flex flex-col items-center gap-0.5")}>
+                <Section items={utilityNav} role={role} currentPath={currentPath} collapsed={collapsed} />
+                {mode === "collapsed" ? (
+                  <Tooltip delayDuration={120}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={handleHideClick}
+                        aria-label="Hide sidebar"
+                        className="mx-auto grid h-10 w-10 place-items-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                      >
+                        <EyeOff className="h-4 w-4 shrink-0" strokeWidth={2.25} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={8} className="font-semibold">Hide sidebar</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div className="h-10" aria-hidden="true" />
+                )}
+              </div>
+
+              <div className="h-4 shrink-0" />
+
+              {/* Settings — always last. */}
               <Section items={bottomNav} role={role} currentPath={currentPath} collapsed={collapsed} />
             </div>
           </div>
         </div>
       </div>
     </Sidebar>
+
+    {/* Small edge handle when fully hidden — a bit more peeks out on hover.
+        Click steps to the icon rail (not straight to full width), so the
+        return path is strictly hidden -> collapsed -> expanded: click the
+        logo from there to finish opening it. */}
+    {isHidden && (
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => onModeChange("collapsed")}
+            aria-label="Show sidebar"
+            className="group fixed left-0 top-1/2 z-40 flex h-16 w-5 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-sidebar-border/60 bg-sidebar shadow-md transition-all duration-200 hover:w-7"
+          >
+            <ChevronRight className="h-4 w-4 text-sidebar-foreground/70 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">Show sidebar</TooltipContent>
+      </Tooltip>
+    )}
+    </>
   );
 }
