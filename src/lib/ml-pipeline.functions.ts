@@ -131,17 +131,23 @@ export const runMLPrediction = createServerFn({ method: "POST" })
     // 1. Silo + current batch
     const { data: silo, error: siloError } = await supabase
       .from("silos")
-      .select(`
-        id, silo_id, name, admin_id, warehouse_id, fumigation_active,
-        current_batch:grain_batches!fk_silos_current_batch(
-          id, batch_id, grain_type, moisture_content, intake_date, quality_score
-        )
-      `)
+      .select("id, silo_id, name, admin_id, warehouse_id")
       .eq("id", data.siloId)
       .single();
     if (siloError || !silo) throw new Error("Silo not found");
 
-    const batch = Array.isArray(silo.current_batch) ? silo.current_batch[0] : silo.current_batch;
+    // Current batch: fetch latest active batch for this silo (schema on main
+    // does not expose a `current_batch` FK on silos — see FINAL_PLAN §2).
+    const { data: batchRow } = await (supabase as any)
+      .from("grain_batches")
+      .select("id, batch_id, grain_type, moisture_content, intake_date, quality_score")
+      .eq("silo_id", data.siloId)
+      .order("intake_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const batch = batchRow as
+      | { id: string; batch_id: string; grain_type: string; moisture_content: number | null; intake_date: string; quality_score: number | null }
+      | null;
     if (!batch) throw new Error("No active grain batch found in silo");
 
     // 2. Sensor device (for Firebase actuation)
@@ -303,7 +309,8 @@ export const runMLPrediction = createServerFn({ method: "POST" })
       else { led2 = true; }
 
       // === FUMIGATION INTERLOCK — block all fan ON commands if fumigation is active ===
-      if ((silo as any).fumigation_active && fanOn) {
+      const fumigationActive = (silo as any).fumigation_active === true;
+      if (fumigationActive && fanOn) {
         console.log(`⚠️ Fumigation active for silo ${silo.silo_id} — overriding AI fan ON command`);
         fanOn = false;
         pwm = 0;
