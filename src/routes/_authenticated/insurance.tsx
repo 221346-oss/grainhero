@@ -1,4 +1,4 @@
-import { TableSkeleton } from "@/components/app/skeletons";
+import { DashboardSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,10 @@ import {
   listClaims, upsertClaim, deleteClaim,
   type InsurancePolicyRow, type InsuranceClaimRow,
 } from "@/lib/team-settings-insurance.functions";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
+import { getPlatformInsuranceOverview } from "@/lib/platform-overviews.functions";
 
 export const Route = createFileRoute("/_authenticated/insurance")({ component: InsurancePage });
 
@@ -62,6 +66,7 @@ const emptyClaim: ClaimForm = {
 
 function InsurancePage() {
   const qc = useQueryClient();
+  const { isSuperAdmin } = useIsSuperAdmin();
   const listPoliciesFn = useServerFn(listPolicies);
   const savePolicyFn = useServerFn(upsertPolicy);
   const delPolicyFn = useServerFn(deletePolicy);
@@ -74,6 +79,13 @@ function InsurancePage() {
   });
   const { data: claims = [], isLoading: claimsLoading } = useQuery({
     queryKey: ["insurance-claims"], queryFn: () => listClaimsFn() as Promise<InsuranceClaimRow[]>,
+  });
+
+  const fetchPlatformIns = useServerFn(getPlatformInsuranceOverview);
+  const platformInsQ = useQuery({
+    queryKey: ["platform-insurance-overview"],
+    queryFn: () => fetchPlatformIns(),
+    enabled: isSuperAdmin,
   });
 
   const [policyOpen, setPolicyOpen] = useState(false);
@@ -141,13 +153,36 @@ function InsurancePage() {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      {isSuperAdmin && (
+        <div className="mb-6">
+          <PlatformScopeBanner label="Policies and claims across every tenant. Totals reflect all insured value on the platform." />
+        </div>
+      )}
+      {isSuperAdmin && platformInsQ.data && (
+        <div className="mb-6">
+          <PlatformOverviewTable
+            title="Per-tenant insurance"
+            description={`Total coverage $${platformInsQ.data.totals.coverage.toLocaleString()} · ${platformInsQ.data.totals.openClaims} open claims`}
+            rows={platformInsQ.data.rows}
+            columns={[
+              { key: "activePolicies", label: "Active", align: "right", render: (r) => `${r.activePolicies}/${r.policies}` },
+              { key: "coverage", label: "Coverage", align: "right", render: (r) => `$${r.coverage.toLocaleString()}` },
+              { key: "premium", label: "Premium", align: "right", render: (r) => `$${r.premium.toLocaleString()}` },
+              { key: "openClaims", label: "Open claims", align: "right", render: (r) => (
+                  <span className={r.openClaims > 0 ? "text-amber-700 font-medium" : ""}>{r.openClaims}</span>
+                ) },
+              { key: "claimRate", label: "Claim rate", align: "right", render: (r) => `${(r.claimRate * 100).toFixed(0)}%` },
+            ]}
+          />
+        </div>
+      )}
       <PageHeader title="Insurance" subtitle="Track your policies and claims across grain operations" />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="Active Policies" value={stats.active} icon={Shield} accent="emerald" />
-        <StatCard label="Total Coverage" value={`$${stats.totalCoverage.toLocaleString()}`} icon={DollarSign} accent="sky" />
+        <StatCard label="Total Coverage" value={`PKR ${stats.totalCoverage.toLocaleString()}`} icon={DollarSign} accent="sky" />
         <StatCard label="Open Claims" value={stats.openClaims} icon={AlertTriangle} accent="amber" />
-        <StatCard label="Claimed Amount" value={`$${stats.totalClaimed.toLocaleString()}`} icon={FileText} accent="violet" />
+        <StatCard label="Claimed Amount" value={`PKR ${stats.totalClaimed.toLocaleString()}`} icon={FileText} accent="violet" />
       </div>
 
       <Tabs defaultValue="policies">
@@ -165,11 +200,11 @@ function InsurancePage() {
           <Card>
             <CardContent className="p-0">
               {policiesLoading ? (
-                <div className="p-4"><TableSkeleton rows={5} cols={4} /></div>
+                <DashboardSkeleton />
               ) : policies.length === 0 ? (
                 <div className="p-10 text-center text-slate-500">No policies yet</div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="">
                   {policies.map((p) => (
                     <div key={p.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
                       <div className="flex-1 min-w-0">
@@ -204,11 +239,11 @@ function InsurancePage() {
           <Card>
             <CardContent className="p-0">
               {claimsLoading ? (
-                <div className="p-4"><TableSkeleton rows={5} cols={4} /></div>
+                <DashboardSkeleton />
               ) : claims.length === 0 ? (
                 <div className="p-10 text-center text-slate-500">No claims yet</div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="">
                   {claims.map((c) => (
                     <div key={c.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
                       <div className="flex-1 min-w-0">

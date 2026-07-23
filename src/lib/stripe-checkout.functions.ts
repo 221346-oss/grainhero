@@ -12,13 +12,15 @@ const checkoutInput = z.object({
   }),
   install: z.object({
     address: z.string().trim().min(3).max(300),
-    city: z.string().trim().min(1).max(120),
+    city: z.string().trim().max(120).optional().nullable(),
     country: z.string().trim().min(1).max(120),
     phone: z.string().trim().min(4).max(40),
     preferredDate: z.string().trim().max(40).optional().nullable(),
     notes: z.string().trim().max(1000).optional().nullable(),
     businessName: z.string().trim().max(200).optional().nullable(),
     taxId: z.string().trim().max(80).optional().nullable(),
+    lat: z.number().min(-90).max(90).optional().nullable(),
+    lng: z.number().min(-180).max(180).optional().nullable(),
   }),
 });
 
@@ -111,6 +113,8 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
             install_address: data.install.address,
             install_city: data.install.city,
             install_country: data.install.country,
+            install_lat: data.install.lat ?? null,
+            install_lng: data.install.lng ?? null,
             contact_phone: data.install.phone,
             preferred_install_date: data.install.preferredDate || null,
             notes: data.install.notes || null,
@@ -225,6 +229,115 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     return { url: session.url as string, id: session.id as string };
   });
 
+const siloAddonInput = z.object({
+  install: z.object({
+    address: z.string().trim().min(3).max(300),
+    city: z.string().trim().max(120).optional().nullable(),
+    country: z.string().trim().min(1).max(120),
+    phone: z.string().trim().min(4).max(40),
+    notes: z.string().trim().max(1000).optional().nullable(),
+  }),
+});
+
+/**
+ * One-time IoT/silo add-on purchase for an already-onboarded tenant admin
+ * who hit their plan's silo limit. Unlike createStripeCheckoutSession (the
+ * signup flow, mode "subscription"), this is authenticated and charges only
+ * the one-time hardware fee — it must NOT create a second recurring
+ * subscription for an existing customer, since the webhook's fulfillment
+ * step re-syncs `profiles.subscription_plan` from the session's plan_id
+ * metadata (see stripe webhook handler); we pass the tenant's *current*
+ * plan back so that sync is a harmless no-op instead of wiping it.
+ */
+export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => siloAddonInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: profileRow } = await context.supabase
+      .from("profiles")
+      .select("id, email, name, stripe_customer_id, subscription_plan")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const profile = profileRow as {
+      email?: string | null; name?: string | null; stripe_customer_id?: string | null; subscription_plan?: string | null;
+    } | null;
+
+    const planId = profile?.subscription_plan ?? "basic";
+    const plan = pricingData.find((p: { id: string }) => p.id === planId) ?? pricingData[0];
+    const email = (profile?.email ?? "").trim().toLowerCase();
+    const name = (profile?.name ?? "").trim() || email;
+
+    const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
+
+    let customerId = profile?.stripe_customer_id ?? null;
+    if (!customerId && email) {
+      const created = await stripeFetch(
+        "/customers",
+        stripeForm({ email, name, "metadata[user_id]": context.userId }),
+      );
+      customerId = created.id as string;
+      await context.supabase.from("profiles").update({ stripe_customer_id: customerId }).eq("id", context.userId);
+    }
+
+    const iotUnit = Number(plan.iotCharge ?? 7000);
+    const { data: order, error } = await context.supabase
+      .from("hardware_orders" as never)
+      .insert({
+        admin_id: context.userId,
+        customer_name: name,
+        customer_email: email,
+        stripe_customer_id: customerId,
+        plan_id: plan.id,
+        plan_name: plan.name,
+        hardware_quantity: 1,
+        hardware_unit_price: iotUnit,
+        hardware_total: iotUnit,
+        currency: "PKR",
+        install_address: data.install.address,
+        install_city: data.install.city ?? null,
+        install_country: data.install.country,
+        contact_phone: data.install.phone,
+        notes: data.install.notes || "Additional silo/IoT device request — plan silo limit reached.",
+        status: "pending_payment",
+      } as never)
+      .select("id")
+      .single();
+    if (error) throw error;
+    const orderId = (order as { id: string }).id;
+
+    const origin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
+    const currency = String(plan.currency ?? "PKR").toLowerCase();
+    const params = stripeForm({
+      mode: "payment",
+      customer: customerId ?? undefined,
+      client_reference_id: orderId,
+      success_url: `${origin}/orders?addon=success`,
+      cancel_url: `${origin}/orders?addon=cancelled`,
+      "metadata[user_id]": context.userId,
+      "metadata[customer_email]": email,
+      "metadata[plan_id]": plan.id,
+      "metadata[hardware_order_id]": orderId,
+      "metadata[addon]": "true",
+      "line_items[0][quantity]": "1",
+      "line_items[0][price_data][currency]": currency,
+      "line_items[0][price_data][product_data][name]": "Additional silo / IoT sensor",
+      "line_items[0][price_data][product_data][description]": "One-time hardware + install fee for one additional silo beyond your plan's included limit.",
+      "line_items[0][price_data][unit_amount]": String(Math.round(iotUnit * 100)),
+    });
+
+    let session: { url: string; id: string };
+    try {
+      session = await stripeFetch("/checkout/sessions", params) as { url: string; id: string };
+    } catch (e) {
+      // Roll back the draft order if Stripe rejects the session, so it
+      // doesn't linger forever in "pending_payment".
+      await context.supabase.from("hardware_orders" as never).delete().eq("id", orderId);
+      throw e;
+    }
+    await context.supabase.from("hardware_orders" as never).update({ stripe_session_id: session.id } as never).eq("id", orderId);
+    return { url: session.url, id: session.id };
+  });
+
 const checkoutSummaryInput = z.object({ sessionId: z.string().trim().min(5).max(200) });
 
 export const getCheckoutSessionSummary = createServerFn({ method: "GET" })
@@ -288,6 +401,37 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       .update({ admin_id: context.userId } as never)
       .is("admin_id", null)
       .ilike("customer_email", email);
+
+    // Promote any still-pending orders to `new` so Platform → Orders shows
+    // them right away (fallback for when the Stripe webhook isn't reachable),
+    // and notify every super admin so they don't miss the sign-up.
+    try {
+      const pendingIds = orders
+        .filter((o) => String(o.status ?? "") === "pending_payment")
+        .map((o) => String(o.id ?? ""))
+        .filter(Boolean);
+      if (pendingIds.length > 0) {
+        await supabaseAdmin
+          .from("hardware_orders" as never)
+          .update({ status: "new" } as never)
+          .in("id", pendingIds);
+      }
+      const { emitToSuperAdmins } = await import("@/lib/notify");
+      for (const o of orders) {
+        await emitToSuperAdmins(supabaseAdmin, {
+          category: "order",
+          severity: "info",
+          title: "New install order placed",
+          body: `Order for plan ${String(o.plan_id ?? o.plan_name ?? "?")} · ${Number(o.hardware_quantity ?? 0)} unit(s) by ${email}.`,
+          link: `/platform/orders/${String(o.id ?? "")}`,
+          entityType: "hardware_order",
+          entityId: String(o.id ?? ""),
+          metadata: { plan_id: o.plan_id ?? null, hardware_quantity: o.hardware_quantity ?? null },
+        });
+      }
+    } catch (e) {
+      console.warn("[claim] super-admin notify failed:", (e as Error).message);
+    }
 
     const stripeCustomerId = String(first.stripe_customer_id ?? "");
     if (stripeCustomerId) {

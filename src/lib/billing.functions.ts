@@ -1,15 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { getEffectiveRole } from "./rbac.server";
 
 async function role(supabase: any, userId: string) {
-  const roles: string[] = [];
-  for (const r of ["super_admin", "admin", "manager", "technician"]) {
-    const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: r });
-    if (data) roles.push(r);
-  }
-  const order = ["super_admin", "admin", "manager", "technician", "pending"];
-  return order.find((r) => roles.includes(r)) ?? "pending";
+  return getEffectiveRole(supabase, userId);
 }
 
 async function tenantAdminId(supabase: any, userId: string): Promise<string> {
@@ -106,21 +101,30 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const r = await role(context.supabase, context.userId);
     if (!["super_admin", "admin", "manager"].includes(r)) throw new Error("Forbidden");
-    const adminId = await tenantAdminId(context.supabase, context.userId);
+
+    let adminId: string | null = null;
+    try {
+      adminId = await tenantAdminId(context.supabase, context.userId);
+    } catch (e) {
+      if (r !== "super_admin") throw e;
+    }
+
+    let invQuery = context.supabase
+      .from("buyer_invoices")
+      .select("id, invoice_number, buyer_name, buyer_company, batch_ref, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at");
+
+    let payQuery = context.supabase
+      .from("buyer_payments")
+      .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, created_at");
+
+    if (adminId) {
+      invQuery = invQuery.eq("admin_id", adminId);
+      payQuery = payQuery.eq("admin_id", adminId);
+    }
 
     const [invRes, payRes] = await Promise.all([
-      context.supabase
-        .from("buyer_invoices")
-        .select("id, invoice_number, buyer_name, buyer_company, batch_ref, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at")
-        .eq("admin_id", adminId)
-        .order("created_at", { ascending: false })
-        .limit(200),
-      context.supabase
-        .from("buyer_payments")
-        .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, created_at")
-        .eq("admin_id", adminId)
-        .order("payment_date", { ascending: false })
-        .limit(200),
+      invQuery.order("created_at", { ascending: false }).limit(200),
+      payQuery.order("payment_date", { ascending: false }).limit(200),
     ]);
 
     const invoices = (invRes.data ?? []) as any[];

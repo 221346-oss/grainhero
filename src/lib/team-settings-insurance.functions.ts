@@ -1,5 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveRole } from "./rbac.server";
+import { assertPlanAllows } from "@/lib/plan-gate";
+
+async function roleFlags(supabase: any, userId: string) {
+  const r = await getEffectiveRole(supabase, userId);
+  return {
+    role: r,
+    isSuper: r === "super_admin",
+    isAdmin: r === "admin",
+    isManager: r === "manager",
+  };
+}
 
 // ============= TEAM MANAGEMENT =============
 
@@ -37,11 +49,9 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
 export const inviteTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
+  .validator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    const { data: isManager } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" });
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
     if (isManager && !isAdmin && !isSuper && data.role !== "technician") throw new Error("Managers can only invite technicians");
     if (isAdmin && !isSuper && data.role === "admin") throw new Error("Only super admins can invite admins");
@@ -51,49 +61,81 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       .from("profiles").select("admin_id, id").eq("id", context.userId).maybeSingle();
     const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? tenantId;
 
-    // Enforce plan-based staff limit (admin's active subscription)
-    if (!isSuper) {
-      const { supabaseAdmin: sa } = await import("@/integrations/supabase/client.server");
-      const { data: sub } = await sa
-        .from("subscriptions")
-        .select("max_users, status")
-        .eq("admin_id", admin_id)
-        .in("status", ["active", "trial"] as never)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!sub) throw new Error("No active subscription. Purchase a plan first to invite staff.");
-      const maxUsers = Number((sub as { max_users?: number }).max_users ?? 0);
-      const { count } = await sa
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .or(`admin_id.eq.${admin_id},id.eq.${admin_id}`);
-      const current = count ?? 1;
-      if (maxUsers > 0 && current >= maxUsers) {
-        throw new Error(`Staff limit reached (${current}/${maxUsers}). Upgrade your plan to add more members.`);
-      }
-    }
+    // Enforce plan-based staff limit via central gate.
+    await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: invited, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email.trim().toLowerCase(), {
-      data: { name: data.name ?? "", invited_role: data.role, admin_id },
+    const email = data.email.trim().toLowerCase();
+    let uid: string | undefined;
+    // 1) Ensure an auth user exists. Prefer createUser (doesn't require SMTP);
+    //    fall back to locating an existing user if the email is already registered.
+    const createRes = await supabaseAdmin.auth.admin.createUser({
+      email,
+      email_confirm: false,
+      user_metadata: { name: data.name ?? "", invited_role: data.role, admin_id },
     });
-    if (error) throw new Error(error.message);
-    const uid = invited.user?.id;
+    if (createRes.error) {
+      const msg = createRes.error.message || (createRes.error as { code?: string }).code || "";
+      const already = /already|registered|exists|duplicate/i.test(msg);
+      if (!already) {
+        console.error("[inviteTeamMember] createUser failed", createRes.error);
+        throw new Error(msg || "Could not create the user in Supabase Auth.");
+      }
+      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      if (listErr) throw new Error(listErr.message || "Failed to look up existing user");
+      uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
+      if (!uid) throw new Error("A user with that email already exists but could not be located.");
+    } else {
+      uid = createRes.data.user?.id;
+    }
+
+    // 2) Generate an invite/magic link (does not send email; we send via Resend).
+    let inviteLink: string | null = null;
+    try {
+      const linkRes = await supabaseAdmin.auth.admin.generateLink({
+        type: "invite",
+        email,
+        options: { data: { name: data.name ?? "", invited_role: data.role, admin_id } },
+      });
+      if (!linkRes.error) inviteLink = linkRes.data.properties?.action_link ?? null;
+    } catch (e) {
+      console.warn("[inviteTeamMember] generateLink failed (non-fatal)", e);
+    }
+
+    // 3) Send the invitation email via Resend (already configured in this project).
+    try {
+      const { sendEmailViaResend } = await import("@/lib/resend.server");
+      const cta = inviteLink
+        ? `<p><a href="${inviteLink}" style="display:inline-block;background:#059669;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Accept invitation</a></p>`
+        : `<p>Sign in at <a href="https://grainheroo.lovable.app/auth">grainheroo.lovable.app/auth</a> using this email to accept.</p>`;
+      await sendEmailViaResend({
+        to: email,
+        subject: `You've been invited to GrainHero as ${data.role}`,
+        html: `<div style="font-family:Inter,Arial,sans-serif;color:#0f172a;max-width:520px;margin:auto">
+          <h2 style="color:#065f46">You're invited to GrainHero</h2>
+          <p>Hi ${data.name ?? "there"}, you've been added to a GrainHero tenant as <strong>${data.role}</strong>.</p>
+          ${cta}
+          <p style="color:#64748b;font-size:12px;margin-top:24px">If you didn't expect this, you can ignore this email.</p>
+        </div>`,
+      });
+    } catch (e) {
+      console.warn("[inviteTeamMember] email send failed (non-fatal)", e);
+    }
     if (uid) {
-      await supabaseAdmin.from("profiles").upsert({ id: uid, email: data.email.trim().toLowerCase(), name: data.name ?? data.email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
-      await supabaseAdmin.from("user_roles").upsert({ user_id: uid, role: data.role }, { onConflict: "user_id,role" });
+      const { error: pErr } = await supabaseAdmin.from("profiles").upsert({ id: uid, email, name: data.name ?? email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
+      if (pErr) { console.error("[inviteTeamMember] profiles upsert failed", pErr); throw new Error(pErr.message || "Failed to save profile"); }
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+      const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
+      if (rErr) { console.error("[inviteTeamMember] user_roles insert failed", rErr); throw new Error(rErr.message || "Failed to assign role"); }
     }
     return { ok: true };
   });
 
 export const updateTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
+  .validator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    const { data: isManager } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" });
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
 
     const update: Record<string, any> = {};
@@ -114,10 +156,9 @@ export const updateTeamMember = createServerFn({ method: "POST" })
 
 export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const { isSuper, isAdmin } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin) throw new Error("Forbidden");
     if (data.id === context.userId) throw new Error("You cannot remove yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -142,7 +183,7 @@ export const getMySettings = createServerFn({ method: "GET" })
 
 export const updateMySettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
+  .validator((d: {
     name?: string; phone?: string; business_type?: string; avatar?: string | null;
     address?: Record<string, unknown>; location?: Record<string, unknown>;
     preferences?: Record<string, unknown>;
@@ -189,8 +230,11 @@ export const listPolicies = createServerFn({ method: "GET" })
 
 export const upsertPolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
+  .validator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
+    if (!data.id) {
+      await assertPlanAllows({ feature: "insurance", sb: context.supabase, userId: context.userId });
+    }
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
       policy_number: data.policy_number ?? `POL-${Date.now()}`,
@@ -221,7 +265,7 @@ export const upsertPolicy = createServerFn({ method: "POST" })
 
 export const deletePolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("insurance_policies").delete().eq("id", data.id);
     if (error) throw error;
@@ -239,7 +283,7 @@ export const listClaims = createServerFn({ method: "GET" })
 
 export const upsertClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: Partial<InsuranceClaimRow> & { id?: string }) => d)
+  .validator((d: Partial<InsuranceClaimRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
@@ -271,7 +315,7 @@ export const upsertClaim = createServerFn({ method: "POST" })
 
 export const deleteClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("insurance_claims").delete().eq("id", data.id);
     if (error) throw error;

@@ -8,11 +8,13 @@ import { SuperAdminDashboard } from "@/components/dashboards/SuperAdminDashboard
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
 import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard";
-import { PendingDashboard } from "@/components/dashboards/PendingDashboard";
-
+import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
+import { useState, useEffect } from "react";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
+
+const CHANGE_EVENT = "gh_impersonation_changed";
 
 function DashboardPage() {
   const fetchRole = useServerFn(getMyRole);
@@ -20,6 +22,18 @@ function DashboardPage() {
     queryKey: ["my-role"],
     queryFn: () => fetchRole(),
   });
+
+  // Track impersonation session reactively
+  const [impersonating, setImpersonating] = useState(() => getImpersonationSession());
+  useEffect(() => {
+    const sync = () => setImpersonating(getImpersonationSession());
+    window.addEventListener("storage", sync);
+    window.addEventListener(CHANGE_EVENT, sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(CHANGE_EVENT, sync);
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -30,14 +44,16 @@ function DashboardPage() {
     return <div className="p-8 text-red-600">Failed to load role: {(error as Error).message}</div>;
   }
 
-  const role = data?.role ?? "pending";
-  const name = data?.profile?.name ?? undefined;
+  const realRole = data?.role && data.role !== "pending" ? data.role : "admin";
+  // When super_admin is impersonating, downgrade to admin view
+  const role = realRole === "super_admin" && impersonating ? "admin" : realRole;
+  const name = impersonating ? impersonating.adminName : (data?.profile?.name ?? undefined);
 
   switch (role) {
     case "super_admin": return <SuperAdminDashboard name={name} />;
-    case "admin": return <AdminDashboard name={name} />;
     case "manager": return <ManagerDashboard name={name} />;
     case "technician": return <TechnicianDashboard name={name} />;
-    default: return <PendingDashboard name={name} />;
+    // "admin" and any legacy/pending role → admin dashboard by default
+    default: return <AdminDashboard name={name} />;
   }
 }

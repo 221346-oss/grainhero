@@ -1,89 +1,104 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, DollarSign, Server, Activity, Globe2 } from "lucide-react";
-import { PageHeader, StatCard, Placeholder } from "./_shared";
-import { useDashboardStats } from "./useDashboardStats";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { sendAdminTestEmail } from "@/lib/admin-test-email.functions";
-import { toast } from "sonner";
-import { Mail, Loader2 } from "lucide-react";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { supabase } from "@/integrations/supabase/client";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { WelcomeBanner } from "./WelcomeBanner";
+import { SuperKpiSummary } from "./SuperKpiSummary";
+import { SuperInsightsStrip } from "./SuperInsightsStrip";
+import { SuperBento } from "./SuperBento";
+import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
+import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 
 export function SuperAdminDashboard({ name }: { name?: string }) {
-  const { data: s } = useDashboardStats();
-  const profile = useMyProfile();
-  const fn = useServerFn(sendAdminTestEmail);
-  const [to, setTo] = useState<string>("");
-  const initial = to || profile.data?.email || "";
-  const mut = useMutation({
-    mutationFn: (email: string) => fn({ data: { to: email } }),
-    onSuccess: (r) => toast.success(`Test email sent to ${r.to}`),
-    onError: (e: Error) => toast.error(e.message || "Failed to send"),
+  const metricsFn = useServerFn(getPlatformMetrics);
+  const widgetsFn = useServerFn(getPlatformOverviewWidgets);
+  const revenueFn = useServerFn(getSaasRevenueAnalytics);
+  const qc = useQueryClient();
+
+  // Realtime invalidation — any change to revenue-shaping tables refreshes
+  // MRR, revenue trend, and by-plan chart across every SuperAdmin surface.
+  useEffect(() => {
+    const channel = supabase
+      .channel("superadmin-revenue")
+      .on("postgres_changes", { event: "*", schema: "public", table: "subscriptions" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-metrics"] });
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+        qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
+        qc.invalidateQueries({ queryKey: ["revenue-integrity"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-metrics"] });
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+        qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "plan_thresholds" }, () => {
+        qc.invalidateQueries();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+        qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
+  const { data: m } = useQuery({
+    queryKey: ["platform-metrics"],
+    queryFn: () => metricsFn(),
+    refetchInterval: 30_000,
   });
+  const { data: w } = useQuery({
+    queryKey: ["platform-widgets"],
+    queryFn: () => widgetsFn(),
+  });
+  const { data: revenueData } = useQuery({
+    queryKey: ["saas-revenue-dashboard"],
+    queryFn: () => revenueFn(),
+  });
+
+  const mrr = revenueData?.kpis?.mrr ?? m?.mrr ?? 0;
+  const mrrSpark = (revenueData?.revenueSeries ?? []).map(
+    (r: { revenue?: number }) => Number(r.revenue ?? 0),
+  );
+  const mrrDelta = (() => {
+    if (mrrSpark.length < 2) return 0;
+    const prev = mrrSpark[mrrSpark.length - 2] || 0;
+    const cur = mrrSpark[mrrSpark.length - 1] || 0;
+    if (!prev) return cur > 0 ? 100 : 0;
+    return Math.round(((cur - prev) / prev) * 100);
+  })();
+
+  const reporting = w?.reportingStats ?? { totalTickets: 0 };
+
+  const signups30 = (w?.signupsSeries ?? []).reduce((acc: number, p: any) => acc + (p.count ?? 0), 0);
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        title={`Super Admin${name ? ` — ${name}` : ""}`}
-        subtitle="Platform-wide health, tenants, subscriptions and revenue"
-        badge="Super Admin"
-      />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <StatCard label="Warehouses" value={s?.warehouses ?? "—"} icon={Building2} accent="emerald" />
-        <StatCard label="Silos" value={s?.silos ?? "—"} icon={Users} accent="sky" />
-        <StatCard label="Batches" value={s?.batches.total ?? "—"} icon={DollarSign} accent="violet" />
-        <StatCard label="Sensors" value={s?.sensors.total ?? "—"} icon={Server} accent="amber" />
-        <StatCard label="Actuators" value={s?.actuators.total ?? "—"} icon={Activity} accent="emerald" />
-        <StatCard label="Alerts" value={s?.alerts.open ?? "—"} icon={Globe2} accent="rose" />
+    <TooltipProvider delayDuration={150}>
+      <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
+        <WelcomeBanner name={name} />
+
+        <div className="space-y-3 mt-1">
+          <SuperKpiSummary
+            mrr={mrr}
+            mrrDeltaPct={mrrDelta}
+            mrrSpark={mrrSpark}
+            activeSubs={m?.activeSubscriptions ?? 0}
+            totalTenants={m?.totalTenants ?? 0}
+            totalUsers={m?.totalUsers ?? 0}
+            ordersOpen={w?.ordersTotal ?? 0}
+            criticalAlerts={m?.criticalAlerts ?? 0}
+          />
+          <SuperInsightsStrip
+            signupsTotal={w?.signupsTotal ?? 0}
+            wowDelta={w?.wowDelta ?? 0}
+            ticketsTotal={reporting.totalTickets ?? 0}
+            pipelineTotal={w?.pipelineTotal ?? 0}
+            criticalAlerts={m?.criticalAlerts ?? 0}
+          />
+          <SuperBento recentSignups={w?.recentSignups ?? []} />
+        </div>
       </div>
-      <Card className="mb-6 border-emerald-200/70 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="h-4 w-4 text-emerald-600" /> Send test email (Resend)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={initial}
-              onChange={(e) => setTo(e.target.value)}
-              className="flex-1"
-            />
-            <Button
-              onClick={() => {
-                const email = (to || profile.data?.email || "").trim();
-                if (!email) return toast.error("Enter an email");
-                mut.mutate(email);
-              }}
-              disabled={mut.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send test"}
-            </Button>
-          </div>
-          <p className="text-xs text-slate-500 mt-2">
-            Sends a plain test email via the Resend connector using RESEND_FROM_EMAIL.
-          </p>
-        </CardContent>
-      </Card>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Recent Signups</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-        <Card className="border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">System Alerts</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-        <Card className="md:col-span-2 border-slate-200/70 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Global Analytics</CardTitle></CardHeader>
-          <CardContent><Placeholder /></CardContent>
-        </Card>
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }

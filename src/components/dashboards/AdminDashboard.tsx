@@ -1,32 +1,52 @@
-import { Users, Building2, DollarSign, TrendingUp, Package, Activity } from "lucide-react";
-import { PageHeader, StatCard } from "./_shared";
-import { useDashboardStats } from "./useDashboardStats";
-import { RecentBatchesCard, RecentAlertsCard, TeamCard, ActuatorsCard, SilosOccupancyCard } from "./DashboardBlocks";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { WelcomeBanner } from "./WelcomeBanner";
+import { KpiSummary } from "./KpiSummary";
+import { InsightsStrip } from "./InsightsStrip";
+import { AdminSilosCard, RecentBatchesCard } from "./DashboardBlocks";
+import type { RangeKey } from "./RangeChip";
+import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
 export function AdminDashboard({ name }: { name?: string }) {
-  const { data: s } = useDashboardStats();
+  const [range, setRange] = useState<RangeKey>("mtd");
+
+  const fn = useServerFn(getDashboardExtras);
+  const { data: extras } = useQuery({
+    queryKey: ["dashboard-extras", range],
+    queryFn: () => fn({ data: { range } }),
+    refetchInterval: 30_000,
+  });
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader
-        title={`Admin Dashboard${name ? ` — ${name}` : ""}`}
-        subtitle="Tenant overview: team, silos, revenue and operations"
-        badge="Admin"
-      />
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        <StatCard label="Buyers" value={s?.buyers ?? "—"} icon={Users} accent="emerald" />
-        <StatCard label="Warehouses" value={s?.warehouses ?? "—"} icon={Building2} accent="sky" />
-        <StatCard label="Active Batches" value={s?.batches.active ?? "—"} icon={Package} accent="violet" />
-        <StatCard label="Silos" value={s?.silos ?? "—"} icon={DollarSign} accent="emerald" />
-        <StatCard label="Sensors Online" value={s?.sensors.online ?? "—"} icon={TrendingUp} accent="amber" />
-        <StatCard label="Open Alerts" value={s?.alerts.open ?? "—"} icon={Activity} accent="rose" />
+    <TooltipProvider delayDuration={150}>
+      <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
+        <WelcomeBanner name={name} />
+
+        <div className="space-y-3 mt-1">
+          <KpiSummary
+            range={range}
+            onRange={setRange}
+            deltaBatches={extras?.deltas?.batches?.pct}
+            deltaAlerts={extras?.deltas?.alerts?.pct}
+            revenueMtd={extras?.revenueMtd}
+            revenueDeltaPct={extras?.revenueDeltaPct}
+            revenueSpark={extras?.revenueSpark}
+            planName={extras?.subscription?.plan_name}
+          />
+          <InsightsStrip
+            insights={extras?.insights}
+            ordersOpen={extras?.installCounts?.pending}
+            alertsOpen={extras?.deltas?.alerts?.cur}
+            pipeline={extras?.pipeline}
+          />
+          <div className="grid gap-3 lg:grid-cols-2">
+            <AdminSilosCard />
+            <RecentBatchesCard />
+          </div>
+        </div>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <RecentBatchesCard />
-        <RecentAlertsCard />
-        <TeamCard />
-        <ActuatorsCard />
-        <SilosOccupancyCard />
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }

@@ -18,6 +18,7 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
 const listNotifInput = z.object({
   filter: z.enum(["all", "unread", "read"]).default("all"),
   limit: z.number().int().min(1).max(200).default(50),
+  categories: z.array(z.string().min(1).max(60)).optional(),
 });
 
 export const listNotifications = createServerFn({ method: "POST" })
@@ -33,6 +34,7 @@ export const listNotifications = createServerFn({ method: "POST" })
       .limit(limit);
     if (data.filter === "unread") q = q.eq("read", false);
     if (data.filter === "read") q = q.eq("read", true);
+    if (data.categories && data.categories.length) q = q.in("category", data.categories);
     const { data: rows, error } = await q;
     if (error) throw error;
     const { count } = await context.supabase
@@ -40,7 +42,15 @@ export const listNotifications = createServerFn({ method: "POST" })
       .select("id", { count: "exact", head: true })
       .eq("user_id", context.userId)
       .eq("read", false);
-    return { notifications: rows ?? [], unread_count: count ?? 0 };
+    // Distinct list of categories the user actually has, for the UI filter.
+    const { data: catRows } = await context.supabase
+      .from("notifications")
+      .select("category")
+      .eq("user_id", context.userId);
+    const availableCategories = Array.from(
+      new Set((catRows ?? []).map((r) => (r as { category?: string }).category ?? "system")),
+    ).sort();
+    return { notifications: rows ?? [], unread_count: count ?? 0, availableCategories };
   });
 
 export const markNotificationRead = createServerFn({ method: "POST" })
@@ -94,6 +104,9 @@ const listLogsInput = z.object({
   from: z.string().optional().nullable(),
   to: z.string().optional().nullable(),
   entity_ref: z.string().optional().nullable(),
+  actor_role: z.string().optional().nullable(),
+  tenant_admin_id: z.string().optional().nullable(),
+  user_id_filter: z.string().optional().nullable(),
 });
 
 export const listActivityLogs = createServerFn({ method: "POST" })
@@ -105,10 +118,32 @@ export const listActivityLogs = createServerFn({ method: "POST" })
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
+    // Resolve caller's effective role for scope
+    const { data: roleRow } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .order("role")
+      .limit(1)
+      .maybeSingle();
+    const callerRole = (roleRow?.role as string | undefined) ?? "admin";
+
     let q = context.supabase
       .from("activity_logs")
       .select("*", { count: "exact" })
       .order("created_at", { ascending: false });
+
+    // Role-based scope
+    if (callerRole === "technician" || callerRole === "manager") {
+      q = q.eq("user_id", context.userId);
+    } else if (callerRole === "super_admin") {
+      if (data.actor_role && data.actor_role !== "all") q = q.eq("user_role", data.actor_role);
+      if (data.tenant_admin_id) q = q.eq("admin_id", data.tenant_admin_id);
+      // else: unrestricted — RLS still applies
+    } else {
+      // admin: their own tenant (RLS already narrows, keep filter explicit)
+      if (data.user_id_filter) q = q.eq("user_id", data.user_id_filter);
+    }
 
     if (data.category && data.category !== "all") q = q.eq("category", data.category);
     if (data.severity && data.severity !== "all") q = q.eq("severity", data.severity);
@@ -133,6 +168,7 @@ export const listActivityLogs = createServerFn({ method: "POST" })
     const total = count ?? 0;
     return {
       logs: rows ?? [],
+      caller_role: callerRole,
       pagination: {
         current_page: page,
         total_pages: Math.max(1, Math.ceil(total / limit)),

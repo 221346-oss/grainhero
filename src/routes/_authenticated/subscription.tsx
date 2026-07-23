@@ -9,12 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { CreditCard, Package, Warehouse, Users, Cpu, Sparkles, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2 } from "lucide-react";
+import { Package, Warehouse, Users, Cpu, XCircle, Calendar, ArrowUpRight, RotateCcw, Loader2 } from "lucide-react";
 import { getMySubscription, cancelMySubscription } from "@/lib/billing.functions";
 import { createStripeBillingPortalSession } from "@/lib/stripe-checkout.functions";
 import { changeMyPlan, cancelAtPeriodEnd, resumeSubscription } from "@/lib/subscription-management.functions";
+import { getAllSubscriptions } from "@/lib/platform-no-admin.functions";
+import { adminChangeUserPlan, adminCancelSubscription, adminResumeSubscription, adminSyncSubscription, adminReconcileAllSubscriptions } from "@/lib/admin-subscriptions.functions";
+import { getMyRole } from "@/lib/roles.functions";
 import pricingData from "@/lib/pricing-data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { SubscriptionSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   component: SubscriptionPage,
@@ -51,13 +59,34 @@ function SubscriptionPage() {
   const changeFn = useServerFn(changeMyPlan);
   const cancelPeriodFn = useServerFn(cancelAtPeriodEnd);
   const resumeFn = useServerFn(resumeSubscription);
+  const roleFn = useServerFn(getMyRole);
+  const allSubsFn = useServerFn(getAllSubscriptions);
+  const adminChangeFn = useServerFn(adminChangeUserPlan);
+  const adminCancelFn = useServerFn(adminCancelSubscription);
+  const adminResumeFn = useServerFn(adminResumeSubscription);
+  const adminSyncFn = useServerFn(adminSyncSubscription);
+  const adminReconcileFn = useServerFn(adminReconcileAllSubscriptions);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fn() });
+  const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
+  
+  const isSuperAdmin = (roleData?.role ?? data?.role ?? "pending") === "super_admin";
+  
+  // Fetch all subscriptions if super admin
+  const { data: allSubs = [] } = useQuery({ 
+    queryKey: ["all-subscriptions"], 
+    queryFn: () => allSubsFn(),
+    enabled: isSuperAdmin
+  });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [changeOpen, setChangeOpen] = useState(false);
   const [newPlan, setNewPlan] = useState<"basic" | "intermediate" | "pro">("intermediate");
+  async function runAdmin(op: () => Promise<any>, successMsg: string) {
+    try { await op(); toast.success(successMsg); qc.invalidateQueries({ queryKey: ["all-subscriptions"] }); }
+    catch (e: any) { toast.error(e?.message ?? "Action failed"); }
+  }
 
   const cancelM = useMutation({
     mutationFn: () => cancelFn({ data: { reason: reason || undefined } }),
@@ -94,32 +123,37 @@ function SubscriptionPage() {
 
   const canManage = ["super_admin", "admin"].includes(role);
 
+  if (isLoading) return <SubscriptionSkeleton />;
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><CreditCard className="h-6 w-6 text-emerald-600" /> My Subscription</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage your plan, usage and billing history.</p>
-        </div>
-        <div className="flex gap-2">
+    <AdminPageShell
+      title="My subscription"
+      subtitle="Manage your plan, usage and billing history"
+      actions={
+        <>
           {sub && (
-            <Button variant="outline" onClick={() => portalM.mutate()} disabled={portalM.isPending}>
+            <Button variant="outline" size="sm" onClick={() => portalM.mutate()} disabled={portalM.isPending}>
               {portalM.isPending ? "Opening…" : "Manage billing"}
             </Button>
           )}
           {sub && canManage && sub.status !== "cancelled" && (
-            <Button variant="outline" onClick={() => { setNewPlan((sub.plan_name?.toLowerCase().includes("pro") ? "pro" : sub.plan_name?.toLowerCase().includes("inter") ? "intermediate" : "basic") as any); setChangeOpen(true); }}>
-              <ArrowUpRight className="h-4 w-4 mr-2" /> Upgrade / Downgrade
+            <Button variant="outline" size="sm" onClick={() => { setNewPlan((sub.plan_name?.toLowerCase().includes("pro") ? "pro" : sub.plan_name?.toLowerCase().includes("inter") ? "intermediate" : "basic") as any); setChangeOpen(true); }}>
+              <ArrowUpRight className="h-4 w-4 mr-2" /> Change plan
             </Button>
           )}
-          <Button asChild variant="outline"><Link to="/plans">Browse plans</Link></Button>
-        </div>
-      </div>
+          {isSuperAdmin && (
+            <Button variant="outline" size="sm" onClick={() => runAdmin(() => adminReconcileFn(), "Reconciled from Stripe")}>
+              <RotateCcw className="h-4 w-4 mr-2" /> Sync all from Stripe
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm"><Link to="/plans">Browse plans</Link></Button>
+        </>
+      }
+    >
 
       {!sub && (
         <Card>
           <CardContent className="p-8 text-center space-y-3">
-            <Sparkles className="h-10 w-10 text-emerald-600 mx-auto" />
             <div className="text-lg font-semibold text-slate-900">No active subscription</div>
             <p className="text-sm text-slate-500 max-w-md mx-auto">You&apos;re not on a paid plan yet. Pick one to unlock warehouses, silos and AI predictions at scale.</p>
             <Button asChild><Link to="/plans">Choose a plan</Link></Button>
@@ -129,6 +163,19 @@ function SubscriptionPage() {
 
       {sub && (
         <>
+          {(sub as any).cancel_at && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                <Calendar className="h-4 w-4" />
+                Scheduled to cancel on {new Date((sub as any).cancel_at).toLocaleDateString()}
+              </div>
+              {canManage && (
+                <Button size="sm" variant="outline" onClick={() => resumeM.mutate()} disabled={resumeM.isPending}>
+                  <RotateCcw className="h-4 w-4 mr-2" /> Resume
+                </Button>
+              )}
+            </div>
+          )}
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -140,7 +187,7 @@ function SubscriptionPage() {
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-4 text-sm">
-              <div><div className="text-xs uppercase text-slate-500 font-semibold">Price</div><div className="text-lg font-bold">{sub.currency ?? "USD"} {Number(sub.price_per_month).toFixed(2)}<span className="text-xs text-slate-500">/mo</span></div></div>
+              <div><div className="text-xs uppercase text-slate-500 font-semibold">Price</div><div className="text-lg font-bold">{sub.currency ?? "PKR"} {Number(sub.price_per_month).toFixed(2)}<span className="text-xs text-slate-500">/mo</span></div></div>
               <div><div className="text-xs uppercase text-slate-500 font-semibold">Billing cycle</div><div className="text-lg font-bold capitalize">{sub.billing_cycle ?? "monthly"}</div></div>
               <div><div className="text-xs uppercase text-slate-500 font-semibold flex items-center gap-1"><Calendar className="h-3 w-3" />Renews</div><div className="text-lg font-bold">{sub.next_payment_date ? new Date(sub.next_payment_date).toLocaleDateString() : "—"}</div></div>
               <div><div className="text-xs uppercase text-slate-500 font-semibold">Auto-renew</div><div className="text-lg font-bold">{sub.auto_renew ? "On" : "Off"}</div></div>
@@ -187,7 +234,7 @@ function SubscriptionPage() {
                       <div className="text-xs text-slate-500">{inv.billing_date ? new Date(inv.billing_date).toLocaleDateString() : "—"}</div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-semibold">{inv.currency ?? "USD"} {Number(inv.amount).toFixed(2)}</span>
+                      <span className="font-semibold">{inv.currency ?? "PKR"} {Number(inv.amount).toFixed(2)}</span>
                       <Badge className={statusBadge(inv.status)}>{inv.status ?? "pending"}</Badge>
                     </div>
                   </div>
@@ -199,7 +246,7 @@ function SubscriptionPage() {
 
           {canManage && sub.status !== "cancelled" && (
             <div className="flex justify-end gap-2">
-              {(sub as any).cancel_at_period_end ? (
+              {(sub as any).cancel_at ? (
                 <Button variant="outline" onClick={() => resumeM.mutate()} disabled={resumeM.isPending}>
                   <RotateCcw className="h-4 w-4 mr-2" /> Resume subscription
                 </Button>
@@ -214,6 +261,64 @@ function SubscriptionPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Super Admin: Show all subscriptions */}
+      {isSuperAdmin && (
+        <AdminDataCard title="All platform subscriptions" description={`${allSubs.length} subscription${allSubs.length === 1 ? "" : "s"} · manage plans, cancel or resume from here`}>
+          {allSubs.length === 0 && (
+            <div className="p-8 text-center text-sm text-slate-500">No tenant subscriptions yet.</div>
+          )}
+          <div className="divide-y divide-slate-100">
+            {allSubs.map((s: any) => {
+              const daysLeft = s.next_payment_date ? Math.ceil((new Date(s.next_payment_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+              const expiryText = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";
+              const expiryColor = daysLeft !== null && daysLeft <= 7 ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-slate-500";
+              return (
+                <div key={s.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-slate-900 truncate">{s.user_name}</div>
+                    <div className="text-xs text-slate-500 truncate">{s.user_email} · {s.business_type}</div>
+                  </div>
+                  <Badge variant="outline" className={statusBadge(s.status)}>{s.status}</Badge>
+                  <span className="text-sm font-medium text-slate-700">{s.plan_name}</span>
+                  <div className="flex flex-col items-end gap-0.5 min-w-[110px]">
+                    <span className="text-sm font-bold text-slate-900">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-slate-500">/mo</span></span>
+                    <div className={`text-[10px] font-medium ${expiryColor}`}>Expires: {expiryText}</div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuLabel className="text-[11px]">Change plan</DropdownMenuLabel>
+                      {pricingData.map((p: any) => (
+                        <DropdownMenuItem key={p.id} onClick={() => runAdmin(() => adminChangeFn({ data: { subscriptionId: s.id, planId: p.id } }), `Moved ${s.user_name} to ${p.name}`)}>
+                          <ArrowUpRight className="h-3.5 w-3.5 mr-2" /> {p.name} — {p.currency ?? "PKR"} {p.price}/mo
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => runAdmin(() => adminCancelFn({ data: { subscriptionId: s.id, immediate: false } }), "Will cancel at period end")}>
+                        <Calendar className="h-3.5 w-3.5 mr-2" /> Cancel at period end
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => runAdmin(() => adminResumeFn({ data: { subscriptionId: s.id } }), "Subscription resumed")}>
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Resume
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-red-600" onClick={() => runAdmin(() => adminCancelFn({ data: { subscriptionId: s.id, immediate: true } }), "Subscription cancelled")}>
+                        <XCircle className="h-3.5 w-3.5 mr-2" /> Cancel immediately
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => runAdmin(() => adminSyncFn({ data: { subscriptionId: s.id } }), "Synced from Stripe")}>
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Sync from Stripe
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
+            })}
+          </div>
+        </AdminDataCard>
       )}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -241,7 +346,7 @@ function SubscriptionPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {pricingData.map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name} — {p.currency ?? "USD"} {p.price}/mo</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.name} — {p.currency ?? "PKR"} {p.price}/mo</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -255,6 +360,6 @@ function SubscriptionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminPageShell>
   );
 }

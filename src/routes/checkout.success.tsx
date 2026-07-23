@@ -1,28 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import {
-  CheckCircle2,
-  Loader2,
-  Mail,
-  ShieldCheck,
-  Sparkles,
-  Truck,
-  ArrowRight,
-  CalendarCheck,
-  User,
-} from "lucide-react";
+import { Loader2, CheckCircle2, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyOnboardingStatus } from "@/lib/onboarding-status.functions";
-import { claimPaidCheckoutForUser, getCheckoutSessionSummary } from "@/lib/stripe-checkout.functions";
+import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
 import { sendCheckoutConfirmationEmail } from "@/lib/checkout-emails.functions";
-import { getAuthRedirectOrigin } from "@/lib/app-url";
+import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
 
 const search = z.object({
   session_id: z.string().optional(),
@@ -33,302 +19,185 @@ export const Route = createFileRoute("/checkout/success")({
   head: () => ({
     meta: [
       { title: "Welcome to GrainHero 🎉" },
-      { name: "description", content: "Your payment is confirmed. Let's finish setting up your account." },
+      { name: "description", content: "Your payment is confirmed. Setting up your account…" },
     ],
   }),
   component: SuccessPage,
 });
 
-/** Lightweight confetti burst that runs entirely on the client. */
-function Confetti() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+const DRAFT_KEY = "grainhero.checkoutDraft.v1";
+const PENDING_SESSION_KEY = "grainhero.pendingCheckoutSession";
+
+function readDraft() {
+  try {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem(DRAFT_KEY) : null;
+    if (!raw) return { customerEmail: "", customerName: "", customerPassword: "" };
+    const d = JSON.parse(raw) as Record<string, string>;
+    return {
+      customerEmail: d.customerEmail ?? "",
+      customerName: d.customerName ?? "",
+      customerPassword: d.customerPassword ?? "",
     };
-    resize();
-    window.addEventListener("resize", resize);
-    const colors = ["#00a63e", "#22c55e", "#84cc16", "#eab308", "#0ea5e9", "#8b5cf6", "#f43f5e"];
-    const pieces = Array.from({ length: 140 }, () => ({
-      x: Math.random() * canvas.width,
-      y: -20 - Math.random() * canvas.height * 0.5,
-      r: 4 + Math.random() * 6,
-      c: colors[Math.floor(Math.random() * colors.length)],
-      vy: 2 + Math.random() * 3,
-      vx: -1.5 + Math.random() * 3,
-      rot: Math.random() * Math.PI,
-      vr: -0.15 + Math.random() * 0.3,
-    }));
-    let raf = 0;
-    const t0 = performance.now();
-    const tick = (t: number) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const p of pieces) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rot += p.vr;
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        ctx.fillStyle = p.c;
-        ctx.fillRect(-p.r, -p.r * 0.4, p.r * 2, p.r * 0.8);
-        ctx.restore();
-      }
-      if (t - t0 < 6000) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
+  } catch {
+    return { customerEmail: "", customerName: "", customerPassword: "" };
+  }
 }
 
-function StepRow({
-  done,
-  icon,
-  title,
-  desc,
-  action,
-}: {
-  done: boolean;
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3 py-3">
-      <div
-        className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center transition ${
-          done ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
-        }`}
-      >
-        {done ? <CheckCircle2 className="h-5 w-5" /> : icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-medium text-slate-900 text-sm">{title}</p>
-          {done && <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px]">Done</Badge>}
-        </div>
-        <p className="text-xs text-slate-600 mt-0.5">{desc}</p>
-        {!done && action && <div className="mt-2">{action}</div>}
-      </div>
-    </div>
-  );
-}
+type Status = "loading" | "creating_account" | "done" | "error";
 
 function SuccessPage() {
   const navigate = useNavigate();
   const { session_id: sessionId } = Route.useSearch();
-  const statusFn = useServerFn(getMyOnboardingStatus);
   const summaryFn = useServerFn(getCheckoutSessionSummary);
+  const confirmFn = useServerFn(autoConfirmUserEmail);
   const claimFn = useServerFn(claimPaidCheckoutForUser);
   const sendConfirmFn = useServerFn(sendCheckoutConfirmationEmail);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  const [claiming, setClaiming] = useState(false);
-  const claimStarted = useRef(false);
-  const confirmSent = useRef(false);
 
+  const [status, setStatus] = useState<Status>("loading");
+  const [errorMsg, setErrorMsg] = useState("");
+  const ran = useRef(false);
+  const confirmEmailSent = useRef(false);
+
+  // Send buyer confirmation email — idempotent, best-effort
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setSignedIn(!!session?.user);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  const query = useQuery({
-    queryKey: ["onboarding-status"],
-    queryFn: () => statusFn(),
-    enabled: signedIn === true,
-    refetchInterval: (q) => {
-      const d = q.state.data;
-      // Poll every 3s until the webhook flips the subscription to active.
-      if (!d) return 3000;
-      return d.subscriptionActive ? false : 3000;
-    },
-  });
-
-  const summaryQuery = useQuery({
-    queryKey: ["checkout-session-summary", sessionId],
-    queryFn: () => summaryFn({ data: { sessionId: sessionId! } }),
-    enabled: Boolean(sessionId),
-  });
-
-  useEffect(() => {
-    if (signedIn !== true || !sessionId || claimStarted.current) return;
-    claimStarted.current = true;
-    setClaiming(true);
-    claimFn({ data: { sessionId } })
-      .then(() => query.refetch())
-      .catch((e) => toast.error((e as Error).message ?? "Could not link payment to your account"))
-      .finally(() => setClaiming(false));
-  }, [claimFn, query, sessionId, signedIn]);
-
-  // Fire the buyer confirmation email as soon as we know the session id — works
-  // for both guest and signed-in flows; the server function is idempotent.
-  useEffect(() => {
-    if (!sessionId || confirmSent.current) return;
-    confirmSent.current = true;
+    if (!sessionId || confirmEmailSent.current) return;
+    confirmEmailSent.current = true;
     sendConfirmFn({ data: { sessionId } }).catch((e) =>
       console.warn("[confirm email]", (e as Error).message),
     );
   }, [sendConfirmFn, sessionId]);
 
-  const s = query.data;
-  const summary = summaryQuery.data;
-  const paymentDone = Boolean(s?.subscriptionActive || summary?.paid);
-  const profileConnected = Boolean(s?.profile);
-  // Consider account ready once payment is confirmed and profile is linked
-  const allDone = paymentDone && profileConnected;
-
-  // Once we've confirmed the subscription is live, drop the saved checkout draft.
   useEffect(() => {
-    if (paymentDone && typeof window !== "undefined") {
-      try { window.localStorage.removeItem("grainhero.checkoutDraft.v1"); } catch { /* ignore */ }
-    }
-  }, [paymentDone]);
+    if (ran.current) return;
+    ran.current = true;
 
-  const planLabel = useMemo(() => {
-    const raw = (s?.subscription as { plan_name?: string } | null)?.plan_name;
-    return raw ? String(raw).replace(/_/g, " ") : null;
-  }, [s]);
+    (async () => {
+      if (sessionId) {
+        try { window.localStorage.setItem(PENDING_SESSION_KEY, sessionId); } catch { /* ignore */ }
+      }
 
-  // Signed-out visitor landing here from Stripe — auto-redirect to signup
-  // as soon as we know the email (from the session summary query).
-  // We wait up to ~2s for the summary; if it hasn't loaded yet we show a
-  // brief loading screen so the email can be pre-filled on the signup page.
-  useEffect(() => {
-    if (signedIn !== false) return;
-    const redirectPath = `/checkout/success${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}`;
-    const email = summaryQuery.data?.email ?? "";
-    // Only navigate once summary has resolved (or failed after timeout).
-    if (summaryQuery.isLoading) return;
-    navigate({
-      to: "/auth/signup",
-      search: {
-        email: email || undefined,
-        redirect: redirectPath,
-      } as never,
-      replace: true,
-    });
-  }, [signedIn, summaryQuery.isLoading, summaryQuery.data?.email, sessionId, navigate]);
+      const draft = readDraft();
+      let email = draft.customerEmail;
+      const password = draft.customerPassword;
+      const name = draft.customerName;
 
-  // While waiting for summary to load for the signed-out redirect, show a
-  // minimal spinner so the screen isn't blank.
-  if (signedIn === null || signedIn === false) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center px-4"
-        style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)" }}
-      >
-        <div className="flex flex-col items-center gap-4 text-slate-600">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-          <p className="text-sm">Redirecting to account setup…</p>
-        </div>
-      </div>
-    );
-  }
+      // Get email from Stripe session if draft is empty
+      if (!email && sessionId) {
+        try {
+          const s = await summaryFn({ data: { sessionId } });
+          email = s?.email ?? "";
+        } catch { /* ignore */ }
+      }
+
+      if (!email) {
+        navigate({ to: "/auth/login", replace: true });
+        return;
+      }
+
+      if (!password) {
+        // Payment succeeded but password wasn't saved — finish signup manually.
+        try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+        navigate({
+          to: "/auth/signup",
+          search: {
+            email,
+            redirect: sessionId ? `/checkout/success?session_id=${sessionId}` : undefined,
+          } as never,
+          replace: true,
+        });
+        return;
+      }
+
+      // Create account, link the paid order, and sign in.
+      setStatus("creating_account");
+
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name, business_type: "farm" } },
+      });
+
+      const alreadyRegistered = signUpError?.message.toLowerCase().includes("already registered");
+
+      if (signUpError && !alreadyRegistered) {
+        setStatus("error");
+        setErrorMsg(signUpError.message);
+        return;
+      }
+
+      try {
+        await confirmFn({ data: { email } });
+      } catch (e) {
+        console.warn("[success] auto-confirm failed:", (e as Error).message);
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setStatus("error");
+        setErrorMsg(`Payment received but sign-in failed: ${signInError.message}. Try logging in with your email.`);
+        return;
+      }
+
+      try {
+        await claimFn({ data: sessionId ? { sessionId } : {} });
+      } catch (e) {
+        console.warn("[success] claim checkout failed:", (e as Error).message);
+      }
+
+      try {
+        window.localStorage.removeItem(DRAFT_KEY);
+        window.localStorage.removeItem(PENDING_SESSION_KEY);
+      } catch { /* ignore */ }
+
+      setStatus("done");
+
+      setTimeout(() => {
+        navigate({ to: "/dashboard", replace: true });
+      }, 800);
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const statusMessages: Record<Status, string> = {
+    loading: "Confirming your payment…",
+    creating_account: "Setting up your account…",
+    done: "Account ready! Taking you to your dashboard…",
+    error: errorMsg || "Something went wrong.",
+  };
 
   return (
-    <div
-      className="min-h-screen py-10 px-4 relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)" }}
-    >
-      <Confetti />
-      <div className="max-w-2xl mx-auto space-y-6 relative z-10">
-        {/* Hero */}
-        <div className="text-center space-y-3 animate-fade-in">
-          <div className="mx-auto h-20 w-20 rounded-full bg-white shadow-xl flex items-center justify-center animate-scale-in">
-            <CheckCircle2 className="h-12 w-12 text-emerald-600" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 flex items-center justify-center gap-2">
-            Welcome to GrainHero <Sparkles className="h-6 w-6 text-amber-500" />
-          </h1>
-          <p className="text-slate-600 max-w-md mx-auto">
-            Your payment is confirmed. Follow the path below and GrainHero will be ready for you fast.
-          </p>
-          {planLabel && (
-            <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white capitalize">{planLabel} plan</Badge>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-background checkout-inline-bg transition-colors">
+      <Card className="max-w-sm w-full shadow-xl">
+        <CardContent className="p-8 text-center space-y-4">
+          {status === "error" ? (
+            <>
+              <div className="mx-auto h-14 w-14 rounded-full bg-red-100 flex items-center justify-center">
+                <PartyPopper className="h-7 w-7 text-red-500" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-900">Something went wrong</h1>
+              <p className="text-sm text-slate-600">{errorMsg}</p>
+              <Button
+                className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
+                onClick={() => navigate({ to: "/auth/login" })}
+              >
+                Go to login
+              </Button>
+            </>
+          ) : status === "done" ? (
+            <>
+              <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center">
+                <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-900">Payment confirmed!</h1>
+              <p className="text-sm text-slate-600">Taking you to your dashboard…</p>
+            </>
+          ) : (
+            <>
+              <Loader2 className="h-10 w-10 animate-spin text-emerald-600 mx-auto" />
+              <p className="text-sm font-medium text-slate-700">{statusMessages[status]}</p>
+            </>
           )}
-        </div>
-
-        {/* Steps */}
-        <Card className="shadow-lg border-slate-200">
-          <CardContent className="p-6 divide-y divide-slate-100">
-            <StepRow
-              done={paymentDone}
-              icon={<Loader2 className="h-4 w-4 animate-spin" />}
-              title={paymentDone ? "Payment confirmed" : "Activating your subscription…"}
-              desc={
-                paymentDone
-                  ? "Stripe has settled your payment and your plan is live."
-                  : "This usually takes a few seconds. You can leave this page open."
-              }
-            />
-            <StepRow
-              done={profileConnected}
-              icon={<User className="h-4 w-4" />}
-              title="Account connected"
-              desc={claiming ? "Linking your paid order to this account…" : "Your checkout email is connected to your GrainHero login."}
-            />
-            <StepRow
-              done={false}
-              icon={<CalendarCheck className="h-4 w-4" />}
-              title="Technician install scheduled"
-              desc={
-                (s?.latestOrder as { technician_name?: string } | null)?.technician_name
-                  ? `Assigned to ${(s?.latestOrder as { technician_name?: string })?.technician_name}. We'll email you the visit time.`
-                  : "Our team will contact you within 24 hours to schedule the sensor install."
-              }
-            />
-            <StepRow
-              done={false}
-              icon={<Truck className="h-4 w-4" />}
-              title="On-site setup by GrainHero"
-              desc="Our technician installs IoT sensors, checks your storage setup, and turns monitoring live."
-            />
-            <StepRow
-              done={false}
-              icon={<ShieldCheck className="h-4 w-4" />}
-              title="First dashboard walkthrough"
-              desc="A quick in-app guide will point out plans, orders, notifications, silos, sensors, and settings."
-              action={
-                <Button
-                  size="sm"
-                  className="bg-[#00a63e] hover:bg-[#029238] text-white"
-                  onClick={() => navigate({ to: "/dashboard" })}
-                >
-                  Go to dashboard <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              }
-            />
-          </CardContent>
-        </Card>
-
-        {allDone && (
-          <div className="text-center animate-fade-in">
-            <Button
-              size="lg"
-              className="bg-[#00a63e] hover:bg-[#029238] text-white"
-              onClick={() => navigate({ to: "/dashboard" })}
-            >
-              Enter your dashboard <ArrowRight className="h-5 w-5 ml-1" />
-            </Button>
-          </div>
-        )}
-
-        <p className="text-center text-xs text-slate-500">
-          Need help? Email us at <a href="mailto:support@grainhero.app" className="underline">support@grainhero.app</a>
-        </p>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

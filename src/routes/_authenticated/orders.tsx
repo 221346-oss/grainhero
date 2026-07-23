@@ -1,10 +1,27 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
+import { createSiloAddonCheckoutSession } from "@/lib/stripe-checkout.functions";
+import { advanceInstallStage } from "@/lib/installations.functions";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Phone, Wrench, Calendar, Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck, CheckCircle2, PlusCircle, Loader2 } from "lucide-react";
+import { OrdersSkeleton } from "@/components/app/skeletons";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
+import { HardwareOrderThread } from "@/components/app/orders/HardwareOrderThread";
+import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({ meta: [{ title: "My install orders — GrainHero" }] }),
@@ -21,28 +38,69 @@ const STATUS_STYLE: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
 };
 
+const emptyAddonForm = { address: "", city: "", country: "", phone: "", notes: "" };
+
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
+  const qc = useQueryClient();
+  const addonFn = useServerFn(createSiloAddonCheckoutSession);
+  const [addonOpen, setAddonOpen] = useState(false);
+  const [addonForm, setAddonForm] = useState(emptyAddonForm);
+  const addonMut = useMutation({
+    mutationFn: () =>
+      addonFn({
+        data: {
+          install: {
+            address: addonForm.address.trim(),
+            city: addonForm.city.trim() || null,
+            country: addonForm.country.trim(),
+            phone: addonForm.phone.trim(),
+            notes: addonForm.notes.trim() || null,
+          },
+        },
+      }),
+    onSuccess: (res) => {
+      if (!res?.url) { toast.error("Could not start checkout"); return; }
+      window.location.href = res.url;
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not start checkout"),
+  });
+  const advanceFn = useServerFn(advanceInstallStage);
+  const completeMut = useMutation({
+    mutationFn: (orderId: string) => advanceFn({ data: { orderId, next: "completed" } }),
+    onSuccess: () => {
+      toast.success("Admin sign-off recorded. Silos & warehouse are ready.");
+      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+      qc.invalidateQueries({ queryKey: ["installation"] });
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["warehouses"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Could not complete install"),
+  });
   const { data, isLoading } = useQuery({
     queryKey: ["my-hardware-orders"],
     queryFn: () => fetchFn(),
   });
   const orders = data?.orders ?? [];
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
-          <Package className="h-5 w-5 text-white" />
-        </div>
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="h-4 w-4" /> Dashboard
+      </Link>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My install orders</h1>
           <p className="text-sm text-slate-500">Track the technician install for each subscription you purchased.</p>
         </div>
+        <Button onClick={() => { setAddonForm(emptyAddonForm); setAddonOpen(true); }} className="gap-2">
+          <PlusCircle className="h-4 w-4" /> Request new silo
+        </Button>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
+        <OrdersSkeleton />
       ) : orders.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-slate-500 text-sm">
@@ -59,9 +117,10 @@ function MyOrdersPage() {
                     <CardTitle className="text-base">{o.plan_name ?? o.plan_id} · {o.hardware_quantity} sensor{Number(o.hardware_quantity) === 1 ? "" : "s"}</CardTitle>
                     <CardDescription className="text-xs">Placed {new Date(o.created_at as string).toLocaleString()}</CardDescription>
                   </div>
-                  <Badge className={STATUS_STYLE[o.status as string] ?? "bg-slate-200 text-slate-700"}>
-                    {String(o.status).replace("_", " ")}
-                  </Badge>
+                  <InstallStageTracker
+                    variant="row"
+                    {...deriveStage(o as any, (o as any).installation ?? null, ((o as any).visit_events ?? []) as any)}
+                  />
                 </div>
               </CardHeader>
               <CardContent className="grid gap-3 md:grid-cols-2 text-sm text-slate-700">
@@ -92,10 +151,146 @@ function MyOrdersPage() {
                 <div className="md:col-span-2 text-xs text-slate-500 border-t border-slate-100 pt-2">
                   Rs. {Number(o.hardware_total ?? 0).toLocaleString()} in hardware · order id: {o.id}
                 </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <CardActions
+                    order={o}
+                    onTrack={() => setOpenOrderId(o.id as string)}
+                    onComplete={() => completeMut.mutate(o.id as string)}
+                    completing={completeMut.isPending && completeMut.variables === o.id}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <HardwareOrderThread orderId={o.id as string} as="admin" />
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+      <InstallationDrawer
+        orderId={openOrderId}
+        open={!!openOrderId}
+        onOpenChange={(v) => !v && setOpenOrderId(null)}
+        canEdit={false}
+      />
+
+      <Dialog open={addonOpen} onOpenChange={(o) => { setAddonOpen(o); if (!o) setAddonForm(emptyAddonForm); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request a new silo</DialogTitle>
+            <DialogDescription>
+              One-time hardware &amp; install fee for one additional silo beyond your plan's included limit.
+              We'll charge you now and dispatch a technician to install it.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="grid gap-3 py-1"
+            onSubmit={(e) => { e.preventDefault(); addonMut.mutate(); }}
+          >
+            <div className="grid gap-1.5">
+              <Label htmlFor="addon-address">Install address</Label>
+              <Input
+                id="addon-address"
+                value={addonForm.address}
+                onChange={(e) => setAddonForm((f) => ({ ...f, address: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="addon-city">City</Label>
+                <Input
+                  id="addon-city"
+                  value={addonForm.city}
+                  onChange={(e) => setAddonForm((f) => ({ ...f, city: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="addon-country">Country</Label>
+                <Input
+                  id="addon-country"
+                  value={addonForm.country}
+                  onChange={(e) => setAddonForm((f) => ({ ...f, country: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="addon-phone">Contact phone</Label>
+              <Input
+                id="addon-phone"
+                value={addonForm.phone}
+                onChange={(e) => setAddonForm((f) => ({ ...f, phone: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="addon-notes">Notes (optional)</Label>
+              <Textarea
+                id="addon-notes"
+                rows={2}
+                value={addonForm.notes}
+                onChange={(e) => setAddonForm((f) => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+            <DialogFooter className="mt-2">
+              <Button type="button" variant="outline" onClick={() => setAddonOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={addonMut.isPending} className="gap-2">
+                {addonMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                {addonMut.isPending ? "Starting checkout…" : "Continue to payment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function CardActions({ order, onTrack, onComplete, completing }: {
+  order: Record<string, unknown>;
+  onTrack: () => void;
+  onComplete: () => void;
+  completing: boolean;
+}) {
+  const derived = deriveStage(order as any, (order as any).installation ?? null, ((order as any).visit_events ?? []) as any);
+  const canComplete = derived.stage === "installed" && !derived.blocked;
+  return (
+    <div className="flex items-center gap-2">
+      <Button size="sm" variant="outline" onClick={onTrack}>
+        <Truck className="h-3.5 w-3.5 mr-1.5" /> Track installation
+      </Button>
+      {canComplete && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={completing}>
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+              {completing ? "Signing off…" : "Sign off & complete"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Admin sign-off required</AlertDialogTitle>
+              <AlertDialogDescription>
+                By signing off, you confirm every sensor is physically installed and working at your site. GrainHero will automatically:
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
+                  <li>Provision a warehouse for this install (if none exists).</li>
+                  <li>Create one silo per installed device serial.</li>
+                  <li>Record your Admin sign-off and move the order to <strong>Completed</strong> — this step cannot be reversed.</li>
+                </ul>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Not yet</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={onComplete}
+              >
+                Yes, sign off
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

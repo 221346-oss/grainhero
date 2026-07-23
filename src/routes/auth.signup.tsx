@@ -1,15 +1,48 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
+import { SignupOrderSummary } from "@/components/auth/SignupOrderSummary";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 import { validateSignupForm, validatePassword, type PasswordStrength } from "@/lib/validation";
-import { getAuthRedirectOrigin } from "@/lib/app-url";
+import { resolvePlanId, type PlanId } from "@/lib/pricing-data";
+import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
+import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
+import { sendWelcomeEmail } from "@/lib/email-automation.functions";
+import { syncSignupToHubspot } from "@/lib/hubspot.functions";
+
+const DRAFT_KEY = "grainhero.checkoutDraft.v1";
+
+function parseSessionId(redirect?: string): string | null {
+  if (!redirect?.includes("session_id=")) return null;
+  try {
+    const qs = redirect.includes("?") ? redirect.slice(redirect.indexOf("?")) : `?${redirect}`;
+    return new URLSearchParams(qs).get("session_id");
+  } catch {
+    return null;
+  }
+}
+
+function loadCheckoutDraft(): { planId: PlanId | null; iotQuantity: number } {
+  if (typeof window === "undefined") return { planId: null, iotQuantity: 1 };
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    const draft = raw ? (JSON.parse(raw) as { selected?: string; iotQuantity?: number }) : null;
+    const storedPlan = window.localStorage.getItem("selectedPlanId");
+    const planId = resolvePlanId(draft?.selected ?? storedPlan);
+    const iotQuantity = typeof draft?.iotQuantity === "number" ? draft.iotQuantity : 1;
+    return { planId, iotQuantity };
+  } catch {
+    return { planId: null, iotQuantity: 1 };
+  }
+}
 
 const search = z.object({
   plan: z.string().optional(),
@@ -31,6 +64,41 @@ export const Route = createFileRoute("/auth/signup")({
 function SignupPage() {
   const navigate = useNavigate();
   const { plan, email: prefillEmail, redirect } = Route.useSearch();
+  const sessionId = useMemo(() => parseSessionId(redirect), [redirect]);
+  const summaryFn = useServerFn(getCheckoutSessionSummary);
+  const confirmEmailFn = useServerFn(autoConfirmUserEmail);
+  const claimFn = useServerFn(claimPaidCheckoutForUser);
+  const summaryQuery = useQuery({
+    queryKey: ["signup-checkout-summary", sessionId],
+    queryFn: () => summaryFn({ data: { sessionId: sessionId! } }),
+    enabled: Boolean(sessionId),
+  });
+  const [draftPlan, setDraftPlan] = useState<{ planId: PlanId | null; iotQuantity: number }>({
+    planId: null,
+    iotQuantity: 1,
+  });
+
+  useEffect(() => {
+    setDraftPlan(loadCheckoutDraft());
+  }, []);
+
+  const orderPlanId = useMemo(() => {
+    if (summaryQuery.data?.planName) {
+      const fromSummary = resolvePlanId(summaryQuery.data.planName);
+      if (fromSummary) return fromSummary;
+    }
+    return resolvePlanId(plan) ?? draftPlan.planId;
+  }, [summaryQuery.data?.planName, plan, draftPlan.planId]);
+
+  const orderIotQuantity = useMemo(() => {
+    const fromSummary = summaryQuery.data?.hardwareQuantity;
+    if (typeof fromSummary === "number" && fromSummary > 0) return fromSummary;
+    return draftPlan.iotQuantity;
+  }, [summaryQuery.data?.hardwareQuantity, draftPlan.iotQuantity]);
+
+  const showOrderSummary = Boolean(orderPlanId);
+  const orderPaid = Boolean(summaryQuery.data?.paid);
+
   const [form, setForm] = useState({
     name: "",
     email: prefillEmail ?? "",
@@ -42,11 +110,12 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
   const [strength, setStrength] = useState<PasswordStrength>({ score: 0, feedback: [], isValid: false });
-  const [sentEmail, setSentEmail] = useState<string | null>(null);
-  const [confirmPath, setConfirmPath] = useState<string>("/auth/login");
-  const [resending, setResending] = useState(false);
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<keyof typeof form, boolean>>({
+    name: false, email: false, phone: false, password: false, confirmPassword: false,
+  });
+  const [fieldErrors, setFieldErrors] = useState<Record<keyof typeof form, string>>({
+    name: "", email: "", phone: "", password: "", confirmPassword: "",
+  });
 
   const update = (k: keyof typeof form, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -81,61 +150,106 @@ function SignupPage() {
     }
     setLoading(true);
     const safeRedirect = redirect?.startsWith("/") ? redirect : null;
-    const redirectQs = plan ? `?plan=${encodeURIComponent(plan)}&email=${encodeURIComponent(form.email)}` : "";
-    const nextConfirmPath = safeRedirect
-      ? `${safeRedirect}${safeRedirect.includes("?") ? "&" : "?"}email=${encodeURIComponent(form.email)}`
-      : `/auth/login${redirectQs}`;
-    const redirectOrigin = getAuthRedirectOrigin();
+    const normalizedEmail = form.email.trim().toLowerCase();
+
+    // Step 1: Register account
     const { data, error } = await supabase.auth.signUp({
-      email: form.email.trim().toLowerCase(),
+      email: normalizedEmail,
       password: form.password,
       options: {
-        emailRedirectTo: `${redirectOrigin}${nextConfirmPath}`,
         data: {
           name: form.name.trim(),
           phone: form.phone.trim(),
           business_type: "farm",
         },
+        emailRedirectTo: `${window.location.origin}/auth/verify-otp`,
       },
     });
-    setLoading(false);
+    
     if (error) {
       setMsg({ type: "error", text: error.message });
+      setLoading(false);
       return;
     }
-    if (data.user && !data.session) {
-      setSentEmail(form.email.trim().toLowerCase());
-      setConfirmPath(nextConfirmPath);
-      setMsg({ type: "success", text: "Check your inbox to confirm your email, then sign in." });
+
+    // Check if email confirmation is required
+    const needsEmailConfirmation = data?.user && !data.user.email_confirmed_at && data.user.identities?.length === 0;
+    
+    if (needsEmailConfirmation) {
+      // Store email for verification page
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("pendingVerificationEmail", normalizedEmail);
+      }
+      setMsg({ 
+        type: "success", 
+        text: "Account created! Please check your email to verify your account." 
+      });
+      setLoading(false);
+      // Redirect to verification page after 2 seconds
+      setTimeout(() => {
+        navigate({ to: "/auth/verify-otp", search: { email: normalizedEmail } });
+      }, 2000);
       return;
     }
-    // Auto-confirmed / already signed in
+
+    // Step 2: Auto-confirm email + assign admin role on server (only if email confirmation is disabled)
+    try {
+      await confirmEmailFn({ data: { email: normalizedEmail } });
+    } catch (e) {
+      console.warn("[signup] auto-confirm failed (continuing):", (e as Error).message);
+    }
+
+    // Step 3: Sign in with the same credentials
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password: form.password,
+    });
+    setLoading(false);
+    if (signInError) {
+      setMsg({ type: "error", text: `Account created but sign-in failed: ${signInError.message}` });
+      return;
+    }
+
+    if (orderPaid || sessionId) {
+      try {
+        await claimFn({ data: sessionId ? { sessionId } : {} });
+      } catch (e) {
+        console.warn("[signup] claim checkout failed:", (e as Error).message);
+      }
+    }
+
+    // Fire-and-forget: welcome email + HubSpot sync (don't block the redirect).
+    const [firstName, ...rest] = form.name.trim().split(/\s+/);
+    void sendWelcomeEmail().catch((e) => console.warn("[signup] welcome email failed:", e));
+    void syncSignupToHubspot({
+      data: {
+        email: normalizedEmail,
+        firstName,
+        lastName: rest.join(" ") || undefined,
+        phone: form.phone.trim() || undefined,
+        company: form.name.trim(),
+      },
+    }).catch((e) => console.warn("[signup] hubspot sync failed:", e));
+
+    // Step 4: Redirect directly to dashboard (or original redirect target)
     if (safeRedirect) navigate({ to: safeRedirect as never });
     else if (plan) navigate({ to: "/checkout", search: { plan } as never });
     else navigate({ to: "/dashboard" });
   };
 
-  const resend = async () => {
-    if (!sentEmail) return;
-    setResending(true);
-    setMsg(null);
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email: sentEmail,
-      options: { emailRedirectTo: `${getAuthRedirectOrigin()}${confirmPath}` },
-    });
-    setResending(false);
-    if (error) setMsg({ type: "error", text: error.message });
-    else setMsg({ type: "success", text: `Confirmation resent to ${sentEmail}` });
-  };
 
   return (
     <AuthShell>
       <div className="space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-semibold">Create your account</h1>
-          <p className="text-sm text-muted-foreground">Start monitoring your grain in minutes</p>
+          <p className="text-sm text-muted-foreground">
+            {orderPaid ? "Finish setup for your paid plan" : "Start monitoring your grain in minutes"}
+          </p>
         </div>
+        {showOrderSummary && orderPlanId && (
+          <SignupOrderSummary planId={orderPlanId} iotQuantity={orderIotQuantity} paid={orderPaid} />
+        )}
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="su-name">Full name</Label>
@@ -223,23 +337,6 @@ function SignupPage() {
             )}
           </div>
           <Message msg={msg} />
-          {sentEmail && (
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-sm text-emerald-900 space-y-2">
-              <p>
-                We sent a confirmation link to <b>{sentEmail}</b>. Didn't get it? Check spam, then resend.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={resending}
-                onClick={resend}
-                className="w-full"
-              >
-                {resending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resend confirmation email"}
-              </Button>
-            </div>
-          )}
           <Button type="submit" disabled={loading} className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create account"}
           </Button>

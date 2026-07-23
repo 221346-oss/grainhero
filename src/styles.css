@@ -96,35 +96,36 @@
   --gradient-fusion: linear-gradient(135deg, #DCF095 0%, #ADFFBC 100%);
   --gradient-fusion-soft: linear-gradient(135deg, #EEF7C6 0%, #D7FFDF 100%);
 
-  --sidebar: #DCF095;
+  --sidebar: #ffffff;
   --sidebar-foreground: oklch(0.18 0.02 150);
-  --sidebar-primary: #ADFFBC;
-  --sidebar-primary-foreground: oklch(0.18 0.02 150);
-  --sidebar-accent: color-mix(in oklab, #ADFFBC 55%, transparent);
-  --sidebar-accent-foreground: oklch(0.15 0.02 150);
-  --sidebar-border: color-mix(in oklab, #0a0f00 8%, transparent);
-  --sidebar-ring: #C674F2;
+  --sidebar-primary: oklch(0.68 0.22 145);
+  --sidebar-primary-foreground: oklch(0.15 0.02 150);
+  --sidebar-accent: oklch(0.95 0.02 130);
+  --sidebar-accent-foreground: oklch(0.18 0.02 150);
+  --sidebar-border: oklch(0.91 0.03 130);
+  --sidebar-ring: oklch(0.68 0.22 145);
 }
 
 .dark {
-  --background: oklch(0.14 0.02 150);
-  --foreground: oklch(0.96 0.03 130);
-  --card: oklch(0.19 0.02 150);
-  --card-foreground: oklch(0.96 0.03 130);
-  --popover: oklch(0.19 0.02 150);
-  --popover-foreground: oklch(0.96 0.03 130);
+  /* Softer dark — slate-800 level, not pitch black */
+  --background: oklch(0.20 0.015 150);
+  --foreground: oklch(0.93 0.02 130);
+  --card: oklch(0.25 0.015 150);
+  --card-foreground: oklch(0.93 0.02 130);
+  --popover: oklch(0.25 0.015 150);
+  --popover-foreground: oklch(0.93 0.02 130);
   --primary: #ADFFBC;
   --primary-foreground: oklch(0.15 0.02 150);
-  --secondary: oklch(0.24 0.03 150);
-  --secondary-foreground: oklch(0.96 0.03 130);
-  --muted: oklch(0.22 0.02 150);
-  --muted-foreground: oklch(0.72 0.04 130);
-  --accent: oklch(0.35 0.12 140);
-  --accent-foreground: oklch(0.96 0.03 130);
-  --destructive: oklch(0.7 0.2 22);
+  --secondary: oklch(0.30 0.02 150);
+  --secondary-foreground: oklch(0.93 0.02 130);
+  --muted: oklch(0.28 0.015 150);
+  --muted-foreground: oklch(0.68 0.03 130);
+  --accent: oklch(0.38 0.10 140);
+  --accent-foreground: oklch(0.93 0.02 130);
+  --destructive: oklch(0.65 0.20 22);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 10%);
   --ring: #C674F2;
   --chart-1: #ADFFBC;
   --chart-2: #DCF095;
@@ -132,14 +133,14 @@
   --chart-4: oklch(0.75 0.18 90);
   --chart-5: oklch(0.65 0.22 25);
 
-  --sidebar: #1a1f14;
-  --sidebar-foreground: #DCF095;
-  --sidebar-primary: #2b6b3a;
-  --sidebar-primary-foreground: #ADFFBC;
-  --sidebar-accent: color-mix(in oklab, #ADFFBC 18%, transparent);
-  --sidebar-accent-foreground: #ADFFBC;
-  --sidebar-border: color-mix(in oklab, #ADFFBC 12%, transparent);
-  --sidebar-ring: #C674F2;
+  --sidebar: oklch(0.17 0.02 150);
+  --sidebar-foreground: oklch(0.92 0.02 130);
+  --sidebar-primary: oklch(0.68 0.22 145);
+  --sidebar-primary-foreground: oklch(0.15 0.02 150);
+  --sidebar-accent: oklch(0.22 0.02 150);
+  --sidebar-accent-foreground: oklch(0.92 0.02 130);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.68 0.22 145);
 }
 
 @layer base {
@@ -151,6 +152,80 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  /*
+   * Dark mode compatibility layer.
+   * Many dashboard pages use hardcoded slate-* Tailwind classes.
+   * These overrides make them respond to dark mode without touching every file.
+   */
+  .dark .text-slate-900 { color: oklch(0.93 0.02 130) !important; }
+  .dark .text-slate-800 { color: oklch(0.88 0.02 130) !important; }
+  .dark .text-slate-700 { color: oklch(0.82 0.02 130) !important; }
+  .dark .text-slate-600 { color: oklch(0.72 0.02 130) !important; }
+  .dark .text-slate-500 { color: oklch(0.62 0.02 130) !important; }
+  .dark .text-slate-400 { color: oklch(0.55 0.02 130) !important; }
+
+  .dark .bg-slate-50  { background-color: oklch(0.26 0.015 150) !important; }
+  .dark .bg-slate-100 { background-color: oklch(0.28 0.015 150) !important; }
+  .dark .bg-slate-200 { background-color: oklch(0.32 0.015 150) !important; }
+  .dark .bg-white     { background-color: var(--card) !important; }
+
+  .dark .border-slate-100 { border-color: oklch(1 0 0 / 8%)  !important; }
+  .dark .border-slate-200 { border-color: oklch(1 0 0 / 12%) !important; }
+  .dark .border-slate-300 { border-color: oklch(1 0 0 / 16%) !important; }
+
+  .dark .bg-gradient-to-br.from-slate-50 { background: var(--background) !important; }
+  .dark .hover\:bg-slate-50:hover  { background-color: oklch(0.27 0.015 150) !important; }
+  .dark .hover\:bg-slate-100:hover { background-color: oklch(0.30 0.015 150) !important; }
+
+  /* Landing page hardcoded backgrounds */
+  .dark .landing-bg   { background-color: oklch(0.20 0.015 150) !important; }
+  .dark .checkout-bg  { background-color: oklch(0.20 0.015 150) !important; }
+  .dark .auth-bg      { background: oklch(0.20 0.015 150) !important; }
+
+  /* ── Landing page section overrides ─────────────────────────────────────
+     Sections use bg-[#EDE9D4] or bg-[#252d26] as hardcoded Tailwind classes.
+     We target them via the CSS custom selector. */
+  .dark [class*="bg-[#EDE9D4]"]  { background-color: oklch(0.20 0.015 150) !important; }
+  .dark [class*="bg-[#252d26]"]  { background-color: oklch(0.17 0.015 150) !important; }
+  .dark [class*="bg-[#404F44]"]  { background-color: oklch(0.30 0.015 150) !important; }
+
+  /* Landing text colors */
+  .dark [class*="text-[#252d26]"] { color: oklch(0.93 0.02 130) !important; }
+  .dark [class*="text-[#404F44]"] { color: oklch(0.75 0.02 130) !important; }
+  .dark [class*="text-[#EDE9D4]"] { color: oklch(0.93 0.02 130) !important; }
+
+  /* Pricing cards on landing */
+  .dark [class*="bg-white"][class*="border-2"] { background-color: var(--card) !important; }
+  .dark [class*="text-[#252d26]"] { color: var(--foreground) !important; }
+
+  /* Feature flip card back (inline style #EDE9D4) — handled via JS class */
+  .dark .flip-card-back-dark { background-color: oklch(0.28 0.015 150) !important; }
+  .dark .flip-card-front-dark { background-color: var(--card) !important; }
+
+  /* Checkout page step navigator */
+  .dark .bg-white\/70 { background-color: oklch(0.25 0.015 150 / 70%) !important; }
+  .dark .border-white\/70 { border-color: oklch(1 0 0 / 12%) !important; }
+  .dark [class*="bg-white/70"] { background-color: oklch(0.25 0.015 150 / 80%) !important; }
+  .dark [class*="bg-white/80"] { background-color: oklch(0.25 0.015 150 / 90%) !important; }
+
+  /* Auth shell gradient background */
+  .dark .bg-background { background-color: var(--background) !important; }
+
+  /* Checkout & success inline gradient backgrounds */
+  .dark .checkout-inline-bg { background: var(--background) !important; }
+
+  /* Emerald tinted card backgrounds in checkout */
+  .dark [class*="bg-emerald-50"] { background-color: oklch(0.26 0.04 150) !important; }
+  .dark [class*="bg-emerald-100"] { background-color: oklch(0.28 0.06 150) !important; }
+  .dark [class*="from-emerald-50"] { --tw-gradient-from: oklch(0.26 0.04 150) !important; }
+  .dark [class*="to-sky-50"] { --tw-gradient-to: oklch(0.24 0.02 220) !important; }
+  .dark [class*="bg-amber-50"] { background-color: oklch(0.28 0.04 80) !important; }
+  .dark [class*="bg-amber-100"] { background-color: oklch(0.30 0.06 80) !important; }
+  .dark [class*="text-amber-900"] { color: oklch(0.85 0.10 80) !important; }
+  .dark [class*="text-amber-800"] { color: oklch(0.78 0.10 80) !important; }
+  .dark [class*="text-emerald-900"] { color: oklch(0.85 0.12 150) !important; }
+  .dark [class*="text-emerald-800"] { color: oklch(0.78 0.12 150) !important; }
 }
 
 /* ============================
@@ -207,6 +282,27 @@ html { scroll-behavior: smooth; }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
+/* Flowing menu sidebar — marquee band scroll */
+@keyframes gh-flow-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Variable-font hover — letters bolden outward from the center on hover */
+.vfh .vfh-letter {
+  font-weight: var(--vfh-base, 500);
+  font-variation-settings: "wght" var(--vfh-base, 500);
+  transition:
+    font-weight 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    font-variation-settings 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.vfh:hover .vfh-letter,
+a:hover > .vfh .vfh-letter,
+button:hover > .vfh .vfh-letter {
+  font-weight: var(--vfh-hover, 900);
+  font-variation-settings: "wght" var(--vfh-hover, 900);
+}
+
 /* Skeleton shimmer — LinkedIn / YouTube / GitHub style */
 @keyframes skeleton-shimmer {
   0% { background-position: -200% 0; }
@@ -222,3 +318,73 @@ html { scroll-behavior: smooth; }
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
+
+/* Shimmer button — emerald-ui ShimmerButton sweep */
+@keyframes shimmer2 {
+  0% { background-position: 0% 0%; }
+  100% { background-position: -200% 0%; }
+}
+
+/* Text shimmer — emerald-ui TextShimmer sweep */
+@keyframes shimmer {
+  0% { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
+/* Branded loader progress bar animation */
+@keyframes progress {
+  0%   { width: 0%;   margin-left: 0; }
+  50%  { width: 70%;  margin-left: 15%; }
+  100% { width: 0%;   margin-left: 100%; }
+}
+
+/*
+ * Dark-mode safety net for authenticated pages.
+ * Many older pages hardcode slate/gray/white utilities without dark: variants.
+ * Scope these overrides to `.app-scope` so marketing pages stay untouched.
+ */
+.dark .app-scope .bg-white { background-color: var(--card) !important; }
+.dark .app-scope .bg-white\/50 { background-color: color-mix(in oklab, var(--card) 60%, transparent) !important; }
+.dark .app-scope .bg-white\/80 { background-color: color-mix(in oklab, var(--card) 85%, transparent) !important; }
+
+.dark .app-scope .bg-slate-50,
+.dark .app-scope .bg-gray-50 { background-color: var(--muted) !important; }
+.dark .app-scope .bg-slate-100,
+.dark .app-scope .bg-gray-100 { background-color: var(--muted) !important; }
+.dark .app-scope .bg-slate-200,
+.dark .app-scope .bg-gray-200 { background-color: color-mix(in oklab, var(--muted) 85%, var(--foreground) 10%) !important; }
+
+.dark .app-scope .hover\:bg-slate-50:hover,
+.dark .app-scope .hover\:bg-gray-50:hover,
+.dark .app-scope .hover\:bg-slate-100:hover,
+.dark .app-scope .hover\:bg-gray-100:hover { background-color: color-mix(in oklab, var(--muted) 60%, transparent) !important; }
+
+.dark .app-scope .text-slate-400,
+.dark .app-scope .text-gray-400,
+.dark .app-scope .text-slate-500,
+.dark .app-scope .text-gray-500,
+.dark .app-scope .text-slate-600,
+.dark .app-scope .text-gray-600 { color: var(--muted-foreground) !important; }
+
+.dark .app-scope .text-slate-700,
+.dark .app-scope .text-gray-700,
+.dark .app-scope .text-slate-800,
+.dark .app-scope .text-gray-800,
+.dark .app-scope .text-slate-900,
+.dark .app-scope .text-gray-900,
+.dark .app-scope .text-black { color: var(--foreground) !important; }
+
+.dark .app-scope .hover\:text-slate-900:hover,
+.dark .app-scope .hover\:text-gray-900:hover { color: var(--foreground) !important; }
+
+.dark .app-scope .border-slate-100,
+.dark .app-scope .border-slate-200,
+.dark .app-scope .border-slate-300,
+.dark .app-scope .border-gray-100,
+.dark .app-scope .border-gray-200,
+.dark .app-scope .border-gray-300 { border-color: var(--border) !important; }
+
+.dark .app-scope .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .app-scope .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }

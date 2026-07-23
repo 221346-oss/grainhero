@@ -1,0 +1,3 @@
+ALTER TABLE public.hardware_order_visit_events DROP CONSTRAINT hardware_order_visit_events_event_type_check;
+ALTER TABLE public.hardware_order_visit_events ADD CONSTRAINT hardware_order_visit_events_event_type_check
+  CHECK (event_type IS NULL OR event_type = ANY (ARRAY['arrived','inspection','install','test','handover','issue','assigned','en_route','onsite','installed','completed','blocked','admin_signoff']::text[]));

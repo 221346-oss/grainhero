@@ -79,9 +79,10 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
 
     const gatewayKey = process.env.LOVABLE_API_KEY;
     const resendKey = process.env.RESEND_API_KEY;
-    const from = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
+    const configFrom = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
+    
     if (!resendKey) {
-      console.warn("[checkout email] missing RESEND_API_KEY — skipping email");
+      console.warn("[checkout email] missing resend key");
       return { sent: false, reason: "not_configured" as const };
     }
 
@@ -140,23 +141,66 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
     </div>
     <p style="text-align:center;font-size:11px;color:#94a3b8;margin:16px 0 0">© GrainHero</p>
   </div>
-</body></html>`;
+ </body></html>`;
 
-    const res = await fetch(emailEndpoint, {
-      method: "POST",
-      headers: emailHeaders,
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: `Payment confirmed — welcome to GrainHero`,
-        html,
-      }),
-    });
-    const resBody = await res.text();
-    console.log(`[checkout email] resend response ${res.status}:`, resBody);
-    if (!res.ok) {
-      console.error(`[checkout email] resend failed ${res.status}: ${resBody}`);
-      throw new Error(`Email send failed: ${res.status}: ${resBody}`);
+    const trySend = async (fromAddress: string) => {
+      if (gatewayKey) {
+        try {
+          const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${gatewayKey}`,
+              "X-Connection-Api-Key": resendKey,
+            },
+            body: JSON.stringify({
+              from: fromAddress,
+              to: [to],
+              subject: `Payment confirmed — welcome to GrainHero`,
+              html,
+            }),
+          });
+          if (res.ok) return true;
+          console.warn(`[checkout email] Gateway send failed: ${res.status}`);
+        } catch (e) {
+          console.warn("[checkout email] Gateway fetch failed:", e);
+        }
+      }
+
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${resendKey}`,
+          },
+          body: JSON.stringify({
+            from: fromAddress,
+            to: [to],
+            subject: `Payment confirmed — welcome to GrainHero`,
+            html,
+          }),
+        });
+        if (res.ok) return true;
+        const body = await res.text();
+        console.warn(`[checkout email] Direct Resend send failed (${res.status}): ${body}`);
+      } catch (e) {
+        console.warn("[checkout email] Direct Resend fetch failed:", e);
+      }
+
+      return false;
+    };
+
+    let success = await trySend(configFrom);
+
+    if (!success && !configFrom.includes("resend.dev")) {
+      console.log("[checkout email] Retrying with sandbox onboarding@resend.dev sender");
+      success = await trySend("GrainHero <onboarding@resend.dev>");
+    }
+
+    if (!success) {
+      console.error("[checkout email] All email sending attempts failed.");
+      return { sent: false, reason: "send_failed" as const };
     }
 
     // Best-effort de-dupe marker.
