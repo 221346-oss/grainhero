@@ -5,11 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Sidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  LogOut,
-  Package,
-  QrCode, Settings,
-} from "lucide-react";
+import { LogOut, Package, QrCode, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { FlowingNavItem } from "@/components/app/FlowingNavItem";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -30,30 +26,116 @@ type NavItem = {
 
 // Group 2 — the five consolidated workspaces.
 const workspaceNav: NavItem[] = [
-  { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
-  { name: "monitoring", label: "Monitoring", to: "/monitoring", roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Sensors", "Actuators", "Alerts", "Environmental", "Device Health", "Maintenance", "Incidents"] },
-  { name: "intelligence", label: "Intelligence", to: "/intelligence", roles: ["super_admin", "admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
-  { name: "business", label: "Business", to: "/business", roles: ["super_admin", "admin", "manager"], marqueeItems: ["Revenue", "Subscription", "Insurance"] },
-  { name: "administration", label: "Administration", to: "/administration", roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
+  {
+    name: "grain-operations",
+    label: "Grain Operations",
+    to: "/grain-operations",
+    roles: ["super_admin", "admin", "manager", "technician"],
+    marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"],
+  },
+  {
+    name: "monitoring",
+    label: "Monitoring",
+    to: "/monitoring",
+    roles: ["super_admin", "admin", "manager", "technician"],
+    marqueeItems: [
+      "Sensors",
+      "Actuators",
+      "Alerts",
+      "Environmental",
+      "Device Health",
+      "Maintenance",
+      "Incidents",
+    ],
+  },
+  {
+    name: "intelligence",
+    label: "Intelligence",
+    to: "/intelligence",
+    roles: ["super_admin", "admin", "manager", "technician"],
+    badge: "AI",
+    marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"],
+  },
+  {
+    name: "business",
+    label: "Business",
+    to: "/business",
+    roles: ["super_admin", "admin", "manager"],
+    marqueeItems: ["Revenue", "Subscription", "Insurance"],
+  },
+  {
+    name: "administration",
+    label: "Administration",
+    to: "/administration",
+    roles: ["super_admin", "admin", "manager", "technician"],
+    marqueeItems: ["Team Management", "Security Center", "Activity Logs"],
+  },
 ];
 
 // Group 3 — standalone pages. Platform is a single entry to the platform area.
 const utilityNav: NavItem[] = [
-  { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
-  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
-  { name: "platform", label: "Platform", to: "/platform", roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Plans & Thresholds", "Pipeline", "Leads", "System Health", "Audit Logs", "Activity Feed"] },
+  {
+    name: "traceability",
+    label: "Traceability",
+    to: "/traceability",
+    icon: QrCode,
+    roles: ["admin", "manager", "technician"],
+    marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"],
+  },
+  {
+    name: "platform-orders",
+    label: "Install Orders",
+    to: "/platform/orders",
+    icon: Package,
+    roles: ["super_admin"],
+    marqueeItems: ["Pending", "Completed", "Revenue"],
+  },
+  {
+    name: "platform",
+    label: "Platform",
+    to: "/platform",
+    roles: ["super_admin"],
+    marqueeItems: [
+      "Overview",
+      "Tenants",
+      "Users",
+      "Plans & Thresholds",
+      "Pipeline",
+      "Leads",
+      "System Health",
+      "Audit Logs",
+      "Activity Feed",
+    ],
+  },
 ];
 
 // Bottom "admin" strip — Slack shows Admin at the bottom of the workspace rail.
 const bottomNav: NavItem[] = [
-  { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Profile", "Location", "Notifications", "Appearance"] },
+  {
+    name: "settings",
+    label: "Settings",
+    to: "/settings",
+    icon: Settings,
+    roles: ["super_admin", "admin", "manager", "technician"],
+    marqueeItems: ["Profile", "Location", "Notifications", "Appearance"],
+  },
 ];
 
 function hasVisible(items: NavItem[], role: AppRole) {
   return items.some((i) => i.roles.includes(role));
 }
 
-function Section({ items, role, currentPath }: { label?: string; items: NavItem[]; role: AppRole; currentPath: string; showLabel?: boolean }) {
+function Section({
+  items,
+  role,
+  currentPath,
+}: {
+  label?: string;
+  items: NavItem[];
+  role: AppRole;
+  currentPath: string;
+  showLabel?: boolean;
+}) {
   // Sidebar is permanently visible (collapsible="none") — never render collapsed.
   const collapsed = false;
   const visible = items.filter((i) => i.roles.includes(role));
@@ -61,9 +143,10 @@ function Section({ items, role, currentPath }: { label?: string; items: NavItem[
   return (
     <div className={cn(collapsed && "flex flex-col items-center py-1")}>
       {visible.map((item) => {
-        const active = item.to === "/platform"
-          ? currentPath === "/platform" || currentPath.startsWith("/platform/")
-          : currentPath === item.to;
+        const active =
+          item.to === "/platform"
+            ? currentPath === "/platform" || currentPath.startsWith("/platform/")
+            : currentPath === item.to;
         return (
           <FlowingNavItem
             key={item.name}
@@ -130,7 +213,6 @@ export function AppSidebar({ hidden = false }: { hidden?: boolean }) {
   return (
     <Sidebar collapsible="none" className="sticky top-0 h-screen w-56 bg-transparent">
       <div className="flex h-full flex-col px-3">
-
         {/* Logo — fixed at the top, outside the dock, never hidden by scroll */}
         <div className="px-2 py-4">
           <Link
@@ -152,11 +234,17 @@ export function AppSidebar({ hidden = false }: { hidden?: boolean }) {
           }`}
         >
           <div className="flex w-full max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/30">
-
             {/* Nav — workspaces / standalone pages, separated by dividers */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
-              <Section items={workspaceNav} role={role} currentPath={currentPath} showLabel={false} />
-              {hasVisible(utilityNav, role) && <div className="mx-3 my-1.5 h-px bg-sidebar-border/80" />}
+              <Section
+                items={workspaceNav}
+                role={role}
+                currentPath={currentPath}
+                showLabel={false}
+              />
+              {hasVisible(utilityNav, role) && (
+                <div className="mx-3 my-1.5 h-px bg-sidebar-border/80" />
+              )}
               <Section items={utilityNav} role={role} currentPath={currentPath} showLabel={false} />
             </div>
 
@@ -173,10 +261,8 @@ export function AppSidebar({ hidden = false }: { hidden?: boolean }) {
                 <span className="ml-2">Sign out</span>
               </Button>
             </div>
-
           </div>
         </div>
-
       </div>
     </Sidebar>
   );

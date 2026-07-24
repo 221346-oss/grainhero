@@ -103,8 +103,7 @@ export function HeaderSearch() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      const typing =
-        !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable);
+      const typing = !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable);
       if ((e.key === "/" && !typing) || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) {
         e.preventDefault();
         setOpen(true);
@@ -133,10 +132,7 @@ export function HeaderSearch() {
     <div className="relative flex items-center">
       <GooeyFilter />
 
-      <motion.div
-        className="relative filter-[url(#header-goo-effect)]"
-        initial={false}
-      >
+      <motion.div className="relative filter-[url(#header-goo-effect)]" initial={false}>
         <motion.div
           variants={buttonVariants}
           initial={false}

@@ -27,16 +27,33 @@ function priorityDot(p: string) {
         : "bg-slate-400";
 }
 
-function CardHeaderLink({ to, search, title, count }: { to: string; search?: Record<string, string>; title: string; count?: number }) {
+function CardHeaderLink({
+  to,
+  search,
+  title,
+  count,
+}: {
+  to: string;
+  search?: Record<string, string>;
+  title: string;
+  count?: number;
+}) {
   return (
     <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
       <CardTitle className="text-sm flex items-center gap-2">
         {title}
         {typeof count === "number" && (
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono tabular-nums">{count}</Badge>
+          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono tabular-nums">
+            {count}
+          </Badge>
         )}
       </CardTitle>
-      <Link to={to} search={search as never} aria-label={`Open ${title}`} className="text-emerald-600 hover:text-emerald-700">
+      <Link
+        to={to}
+        search={search as never}
+        aria-label={`Open ${title}`}
+        className="text-emerald-600 hover:text-emerald-700"
+      >
         <ArrowUpRight className="h-3.5 w-3.5" />
       </Link>
     </CardHeader>
@@ -57,15 +74,30 @@ export function RecentBatchesCard() {
   const overflow = rows.slice(3);
   return (
     <Card className="border-0 shadow-sm">
-      <CardHeaderLink to="/grain-operations" search={{ tab: "batches" }} title="Batches" count={rows.length} />
+      <CardHeaderLink
+        to="/grain-operations"
+        search={{ tab: "batches" }}
+        title="Batches"
+        count={rows.length}
+      />
       <CardContent className="p-2 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">No batches</p>}
         <div className="divide-y divide-border/40">
           {visible.map((b) => (
-            <Link key={b.id} to="/grain-operations" search={{ tab: "batches" }} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
+            <Link
+              key={b.id}
+              to="/grain-operations"
+              search={{ tab: "batches" }}
+              className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded"
+            >
               <span className="font-medium truncate">{b.batch_id}</span>
-              <span className="tabular-nums text-muted-foreground text-[11px]">{Number(b.quantity_kg).toLocaleString()}kg</span>
-              <span className={`h-2 w-2 rounded-full ${riskColor(Number(b.risk_score ?? 0))}`} title={`risk ${Number(b.risk_score ?? 0).toFixed(0)}`} />
+              <span className="tabular-nums text-muted-foreground text-[11px]">
+                {Number(b.quantity_kg).toLocaleString()}kg
+              </span>
+              <span
+                className={`h-2 w-2 rounded-full ${riskColor(Number(b.risk_score ?? 0))}`}
+                title={`risk ${Number(b.risk_score ?? 0).toFixed(0)}`}
+              />
             </Link>
           ))}
         </div>
@@ -78,10 +110,17 @@ export function RecentBatchesCard() {
           >
             <div className="divide-y divide-border/40 blur-[3px] opacity-50 pointer-events-none select-none">
               {overflow.map((b) => (
-                <div key={b.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2 py-1.5 text-xs">
+                <div
+                  key={b.id}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-2 py-1.5 text-xs"
+                >
                   <span className="font-medium truncate">{b.batch_id}</span>
-                  <span className="tabular-nums text-muted-foreground text-[11px]">{Number(b.quantity_kg).toLocaleString()}kg</span>
-                  <span className={`h-2 w-2 rounded-full ${riskColor(Number(b.risk_score ?? 0))}`} />
+                  <span className="tabular-nums text-muted-foreground text-[11px]">
+                    {Number(b.quantity_kg).toLocaleString()}kg
+                  </span>
+                  <span
+                    className={`h-2 w-2 rounded-full ${riskColor(Number(b.risk_score ?? 0))}`}
+                  />
                 </div>
               ))}
             </div>
@@ -108,8 +147,15 @@ export function RecentAlertsCard() {
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">All clear</p>}
         <div className="divide-y divide-border/40">
           {rows.slice(0, 5).map((a) => (
-            <Link key={a.id} to="/grain-alerts" search={{ priority: "all" }} className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
-              <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot(String(a.priority))}`} />
+            <Link
+              key={a.id}
+              to="/grain-alerts"
+              search={{ priority: "all" }}
+              className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded"
+            >
+              <span
+                className={`h-2 w-2 rounded-full shrink-0 ${priorityDot(String(a.priority))}`}
+              />
               <span className="truncate flex-1">{a.title}</span>
             </Link>
           ))}
@@ -129,7 +175,9 @@ export function TeamCard() {
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No members yet</p>}
         {rows.slice(0, 4).map((u) => (
           <div key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-muted/40">
-            <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[10px] font-semibold shrink-0">{(u.name ?? u.email ?? "?").slice(0, 2).toUpperCase()}</div>
+            <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[10px] font-semibold shrink-0">
+              {(u.name ?? u.email ?? "?").slice(0, 2).toUpperCase()}
+            </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium truncate">{u.name ?? "—"}</p>
               <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
@@ -161,8 +209,14 @@ export function ActuatorsCard() {
         </div>
         {rows.length > 0 && (
           <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" />on {rows.filter(r => r.is_on).length}</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted-foreground/30" />off {rows.filter(r => !r.is_on).length}</span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              on {rows.filter((r) => r.is_on).length}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+              off {rows.filter((r) => !r.is_on).length}
+            </span>
           </div>
         )}
       </CardContent>
@@ -175,7 +229,12 @@ export function SilosOccupancyCard() {
   const rows = data?.silos ?? [];
   return (
     <Card className="border-0 shadow-sm">
-      <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
+      <CardHeaderLink
+        to="/grain-operations"
+        search={{ tab: "silos" }}
+        title="Silos"
+        count={rows.length}
+      />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
         {rows.slice(0, 6).map((s) => {
@@ -184,10 +243,21 @@ export function SilosOccupancyCard() {
           const pct = cap ? Math.round((occ / cap) * 100) : 0;
           const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
           return (
-            <Link key={s.id} to="/grain-operations" search={{ tab: "silos" }} title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`} className="flex items-center gap-2 group">
-              <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
+            <Link
+              key={s.id}
+              to="/grain-operations"
+              search={{ tab: "silos" }}
+              title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
+              className="flex items-center gap-2 group"
+            >
+              <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">
+                {s.name}
+              </span>
               <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
+                <div
+                  className={`h-full ${bar} transition-all`}
+                  style={{ width: `${Math.min(100, pct)}%` }}
+                />
               </div>
               <span className="text-[11px] tabular-nums font-semibold w-8 text-right">{pct}%</span>
             </Link>
@@ -211,7 +281,12 @@ export function AdminSilosCard() {
   const alerts = data?.siloAlerts ?? [];
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
+      <CardHeaderLink
+        to="/grain-operations"
+        search={{ tab: "silos" }}
+        title="Silos"
+        count={rows.length}
+      />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
         {rows.slice(0, 6).map((s) => {
@@ -226,18 +301,31 @@ export function AdminSilosCard() {
               key={s.id}
               to="/grain-operations"
               search={{ tab: "silos" }}
-              title={topAlert ? `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg · ${topAlert.title}` : `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
+              title={
+                topAlert
+                  ? `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg · ${topAlert.title}`
+                  : `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`
+              }
               className="flex items-center gap-2 group"
             >
-              <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
+              <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">
+                {s.name}
+              </span>
               <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
+                <div
+                  className={`h-full ${bar} transition-all`}
+                  style={{ width: `${Math.min(100, pct)}%` }}
+                />
               </div>
               <span className="text-[11px] tabular-nums font-semibold w-8 text-right">{pct}%</span>
               {siloAlerts.length > 0 && (
-                <span className={`inline-flex items-center gap-0.5 shrink-0 ${topAlert?.priority === "critical" ? "text-red-600" : "text-amber-600"}`}>
+                <span
+                  className={`inline-flex items-center gap-0.5 shrink-0 ${topAlert?.priority === "critical" ? "text-red-600" : "text-amber-600"}`}
+                >
                   <AlertTriangle className="h-3 w-3" />
-                  <span className="text-[10px] font-semibold tabular-nums">{siloAlerts.length}</span>
+                  <span className="text-[10px] font-semibold tabular-nums">
+                    {siloAlerts.length}
+                  </span>
                 </span>
               )}
             </Link>

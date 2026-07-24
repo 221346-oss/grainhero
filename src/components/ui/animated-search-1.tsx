@@ -102,43 +102,99 @@ const LoadingIcon = () => {
     >
       <rect width="256" height="256" fill="none" />
       <line
-        x1="128" y1="32" x2="128" y2="64"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="128"
+        y1="32"
+        x2="128"
+        y2="64"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
       <line
-        x1="195.88" y1="60.12" x2="173.25" y2="82.75"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="195.88"
+        y1="60.12"
+        x2="173.25"
+        y2="82.75"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
       <line
-        x1="224" y1="128" x2="192" y2="128"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="224"
+        y1="128"
+        x2="192"
+        y2="128"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
       <line
-        x1="195.88" y1="195.88" x2="173.25" y2="173.25"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="195.88"
+        y1="195.88"
+        x2="173.25"
+        y2="173.25"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
       <line
-        x1="128" y1="224" x2="128" y2="192"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="128"
+        y1="224"
+        x2="128"
+        y2="192"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
       <line
-        x1="60.12" y1="195.88" x2="82.75" y2="173.25"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="60.12"
+        y1="195.88"
+        x2="82.75"
+        y2="173.25"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
       <line
-        x1="32" y1="128" x2="64" y2="128"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="32"
+        y1="128"
+        x2="64"
+        y2="128"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
       <line
-        x1="60.12" y1="60.12" x2="82.75" y2="82.75"
-        fill="none" stroke="#dddddd" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"
+        x1="60.12"
+        y1="60.12"
+        x2="82.75"
+        y2="82.75"
+        fill="none"
+        stroke="#dddddd"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="16"
         className="stroke-[#dddddd] stroke-round stroke-join-round stroke-[16]"
       />
     </svg>
@@ -295,9 +351,7 @@ export const GooeySearchBar = () => {
           await new Promise((resolve) => setTimeout(resolve, 500));
 
           const filteredData = dummyData.filter((item) =>
-            item
-              .toLowerCase()
-              .includes(debouncedSearchText.trim().toLowerCase())
+            item.toLowerCase().includes(debouncedSearchText.trim().toLowerCase()),
           );
 
           if (!isCancelled) {
@@ -330,7 +384,12 @@ export const GooeySearchBar = () => {
   }, [debouncedSearchText]);
 
   return (
-    <div className={clsx("w-full h-[100dvh] flex items-center justify-center", isUnsupported && "no-goo-unsupported")}>
+    <div
+      className={clsx(
+        "w-full h-[100dvh] flex items-center justify-center",
+        isUnsupported && "no-goo-unsupported",
+      )}
+    >
       <GooeyFilter />
       <AnimationStyles />
 
@@ -338,7 +397,7 @@ export const GooeySearchBar = () => {
         <motion.div
           className={clsx(
             "button-content-inner cursor-pointer max-w-max",
-            isUnsupported ? 'filter-none' : 'filter-[url(#goo-effect)]'
+            isUnsupported ? "filter-none" : "filter-[url(#goo-effect)]",
           )}
           initial="initial"
           animate={state.step === 1 ? "step1" : "step2"}
@@ -368,7 +427,7 @@ export const GooeySearchBar = () => {
                     transition={getResultItemTransition(index)}
                     className={clsx(
                       "search-result absolute w-full bg-black rounded-[40px] text-[#ddd] text-[14px] left-[-30px]",
-                      isUnsupported ? 'p-[7.5px] px-[10px]' : 'py-[12.5px] px-[20px]'
+                      isUnsupported ? "p-[7.5px] px-[10px]" : "py-[12.5px] px-[20px]",
                     )}
                     role="option"
                   >
@@ -396,12 +455,17 @@ export const GooeySearchBar = () => {
             whileTap={{ scale: 0.95 }}
             className={clsx(
               "search-btn cursor-pointer tracking-[-0.5px] bg-black outline-none border-none rounded-full text-[#ddddddaf]",
-              isUnsupported ? 'p-[5px] px-[10px]' : 'py-[10px] px-[20px]'
+              isUnsupported ? "p-[5px] px-[10px]" : "py-[10px] px-[20px]",
             )}
             role="button"
           >
             {state.step === 1 ? (
-              <span className={clsx("search-text pointer-events-none text-center relative", isUnsupported ? 'left-0' : 'left-[4px]')}>
+              <span
+                className={clsx(
+                  "search-text pointer-events-none text-center relative",
+                  isUnsupported ? "left-0" : "left-[4px]",
+                )}
+              >
                 Search
               </span>
             ) : (
@@ -423,7 +487,7 @@ export const GooeySearchBar = () => {
                 key="icon"
                 className={clsx(
                   "separate-element absolute bg-black right-[-5px] top-[-1px] flex justify-center items-center rounded-full",
-                  isUnsupported ? 'w-[36px] h-[36px]' : 'w-[46px] h-[46px]'
+                  isUnsupported ? "w-[36px] h-[36px]" : "w-[46px] h-[46px]",
                 )}
                 initial="hidden"
                 animate="visible"
@@ -436,11 +500,7 @@ export const GooeySearchBar = () => {
                   bounce: 0.15,
                 }}
               >
-                {!state.isLoading ? (
-                  <SearchIcon isUnsupported={isUnsupported} />
-                ) : (
-                  <LoadingIcon />
-                )}
+                {!state.isLoading ? <SearchIcon isUnsupported={isUnsupported} /> : <LoadingIcon />}
               </motion.div>
             )}
           </AnimatePresence>

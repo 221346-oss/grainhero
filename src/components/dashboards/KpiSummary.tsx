@@ -5,17 +5,21 @@ import { RangeChip, type RangeKey } from "./RangeChip";
 import { useDashboardStats } from "./useDashboardStats";
 
 const fmtPKR = new Intl.NumberFormat("en-PK", {
-  style: "currency", currency: "PKR", maximumFractionDigits: 0,
+  style: "currency",
+  currency: "PKR",
+  maximumFractionDigits: 0,
 });
 
 function Spark({ data }: { data: number[] }) {
   if (!data.length) return null;
   const max = Math.max(1, ...data);
-  const pts = data.map((v, i) => {
-    const x = (i / Math.max(1, data.length - 1)) * 100;
-    const y = 24 - (v / max) * 22;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
+  const pts = data
+    .map((v, i) => {
+      const x = (i / Math.max(1, data.length - 1)) * 100;
+      const y = 24 - (v / max) * 22;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
   return (
     <svg viewBox="0 0 100 24" preserveAspectRatio="none" className="w-full h-6">
       <polyline
@@ -29,12 +33,23 @@ function Spark({ data }: { data: number[] }) {
   );
 }
 
-type Row = { label: string; value: number | string; to: string; search?: { tab: string }; delta?: number; icon: LucideIcon };
+type Row = {
+  label: string;
+  value: number | string;
+  to: string;
+  search?: { tab: string };
+  delta?: number;
+  icon: LucideIcon;
+};
 
 export function KpiSummary({
-  range, onRange,
-  deltaBatches, deltaAlerts,
-  revenueMtd, revenueDeltaPct, revenueSpark,
+  range,
+  onRange,
+  deltaBatches,
+  deltaAlerts,
+  revenueMtd,
+  revenueDeltaPct,
+  revenueSpark,
   planName,
 }: {
   range: RangeKey;
@@ -48,11 +63,42 @@ export function KpiSummary({
 }) {
   const { data: s } = useDashboardStats();
   const rows: Row[] = [
-    { label: "Buyers", value: s?.buyers ?? "—", to: "/grain-operations", search: { tab: "buyers" }, icon: Users },
-    { label: "Warehouses", value: s?.warehouses ?? "—", to: "/grain-operations", search: { tab: "warehouses" }, icon: Building2 },
-    { label: "Active Batches", value: s?.batches.active ?? "—", to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches, icon: Package },
-    { label: "Silos", value: s?.silos ?? "—", to: "/grain-operations", search: { tab: "silos" }, icon: Container },
-    { label: "Sensors Online", value: s?.sensors.online ?? "—", to: "/sensors", delta: deltaAlerts, icon: Radio },
+    {
+      label: "Buyers",
+      value: s?.buyers ?? "—",
+      to: "/grain-operations",
+      search: { tab: "buyers" },
+      icon: Users,
+    },
+    {
+      label: "Warehouses",
+      value: s?.warehouses ?? "—",
+      to: "/grain-operations",
+      search: { tab: "warehouses" },
+      icon: Building2,
+    },
+    {
+      label: "Active Batches",
+      value: s?.batches.active ?? "—",
+      to: "/grain-operations",
+      search: { tab: "batches" },
+      delta: deltaBatches,
+      icon: Package,
+    },
+    {
+      label: "Silos",
+      value: s?.silos ?? "—",
+      to: "/grain-operations",
+      search: { tab: "silos" },
+      icon: Container,
+    },
+    {
+      label: "Sensors Online",
+      value: s?.sensors.online ?? "—",
+      to: "/sensors",
+      delta: deltaAlerts,
+      icon: Radio,
+    },
   ];
   const rev = revenueMtd ?? 0;
   const revPositive = (revenueDeltaPct ?? 0) >= 0;
@@ -88,8 +134,11 @@ export function KpiSummary({
               {fmtPKR.format(rev)}
             </div>
             <div className="flex items-center gap-1 mt-0.5">
-              <span className={`text-[10px] font-medium ${revPositive ? "text-emerald-600" : "text-amber-600"}`}>
-                {revPositive ? "+" : ""}{revenueDeltaPct ?? 0}% vs prev
+              <span
+                className={`text-[10px] font-medium ${revPositive ? "text-emerald-600" : "text-amber-600"}`}
+              >
+                {revPositive ? "+" : ""}
+                {revenueDeltaPct ?? 0}% vs prev
               </span>
               <InfoDot text="12-month revenue trend, shown below." />
             </div>
@@ -116,11 +165,16 @@ export function KpiSummary({
                     </span>
                     <div className="flex items-center gap-2">
                       {typeof r.delta === "number" && (
-                        <span className={`text-[10px] font-medium ${positive ? "text-emerald-600" : "text-amber-600"}`}>
-                          {positive ? "+" : ""}{r.delta}%
+                        <span
+                          className={`text-[10px] font-medium ${positive ? "text-emerald-600" : "text-amber-600"}`}
+                        >
+                          {positive ? "+" : ""}
+                          {r.delta}%
                         </span>
                       )}
-                      <span className="text-sm font-bold tabular-nums text-foreground w-10 text-right">{r.value}</span>
+                      <span className="text-sm font-bold tabular-nums text-foreground w-10 text-right">
+                        {r.value}
+                      </span>
                     </div>
                   </Link>
                 </li>
