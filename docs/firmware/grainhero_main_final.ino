@@ -37,11 +37,12 @@ String getDateTimeString() {
 #define MQTT_PORT 1883
 #define MQTT_USERNAME "" // if needed
 #define MQTT_PASSWORD "" // if needed
+#define AUTH_TOKEN "GrainHero_Secret_2026" // Local Network Security
 
 Servo lidServo;
 
-const int SERVO_CLOSED_ANGLE = 100; // resting closed
-const int SERVO_OPEN_ANGLE = 170;   // resting open
+    const int SERVO_CLOSED_ANGLE = 100; // resting closed
+const int SERVO_OPEN_ANGLE = 170;       // resting open
 int servoCurrentAngle = SERVO_CLOSED_ANGLE;
 bool servoIsOpen = false;
 
@@ -99,6 +100,12 @@ unsigned long humanOverrideActivatedAt = 0;
 enum ControlMode { AUTO, MANUAL };
 
 ControlMode controlMode = AUTO;
+
+// ---------- FUMIGATION INTERLOCK ----------
+bool fumigationLockdown = false;
+
+// ---------- NETWORK WATCHDOG ----------
+unsigned long lastCloudHeartbeat = 0;
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -567,6 +574,38 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     return;
   }
 
+  // --- SECURITY: Verify API Key ---
+  if (!doc.containsKey("api_key") || doc["api_key"] != AUTH_TOKEN) {
+    Serial.println(F("❌ SECURITY BREACH: Invalid API Key. Payload rejected."));
+    return;
+  }
+
+  // Update cloud heartbeat on any valid message
+  lastCloudHeartbeat = millis();
+
+  // --- FUMIGATION LOCKDOWN ---
+  if (doc.containsKey("action")) {
+    String action = doc["action"];
+    if (action == "lockdown") {
+      fumigationLockdown = true;
+      controlMode = MANUAL;
+      humanOverrideActive = false;
+      targetFanSpeed = 0;
+      humanRequestedFan = false;
+      Serial.println(F("🔒 FUMIGATION LOCKDOWN ENABLED! All overrides blocked."));
+      return;
+    } else if (action == "release_lockdown") {
+      fumigationLockdown = false;
+      Serial.println(F("🔓 FUMIGATION LOCKDOWN RELEASED."));
+      return;
+    }
+  }
+
+  if (fumigationLockdown) {
+    Serial.println(F("⚠️ COMMAND IGNORED: Silo is in Fumigation Lockdown!"));
+    return;
+  }
+
   // --- Handle Servo commands (INTENT ONLY) ---
   if (doc.containsKey("servo")) {
     String servoCmd = doc["servo"];
@@ -772,13 +811,24 @@ void loop() {
   }
 
   // ================================
-  // 4️⃣ FAILSAFE AUTONOMY (MQTT silent)
+  // 4️⃣ FAILSAFE AUTONOMY & EMERGENCY
   // ================================
-  if (!mqttClient.connected()) {
+  bool cloudDisconnected = (!mqttClient.connected()) || (millis() - lastCloudHeartbeat > 30UL * 60UL * 1000UL);
+
+  if (currentData.temperature >= 35.0 && !fumigationLockdown) {
+    // 🚨 EMERGENCY THERMAL OVERRIDE — FAO hot-spot threshold 🚨
+    // Per FAO Storage Guidelines: grain temp >= 35°C confirms an active
+    // hot-spot (mold/insect infestation). Immediate forced aeration required.
+    Serial.println(F("🚨 HEAT EMERGENCY (>= 35°C / FAO threshold)! FORCING LID OPEN AND FAN ON!"));
+    requestFanOn(100);
+    servoState = true;
+    humanOverrideActive = true;
+    humanRequestedFan = true;
+  } else if (cloudDisconnected) {
     if (currentData.tvoc_approx > 600) {
-      requestFanOn(80); // new safe request function
+      requestFanOn(80);
     } else {
-      requestFanOff(); // new safe request function
+      requestFanOff();
     }
   }
 
@@ -1257,6 +1307,7 @@ void publishToMQTT() {
 
   // Metadata
   doc["device_id"] = currentData.deviceID;
+  doc["api_key"] = AUTH_TOKEN;
   doc["battery_level"] = 98;
   doc["signal_strength"] = -60;
   doc["timestamp"] = currentData.dateTime;

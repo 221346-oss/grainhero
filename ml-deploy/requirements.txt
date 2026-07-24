@@ -1,13 +1,26 @@
+# ── Inference (Process 1) ─────────────────────────────────────────────────────
 fastapi>=0.111.0
-uvicorn>=0.29.0
-gradio>=4.31.0
-joblib>=1.4.0
+uvicorn[standard]>=0.29.0
+onnxruntime>=1.18.0          # GIL-releasing native inference
+httpx>=0.27.0                 # async Supabase calls from inference server
+supabase>=2.5.0               # Supabase Python client (storage + DB)
+
+# ── Online learning (background task inside Process 1) ────────────────────────
+river>=0.21.0                 # incremental/online learning, never blocks request path
+
+# ── Shared utilities ──────────────────────────────────────────────────────────
 numpy>=1.26.0
 pandas>=2.2.0
+joblib>=1.4.0
+scipy>=1.13.0
+
+# ── ONNX export / retraining (Processes 2 & 3 only) ──────────────────────────
 scikit-learn>=1.4.0
 xgboost>=2.0.0
 lightgbm>=4.3.0
-shap>=0.45.0
-scipy>=1.13.0
+skl2onnx>=1.17.0              # convert sklearn VotingClassifier → ONNX
+onnxmltools>=1.12.0           # adapters for XGBoost/LightGBM → ONNX
+optuna>=3.6.0                 # hyperparameter search (nightly_retrain.py only)
 imbalanced-learn>=0.12.0
-optuna>=3.6.0
+shap>=0.45.0                  # still used in retrain evaluation
+
