@@ -1,54 +1,150 @@
-import { useEffect, useState } from "react";
-import { useRouterState, Link } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { useRouterState, useNavigate, Link } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Container, Wheat, Bell, Store, Radio,
-  ToggleRight, Users, Package, UserCog, Settings2, Check, type LucideIcon,
-  DollarSign, CreditCard, MessageSquare, Activity, ScrollText,
-  ClipboardList, TrendingUp, UserPlus, Shield, ShieldCheck, Rocket,
-  Truck, ClipboardCheck,
+  LayoutDashboard,
+  Container,
+  Wheat,
+  Bell,
+  Store,
+  Radio,
+  ToggleRight,
+  Users,
+  Package,
+  UserCog,
+  Settings2,
+  Check,
+  type LucideIcon,
+  DollarSign,
+  CreditCard,
+  MessageSquare,
+  Activity,
+  ScrollText,
+  ClipboardList,
+  TrendingUp,
+  UserPlus,
+  Shield,
+  ShieldCheck,
+  Rocket,
+  Truck,
+  ClipboardCheck,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 type AdminTabKey =
-  | "overview" | "silos" | "batches" | "alerts" | "marketplace"
-  | "sensors" | "actuators" | "buyers" | "orders" | "team";
+  | "overview"
+  | "silos"
+  | "batches"
+  | "alerts"
+  | "marketplace"
+  | "sensors"
+  | "actuators"
+  | "buyers"
+  | "orders"
+  | "team";
 
 type ManagerTabKey =
-  | "overview" | "silos" | "batches" | "alerts" | "dispatch"
-  | "qc" | "actuators" | "orders" | "team" | "sensors";
+  | "overview"
+  | "silos"
+  | "batches"
+  | "alerts"
+  | "dispatch"
+  | "qc"
+  | "actuators"
+  | "orders"
+  | "team"
+  | "sensors";
 
 type SuperTabKey =
-  | "overview" | "orders" | "financials" | "users" | "plans"
-  | "reporting" | "health" | "audit-logs" | "system-logs"
-  | "pipeline" | "leads" | "insurance" | "subscription"
-  | "security" | "launch";
+  | "overview"
+  | "orders"
+  | "financials"
+  | "users"
+  | "plans"
+  | "reporting"
+  | "health"
+  | "audit-logs"
+  | "system-logs"
+  | "pipeline"
+  | "leads"
+  | "insurance"
+  | "subscription"
+  | "security"
+  | "launch";
 
 type TabKey = AdminTabKey | SuperTabKey | ManagerTabKey;
 
-type Def<K extends string> = { key: K; label: string; icon: LucideIcon; to: string; search?: { tab: string } };
+type Def<K extends string> = {
+  key: K;
+  label: string;
+  icon: LucideIcon;
+  to: string;
+  search?: { tab: string };
+};
 
 const CATALOG_ADMIN: Def<AdminTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "silos", label: "Silos", icon: Container, to: "/grain-operations", search: { tab: "silos" } },
-  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
+  {
+    key: "silos",
+    label: "Silos",
+    icon: Container,
+    to: "/grain-operations",
+    search: { tab: "silos" },
+  },
+  {
+    key: "batches",
+    label: "Batches",
+    icon: Wheat,
+    to: "/grain-operations",
+    search: { tab: "batches" },
+  },
   { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
   { key: "marketplace", label: "Marketplace", icon: Store, to: "/business" },
   { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
   { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
-  { key: "buyers", label: "Buyers", icon: Users, to: "/grain-operations", search: { tab: "buyers" } },
+  {
+    key: "buyers",
+    label: "Buyers",
+    icon: Users,
+    to: "/grain-operations",
+    search: { tab: "buyers" },
+  },
   { key: "orders", label: "Orders", icon: Package, to: "/orders" },
   { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
 ];
 
 const CATALOG_MANAGER: Def<ManagerTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "silos", label: "Silos", icon: Container, to: "/grain-operations", search: { tab: "silos" } },
-  { key: "batches", label: "Batches", icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
+  {
+    key: "silos",
+    label: "Silos",
+    icon: Container,
+    to: "/grain-operations",
+    search: { tab: "silos" },
+  },
+  {
+    key: "batches",
+    label: "Batches",
+    icon: Wheat,
+    to: "/grain-operations",
+    search: { tab: "batches" },
+  },
   { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
-  { key: "dispatch", label: "Dispatch", icon: Truck, to: "/grain-operations", search: { tab: "silos" } },
-  { key: "qc", label: "QC", icon: ClipboardCheck, to: "/grain-operations", search: { tab: "batches" } },
+  {
+    key: "dispatch",
+    label: "Dispatch",
+    icon: Truck,
+    to: "/grain-operations",
+    search: { tab: "silos" },
+  },
+  {
+    key: "qc",
+    label: "QC",
+    icon: ClipboardCheck,
+    to: "/grain-operations",
+    search: { tab: "batches" },
+  },
   { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
   { key: "orders", label: "Orders", icon: Package, to: "/orders" },
   { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
@@ -91,7 +187,9 @@ function readStored(storage: string, def: TabKey[], validKeys: Set<string>): Tab
     let out = filtered.slice(0, 5);
     if (!out.includes("overview")) out = (["overview", ...out] as TabKey[]).slice(0, 5);
     return out;
-  } catch { return def; }
+  } catch {
+    return def;
+  }
 }
 
 export function DashboardQuickTabs() {
@@ -99,9 +197,13 @@ export function DashboardQuickTabs() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const isManager = role === "manager";
-  const CATALOG = (isSuperAdmin ? CATALOG_SUPER : isManager ? CATALOG_MANAGER : CATALOG_ADMIN) as Def<TabKey>[];
+  const CATALOG = (
+    isSuperAdmin ? CATALOG_SUPER : isManager ? CATALOG_MANAGER : CATALOG_ADMIN
+  ) as Def<TabKey>[];
   const STORAGE = isSuperAdmin ? STORAGE_SUPER : isManager ? STORAGE_MANAGER : STORAGE_ADMIN;
-  const DEFAULT = (isSuperAdmin ? DEFAULT_SUPER : isManager ? DEFAULT_MANAGER : DEFAULT_ADMIN) as TabKey[];
+  const DEFAULT = (
+    isSuperAdmin ? DEFAULT_SUPER : isManager ? DEFAULT_MANAGER : DEFAULT_ADMIN
+  ) as TabKey[];
   const validKeys = new Set(CATALOG.map((c) => c.key));
   const [tabs, setTabs] = useState<TabKey[]>(DEFAULT);
   useEffect(() => {
@@ -120,6 +222,25 @@ export function DashboardQuickTabs() {
     });
   }
 
+  // Hover-to-open: pointing at a tab navigates to its screen after a short
+  // delay, so sweeping the cursor across the row to reach the bell/avatar
+  // doesn't fire off navigations. Leaving before the delay cancels it.
+  const navigate = useNavigate();
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelHover = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+  useEffect(() => cancelHover, []);
+  const hoverOpen = (def: Def<TabKey>) => {
+    cancelHover();
+    hoverTimer.current = setTimeout(() => {
+      navigate({ to: def.to, search: def.search as never });
+    }, 180);
+  };
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="hidden md:flex items-center gap-1.5 shrink-0">
@@ -127,15 +248,18 @@ export function DashboardQuickTabs() {
           const def = CATALOG.find((d) => d.key === k);
           if (!def) return null;
           const Icon = def.icon;
-          const isActive = def.to === "/dashboard"
-            ? path === "/dashboard"
-            : (path === def.to || path.startsWith(def.to + "/"))
-              && (!def.search || search.tab === def.search.tab);
+          const isActive =
+            def.to === "/dashboard"
+              ? path === "/dashboard"
+              : (path === def.to || path.startsWith(def.to + "/")) &&
+                (!def.search || search.tab === def.search.tab);
           const pill = (
             <Link
               to={def.to}
               search={def.search as never}
               aria-label={def.label}
+              onMouseEnter={isActive ? undefined : () => hoverOpen(def)}
+              onMouseLeave={cancelHover}
               className={
                 "h-8 inline-flex items-center gap-1.5 rounded-full text-xs font-medium transition " +
                 (isActive
@@ -152,7 +276,9 @@ export function DashboardQuickTabs() {
           ) : (
             <Tooltip key={k}>
               <TooltipTrigger asChild>{pill}</TooltipTrigger>
-              <TooltipContent side="bottom" className="text-[11px]">{def.label}</TooltipContent>
+              <TooltipContent side="bottom" className="text-[11px]">
+                {def.label}
+              </TooltipContent>
             </Tooltip>
           );
         })}
@@ -168,7 +294,9 @@ export function DashboardQuickTabs() {
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-56 p-2">
-            <p className="px-2 py-1 text-[11px] uppercase tracking-wider text-muted-foreground">Show tabs (max 5)</p>
+            <p className="px-2 py-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+              Show tabs (max 5)
+            </p>
             <div className="grid gap-0.5">
               {CATALOG.map((t) => {
                 const checked = tabs.includes(t.key);
@@ -184,7 +312,9 @@ export function DashboardQuickTabs() {
                     <span className="inline-flex items-center gap-2">
                       <t.icon className="h-3.5 w-3.5" />
                       {t.label}
-                      {locked && <span className="ml-1 text-[9px] text-muted-foreground">pinned</span>}
+                      {locked && (
+                        <span className="ml-1 text-[9px] text-muted-foreground">pinned</span>
+                      )}
                     </span>
                     {checked && <Check className="h-3.5 w-3.5 text-emerald-600" />}
                   </button>
