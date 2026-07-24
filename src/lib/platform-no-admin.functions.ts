@@ -6,7 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getPlatformMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }: { context: any }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
       _user_id: context.userId, 
@@ -55,7 +55,7 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
 
 export const listAllUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }: { context: any }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
       _user_id: context.userId, 
@@ -82,7 +82,7 @@ export const listAllUsers = createServerFn({ method: "GET" })
 
 export const listAllTenants = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }: { context: any }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
       _user_id: context.userId, 
@@ -119,7 +119,7 @@ export const listAllTenants = createServerFn({ method: "GET" })
 export const toggleUserBlocked = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; blocked: boolean }) => d)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }: { data: any; context: any }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
       _user_id: context.userId, 
@@ -136,7 +136,7 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
 export const getPlatformLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { limit?: number; severity?: string } = {}) => d)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }: { data: any; context: any }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
       _user_id: context.userId, 
@@ -219,7 +219,7 @@ export const getPlatformLogs = createServerFn({ method: "GET" })
 
 export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }: { context: any }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
       _user_id: context.userId, 
@@ -393,7 +393,7 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
 
 export const getAllSubscriptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }: { context: any }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
       _user_id: context.userId, 
@@ -417,7 +417,7 @@ export const getAllSubscriptions = createServerFn({ method: "GET" })
       .select("id, name, email, business_type")
       .in("id", adminIds);
 
-    const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    const profileMap = new Map<string, any>((profiles ?? []).map((p: any) => [p.id, p]));
 
     return (subscriptions ?? []).map((s: any) => {
       const profile = profileMap.get(s.admin_id);
@@ -432,7 +432,7 @@ export const getAllSubscriptions = createServerFn({ method: "GET" })
 
 export const getPlatformReportingDetails = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }: { context: any }) => {
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
       _role: "super_admin",
@@ -480,7 +480,7 @@ export const getPlatformReportingDetails = createServerFn({ method: "GET" })
 export const submitPlatformQuery = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { subject: string; message: string }) => d)
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }: { data: any; context: any }) => {
     const { data: roleRow } = await context.supabase
       .from("user_roles")
       .select("role")
