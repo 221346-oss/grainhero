@@ -10,8 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Download large model .pkl files (kept out of git; hosted as Lovable assets)
-RUN xargs -n2 -a MODEL_URLS.txt sh -c 'curl -fsSL "$0" -o "$1"' && ls -lh *.pkl
+# ONNX models (~87 MB total) are committed in this folder, no download step needed.
+RUN ls -lh *.onnx
 
 ENV PORT=7860
 EXPOSE 7860
