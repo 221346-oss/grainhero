@@ -286,7 +286,7 @@ graph LR
 | Month 3 | Real data collection | Instrument pilot silo; label weekly | Month 3–9 |
 | Month 4 | Acoustic pest detection | MEMS mic + 1D CNN TFLite on ESP32 | Hardware v2 |
 | Month 6 | Retrain with real data | Augment synthetic with real; run Optuna again | Month 6 |
-| Month 9 | Temporal ML model | LSTM or TCN for sequence-based prediction | Research sprint |
+| Month 9 | Temporal ML model | Transformer or Mamba architecture for sequence-based prediction | Research sprint |
 | Year 2 | Federated learning | Flower framework — train across multiple silos without sharing raw data | Advanced feature |
 | Year 2 | Aflatoxin detection | NIR spectroscopy module + CNN | Premium hardware |
 | Year 2 | Reinforcement learning fan control | DQN policy: minimize spoilage risk × energy cost | Research sprint |
