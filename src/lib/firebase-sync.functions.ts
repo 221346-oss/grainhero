@@ -80,8 +80,7 @@ export const syncFirebaseSnapshot = createServerFn({ method: "POST" })
   });
 
 // ─── getLatestFirebaseReadings ────────────────────────────────────────────────
-// Replaces GH1 firebaseRealtimeService.getLatestReadings().
-// Called by the frontend_code useFirebaseSensor hook via /api/firebase/live-sensors.
+// Called by src/hooks/use-firebase-sensor.ts via /api/firebase/live-sensors.
 // Returns a map of deviceId → { temperature, humidity, tvoc_ppb, timestamp }
 // for all devices found in either Firebase RTDB tree.
 export const getLatestFirebaseReadings = createServerFn({ method: "GET" })

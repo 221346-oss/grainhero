@@ -1,77 +1,204 @@
-import { createServerFn } from "@tanstack/react-start";
+/**
+ * ai-inference.functions.ts
+ * ─────────────────────────
+ * Pure backend utility that calls either:
+ *   1. The remote HuggingFace ML API  (GRAINHERO_ML_API_URL)  → preferred
+ *   2. A local Python subprocess      (src/ml/smartbin_predict.py) → fallback
+ *
+ * This file has NO Tanstack `createServerFn` wrapper so it can be safely
+ * imported by background cron jobs AND by the authenticated server function
+ * in ml-pipeline.functions.ts without duplicating logic.
+ */
+
 import { spawn } from "child_process";
 import path from "path";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type SpoilagePredictionResult = {
-  risk_class: string;
-  risk_score: number;
-  confidence: number;
+export type SpoilagePredictionResult = {
+  risk_class: "low" | "moderate" | "high" | "critical";
+  risk_score: number;          // 0–100
+  confidence: number;          // 0–1
   factors: string[];
+  source: "api" | "python_local";
+  trustworthy: boolean;
 };
 
-/**
- * Invokes the Python ML model script to predict spoilage risk.
- */
-export async function runPythonMLInference(data: {
+export type MLInferenceInput = {
+  grain_type: string;
   temperature: number;
   humidity: number;
   moisture: number;
-  voc: number;
-  co2: number;
+  voc: number | null;
+  co2?: number | null;
   storage_days: number;
-  grain_type: string;
-}): Promise<SpoilagePredictionResult> {
-  return new Promise((resolve, reject) => {
-    // Determine the absolute path to the Python script
-    const scriptPath = path.resolve(process.cwd(), "src/ml/smartbin_predict.py");
+  // Optional enriched fields used by the HuggingFace API
+  dew_point?: number;
+  airflow?: number;
+  temperature_history?: number[];
+  humidity_history?: number[];
+  moisture_history?: number[];
+};
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function labelToRiskClass(label: string): "low" | "moderate" | "high" | "critical" {
+  const l = label.toLowerCase();
+  if (l.includes("critical") || l.includes("spoiled")) return "critical";
+  if (l.includes("high") || l.includes("risky")) return "high";
+  if (l.includes("moderate") || l.includes("medium")) return "moderate";
+  return "low";
+}
+
+function scoreFromRiskClass(cls: "low" | "moderate" | "high" | "critical"): number {
+  return { low: 10, moderate: 45, high: 70, critical: 90 }[cls];
+}
+
+// ─── Primary: HuggingFace remote API ─────────────────────────────────────────
+
+async function callHuggingFaceAPI(data: MLInferenceInput): Promise<SpoilagePredictionResult | null> {
+  const mlUrl = process.env.GRAINHERO_ML_API_URL;
+  if (!mlUrl) return null;
+
+  const payload = {
+    grain_type: data.grain_type.toLowerCase(),
+    temperature: data.temperature,
+    humidity: data.humidity,
+    storage_days: data.storage_days,
+    grain_moisture: data.moisture,
+    airflow: data.airflow ?? 0,
+    dew_point: data.dew_point ?? 15,
+    ambient_light: 0,
+    pest_presence: data.voc == null ? 0 : Math.min(1, Math.max(0, data.voc / 1000)),
+    rainfall: 0,
+    temperature_history: data.temperature_history ?? [],
+    humidity_history: data.humidity_history ?? [],
+    moisture_history: data.moisture_history ?? [],
+  };
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(`${mlUrl.replace(/\/$/, "")}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        console.warn(`[ML API] HTTP ${res.status} on attempt ${attempt}`);
+        continue;
+      }
+      const raw = (await res.json()) as Record<string, unknown>;
+      if (raw.error === "sensor_fault") {
+        return {
+          risk_class: "low",
+          risk_score: 0,
+          confidence: 0,
+          factors: ["ML rejected input as sensor_fault"],
+          source: "api",
+          trustworthy: false,
+        };
+      }
+      const score = Math.max(0, Math.min(100, Math.round(Number(raw.risk_score ?? raw.riskScore ?? 0))));
+      const confidence = Math.max(0, Math.min(1, Number(raw.confidence ?? 0)));
+      const labelFromRaw = String(raw.risk_class ?? raw.prediction ?? raw.predicted_class ?? "");
+      const riskClass = labelFromRaw ? labelToRiskClass(labelFromRaw) : labelToRiskClass(
+        score >= 80 ? "critical" : score >= 60 ? "high" : score >= 30 ? "moderate" : "low"
+      );
+      return {
+        risk_class: riskClass,
+        risk_score: score || scoreFromRiskClass(riskClass),
+        confidence,
+        factors: Array.isArray(raw.primary_risk_factors)
+          ? raw.primary_risk_factors.map(String)
+          : Array.isArray(raw.factors)
+          ? raw.factors.map(String)
+          : [],
+        source: "api",
+        trustworthy: raw.trustworthy !== false && confidence > 0,
+      };
+    } catch (err) {
+      console.warn(`[ML API] Attempt ${attempt} error:`, (err as Error).message);
+    }
+  }
+  return null;
+}
+
+// ─── Fallback: Local Python subprocess ───────────────────────────────────────
+
+async function callLocalPython(data: MLInferenceInput): Promise<SpoilagePredictionResult> {
+  return new Promise((resolve, reject) => {
+    const scriptPath = path.resolve(process.cwd(), "src/ml/smartbin_predict.py");
     const pythonProcess = spawn("python3", [
       scriptPath,
-      "--temp", data.temperature.toString(),
-      "--humidity", data.humidity.toString(),
-      "--moisture", data.moisture.toString(),
-      "--voc", data.voc.toString(),
-      "--co2", data.co2.toString(),
-      "--days", data.storage_days.toString(),
-      "--grain", data.grain_type
+      JSON.stringify({
+        temperature: data.temperature,
+        humidity: data.humidity,
+        grain_moisture: data.moisture,
+        storage_days: data.storage_days,
+        grain_type: data.grain_type,
+        pest_presence: data.voc == null ? 0 : Math.min(1, Math.max(0, data.voc / 1000)),
+      }),
     ]);
 
     let outputData = "";
     let errorData = "";
-
-    pythonProcess.stdout.on("data", (chunk) => {
-      outputData += chunk.toString();
-    });
-
-    pythonProcess.stderr.on("data", (chunk) => {
-      errorData += chunk.toString();
-    });
+    pythonProcess.stdout.on("data", (chunk: Buffer) => { outputData += chunk.toString(); });
+    pythonProcess.stderr.on("data", (chunk: Buffer) => { errorData += chunk.toString(); });
 
     pythonProcess.on("close", (code) => {
       if (code !== 0) {
-        console.error("Python inference failed with code", code);
-        console.error("Stderr:", errorData);
-        // Fallback or reject? For now, reject to ensure caller handles it.
-        return reject(new Error(`ML inference failed: ${errorData}`));
+        return reject(new Error(`Python ML failed (exit ${code}): ${errorData}`));
       }
-
       try {
-        // Find JSON block in stdout
         const jsonStart = outputData.indexOf("{");
         const jsonEnd = outputData.lastIndexOf("}");
-        
-        if (jsonStart === -1 || jsonEnd === -1) {
-          throw new Error("No JSON found in Python output");
-        }
-
-        const jsonStr = outputData.slice(jsonStart, jsonEnd + 1);
-        const result = JSON.parse(jsonStr) as SpoilagePredictionResult;
-        resolve(result);
+        if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON in Python output");
+        const raw = JSON.parse(outputData.slice(jsonStart, jsonEnd + 1)) as {
+          prediction?: string;
+          confidence?: number;
+          factors?: string[];
+          error?: string;
+        };
+        if (raw.error) throw new Error(raw.error);
+        const label = String(raw.prediction ?? "Unknown").toLowerCase();
+        const riskClass = labelToRiskClass(label);
+        resolve({
+          risk_class: riskClass,
+          risk_score: scoreFromRiskClass(riskClass),
+          confidence: Math.max(0, Math.min(1, Number(raw.confidence ?? 0) / 100)),
+          factors: raw.factors ?? [],
+          source: "python_local",
+          trustworthy: true,
+        });
       } catch (err) {
-        console.error("Failed to parse ML output:", outputData);
         reject(err);
       }
     });
   });
+}
+
+// ─── Main export: unified inference function ──────────────────────────────────
+
+/**
+ * runMLInference
+ * Tries the HuggingFace remote API first (Box 1 of the ML cascade).
+ * Falls back to the local Python subprocess if the API is unreachable.
+ * Returns null if BOTH methods fail (caller should apply a safety guardrail).
+ */
+export async function runMLInference(data: MLInferenceInput): Promise<SpoilagePredictionResult | null> {
+  // Box 1: Remote API
+  try {
+    const apiResult = await callHuggingFaceAPI(data);
+    if (apiResult) return apiResult;
+  } catch (err) {
+    console.warn("[ML] HuggingFace API failed:", (err as Error).message);
+  }
+
+  // Box 2: Local Python fallback
+  try {
+    const pythonResult = await callLocalPython(data);
+    return pythonResult;
+  } catch (err) {
+    console.warn("[ML] Local Python fallback also failed:", (err as Error).message);
+  }
+
+  return null;
 }

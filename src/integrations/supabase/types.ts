@@ -497,6 +497,42 @@ export type Database = {
           },
         ]
       }
+      bug_reports: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          description: string
+          id: string
+          page_path: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          page_path?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          page_path?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       buyer_accounts: {
         Row: {
           buyer_id: string | null
@@ -2583,6 +2619,10 @@ export type Database = {
           silo_id: string | null
           source: string
           status: string
+          technician_assigned_at: string | null
+          technician_id: string | null
+          technician_notes: string | null
+          technician_status: string | null
           tenant_id: string
           updated_at: string
         }
@@ -2604,6 +2644,10 @@ export type Database = {
           silo_id?: string | null
           source?: string
           status?: string
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -2625,6 +2669,10 @@ export type Database = {
           silo_id?: string | null
           source?: string
           status?: string
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           tenant_id?: string
           updated_at?: string
         }
@@ -2656,6 +2704,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "silos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incidents_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incidents_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -3081,6 +3143,10 @@ export type Database = {
           supplier_id: string | null
           supplier_name: string | null
           tags: string[] | null
+          technician_assigned_at: string | null
+          technician_id: string | null
+          technician_notes: string | null
+          technician_status: string | null
           test_weight: number | null
           total_purchase_value: number | null
           unit_cost: number | null
@@ -3147,6 +3213,10 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string | null
           tags?: string[] | null
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           test_weight?: number | null
           total_purchase_value?: number | null
           unit_cost?: number | null
@@ -3213,6 +3283,10 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string | null
           tags?: string[] | null
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           test_weight?: number | null
           total_purchase_value?: number | null
           unit_cost?: number | null
@@ -3305,6 +3379,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
           {
             foreignKeyName: "grain_batches_updated_by_fkey"
@@ -4156,6 +4244,70 @@ export type Database = {
           {
             foreignKeyName: "hubspot_sync_log_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+        ]
+      }
+      inspection_reports: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          defects: string | null
+          id: string
+          image_urls: Json | null
+          moisture: string | null
+          quality: string | null
+          remarks: string | null
+          status: string
+          technician_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          defects?: string | null
+          id?: string
+          image_urls?: Json | null
+          moisture?: string | null
+          quality?: string | null
+          remarks?: string | null
+          status?: string
+          technician_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          defects?: string | null
+          id?: string
+          image_urls?: Json | null
+          moisture?: string | null
+          quality?: string | null
+          remarks?: string | null
+          status?: string
+          technician_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_reports_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_reports_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_reports_technician_id_fkey"
+            columns: ["technician_id"]
             isOneToOne: false
             referencedRelation: "technician_performance_v"
             referencedColumns: ["technician_id"]

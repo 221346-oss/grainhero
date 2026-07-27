@@ -231,7 +231,7 @@ export const getReportsData = createServerFn({ method: "GET" })
       context.supabase.from("buyer_invoices")
         .select("id, invoice_number, buyer_name, total_amount, amount_paid, payment_status, currency, created_at")
         .order("created_at", { ascending: false }).limit(1000),
-      context.supabase.from("silos").select("id, name, capacity_kg, current_stock_kg, status").limit(500),
+      context.supabase.from("silos").select("id, name, capacity_kg, current_occupancy_kg, status").limit(500),
     ]);
 
     return {
