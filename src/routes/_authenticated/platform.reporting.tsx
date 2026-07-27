@@ -1,7 +1,8 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
@@ -9,10 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getPlatformOverviewWidgets, getPlatformReportingDetails } from "@/lib/platform-no-admin.functions";
 import { getCustomerFeedback, getWarehouseOperationsMetrics, getTechnicianPerformance } from "@/lib/platform-reporting.functions";
-import { listTickets, type TicketRow } from "@/lib/tickets.functions";
+import { listTickets, deleteTicket, type TicketRow } from "@/lib/tickets.functions";
 import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
-import { attachTicket } from "@/lib/ticketMessages";
-import { Star, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { attachTicketForUser } from "@/lib/ticketMessages";
+import { Star, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 
@@ -32,6 +34,8 @@ function PlatformReportingPage() {
   const warehousesFn = useServerFn(getWarehouseOperationsMetrics);
   const techniciansFn = useServerFn(getTechnicianPerformance);
   const ticketsFn = useServerFn(listTickets);
+  const deleteTicketFn = useServerFn(deleteTicket);
+  const qc = useQueryClient();
 
   const { data: w } = useQuery({ queryKey: ["platform-widgets"], queryFn: () => widgetsFn() });
   const { data: details, isLoading } = useQuery({
@@ -59,6 +63,15 @@ function PlatformReportingPage() {
   const [selectedTicket, setSelectedTicket] = useState<TicketRow | null>(null);
   const [ticketStatusFilter, setTicketStatusFilter] = useState<"all" | "open" | "resolved" | "closed">("all");
 
+  const deleteTicketMut = useMutation({
+    mutationFn: (id: string) => deleteTicketFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Ticket deleted");
+      qc.invalidateQueries({ queryKey: ["field-tickets"] });
+    },
+    onError: (e: unknown) => toast.error((e as Error).message ?? "Failed to delete"),
+  });
+
   // Keep reporting tab live when tickets change
   useRealtimeInvalidate("field_tickets", [["field-tickets", "all"]]);
 
@@ -68,10 +81,22 @@ function PlatformReportingPage() {
   const technicians = techData ?? { technicians: [] };
   const allTickets: TicketRow[] = ticketData?.tickets ?? [];
 
-  // Pre-attach broadcast channels for all tickets so Discussion works immediately
+  // Bug-report tickets submitted through the field ticket form
+  // Match exact dropdown value OR case-insensitive contains "bug"
+  const bugTickets = allTickets.filter(
+    (t) => t.title === "Bug report" || t.title.toLowerCase().includes("bug"),
+  );
+
+  const [currentUserId, setCurrentUserId] = useState("");
   useEffect(() => {
-    allTickets.forEach((t) => attachTicket(t.id));
-  }, [allTickets]);
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? ""));
+  }, []);
+
+  // Pre-attach channels with unread tracking
+  useEffect(() => {
+    if (!currentUserId) return;
+    allTickets.forEach((t) => attachTicketForUser(t.id, currentUserId));
+  }, [allTickets, currentUserId]);
   const filteredTickets = useMemo(() =>
     ticketStatusFilter === "all"
       ? allTickets
@@ -98,7 +123,7 @@ function PlatformReportingPage() {
         <TabsList>
           <TabsTrigger value="hardware">Hardware ({details?.hardwareOrders?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="alerts">Sensor alerts ({details?.hardwareAlerts?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="bugs">Bug reports ({details?.bugReports?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="bugs">Bug reports ({(details?.bugReports?.length ?? 0) + bugTickets.length})</TabsTrigger>
           <TabsTrigger value="queries">Manager queries ({details?.managerQueries?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="feedback">Customer Feedback ({feedback.feedback.length})</TabsTrigger>
           <TabsTrigger value="warehouses">Warehouse Metrics ({warehouses.warehouses.length})</TabsTrigger>
@@ -187,8 +212,77 @@ function PlatformReportingPage() {
           </AdminDataCard>
         </TabsContent>
 
-        <TabsContent value="bugs" className="mt-4">
-          <AdminDataCard title="Bug reports" description="Error and critical logs from the last 30 days">
+        <TabsContent value="bugs" className="mt-4 space-y-4">
+          {/* Bug reports from admins via the ticket system */}
+          <AdminDataCard
+            title={`Bug reports from admins (${bugTickets.length})`}
+            description="Bug reports submitted by admins via the incident ticket form"
+          >
+            {bugTickets.length === 0 ? (
+              <p className="p-6 text-sm text-slate-400 text-center">No bug report tickets submitted yet</p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {bugTickets.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSelectedTicket(t)}
+                    className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="font-semibold text-sm text-slate-900">
+                            {t.reporter_name}
+                          </span>
+                          <Badge
+                            className={cn(
+                              "text-[10px] font-semibold uppercase border",
+                              t.priority === "high"
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : t.priority === "medium"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-slate-100 text-slate-600 border-slate-200",
+                            )}
+                          >
+                            {t.priority}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] font-semibold uppercase",
+                              t.status === "open"
+                                ? "border-slate-300 text-slate-600"
+                                : t.status === "resolved"
+                                ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+                                : "bg-slate-100 text-slate-500 border-slate-200",
+                            )}
+                          >
+                            {t.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-slate-500 line-clamp-2">{t.description}</p>
+                        {(t.admin_name || t.admin_email) && (
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            From: {t.admin_name ?? t.admin_email}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-400 shrink-0">
+                        {new Date(t.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </AdminDataCard>
+
+          {/* System error / critical logs */}
+          <AdminDataCard
+            title="System error logs"
+            description="Error and critical logs from the last 30 days"
+          >
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                 <tr>
@@ -217,7 +311,7 @@ function PlatformReportingPage() {
                   </tr>
                 ))}
                 {!details?.bugReports?.length && (
-                  <tr><td colSpan={4} className="text-center text-slate-400 py-8">No bug reports</td></tr>
+                  <tr><td colSpan={4} className="text-center text-slate-400 py-8">No system error logs</td></tr>
                 )}
               </tbody>
             </table>
@@ -637,6 +731,22 @@ function PlatformReportingPage() {
                             Closed {new Date(ticket.closed_at).toLocaleDateString()}
                           </div>
                         )}
+                        {/* Delete button — closed tickets only */}
+                        {ticket.status === "closed" && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteTicketMut.mutate(ticket.id);
+                            }}
+                            disabled={deleteTicketMut.isPending}
+                            className="flex items-center gap-1 ml-auto text-[10px] font-medium text-red-500 hover:text-red-700 transition"
+                            title="Delete ticket"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -652,7 +762,10 @@ function PlatformReportingPage() {
       <TicketDetailSheet
         ticket={selectedTicket}
         open={!!selectedTicket}
-        onClose={() => setSelectedTicket(null)}
+        onClose={() => {
+          setSelectedTicket(null);
+          qc.invalidateQueries({ queryKey: ["field-tickets"] });
+        }}
       />
     </AdminPageShell>
   );

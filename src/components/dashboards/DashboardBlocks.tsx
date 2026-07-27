@@ -386,7 +386,7 @@ export function OpenFieldIncidentsCard({
             </p>
           ) : (
             <ul className="divide-y divide-border/40 overflow-y-auto"
-                style={{ maxHeight: "82px" }}>
+                style={{ maxHeight: "132px" }}>
               {tickets.map((t) => {
                 const unread = unreadFor(t.id);
                 return (

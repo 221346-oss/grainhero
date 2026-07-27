@@ -141,25 +141,43 @@ function notifyUnread(userId: string) {
 /**
  * Attach a ticket channel AND track unread messages for a specific user.
  * Call this instead of bare attachTicket when you know the current user.
+ * IDEMPOTENT — safe to call multiple times for the same userId+ticketId.
  */
+
+// Track which userId+ticketId pairs have had a listener registered
+const attachedForUser = new Set<string>();
+
 export function attachTicketForUser(ticketId: string, currentUserId: string) {
   // Attach the channel first (idempotent)
   attachTicket(ticketId);
 
-  // Intercept incoming messages to update unread count
-  // We do this by subscribing to store changes and comparing sender
+  // Only register one unread-tracking listener per userId+ticketId pair
+  const pair = `${currentUserId}:${ticketId}`;
+  if (attachedForUser.has(pair)) return;
+  attachedForUser.add(pair);
+
+  // Track the last message id we've already counted to avoid double-counting
+  let lastCountedId: string | null = null;
+
   subscribeToTicket(ticketId, () => {
     const msgs = getMessages(ticketId);
     if (!msgs.length) return;
     const last = msgs[msgs.length - 1];
-    // Only increment if the last message was sent by someone else
-    if (last && last.senderId !== currentUserId) {
+    // Only increment once per unique incoming message from someone else
+    if (last && last.senderId !== currentUserId && last.id !== lastCountedId) {
+      lastCountedId = last.id;
       const key = unreadKey(currentUserId, ticketId);
       const prev = unreadCounts.get(key) ?? 0;
       unreadCounts.set(key, prev + 1);
       notifyUnread(currentUserId);
     }
   });
+}
+
+/** Reset unread count for a user+ticket (call when discussion opens). */
+export function markTicketRead(userId: string, ticketId: string) {
+  unreadCounts.set(unreadKey(userId, ticketId), 0);
+  notifyUnread(userId);
 }
 
 /** Get unread count for a specific user+ticket. */
@@ -174,12 +192,6 @@ export function getTotalUnread(userId: string): number {
     if (key.startsWith(`${userId}:`)) total += count;
   }
   return total;
-}
-
-/** Reset unread count for a user+ticket (call when discussion opens). */
-export function markTicketRead(userId: string, ticketId: string) {
-  unreadCounts.set(unreadKey(userId, ticketId), 0);
-  notifyUnread(userId);
 }
 
 /** Subscribe to any unread count change for a user. Returns unsubscribe fn. */

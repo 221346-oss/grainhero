@@ -55,7 +55,7 @@ export function TicketSidePanel({
 }: {
   controlledOpen?: boolean;
   onControlledClose?: () => void;
-} = {}) {
+}) {
   const { isSuperAdmin, role } = useIsSuperAdmin();
   const [internalOpen, setInternalOpen] = useState(false);
   const panelOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -100,7 +100,7 @@ export function TicketSidePanel({
     tickets.forEach((t) => attachTicketForUser(t.id, currentUserId));
   }, [tickets, currentUserId]);
 
-  const { unreadFor, totalUnread, markRead } = useTicketUnread(currentUserId);
+  const { unreadFor, markRead } = useTicketUnread(currentUserId);
 
   // Only visible to admin and super_admin
   if (role !== "admin" && role !== "super_admin") return null;
@@ -142,11 +142,6 @@ export function TicketSidePanel({
           {openCount > 0 && (
             <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-slate-700 text-white text-[10px] font-bold grid place-items-center">
               {openCount > 99 ? "99+" : openCount}
-            </span>
-          )}
-          {totalUnread > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold grid place-items-center ring-2 ring-background">
-              {totalUnread > 9 ? "9+" : totalUnread}
             </span>
           )}
         </button>

@@ -19,7 +19,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { closeTicket, resolveTicket, type TicketRow } from "@/lib/tickets.functions";
+import { closeTicket, resolveTicket, deleteTicket, type TicketRow } from "@/lib/tickets.functions";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
@@ -42,6 +42,7 @@ import {
   MessageSquare,
   X,
   Info,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 
@@ -68,6 +69,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   const { isSuperAdmin } = useIsSuperAdmin();
   const closeFn = useServerFn(closeTicket);
   const resolveFn = useServerFn(resolveTicket);
+  const deleteFn = useServerFn(deleteTicket);
   const [resolveNote, setResolveNote] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
@@ -110,12 +112,23 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
     onError: (e: unknown) => toast.error((e as Error).message ?? "Failed"),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Ticket deleted");
+      qc.invalidateQueries({ queryKey: ["field-tickets"] });
+      qc.invalidateQueries({ queryKey: ["field-tickets", "all"] });
+      onClose();
+    },
+    onError: (e: unknown) => toast.error((e as Error).message ?? "Failed to delete"),
+  });
+
   if (!ticket) return null;
 
   const isActionable = ticket.status === "open";
   const isResolved = ticket.status === "resolved";
   const isClosed = ticket.status === "closed";
-  const isPending = closeMut.isPending || resolveMut.isPending;
+  const isPending = closeMut.isPending || resolveMut.isPending || deleteMut.isPending;
 
   return (
     <>
@@ -344,6 +357,20 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
               {(isClosed || (isSuperAdmin && (isResolved || isClosed))) && (
                 <Button variant="outline" size="sm" onClick={onClose} className="flex-1">
                   Done
+                </Button>
+              )}
+
+              {/* Super admin: delete closed ticket */}
+              {isSuperAdmin && isClosed && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => deleteMut.mutate(ticket.id)}
+                  disabled={isPending}
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  {deleteMut.isPending ? "Deleting…" : "Delete"}
                 </Button>
               )}
             </div>

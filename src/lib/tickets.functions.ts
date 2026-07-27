@@ -129,13 +129,23 @@ export const createTicket = createServerFn({ method: "POST" })
     }));
 
     if (notificationRows.length > 0) {
-      // Try with service role first; fall back silently if unavailable
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin.from("notifications").insert(notificationRows);
-      } catch {
-        // SUPABASE_SERVICE_ROLE_KEY not set — skip notifications silently
-        console.warn("[createTicket] notifications skipped: service role key not available");
+      // Use security-definer RPC so no service role key is needed
+      for (const n of notificationRows) {
+        const { error: rpcErr } = await context.supabase.rpc("insert_notification", {
+          p_user_id: n.user_id,
+          p_admin_id: n.admin_id,
+          p_title: n.title,
+          p_message: n.message,
+          p_category: n.category,
+          p_type: n.type,
+          p_action_url: n.action_url,
+          p_entity_type: n.entity_type,
+          p_entity_id: n.entity_id,
+          p_metadata: n.metadata,
+        });
+        if (rpcErr) {
+          console.warn("[createTicket] notification RPC failed:", rpcErr.message);
+        }
       }
     }
 
@@ -294,28 +304,48 @@ export const resolveTicket = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
-    // Notify the admin who raised this ticket
+    // Notify the admin who raised this ticket via security-definer RPC
+    // (works without service role key)
     const t = ticket as { admin_id: string; title: string };
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("notifications").insert({
-        user_id: t.admin_id,
-        admin_id: context.userId,
-        title: `Ticket resolved: ${t.title}`,
-        message: data.note
-          ? `Super admin resolved your ticket with note: "${data.note}". You can now close it.`
-          : "Super admin has resolved your ticket. You can now close it.",
-        category: "ticket",
-        type: "success",
-        read: false,
-        action_url: null,
-        entity_type: "field_ticket",
-        entity_id: data.id,
-        metadata: { ticket_id: data.id, resolved_note: data.note ?? null },
-      });
-    } catch {
-      console.warn("[resolveTicket] notification skipped: service role key not available");
+    const { error: rpcErr } = await context.supabase.rpc("insert_notification", {
+      p_user_id: t.admin_id,
+      p_admin_id: context.userId,
+      p_title: `Ticket resolved: ${t.title}`,
+      p_message: data.note
+        ? `Super admin resolved your ticket with note: "${data.note}". You can now close it.`
+        : "Super admin has resolved your ticket. You can now close it.",
+      p_category: "ticket",
+      p_type: "success",
+      p_action_url: null,
+      p_entity_type: "field_ticket",
+      p_entity_id: data.id,
+      p_metadata: { ticket_id: data.id, resolved_note: data.note ?? null },
+    });
+    if (rpcErr) {
+      console.warn("[resolveTicket] notification RPC failed:", rpcErr.message);
     }
 
+    return { ok: true };
+  });
+
+// ── deleteTicket ──────────────────────────────────────────────────────────────
+// Super admin only. Can only delete closed tickets (not open/resolved).
+
+const deleteTicketInput = z.object({ id: z.string().uuid() });
+
+export const deleteTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => parseOrThrow(deleteTicketInput, d))
+  .handler(async ({ data, context }) => {
+    const role = await resolveRole(context.supabase as never, context.userId);
+    if (role !== "super_admin") throw new Error("Only super admins can delete tickets.");
+
+    // Use RPC to bypass any remaining RLS restrictions
+    const { error } = await context.supabase.rpc("delete_field_ticket", {
+      p_ticket_id: data.id,
+      p_user_id: context.userId,
+    });
+
+    if (error) throw new Error(error.message);
     return { ok: true };
   });

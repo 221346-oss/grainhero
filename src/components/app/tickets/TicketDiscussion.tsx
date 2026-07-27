@@ -11,9 +11,10 @@
  *
  * Features: send, edit (own messages), delete (own messages).
  */
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
-  attachTicket,
+  attachTicketForUser,
+  markTicketRead,
   sendMessage,
   editMessage,
   deleteMessage,
@@ -50,12 +51,20 @@ export function TicketDiscussion({
   currentUserId,
   currentUserLabel,
 }: Props) {
-  // Attach the broadcast channel as soon as ticketId is known
-  // (not just when dialog opens — so messages arrive while closed)
+  // Attach channel WITH unread tracking as soon as ticketId + userId are known.
+  // This must use attachTicketForUser (not bare attachTicket) so the unread
+  // counter is registered for the current user on this ticket.
   useEffect(() => {
-    if (!ticketId) return;
-    attachTicket(ticketId);
-  }, [ticketId]);
+    if (!ticketId || !currentUserId) return;
+    attachTicketForUser(ticketId, currentUserId);
+  }, [ticketId, currentUserId]);
+
+  // When the dialog opens, mark all messages as read for this user
+  useEffect(() => {
+    if (open && ticketId && currentUserId) {
+      markTicketRead(currentUserId, ticketId);
+    }
+  }, [open, ticketId, currentUserId]);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     getMessages(ticketId),
