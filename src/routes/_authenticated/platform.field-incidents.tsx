@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { MessageSquare } from "lucide-react";
+import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
 
 export const Route = createFileRoute("/_authenticated/platform/field-incidents")({
   component: FieldIncidentsPage,
@@ -28,6 +30,8 @@ function FieldIncidentsPage() {
   const { data } = useQuery({ queryKey: ["field-incidents"], queryFn: () => load() });
   const [active, setActive] = useState<Row | null>(null);
   const [note, setNote] = useState("");
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
 
   const mut = useMutation({
     mutationFn: (payload: { id: string; status: "resolved" | "dismissed" }) =>
@@ -75,9 +79,22 @@ function FieldIncidentsPage() {
           <SheetHeader><SheetTitle>{active?.category ?? "Incident"}</SheetTitle></SheetHeader>
           {active && (
             <div className="space-y-4 mt-4 text-sm">
-              <div className="flex gap-2 flex-wrap">
-                <Badge variant="outline">{active.severity}</Badge>
-                <Badge variant="secondary">{active.status}</Badge>
+              <div className="flex gap-2 flex-wrap items-center justify-between">
+                <div className="flex gap-2 flex-wrap">
+                  <Badge variant="outline">{active.severity}</Badge>
+                  <Badge variant="secondary">{active.status}</Badge>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-amber-300 text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-500/10 hover:bg-amber-100"
+                  onClick={() => {
+                    setActiveDiscussionTicket(active);
+                    setDiscussionOpen(true);
+                  }}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" /> Discussion Thread
+                </Button>
               </div>
               <div><div className="text-xs text-muted-foreground mb-1">Notes</div><div className="whitespace-pre-wrap">{active.notes ?? "—"}</div></div>
               <div><div className="text-xs text-muted-foreground mb-1">Reporter</div><div className="font-mono text-xs">{active.reporter_user_id}</div></div>
@@ -93,6 +110,11 @@ function FieldIncidentsPage() {
           )}
         </SheetContent>
       </Sheet>
+      <TicketDiscussionDialog
+        open={discussionOpen}
+        onOpenChange={setDiscussionOpen}
+        incident={activeDiscussionTicket}
+      />
     </AdminPageShell>
   );
 }
