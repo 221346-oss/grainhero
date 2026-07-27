@@ -33,7 +33,7 @@ package-lock.json
 *.sln
 *.sw?
 
-# Environment variables — keep root .env tracked for public Supabase config,
+# Environment variables — keep root .env tracked for shared public app config,
 # but continue ignoring local/secret environment variants.
 .env.local
 .env.*.local

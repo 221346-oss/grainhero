@@ -281,6 +281,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "actuators_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
         ]
       }
       analytics_governance_audit: {
@@ -489,6 +496,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bug_reports: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          description: string
+          id: string
+          page_path: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          page_path?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          page_path?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       buyer_accounts: {
         Row: {
@@ -1837,8 +1880,8 @@ export type Database = {
           name: string
           notes: string | null
           preferred_grain_types:
-          | Database["public"]["Enums"]["grain_type"][]
-          | null
+            | Database["public"]["Enums"]["grain_type"][]
+            | null
           preferred_payment_terms: string | null
           rating: number | null
           state: string | null
@@ -1865,8 +1908,8 @@ export type Database = {
           name: string
           notes?: string | null
           preferred_grain_types?:
-          | Database["public"]["Enums"]["grain_type"][]
-          | null
+            | Database["public"]["Enums"]["grain_type"][]
+            | null
           preferred_payment_terms?: string | null
           rating?: number | null
           state?: string | null
@@ -1893,8 +1936,8 @@ export type Database = {
           name?: string
           notes?: string | null
           preferred_grain_types?:
-          | Database["public"]["Enums"]["grain_type"][]
-          | null
+            | Database["public"]["Enums"]["grain_type"][]
+            | null
           preferred_payment_terms?: string | null
           rating?: number | null
           state?: string | null
@@ -1909,6 +1952,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyers_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -2013,6 +2063,139 @@ export type Database = {
           webhook_secret?: string | null
         }
         Relationships: []
+      }
+      customer_feedback: {
+        Row: {
+          admin_id: string
+          comments: string | null
+          communication_rating: number | null
+          created_at: string
+          follow_up_note: string | null
+          follow_up_required: boolean | null
+          id: string
+          installation_quality: number | null
+          issues_encountered: string[] | null
+          order_id: string
+          overall_rating: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          submitted_at: string
+          technician_id: string | null
+          technician_rating: number | null
+          timeliness_rating: number | null
+          updated_at: string
+          warehouse_id: string | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          admin_id: string
+          comments?: string | null
+          communication_rating?: number | null
+          created_at?: string
+          follow_up_note?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          installation_quality?: number | null
+          issues_encountered?: string[] | null
+          order_id: string
+          overall_rating?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string
+          technician_id?: string | null
+          technician_rating?: number | null
+          timeliness_rating?: number | null
+          updated_at?: string
+          warehouse_id?: string | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          admin_id?: string
+          comments?: string | null
+          communication_rating?: number | null
+          created_at?: string
+          follow_up_note?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          installation_quality?: number | null
+          issues_encountered?: string[] | null
+          order_id?: string
+          overall_rating?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string
+          technician_id?: string | null
+          technician_rating?: number | null
+          timeliness_rating?: number | null
+          updated_at?: string
+          warehouse_id?: string | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "hardware_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_operations_summary_v"
+            referencedColumns: ["warehouse_id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dashboard_shares: {
         Row: {
@@ -2142,6 +2325,119 @@ export type Database = {
         }
         Relationships: []
       }
+      dispatches: {
+        Row: {
+          admin_id: string
+          avg_cost_at_dispatch: number | null
+          buyer_id: string | null
+          created_at: string | null
+          created_by: string
+          destination: string | null
+          dispatch_date: string | null
+          driver_contact: string | null
+          driver_name: string | null
+          id: string
+          notes: string | null
+          price_per_kg: number
+          profit: number | null
+          quantity_kg: number
+          revenue: number | null
+          silo_id: string
+          updated_at: string | null
+          vehicle_number: string | null
+        }
+        Insert: {
+          admin_id: string
+          avg_cost_at_dispatch?: number | null
+          buyer_id?: string | null
+          created_at?: string | null
+          created_by: string
+          destination?: string | null
+          dispatch_date?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          price_per_kg: number
+          profit?: number | null
+          quantity_kg: number
+          revenue?: number | null
+          silo_id: string
+          updated_at?: string | null
+          vehicle_number?: string | null
+        }
+        Update: {
+          admin_id?: string
+          avg_cost_at_dispatch?: number | null
+          buyer_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          destination?: string | null
+          dispatch_date?: string | null
+          driver_contact?: string | null
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          price_per_kg?: number
+          profit?: number | null
+          quantity_kg?: number
+          revenue?: number | null
+          silo_id?: string
+          updated_at?: string | null
+          vehicle_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "dispatches_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dispatches_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           active: boolean
@@ -2197,6 +2493,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "drivers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
         ]
       }
       email_send_log: {
@@ -2237,6 +2540,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_send_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -2309,6 +2619,10 @@ export type Database = {
           silo_id: string | null
           source: string
           status: string
+          technician_assigned_at: string | null
+          technician_id: string | null
+          technician_notes: string | null
+          technician_status: string | null
           tenant_id: string
           updated_at: string
         }
@@ -2330,6 +2644,10 @@ export type Database = {
           silo_id?: string | null
           source?: string
           status?: string
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -2351,10 +2669,28 @@ export type Database = {
           silo_id?: string | null
           source?: string
           status?: string
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           tenant_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "field_incidents_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incidents_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
           {
             foreignKeyName: "field_incidents_silo_id_fkey"
             columns: ["silo_id"]
@@ -2368,6 +2704,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "silos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incidents_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incidents_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -2431,6 +2781,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_ledger_entries_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -2786,6 +3143,10 @@ export type Database = {
           supplier_id: string | null
           supplier_name: string | null
           tags: string[] | null
+          technician_assigned_at: string | null
+          technician_id: string | null
+          technician_notes: string | null
+          technician_status: string | null
           test_weight: number | null
           total_purchase_value: number | null
           unit_cost: number | null
@@ -2852,6 +3213,10 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string | null
           tags?: string[] | null
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           test_weight?: number | null
           total_purchase_value?: number | null
           unit_cost?: number | null
@@ -2918,6 +3283,10 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string | null
           tags?: string[] | null
+          technician_assigned_at?: string | null
+          technician_id?: string | null
+          technician_notes?: string | null
+          technician_status?: string | null
           test_weight?: number | null
           total_purchase_value?: number | null
           unit_cost?: number | null
@@ -3010,6 +3379,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_batches_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
           {
             foreignKeyName: "grain_batches_updated_by_fkey"
@@ -3208,6 +3591,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "silos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_dispatches_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_operations_summary_v"
+            referencedColumns: ["warehouse_id"]
           },
           {
             foreignKeyName: "grain_dispatches_warehouse_id_fkey"
@@ -3774,6 +4164,9 @@ export type Database = {
           tracking_carrier?: string | null
           tracking_number?: string | null
           updated_at?: string
+          warehouse_city?: string | null
+          warehouse_id?: string | null
+          warehouse_location?: string | null
         }
         Relationships: [
           {
@@ -3781,6 +4174,27 @@ export type Database = {
             columns: ["assigned_technician_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hardware_orders_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "hardware_orders_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_operations_summary_v"
+            referencedColumns: ["warehouse_id"]
+          },
+          {
+            foreignKeyName: "hardware_orders_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]
@@ -3826,6 +4240,77 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hubspot_sync_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+        ]
+      }
+      inspection_reports: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          defects: string | null
+          id: string
+          image_urls: Json | null
+          moisture: string | null
+          quality: string | null
+          remarks: string | null
+          status: string
+          technician_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          defects?: string | null
+          id?: string
+          image_urls?: Json | null
+          moisture?: string | null
+          quality?: string | null
+          remarks?: string | null
+          status?: string
+          technician_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          defects?: string | null
+          id?: string
+          image_urls?: Json | null
+          moisture?: string | null
+          quality?: string | null
+          remarks?: string | null
+          status?: string
+          technician_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_reports_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_reports_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_reports_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -3964,6 +4449,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_claim_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -4463,6 +4955,69 @@ export type Database = {
           },
         ]
       }
+      live_sensor_readings: {
+        Row: {
+          airflow: number | null
+          ambient_light: number | null
+          confidence: number | null
+          created_at: string | null
+          dew_point: number | null
+          grain_moisture: number
+          grain_type: string
+          humidity: number
+          id: number
+          pest_presence: number | null
+          prediction: string | null
+          rainfall: number | null
+          risk_score: number | null
+          silo_id: string | null
+          source: string | null
+          storage_days: number
+          temperature: number
+          tvoc_ppb: number | null
+        }
+        Insert: {
+          airflow?: number | null
+          ambient_light?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          dew_point?: number | null
+          grain_moisture: number
+          grain_type: string
+          humidity: number
+          id?: number
+          pest_presence?: number | null
+          prediction?: string | null
+          rainfall?: number | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          storage_days?: number
+          temperature: number
+          tvoc_ppb?: number | null
+        }
+        Update: {
+          airflow?: number | null
+          ambient_light?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          dew_point?: number | null
+          grain_moisture?: number
+          grain_type?: string
+          humidity?: number
+          id?: number
+          pest_presence?: number | null
+          prediction?: string | null
+          rainfall?: number | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          storage_days?: number
+          temperature?: number
+          tvoc_ppb?: number | null
+        }
+        Relationships: []
+      }
       logistics_cost_entries: {
         Row: {
           amount: number
@@ -4517,6 +5072,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logistics_cost_entries_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -4604,6 +5166,36 @@ export type Database = {
           sql_template?: string
           unit?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ml_model_metadata: {
+        Row: {
+          active_accuracy: number | null
+          active_model_version: string | null
+          best_params: Json | null
+          grain_type: string
+          last_fast_run: string | null
+          last_nightly_run: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_accuracy?: number | null
+          active_model_version?: string | null
+          best_params?: Json | null
+          grain_type: string
+          last_fast_run?: string | null
+          last_nightly_run?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_accuracy?: number | null
+          active_model_version?: string | null
+          best_params?: Json | null
+          grain_type?: string
+          last_fast_run?: string | null
+          last_nightly_run?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -5202,6 +5794,9 @@ export type Database = {
           plan_id: string
           price_cents: number
           sort_order: number
+          stripe_price_monthly_id: string | null
+          stripe_price_yearly_id: string | null
+          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -5223,6 +5818,9 @@ export type Database = {
           plan_id: string
           price_cents?: number
           sort_order?: number
+          stripe_price_monthly_id?: string | null
+          stripe_price_yearly_id?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -5392,8 +5990,8 @@ export type Database = {
           subscription_plan: string | null
           suspended: boolean
           technician_status:
-          | Database["public"]["Enums"]["technician_status"]
-          | null
+            | Database["public"]["Enums"]["technician_status"]
+            | null
           trial_ends_at: string | null
           updated_at: string | null
           updated_by: string | null
@@ -5458,8 +6056,8 @@ export type Database = {
           subscription_plan?: string | null
           suspended?: boolean
           technician_status?:
-          | Database["public"]["Enums"]["technician_status"]
-          | null
+            | Database["public"]["Enums"]["technician_status"]
+            | null
           trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -5524,8 +6122,8 @@ export type Database = {
           subscription_plan?: string | null
           suspended?: boolean
           technician_status?:
-          | Database["public"]["Enums"]["technician_status"]
-          | null
+            | Database["public"]["Enums"]["technician_status"]
+            | null
           trial_ends_at?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -5749,6 +6347,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_payout_accounts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
         ]
       }
@@ -6919,6 +7524,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subscriptions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
         ]
       }
       suppliers: {
@@ -7014,6 +7626,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tax_registrations_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
         ]
       }
       tax_rules: {
@@ -7058,46 +7677,160 @@ export type Database = {
         }
         Relationships: []
       }
+      technician_warehouse_assignments: {
+        Row: {
+          admin_id: string
+          assigned_by: string | null
+          city: string
+          created_at: string
+          id: string
+          is_primary: boolean | null
+          technician_id: string
+          updated_at: string
+          warehouse_id: string
+        }
+        Insert: {
+          admin_id: string
+          assigned_by?: string | null
+          city: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          technician_id: string
+          updated_at?: string
+          warehouse_id: string
+        }
+        Update: {
+          admin_id?: string
+          assigned_by?: string | null
+          city?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean | null
+          technician_id?: string
+          updated_at?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_warehouse_assignments_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_warehouse_assignments_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "technician_warehouse_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_warehouse_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "technician_warehouse_assignments_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_warehouse_assignments_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "technician_warehouse_assignments_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_operations_summary_v"
+            referencedColumns: ["warehouse_id"]
+          },
+          {
+            foreignKeyName: "technician_warehouse_assignments_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_plan_change_requests: {
         Row: {
+          apply_at: string | null
+          billing_cycle: string | null
+          charge_amount_cents: number | null
           created_at: string
           current_plan: string | null
           decided_at: string | null
           decided_by: string | null
           direction: string
+          downgrade_reason: string | null
+          downgrade_reason_details: string | null
           id: string
           note: string | null
           requested_by: string
           requested_plan: string
+          retention_offer_declined: boolean | null
           status: string
+          stripe_session_id: string | null
           tenant_admin_id: string
           updated_at: string
         }
         Insert: {
+          apply_at?: string | null
+          billing_cycle?: string | null
+          charge_amount_cents?: number | null
           created_at?: string
           current_plan?: string | null
           decided_at?: string | null
           decided_by?: string | null
           direction: string
+          downgrade_reason?: string | null
+          downgrade_reason_details?: string | null
           id?: string
           note?: string | null
           requested_by: string
           requested_plan: string
+          retention_offer_declined?: boolean | null
           status?: string
+          stripe_session_id?: string | null
           tenant_admin_id: string
           updated_at?: string
         }
         Update: {
+          apply_at?: string | null
+          billing_cycle?: string | null
+          charge_amount_cents?: number | null
           created_at?: string
           current_plan?: string | null
           decided_at?: string | null
           decided_by?: string | null
           direction?: string
+          downgrade_reason?: string | null
+          downgrade_reason_details?: string | null
           id?: string
           note?: string | null
           requested_by?: string
           requested_plan?: string
+          retention_offer_declined?: boolean | null
           status?: string
+          stripe_session_id?: string | null
           tenant_admin_id?: string
           updated_at?: string
         }
@@ -7575,6 +8308,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "silos_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "silos_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_operations_summary_v"
+            referencedColumns: ["warehouse_id"]
+          },
+          {
             foreignKeyName: "silos_warehouse_id_fkey"
             columns: ["warehouse_id"]
             isOneToOne: false
@@ -7638,6 +8385,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "grain_batches_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
             foreignKeyName: "grain_batches_silo_id_fkey"
             columns: ["silo_id"]
             isOneToOne: false
@@ -7665,8 +8419,8 @@ export type Database = {
           technician_id: string | null
           technician_name: string | null
           technician_status:
-          | Database["public"]["Enums"]["technician_status"]
-          | null
+            | Database["public"]["Enums"]["technician_status"]
+            | null
           total_installations: number | null
         }
         Relationships: []
@@ -7784,87 +8538,87 @@ export type Database = {
       alert_priority: "low" | "medium" | "high" | "critical"
       alert_status: "pending" | "acknowledged" | "resolved" | "escalated"
       app_role:
-      | "super_admin"
-      | "admin"
-      | "manager"
-      | "technician"
-      | "pending"
-      | "buyer"
+        | "super_admin"
+        | "admin"
+        | "manager"
+        | "technician"
+        | "pending"
+        | "buyer"
       batch_status:
-      | "stored"
-      | "dispatched"
-      | "sold"
-      | "damaged"
-      | "expired"
-      | "on_hold"
-      | "processing"
-      | "intake"
-      | "treatment"
-      | "ready"
-      | "rejected"
+        | "stored"
+        | "dispatched"
+        | "sold"
+        | "damaged"
+        | "expired"
+        | "on_hold"
+        | "processing"
+        | "intake"
+        | "treatment"
+        | "ready"
+        | "rejected"
       billing_cycle: "monthly" | "yearly" | "quarterly"
       buyer_order_status:
-      | "pending"
-      | "confirmed"
-      | "invoiced"
-      | "paid"
-      | "dispatched"
-      | "completed"
-      | "cancelled"
-      | "refunded"
+        | "pending"
+        | "confirmed"
+        | "invoiced"
+        | "paid"
+        | "dispatched"
+        | "completed"
+        | "cancelled"
+        | "refunded"
       buyer_status: "active" | "paused" | "inactive"
       buyer_type:
-      | "local_mill"
-      | "exporter"
-      | "wholesaler"
-      | "retailer"
-      | "government"
+        | "local_mill"
+        | "exporter"
+        | "wholesaler"
+        | "retailer"
+        | "government"
       device_status: "active" | "offline" | "error" | "maintenance"
       dispute_status: "open" | "under_review" | "resolved" | "rejected"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
       notification_cat:
-      | "batch"
-      | "spoilage"
-      | "dispatch"
-      | "payment"
-      | "insurance"
-      | "invoice"
-      | "system"
+        | "batch"
+        | "spoilage"
+        | "dispatch"
+        | "payment"
+        | "insurance"
+        | "invoice"
+        | "system"
       payment_status: "pending" | "paid" | "failed" | "refunded" | "cancelled"
       plan_name:
-      | "Grain Starter"
-      | "Grain Professional"
-      | "Grain Enterprise"
-      | "Grain Enterprise Plus"
-      | "Custom"
+        | "Grain Starter"
+        | "Grain Professional"
+        | "Grain Enterprise"
+        | "Grain Enterprise Plus"
+        | "Custom"
       power_source: "solar" | "battery" | "direct" | "hybrid"
       refund_state: "pending" | "succeeded" | "failed" | "cancelled"
       review_direction: "buyer_to_seller" | "seller_to_buyer"
       review_status: "pending" | "published" | "rejected"
       sensor_type:
-      | "temperature"
-      | "humidity"
-      | "co2"
-      | "voc"
-      | "moisture"
-      | "light"
-      | "pressure"
-      | "ph"
+        | "temperature"
+        | "humidity"
+        | "co2"
+        | "voc"
+        | "moisture"
+        | "light"
+        | "pressure"
+        | "ph"
       shipment_status:
-      | "queued"
-      | "in_transit"
-      | "out_for_delivery"
-      | "delivered"
-      | "exception"
+        | "queued"
+        | "in_transit"
+        | "out_for_delivery"
+        | "delivered"
+        | "exception"
       spoilage_label: "Safe" | "Risky" | "Spoiled"
       subscription_status:
-      | "active"
-      | "inactive"
-      | "cancelled"
-      | "expired"
-      | "trial"
+        | "active"
+        | "inactive"
+        | "cancelled"
+        | "expired"
+        | "trial"
       supplier_kind: "external" | "own_farm" | "internal_transfer" | "anonymous"
       technician_status: "available" | "busy" | "offline" | "on_leave"
       user_status: "active" | "inactive" | "deleted"
@@ -7881,116 +8635,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
