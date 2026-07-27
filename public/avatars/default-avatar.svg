@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 918 918">
+  <defs>
+    <clipPath id="avatar-clip">
+      <circle cx="459" cy="459" r="459"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#avatar-clip)">
+    <circle fill="#60a5fa" cx="459" cy="322" r="220"/>
+    <path fill="#60a5fa" d="M459 560c-153 0-333 78-361 253a459 459 0 0 0 722 0c-28-175-208-253-361-253Z"/>
+  </g>
+</svg>
