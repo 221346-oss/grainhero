@@ -106,10 +106,12 @@ export const updateMaintenanceRequest = createServerFn({ method: "POST" })
     if (data.assignedTechnicianId !== undefined) patch.assigned_technician_id = data.assignedTechnicianId;
     if (data.resolutionNotes !== undefined) patch.resolution_notes = data.resolutionNotes;
 
-    const { error } = await context.supabase
+    const { data: row, error } = await context.supabase
       .from("maintenance_requests" as never)
       .update(patch as never)
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .select("*, devices:device_id(id, device_name, device_id), silos:silo_id(id, name, silo_id), technician:assigned_technician_id(id, name, email)")
+      .single();
     if (error) throw error;
-    return { ok: true };
+    return row as Row;
   });

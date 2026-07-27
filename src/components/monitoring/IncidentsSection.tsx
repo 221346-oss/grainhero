@@ -116,29 +116,29 @@ export function IncidentsSection() {
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/40">
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
           <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading incidents…
         </div>
       ) : incidents.length === 0 ? (
-        <div className="py-12 text-center text-white/40">
+        <div className="py-12 text-center text-muted-foreground">
           <p className="text-sm">No incidents reported.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {(incidents as any[]).map((i) => (
-            <div key={i.id} className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/8 transition-colors">
+            <div key={i.id} className="bg-muted/30 border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
               <div className="flex items-start gap-3">
                 <AlertOctagon className="w-5 h-5 mt-0.5 shrink-0 text-rose-400" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm font-semibold text-white">{i.title}</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{i.title}</h3>
                     <Badge className={i.status !== "resolved" ? "bg-rose-500/20 text-rose-400" : "bg-emerald-500/20 text-emerald-400"}>{i.status}</Badge>
                     {i.status === "escalated" && (
                       <Badge className="bg-purple-500/20 text-purple-300 gap-1"><ArrowUpCircle className="w-3 h-3" /> Escalated to Super Admin</Badge>
                     )}
                   </div>
-                  <p className="text-xs text-white/60 mt-1">{i.message}</p>
-                  <div className="text-xs text-white/40 mt-2 flex flex-wrap gap-x-3">
+                  <p className="text-xs text-muted-foreground mt-1">{i.message}</p>
+                  <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3">
                     {i.triggered_at && <span>Triggered {new Date(i.triggered_at).toLocaleString()}</span>}
                     {i.reportedByName && <span>Reported by {i.reportedByName}</span>}
                     {i.assignedToName && <span>Assigned to {i.assignedToName}</span>}
@@ -149,7 +149,7 @@ export function IncidentsSection() {
                         value={i.assigned_to ?? "unassigned"}
                         onValueChange={(v) => assignMut.mutate({ id: i.id, technicianId: v === "unassigned" ? null : v })}
                       >
-                        <SelectTrigger className="h-7 w-[180px] text-xs bg-white/5 border-white/10 text-white">
+                        <SelectTrigger className="h-7 w-[180px] text-xs bg-muted/30 border-border text-foreground">
                           <SelectValue placeholder="Assign technician" />
                         </SelectTrigger>
                         <SelectContent>
@@ -161,7 +161,7 @@ export function IncidentsSection() {
                       </Select>
                       {i.status !== "escalated" && i.status !== "resolved" && (
                         <Button
-                          size="sm" variant="outline" className="h-7 text-xs gap-1 border-white/10 text-white/80 hover:text-white"
+                          size="sm" variant="outline" className="h-7 text-xs gap-1 border-border text-muted-foreground hover:text-foreground"
                           disabled={escalateMut.isPending}
                           onClick={() => escalateMut.mutate(i.id)}
                         >

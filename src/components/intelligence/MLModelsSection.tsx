@@ -87,7 +87,7 @@ export function MLModelsSection() {
           </Card>
         ))}
         {models.length === 0 && (
-          <div className="lg:col-span-2 p-10 text-center text-sm text-white/40">No models available.</div>
+          <div className="lg:col-span-2 p-10 text-center text-sm text-muted-foreground">No models available.</div>
         )}
       </div>
     </div>

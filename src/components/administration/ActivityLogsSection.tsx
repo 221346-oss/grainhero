@@ -117,7 +117,7 @@ export function ActivityLogsSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-white/40">{scopeText}</p>
+        <p className="text-sm text-muted-foreground">{scopeText}</p>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV}>
             <Download className="h-4 w-4 mr-2" /> Export CSV

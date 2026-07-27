@@ -82,7 +82,7 @@ export function NotificationsSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-white/40">
+        <p className="text-sm text-muted-foreground">
           {unread > 0 ? `${unread} unread notification${unread === 1 ? "" : "s"}` : "All caught up!"}
         </p>
         <div className="flex flex-wrap gap-2 shrink-0">

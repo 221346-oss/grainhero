@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
 import { requireRole } from "@/lib/rbac.server";
+import { logActivity } from "@/lib/activity";
 
 // Roles allowed to rename a silo/warehouse — same allow-list used for team
 // invite/manage (see inviteTeamMember/updateTeamMember in
@@ -265,7 +266,7 @@ export const deleteSilo = createServerFn({ method: "POST" })
       .from("grain_batches")
       .select("id", { count: "exact", head: true })
       .eq("silo_id", data.id)
-      .in("status", ["stored", "on_hold", "processing", "damaged", "expired"]);
+      .in("status", ["stored", "on_hold", "processing", "damaged", "expired", "pending_qc", "qc_submitted", "qc_failed", "qc_passed", "admin_rejected"] as never);
       
     if (countError) throw countError;
     if (count && count > 0) {
@@ -292,7 +293,7 @@ export const listGrainBatches = createServerFn({ method: "GET" })
 const grainTypes = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
 const batchStatuses = ["stored","dispatched","sold","damaged","expired","on_hold","processing"] as const;
 
-const batchInput = z.object({
+const batchInputBase = z.object({
   id: z.string().uuid().optional(),
   batch_id: z.string().min(1).max(50).optional(),
   grain_type: z.enum(grainTypes),
@@ -317,13 +318,24 @@ const batchInput = z.object({
   source_kind: z.enum(["external","own_farm","internal_transfer","anonymous"]).optional().nullable(),
   unit_cost: z.number().nonnegative().optional().nullable(),
   currency: z.string().min(3).max(3).optional().nullable(),
+  // QC pipeline: required on create (a new batch must be assigned a
+  // technician to enter pending_qc), ignored on update — reassigning happens
+  // through the dedicated QC functions, not this generic upsert.
+  assignedTechnicianId: z.string().uuid().optional().nullable(),
 });
+const batchInput = batchInputBase.refine(
+  (d) => d.id || d.assignedTechnicianId,
+  { message: "Assign a technician to the new batch", path: ["assignedTechnicianId"] },
+);
 
 export const upsertGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
     if (!data.id) {
+      // Batch creation starts the QC pipeline — restricted to Manager/Admin.
+      // (Technicians only ever act on batches already assigned to them.)
+      await requireRole(context.supabase, context.userId, ["admin", "manager"]);
       await assertPlanAllows({ feature: "max_batches", sb: context.supabase, userId: context.userId });
     }
     // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
@@ -381,6 +393,14 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         })
         .eq("id", data.id).select("*").single();
       if (error) throw error;
+      await logActivity({
+        actorId: context.userId,
+        tenantAdminId,
+        action: "batch.updated",
+        targetType: "grain_batch",
+        targetId: data.id,
+        meta: { batchId: (row as { batch_id?: string }).batch_id, status: data.status ?? "stored" },
+      });
       return row;
     }
 
@@ -395,6 +415,25 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
           `Silo capacity exceeded: only ${free.toLocaleString()}kg free (capacity ${capacity.toLocaleString()}kg, already holding ${currentOccupancy.toLocaleString()}kg), tried to add ${data.quantity_kg.toLocaleString()}kg.`
         );
       }
+    }
+
+    // 1 technician can only be actively assigned to 1 batch at a time — the
+    // create form only offers technicians without an in-progress batch (see
+    // listAvailableTechnicians in batch-qc.functions.ts), but re-validate
+    // server-side against a race.
+    const { data: technician, error: techErr } = await context.supabase
+      .from("profiles").select("id, admin_id").eq("id", data.assignedTechnicianId as string).maybeSingle();
+    if (techErr) throw techErr;
+    if (!technician || (technician as { admin_id?: string | null }).admin_id !== tenantAdminId) {
+      throw new Error("Technician must be a member of your team");
+    }
+    const { count: activeCount } = await context.supabase
+      .from("grain_batches")
+      .select("id", { count: "exact", head: true })
+      .eq("assigned_technician_id" as never, data.assignedTechnicianId as string)
+      .in("status", ["pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never);
+    if ((activeCount ?? 0) > 0) {
+      throw new Error("This technician already has a batch in progress");
     }
 
     const batchId = data.batch_id ?? `${data.grain_type.slice(0,3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
@@ -422,23 +461,43 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         purchase_price_per_kg: data.purchase_price_per_kg ?? null,
         total_purchase_value,
         intake_conditions,
-        status: data.status ?? "stored",
+        status: "pending_qc",
+        assigned_technician_id: data.assignedTechnicianId,
         notes: data.notes ?? null,
         created_by: context.userId,
         supplier_id: data.supplier_id ?? null,
         source_kind: data.source_kind ?? null,
         unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
         currency: data.currency ?? "PKR",
-      })
+      } as never)
       .select("*").single();
     if (error) throw error;
 
     // Update silo stock only. A silo now holds many mixed batches, so we no
     // longer point current_batch_id/batch_loaded_date at a single intake.
+    // Occupancy is counted from intake regardless of QC status (confirmed —
+    // no reserved-capacity concept), matching existing behavior exactly.
     await context.supabase.from("silos").update({
       current_occupancy_kg: (silo.current_occupancy_kg ?? 0) + data.quantity_kg,
       updated_by: context.userId,
     }).eq("id", data.silo_id);
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId,
+      action: "batch.created",
+      targetType: "grain_batch",
+      targetId: (row as { id: string }).id,
+      meta: { batchId, grainType: data.grain_type, quantityKg: data.quantity_kg, siloId: data.silo_id },
+    });
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId,
+      action: "batch.qc_assigned",
+      targetType: "grain_batch",
+      targetId: (row as { id: string }).id,
+      meta: { batchId, assignedTechnicianId: data.assignedTechnicianId },
+    });
 
     return row;
   });
@@ -560,6 +619,17 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
       if (silo?.current_batch_id === data.id) patch.current_batch_id = null;
       await context.supabase.from("silos").update(patch).eq("id", batch.silo_id);
     }
+
+    const { data: prof } = await context.supabase
+      .from("profiles").select("admin_id").eq("id", context.userId).maybeSingle();
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: prof?.admin_id ?? context.userId,
+      action: "batch.dispatched",
+      targetType: "grain_batch",
+      targetId: data.id,
+      meta: { dispatchedQuantityKg: data.dispatched_quantity_kg, isFull, revenue, buyerId },
+    });
 
     return row;
   });
@@ -1206,7 +1276,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       buyers: buyers.count ?? 0,
       batches: {
         total: batches.count ?? 0,
-        active: batchesData.filter((b) => b.status === "stored" || b.status === "processing").length,
+        active: batchesData.filter((b) => ["stored", "processing", "pending_qc", "qc_submitted", "qc_failed", "qc_passed"].includes(b.status ?? "")).length,
       },
       sensors: {
         total: sensors.count ?? 0,

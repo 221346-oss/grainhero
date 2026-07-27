@@ -49,8 +49,16 @@ function PlatformMonitoringPage() {
   });
   const updateStatusMut = useMutation({
     mutationFn: (v: { id: string; status: typeof MAINT_STATUSES[number] }) => updateMaintFn({ data: v }),
-    onSuccess: () => {
+    onSuccess: (updated: Record<string, any>) => {
       toast.success("Maintenance request updated");
+      // Merge the full updated row (not a partial patch) into cache for an
+      // instant, always-complete update, then confirm with a background refetch.
+      qc.setQueryData(["maintenance-requests"], (old: { requests: Record<string, any>[] } | undefined) => {
+        if (!old) return old;
+        return {
+          requests: old.requests.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)),
+        };
+      });
       qc.invalidateQueries({ queryKey: ["maintenance-requests"] });
     },
     onError: (e: Error) => toast.error(e.message || "Update failed"),

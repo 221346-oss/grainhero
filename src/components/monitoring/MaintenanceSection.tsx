@@ -154,25 +154,25 @@ export function MaintenanceSection() {
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your maintenance requests</h3>
           {myRequests.length === 0 ? (
-            <p className="text-sm text-white/40 py-4">No maintenance requests yet.</p>
+            <p className="text-sm text-muted-foreground py-4">No maintenance requests yet.</p>
           ) : (
-            <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+            <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-white/5 border-b border-white/10">
+                <thead className="bg-muted/40 border-b border-border">
                   <tr>
-                    <th className="px-4 py-2 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Title</th>
-                    <th className="px-4 py-2 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Priority</th>
-                    <th className="px-4 py-2 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-2 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Requested</th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Title</th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Priority</th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Requested</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-border">
                   {myRequests.map((r: any) => (
                     <tr key={r.id}>
-                      <td className="px-4 py-2 text-white font-medium">{r.title}</td>
-                      <td className="px-4 py-2 text-white/70 text-xs capitalize">{r.priority}</td>
+                      <td className="px-4 py-2 text-foreground font-medium">{r.title}</td>
+                      <td className="px-4 py-2 text-muted-foreground text-xs capitalize">{r.priority}</td>
                       <td className="px-4 py-2"><Badge className={statusTone(r.status)}>{r.status.replace("_", " ")}</Badge></td>
-                      <td className="px-4 py-2 text-white/70 text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-2 text-muted-foreground text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -185,32 +185,32 @@ export function MaintenanceSection() {
       <div className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Due soon (from calibration schedule)</h3>
         {isLoading ? (
-          <div className="flex items-center justify-center py-12 text-white/40">
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading maintenance tasks…
           </div>
         ) : dueSoon.length === 0 ? (
-          <div className="py-12 text-center text-white/40">
+          <div className="py-12 text-center text-muted-foreground">
             <p className="text-sm">No maintenance tasks.</p>
           </div>
         ) : (
-          <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+          <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-white/5 border-b border-white/10">
+                <thead className="bg-muted/40 border-b border-border">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Task</th>
-                    <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Due</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Task</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Due</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-border">
                   {(dueSoon as any[]).map((m) => (
-                    <tr key={m.id} className="hover:bg-white/2 transition-colors">
-                      <td className="px-4 py-3 text-white font-medium">{m.task_description}</td>
-                      <td className="px-4 py-3 text-white/70 text-xs">{m.maintenance_type ?? "—"}</td>
+                    <tr key={m.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-4 py-3 text-foreground font-medium">{m.task_description}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{m.maintenance_type ?? "—"}</td>
                       <td className="px-4 py-3"><Badge className={m.status === "pending" ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"}>{m.status}</Badge></td>
-                      <td className="px-4 py-3 text-white/70 text-xs">{m.due_date ? new Date(m.due_date).toLocaleDateString() : "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">{m.due_date ? new Date(m.due_date).toLocaleDateString() : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

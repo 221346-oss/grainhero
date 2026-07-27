@@ -111,7 +111,7 @@ export function SubscriptionSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-white/40">Manage your plan, usage and billing history.</p>
+        <p className="text-sm text-muted-foreground">Manage your plan, usage and billing history.</p>
         <div className="flex items-center gap-2 flex-wrap">
           {sub && (
             <Button variant="outline" size="sm" onClick={() => portalM.mutate()} disabled={portalM.isPending}>
