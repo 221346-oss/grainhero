@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
@@ -8,19 +9,29 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getPlatformOverviewWidgets, getPlatformReportingDetails } from "@/lib/platform-no-admin.functions";
 import { getCustomerFeedback, getWarehouseOperationsMetrics, getTechnicianPerformance } from "@/lib/platform-reporting.functions";
+import { listTickets, type TicketRow } from "@/lib/tickets.functions";
+import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
+import { attachTicket } from "@/lib/ticketMessages";
 import { Star, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 
 export const Route = createFileRoute("/_authenticated/platform/reporting")({
   head: () => ({ meta: [{ title: "Platform reporting — GrainHero" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({ tab: (search.tab as string) || "hardware" }),
   component: PlatformReportingPage,
 });
 
 function PlatformReportingPage() {
+  const search = useSearch({ from: "/_authenticated/platform/reporting" });
+  const activeTab = (search as { tab?: string }).tab ?? "hardware";
+
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
   const detailsFn = useServerFn(getPlatformReportingDetails);
   const feedbackFn = useServerFn(getCustomerFeedback);
   const warehousesFn = useServerFn(getWarehouseOperationsMetrics);
   const techniciansFn = useServerFn(getTechnicianPerformance);
+  const ticketsFn = useServerFn(listTickets);
 
   const { data: w } = useQuery({ queryKey: ["platform-widgets"], queryFn: () => widgetsFn() });
   const { data: details, isLoading } = useQuery({
@@ -39,11 +50,34 @@ function PlatformReportingPage() {
     queryKey: ["technician-performance"],
     queryFn: () => techniciansFn(),
   });
+  const { data: ticketData, isLoading: loadingTickets } = useQuery({
+    queryKey: ["field-tickets", "all"],
+    queryFn: () => ticketsFn({ data: { status: "all" } }),
+    staleTime: 30_000,
+  });
+
+  const [selectedTicket, setSelectedTicket] = useState<TicketRow | null>(null);
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<"all" | "open" | "resolved" | "closed">("all");
+
+  // Keep reporting tab live when tickets change
+  useRealtimeInvalidate("field_tickets", [["field-tickets", "all"]]);
 
   const stats = w?.reportingStats ?? { hardwareIssues: 0, bugReports: 0, managerQueries: 0, totalTickets: 0 };
   const feedback = feedbackData ?? { feedback: [], aggregates: { totalCount: 0, avgOverallRating: 0, avgTechnicianRating: 0, avgInstallQuality: 0, recommendPercent: 0, recommendCount: 0 } };
   const warehouses = warehouseData ?? { warehouses: [], platformAggregates: { totalWarehouses: 0, avgUtilizationPercent: 0, totalActiveSilos: 0, totalRecentAlerts: 0, totalQualityIncidents: 0 }, insights: { topUtilized: [], underUtilized: [], withIssues: [] } };
   const technicians = techData ?? { technicians: [] };
+  const allTickets: TicketRow[] = ticketData?.tickets ?? [];
+
+  // Pre-attach broadcast channels for all tickets so Discussion works immediately
+  useEffect(() => {
+    allTickets.forEach((t) => attachTicket(t.id));
+  }, [allTickets]);
+  const filteredTickets = useMemo(() =>
+    ticketStatusFilter === "all"
+      ? allTickets
+      : allTickets.filter((t) => t.status === ticketStatusFilter),
+    [allTickets, ticketStatusFilter],
+  );
 
   return (
     <AdminPageShell
@@ -60,7 +94,7 @@ function PlatformReportingPage() {
         ]}
       />
 
-      <Tabs defaultValue="hardware">
+      <Tabs defaultValue={activeTab}>
         <TabsList>
           <TabsTrigger value="hardware">Hardware ({details?.hardwareOrders?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="alerts">Sensor alerts ({details?.hardwareAlerts?.length ?? 0})</TabsTrigger>
@@ -69,6 +103,9 @@ function PlatformReportingPage() {
           <TabsTrigger value="feedback">Customer Feedback ({feedback.feedback.length})</TabsTrigger>
           <TabsTrigger value="warehouses">Warehouse Metrics ({warehouses.warehouses.length})</TabsTrigger>
           <TabsTrigger value="technicians">Technicians ({technicians.technicians.length})</TabsTrigger>
+          <TabsTrigger value="tickets">
+            Incident Tickets ({allTickets.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="hardware" className="mt-4">
@@ -494,7 +531,129 @@ function PlatformReportingPage() {
             )}
           </AdminDataCard>
         </TabsContent>
+
+        {/* Incident Tickets Tab — all tickets for super admin with status filter */}
+        <TabsContent value="tickets" className="mt-4">
+          <AdminDataCard
+            title="Incident tickets"
+            description="All tickets raised by admins — open, resolved, and closed"
+          >
+            {/* Filter bar */}
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2 flex-wrap">
+              {(["all", "open", "resolved", "closed"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setTicketStatusFilter(s)}
+                  className={cn(
+                    "text-xs font-medium px-3 py-1 rounded-full border transition-colors capitalize",
+                    ticketStatusFilter === s
+                      ? "bg-slate-900 text-white border-slate-900"
+                      : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+                  )}
+                >
+                  {s === "all" ? `All (${allTickets.length})` : `${s} (${allTickets.filter((t) => t.status === s).length})`}
+                </button>
+              ))}
+            </div>
+
+            {loadingTickets ? (
+              <p className="p-6 text-sm text-slate-500">Loading tickets…</p>
+            ) : filteredTickets.length === 0 ? (
+              <p className="p-6 text-sm text-slate-400 text-center">
+                {allTickets.length === 0 ? "No tickets raised yet" : `No ${ticketStatusFilter} tickets`}
+              </p>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {filteredTickets.map((ticket) => (
+                  <button
+                    key={ticket.id}
+                    type="button"
+                    onClick={() => setSelectedTicket(ticket)}
+                    className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="font-semibold text-sm text-slate-900">{ticket.title}</span>
+                          {/* Priority */}
+                          <Badge
+                            className={cn(
+                              "text-[10px] font-semibold uppercase border",
+                              ticket.priority === "high"
+                                ? "bg-red-50 text-red-700 border-red-200"
+                                : ticket.priority === "medium"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-slate-100 text-slate-600 border-slate-200",
+                            )}
+                          >
+                            {ticket.priority}
+                          </Badge>
+                          {/* Status */}
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] font-semibold uppercase",
+                              ticket.status === "open"
+                                ? "border-slate-300 text-slate-600"
+                                : ticket.status === "resolved"
+                                ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+                                : "bg-slate-100 text-slate-500 border-slate-200",
+                            )}
+                          >
+                            {ticket.status}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-slate-500 mb-1">
+                          <span className="font-medium">{ticket.reporter_name}</span>
+                          <span className="mx-1 opacity-50">·</span>
+                          <span className="capitalize">{ticket.reporter_role}</span>
+                          {(ticket.admin_name || ticket.admin_email) && (
+                            <>
+                              <span className="mx-1 opacity-50">·</span>
+                              <span>From: {ticket.admin_name ?? ticket.admin_email}</span>
+                            </>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                          {ticket.description}
+                        </p>
+                        {ticket.resolved_note && (
+                          <p className="text-xs text-emerald-600 mt-1 line-clamp-1">
+                            Resolution: {ticket.resolved_note}
+                          </p>
+                        )}
+                      </div>
+                      <div className="shrink-0 text-xs text-slate-400 text-right space-y-1 min-w-[90px]">
+                        <div>{new Date(ticket.created_at).toLocaleDateString()}</div>
+                        {ticket.resolved_at && (
+                          <div className="text-emerald-600 font-medium flex items-center gap-1 justify-end">
+                            <CheckCircle2 className="h-3 w-3" />
+                            {new Date(ticket.resolved_at).toLocaleDateString()}
+                          </div>
+                        )}
+                        {ticket.closed_at && (
+                          <div className="text-slate-400 font-medium">
+                            Closed {new Date(ticket.closed_at).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </AdminDataCard>
+        </TabsContent>
       </Tabs>
+
+      {/* Detail sheet — superadmin can resolve/discuss from reporting page too */}
+
+      <TicketDetailSheet
+        ticket={selectedTicket}
+        open={!!selectedTicket}
+        onClose={() => setSelectedTicket(null)}
+      />
     </AdminPageShell>
   );
 }
