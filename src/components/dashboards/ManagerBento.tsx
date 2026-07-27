@@ -1,15 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
-import { AlertTriangle, ClipboardCheck, Truck, ToggleRight, Package, Container, UserCheck, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, Truck, ToggleRight, Package, Container, UserCheck, CheckCircle, XCircle, Loader2, Plus, MessageSquare } from "lucide-react";
 import { type ReactNode, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { assignQCTask, approveQCResult } from "@/lib/qc.functions";
-import { assignFieldIncident } from "@/lib/field-settings.functions";
+import { assignFieldIncident, listOpenFieldIncidents } from "@/lib/field-settings.functions";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
+import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
 
 type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; to?: string; action?: ReactNode };
 
@@ -272,7 +274,7 @@ function ReviewQCButton({
 
 // ─── BentoCard ────────────────────────────────────────────────────────────────
 function BentoCard({
-  title, icon: Icon, count, to, tooltip, rows, empty,
+  title, icon: Icon, count, to, tooltip, rows, empty, headerAction,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -281,6 +283,7 @@ function BentoCard({
   tooltip: string;
   rows: Row[];
   empty: string;
+  headerAction?: ReactNode;
 }) {
   return (
     <div className="rounded-xl border bg-card/60 flex flex-col min-h-0">
@@ -295,9 +298,12 @@ function BentoCard({
             </span>
           )}
         </div>
-        <Link to={to as never} search={{} as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
-          View all
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          {headerAction}
+          <Link to={to as never} search={{} as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+            View all
+          </Link>
+        </div>
       </header>
       <div className="max-h-[260px] overflow-auto">
         {rows.length === 0 ? (
@@ -344,6 +350,10 @@ export function ManagerBento({
   technicians?: Array<{ id: string; name: string | null; email: string | null; is_busy?: boolean; active_batch_id?: string | null }>;
   incidents?: Array<{ id: string; category: string; severity: string; status: string; created_at: string; assigned_to: string | null; silo_id?: string | null; notes?: string | null }>;
 }) {
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
+
   // Map silo ID to current batch info for incident batch displaying
   const siloBatchMap = useMemo(() => {
     const map: Record<string, { batch_id: string; grain_type: string }> = {};
@@ -424,32 +434,13 @@ export function ManagerBento({
     to: "/orders",
   }));
 
-  const incList = incidents ?? [];
-  const incidentRows: Row[] = incList.map((inc) => {
-    const silo = silos.find((s) => s.id === inc.silo_id);
-    const batchInfo = inc.silo_id ? siloBatchMap[inc.silo_id] : null;
-    const batchLabel = batchInfo ? `Batch: ${batchInfo.batch_id} (${batchInfo.grain_type})` : silo ? `Silo: ${silo.name}` : "General field incident";
-    const assignedTech = inc.assigned_to ? techs.find((t) => t.id === inc.assigned_to) : null;
-
-    return {
-      id: inc.id,
-      primary: `${inc.category} — ${batchLabel}`,
-      secondary: inc.notes ? `"${inc.notes}"` : `Severity: ${inc.severity} · ${inc.status}`,
-      badge: (
-        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${inc.severity === "high" || inc.severity === "critical" ? "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-300" : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-300"}`}>
-          {inc.severity}
-        </span>
-      ),
-      action: assignedTech ? (
-        <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 shrink-0">
-          Tech: {assignedTech.name ?? assignedTech.email}
-        </span>
-      ) : (
-        <AssignIncidentButton incidentId={inc.id} technicians={techs} />
-      ),
-      to: "/platform/field-incidents",
-    };
+  const listTicketsFn = useServerFn(listOpenFieldIncidents);
+  const { data: openTickets, isLoading: ticketsLoading } = useQuery({
+    queryKey: ["open-field-tickets"],
+    queryFn: () => listTicketsFn(),
+    refetchInterval: 30_000,
   });
+  const incList = (openTickets ?? []) as Array<{ id: string; category: string; severity: string; status: string; created_at: string; notes?: string | null; assigned_to?: string | null; reporter_user_id?: string }>;
 
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -462,9 +453,83 @@ export function ManagerBento({
       <BentoCard title="QC queue" icon={ClipboardCheck} count={qcQueue.length} to="/grain-batches"
         tooltip="Batches in the QC pipeline. Assign a technician to arrived trucks, then review submitted reports."
         rows={qcRows} empty="No batches pending QC." />
-      <BentoCard title="Open field incidents" icon={AlertTriangle} count={incList.length} to="/platform/field-incidents"
-        tooltip="Active field incidents with affected batches. Assign 1 technician per incident."
-        rows={incidentRows} empty="No open field incidents." />
+      {/* ── Open Field Incidents – self-fetching, scrollable ── */}
+      <div className="rounded-xl border bg-card/60 flex flex-col min-h-0">
+        <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <h3 className="text-xs font-semibold truncate">Open field incidents</h3>
+            <InfoDot text="Active field incidents — click Discuss to open the thread." />
+            {incList.length > 0 && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                {incList.length}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              id="manager-new-ticket-btn"
+              onClick={() => setTicketDialogOpen(true)}
+              className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+              title="Report a new field incident ticket"
+            >
+              <Plus className="h-3 w-3" /> New Ticket
+            </button>
+            <Link to="/platform/field-incidents" search={{} as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+              View all
+            </Link>
+          </div>
+        </header>
+        <div className="overflow-y-auto max-h-[260px]">
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : incList.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-3 py-6 text-center">No open field incidents.</p>
+          ) : (
+            <ul className="divide-y">
+              {incList.map((inc) => (
+                <li key={inc.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium truncate">{inc.category}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {new Date(inc.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActiveDiscussionTicket({
+                        id: inc.id,
+                        category: inc.category,
+                        severity: inc.severity,
+                        status: inc.status,
+                        notes: inc.notes,
+                        created_at: inc.created_at,
+                      });
+                      setDiscussionOpen(true);
+                    }}
+                    className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
+                    title="Open discussion thread"
+                  >
+                    <MessageSquare className="h-3 w-3" /> Discuss
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+      <ReportTicketDialog
+        open={ticketDialogOpen}
+        onOpenChange={setTicketDialogOpen}
+        silos={silos}
+      />
+      <TicketDiscussionDialog
+        open={discussionOpen}
+        onOpenChange={setDiscussionOpen}
+        incident={activeDiscussionTicket}
+      />
       <BentoCard title="Dispatch queue" icon={Truck} count={dispatchQueue.length} to="/grain-batches"
         tooltip="Batches ready to be dispatched to buyers."
         rows={dispatchRows} empty="Nothing ready to ship." />
