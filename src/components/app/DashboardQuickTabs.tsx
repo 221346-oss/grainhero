@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouterState, useNavigate, Link } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -31,6 +32,9 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { AlertCard } from "@/components/ui/alert-card";
+
+const MAX_TABS = 5;
 
 type AdminTabKey =
   | "overview"
@@ -206,20 +210,22 @@ export function DashboardQuickTabs() {
   ) as TabKey[];
   const validKeys = new Set(CATALOG.map((c) => c.key));
   const [tabs, setTabs] = useState<TabKey[]>(DEFAULT);
+  const [slotsFullAlert, setSlotsFullAlert] = useState(false);
   useEffect(() => {
     setTabs(readStored(STORAGE, DEFAULT, validKeys));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuperAdmin, isManager]);
 
   function toggle(k: TabKey) {
-    setTabs((cur) => {
-      const has = cur.includes(k);
-      let next = has ? cur.filter((x) => x !== k) : [...cur, k];
-      if (!has && next.length > 5) next = next.slice(-5);
-      if (!next.includes("overview")) next = (["overview", ...next] as TabKey[]).slice(0, 5);
-      localStorage.setItem(STORAGE, JSON.stringify(next));
-      return next;
-    });
+    const has = tabs.includes(k);
+    if (!has && tabs.length >= MAX_TABS) {
+      setSlotsFullAlert(true);
+      return;
+    }
+    let next = has ? tabs.filter((x) => x !== k) : [...tabs, k];
+    if (!next.includes("overview")) next = (["overview", ...next] as TabKey[]).slice(0, MAX_TABS);
+    localStorage.setItem(STORAGE, JSON.stringify(next));
+    setTabs(next);
   }
 
   // Hover-to-open: pointing at a tab navigates to its screen after a short
@@ -324,6 +330,23 @@ export function DashboardQuickTabs() {
           </PopoverContent>
         </Popover>
       </div>
+
+      {typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <AlertCard
+              className="pointer-events-auto"
+              isVisible={slotsFullAlert}
+              title="Slots are full"
+              description={`You can pin up to ${MAX_TABS} tabs. Remove one before adding another.`}
+              buttonText="Got it"
+              icon={<Bell className="h-5 w-5 text-destructive-foreground" />}
+              onButtonClick={() => setSlotsFullAlert(false)}
+              onDismiss={() => setSlotsFullAlert(false)}
+            />
+          </div>,
+          document.body,
+        )}
     </TooltipProvider>
   );
 }
