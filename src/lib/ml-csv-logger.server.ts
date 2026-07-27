@@ -14,12 +14,6 @@ type MLCSVData = {
 
 export function appendToMLDataset(data: MLCSVData) {
   try {
-    const csvDir = path.resolve(process.cwd(), "src/ml");
-    if (!fs.existsSync(csvDir)) {
-      fs.mkdirSync(csvDir, { recursive: true });
-    }
-    const csvPath = path.resolve(csvDir, "rice_spoilage_10k.csv");
-
     const t = data.temperature;
     const rh = data.humidity;
 
@@ -63,10 +57,11 @@ export function appendToMLDataset(data: MLCSVData) {
       data.pestScore > 0.5 ? 1 : 0,
       data.moisture.toFixed(2),
       rainfallVal.toFixed(1),
-    ].join(',') + '\n';
+    ].join(',');
 
-    fs.appendFileSync(csvPath, row);
-    console.log(`[ML Logger] 📊 Appended reading to training dataset (label=${spoilageLabel})`);
+    // Local disk logging disabled for serverless compatibility
+    // fs.appendFileSync(csvPath, row + '\n');
+    console.log(`[ML Logger] 📊 Edge-compatible log (label=${spoilageLabel}): ${row}`);
   } catch (err) {
     console.warn(`[ML Logger] CSV append warning:`, (err as Error).message);
   }

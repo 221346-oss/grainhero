@@ -19,8 +19,6 @@ dist-ssr
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
-package-lock.json
-
 
 # Editor directories and files
 .vscode/*
@@ -33,8 +31,9 @@ package-lock.json
 *.sln
 *.sw?
 
-# Environment variables — keep root .env tracked for public Supabase config,
+# Environment variables — keep root .env tracked for shared public app config,
 # but continue ignoring local/secret environment variants.
 .env.*
 !.env.example
+!.env
 

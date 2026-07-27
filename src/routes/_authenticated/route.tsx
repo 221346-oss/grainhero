@@ -4,33 +4,44 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSearch } from "@/components/app/AppSearch";
-import { AppSidebar } from "@/components/app/AppSidebar";
+import { AppSidebar, type SidebarMode } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
+import { ProfileMenu } from "@/components/app/ProfileMenu";
 import { Sun, Moon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
-import { useMyProfile, initialsOf } from "@/hooks/useMyProfile";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
+import { BugReportButton } from "@/components/app/BugReportButton";
+import { TicketSidePanel } from "@/components/app/tickets/TicketSidePanel";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
+import TextShimmer from "@/components/ui/text-shimmer";
+import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  // Full app-chrome skeleton while the auth check runs on first paint.
+  pendingComponent: AppShellSkeleton,
   beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth/login" });
 
     // Role-aware guardrails: block super_admins from tenant-operational
     // routes, and redirect them off tenant pages that have a canonical
-    // platform equivalent (avoid two lenses on the same data).
+    // platform equivalent (avoid two lenses on the same data). Silos,
+    // warehouses, and grain batches were consolidated into the tabbed
+    // /grain-operations workspace — that's what's blocked now, not the old
+    // standalone paths. /silos/:siloId (the detail view) is still a real
+    // standalone route (linked from attention.tsx, ManagerBento.tsx), so it
+    // stays blocked too, via the "/silos/" sub-route prefix.
     const OPERATIONAL_PREFIXES = [
-      "/silos", "/warehouses", "/grain-batches", "/sensors", "/actuators",
+      "/grain-operations", "/silos/", "/sensors", "/actuators",
     ];
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
       "/team-management": "/platform/users",
-      "/data-visualization": "/analytics",
       "/traceability": "/dashboard",
       "/orders": "/platform/orders",
     };
@@ -66,37 +77,103 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-  const { data: profile } = useMyProfile();
-  const avatar = profile?.avatar ?? null;
-  const initials = initialsOf(profile?.name, profile?.email);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mode, setMode] = useState<ThemeMode>(() =>
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Desktop sidebar tri-state (expanded / collapsed-icon-rail / hidden),
+  // persisted so it survives reloads. Falls back to the legacy boolean key
+  // so existing users' saved preference carries over.
+  const [sidebarMode, setSidebarModeState] = useState<SidebarMode>(() => {
+    if (typeof window === "undefined") return "collapsed";
+    const stored = localStorage.getItem("gh_sidebar_mode");
+    if (stored === "expanded" || stored === "collapsed" || stored === "hidden") return stored;
+    return localStorage.getItem("gh_sidebar_collapsed") === "false" ? "expanded" : "collapsed";
+  });
+  // Persisted mode changes — explicit user actions (logo click, collapse,
+  // hide, show-from-hidden). Scroll-driven auto-collapse below intentionally
+  // bypasses this and writes state only, so it doesn't clobber the user's
+  // saved preference for next visit.
+  const setSidebarMode = (next: SidebarMode) => {
+    setSidebarModeState(next);
+    try { localStorage.setItem("gh_sidebar_mode", next); } catch { /* ignore */ }
+  };
+  const [headerVisible, setHeaderVisible] = useState(true);
 
   useEffect(() => {
     const stored = getStoredThemeMode();
     setMode(stored);
   }, []);
 
+  // Close sidebar on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const handleToggle = () => {
     const next = toggleThemeMode();
     setMode(next);
   };
+
+  // Floating header/sidebar — slide away on scroll-down, back on scroll-up.
+  // The page body (not <main>) is what actually scrolls here — the layout
+  // is min-h-screen, not h-screen, so <main>'s overflow-y-auto never gets
+  // short enough to scroll internally. Listen on window, same as the
+  // landing page's nav.
+  const [navHidden, setNavHidden] = useState(false);
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      const y = window.scrollY;
+      const scrollingDown = y > lastScrollY && y > 4;
+      setNavHidden(scrollingDown);
+      if (scrollingDown) setSidebarModeState((m) => (m === "expanded" ? "collapsed" : m));
+      lastScrollY = y;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Every page should start the same way: header visible, scrolled to top —
+  // otherwise leftover scroll state from the previous page (e.g. hidden
+  // header from scrolling down on Grain Operations) carries over and makes
+  // the next page look different on arrival.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setNavHidden(false);
+  }, [pathname]);
+
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SessionGuard />
       <OnboardingTour />
-      <div className="min-h-screen flex w-full bg-background">
+      <BugReportButton />
+      <div className="app-scope min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
-          <AppSidebar />
+          <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
-          <header className="h-14 flex items-center gap-2 sm:gap-3 border-b border-border/60 bg-background/85 backdrop-blur-md px-3 sm:px-6 sticky top-0 z-30">
+          <motion.header
+            initial="visible"
+            animate={navHidden ? "hidden" : "visible"}
+            variants={{
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
+              hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
+            }}
+            className="h-14 flex items-center gap-2 sm:gap-3 rounded-2xl bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
+          >
             <div className="flex-1 max-w-2xl mx-auto w-full">
               <AppSearch />
             </div>
             <DashboardQuickTabs />
+            <AdminUpgradeLink />
+            <TicketSidePanel />
             {/* Dark / Light toggle */}
             <button
               type="button"
@@ -109,27 +186,28 @@ function AuthenticatedLayout() {
                 : <Moon className="h-4 w-4" />}
             </button>
             <NotificationBell />
-            <Link
-              to="/settings"
-              aria-label="Your profile"
-              data-tour="topbar-profile"
-              className="shrink-0 h-9 w-9 rounded-full grid place-items-center text-[12px] font-bold text-[--fusion-ink] shadow-sm relative overflow-hidden ring-1 ring-black/5 hover:ring-[--fusion-grape]/60 transition"
-              style={avatar ? undefined : { background: "var(--gradient-fusion)" }}
-            >
-              {avatar ? (
-                <img src={avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              ) : (
-                <span>{initials}</span>
-              )}
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[--fusion-grape] ring-2 ring-background" />
-            </Link>
-          </header>
-          <main className="flex-1 overflow-y-auto overflow-x-hidden">
+            <ProfileMenu />
+          </motion.header>
+          <main className="flex-1 overflow-x-hidden">
             <AnimatedOutlet />
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+// Only tenant admins see the Upgrade shortcut in the topbar.
+function AdminUpgradeLink() {
+  const { role } = useIsSuperAdmin();
+  if (role !== "admin") return null;
+  return (
+    <Link
+      to="/plan-management"
+      className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+    >
+      <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
+    </Link>
   );
 }
 

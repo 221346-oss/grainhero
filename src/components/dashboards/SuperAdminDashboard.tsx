@@ -71,6 +71,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
 
   const reporting = w?.reportingStats ?? { totalTickets: 0 };
 
+  const signups30 = (w?.signupsSeries ?? []).reduce((acc: number, p: any) => acc + (p.count ?? 0), 0);
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">

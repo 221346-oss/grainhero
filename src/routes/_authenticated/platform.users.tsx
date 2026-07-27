@@ -5,9 +5,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
 import { saveImpersonationSession } from "@/components/app/ImpersonationBanner";
@@ -23,12 +23,12 @@ export const Route = createFileRoute("/_authenticated/platform/users")({ compone
 
 type Row = { id: string; name: string | null; email: string | null; business_type: string | null; blocked: boolean | null; email_verified: boolean | null; created_at: string | null; last_login: string | null; role: string; admin_id: string | null };
 
-const ROLE_BADGE: Record<string, string> = {
-  super_admin: "bg-red-100 text-red-700 border-red-200",
-  admin: "bg-purple-100 text-purple-700 border-purple-200",
-  manager: "bg-blue-100 text-blue-700 border-blue-200",
-  technician: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  pending: "bg-amber-100 text-amber-700 border-amber-200",
+const ROLE_TEXT: Record<string, string> = {
+  super_admin: "text-destructive",
+  admin: "text-primary",
+  manager: "text-chart-3",
+  technician: "text-chart-4",
+  pending: "text-muted-foreground",
 };
 
 function UsersPage() {
@@ -128,62 +128,73 @@ function UsersPage() {
             <p className="text-sm">No users found</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {filtered.map((u) => (
-              <div key={u.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-900 truncate">{u.name ?? "Unnamed user"}</div>
-                  <div className="text-xs text-slate-500 truncate">
-                    {u.email}
-                    {u.created_at && <span className="ml-2 text-slate-400">• Joined {new Date(u.created_at).toLocaleDateString()}</span>}
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline" className={ROLE_BADGE[u.role] ?? ROLE_BADGE.pending}>
-                      {u.role.replace("_", " ")}
-                    </Badge>
-                    {u.blocked && <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Blocked</Badge>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {u.role === "admin" && !u.blocked && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={impersonate.isPending}
-                        onClick={() => impersonate.mutate(u.id)}
-                        className="text-blue-600 hover:bg-blue-50 border-blue-200"
-                      >
-                        <UserCog className="h-3 w-3 mr-1" />
-                        View as
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant={u.blocked ? "default" : "outline"}
-                      disabled={toggle.isPending}
-                      onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
-                      className={u.blocked ? "bg-emerald-600 hover:bg-emerald-700" : "text-red-600 hover:bg-red-50 border-red-200"}
-                    >
-                      {u.blocked ? "Unblock" : "Block"}
-                    </Button>
-                  </div>
-                </div >
-                <Badge variant="outline" className={ROLE_BADGE[u.role] ?? ROLE_BADGE.pending}>
-                  {u.role.replace("_", " ")}
-                </Badge>
-                {u.blocked && <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Blocked</Badge>}
-                <Button
-                  size="sm"
-                  variant={u.blocked ? "default" : "outline"}
-                  disabled={toggle.isPending}
-                  onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
-                  className={u.blocked ? "bg-emerald-600 hover:bg-emerald-700" : "text-red-600 hover:bg-red-50 border-red-200"}
-                >
-                  {u.blocked ? "Unblock" : "Block"}
-                </Button>
-              </div >
-            ))
-            }
-          </div >
+          <div className="p-2">
+            <Table className="border-separate border-spacing-0">
+              <TableHeader className="[&_tr]:border-0">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="h-10 font-normal text-muted-foreground">User</TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground">Role</TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground">Joined</TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <tbody aria-hidden="true" className="h-2" />
+              <TableBody>
+                {filtered.map((u) => (
+                  <TableRow
+                    key={u.id}
+                    className="border-0 hover:bg-muted/40 [&>td]:border-0 [&_td:first-child]:rounded-s-lg [&_td:last-child]:rounded-e-lg"
+                  >
+                    <TableCell className="py-3">
+                      <div className="font-medium truncate">{u.name ?? "Unnamed user"}</div>
+                      <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`text-sm font-medium ${ROLE_TEXT[u.role] ?? ROLE_TEXT.pending}`}>
+                        {u.role.replace("_", " ")}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {u.blocked ? (
+                        <span className="text-sm font-medium text-destructive">Blocked</span>
+                      ) : (
+                        <span className="text-sm font-medium text-primary">Active</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {u.role === "admin" && !u.blocked && (
+                          <Button
+                            size="sm"
+                            variant="link"
+                            disabled={impersonate.isPending}
+                            onClick={() => impersonate.mutate(u.id)}
+                            className="h-auto p-0 text-primary"
+                          >
+                            <UserCog className="me-1 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
+                            View as
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="link"
+                          disabled={toggle.isPending}
+                          onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
+                          className={`h-auto p-0 ${u.blocked ? "text-primary" : "text-destructive"}`}
+                        >
+                          {u.blocked ? "Unblock" : "Block"}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </AdminDataCard >
     </AdminPageShell >

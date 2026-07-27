@@ -38,11 +38,11 @@ export function ManagerKpiSummary({
   const fill = k?.fillPct ?? 0;
   const fmtKg = (n: number) => `${Math.round(n / 1000).toLocaleString()}t`;
   const rows = [
-    { label: "Active batches", value: k?.batchesActive ?? "—", to: "/grain-batches" },
-    { label: "QC pending", value: k?.qcPending ?? "—", to: "/grain-batches" },
-    { label: "Ready to dispatch", value: k?.dispatchReady ?? "—", to: "/grain-batches" },
-    { label: "Open alerts", value: k?.alertsOpen ?? "—", to: "/grain-alerts" },
-    { label: "Open orders", value: k?.ordersOpen ?? "—", to: "/orders" },
+    { label: "Active batches", value: k?.batchesActive ?? "—", to: "/grain-operations", search: { tab: "batches" } },
+    { label: "QC pending", value: k?.qcPending ?? "—", to: "/grain-operations", search: { tab: "batches" } },
+    { label: "Ready to dispatch", value: k?.dispatchReady ?? "—", to: "/grain-operations", search: { tab: "batches" } },
+    { label: "Open alerts", value: k?.alertsOpen ?? "—", to: "/grain-alerts", search: undefined as { tab: string } | undefined },
+    { label: "Open orders", value: k?.ordersOpen ?? "—", to: "/orders", search: undefined as { tab: string } | undefined },
   ];
 
   return (
@@ -58,7 +58,8 @@ export function ManagerKpiSummary({
       <div className="grid gap-2 md:grid-cols-[1fr_35%]">
         {/* Silo Fill hero */}
         <Link
-          to="/silos"
+          to="/grain-operations"
+          search={{ tab: "silos" }}
           className="group rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
@@ -97,6 +98,7 @@ export function ManagerKpiSummary({
               <li key={r.label}>
                 <Link
                   to={r.to}
+                  search={r.search as never}
                   className="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
                 >
                   <span className="text-xs text-foreground">{r.label}</span>

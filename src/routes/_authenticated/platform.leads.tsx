@@ -48,7 +48,7 @@ function LeadsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-transparent">
                 <tr>
                   <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Name</th>
                   <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Email</th>
@@ -57,7 +57,7 @@ function LeadsPage() {
                   <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="">
                 {(data?.results ?? []).map((c: any) => {
                   const fullName = [c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(" ");
                   return (

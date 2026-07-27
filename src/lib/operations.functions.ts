@@ -3,6 +3,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
+import { requireRole } from "@/lib/rbac.server";
+
+// Roles allowed to rename a silo/warehouse — same allow-list used for team
+// invite/manage (see inviteTeamMember/updateTeamMember in
+// team-settings-insurance.functions.ts). Technicians are excluded.
+const RENAME_ROLES = ["super_admin", "admin", "manager"] as const;
 
 // Turn ZodError into a readable one-liner so the client toast is helpful.
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
@@ -29,7 +35,9 @@ export const listWarehouses = createServerFn({ method: "GET" })
 const warehouseInput = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1).max(200),
-  warehouse_id: z.string().min(1).max(50),
+  // Auto-generated on insert if omitted (same pattern as silo_id below) —
+  // the create-warehouse form has no field for this and never sends one.
+  warehouse_id: z.string().min(1).max(50).optional(),
   location_description: z.string().max(500).optional().nullable(),
   address: z.string().max(500).optional().nullable(),
   total_capacity_kg: z.number().nonnegative().optional().nullable(),
@@ -57,30 +65,71 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
       description: data.location_description ?? null,
       address: data.address ?? null,
     };
-    const payload = {
-      name: data.name,
-      warehouse_id: data.warehouse_id,
-      location,
-      total_capacity_kg: data.total_capacity_kg ?? null,
-      status: data.status,
-      notes: data.notes ?? null,
-      admin_id: tenantAdminId,
-      created_by: context.userId,
-      updated_by: context.userId,
-    };
     if (data.id) {
+      // Update: don't touch warehouse_id (immutable, same convention as silos).
+      // Renaming (changing `name`) is gated to admin/manager/super_admin —
+      // same allow-list as team invite/manage — everything else in this
+      // form stays open to whoever could already edit a warehouse.
+      const { data: current } = await context.supabase
+        .from("warehouses")
+        .select("name")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (current && current.name !== data.name) {
+        await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+      }
       const { data: row, error } = await context.supabase
         .from("warehouses")
-        .update({ ...payload, updated_by: context.userId })
+        .update({
+          name: data.name,
+          location,
+          total_capacity_kg: data.total_capacity_kg ?? null,
+          status: data.status,
+          notes: data.notes ?? null,
+          updated_by: context.userId,
+        })
         .eq("id", data.id)
         .select("*")
         .single();
       if (error) throw error;
       return row;
     }
+    // Insert: auto-generate warehouse_id if not provided.
+    const warehouseId = data.warehouse_id ?? `WH-${Date.now().toString().slice(-8)}`;
     const { data: row, error } = await context.supabase
       .from("warehouses")
-      .insert(payload)
+      .insert({
+        name: data.name,
+        warehouse_id: warehouseId,
+        location,
+        total_capacity_kg: data.total_capacity_kg ?? null,
+        status: data.status,
+        notes: data.notes ?? null,
+        admin_id: tenantAdminId,
+        created_by: context.userId,
+        updated_by: context.userId,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+const renameInput = z.object({ id: z.string().uuid(), name: z.string().min(1).max(200) });
+
+// Dedicated, minimal rename endpoint for the pencil-icon inline rename UI —
+// only touches `name`, doesn't require reconstructing every other field of
+// the row. Role-gated to admin/manager/super_admin (technicians excluded),
+// same allow-list as team invite/manage.
+export const renameWarehouse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => parseOrThrow(renameInput, d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+    const { data: row, error } = await context.supabase
+      .from("warehouses")
+      .update({ name: data.name, updated_by: context.userId })
+      .eq("id", data.id)
       .select("*")
       .single();
     if (error) throw error;
@@ -128,7 +177,21 @@ export const upsertSilo = createServerFn({ method: "POST" })
     }
     const location = { description: data.location_description ?? null };
     if (data.id) {
-      // Update: don't touch silo_id or name (immutable per original app)
+      // Update: silo_id (the auto-generated code) stays immutable. `name`
+      // is user-editable, but renaming (changing it) is gated to
+      // admin/manager/super_admin — same allow-list as team invite/manage —
+      // everything else in this form stays open to whoever could already
+      // edit a silo.
+      if (data.name) {
+        const { data: current } = await context.supabase
+          .from("silos")
+          .select("name")
+          .eq("id", data.id)
+          .maybeSingle();
+        if (current && current.name !== data.name) {
+          await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+        }
+      }
       const { data: row, error } = await context.supabase
         .from("silos")
         .update({
@@ -138,6 +201,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
           status: data.status,
           notes: data.notes ?? null,
           updated_by: context.userId,
+          ...(data.name ? { name: data.name } : {}),
         })
         .eq("id", data.id)
         .select("*")
@@ -168,6 +232,25 @@ export const upsertSilo = createServerFn({ method: "POST" })
         admin_id: tenantAdminId,
         created_by: context.userId,
       })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return row;
+  });
+
+// Dedicated, minimal rename endpoint for the pencil-icon inline rename UI —
+// only touches `name` (not silo_id, which stays immutable), doesn't require
+// reconstructing every other field of the row. Role-gated to
+// admin/manager/super_admin, same allow-list as team invite/manage.
+export const renameSilo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => parseOrThrow(renameInput, d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+    const { data: row, error } = await context.supabase
+      .from("silos")
+      .update({ name: data.name, updated_by: context.userId })
+      .eq("id", data.id)
       .select("*")
       .single();
     if (error) throw error;
@@ -243,6 +326,15 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
     if (!data.id) {
       await assertPlanAllows({ feature: "max_batches", sb: context.supabase, userId: context.userId });
     }
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    // Managers/technicians have profiles.admin_id set to their tenant admin; admins have it null.
+    const { data: prof, error: profErr } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (profErr) throw profErr;
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     // resolve warehouse from silo
     const { data: silo, error: siloErr } = await context.supabase
       .from("silos").select("id, warehouse_id, capacity_kg, current_occupancy_kg").eq("id", data.silo_id).single();
@@ -292,6 +384,19 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       return row;
     }
 
+    // Intake capacity check: a silo now holds many mixed batches, so every
+    // new intake must fit in whatever room is left (capacity - current stock).
+    if (data.silo_id != null) {
+      const currentOccupancy = Number(silo.current_occupancy_kg ?? 0);
+      const capacity = silo.capacity_kg != null ? Number(silo.capacity_kg) : null;
+      if (capacity != null && currentOccupancy + data.quantity_kg > capacity) {
+        const free = Math.max(0, capacity - currentOccupancy);
+        throw new Error(
+          `Silo capacity exceeded: only ${free.toLocaleString()}kg free (capacity ${capacity.toLocaleString()}kg, already holding ${currentOccupancy.toLocaleString()}kg), tried to add ${data.quantity_kg.toLocaleString()}kg.`
+        );
+      }
+    }
+
     const batchId = data.batch_id ?? `${data.grain_type.slice(0,3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const qrPayload = `GH-${batchId}-${Date.now()}`;
     const { data: row, error } = await context.supabase
@@ -299,7 +404,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       .insert({
         batch_id: batchId,
         qr_code: qrPayload,
-        admin_id: context.userId,
+        admin_id: tenantAdminId,
         silo_id: data.silo_id,
         warehouse_id: silo.warehouse_id,
         grain_type: data.grain_type,
@@ -328,12 +433,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       .select("*").single();
     if (error) throw error;
 
-    // update silo occupancy and current_batch link
+    // Update silo stock only. A silo now holds many mixed batches, so we no
+    // longer point current_batch_id/batch_loaded_date at a single intake.
     await context.supabase.from("silos").update({
       current_occupancy_kg: (silo.current_occupancy_kg ?? 0) + data.quantity_kg,
-      current_batch_id: row.id,
-      batch_loaded_date: new Date().toISOString(),
-      batch_dispatched_date: null,
       updated_by: context.userId,
     }).eq("id", data.silo_id);
 
@@ -376,6 +479,13 @@ const dispatchInput = z.object({
   notes: z.string().optional().nullable(),
 });
 
+/**
+ * @deprecated Batch-based dispatch. Silos now hold mixed grain from many
+ * intake batches, so dispatching "a batch" no longer models reality. Use
+ * `createDispatchFromSilo` (dispatches.functions.ts) instead. Kept only for
+ * backward compatibility with any remaining callers/legacy data — do not
+ * wire new UI to this.
+ */
 export const dispatchGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(dispatchInput, d))
@@ -383,8 +493,15 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
     let buyerId = data.buyer_id ?? null;
     if (!buyerId && data.new_buyer?.name) {
       await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
+      // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+      const { data: prof } = await context.supabase
+        .from("profiles")
+        .select("id, admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
       const { data: b, error: bErr } = await context.supabase.from("buyers").insert({
-        admin_id: context.userId,
+        admin_id: tenantAdminId,
         name: data.new_buyer.name,
         contact_name: data.new_buyer.name,
         contact_phone: data.new_buyer.contact_phone ?? null,
@@ -446,6 +563,30 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
 
     return row;
   });
+
+// Aggregate `dispatches` (new silo-based model) revenue/profit per tenant.
+// Shared by analytics/dashboard reads that need to merge legacy per-batch
+// numbers (grain_batches.revenue/profit) with the new model — see the
+// dispatch-refactor TODOs in analytics.functions.ts / dashboard-extras.functions.ts /
+// platform-overviews.functions.ts.
+export async function fetchDispatchTotals(
+  supabase: any,
+): Promise<Array<{ admin_id: string; revenue: number; profit: number }>> {
+  // grain_dispatches is the live table (written by createDispatchFromSilo in
+  // dispatches.functions.ts) — its revenue column is `total_amount`, not
+  // `revenue` (that was the now-dead `dispatches` table's naming).
+  const { data, error } = await supabase.from("grain_dispatches").select("admin_id, total_amount, profit").limit(10000);
+  if (error) throw error;
+  const map = new Map<string, { admin_id: string; revenue: number; profit: number }>();
+  for (const d of (data ?? []) as Array<{ admin_id: string; total_amount: number | null; profit: number | null }>) {
+    const key = d.admin_id ?? "unknown";
+    const cur = map.get(key) ?? { admin_id: key, revenue: 0, profit: 0 };
+    cur.revenue += Number(d.total_amount ?? 0);
+    cur.profit += Number(d.profit ?? 0);
+    map.set(key, cur);
+  }
+  return Array.from(map.values());
+}
 
 const spoilageInput = z.object({
   id: z.string().uuid(),
@@ -563,10 +704,17 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
       return row;
     }
     const deviceId = data.device_id ?? `DEV-${Date.now().toString().slice(-8)}`;
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const { data: row, error } = await context.supabase.from("sensor_devices").insert({
       ...base,
       device_id: deviceId,
-      admin_id: context.userId,
+      admin_id: tenantAdminId,
       created_by: context.userId,
     }).select("*").single();
     if (error) throw error;
@@ -659,7 +807,10 @@ export const upsertActuator = createServerFn({ method: "POST" })
     if (!data.id) {
       await assertPlanAllows({ feature: "max_actuators", sb: context.supabase, userId: context.userId });
     }
-    const payload = {
+    // admin_id is intentionally excluded from this shared base — it must
+    // never be rewritten on update (RLS requires it stay
+    // get_tenant_admin_id(auth.uid()); only set once, on insert, below).
+    const base = {
       actuator_id: data.actuator_id,
       name: data.name,
       actuator_type: data.actuator_type,
@@ -674,23 +825,28 @@ export const upsertActuator = createServerFn({ method: "POST" })
       target_fan_speed: data.target_fan_speed ?? null,
       tags: data.tags ?? null,
       notes: data.notes ?? null,
-      admin_id: context.userId,
-      created_by: context.userId,
       updated_by: context.userId,
     };
     if (data.id) {
       const { data: row, error } = await context.supabase
         .from("actuators")
-        .update({ ...payload, updated_by: context.userId })
+        .update(base)
         .eq("id", data.id)
         .select("*")
         .single();
       if (error) throw error;
       return row;
     }
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const { data: row, error } = await context.supabase
       .from("actuators")
-      .insert(payload)
+      .insert({ ...base, admin_id: tenantAdminId, created_by: context.userId })
       .select("*")
       .single();
     if (error) throw error;
@@ -809,7 +965,11 @@ export const upsertGrainAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(alertInput, d))
   .handler(async ({ data, context }) => {
-    const payload = {
+    // admin_id (and created_by) are intentionally excluded from this shared
+    // base — admin_id must never be rewritten on update (RLS requires it
+    // stay get_tenant_admin_id(auth.uid())); both are only set once, on
+    // insert, below.
+    const base = {
       alert_id: data.alert_id,
       title: data.title,
       message: data.message,
@@ -821,23 +981,32 @@ export const upsertGrainAlert = createServerFn({ method: "POST" })
       warehouse_id: data.warehouse_id ?? null,
       batch_id: data.batch_id ?? null,
       tags: data.tags ?? null,
-      admin_id: context.userId,
-      created_by: context.userId,
-      triggered_at: new Date().toISOString(),
     };
     if (data.id) {
       const { data: row, error } = await context.supabase
         .from("grain_alerts")
-        .update(payload)
+        .update(base)
         .eq("id", data.id)
         .select("*")
         .single();
       if (error) throw error;
       return row;
     }
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const { data: row, error } = await context.supabase
       .from("grain_alerts")
-      .insert(payload)
+      .insert({
+        ...base,
+        admin_id: tenantAdminId,
+        created_by: context.userId,
+        triggered_at: new Date().toISOString(),
+      })
       .select("*")
       .single();
     if (error) throw error;
@@ -957,6 +1126,9 @@ export const upsertBuyer = createServerFn({ method: "POST" })
     if (!data.id) {
       await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
     }
+    // admin_id is intentionally excluded from this shared payload — it must
+    // never be rewritten on update (RLS requires it stay
+    // get_tenant_admin_id(auth.uid())); only set once, on insert, below.
     const payload = {
       name: data.name,
       contact_name: data.contact_name,
@@ -975,7 +1147,6 @@ export const upsertBuyer = createServerFn({ method: "POST" })
       rating: data.rating ?? null,
       tags: data.tags ?? null,
       notes: data.notes ?? null,
-      admin_id: context.userId,
     };
     if (data.id) {
       const { data: row, error } = await context.supabase
@@ -987,9 +1158,16 @@ export const upsertBuyer = createServerFn({ method: "POST" })
       if (error) throw error;
       return row;
     }
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const { data: row, error } = await context.supabase
       .from("buyers")
-      .insert(payload)
+      .insert({ ...payload, admin_id: tenantAdminId })
       .select("*")
       .single();
     if (error) throw error;
@@ -1015,13 +1193,13 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       context.supabase.from("grain_batches").select("id, status", { count: "exact" }).limit(1000),
       context.supabase.from("sensor_devices").select("id, status", { count: "exact" }).limit(1000),
       context.supabase.from("actuators").select("id, status", { count: "exact" }).limit(1000),
-      context.supabase.from("grain_alerts").select("id, status, alert_type", { count: "exact" }).limit(1000),
+      context.supabase.from("grain_alerts").select("id, status, priority", { count: "exact" }).limit(1000),
       context.supabase.from("buyers").select("id", { count: "exact", head: true }),
     ]);
     const batchesData = (batches.data ?? []) as Array<{ status: string | null }>;
     const sensorsData = (sensors.data ?? []) as Array<{ status: string | null }>;
     const actuatorsData = (actuators.data ?? []) as Array<{ status: string | null }>;
-    const alertsData = (alerts.data ?? []) as Array<{ status: string | null; alert_type: string | null }>;
+    const alertsData = (alerts.data ?? []) as Array<{ status: string | null; priority: string | null }>;
     return {
       warehouses: warehouses.count ?? 0,
       silos: silos.count ?? 0,
@@ -1040,8 +1218,12 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       },
       alerts: {
         total: alerts.count ?? 0,
-        open: alertsData.filter((a) => a.status === "open" || a.status === "active").length,
-        critical: alertsData.filter((a) => a.alert_type === "critical" || a.alert_type === "high").length,
+        // grain_alerts.status is the `pending|acknowledged|resolved|escalated` enum —
+        // "open" means anything not yet resolved. Severity lives in `priority`
+        // (`low|medium|high|critical`); `alert_type` is the notification channel
+        // (SMS/email/in-app/...), never "critical"/"high", so that check always matched zero rows.
+        open: alertsData.filter((a) => a.status !== "resolved").length,
+        critical: alertsData.filter((a) => a.priority === "critical" || a.priority === "high").length,
       },
     };
   });

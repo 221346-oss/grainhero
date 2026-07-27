@@ -91,14 +91,13 @@ export const advanceMyDealStage = createServerFn({ method: "POST" })
 export const trackLoginAndAdvance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: prof } = await supabaseAdmin
+    const { data: prof } = await context.supabase
       .from("profiles")
       .select("login_count, hubspot_deal_id")
       .eq("id", context.userId)
       .maybeSingle();
     const newCount = (prof?.login_count ?? 0) + 1;
-    await supabaseAdmin
+    await context.supabase
       .from("profiles")
       .update({ login_count: newCount, last_login: new Date().toISOString() })
       .eq("id", context.userId);

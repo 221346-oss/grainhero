@@ -66,7 +66,7 @@ export async function syncSubscriptionFromStripe(
     cancel_at_period_end?: boolean;
     latest_invoice?: string | null;
     metadata?: Record<string, string>;
-    items?: { data: Array<{ price: { unit_amount: number; currency: string; recurring?: { interval: string } } }> };
+    items?: { data: Array<{ id: string; price: { id: string; unit_amount: number; currency: string; recurring?: { interval: string }; metadata?: Record<string, string> } }> };
   };
 
   const { data: prof } = await supabaseAdmin
@@ -82,6 +82,7 @@ export async function syncSubscriptionFromStripe(
   const planName = PLAN_NAME_MAP[planId] ?? "Custom";
   const limits = PLAN_LIMITS[planId] ?? PLAN_LIMITS.basic;
   const price = sub.items?.data[0]?.price;
+  const itemId = sub.items?.data[0]?.id ?? null;
   const interval = price?.recurring?.interval ?? "month";
   const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
   const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial", "trialing", "past_due"]);
@@ -123,6 +124,27 @@ export async function syncSubscriptionFromStripe(
     .select("*")
     .maybeSingle();
   if (error) throw error;
+
+  // Mirror Stripe truth onto profiles so the plan-management UI and
+  // proration preview can find the subscription without a Stripe round trip.
+  try {
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        stripe_subscription_id: sub.id,
+        stripe_subscription_item_id: itemId,
+        stripe_subscription_status: status,
+        subscription_plan: planId,
+        billing_cycle: billingCycle,
+        current_period_end: sub.current_period_end
+          ? new Date(sub.current_period_end * 1000).toISOString()
+          : null,
+      } as never)
+      .eq("id", adminId);
+  } catch (e) {
+    console.warn("[billing-sync] profile mirror failed:", (e as Error).message);
+  }
+
   return { row: data, adminId, planId, planName };
 }
 

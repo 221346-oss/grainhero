@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { Package, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/marketplace/")({
   component: MarketplaceIndex,
@@ -41,10 +41,8 @@ function MarketplaceIndex() {
             <Card className="h-full transition hover:border-emerald-500/50">
               <CardContent className="p-4 space-y-3">
                 <div className="aspect-video rounded-md bg-muted overflow-hidden flex items-center justify-center">
-                  {l.cover_image_url ? (
+                  {l.cover_image_url && (
                     <img src={l.cover_image_url} alt={l.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <Package className="h-10 w-10 text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex items-center justify-between">

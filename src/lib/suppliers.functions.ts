@@ -150,10 +150,17 @@ export const getSupplierDetail = createServerFn({ method: "GET" })
 export const getPriceSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Resolve tenant admin id — settings are a single shared row per tenant.
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const { data } = await context.supabase
       .from("tenant_price_settings")
       .select("*")
-      .eq("admin_id", context.userId)
+      .eq("admin_id", tenantAdminId)
       .maybeSingle();
     return {
       default_margin_pct: Number((data as Row | null)?.default_margin_pct ?? 15),
@@ -172,10 +179,17 @@ export const savePriceSettings = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    // Resolve tenant admin id — settings are a single shared row per tenant.
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     const { error } = await context.supabase
       .from("tenant_price_settings")
       .upsert({
-        admin_id: context.userId,
+        admin_id: tenantAdminId,
         default_margin_pct: data.default_margin_pct,
         currency: data.currency,
         per_grain_margin: data.per_grain_margin ?? {},

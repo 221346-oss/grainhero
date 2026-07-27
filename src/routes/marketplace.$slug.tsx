@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Package, MapPin, ShieldCheck } from "lucide-react";
+import { MapPin, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/marketplace/$slug")({
   component: ListingDetail,
@@ -61,10 +61,8 @@ function ListingDetail() {
       <div className="space-y-4">
         <Link to="/marketplace" className="text-sm text-muted-foreground hover:text-foreground">← Back to marketplace</Link>
         <div className="aspect-video rounded-lg bg-muted overflow-hidden flex items-center justify-center">
-          {l.cover_image_url ? (
+          {l.cover_image_url && (
             <img src={l.cover_image_url} alt={l.title} className="w-full h-full object-cover" />
-          ) : (
-            <Package className="h-14 w-14 text-muted-foreground" />
           )}
         </div>
         <div>

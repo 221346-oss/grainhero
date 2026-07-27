@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
+import { fetchDispatchTotals } from "./operations.functions";
 
 // ---------- helpers ----------
 
@@ -296,7 +297,7 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
         .limit(500),
       context.supabase
         .from("silos")
-        .select("id, name, capacity_kg, current_stock_kg, status")
+        .select("id, name, capacity_kg, current_occupancy_kg, status")
         .limit(200),
       context.supabase
         .from("sensor_readings")
@@ -311,11 +312,22 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
     const r = (readings.data ?? []) as any[];
 
     const totalKg = b.reduce((sum, x) => sum + Number(x.quantity_kg ?? 0), 0);
-    const totalRevenue = b.reduce((sum, x) => sum + Number(x.revenue ?? 0), 0);
-    const totalProfit = b.reduce((sum, x) => sum + Number(x.profit ?? 0), 0);
+    // TODO(dispatch-refactor): grain_batches.revenue/profit are the legacy per-batch dispatch
+    // model and will stop growing now that dispatch happens from silos (dispatchFromSilo in
+    // operations.functions.ts, writing to the `dispatches` table). Merging both totals here so
+    // this overview doesn't silently read zero — replace with a dispatches-only query once
+    // legacy batch-level dispatch data is fully migrated.
+    const dispatchTotals = await fetchDispatchTotals(context.supabase);
+    const dispatchRevenue = dispatchTotals.reduce((s, d) => s + d.revenue, 0);
+    const dispatchProfit = dispatchTotals.reduce((s, d) => s + d.profit, 0);
+    const totalRevenue = b.reduce((sum, x) => sum + Number(x.revenue ?? 0), 0) + dispatchRevenue;
+    const totalProfit = b.reduce((sum, x) => sum + Number(x.profit ?? 0), 0) + dispatchProfit;
     const spoiled = b.filter((x) => x.spoilage_label && String(x.spoilage_label).toLowerCase() !== "safe").length;
     const avgRisk = b.length ? b.reduce((sum, x) => sum + Number(x.risk_score ?? 0), 0) / b.length : 0;
 
+    // NOTE: byGrain revenue below intentionally stays batch-only (legacy). A silo-based
+    // dispatch mixes grain from many batches/types, so a single dispatch can't be attributed
+    // to one grain_type — needs a proper design decision, not a blind merge. See TODO above.
     const byGrain = new Map<string, { grain: string; batches: number; kg: number; revenue: number }>();
     for (const x of b) {
       const key = x.grain_type ?? "unknown";
@@ -343,7 +355,7 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
     }
 
     const totalCapacity = s.reduce((sum, x) => sum + Number(x.capacity_kg ?? 0), 0);
-    const usedCapacity = s.reduce((sum, x) => sum + Number(x.current_stock_kg ?? 0), 0);
+    const usedCapacity = s.reduce((sum, x) => sum + Number(x.current_occupancy_kg ?? 0), 0);
 
     const avgTemp = r.length ? r.reduce((sum, x) => sum + Number(x.temperature_value ?? 0), 0) / r.length : 0;
     const avgHum = r.length ? r.reduce((sum, x) => sum + Number(x.humidity_value ?? 0), 0) / r.length : 0;
@@ -359,7 +371,7 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
         spoiled,
         spoilageRate: b.length ? spoiled / b.length : 0,
         avgRisk,
-        openAlerts: a.filter((x) => x.status === "open" || x.status === "active").length,
+        openAlerts: a.filter((x) => x.status !== "resolved").length,
         totalCapacity,
         usedCapacity,
         utilization: totalCapacity > 0 ? usedCapacity / totalCapacity : 0,

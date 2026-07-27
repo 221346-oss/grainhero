@@ -5,15 +5,18 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Save, User, Bell, MapPin, Loader2, Palette, Check, Camera, Trash2, ShieldAlert, Plus, X } from "lucide-react";
+import { Save, Loader2, Check, Camera, Trash2, Plus, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
+import { LocationMap } from "@/components/app/LocationMap";
+import { VariableFontText } from "@/components/app/VariableFontText";
 import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { initialsOf } from "@/hooks/useMyProfile";
@@ -64,6 +67,7 @@ function SettingsPage() {
       if (u?.user?.email) setAuthEmail(u.user.email);
     });
   }, []);
+  const [tab, setTab] = useState("profile");
   const [theme, setTheme] = useState<ThemeId>(() => getStoredTheme());
   function selectTheme(id: ThemeId) { setTheme(id); applyTheme(id); }
 
@@ -132,7 +136,7 @@ function SettingsPage() {
   return (
     <AdminPageShell
       title="Settings"
-      subtitle="Manage your profile, location and notification preferences"
+      subtitle="Manage your profile, location and appearance"
       actions={
         <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -140,16 +144,40 @@ function SettingsPage() {
         </Button>
       }
     >
-      <Tabs defaultValue="profile">
-        <TabsList className="mb-6">
-          <TabsTrigger value="profile"><User className="h-4 w-4 mr-2" />Profile</TabsTrigger>
-          <TabsTrigger value="location"><MapPin className="h-4 w-4 mr-2" />Location</TabsTrigger>
-          <TabsTrigger value="notifications"><Bell className="h-4 w-4 mr-2" />Notifications</TabsTrigger>
-          <TabsTrigger value="appearance"><Palette className="h-4 w-4 mr-2" />Appearance</TabsTrigger>
-          {isSuperAdmin && (
-            <TabsTrigger value="platform"><ShieldAlert className="h-4 w-4 mr-2" />Platform</TabsTrigger>
-          )}
-        </TabsList>
+      <Tabs value={tab} onValueChange={setTab}>
+        {/* Variable-font hover nav — letters bolden outward from the center */}
+        <div className="mb-6 overflow-x-auto no-scrollbar border-b border-border">
+          <div className="flex items-center gap-8 px-1">
+            {([
+              { value: "profile", label: "Profile" },
+              { value: "location", label: "Location" },
+              { value: "appearance", label: "Appearance" },
+              ...(isSuperAdmin ? [{ value: "platform", label: "Platform" }] : []),
+            ] as { value: string; label: string }[]).map((t) => {
+              const isActive = tab === t.value;
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setTab(t.value)}
+                  className={cn(
+                    "relative py-3 text-sm uppercase tracking-[0.15em] whitespace-nowrap transition-colors",
+                    isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <VariableFontText text={t.label} base={isActive ? 850 : 350} hover={850} staggerMs={30} />
+                  {isActive && (
+                    <motion.div
+                      layoutId="settings-tab-underline"
+                      className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[#2FAC0C]"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <TabsContent value="profile">
           <Card>
@@ -214,6 +242,9 @@ function SettingsPage() {
               <div><Label>Country</Label><Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></div>
             </CardContent>
           </Card>
+          <div className="mt-4">
+            <LocationMap address={form.address} city={form.city} country={form.country} />
+          </div>
           <Card className="mt-4">
             <CardHeader>
               <CardTitle>App tour</CardTitle>
@@ -229,30 +260,6 @@ function SettingsPage() {
               >
                 Replay the tour
               </button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader><CardTitle>Notifications</CardTitle><CardDescription>Choose how we contact you.</CardDescription></CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { key: "email_alerts", label: "Email alerts" },
-                { key: "sms_alerts", label: "SMS alerts" },
-                { key: "push_notifications", label: "Push notifications" },
-                { key: "weekly_reports", label: "Weekly reports" },
-                { key: "expiry_email_alerts", label: "Email me when my plan is about to expire (7 / 3 / 1 days)" },
-                { key: "expiry_push_alerts", label: "In-app notification when my plan is about to expire" },
-              ].map((row) => (
-                <div key={row.key} className="flex items-center justify-between rounded-lg border border-border p-3">
-                  <span className="text-sm font-medium text-foreground">{row.label}</span>
-                  <Switch
-                    checked={!!form.prefs[row.key as keyof Prefs]}
-                    onCheckedChange={(v) => setForm({ ...form, prefs: { ...form.prefs, [row.key]: v } })}
-                  />
-                </div>
-              ))}
             </CardContent>
           </Card>
         </TabsContent>

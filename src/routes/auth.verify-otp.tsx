@@ -43,6 +43,9 @@ function VerifyOtpPage() {
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
+    if (next.every(Boolean)) {
+      verify(next.join(""));
+    }
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -59,11 +62,18 @@ function VerifyOtpPage() {
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
     setOtp(next);
     inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+    if (pasted.length === 6) {
+      verify(pasted);
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = otp.join("");
+    verify(otp.join(""));
+  };
+
+  const verify = async (token: string) => {
+    if (loading) return;
     if (token.length < 6) {
       setMsg({ type: "error", text: "Enter the full 6-digit code." });
       return;

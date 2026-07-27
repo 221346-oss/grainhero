@@ -204,7 +204,7 @@ function InsurancePage() {
               ) : policies.length === 0 ? (
                 <div className="p-10 text-center text-slate-500">No policies yet</div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="">
                   {policies.map((p) => (
                     <div key={p.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
                       <div className="flex-1 min-w-0">
@@ -243,7 +243,7 @@ function InsurancePage() {
               ) : claims.length === 0 ? (
                 <div className="p-10 text-center text-slate-500">No claims yet</div>
               ) : (
-                <div className="divide-y divide-slate-100">
+                <div className="">
                   {claims.map((c) => (
                     <div key={c.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
                       <div className="flex-1 min-w-0">
