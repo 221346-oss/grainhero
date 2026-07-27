@@ -52,7 +52,6 @@ import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
-import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
 import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
 import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
@@ -66,7 +65,6 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
 import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
@@ -89,6 +87,7 @@ import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMonitoringRouteImport } from './routes/_authenticated/platform.monitoring'
 import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
 import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
 import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
@@ -101,7 +100,9 @@ import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './ro
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
 import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
+import { Route as AuthenticatedPlatformKeyMetricsRouteImport } from './routes/_authenticated/platform.key-metrics'
 import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
+import { Route as AuthenticatedPlatformIntelligenceRouteImport } from './routes/_authenticated/platform.intelligence'
 import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
@@ -112,6 +113,7 @@ import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_aut
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
 import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
+import { Route as AuthenticatedPlatformBusinessRouteImport } from './routes/_authenticated/platform.business'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
 import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
@@ -403,11 +405,6 @@ const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
   path: '/monitoring',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMlModelsRoute = AuthenticatedMlModelsRouteImport.update({
-  id: '/ml-models',
-  path: '/ml-models',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedMaintenanceRoute =
   AuthenticatedMaintenanceRouteImport.update({
     id: '/maintenance',
@@ -478,12 +475,6 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAiPredictionsRoute =
-  AuthenticatedAiPredictionsRouteImport.update({
-    id: '/ai-predictions',
-    path: '/ai-predictions',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdministrationRoute =
   AuthenticatedAdministrationRouteImport.update({
     id: '/administration',
@@ -612,6 +603,12 @@ const AuthenticatedPlatformOrdersRoute =
     path: '/platform/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMonitoringRoute =
+  AuthenticatedPlatformMonitoringRouteImport.update({
+    id: '/platform/monitoring',
+    path: '/platform/monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformMobileSyncMonitorRoute =
   AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
     id: '/platform/mobile-sync-monitor',
@@ -684,10 +681,22 @@ const AuthenticatedPlatformLaunchReadinessRoute =
     path: '/platform/launch-readiness',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformKeyMetricsRoute =
+  AuthenticatedPlatformKeyMetricsRouteImport.update({
+    id: '/platform/key-metrics',
+    path: '/platform/key-metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformInvoiceFailuresRoute =
   AuthenticatedPlatformInvoiceFailuresRouteImport.update({
     id: '/platform/invoice-failures',
     path: '/platform/invoice-failures',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformIntelligenceRoute =
+  AuthenticatedPlatformIntelligenceRouteImport.update({
+    id: '/platform/intelligence',
+    path: '/platform/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformInsuranceRoute =
@@ -748,6 +757,12 @@ const AuthenticatedPlatformCommerceMobileRoute =
   AuthenticatedPlatformCommerceMobileRouteImport.update({
     id: '/platform/commerce-mobile',
     path: '/platform/commerce-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformBusinessRoute =
+  AuthenticatedPlatformBusinessRouteImport.update({
+    id: '/platform/business',
+    path: '/platform/business',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformAuditLogsRoute =
@@ -1173,7 +1188,6 @@ export interface FileRoutesByFullPath {
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
-  '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/attention': typeof AuthenticatedAttentionRoute
   '/business': typeof AuthenticatedBusinessRoute
@@ -1187,7 +1201,6 @@ export interface FileRoutesByFullPath {
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/ml-models': typeof AuthenticatedMlModelsRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -1219,6 +1232,7 @@ export interface FileRoutesByFullPath {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/business': typeof AuthenticatedPlatformBusinessRoute
   '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -1229,7 +1243,9 @@ export interface FileRoutesByFullPath {
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/platform/intelligence': typeof AuthenticatedPlatformIntelligenceRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/key-metrics': typeof AuthenticatedPlatformKeyMetricsRoute
   '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -1242,6 +1258,7 @@ export interface FileRoutesByFullPath {
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/platform/monitoring': typeof AuthenticatedPlatformMonitoringRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1344,7 +1361,6 @@ export interface FileRoutesByTo {
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
-  '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/attention': typeof AuthenticatedAttentionRoute
   '/business': typeof AuthenticatedBusinessRoute
@@ -1358,7 +1374,6 @@ export interface FileRoutesByTo {
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/ml-models': typeof AuthenticatedMlModelsRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -1390,6 +1405,7 @@ export interface FileRoutesByTo {
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/business': typeof AuthenticatedPlatformBusinessRoute
   '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -1400,7 +1416,9 @@ export interface FileRoutesByTo {
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/platform/intelligence': typeof AuthenticatedPlatformIntelligenceRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/key-metrics': typeof AuthenticatedPlatformKeyMetricsRoute
   '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -1413,6 +1431,7 @@ export interface FileRoutesByTo {
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/platform/monitoring': typeof AuthenticatedPlatformMonitoringRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1519,7 +1538,6 @@ export interface FileRoutesById {
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRoute
-  '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/attention': typeof AuthenticatedAttentionRoute
   '/_authenticated/business': typeof AuthenticatedBusinessRoute
@@ -1533,7 +1551,6 @@ export interface FileRoutesById {
   '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
   '/_authenticated/listings': typeof AuthenticatedListingsRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
   '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -1565,6 +1582,7 @@ export interface FileRoutesById {
   '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/business': typeof AuthenticatedPlatformBusinessRoute
   '/_authenticated/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -1575,7 +1593,9 @@ export interface FileRoutesById {
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/_authenticated/platform/intelligence': typeof AuthenticatedPlatformIntelligenceRoute
   '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/_authenticated/platform/key-metrics': typeof AuthenticatedPlatformKeyMetricsRoute
   '/_authenticated/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -1588,6 +1608,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/_authenticated/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/_authenticated/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/_authenticated/platform/monitoring': typeof AuthenticatedPlatformMonitoringRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1694,7 +1715,6 @@ export interface FileRouteTypes {
     | '/activity-logs'
     | '/actuators'
     | '/administration'
-    | '/ai-predictions'
     | '/analytics'
     | '/attention'
     | '/business'
@@ -1708,7 +1728,6 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/listings'
     | '/maintenance'
-    | '/ml-models'
     | '/monitoring'
     | '/not-allowed'
     | '/notifications'
@@ -1740,6 +1759,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/business'
     | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
@@ -1750,7 +1770,9 @@ export interface FileRouteTypes {
     | '/platform/financials'
     | '/platform/health'
     | '/platform/insurance'
+    | '/platform/intelligence'
     | '/platform/invoice-failures'
+    | '/platform/key-metrics'
     | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
@@ -1763,6 +1785,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
     | '/platform/mobile-sync-monitor'
+    | '/platform/monitoring'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1865,7 +1888,6 @@ export interface FileRouteTypes {
     | '/activity-logs'
     | '/actuators'
     | '/administration'
-    | '/ai-predictions'
     | '/analytics'
     | '/attention'
     | '/business'
@@ -1879,7 +1901,6 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/listings'
     | '/maintenance'
-    | '/ml-models'
     | '/monitoring'
     | '/not-allowed'
     | '/notifications'
@@ -1911,6 +1932,7 @@ export interface FileRouteTypes {
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/business'
     | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
@@ -1921,7 +1943,9 @@ export interface FileRouteTypes {
     | '/platform/financials'
     | '/platform/health'
     | '/platform/insurance'
+    | '/platform/intelligence'
     | '/platform/invoice-failures'
+    | '/platform/key-metrics'
     | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
@@ -1934,6 +1958,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
     | '/platform/mobile-sync-monitor'
+    | '/platform/monitoring'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -2039,7 +2064,6 @@ export interface FileRouteTypes {
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
     | '/_authenticated/administration'
-    | '/_authenticated/ai-predictions'
     | '/_authenticated/analytics'
     | '/_authenticated/attention'
     | '/_authenticated/business'
@@ -2053,7 +2077,6 @@ export interface FileRouteTypes {
     | '/_authenticated/intelligence'
     | '/_authenticated/listings'
     | '/_authenticated/maintenance'
-    | '/_authenticated/ml-models'
     | '/_authenticated/monitoring'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
@@ -2085,6 +2108,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buyer/orders'
     | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/business'
     | '/_authenticated/platform/commerce-mobile'
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
@@ -2095,7 +2119,9 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/insurance'
+    | '/_authenticated/platform/intelligence'
     | '/_authenticated/platform/invoice-failures'
+    | '/_authenticated/platform/key-metrics'
     | '/_authenticated/platform/launch-readiness'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
@@ -2108,6 +2134,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/mobile-push-diagnostics'
     | '/_authenticated/platform/mobile-settings'
     | '/_authenticated/platform/mobile-sync-monitor'
+    | '/_authenticated/platform/monitoring'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
@@ -2569,13 +2596,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/ml-models': {
-      id: '/_authenticated/ml-models'
-      path: '/ml-models'
-      fullPath: '/ml-models'
-      preLoaderRoute: typeof AuthenticatedMlModelsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/maintenance': {
       id: '/_authenticated/maintenance'
       path: '/maintenance'
@@ -2665,13 +2685,6 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ai-predictions': {
-      id: '/_authenticated/ai-predictions'
-      path: '/ai-predictions'
-      fullPath: '/ai-predictions'
-      preLoaderRoute: typeof AuthenticatedAiPredictionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/administration': {
@@ -2828,6 +2841,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/monitoring': {
+      id: '/_authenticated/platform/monitoring'
+      path: '/platform/monitoring'
+      fullPath: '/platform/monitoring'
+      preLoaderRoute: typeof AuthenticatedPlatformMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/mobile-sync-monitor': {
       id: '/_authenticated/platform/mobile-sync-monitor'
       path: '/platform/mobile-sync-monitor'
@@ -2912,11 +2932,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLaunchReadinessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/key-metrics': {
+      id: '/_authenticated/platform/key-metrics'
+      path: '/platform/key-metrics'
+      fullPath: '/platform/key-metrics'
+      preLoaderRoute: typeof AuthenticatedPlatformKeyMetricsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/invoice-failures': {
       id: '/_authenticated/platform/invoice-failures'
       path: '/platform/invoice-failures'
       fullPath: '/platform/invoice-failures'
       preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/intelligence': {
+      id: '/_authenticated/platform/intelligence'
+      path: '/platform/intelligence'
+      fullPath: '/platform/intelligence'
+      preLoaderRoute: typeof AuthenticatedPlatformIntelligenceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/insurance': {
@@ -2987,6 +3021,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/commerce-mobile'
       fullPath: '/platform/commerce-mobile'
       preLoaderRoute: typeof AuthenticatedPlatformCommerceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/business': {
+      id: '/_authenticated/platform/business'
+      path: '/platform/business'
+      fullPath: '/platform/business'
+      preLoaderRoute: typeof AuthenticatedPlatformBusinessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/audit-logs': {
@@ -3609,7 +3650,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedAdministrationRoute: typeof AuthenticatedAdministrationRoute
-  AuthenticatedAiPredictionsRoute: typeof AuthenticatedAiPredictionsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedAttentionRoute: typeof AuthenticatedAttentionRoute
   AuthenticatedBusinessRoute: typeof AuthenticatedBusinessRoute
@@ -3623,7 +3663,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
   AuthenticatedListingsRoute: typeof AuthenticatedListingsRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
-  AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
   AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -3646,6 +3685,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformBusinessRoute: typeof AuthenticatedPlatformBusinessRoute
   AuthenticatedPlatformCommerceMobileRoute: typeof AuthenticatedPlatformCommerceMobileRoute
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -3656,7 +3696,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformInsuranceRoute: typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  AuthenticatedPlatformIntelligenceRoute: typeof AuthenticatedPlatformIntelligenceRoute
   AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
+  AuthenticatedPlatformKeyMetricsRoute: typeof AuthenticatedPlatformKeyMetricsRoute
   AuthenticatedPlatformLaunchReadinessRoute: typeof AuthenticatedPlatformLaunchReadinessRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
@@ -3669,6 +3711,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformMobilePushDiagnosticsRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   AuthenticatedPlatformMobileSettingsRoute: typeof AuthenticatedPlatformMobileSettingsRoute
   AuthenticatedPlatformMobileSyncMonitorRoute: typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  AuthenticatedPlatformMonitoringRoute: typeof AuthenticatedPlatformMonitoringRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
@@ -3692,7 +3735,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedAdministrationRoute: AuthenticatedAdministrationRoute,
-  AuthenticatedAiPredictionsRoute: AuthenticatedAiPredictionsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedAttentionRoute: AuthenticatedAttentionRoute,
   AuthenticatedBusinessRoute: AuthenticatedBusinessRoute,
@@ -3706,7 +3748,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
   AuthenticatedListingsRoute: AuthenticatedListingsRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
-  AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
   AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
@@ -3730,6 +3771,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsuranceClaimsClaimIdRoute:
     AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformBusinessRoute: AuthenticatedPlatformBusinessRoute,
   AuthenticatedPlatformCommerceMobileRoute:
     AuthenticatedPlatformCommerceMobileRoute,
   AuthenticatedPlatformDashboardBuilderRoute:
@@ -3747,8 +3789,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformInsuranceRoute:
     AuthenticatedPlatformInsuranceRouteWithChildren,
+  AuthenticatedPlatformIntelligenceRoute:
+    AuthenticatedPlatformIntelligenceRoute,
   AuthenticatedPlatformInvoiceFailuresRoute:
     AuthenticatedPlatformInvoiceFailuresRoute,
+  AuthenticatedPlatformKeyMetricsRoute: AuthenticatedPlatformKeyMetricsRoute,
   AuthenticatedPlatformLaunchReadinessRoute:
     AuthenticatedPlatformLaunchReadinessRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
@@ -3769,6 +3814,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformMobileSettingsRoute,
   AuthenticatedPlatformMobileSyncMonitorRoute:
     AuthenticatedPlatformMobileSyncMonitorRoute,
+  AuthenticatedPlatformMonitoringRoute: AuthenticatedPlatformMonitoringRoute,
   AuthenticatedPlatformOrdersRoute:
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
@@ -3940,3 +3986,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

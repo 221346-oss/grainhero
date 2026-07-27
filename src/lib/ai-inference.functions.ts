@@ -38,6 +38,46 @@ export type MLInferenceInput = {
   moisture_history?: number[];
 };
 
+/**
+ * Optional request-log context. Both call sites (the manual "Run AI
+ * Prediction" button and the Firebase sync cron) pass their own Supabase
+ * client — this utility stays import-safe for cron jobs by never importing
+ * a client itself. Omit to skip logging (e.g. a caller that doesn't have a
+ * tenant to attribute the request to).
+ */
+export type MLLogContext = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  adminId?: string | null;
+  siloId?: string | null;
+  deviceId?: string | null;
+  triggeredBy: "manual" | "cron";
+};
+
+async function logInferenceRequest(
+  log: MLLogContext | undefined,
+  outcome: { success: boolean; source: SpoilagePredictionResult["source"] | "cascade_failed"; result: SpoilagePredictionResult | null; error: string | null; startedAt: number },
+) {
+  if (!log) return;
+  try {
+    await log.supabase.from("ml_inference_requests").insert({
+      admin_id: log.adminId ?? null,
+      silo_id: log.siloId ?? null,
+      device_id: log.deviceId ?? null,
+      source: outcome.source === "cascade_failed" ? "cascade_failed" : outcome.source,
+      success: outcome.success,
+      risk_class: outcome.result?.risk_class ?? null,
+      risk_score: outcome.result?.risk_score ?? null,
+      confidence: outcome.result?.confidence ?? null,
+      latency_ms: Math.round(Date.now() - outcome.startedAt),
+      error_message: outcome.error,
+      triggered_by: log.triggeredBy,
+    });
+  } catch (e) {
+    console.warn("[ML] failed to write inference request log:", (e as Error).message);
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function labelToRiskClass(label: string): "low" | "moderate" | "high" | "critical" {
@@ -183,11 +223,16 @@ async function callLocalPython(data: MLInferenceInput): Promise<SpoilagePredicti
  * Falls back to the local Python subprocess if the API is unreachable.
  * Returns null if BOTH methods fail (caller should apply a safety guardrail).
  */
-export async function runMLInference(data: MLInferenceInput): Promise<SpoilagePredictionResult | null> {
+export async function runMLInference(data: MLInferenceInput, log?: MLLogContext): Promise<SpoilagePredictionResult | null> {
+  const startedAt = Date.now();
+
   // Box 1: Remote API
   try {
     const apiResult = await callHuggingFaceAPI(data);
-    if (apiResult) return apiResult;
+    if (apiResult) {
+      await logInferenceRequest(log, { success: true, source: "api", result: apiResult, error: null, startedAt });
+      return apiResult;
+    }
   } catch (err) {
     console.warn("[ML] HuggingFace API failed:", (err as Error).message);
   }
@@ -195,9 +240,14 @@ export async function runMLInference(data: MLInferenceInput): Promise<SpoilagePr
   // Box 2: Local Python fallback
   try {
     const pythonResult = await callLocalPython(data);
+    await logInferenceRequest(log, { success: true, source: "python_local", result: pythonResult, error: null, startedAt });
     return pythonResult;
   } catch (err) {
     console.warn("[ML] Local Python fallback also failed:", (err as Error).message);
+    await logInferenceRequest(log, {
+      success: false, source: "cascade_failed", result: null,
+      error: (err as Error).message.slice(0, 500), startedAt,
+    });
   }
 
   return null;

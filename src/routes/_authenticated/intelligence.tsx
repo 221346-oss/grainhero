@@ -9,7 +9,7 @@ import { AnalyticsSection } from "@/components/intelligence/AnalyticsSection";
 import { MLModelsSection } from "@/components/intelligence/MLModelsSection";
 import { ReportsSection } from "@/components/intelligence/ReportsSection";
 import { Brain, BarChart3, Cpu, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
-import { getBatchPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
+import { getSiloPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
 import { getReportsData } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 
@@ -36,7 +36,7 @@ function IntelligenceWorkspace() {
   const allowedAnalytics = ["super_admin", "admin", "manager"].includes(role);
   const allowedModels = ["super_admin", "admin"].includes(role);
 
-  const fetchPredictions = useServerFn(getBatchPredictions);
+  const fetchPredictions = useServerFn(getSiloPredictions);
   const fetchOverview = useServerFn(getAnalyticsOverview);
   const fetchModels = useServerFn(getMLModels);
   const fetchReports = useServerFn(getReportsData);

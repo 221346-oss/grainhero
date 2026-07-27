@@ -22,18 +22,17 @@ type Reading = {
   reading_timestamp: string;
 };
 
-// Compute a heuristic spoilage risk score 0-100 for a batch if ML inference is missing.
-function computeFallbackRisk(batch: {
+// Compute a heuristic spoilage risk score 0-100 for a silo if ML inference is missing.
+function computeFallbackRisk(silo: {
   moisture_content: number | null;
   risk_score: number | null;
-  grain_type: string | null;
 }, r: Reading | null): { score: number; level: "low" | "moderate" | "high" | "critical"; factors: string[] } {
   const factors: string[] = [];
   let score = 0;
 
   const temp = r?.temperature_value ?? null;
   const hum = r?.humidity_value ?? null;
-  const moisture = r?.moisture_value ?? batch.moisture_content ?? null;
+  const moisture = r?.moisture_value ?? silo.moisture_content ?? null;
   const co2 = r?.co2_value ?? null;
   const voc = r?.voc_value ?? null;
 
@@ -52,7 +51,7 @@ function computeFallbackRisk(batch: {
   if (co2 !== null && co2 > 1500) { score += 15; factors.push(`CO₂ ${co2.toFixed(0)}ppm`); }
   if (voc !== null && voc > 500) { score += 10; factors.push(`VOC ${voc.toFixed(0)}`); }
 
-  if (batch.risk_score != null) score = Math.max(score, batch.risk_score);
+  if (silo.risk_score != null) score = Math.max(score, silo.risk_score);
 
   score = Math.min(100, Math.max(0, Math.round(score)));
   const level = score >= 75 ? "critical" : score >= 50 ? "high" : score >= 25 ? "moderate" : "low";
@@ -61,60 +60,88 @@ function computeFallbackRisk(batch: {
 
 // ---------- server functions ----------
 
-export const getBatchPredictions = createServerFn({ method: "GET" })
+/**
+ * Silo-based predictions (not batch-based). Under the intake-only model a
+ * silo pools grain from many batches (or none, once fully dispatched), and
+ * sensor_readings is written keyed by silo_id, never batch_id (see
+ * firebase-sync cron) — the old batch_id join here always returned zero
+ * rows, so every "prediction" silently fell back to a static heuristic with
+ * no live sensor signal at all. Now joins by silo_id, which is what's
+ * actually populated.
+ */
+export const getSiloPredictions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAllowed(context.supabase, context.userId);
 
-    const { data: batches, error } = await context.supabase
-      .from("grain_batches")
-      .select("id, batch_id, grain_type, quantity_kg, moisture_content, risk_score, status, silo_id, warehouse_id, ai_prediction_confidence, last_risk_assessment")
+    const { data: silos, error } = await context.supabase
+      .from("silos")
+      .select("id, silo_id, name, capacity_kg, current_occupancy_kg, status, warehouse_id, risk_score")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw error;
 
-    const list = batches ?? [];
+    const list = (silos ?? []) as any[];
     if (list.length === 0) return { predictions: [] as any[] };
 
-    const batchIds = list.map((b: any) => b.id);
-    const { data: readings } = await context.supabase
-      .from("sensor_readings")
-      .select("batch_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ml_risk_score, ml_risk_class, reading_timestamp")
-      .in("batch_id", batchIds)
-      .order("reading_timestamp", { ascending: false })
-      .limit(2000);
+    const siloIds = list.map((s) => s.id);
+    const [{ data: readings }, { data: batches }] = await Promise.all([
+      context.supabase
+        .from("sensor_readings")
+        .select("silo_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ml_risk_score, ml_risk_class, reading_timestamp")
+        .in("silo_id", siloIds)
+        .order("reading_timestamp", { ascending: false })
+        .limit(4000),
+      context.supabase
+        .from("grain_batches")
+        .select("id, silo_id, grain_type, quantity_kg, dispatched_quantity_kg, remaining_kg, intake_date")
+        .in("silo_id", siloIds)
+        .is("deleted_at", null)
+        .order("intake_date", { ascending: true, nullsFirst: false }),
+    ]);
 
-    const latestByBatch = new Map<string, Reading>();
+    const latestBySilo = new Map<string, Reading>();
     for (const r of (readings ?? []) as any[]) {
-      if (r.batch_id && !latestByBatch.has(r.batch_id)) latestByBatch.set(r.batch_id, r);
+      if (r.silo_id && !latestBySilo.has(r.silo_id)) latestBySilo.set(r.silo_id, r);
     }
 
-    const predictions = list.map((b: any) => {
-      const r = latestByBatch.get(b.id) ?? null;
-      
+    // Oldest batch with remaining stock per silo (FIFO) — grain type +
+    // storage-age context only, never required for a prediction to exist.
+    type BatchRow = { id: string; silo_id: string; grain_type: string; quantity_kg: number; dispatched_quantity_kg: number | null; remaining_kg: number | null; intake_date: string | null };
+    const oldestActiveBySilo = new Map<string, BatchRow>();
+    let totalRemainingBySilo = new Map<string, number>();
+    for (const b of (batches ?? []) as BatchRow[]) {
+      const remaining = b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0));
+      if (remaining <= 0) continue;
+      totalRemainingBySilo.set(b.silo_id, (totalRemainingBySilo.get(b.silo_id) ?? 0) + remaining);
+      if (!oldestActiveBySilo.has(b.silo_id)) oldestActiveBySilo.set(b.silo_id, b);
+    }
+
+    const predictions = list.map((s: any) => {
+      const r = latestBySilo.get(s.id) ?? null;
+      const oldest = oldestActiveBySilo.get(s.id) ?? null;
+
       let risk;
-      // If we have actual ML predictions from the sensor reading, use them
       if (r?.ml_risk_score != null && r?.ml_risk_class != null) {
         risk = {
           score: r.ml_risk_score,
           level: r.ml_risk_class as "low" | "moderate" | "high" | "critical",
-          factors: [`ML: ${r.ml_risk_class}`]
+          factors: [`ML: ${r.ml_risk_class}`],
         };
       } else {
-        // Fallback to heuristic
-        risk = computeFallbackRisk(b, r);
+        risk = computeFallbackRisk({ moisture_content: null, risk_score: s.risk_score ?? null }, r);
       }
 
       return {
-        id: b.id,
-        batch_id: b.batch_id,
-        grain_type: b.grain_type,
-        quantity_kg: b.quantity_kg,
-        status: b.status,
-        silo_id: b.silo_id,
-        warehouse_id: b.warehouse_id,
-        confidence: b.ai_prediction_confidence ?? 0.78,
+        id: s.id,
+        silo_id: s.silo_id,
+        name: s.name,
+        grain_type: oldest?.grain_type ?? null,
+        quantity_kg: totalRemainingBySilo.get(s.id) ?? 0,
+        status: s.status,
+        warehouse_id: s.warehouse_id,
+        confidence: r?.ml_risk_score != null ? 0.85 : 0.6,
         last_reading_at: r?.reading_timestamp ?? null,
         ...risk,
       };
@@ -123,89 +150,6 @@ export const getBatchPredictions = createServerFn({ method: "GET" })
     return { predictions };
   });
 
-// Platform-lens: aggregate spoilage risk across all tenants for super_admin.
-// Read-only; returns per-tenant risk distribution + worst offenders.
-export const getPlatformSpoilageOverview = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    if ((await getEffectiveRole(context.supabase, context.userId)) !== "super_admin") {
-      throw new Error("Forbidden: super admin only");
-    }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const [{ data: batches }, { data: profiles }] = await Promise.all([
-      supabaseAdmin
-        .from("grain_batches")
-        .select("id, admin_id, batch_id, grain_type, quantity_kg, moisture_content, risk_score, status, silo_id")
-        .is("deleted_at", null)
-        .limit(5000),
-      supabaseAdmin
-        .from("profiles")
-        .select("id, name, email, business_type")
-        .is("admin_id", null),
-    ]);
-
-    const b = (batches ?? []) as any[];
-    if (b.length === 0) {
-      return { tenants: [], distribution: { low: 0, moderate: 0, high: 0, critical: 0 }, totalBatches: 0, totalTenants: 0 };
-    }
-
-    const batchIds = b.map((x) => x.id);
-    const { data: readings } = await supabaseAdmin
-      .from("sensor_readings")
-      .select("batch_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ml_risk_score, ml_risk_class, reading_timestamp")
-      .in("batch_id", batchIds)
-      .order("reading_timestamp", { ascending: false })
-      .limit(10000);
-
-    const latestByBatch = new Map<string, Reading>();
-    for (const r of (readings ?? []) as any[]) {
-      if (r.batch_id && !latestByBatch.has(r.batch_id)) latestByBatch.set(r.batch_id, r);
-    }
-
-    const profileMap = new Map<string, any>();
-    for (const p of (profiles ?? []) as any[]) profileMap.set(p.id, p);
-
-    const distribution = { low: 0, moderate: 0, high: 0, critical: 0 };
-    const tenantAgg = new Map<string, { admin_id: string; batches: number; totalKg: number; scoreSum: number; critical: number; high: number; moderate: number; low: number }>();
-
-    for (const batch of b) {
-      const r = latestByBatch.get(batch.id) ?? null;
-      const risk = r?.ml_risk_score != null && r?.ml_risk_class != null
-        ? { score: r.ml_risk_score as number, level: r.ml_risk_class as "low" | "moderate" | "high" | "critical" }
-        : computeFallbackRisk(batch, r);
-      distribution[risk.level]++;
-
-      const key = batch.admin_id ?? "unknown";
-      const cur = tenantAgg.get(key) ?? { admin_id: key, batches: 0, totalKg: 0, scoreSum: 0, critical: 0, high: 0, moderate: 0, low: 0 };
-      cur.batches++;
-      cur.totalKg += Number(batch.quantity_kg ?? 0);
-      cur.scoreSum += Number(risk.score ?? 0);
-      cur[risk.level]++;
-      tenantAgg.set(key, cur);
-    }
-
-    const tenants = Array.from(tenantAgg.values())
-      .map((t) => {
-        const p = profileMap.get(t.admin_id);
-        return {
-          admin_id: t.admin_id,
-          name: p?.name ?? p?.email ?? "Unknown tenant",
-          email: p?.email ?? null,
-          business_type: p?.business_type ?? null,
-          batches: t.batches,
-          totalKg: t.totalKg,
-          avgRisk: t.batches > 0 ? Math.round(t.scoreSum / t.batches) : 0,
-          critical: t.critical,
-          high: t.high,
-          moderate: t.moderate,
-          low: t.low,
-        };
-      })
-      .sort((x, y) => (y.critical * 1000 + y.high * 100 + y.avgRisk) - (x.critical * 1000 + x.high * 100 + x.avgRisk));
-
-    return { tenants, distribution, totalBatches: b.length, totalTenants: tenants.length };
-  });
 
 export const getMLModels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

@@ -7,18 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Database, Activity, GitBranch } from "lucide-react";
 import { getMLModels } from "@/lib/analytics.functions";
-import { getPlatformMLInference } from "@/lib/platform-overviews.functions";
 import { getMyRole } from "@/lib/roles.functions";
-import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
-import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 
 export function MLModelsSection() {
   const fetchRole = useServerFn(getMyRole);
   const fetchModels = useServerFn(getMLModels);
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
-  const allowed = ["super_admin", "admin"].includes(role);
-  const isSuperAdmin = role === "super_admin";
+  const allowed = role === "admin";
 
   const { data } = useQuery({
     queryKey: ["ml-models"],
@@ -26,16 +22,9 @@ export function MLModelsSection() {
     enabled: allowed,
   });
 
-  const fetchInf = useServerFn(getPlatformMLInference);
-  const infQ = useQuery({
-    queryKey: ["platform-ml-inference"],
-    queryFn: () => fetchInf(),
-    enabled: isSuperAdmin,
-  });
-
   if (!roleQ.isLoading && !allowed) {
     return (
-      <Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>Model performance is available to admins and super admins.</CardDescription></CardHeader></Card>
+      <Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>Model performance is available to admins. Super Admin has a separate model-monitoring view under Platform.</CardDescription></CardHeader></Card>
     );
   }
 
@@ -43,26 +32,6 @@ export function MLModelsSection() {
 
   return (
     <div className="space-y-6">
-      {isSuperAdmin && (
-        <PlatformScopeBanner label="Inference volume, accuracy and confidence measured across every tenant. Retraining is not available from this view." />
-      )}
-      {isSuperAdmin && infQ.data && (
-        <PlatformOverviewTable
-          title="Per-tenant inference (last 7 days)"
-          description={`${infQ.data.totalInferences.toLocaleString()} inferences · ${infQ.data.totalAnomalies.toLocaleString()} anomalies`}
-          rows={infQ.data.rows}
-          columns={[
-            { key: "inferences", label: "Inferences", align: "right", render: (r) => r.inferences.toLocaleString() },
-            { key: "critical", label: "Critical", align: "right", render: (r) => (
-                <span className={r.critical > 0 ? "text-red-600 font-medium" : ""}>{r.critical}</span>
-              ) },
-            { key: "anomalies", label: "Anomalies", align: "right", render: (r) => r.anomalies },
-            { key: "anomalyRate", label: "Anom rate", align: "right", render: (r) => `${(r.anomalyRate * 100).toFixed(1)}%` },
-            { key: "avgConfidence", label: "Avg conf", align: "right", render: (r) => `${(r.avgConfidence * 100).toFixed(1)}%` },
-          ]}
-        />
-      )}
-
       <div className="grid gap-4 lg:grid-cols-2">
         {models.map((m: any) => (
           <Card key={m.id}>

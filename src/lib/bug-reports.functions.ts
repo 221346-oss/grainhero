@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const submitInput = z.object({
   description: z.string().trim().min(5).max(2000),
+  category: z.enum(["bug", "maintenance"]).default("bug"),
   pagePath: z.string().trim().max(300).optional().nullable(),
   userAgent: z.string().trim().max(500).optional().nullable(),
 });
@@ -26,6 +27,7 @@ export const submitBugReport = createServerFn({ method: "POST" })
         user_id: context.userId,
         admin_id: adminId,
         description: data.description,
+        category: data.category,
         page_path: data.pagePath ?? null,
         user_agent: data.userAgent ?? null,
       } as never)

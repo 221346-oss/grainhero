@@ -136,19 +136,22 @@ export const runMLPrediction = createServerFn({ method: "POST" })
       .single();
     if (siloError || !silo) throw new Error("Silo not found");
 
-    // Current batch: fetch latest active batch for this silo (schema on main
-    // does not expose a `current_batch` FK on silos — see FINAL_PLAN §2).
-    const { data: batchRow } = await (supabase as any)
+    // Predictions are silo-based, not batch-based: a pooled silo can hold
+    // several batches (or none, once fully dispatched) under the intake-only
+    // model, so there's no single "the batch" to require. Batches here are
+    // only a best-effort hint for grain type / storage age — the oldest one
+    // still holding stock (FIFO), since that's the grain most at risk of
+    // prolonged storage. Sensor readings (queried by silo_id below) are the
+    // real, always-available silo-level signal.
+    const { data: batchRows } = await (supabase as any)
       .from("grain_batches")
-      .select("id, batch_id, grain_type, moisture_content, intake_date, quality_score")
+      .select("id, batch_id, grain_type, moisture_content, intake_date, quantity_kg, dispatched_quantity_kg, remaining_kg")
       .eq("silo_id", data.siloId)
-      .order("intake_date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const batch = batchRow as
-      | { id: string; batch_id: string; grain_type: string; moisture_content: number | null; intake_date: string; quality_score: number | null }
-      | null;
-    if (!batch) throw new Error("No active grain batch found in silo");
+      .order("intake_date", { ascending: true, nullsFirst: false });
+    type BatchRow = { id: string; batch_id: string; grain_type: string; moisture_content: number | null; intake_date: string; quantity_kg: number; dispatched_quantity_kg: number | null; remaining_kg: number | null };
+    const batch = ((batchRows ?? []) as BatchRow[])
+      .find((b) => (b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0))) > 0)
+      ?? null;
 
     // 2. Sensor device (for Firebase actuation)
     const { data: device } = await supabase
@@ -179,8 +182,11 @@ export const runMLPrediction = createServerFn({ method: "POST" })
 
     const tempHistory = readings.map((r) => toNumberOrNull(r.temperature_value)).filter((v): v is number => v !== null).reverse();
     const humHistory = readings.map((r) => toNumberOrNull(r.humidity_value)).filter((v): v is number => v !== null).reverse();
-    const grainType = String(batch.grain_type || "rice").toLowerCase();
-    const grainMoisture = toNumberOrNull(batch.moisture_content) ?? toNumberOrNull(latestReading.moisture_value) ?? 13;
+    const grainType = String(batch?.grain_type || "rice").toLowerCase();
+    // Live sensor reading takes priority — it's the real current silo
+    // condition. Batch moisture-at-intake is only a fallback for silos
+    // whose sensor doesn't report moisture.
+    const grainMoisture = toNumberOrNull(latestReading.moisture_value) ?? toNumberOrNull(batch?.moisture_content) ?? 13;
     const co2 = toNumberOrNull(latestReading.co2_value);
     const voc = toNumberOrNull(latestReading.voc_value);
 
@@ -192,7 +198,7 @@ export const runMLPrediction = createServerFn({ method: "POST" })
       moisture: grainMoisture,
       voc,
       co2,
-      storage_days: calculateStorageDuration(batch.intake_date),
+      storage_days: batch ? calculateStorageDuration(batch.intake_date) : 0,
       dew_point: calculateDewPoint(temperature, humidity),
       airflow: toNumberOrNull(latestReading.airflow) ?? 0,
       temperature_history: tempHistory,
@@ -206,7 +212,13 @@ export const runMLPrediction = createServerFn({ method: "POST" })
 
     // Box 1 + Box 2 via shared utility
     try {
-      const mlResult = await runMLInference(inferenceInput);
+      const mlResult = await runMLInference(inferenceInput, {
+        supabase,
+        adminId: silo.admin_id,
+        siloId: data.siloId,
+        deviceId: device?.id ?? null,
+        triggeredBy: "manual",
+      });
       if (mlResult && mlResult.trustworthy) {
         prediction = {
           riskScore: mlResult.risk_score,
@@ -224,7 +236,7 @@ export const runMLPrediction = createServerFn({ method: "POST" })
         const { data: stale } = await (supabase as any)
           .from("spoilage_predictions")
           .select("*")
-          .eq("batch_id", batch.id)
+          .eq("silo_id", data.siloId)
           .gte("created_at", thirtyMinsAgo)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -254,7 +266,7 @@ export const runMLPrediction = createServerFn({ method: "POST" })
       .from("spoilage_predictions")
       .insert({
         silo_id: data.siloId,
-        batch_id: batch.id,
+        batch_id: batch?.id ?? null,
         prediction_timestamp: new Date().toISOString(),
         temperature,
         humidity,
@@ -284,7 +296,7 @@ export const runMLPrediction = createServerFn({ method: "POST" })
         admin_id: silo.admin_id,
         warehouse_id: silo.warehouse_id,
         silo_id: data.siloId,
-        batch_id: batch.id,
+        batch_id: batch?.id ?? null,
         title: "Human review required for spoilage prediction",
         message: `ML unavailable. Safety guardrail classified this silo as ${prediction.riskClass} risk.`,
         alert_type: "in-app",
