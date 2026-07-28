@@ -66,14 +66,14 @@ export function TicketDiscussion({
     }
   }, [open, ticketId, currentUserId]);
 
+  // Keep messages in sync with the module store — also reload from
+  // localStorage immediately so persisted history appears at once
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     getMessages(ticketId),
   );
-
-  // Keep messages in sync with the module store
   useEffect(() => {
     if (!ticketId) return;
-    setMessages(getMessages(ticketId));
+    setMessages([...getMessages(ticketId)]);
     return subscribeToTicket(ticketId, () => {
       setMessages([...getMessages(ticketId)]);
     });

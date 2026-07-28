@@ -94,7 +94,7 @@ export function TicketSidePanel({
   const tickets: TicketRow[] = data?.tickets ?? [];
   const openCount = tickets.length;
 
-  // Attach channels with unread tracking
+  // Attach channels only once real userId is known
   useEffect(() => {
     if (!currentUserId) return;
     tickets.forEach((t) => attachTicketForUser(t.id, currentUserId));

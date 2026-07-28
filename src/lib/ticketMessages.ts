@@ -1,20 +1,16 @@
 /**
- * Ephemeral per-ticket message store + Supabase broadcast bus.
+ * Per-ticket message store + Supabase broadcast bus.
  *
- * Why a singleton?
- * ─────────────────
- * Messages must persist even when the Discussion dialog is closed.
- * React state is destroyed on unmount, so we lift the message store
- * outside React into a plain module-level Map. Each ticket gets its own
- * array of messages. The Supabase broadcast channel for a ticket is also
- * kept alive here so messages arrive even while the dialog is closed.
+ * Persistence: localStorage under `gh_ticket_msgs_<ticketId>`.
+ * Cleared only when ticket is closed/deleted via clearTicketMessages().
  *
- * Both the TicketDetailSheet AND the reporting page reference the same
- * channel/store for the same ticketId, so they share conversations.
+ * HMR-safe: state is stored on `window.__gh_ticket_store__` so Vite
+ * hot-module-reloads don't wipe the Maps and lose subscriptions.
  *
- * Cleanup: call detachTicket(ticketId) when the ticket is closed.
+ * Two listener tiers:
+ *  - listeners      — UI (TicketDiscussion). Cleaned up on dialog close. OK.
+ *  - coreListeners  — Unread tracking. NEVER cleaned up by UI. Survive HMR.
  */
-
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -29,174 +25,244 @@ export type ChatMessage = {
 
 type Listener = () => void;
 
-// ── Module-level state ────────────────────────────────────────────────────────
+// ── HMR-safe global store ─────────────────────────────────────────────────────
+// Stored on `window` so Vite module reloads don't reset the Maps.
 
-const messageStore = new Map<string, ChatMessage[]>();
-const channels = new Map<string, RealtimeChannel>();
-const listeners = new Map<string, Set<Listener>>();
-
-function channelName(ticketId: string) {
-  return `ticket-discussion-${ticketId}`;
+declare global {
+  interface Window {
+    __gh_ticket_store__?: {
+      messageStore:         Map<string, ChatMessage[]>;
+      channels:             Map<string, RealtimeChannel>;
+      listeners:            Map<string, Set<Listener>>;
+      coreListeners:        Map<string, Set<Listener>>;
+      coreListenersByPair:  Map<string, Listener>;
+      unreadCounts:         Map<string, number>;
+      unreadListeners:      Map<string, Set<Listener>>;
+      attachedForUser:      Set<string>;
+    };
+  }
 }
 
+function getStore() {
+  if (!window.__gh_ticket_store__) {
+    window.__gh_ticket_store__ = {
+      messageStore:        new Map(),
+      channels:            new Map(),
+      listeners:           new Map(),
+      coreListeners:       new Map(),
+      coreListenersByPair: new Map(),
+      unreadCounts:        new Map(),
+      unreadListeners:     new Map(),
+      attachedForUser:     new Set(),
+    };
+  }
+  return window.__gh_ticket_store__;
+}
+
+// ── localStorage ──────────────────────────────────────────────────────────────
+
+function storageKey(ticketId: string) { return `gh_ticket_msgs_${ticketId}`; }
+
+function loadFromStorage(ticketId: string): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(storageKey(ticketId));
+    return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
+  } catch { return []; }
+}
+
+function saveToStorage(ticketId: string, msgs: ChatMessage[]) {
+  try { localStorage.setItem(storageKey(ticketId), JSON.stringify(msgs)); } catch { /* quota */ }
+}
+
+function removeFromStorage(ticketId: string) {
+  try { localStorage.removeItem(storageKey(ticketId)); } catch { /* ignore */ }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function channelName(ticketId: string) { return `ticket-discussion-${ticketId}`; }
+
 function notify(ticketId: string) {
-  listeners.get(ticketId)?.forEach((fn) => fn());
+  const s = getStore();
+  s.coreListeners.get(ticketId)?.forEach((fn) => fn());
+  s.listeners.get(ticketId)?.forEach((fn) => fn());
+}
+
+function ensureLoaded(ticketId: string) {
+  const s = getStore();
+  if (!s.messageStore.has(ticketId)) {
+    s.messageStore.set(ticketId, loadFromStorage(ticketId));
+  }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-/** Ensure the broadcast channel for this ticket is open and receiving. */
 export function attachTicket(ticketId: string) {
-  if (channels.has(ticketId)) return; // already attached
-
-  if (!messageStore.has(ticketId)) messageStore.set(ticketId, []);
+  const s = getStore();
+  if (s.channels.has(ticketId)) return;
+  ensureLoaded(ticketId);
 
   const ch = supabase
     .channel(channelName(ticketId), { config: { broadcast: { self: true } } })
     .on("broadcast", { event: "message" }, ({ payload }) => {
       const msg = payload as ChatMessage;
-      const msgs = messageStore.get(ticketId) ?? [];
-      if (msgs.some((m) => m.id === msg.id)) return; // deduplicate
-      messageStore.set(ticketId, [...msgs, msg]);
+      const msgs = s.messageStore.get(ticketId) ?? [];
+      if (msgs.some((m) => m.id === msg.id)) return;
+      const updated = [...msgs, msg];
+      s.messageStore.set(ticketId, updated);
+      saveToStorage(ticketId, updated);
       notify(ticketId);
     })
     .on("broadcast", { event: "edit" }, ({ payload }) => {
       const { id, text } = payload as { id: string; text: string };
-      const msgs = messageStore.get(ticketId) ?? [];
-      messageStore.set(
-        ticketId,
-        msgs.map((m) => (m.id === id ? { ...m, text, edited: true } : m)),
-      );
+      const msgs = s.messageStore.get(ticketId) ?? [];
+      const updated = msgs.map((m) => m.id === id ? { ...m, text, edited: true } : m);
+      s.messageStore.set(ticketId, updated);
+      saveToStorage(ticketId, updated);
       notify(ticketId);
     })
     .on("broadcast", { event: "delete" }, ({ payload }) => {
       const { id } = payload as { id: string };
-      const msgs = messageStore.get(ticketId) ?? [];
-      messageStore.set(ticketId, msgs.filter((m) => m.id !== id));
+      const msgs = s.messageStore.get(ticketId) ?? [];
+      const updated = msgs.filter((m) => m.id !== id);
+      s.messageStore.set(ticketId, updated);
+      saveToStorage(ticketId, updated);
       notify(ticketId);
     })
     .subscribe();
 
-  channels.set(ticketId, ch);
+  s.channels.set(ticketId, ch);
 }
 
-/** Remove the channel and wipe messages (call when ticket is closed). */
 export function detachTicket(ticketId: string) {
-  const ch = channels.get(ticketId);
+  const s = getStore();
+  const ch = s.channels.get(ticketId);
   if (ch) supabase.removeChannel(ch);
-  channels.delete(ticketId);
-  messageStore.delete(ticketId);
-  listeners.delete(ticketId);
+  s.channels.delete(ticketId);
+  s.messageStore.delete(ticketId);
+  s.listeners.delete(ticketId);
+  s.coreListeners.delete(ticketId);
+  removeFromStorage(ticketId);
+  for (const pair of s.attachedForUser) {
+    if (pair.endsWith(`:${ticketId}`)) {
+      s.attachedForUser.delete(pair);
+      s.coreListenersByPair?.delete(pair);
+    }
+  }
 }
 
-/** Get current messages snapshot. */
 export function getMessages(ticketId: string): ChatMessage[] {
-  return messageStore.get(ticketId) ?? [];
+  ensureLoaded(ticketId);
+  return getStore().messageStore.get(ticketId) ?? [];
 }
 
-/** Send a new message. */
 export async function sendMessage(ticketId: string, msg: ChatMessage) {
-  const ch = channels.get(ticketId);
+  const s = getStore();
+  if (!s.channels.has(ticketId)) {
+    attachTicket(ticketId);
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  const ch = s.channels.get(ticketId);
   if (!ch) return;
   await ch.send({ type: "broadcast", event: "message", payload: msg });
 }
 
-/** Edit a message (broadcast to all). */
 export async function editMessage(ticketId: string, id: string, newText: string) {
-  const ch = channels.get(ticketId);
+  const ch = getStore().channels.get(ticketId);
   if (!ch) return;
   await ch.send({ type: "broadcast", event: "edit", payload: { id, text: newText } });
 }
 
-/** Delete a message (broadcast to all). */
 export async function deleteMessage(ticketId: string, id: string) {
-  const ch = channels.get(ticketId);
+  const ch = getStore().channels.get(ticketId);
   if (!ch) return;
   await ch.send({ type: "broadcast", event: "delete", payload: { id } });
 }
 
-/** Subscribe to store changes for a ticketId. Returns unsubscribe fn. */
+export function clearTicketMessages(ticketId: string) {
+  detachTicket(ticketId);
+}
+
+/** UI listener — safe to clean up on component unmount. */
 export function subscribeToTicket(ticketId: string, fn: Listener): () => void {
-  if (!listeners.has(ticketId)) listeners.set(ticketId, new Set());
-  listeners.get(ticketId)!.add(fn);
-  return () => listeners.get(ticketId)?.delete(fn);
+  const s = getStore();
+  if (!s.listeners.has(ticketId)) s.listeners.set(ticketId, new Set());
+  s.listeners.get(ticketId)!.add(fn);
+  return () => s.listeners.get(ticketId)?.delete(fn);
 }
 
 // ── Unread count tracking ─────────────────────────────────────────────────────
-// Each user has their own unread count per ticket. When a message arrives
-// via broadcast and the discussion dialog is NOT open, the count increments.
-// When the user opens the dialog, markAllRead() resets it to 0.
 
-const unreadCounts = new Map<string, number>(); // key: `${userId}:${ticketId}`
-const unreadListeners = new Map<string, Set<Listener>>(); // key: userId
-
-function unreadKey(userId: string, ticketId: string) {
-  return `${userId}:${ticketId}`;
-}
+function unreadKey(userId: string, ticketId: string) { return `${userId}:${ticketId}`; }
 
 function notifyUnread(userId: string) {
-  unreadListeners.get(userId)?.forEach((fn) => fn());
+  getStore().unreadListeners.get(userId)?.forEach((fn) => fn());
 }
 
 /**
- * Attach a ticket channel AND track unread messages for a specific user.
- * Call this instead of bare attachTicket when you know the current user.
- * IDEMPOTENT — safe to call multiple times for the same userId+ticketId.
+ * Attach channel + register PERSISTENT unread tracking.
+ * Uses coreListeners — survives dialog close and Vite HMR.
  */
-
-// Track which userId+ticketId pairs have had a listener registered
-const attachedForUser = new Set<string>();
-
 export function attachTicketForUser(ticketId: string, currentUserId: string) {
-  // Attach the channel first (idempotent)
+  if (!currentUserId) return;
   attachTicket(ticketId);
 
-  // Only register one unread-tracking listener per userId+ticketId pair
+  const s = getStore();
   const pair = `${currentUserId}:${ticketId}`;
-  if (attachedForUser.has(pair)) return;
-  attachedForUser.add(pair);
+  if (s.attachedForUser.has(pair)) return;
+  s.attachedForUser.add(pair);
 
-  // Track the last message id we've already counted to avoid double-counting
+  // Use a single named listener function stored by pair key so it can
+  // never be registered twice even if this function is called concurrently
   let lastCountedId: string | null = null;
 
-  subscribeToTicket(ticketId, () => {
+  // Remove any stale listener for this pair before adding fresh one
+  // (guards against window store surviving but listener being stale)
+  const existing = s.coreListenersByPair?.get(pair);
+  if (existing) {
+    s.coreListeners.get(ticketId)?.delete(existing);
+  }
+  if (!s.coreListenersByPair) s.coreListenersByPair = new Map();
+
+  const listener = () => {
     const msgs = getMessages(ticketId);
     if (!msgs.length) return;
     const last = msgs[msgs.length - 1];
-    // Only increment once per unique incoming message from someone else
     if (last && last.senderId !== currentUserId && last.id !== lastCountedId) {
       lastCountedId = last.id;
       const key = unreadKey(currentUserId, ticketId);
-      const prev = unreadCounts.get(key) ?? 0;
-      unreadCounts.set(key, prev + 1);
+      s.unreadCounts.set(key, (s.unreadCounts.get(key) ?? 0) + 1);
       notifyUnread(currentUserId);
     }
-  });
+  };
+
+  s.coreListenersByPair.set(pair, listener);
+  if (!s.coreListeners.has(ticketId)) s.coreListeners.set(ticketId, new Set());
+  s.coreListeners.get(ticketId)!.add(listener);
 }
 
-/** Reset unread count for a user+ticket (call when discussion opens). */
 export function markTicketRead(userId: string, ticketId: string) {
-  unreadCounts.set(unreadKey(userId, ticketId), 0);
+  const s = getStore();
+  s.unreadCounts.set(unreadKey(userId, ticketId), 0);
   notifyUnread(userId);
 }
 
-/** Get unread count for a specific user+ticket. */
 export function getUnreadCount(userId: string, ticketId: string): number {
-  return unreadCounts.get(unreadKey(userId, ticketId)) ?? 0;
+  return getStore().unreadCounts.get(unreadKey(userId, ticketId)) ?? 0;
 }
 
-/** Get total unread across all tickets for a user. */
 export function getTotalUnread(userId: string): number {
   let total = 0;
-  for (const [key, count] of unreadCounts) {
+  for (const [key, count] of getStore().unreadCounts) {
     if (key.startsWith(`${userId}:`)) total += count;
   }
   return total;
 }
 
-/** Subscribe to any unread count change for a user. Returns unsubscribe fn. */
+/** Subscribe to unread count changes. Survives HMR via window store. */
 export function subscribeUnread(userId: string, fn: Listener): () => void {
-  if (!unreadListeners.has(userId)) unreadListeners.set(userId, new Set());
-  unreadListeners.get(userId)!.add(fn);
-  return () => unreadListeners.get(userId)?.delete(fn);
+  const s = getStore();
+  if (!s.unreadListeners.has(userId)) s.unreadListeners.set(userId, new Set());
+  s.unreadListeners.get(userId)!.add(fn);
+  return () => s.unreadListeners.get(userId)?.delete(fn);
 }

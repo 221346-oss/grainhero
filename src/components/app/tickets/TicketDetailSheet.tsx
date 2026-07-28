@@ -20,7 +20,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { closeTicket, resolveTicket, deleteTicket, type TicketRow } from "@/lib/tickets.functions";
-import { attachTicketForUser } from "@/lib/ticketMessages";
+import { attachTicketForUser, clearTicketMessages } from "@/lib/ticketMessages";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
 import { cn } from "@/lib/utils";
@@ -75,9 +75,10 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   const [discussionOpen, setDiscussionOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
 
-  // Attach broadcast channel with unread tracking
+  // Attach broadcast channel with unread tracking — only once userId is known
   useEffect(() => {
-    if (ticket?.id && currentUserId) attachTicketForUser(ticket.id, currentUserId);
+    if (!ticket?.id || !currentUserId) return;
+    attachTicketForUser(ticket.id, currentUserId);
   }, [ticket?.id, currentUserId]);
 
   // Get current user id for discussion
@@ -93,6 +94,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
     mutationFn: (id: string) => closeFn({ data: { id } }),
     onSuccess: () => {
       toast.success("Ticket closed");
+      if (ticket?.id) clearTicketMessages(ticket.id); // wipe localStorage on close
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       onClose();
     },
@@ -116,6 +118,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
       toast.success("Ticket deleted");
+      if (ticket?.id) clearTicketMessages(ticket.id); // wipe localStorage on delete
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       qc.invalidateQueries({ queryKey: ["field-tickets", "all"] });
       onClose();
