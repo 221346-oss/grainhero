@@ -1,12 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { AlertTriangle, ClipboardCheck, Truck, ToggleRight, Package, Container, Loader2, Plus, MessageSquare } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listOpenFieldIncidents } from "@/lib/field-settings.functions";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
 import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { attachTicketForUser } from "@/lib/ticketMessages";
+import { useTicketUnread } from "@/hooks/useTicketUnread";
 
 type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; action?: ReactNode; to?: string; search?: { tab: string } };
 
@@ -87,6 +90,16 @@ function PriorityPill({ p }: { p?: string | null }) {
   return <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${map[key] ?? map.medium}`}>{key}</span>;
 }
 
+function UnreadBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  const displayCount = count > 99 ? "99+" : count.toString();
+  return (
+    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border border-white dark:border-slate-900">
+      {displayCount}
+    </span>
+  );
+}
+
 export function ManagerBento({
   silos, alerts, qcQueue, dispatchQueue, actuators, orders,
 }: {
@@ -100,6 +113,12 @@ export function ManagerBento({
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
   const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
+  const [currentUserId, setCurrentUserId] = useState("");
+
+  // Get current user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? ""));
+  }, []);
 
   const siloRows: Row[] = silos.map((s) => {
     const pct = s.capacity_kg ? Math.round((Number(s.current_occupancy_kg ?? 0) / s.capacity_kg) * 100) : 0;
@@ -172,6 +191,15 @@ export function ManagerBento({
   });
   const incList = (openTickets ?? []) as Array<{ id: string; category: string; severity: string; status: string; created_at: string; notes?: string | null; assigned_to?: string | null; reporter_user_id?: string }>;
 
+  // Attach unread tracking for all incidents
+  useEffect(() => {
+    if (!currentUserId) return;
+    incList.forEach((inc) => attachTicketForUser(inc.id, currentUserId));
+  }, [incList, currentUserId]);
+
+  // Get unread counts for incidents
+  const { unreadFor, markRead } = useTicketUnread(currentUserId);
+
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       <BentoCard title="Silos" icon={Container} count={silos.length} to="/grain-operations" search={{ tab: "silos" }}
@@ -189,7 +217,7 @@ export function ManagerBento({
           <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
             <h3 className="text-xs font-semibold truncate">Open field incidents</h3>
-            <InfoDot text="Active field incidents — click Discuss to open the thread." />
+            <InfoDot text="Active field incidents — click the message icon to open discussion." />
             {incList.length > 0 && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                 {incList.length}
@@ -219,33 +247,38 @@ export function ManagerBento({
             <p className="text-xs text-muted-foreground px-3 py-6 text-center">No open field incidents.</p>
           ) : (
             <ul className="divide-y">
-              {incList.map((inc) => (
-                <li key={inc.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium truncate">{inc.category}</div>
-                    <div className="text-[10px] text-muted-foreground truncate">
-                      {new Date(inc.created_at).toLocaleString()}
+              {incList.map((inc) => {
+                const unreadCount = unreadFor(inc.id);
+                return (
+                  <li key={inc.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium truncate">{inc.category}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {new Date(inc.created_at).toLocaleString()}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setActiveDiscussionTicket({
-                        id: inc.id,
-                        category: inc.category,
-                        severity: inc.severity,
-                        status: inc.status,
-                        notes: inc.notes,
-                        created_at: inc.created_at,
-                      });
-                      setDiscussionOpen(true);
-                    }}
-                    className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
-                    title="Open discussion thread"
-                  >
-                    <MessageSquare className="h-3 w-3" /> Discuss
-                  </button>
-                </li>
-              ))}
+                    <button
+                      onClick={() => {
+                        setActiveDiscussionTicket({
+                          id: inc.id,
+                          category: inc.category,
+                          severity: inc.severity,
+                          status: inc.status,
+                          notes: inc.notes,
+                          created_at: inc.created_at,
+                        });
+                        setDiscussionOpen(true);
+                        markRead(inc.id);
+                      }}
+                      className="relative flex items-center justify-center p-2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
+                      title={unreadCount > 0 ? `${unreadCount} unread message${unreadCount > 1 ? 's' : ''}` : "Open discussion thread"}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      <UnreadBadge count={unreadCount} />
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -259,6 +292,7 @@ export function ManagerBento({
         open={discussionOpen}
         onOpenChange={setDiscussionOpen}
         incident={activeDiscussionTicket}
+        currentUserId={currentUserId}
       />
       <BentoCard title="Dispatch queue" icon={Truck} count={dispatchQueue.length} to="/grain-operations" search={{ tab: "silos" }}
         tooltip="Batches ready to be dispatched to buyers."

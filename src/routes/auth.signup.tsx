@@ -80,7 +80,23 @@ function SignupPage() {
 
   useEffect(() => {
     setDraftPlan(loadCheckoutDraft());
-  }, []);
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        navigate({ to: redirect ?? "/dashboard", replace: true });
+      }
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        navigate({ to: redirect ?? "/dashboard", replace: true });
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [navigate, redirect]);
 
   const orderPlanId = useMemo(() => {
     if (summaryQuery.data?.planName) {
