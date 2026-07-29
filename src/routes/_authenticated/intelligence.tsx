@@ -9,7 +9,7 @@ import { AnalyticsSection } from "@/components/intelligence/AnalyticsSection";
 import { MLModelsSection } from "@/components/intelligence/MLModelsSection";
 import { ReportsSection } from "@/components/intelligence/ReportsSection";
 import { Brain, BarChart3, Cpu, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
-import { getBatchPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
+import { getSiloPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
 import { getReportsData } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 
@@ -36,7 +36,7 @@ function IntelligenceWorkspace() {
   const allowedAnalytics = ["super_admin", "admin", "manager"].includes(role);
   const allowedModels = ["super_admin", "admin"].includes(role);
 
-  const fetchPredictions = useServerFn(getBatchPredictions);
+  const fetchPredictions = useServerFn(getSiloPredictions);
   const fetchOverview = useServerFn(getAnalyticsOverview);
   const fetchModels = useServerFn(getMLModels);
   const fetchReports = useServerFn(getReportsData);
@@ -134,7 +134,7 @@ function IntelligenceWorkspace() {
                         style={{ width: count > 0 ? `${Math.max(pct, 3)}%` : "0%" }}
                       />
                     </div>
-                    <span className="w-10 text-right text-sm font-semibold text-white tabular-nums shrink-0">
+                    <span className="w-10 text-right text-sm font-semibold text-foreground tabular-nums shrink-0">
                       {count}
                     </span>
                   </button>
@@ -151,7 +151,7 @@ function IntelligenceWorkspace() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
-            <div className="space-y-0 divide-y divide-white/8 flex-1">
+            <div className="space-y-0 divide-y divide-border flex-1">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-4">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
@@ -159,7 +159,7 @@ function IntelligenceWorkspace() {
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-white font-black text-base font-mono">{s.value}</span>
+                    <span className="text-foreground font-black text-base font-mono">{s.value}</span>
                     {s.up
                       ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                       : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />

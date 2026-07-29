@@ -111,14 +111,14 @@ export function AlertsFunnel() {
         })}
       </div>
 
-      <div className="divide-y divide-white/8">
+      <div className="divide-y divide-border">
         {metrics.map((m) => (
           <div key={m.label} className="flex items-center justify-between py-3">
             <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
               <m.icon className={`w-3.5 h-3.5 ${m.tint}`} />
               {m.label}
             </div>
-            <span className="text-base font-bold text-white tabular-nums">{m.value}</span>
+            <span className="text-base font-bold text-foreground tabular-nums">{m.value}</span>
           </div>
         ))}
       </div>

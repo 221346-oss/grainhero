@@ -14,41 +14,41 @@ export function EnvironmentalSection() {
   return (
     <div className="space-y-4">
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/40">
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
           <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading environmental data…
         </div>
       ) : silos.length === 0 ? (
-        <div className="py-12 text-center text-white/40">
+        <div className="py-12 text-center text-muted-foreground">
           <p className="text-sm">No environmental data available.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(silos as any[]).map((s) => (
-            <div key={s.id} className="bg-white/5 border border-white/10 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-white mb-3">{s.name}</h3>
+            <div key={s.id} className="bg-muted/30 border border-border rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">{s.name}</h3>
               <div className="space-y-2">
                 {s.current_conditions?.temperature && (
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-white/60">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Thermometer className="w-4 h-4" /> Temperature
                     </div>
-                    <span className="text-white font-semibold">{s.current_conditions.temperature.value}°C</span>
+                    <span className="text-foreground font-semibold">{s.current_conditions.temperature.value}°C</span>
                   </div>
                 )}
                 {s.current_conditions?.humidity && (
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-white/60">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Droplets className="w-4 h-4" /> Humidity
                     </div>
-                    <span className="text-white font-semibold">{s.current_conditions.humidity.value}%</span>
+                    <span className="text-foreground font-semibold">{s.current_conditions.humidity.value}%</span>
                   </div>
                 )}
                 {s.current_conditions?.co2 && (
                   <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-white/60">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Wind className="w-4 h-4" /> CO2
                     </div>
-                    <span className="text-white font-semibold">{s.current_conditions.co2.value} ppm</span>
+                    <span className="text-foreground font-semibold">{s.current_conditions.co2.value} ppm</span>
                   </div>
                 )}
               </div>

@@ -332,11 +332,11 @@ export function DataVisualizationPanel() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-white flex items-center gap-2">
+          <h2 className="text-xl font-black text-foreground flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-emerald-500" />
             IoT Data Visualization
           </h2>
-          <p className="text-sm text-white/40 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Real-time charts and live telemetry stream from remote device nodes
           </p>
         </div>

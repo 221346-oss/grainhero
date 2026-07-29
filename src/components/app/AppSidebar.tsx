@@ -16,6 +16,7 @@ import {
   Building2,
   EyeOff,
   ChevronRight,
+  Gauge,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FlowingNavItem } from "@/components/app/FlowingNavItem";
@@ -43,8 +44,8 @@ type NavItem = {
 // alongside them.
 const workspaceNav: NavItem[] = [
   { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", icon: Wheat, roles: ["admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
-  { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Sensors", "Actuators", "Alerts", "Environmental", "Device Health", "Maintenance", "Incidents"] },
-  { name: "intelligence", label: "Intelligence", to: "/intelligence", icon: Sparkles, roles: ["super_admin", "admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
+  { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["admin", "manager", "technician"], marqueeItems: ["Sensors", "Actuators", "Alerts", "Environmental", "Device Health", "Maintenance", "Incidents"] },
+  { name: "intelligence", label: "Intelligence", to: "/intelligence", icon: Sparkles, roles: ["admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
   { name: "business", label: "Business", to: "/business", icon: Briefcase, roles: ["super_admin", "admin", "manager"], marqueeItems: ["Revenue", "Subscription", "Insurance"] },
   { name: "administration", label: "Administration", to: "/administration", icon: ShieldCheck, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
   { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
@@ -52,6 +53,10 @@ const workspaceNav: NavItem[] = [
 
 // Group 3 — super-admin-only platform entries.
 const utilityNav: NavItem[] = [
+  { name: "platform-monitoring", label: "Monitoring", to: "/platform/monitoring", icon: Activity, roles: ["super_admin"], marqueeItems: ["Silos", "Device health", "Incidents"] },
+  { name: "platform-intelligence", label: "Intelligence", to: "/platform/intelligence", icon: Sparkles, roles: ["super_admin"], marqueeItems: ["Model status", "Request volume", "Failures"] },
+  { name: "platform-key-metrics", label: "Key Metrics", to: "/platform/key-metrics", icon: Gauge, roles: ["super_admin"], marqueeItems: ["Device stock", "Live vs down"] },
+  { name: "platform-business", label: "Business", to: "/platform/business", icon: Briefcase, roles: ["super_admin"], marqueeItems: ["Revenue", "Subscriptions", "Insurance"] },
   { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
   { name: "platform", label: "Platform", to: "/platform", icon: Building2, roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Plans & Thresholds", "Pipeline", "Leads", "System Health", "Audit Logs", "Activity Feed"] },
 ];
