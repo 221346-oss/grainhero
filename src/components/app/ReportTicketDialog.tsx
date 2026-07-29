@@ -52,8 +52,8 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
   const userProfileName = roleData?.profile?.name || roleData?.profile?.email || "";
 
   const [title, setTitle] = useState("");
-  const [severity, setSeverity] = useState<"low" | "medium" | "critical" | "">("");
-  const [targetRole, setTargetRole] = useState<"admin" | "technician" | "">("");
+  const [severity, setSeverity] = useState<"low" | "medium" | "critical">("medium");
+  const [targetRole, setTargetRole] = useState<"admin" | "technician">("technician");
   const [reporterName, setReporterName] = useState("");
   const [role, setRole] = useState("manager");
   const [description, setDescription] = useState("");
@@ -62,16 +62,18 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
   useEffect(() => {
     if (detectedRole) {
       setRole(detectedRole);
-      setTargetRole("");
+      setTargetRole("technician");
     }
-    // Don't auto-fill reporter name - keep it empty by default
-  }, [detectedRole]);
+    if (userProfileName && !reporterName) {
+      setReporterName(userProfileName);
+    }
+  }, [detectedRole, userProfileName]);
 
   function reset() {
     setTitle("");
-    setSeverity("");
-    setTargetRole("");
-    setReporterName("");
+    setSeverity("medium");
+    setTargetRole("technician");
+    setReporterName(userProfileName);
     setRole(detectedRole);
     setDescription("");
     setSiloId("");
@@ -128,7 +130,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
             </Label>
             <Input
               id="ticket-title"
-              placeholder="Enter Incident Title"
+              placeholder="Enter incident title e.g. Conveyor Motor Overheating"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="text-xs h-8"
@@ -144,7 +146,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
             </Label>
             <Select value={severity} onValueChange={(v) => setSeverity(v as "low" | "medium" | "critical")} required>
               <SelectTrigger id="ticket-severity" className="text-xs h-8">
-                <SelectValue placeholder="None" />
+                <SelectValue placeholder="Select sensitivity level" />
               </SelectTrigger>
               <SelectContent>
                 {SEVERITY_OPTIONS.map((opt) => (
@@ -163,7 +165,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
             </Label>
             <Select value={targetRole} onValueChange={(v) => setTargetRole(v as "admin" | "technician")} required>
               <SelectTrigger id="ticket-target-role" className="text-xs h-8">
-                <SelectValue placeholder="None" />
+                <SelectValue placeholder="Select recipient" />
               </SelectTrigger>
               <SelectContent>
                 {ROUTE_OPTIONS.map((opt) => (
@@ -183,7 +185,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
               </Label>
               <Input
                 id="ticket-reporter"
-                placeholder="None"
+                placeholder="Reporter name"
                 value={reporterName}
                 onChange={(e) => setReporterName(e.target.value)}
                 className="text-xs h-8"
