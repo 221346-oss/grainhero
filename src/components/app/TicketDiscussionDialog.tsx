@@ -38,6 +38,8 @@ interface Props {
   incident: TicketItem | null;
   /** The currently signed-in user's ID — used to enforce participant-only access */
   currentUserId?: string | null;
+  /** The current user's role — used to allow admin viewing */
+  userRole?: string | null;
 }
 
 function RoleBadge({ role }: { role: string }) {
@@ -67,12 +69,25 @@ function isUserParticipant(
   );
 }
 
+/** Returns true if the user can view the discussion (participants + admins) */
+function canViewDiscussion(
+  currentUserId: string | null | undefined,
+  incident: TicketItem | null,
+  userRole: string | null | undefined,
+): boolean {
+  if (!currentUserId || !incident) return false;
+  // Participants can always view
+  if (isUserParticipant(currentUserId, incident)) return true;
+  // Admins can view but not participate
+  return userRole === "admin" || userRole === "super_admin";
+}
+
 /** True if incident is in a terminal (closed) state */
 function isIncidentClosed(status: string) {
   return status === "resolved" || status === "dismissed";
 }
 
-export function TicketDiscussionDialog({ open, onOpenChange, incident, currentUserId }: Props) {
+export function TicketDiscussionDialog({ open, onOpenChange, incident, currentUserId, userRole }: Props) {
   const qc = useQueryClient();
   const listCommentsFn = useServerFn(listIncidentComments);
   const addCommentFn = useServerFn(addIncidentComment);
@@ -80,15 +95,17 @@ export function TicketDiscussionDialog({ open, onOpenChange, incident, currentUs
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Determine if this user is a participant
+  // Determine if this user is a participant or can view
   const participant = isUserParticipant(currentUserId, incident);
+  const canView = canViewDiscussion(currentUserId, incident, userRole);
+  const isAdminViewing = canView && !participant;
   const isClosed = !!incident && isIncidentClosed(incident.status);
 
   const { data, isLoading } = useQuery({
     queryKey: ["incident-comments", incident?.id],
     queryFn: () => listCommentsFn({ data: { incident_id: incident!.id } }),
-    enabled: !!incident?.id && open && participant,
-    refetchInterval: participant && !isClosed ? 5_000 : false,
+    enabled: !!incident?.id && open && canView,
+    refetchInterval: canView && !isClosed ? 5_000 : false,
   });
 
   // Parse response — server now returns { comments, isParticipant }
