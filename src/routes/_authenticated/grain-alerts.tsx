@@ -26,11 +26,12 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-alerts")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { priority?: string } => ({
     priority: (search.priority as string) ?? "all",
   }),
   component: GrainAlertsPage,
 });
+
 
 type Priority = "low" | "medium" | "high" | "critical";
 type Status = "pending" | "acknowledged" | "resolved" | "escalated";
@@ -54,16 +55,16 @@ type Alert = {
 
 const PRIO_STYLES: Record<Priority, { badge: string; icon: React.ComponentType<{ className?: string }>; border: string; bg: string }> = {
   critical: { badge: "bg-rose-500 text-white", icon: AlertTriangle, border: "border-rose-300", bg: "bg-rose-50 dark:bg-rose-950/30" },
-  high:     { badge: "bg-orange-500 text-white", icon: AlertCircle,   border: "border-orange-300", bg: "bg-orange-50 dark:bg-orange-950/30" },
-  medium:   { badge: "bg-amber-500 text-white",  icon: Bell,          border: "border-amber-300",  bg: "bg-amber-50 dark:bg-amber-950/30" },
-  low:      { badge: "bg-blue-500 text-white",   icon: Activity,      border: "border-blue-300",   bg: "bg-blue-50 dark:bg-blue-950/30" },
+  high: { badge: "bg-orange-500 text-white", icon: AlertCircle, border: "border-orange-300", bg: "bg-orange-50 dark:bg-orange-950/30" },
+  medium: { badge: "bg-amber-500 text-white", icon: Bell, border: "border-amber-300", bg: "bg-amber-50 dark:bg-amber-950/30" },
+  low: { badge: "bg-blue-500 text-white", icon: Activity, border: "border-blue-300", bg: "bg-blue-50 dark:bg-blue-950/30" },
 };
 
 const STATUS_STYLES: Record<Status, { badge: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending:      { badge: "bg-rose-100 text-rose-800 border-rose-200",       icon: AlertTriangle },
-  acknowledged: { badge: "bg-amber-100 text-amber-800 border-amber-200",    icon: Clock },
-  escalated:    { badge: "bg-orange-100 text-orange-800 border-orange-200", icon: ArrowUpRight },
-  resolved:     { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", icon: CheckCircle },
+  pending: { badge: "bg-rose-100 text-rose-800 border-rose-200", icon: AlertTriangle },
+  acknowledged: { badge: "bg-amber-100 text-amber-800 border-amber-200", icon: Clock },
+  escalated: { badge: "bg-orange-100 text-orange-800 border-orange-200", icon: ArrowUpRight },
+  resolved: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", icon: CheckCircle },
 };
 
 function timeAgo(iso: string | null) {
@@ -182,7 +183,7 @@ function GrainAlertsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
   const act = useMutation({
-    mutationFn: (v: { id: string; action: "acknowledge"|"resolve"|"escalate"|"reopen"; notes?: string; resolution_type?: string; escalated_to?: string; reason?: string }) =>
+    mutationFn: (v: { id: string; action: "acknowledge" | "resolve" | "escalate" | "reopen"; notes?: string; resolution_type?: string; escalated_to?: string; reason?: string }) =>
       actFn({ data: v } as never),
     onSuccess: (_d, v) => {
       toast.success(`Alert ${v.action}d`);
@@ -224,11 +225,11 @@ function GrainAlertsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <StatCard tone="indigo" label="Total" value={stats.total} icon={<Bell className="h-4 w-4" />} />
-        <StatCard tone="rose"   label="Open"  value={stats.open}  icon={<AlertTriangle className="h-4 w-4" />} />
-        <StatCard tone="rose"   label="Critical" value={stats.critical} icon={<AlertTriangle className="h-4 w-4" />} />
-        <StatCard tone="amber"  label="Pending" value={stats.pending} icon={<Clock className="h-4 w-4" />} />
+        <StatCard tone="rose" label="Open" value={stats.open} icon={<AlertTriangle className="h-4 w-4" />} />
+        <StatCard tone="rose" label="Critical" value={stats.critical} icon={<AlertTriangle className="h-4 w-4" />} />
+        <StatCard tone="amber" label="Pending" value={stats.pending} icon={<Clock className="h-4 w-4" />} />
         <StatCard tone="emerald" label="Resolved Today" value={stats.resolvedToday} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard tone="blue"    label="Avg Response" value={stats.avg} suffix="m" icon={<Activity className="h-4 w-4" />} />
+        <StatCard tone="blue" label="Avg Response" value={stats.avg} suffix="m" icon={<Activity className="h-4 w-4" />} />
       </div>
 
       {/* Toolbar */}
@@ -365,7 +366,7 @@ function GrainAlertsPage() {
               <Select value={form.priority} onValueChange={(v: Priority) => setForm({ ...form, priority: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(["critical","high","medium","low"] as Priority[]).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  {(["critical", "high", "medium", "low"] as Priority[]).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -374,7 +375,7 @@ function GrainAlertsPage() {
               <Select value={form.status} onValueChange={(v: Status) => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(["pending","acknowledged","escalated","resolved"] as Status[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {(["pending", "acknowledged", "escalated", "resolved"] as Status[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -383,7 +384,7 @@ function GrainAlertsPage() {
               <Select value={form.source} onValueChange={(v) => setForm({ ...form, source: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["sensor","ai","system","manual","batch","user"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {["sensor", "ai", "system", "manual", "batch", "user"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -529,7 +530,7 @@ function GrainAlertsPage() {
   );
 }
 
-function StatCard({ label, value, icon, tone, suffix }: { label: string; value: number; icon: React.ReactNode; tone: "indigo"|"emerald"|"blue"|"rose"|"amber"; suffix?: string }) {
+function StatCard({ label, value, icon, tone, suffix }: { label: string; value: number; icon: React.ReactNode; tone: "indigo" | "emerald" | "blue" | "rose" | "amber"; suffix?: string }) {
   const tones: Record<string, string> = {
     indigo: "from-indigo-500/10 to-indigo-500/5 text-indigo-600 border-indigo-200/60",
     emerald: "from-emerald-500/10 to-emerald-500/5 text-emerald-600 border-emerald-200/60",

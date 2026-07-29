@@ -1,12 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
-import { AlertTriangle, ClipboardCheck, Truck, ToggleRight, Package, Container } from "lucide-react";
-import type { ReactNode } from "react";
+import { AlertTriangle, ClipboardCheck, Truck, ToggleRight, Package, Container, Loader2, Plus, MessageSquare } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listOpenFieldIncidents } from "@/lib/field-settings.functions";
+import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
+import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
 
-type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; to: string; search?: { tab: string } };
+type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; action?: ReactNode; to?: string; search?: { tab: string } };
 
 function BentoCard({
-  title, icon: Icon, count, to, search, tooltip, rows, empty,
+  title, icon: Icon, count, to, search, tooltip, rows, empty, headerAction,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -16,6 +21,7 @@ function BentoCard({
   tooltip: string;
   rows: Row[];
   empty: string;
+  headerAction?: ReactNode;
 }) {
   return (
     <div className="rounded-xl border bg-card/60 flex flex-col min-h-0">
@@ -30,9 +36,12 @@ function BentoCard({
             </span>
           )}
         </div>
-        <Link to={to} search={search as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
-          View all
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          {headerAction}
+          <Link to={to} search={search as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+            View all
+          </Link>
+        </div>
       </header>
       <div className="max-h-[260px] overflow-auto">
         {rows.length === 0 ? (
@@ -40,20 +49,24 @@ function BentoCard({
         ) : (
           <ul className="divide-y">
             {rows.map((r) => (
-              <li key={r.id}>
-                <Link
-                  to={r.to}
-                  search={r.search as never}
-                  className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
-                >
+              <li key={r.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
+                {r.to ? (
+                  <Link to={r.to} search={r.search as never} className="flex-1 min-w-0 flex flex-col">
+                    <div className="text-xs font-medium truncate">{r.primary}</div>
+                    {r.secondary && (
+                      <div className="text-[10px] text-muted-foreground truncate">{r.secondary}</div>
+                    )}
+                  </Link>
+                ) : (
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium truncate">{r.primary}</div>
                     {r.secondary && (
                       <div className="text-[10px] text-muted-foreground truncate">{r.secondary}</div>
                     )}
                   </div>
-                  {r.badge}
-                </Link>
+                )}
+                {r.badge}
+                {r.action}
               </li>
             ))}
           </ul>
@@ -84,6 +97,10 @@ export function ManagerBento({
   actuators: Array<{ id: string; name: string; actuator_type: string; is_on: boolean | null; silo_id: string | null }>;
   orders: Array<{ id: string; order_number: string; status: string; total_amount: number | null; created_at: string }>;
 }) {
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
+
   const siloRows: Row[] = silos.map((s) => {
     const pct = s.capacity_kg ? Math.round((Number(s.current_occupancy_kg ?? 0) / s.capacity_kg) * 100) : 0;
     return {
@@ -147,6 +164,14 @@ export function ManagerBento({
     to: "/orders",
   }));
 
+  const listTicketsFn = useServerFn(listOpenFieldIncidents);
+  const { data: openTickets, isLoading: ticketsLoading } = useQuery({
+    queryKey: ["open-field-tickets"],
+    queryFn: () => listTicketsFn(),
+    refetchInterval: 30_000,
+  });
+  const incList = (openTickets ?? []) as Array<{ id: string; category: string; severity: string; status: string; created_at: string; notes?: string | null; assigned_to?: string | null; reporter_user_id?: string }>;
+
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       <BentoCard title="Silos" icon={Container} count={silos.length} to="/grain-operations" search={{ tab: "silos" }}
@@ -158,6 +183,83 @@ export function ManagerBento({
       <BentoCard title="QC queue" icon={ClipboardCheck} count={qcQueue.length} to="/grain-operations" search={{ tab: "batches" }}
         tooltip="Batches currently in intake / processing / treatment awaiting QC sign-off."
         rows={qcRows} empty="No batches pending QC." />
+      {/* ── Open Field Incidents – self-fetching, scrollable ── */}
+      <div className="rounded-xl border bg-card/60 flex flex-col min-h-0">
+        <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <h3 className="text-xs font-semibold truncate">Open field incidents</h3>
+            <InfoDot text="Active field incidents — click Discuss to open the thread." />
+            {incList.length > 0 && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                {incList.length}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              id="manager-new-ticket-btn"
+              onClick={() => setTicketDialogOpen(true)}
+              className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+              title="Report a new field incident ticket"
+            >
+              <Plus className="h-3 w-3" /> New Ticket
+            </button>
+            <Link to="/platform/field-incidents" search={{} as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+              View all
+            </Link>
+          </div>
+        </header>
+        <div className="overflow-y-auto max-h-[260px]">
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : incList.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-3 py-6 text-center">No open field incidents.</p>
+          ) : (
+            <ul className="divide-y">
+              {incList.map((inc) => (
+                <li key={inc.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium truncate">{inc.category}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {new Date(inc.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActiveDiscussionTicket({
+                        id: inc.id,
+                        category: inc.category,
+                        severity: inc.severity,
+                        status: inc.status,
+                        notes: inc.notes,
+                        created_at: inc.created_at,
+                      });
+                      setDiscussionOpen(true);
+                    }}
+                    className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
+                    title="Open discussion thread"
+                  >
+                    <MessageSquare className="h-3 w-3" /> Discuss
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+      <ReportTicketDialog
+        open={ticketDialogOpen}
+        onOpenChange={setTicketDialogOpen}
+        silos={silos}
+      />
+      <TicketDiscussionDialog
+        open={discussionOpen}
+        onOpenChange={setDiscussionOpen}
+        incident={activeDiscussionTicket}
+      />
       <BentoCard title="Dispatch queue" icon={Truck} count={dispatchQueue.length} to="/grain-operations" search={{ tab: "silos" }}
         tooltip="Batches ready to be dispatched to buyers."
         rows={dispatchRows} empty="Nothing ready to ship." />

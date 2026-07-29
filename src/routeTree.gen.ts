@@ -28,7 +28,6 @@ import { Route as ThemeTestRouteImport } from './routes/theme-test'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
-import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
 import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
@@ -42,7 +41,6 @@ import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authentica
 import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
 import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
-import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
 import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -75,6 +73,7 @@ import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedPlatformBusinessRouteImport } from './routes/_authenticated/platform.business'
 import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
@@ -85,7 +84,9 @@ import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
+import { Route as AuthenticatedPlatformIntelligenceRouteImport } from './routes/_authenticated/platform.intelligence'
 import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
+import { Route as AuthenticatedPlatformKeyMetricsRouteImport } from './routes/_authenticated/platform.key-metrics'
 import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
@@ -98,6 +99,7 @@ import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './rout
 import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
 import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
 import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
+import { Route as AuthenticatedPlatformMonitoringRouteImport } from './routes/_authenticated/platform.monitoring'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
@@ -250,16 +252,6 @@ const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => rootRouteImport,
-const AuthenticatedMaintenanceRoute =
-  AuthenticatedMaintenanceRouteImport.update({
-    id: '/maintenance',
-    path: '/maintenance',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedListingsRoute = AuthenticatedListingsRouteImport.update({
-  id: '/listings',
-  path: '/listings',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -286,12 +278,6 @@ const AuthenticatedAdministrationRoute =
   AuthenticatedAdministrationRouteImport.update({
     id: '/administration',
     path: '/administration',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAiPredictionsRoute =
-  AuthenticatedAiPredictionsRouteImport.update({
-    id: '/ai-predictions',
-    path: '/ai-predictions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
@@ -323,10 +309,6 @@ const AuthenticatedEnvironmentalRoute =
   AuthenticatedEnvironmentalRouteImport.update({
     id: '/environmental',
     path: '/environmental',
-const AuthenticatedAdministrationRoute =
-  AuthenticatedAdministrationRouteImport.update({
-    id: '/administration',
-    path: '/administration',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedGrainAlertsRoute =
@@ -368,11 +350,6 @@ const AuthenticatedMaintenanceRoute =
     path: '/maintenance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMlModelsRoute = AuthenticatedMlModelsRouteImport.update({
-  id: '/ml-models',
-  path: '/ml-models',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
   id: '/monitoring',
   path: '/monitoring',
@@ -531,16 +508,6 @@ const AuthenticatedInsuranceClaimsClaimIdRoute =
   AuthenticatedInsuranceClaimsClaimIdRouteImport.update({
     id: '/insurance-claims/$claimId',
     path: '/insurance-claims/$claimId',
-const AuthenticatedPlatformMonitoringRoute =
-  AuthenticatedPlatformMonitoringRouteImport.update({
-    id: '/platform/monitoring',
-    path: '/platform/monitoring',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMobileSyncMonitorRoute =
-  AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
-    id: '/platform/mobile-sync-monitor',
-    path: '/platform/mobile-sync-monitor',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformIndexRoute =
@@ -553,6 +520,12 @@ const AuthenticatedPlatformAuditLogsRoute =
   AuthenticatedPlatformAuditLogsRouteImport.update({
     id: '/platform/audit-logs',
     path: '/platform/audit-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformBusinessRoute =
+  AuthenticatedPlatformBusinessRouteImport.update({
+    id: '/platform/business',
+    path: '/platform/business',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformCommerceMobileRoute =
@@ -615,10 +588,10 @@ const AuthenticatedPlatformInsuranceRoute =
     path: '/platform/insurance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformKeyMetricsRoute =
-  AuthenticatedPlatformKeyMetricsRouteImport.update({
-    id: '/platform/key-metrics',
-    path: '/platform/key-metrics',
+const AuthenticatedPlatformIntelligenceRoute =
+  AuthenticatedPlatformIntelligenceRouteImport.update({
+    id: '/platform/intelligence',
+    path: '/platform/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformInvoiceFailuresRoute =
@@ -627,20 +600,16 @@ const AuthenticatedPlatformInvoiceFailuresRoute =
     path: '/platform/invoice-failures',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformKeyMetricsRoute =
+  AuthenticatedPlatformKeyMetricsRouteImport.update({
+    id: '/platform/key-metrics',
+    path: '/platform/key-metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformLaunchReadinessRoute =
   AuthenticatedPlatformLaunchReadinessRouteImport.update({
     id: '/platform/launch-readiness',
     path: '/platform/launch-readiness',
-const AuthenticatedPlatformIntelligenceRoute =
-  AuthenticatedPlatformIntelligenceRouteImport.update({
-    id: '/platform/intelligence',
-    path: '/platform/intelligence',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformInsuranceRoute =
-  AuthenticatedPlatformInsuranceRouteImport.update({
-    id: '/platform/insurance',
-    path: '/platform/insurance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformLeadsRoute =
@@ -701,22 +670,18 @@ const AuthenticatedPlatformMobileSettingsRoute =
   AuthenticatedPlatformMobileSettingsRouteImport.update({
     id: '/platform/mobile-settings',
     path: '/platform/mobile-settings',
-const AuthenticatedPlatformBusinessRoute =
-  AuthenticatedPlatformBusinessRouteImport.update({
-    id: '/platform/business',
-    path: '/platform/business',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformAuditLogsRoute =
-  AuthenticatedPlatformAuditLogsRouteImport.update({
-    id: '/platform/audit-logs',
-    path: '/platform/audit-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformMobileSyncMonitorRoute =
   AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
     id: '/platform/mobile-sync-monitor',
     path: '/platform/mobile-sync-monitor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMonitoringRoute =
+  AuthenticatedPlatformMonitoringRouteImport.update({
+    id: '/platform/monitoring',
+    path: '/platform/monitoring',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformOrdersRoute =
@@ -2463,13 +2428,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministrationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/ai-predictions': {
-      id: '/_authenticated/ai-predictions'
-      path: '/ai-predictions'
-      fullPath: '/ai-predictions'
-      preLoaderRoute: typeof AuthenticatedAiPredictionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
       path: '/analytics'
@@ -2559,13 +2517,6 @@ declare module '@tanstack/react-router' {
       path: '/maintenance'
       fullPath: '/maintenance'
       preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ml-models': {
-      id: '/_authenticated/ml-models'
-      path: '/ml-models'
-      fullPath: '/ml-models'
-      preLoaderRoute: typeof AuthenticatedMlModelsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/monitoring': {
@@ -2728,12 +2679,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/verify-otp'
       preLoaderRoute: typeof AuthVerifyOtpRouteImport
       parentRoute: typeof AuthRoute
-    '/_authenticated/maintenance': {
-      id: '/_authenticated/maintenance'
-      path: '/maintenance'
-      fullPath: '/maintenance'
-      preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/checkout/': {
       id: '/checkout/'
@@ -2798,6 +2743,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/business': {
+      id: '/_authenticated/platform/business'
+      path: '/platform/business'
+      fullPath: '/platform/business'
+      preLoaderRoute: typeof AuthenticatedPlatformBusinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/commerce-mobile': {
       id: '/_authenticated/platform/commerce-mobile'
       path: '/platform/commerce-mobile'
@@ -2831,11 +2783,6 @@ declare module '@tanstack/react-router' {
       path: '/platform/field-incidents'
       fullPath: '/platform/field-incidents'
       preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsRouteImport
-    '/_authenticated/administration': {
-      id: '/_authenticated/administration'
-      path: '/administration'
-      fullPath: '/administration'
-      preLoaderRoute: typeof AuthenticatedAdministrationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/field-settings': {
@@ -2873,11 +2820,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformInsuranceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/intelligence': {
+      id: '/_authenticated/platform/intelligence'
+      path: '/platform/intelligence'
+      fullPath: '/platform/intelligence'
+      preLoaderRoute: typeof AuthenticatedPlatformIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/invoice-failures': {
       id: '/_authenticated/platform/invoice-failures'
       path: '/platform/invoice-failures'
       fullPath: '/platform/invoice-failures'
       preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/key-metrics': {
+      id: '/_authenticated/platform/key-metrics'
+      path: '/platform/key-metrics'
+      fullPath: '/platform/key-metrics'
+      preLoaderRoute: typeof AuthenticatedPlatformKeyMetricsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/launch-readiness': {
@@ -2957,18 +2918,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformMobileSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/monitoring': {
-      id: '/_authenticated/platform/monitoring'
-      path: '/platform/monitoring'
-      fullPath: '/platform/monitoring'
-      preLoaderRoute: typeof AuthenticatedPlatformMonitoringRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/platform/mobile-sync-monitor': {
       id: '/_authenticated/platform/mobile-sync-monitor'
       path: '/platform/mobile-sync-monitor'
       fullPath: '/platform/mobile-sync-monitor'
       preLoaderRoute: typeof AuthenticatedPlatformMobileSyncMonitorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/monitoring': {
+      id: '/_authenticated/platform/monitoring'
+      path: '/platform/monitoring'
+      fullPath: '/platform/monitoring'
+      preLoaderRoute: typeof AuthenticatedPlatformMonitoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/orders': {
@@ -3075,33 +3036,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/firebase/live-sensors'
       preLoaderRoute: typeof ApiFirebaseLiveSensorsRouteImport
       parentRoute: typeof rootRouteImport
-    '/_authenticated/platform/key-metrics': {
-      id: '/_authenticated/platform/key-metrics'
-      path: '/platform/key-metrics'
-      fullPath: '/platform/key-metrics'
-      preLoaderRoute: typeof AuthenticatedPlatformKeyMetricsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/invoice-failures': {
-      id: '/_authenticated/platform/invoice-failures'
-      path: '/platform/invoice-failures'
-      fullPath: '/platform/invoice-failures'
-      preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/intelligence': {
-      id: '/_authenticated/platform/intelligence'
-      path: '/platform/intelligence'
-      fullPath: '/platform/intelligence'
-      preLoaderRoute: typeof AuthenticatedPlatformIntelligenceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/insurance': {
-      id: '/_authenticated/platform/insurance'
-      path: '/platform/insurance'
-      fullPath: '/platform/insurance'
-      preLoaderRoute: typeof AuthenticatedPlatformInsuranceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/actuator-ack': {
       id: '/api/public/actuator-ack'
@@ -3172,19 +3106,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/platform/insurance/webhooks'
       preLoaderRoute: typeof AuthenticatedPlatformInsuranceWebhooksRouteImport
       parentRoute: typeof AuthenticatedPlatformInsuranceRoute
-    '/_authenticated/platform/business': {
-      id: '/_authenticated/platform/business'
-      path: '/platform/business'
-      fullPath: '/platform/business'
-      preLoaderRoute: typeof AuthenticatedPlatformBusinessRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/audit-logs': {
-      id: '/_authenticated/platform/audit-logs'
-      path: '/platform/audit-logs'
-      fullPath: '/platform/audit-logs'
-      preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/logistics/carriers': {
       id: '/_authenticated/platform/logistics/carriers'
