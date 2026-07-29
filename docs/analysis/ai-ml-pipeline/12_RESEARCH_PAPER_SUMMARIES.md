@@ -47,6 +47,15 @@ mindmap
       Paper 12: Supply chain traceability
         QR codes add $15/tonne premium
         No blockchain needed
+    Emerging AI & Validation (New Uploads)
+      AI-driven technologies paper (2026)
+        Transformer-based frameworks and Mamba architectures
+        Unsound kernel detection
+      Smart Storage System paper
+        85% efficiency in real-world smart silo prototype
+        Validates the 70-85% real-world accuracy expectation
+      Gonzales et al. (Simultaneous Monitoring)
+        CO2 effective proxy for high-moisture grain zones
 ```
 
 ---
@@ -237,6 +246,35 @@ safe_to_aerate = (
 | **Blockchain is overkill** — immutable PostgreSQL log is sufficient | Confirmed: use append-only `activity_logs` table, no blockchain |
 
 **Code**: `qr_code` field already exists in `grain_batches` Supabase schema. QR generation Edge Function needed in Sprint 4.
+
+---
+
+### Paper 13 — AI-driven technologies for pest monitoring, unsound kernel detection, and intelligent aeration (New Upload)
+**Source**: Sinograin Chengdu Storage Research Institute (2026) | **Relevance**: ⭐⭐⭐⭐⭐
+
+| Finding | GrainHero Decision / Update |
+|---|---|
+| Mamba architectures and Transformer-based frameworks are superseding LSTMs for time-series modeling in grain storage | **Update to Roadmap**: Replaces LSTM/TCN in `05_AI_ML_ARCHITECTURE.md` with Transformers/Mamba for sequence-based prediction (Month 9). |
+| Unsound kernel detection via computer vision (CNN) | Future roadmap addition for intake quality gating. |
+| Intelligent aeration control driven by AI | Validates our fan actuator ML loop. |
+
+---
+
+### Paper 14 — Simultaneous Monitoring of Stored Grain with RH, T, and CO2 Sensors
+**Source**: Applied Engineering in Agriculture (Gonzales et al.) | **Relevance**: ⭐⭐⭐⭐
+
+| Finding | GrainHero Decision / Update |
+|---|---|
+| CO2 sensors are highly effective in indirectly detecting high-moisture grain pockets due to respiration | **Validates**: Addition of Sensirion SCD40 CO2 sensor in hardware v2. CO2 acts as an early warning proxy for both pests and moisture migration. |
+
+---
+
+### Paper 15 — Design and Development of a Model Smart Storage System
+**Source**: Turkish Journal of Agricultural Engineering Research (2023) | **Relevance**: ⭐⭐⭐
+
+| Finding | GrainHero Decision / Update |
+|---|---|
+| Tested prototype smart storage achieved 85% efficiency and 15% failure rate | **Validates**: Our prior conclusion that "real-world accuracy drops to 70–85%" is strongly supported by empirical hardware testing in the field. |
 
 ---
 

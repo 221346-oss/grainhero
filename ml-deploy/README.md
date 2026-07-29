@@ -1,42 +1,27 @@
-# GrainHero ML — Deployment Bundle
+# GrainHero ML — Deployment Bundle (ONNX)
 
-Everything needed to host the spoilage model as a tiny Python web
-service on a **free** host. Point Lovable at the resulting URL via
-the `GRAINHERO_ML_API_URL` secret and the app switches to the real
-model automatically.
+Everything needed to host the 5-grain spoilage-prediction ensemble as a
+FastAPI + ONNX Runtime web service on a **free** host. Point Lovable at
+the resulting URL via the `GRAINHERO_ML_API_URL` secret and the app
+switches to the real model automatically.
 
 ## What's in this folder
 
 | File | Purpose |
 |---|---|
-| `app.py` | FastAPI server exposing `POST /predict` and `GET /health` |
-| `predict.py` | Loads the `.pkl` ensemble and returns the JSON contract |
-| `requirements.txt` | Python deps (sklearn, xgboost, lightgbm, fastapi) |
+| `app.py` | FastAPI server exposing `POST /predict` and `GET /health`, with hot-swap + River online learning |
+| `predict.py` | Feature engineering + response contract (SHAP, storage life, trend) |
+| `model_registry.py` / `hot_swap.py` | ONNX Runtime session cache + background polling for new models from Supabase |
+| `supabase_client.py` | Async fire-and-forget sensor logging (never blocks `/predict`) |
+| `retrain_watcher.py` / `fast_retrain.py` / `nightly_retrain.py` | Background retraining processes (run separately) |
+| `convert_to_onnx.py` | Converts a freshly trained `.pkl` ensemble to `.onnx` for hot-swap |
+| `requirements.txt` | Python deps (onnxruntime, fastapi, sklearn, xgboost, lightgbm, river…) |
 | `Dockerfile` | Container recipe (Python 3.11 slim + libgomp for LGBM) |
 | `render.yaml` | One-click Render.com free web-service config |
-| `.dockerignore` | Keeps the image small |
-| `*_label_encoder.pkl` | Small — committed to the repo |
-| `*_model_metadata.json` | Small — committed to the repo |
+| `*.onnx` | Trained models per grain (~11–20 MB each, **committed to git**) |
+| `*_label_encoder.pkl` / `*_model_metadata.json` | Small helpers — committed |
 
-## What's NOT in this folder (too big for the repo)
-
-The trained ensembles are ~46 MB each and live in your local checkout
-at `src/ml/`:
-
-- `src/ml/ensemble_model.pkl`
-- `src/ml/rice_ensemble_model.pkl`
-- `src/ml/smartbin_model.pkl` (legacy — optional)
-
-Before deploying, **copy them into `ml-deploy/`** on your machine:
-
-```bash
-cp src/ml/ensemble_model.pkl      ml-deploy/
-cp src/ml/rice_ensemble_model.pkl ml-deploy/
-```
-
-> They're gitignored in the deployment repo — you'll push them to your
-> Render/HF repo directly with `git lfs` or a plain `git push` (Render
-> accepts files up to 100 MB per file).
+> No large file downloads at build time — every model needed for inference is committed and shipped with the container.
 
 ---
 
@@ -47,7 +32,17 @@ Python runtime). Our model needs Python + scikit-learn + xgboost, so
 HF free is not usable anymore unless you subscribe to PRO for Docker.
 
 **Use Render.com's free web service instead** (below). It's the
-simplest zero-cost path today and no credit card is required.
+simplest zero-cost path today and no credit card is required. When you
+later add the RAG / research-paper layer and outgrow 512 MB RAM,
+migrate the same `Dockerfile` to a Hugging Face Docker Space (paid PRO,
+16 GB RAM).
+
+### Keep the free service awake (CRITICAL)
+
+Render Free sleeps after 15 min of no traffic → 30–60 s cold start on
+the next request → IoT hardware times out. After deploying, set up a
+free **UptimeRobot** monitor that hits `/health` every 5 minutes. Full
+steps in `docs/ml/BEGINNER_SETUP_GUIDE.md` Part A½.
 
 ---
 

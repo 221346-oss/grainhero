@@ -1,0 +1,327 @@
+--- File: Smartsilo.pdf ---
+Ajisegiri, E.S.A.et al. / Int.Artif.Intell.&Mach.Learn. 2(2) (2022) 35-55 Page 35 of 55
+Volume 2, Issue 2, July 2022
+Received : 22 March 2022
+Accepted : 19 June 2022
+Published : 05 July 2022
+doi: 10.51483/IJAIML.2.2.2022.35-55
+Article Info
+Abstract
+Food security is the aspiration of every nation. To achieve this, particularly in
+Developing Countries, there is a need to reduce wastage by storing staple foods
+grains beyond their production seasons. Longer storage requires human presence,
+monitoring and control of the storage environment which may be laborious,
+demanding and sometimes outrightly unsafe. Therefore, the needs to employ
+automation and artificial intelligence become necessary to control this storage
+environment. This study developed an automated, intelligent silo bin that controls
+the storage environment of the system for the small-scale rural farmers, of which
+over 70% of their population still depend on agriculture, using Internet of Things
+(IoT). The developed system consists of three units interfaced together. These
+units are the pro-type 2-ton (2,000 kg) silo structure, the embedded system (made
+up of the microcontroller, sensors and relays). The system is integrated to an IoT
+system (made up of mobile application (BLYNK), Wi-Fi module and ultrasonic
+atomizer) and the air blowing system (consisting of blower fan and heater). The
+developed smart system was tested and the test run results showed that it
+successfully monitors and controls storage air temperature, humidity, air
+pressure, grain moisture, insect infestation and CO 2 levels, the key parameters
+for long term storability of grains. The coding process could be set to suit different
+grains and storage conditions required for their effective storage. Although the
+silo bin structure used for testing was for a particular proto-type, it can be
+geometrically scaled for many silo structures.
+Keywords: Smart silo, IoT, Artificial intelligence, Embedded system, Ultrasonic atomizer,
+Controlled environmen
+
+==================================================
+
+--- File: A53-1823-1989-eng.pdf ---
+1^1AgricultureCanada
+Spoilage
+Prevention,
+ontrolS'7CJ
+f
+
+DigitizedbytheInternetArchivein2012withfundingfromAgricultureandAgri-FoodCanada-AgricultureetAgroalimentaireCanada
+http://www.archive.org/details/spoilageheatingoOOmill
+
+
+
+==================================================
+
+--- File: AI-driven_technologies_for_pest_monitoring_unsound.pdf ---
+ 
+ 
+AI-driven technologies for pest monitoring, unsound kernel detection,
+and intelligent aeration in grain storage
+Yuanyi Luo1, Dandan Li1*, Jinying Chen1, Yanguang Zhu1, Yiming Ma1, Jie Lin2, Kun Hu1,
+Shengbin Lan1, Yue Li1, Weihao Hu3, Hongwei Xiao2*
+(1. Sinograin Chengdu Storage Research Institute Co., Ltd., Chengdu 610091, China;
+2. College of Engineering, China Agricultural University, Beijing 100083, China;
+3. School of Mechanical and Electrical Engineering, University of Electronic Science and Technology of China, Chengdu 611731, China)
+Abstract: Grain storage plays a crucial role in safeguarding food security and maintaining market stability, and it has therefore
+attracted growing attention from both academia and industry. The primary objective of storage technologies is to minimize post-
+harvest  losses  caused  by  pests,  mold,  and  mechanical  damage.  However,  conventional  storage  management  methods,  which
+rely heavily on manual labor, are often inefficient and costly. With the rapid advancement of artificial intelligence (AI), various
+approaches, such as convolutional neural network (CNN)-based models, Transformer-based frameworks, and emerging Mamba
+architectures,  have  been  introduced  into  the  field  of  grain  storage.  This  paper  presents  a  comprehensive  review  of  artificial
+intelligence methodologies applied across multiple stages of the grain storage process. From four complementary perspectives,
+including  application  significance,  existing  AI  techniques,  comparative  analysis,  and  future  development  trends,  the  review
+systematically summarizes current progress in pest monitoring, unsound kernel detection, and intelligent aeration. It critically
+examines their respective advantages and limitations, while outlining key challenges and future research directions. The review
+aims  to  offer  a  global  perspective  on  the  integration  of  AI  technologies  in  grain  storage  and  to  foster  interdisciplinary
+collabo
+
+==================================================
+
+--- File: SensorsforGrainStorageNeethirajanASABE.pdf ---
+The authors are solely responsible for the content of this te chnical presentation. The technical presentation does not necessarily reflect the 
+official position of the American Society of Agricultural  and Biological Engineers (ASABE), and its printing and distribution d oes not 
+constitute an endorsement of views which may be expressed. Techni cal presentations are not subject to the formal peer review process by 
+ASABE editorial committees; therefore, they ar e not to be presented as refereed publicat ions. Citation of this work should stat e that it is 
+from an ASABE meeting paper. EXAMPLE: Author's Last Name, In itials. 2007. Title of Presentation. ASABE Paper No. 076179. St. 
+Joseph, Mich.: ASABE. For information about securing permission to  reprint or reproduce a techni cal presentation, please contac t ASABE 
+at rutter@asabe.org or 269-429-0300 (2950 Niles Road, St. Joseph, MI 49085-9659 USA). 
+ 
+ 
+ 
+ 
+ 
+ 
+An ASABE Meeting Presentation 
+ 
+Paper Number: 076179
+Sensors for Grain Storage  
+S. Neethirajan 
+Department of Biosystems Engineering, University of Manitoba, Winnipeg, Canada R3T 5V6 
+D.S. Jayas 
+Distinguished Professor, Canada Research Chair in Stored-Grain Ecosystems, Associate 
+Vice-president (Research), University of Manitoba, Winnipeg, MB, Canada R3T 2N2  
+Written for presentation at the 
+2007 ASABE Annual International Meeting 
+Sponsored by ASABE 
+Minneapolis Convention Center 
+Minneapolis, Minnesota 
+17 - 20 June 2007 
+Abstract. Post harvest stored grain losses remain a problem . Vigilant post-harvest grain management is the 
+most cost-effective means of increa sing the world’s food supply. Spoil age of bulk-stored grain leads to 
+decreased nutritional value and poses health hazards due to the formation of irritating volatile metabolites 
+inside grain bins. Quality changes in the stored gr ain bulk can be identified by various odors as well as 
+increase in carbon dioxide. This paper provides info rmation and analysis about the potential of senso
+
+==================================================
+
+--- File: Design_and_Development_of_a_Model_Smart_Storage_Sy.pdf ---
+ 
+ 
+© Publisher: Ebubekir Altuntas. This is an Open Access article and 
+is licensed (CC-BY-NC-4.0) under a Creative Commons Attribution 4.0 International License. 
+ 
+ 
+ 
+ 
+Turkish Journal of Agricultural  
+Engineering Research 
+ 
+https://dergipark.org.tr/en/pub/turkager 
+  https://doi.org/10.46592/turkager.1297511 
+ 
+Research Article 
+ 
+ 
+Turk J Agr Eng Res 
+(TURKAGER) 
+ 
+ISSN: 2717-8420 
+2023, 4(1), 125-132 
+ 
+Design and Development of a Model Smart Storage System 
+ 
+Omokaro IDAMAaID, Ovuakporaye Godwin EKRUYOTAa*ID 
+ 
+aDepartment of Computer Engineering, Delta State University of Science and Technology, Ozoro, NIGERIA 
+ 
+(*): Corresponding Author: g.o.softsystem@gmail.com 
+ 
+ABSTRACT  
+  
+Food security has become a global major problem, due to the rapid increase in population growth. This has 
+necessity the development of an effective agricultural products’ storage system, to alleviate the problem of 
+food wastage. This study was embarked upon to develop a prototype of universal smart storage system for 
+farm products, by using the internet of thing (IoT). The storage structure consists of four princi pal 
+constituents which were; the power source, storage chamber, central processing system, and peripheral 
+component interconnect (PCI) heater and PCI fan. The developed model was tested at a pre-set temperature 
+and relative humidity of 32C and 62% RH respectively. The results revealed that the developed system had 
+an efficiency of 85%. Though, the smart model had a failure rate of 15%, this smart prototype is a major 
+breakthrough in the production of automated storage system for agricultural products.   
+ 
+Keywords: Automation, Environmental conditions, Food security, Smart system, Storage structure 
+ 
+ 
+INTRODUCTION  
+ 
+Food insecurity is rising daily mostly due to decrease in food production and increase 
+in human population. Apart from increase in food production, appropriate storage 
+and processing conditions, may help to alleviate the problem of food wasta
+
+==================================================
+
+--- File: neethirajan2008.pdf ---
+REVIEW PAPER
+Carbon Dioxide (CO 2) Sensors for the Agri-food
+Industry—A Review
+S. Neethirajan & D. S. Jayas & S. Sadistap
+Received: 30 March 2008 / Accepted: 2 October 2008 / Published online: 5 November 2008
+# Springer Science + Business Media, LLC 2008
+Abstract In the food and agricultural industry, sensors are
+being used for process control, monitoring quality, and
+assessing safety. There is a growing demand for carbon
+dioxide (CO 2) sensors in the bulk food storage sector,
+because CO 2 sensors can be used to detect incipient
+spoilage and to assess CO 2 levels in modified-atmosphere
+packages and storage structures. The market potential for
+reliable and inexpensive CO
+2 sensors is huge because of a
+wide range of applications in the agri-food industry. This
+review synthesizes information about the types of CO 2
+sensors, analyzes their detection processes, provides a
+broad overview of the innovative research on the develop-
+ment of sensors, sensing mechanisms, and their character-
+istics, and outlines future possibilities for use of CO
+2
+sensors.
+Keywords CO2 sensors . Optical sensors .
+Electrochemical sensors . Metal oxide sensors .
+Polymer sensors
+Introduction
+The evolving agriculture and food system has entered in to
+a consumer driven era with consumers demanding food
+safety, quality, and convenience. To analyze, design,
+develop, manage, control, and characterize the biological
+and environmental processes in agricultural industry, there
+is a need to collect data. This has necessitated the food and
+agricultural industry to increasingly rely on sensor technol-
+o g y .F o re x a m p l e ,s e n s o r sa r eu s e di nt h ef i e l df o r
+monitoring of environmental parameters to help producers
+to conduct more efficient irrigation or pest control
+programs, on harvesting machinery for measuring yield
+per unit area, during storage for measurement of product
+temperature, for post harvest grading and sorting of fruits
+and vegetables, and for online monitoring of process
+par
+
+==================================================
+
+--- File: AgricResCommentaryFoodSecurity12124.pdf ---
+COMMENTARY
+Storing Grains for Food Security and Sustainability
+Digvir S. Jayas
+Received: 2 October 2011 / Accepted: 28 November 2011 / Published online: 19 January 2012
+/C211NAAS (National Academy of Agricultural Sciences) 2012
+Abstract Globally over two billion tonnes of grains are produced annually. The grains are stored at different stages of the
+grain distribution chain, in deﬁned units such as bags, silos, warehouses, containers and even in piles on the ground. An
+individual unit or a group of units can be managed as man-made ecosystems, where deterioration of the stored grain is a
+result of interactions among physical, chemical, and biological factors. Accurate estimates of post-harvest losses of grains
+are not available, but it can vary from 1–2% in the developed countries, where grain is stored in well managed facilities, to
+20–50% in less developed countries, with poorly managed storage systems. Considerable knowledge has been generated to
+understand the critical parameters for developing efﬁcient grain storage systems. Through proper monitoring and man-
+agement of interactions, both biotic and abiotic in nature, stored-grains can be protected for over a long period. There is an
+urgent need to synthesize the status of knowledge to provide directions for future research and development, to minimize
+the post-harvest losses of grains in different regions of the world.
+Globally over two billion tonnes (Gt) of cereals, oilseeds,
+and pulses (collectively referred to as grains) are produced
+annually for consumption by humans and domesticated
+animals to meet the nutritional requirement of humans. The
+produced grains are stored at different stages of the grain
+distribution chain between the producer and the consumer.
+Obvious reasons for storing grain are: place of consump-
+tion is different than the place of production, production is
+seasonal and consumption is year round, place of pro-
+cessing is different than the place of production, grains are
+kept to deal with 
+
+==================================================
+
+--- File: WirelessDataPA.pdf ---
+The authors are solely responsible for the content of this technical presentation. The technical presentation does not
+necessarily reflect the official position of the American Society of Agricultural Engineers (ASAE), and its printing
+and distribution does not constitute an endorsement of views which may be expressed. Technical presentations are
+not subject to the formal peer review process by ASAE editorial committees; therefore, they are not to be presented
+as refereed publications. Citation of this work should state that it is from an ASAE meeting paper EXAMPLE:
+Author's Last Name, Initials. 2003. Title of Presentation. ASAE Paper No. 03xxxx. St. Joseph, Mich.: ASAE. For
+information about securing permission to reprint or reproduce a technical presentation, please contact ASAE at
+hq@asae.org or 269-429-0300 (2950 Niles Road, St. Joseph, MI 49085-9659 USA).
+                                 Paper Number: 036157
+An ASAE Meeting Presentation
+Not a peer reviewed paper
+Wireless Data Transmission of Networked Sensors
+in Grain Storage
+Paul Armstrong
+USDA-ARS,  Grain Marketing & Production Research Center
+1515 College Ave. Manhattan, KS, 66502, parm@gmprc.ksu.edu
+Written for presentation at the
+2003 ASAE Annual International Meeting
+Sponsored by ASAE
+Riviera Hotel and Convention Center
+Las Vegas, Nevada, USA
+27- 30 July 2003
+Abstract.  Current grain-temperature monitoring systems employ sensors that are hard-wired
+into a  structure.  Thermocouples are typically  used and are integrated into a supporting cable
+which is  suspended between the ceiling and floor of a structure.  Multiplexed signal
+conditioning is performed outside the structure with the data transm itted to a display and
+storage device.  Wireless sensors were studied as an alternative to these systems.  The main issue
+addressed in this study was the data transmission distance through grain that can be achieved by
+a low-power radio frequency (RF) device design ed to operate in the unlicensed FCC spectrum.
+Res
+
+==================================================
+
+--- File: pdfviewer.pdf ---
+Transactions of the ASAE
+V ol. 48(1): 263−271 /C0069 2005 American Society of Agricultural Engineers ISSN 0001−2351 263
+A THREE−DIMENSIONAL, ASYMMETRIC, AND TRANSIENT
+MODEL TO PREDICT GRAIN TEMPERATURES
+IN GRAIN STORAGE BINS
+F. Jian,  D. S. Jayas,  N. D. G. White,  K. Alagusundaram
+ABSTRACT. A three−dimensional, transient, combined model (headspace model + soil model + conduction model in bulk
+grain) was developed to predict grain temperatures in a granary. Different meshes (mesh refinement in the whole domain or
+at the boundary) including linear and hybrid (linear and quadratic) elements were used to simulate grain temperatures. Pre-
+diction accuracies of temperatures produced by the different meshes were compared, and the model was validated using mea-
+sured temperatures in two flat bottom bins (3.76 m diameter and 5.5 m high filled with wheat up to 3 m) located side by side
+in the north−south orientation near Winnipeg, Manitoba. Grain temperatures predicted by the model were in close agreement
+with the measured temperatures throughout a 21−month test in the two bins. By using a hybrid element mesh (mesh refinement
+at the boundary), the mean, standard error, and maximum of the absolute difference between the measured and predicted tem-
+peratures in the south bin were 2.2°C, 0.4°C, and 7.0°C, respectively. The mean, standard error, and maximum of the absolute
+difference predicted by a linear element model (88 linear elements each layer) in the south bin were 2.1°C, 0.3°C, and 6.3°C,
+respectively. Including a headspace model improved the prediction accuracy of the conduction model at the top of the grain
+bulk. Mesh refinement only at the boundary produced a homogeneous distribution of errors in the whole domain; however ,
+mesh refinement in the whole domain gave higher errors at the walls than at the center of the bins. Considering the increased
+computer time and slightly improved accuracy by mesh refinement at the boundary, a uniform mesh with mesh refinement in
+th
+
+==================================================
+
+--- File: SIMULTANEOUSMONITORINGOFSTOREDGRAIN.pdf ---
+Applied Engineering in Agriculture
+V ol. 25(4): 595‐604 2009 American Society of Agricultural and Biological Engineers ISSN 0883-8542 595
+SIMULTANEOUS MONITORING OF STORED GRAIN 
+WITH RELATIVE HUMIDITY, TEMPERATURE, 
+AND CARBON DIOXIDE SENSORS
+H. B. Gonzales,  P. R. Armstrong,  R. G. Maghirang
+ABSTRACT. Grain moisture content (MC) and temperature (T) are the primary factors affecting grain deterioration in storage.
+If these factors are not properly monitored and controlled, grain quality can deteriorate quickly due to mold growth and insect
+infestation. This research examined use of relative humidity (RH), T, and carbon dioxide (CO2) sensors for their suitability
+to determine adverse storage conditions of wheat. A mock‐up storage system was constructed and used to simulate a wheat
+storage bin 6.86 m high. Sensors for T, RH, and CO
+2 measurement were placed at various depths in the storage. High‐moisture
+grain, comprising about 11% of the grain volume, was placed in the top section of the bin. Wheat was aerated with the
+high‐moisture grain conditioned to nominal MCs of 14%, 16%, and 18% wet basis (MC wb) and the remaining grain at
+approximately 11% MCwb. Sensors monitored air conditions during the entire storage period. Aeration was provided over
+3‐h periods at rates of 0.083 m3/min/tonne (eight experiments) and 0.166 m3/min/tonne (one experiment). Airflow was from
+top to bottom of the bin. CO2 sensors were effective in indirectly detecting moist grain conditions due to the large amount
+of CO2 generated from the wet grain. CO2 measurement was less effective as grain temperature was reduced as a result of
+aeration. CO2 levels monitored at the exhaust of the aeration duct were generally adequate in determining adverse storage
+conditions. The equilibrium moisture content (EMC) of wheat, determined from RH and T, gave reasonably accurate
+measurements of grain MC. EMC measurements were also effective in determining moisture changes in the grain due to the
+moisture front m
+
+==================================================
+
