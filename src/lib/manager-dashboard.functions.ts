@@ -42,7 +42,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .order("triggered_at", { ascending: false, nullsFirst: false }).limit(10),
       context.supabase.from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id")
-        .in("status", ["intake", "processing", "treatment"] as never)
+        .in("status", ["intake", "processing", "treatment", "pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never)
         .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, silo_id, purchase_price_per_kg")

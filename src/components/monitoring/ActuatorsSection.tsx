@@ -14,34 +14,34 @@ export function ActuatorsSection() {
   return (
     <div className="space-y-4">
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/40">
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
           <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading actuators…
         </div>
       ) : actuators.length === 0 ? (
-        <div className="py-12 text-center text-white/40">
+        <div className="py-12 text-center text-muted-foreground">
           <p className="text-sm">No actuators registered.</p>
         </div>
       ) : (
-        <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+        <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-white/5 border-b border-white/10">
+              <thead className="bg-muted/40 border-b border-border">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Actuator</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">State</th>
-                  <th className="px-4 py-3 text-left font-semibold text-white/60 text-xs uppercase tracking-wider">Silo</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actuator</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">State</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Silo</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {(actuators as any[]).map((a) => (
-                  <tr key={a.id} className="hover:bg-white/2 transition-colors">
-                    <td className="px-4 py-3 text-white font-medium">{a.name}</td>
-                    <td className="px-4 py-3 text-white/70 text-xs">{a.actuator_type}</td>
+                  <tr key={a.id} className="hover:bg-muted/40 transition-colors">
+                    <td className="px-4 py-3 text-foreground font-medium">{a.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{a.actuator_type}</td>
                     <td className="px-4 py-3"><span className={`text-xs px-2 py-1 rounded ${a.status === "active" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>{a.status}</span></td>
-                    <td className="px-4 py-3 text-white/70 text-xs">{a.is_on ? "On" : "Off"}</td>
-                    <td className="px-4 py-3 text-white/70 text-xs">{a.silos?.name ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{a.is_on ? "On" : "Off"}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{a.silos?.name ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

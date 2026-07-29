@@ -70,11 +70,14 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
         const { data: batches } = await supabaseAdmin
           .from("grain_batches")
           .select("id, silo_id, grain_type, intake_date")
-          .is("deleted_at", null);
+          .is("deleted_at", null)
+          .order("intake_date", { ascending: true, nullsFirst: false });
 
+        // Oldest batch per silo wins (FIFO — the oldest grain still in a
+        // pooled silo is the one storage-duration risk should track).
         const activeBatchMap = new Map();
         for (const b of batches ?? []) {
-          if (b.silo_id) activeBatchMap.set(b.silo_id, b);
+          if (b.silo_id && !activeBatchMap.has(b.silo_id)) activeBatchMap.set(b.silo_id, b);
         }
 
         // --- Proactive HuggingFace Warm-up ---
@@ -153,10 +156,16 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           let mlConfidence: number | null = null;
           let batchId: string | null = null;
 
+          // Silo-based, not batch-based: under the intake-only model a silo
+          // can have many batches (or none, once fully dispatched) — ML
+          // inference must still run off live sensor data either way.
+          // `batch` is now just a best-effort grain-type/storage-age hint
+          // when one silo happens to have exactly one matching batch, not a
+          // requirement for inference to run.
           const batch = activeBatchMap.get(dev.silo_id);
-          if (batch && temp != null && hum != null) {
-            batchId = batch.id;
-            const storageDays = batch.intake_date ? 
+          if (temp != null && hum != null) {
+            batchId = batch?.id ?? null;
+            const storageDays = batch?.intake_date ?
               Math.floor((now.getTime() - new Date(batch.intake_date).getTime()) / (1000 * 3600 * 24)) : 0;
 
             // GH1 parity: throttle ML auto-trigger to once per 60 seconds per device
@@ -175,13 +184,19 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                 // Skip ML inference + auto-actuation; reading insert still proceeds below.
               } else {
                 const mlRes = await runMLInference({
-                  grain_type: batch.grain_type || "wheat",
+                  grain_type: batch?.grain_type || "wheat",
                   temperature: temp,
                   humidity: hum,
                   moisture: moist ?? 12,
                   voc,
                   co2,
                   storage_days: storageDays,
+                }, {
+                  supabase: supabaseAdmin,
+                  adminId: dev.admin_id,
+                  siloId: dev.silo_id,
+                  deviceId: dev.id,
+                  triggeredBy: "cron",
                 });
 
                 if (mlRes) {

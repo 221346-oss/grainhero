@@ -82,7 +82,7 @@ export function PlanManagementSection() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-white/40">Compare plans, request an upgrade or downgrade, and manage auto-upgrade.</p>
+      <p className="text-sm text-muted-foreground">Compare plans, request an upgrade or downgrade, and manage auto-upgrade.</p>
 
       <AdminSummaryTiles tiles={tiles} columns={4} />
 

@@ -176,7 +176,7 @@ export function AnalyticsSection() {
 
       {/* Data Visualization — merged from the former standalone page */}
       {!isSuperAdmin && (
-        <div className="pt-2 border-t border-white/8">
+        <div className="pt-2 border-t border-border">
           <DataVisualizationPanel />
         </div>
       )}

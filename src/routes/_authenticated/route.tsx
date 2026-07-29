@@ -43,6 +43,8 @@ export const Route = createFileRoute("/_authenticated")({
       "/team-management": "/platform/users",
       "/traceability": "/dashboard",
       "/orders": "/platform/orders",
+      "/monitoring": "/platform/monitoring",
+      "/intelligence": "/platform/intelligence",
     };
 
     const path = location.pathname;

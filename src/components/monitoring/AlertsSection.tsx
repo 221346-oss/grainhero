@@ -24,11 +24,11 @@ export function AlertsSection() {
     <div className="space-y-4">
       <AlertsFunnel />
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/40">
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
           <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading alerts…
         </div>
       ) : alerts.length === 0 ? (
-        <div className="py-12 text-center text-white/40">
+        <div className="py-12 text-center text-muted-foreground">
           <p className="text-sm">No active alerts.</p>
         </div>
       ) : (
@@ -43,16 +43,16 @@ export function AlertsSection() {
             } as Record<string, string>)[a.priority] || "bg-gray-500/20 text-gray-400";
 
             return (
-              <div key={a.id} className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/8 transition-colors">
+              <div key={a.id} className="bg-muted/30 border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                 <div className="flex items-start gap-3">
                   <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${prioColor}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm font-semibold text-white">{a.title}</h3>
+                      <h3 className="text-sm font-semibold text-foreground">{a.title}</h3>
                       <Badge className={prioColor}>{a.priority}</Badge>
                     </div>
-                    <p className="text-xs text-white/60 mt-1">{a.message}</p>
-                    <div className="text-xs text-white/40 mt-2">
+                    <p className="text-xs text-muted-foreground mt-1">{a.message}</p>
+                    <div className="text-xs text-muted-foreground mt-2">
                       {a.silos?.name && <span>{a.silos.name} • </span>}
                       {a.triggered_at && <span>{new Date(a.triggered_at).toLocaleString()}</span>}
                     </div>

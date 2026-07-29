@@ -171,19 +171,15 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const sub = subRes.data?.[0] ?? null;
 
     const allBatches = allBatchesRes.data ?? [];
-    // NOTE: the batch status enum has drifted from what this dashboard
-    // originally assumed — "qc_pending"/"quality_check"/"qc"/"ready_to_ship"/
-    // "dispatch_pending" were never real values (see grain_batches.status /
-    // public.batch_status), so those filters always matched zero rows. Fixed
-    // to use the real, currently-populated values below. There is no true
-    // "awaiting technician QC" status in the data model today — every batch
-    // is written as "stored" at creation, with a silo already assigned — so
-    // "on_hold" (a manual flag) is the closest real signal for "needs
-    // review," not a genuine pre-storage QC gate. See the dashboard's
-    // insights strip / "why stuck" widget for the fuller explanation.
+    // A real intake -> QC -> stored pipeline now exists (see batch-qc.functions.ts
+    // and the pending_qc/qc_submitted/qc_failed/qc_passed/admin_rejected
+    // batch_status values) — pendingQC/rejectedQC below use those directly
+    // instead of the old "on_hold"/"rejected" approximations (which never
+    // matched a genuine QC gate). "readyToShip" still has no real signal in
+    // the data model — left as-is.
     const insights = {
-      pendingQC: allBatches.filter((b) => String(b.status) === "on_hold").length,
-      rejectedQC: allBatches.filter((b) => String(b.status) === "rejected").length,
+      pendingQC: allBatches.filter((b) => ["pending_qc", "qc_submitted", "qc_failed"].includes(String(b.status))).length,
+      rejectedQC: allBatches.filter((b) => String(b.status) === "admin_rejected").length,
       atRisk: allBatches.filter((b) => Number(b.risk_score ?? 0) >= 70).length,
       readyToShip: allBatches.filter((b) => String(b.status) === "ready").length,
       actuatorsOn: (actuatorsRes.data ?? []).filter((a) => a.is_on).length,

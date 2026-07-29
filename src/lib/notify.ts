@@ -20,7 +20,8 @@ export type NotifCategory =
   | "system"
   | "ops"
   | "insurance"
-  | "webhook";
+  | "webhook"
+  | "incident";
 
 export type NotifInput = {
   recipientId: string;
