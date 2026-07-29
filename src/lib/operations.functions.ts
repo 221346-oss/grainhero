@@ -289,7 +289,12 @@ export const listGrainBatches = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!batches || batches.length === 0) return [];
 
-    const techIds = Array.from(new Set(batches.map((b) => b.assigned_technician_id).filter(Boolean))) as string[];
+    // assigned_technician_id isn't in the generated Supabase types for
+    // grain_batches yet (see the same `as never`/`as any` workaround used
+    // elsewhere for this column), so it's read via an untyped accessor here
+    // rather than widening `batches`'s inferred type for all consumers.
+    const technicianIdOf = (b: object) => (b as { assigned_technician_id?: string | null }).assigned_technician_id ?? null;
+    const techIds = Array.from(new Set(batches.map(technicianIdOf).filter(Boolean))) as string[];
     let techMap: Record<string, { id: string; name: string | null; email: string | null }> = {};
     if (techIds.length > 0) {
       const { data: techs } = await context.supabase
@@ -301,10 +306,13 @@ export const listGrainBatches = createServerFn({ method: "GET" })
       }
     }
 
-    return batches.map((b) => ({
-      ...b,
-      assigned_technician: b.assigned_technician_id ? techMap[b.assigned_technician_id] ?? null : null,
-    }));
+    return batches.map((b) => {
+      const technicianId = technicianIdOf(b);
+      return {
+        ...b,
+        assigned_technician: technicianId ? techMap[technicianId] ?? null : null,
+      };
+    });
   });
 
 
