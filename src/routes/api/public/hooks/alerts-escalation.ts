@@ -6,12 +6,16 @@ export const Route = createFileRoute("/api/public/hooks/alerts-escalation")({
       POST: async () => {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Escalate open alerts older than 30 minutes to 'escalated'
+        // Escalate open alerts older than 30 minutes to 'escalated'.
+        // Field incidents (recipient_id set) are excluded — they're an
+        // any-role-to-a-chosen-person ticket with no escalation chain, they
+        // only move pending -> closed (see field-incidents.functions.ts).
         const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
         const { data, error } = await supabaseAdmin
           .from("grain_alerts")
           .update({ status: "escalated", updated_at: new Date().toISOString() })
           .in("status", ["pending", "acknowledged"])
+          .is("recipient_id", null)
           .lt("created_at", cutoff)
           .select("id");
 

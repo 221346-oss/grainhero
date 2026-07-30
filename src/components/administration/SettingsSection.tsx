@@ -128,7 +128,7 @@ export function SettingsSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-white/40">Manage your profile, location and notification preferences.</p>
+        <p className="text-sm text-muted-foreground">Manage your profile, location and notification preferences.</p>
         <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
           Save changes

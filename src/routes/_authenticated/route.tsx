@@ -14,6 +14,8 @@ import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { BugReportButton } from "@/components/app/BugReportButton";
+import { TicketSidePanel } from "@/components/app/tickets/TicketSidePanel";
+import { TicketChannelKeepAlive } from "@/components/app/tickets/TicketChannelKeepAlive";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
@@ -43,6 +45,8 @@ export const Route = createFileRoute("/_authenticated")({
       "/team-management": "/platform/users",
       "/traceability": "/dashboard",
       "/orders": "/platform/orders",
+      "/monitoring": "/platform/monitoring",
+      "/intelligence": "/platform/intelligence",
     };
 
     const path = location.pathname;
@@ -172,6 +176,7 @@ function AuthenticatedLayout() {
             </div>
             <DashboardQuickTabs />
             <AdminUpgradeLink />
+            <TicketSidePanel />
             {/* Dark / Light toggle */}
             <button
               type="button"
@@ -187,6 +192,7 @@ function AuthenticatedLayout() {
             <ProfileMenu />
           </motion.header>
           <main className="flex-1 overflow-x-hidden">
+            <TicketChannelKeepAlive />
             <AnimatedOutlet />
           </main>
         </div>

@@ -136,7 +136,7 @@ function PlatformIncidentsView() {
   const fn = useServerFn(getPlatformIncidentsOverview);
   const { data, isLoading, error } = useQuery({
     queryKey: ["platform-incidents"],
-    queryFn: () => fn(),
+    queryFn: () => fn({ data: { scope: "all" } }),
     refetchInterval: 60_000,
   });
   const totals = data?.totals ?? { total: 0, open: 0, resolved: 0, acknowledged: 0 };

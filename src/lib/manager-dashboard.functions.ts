@@ -42,7 +42,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .order("triggered_at", { ascending: false, nullsFirst: false }).limit(10),
       context.supabase.from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id")
-        .in("status", ["intake", "processing", "treatment"] as never)
+        .in("status", ["intake", "processing", "treatment", "pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never)
         .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, silo_id, purchase_price_per_kg")
@@ -60,9 +60,9 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .select("id, name, email, department, shift_pattern")
         .eq("admin_id", adminId).limit(20),
       context.supabase.from("field_incidents")
-        .select("id, title, severity, status, created_at, assigned_to")
-        .in("status", ["pending", "in_progress"] as never)
-        .order("created_at", { ascending: false }).limit(8),
+        .select("id, category, severity, status, created_at, assigned_to, silo_id, notes")
+        .in("status", ["open", "investigating"] as never)
+        .order("created_at", { ascending: false }).limit(10),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true })
         .gte("created_at", startISO),
@@ -91,6 +91,37 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
     });
 
     const actuators = actuatorsRes.data ?? [];
+    const rawTechs = techsRes.data ?? [];
+    const activeQC = qcRes.data ?? [];
+    const activeIncidents = incidentsRes.data ?? [];
+
+    // assigned_technician_id isn't in the generated Supabase types for
+    // grain_batches yet (see the same `as never` workaround in
+    // operations.functions.ts), so it's fetched separately here rather than
+    // widening the qcRes select above (which would fail select-string typing).
+    const { data: assignedQCData } = await context.supabase
+      .from("grain_batches")
+      .select("assigned_technician_id, batch_id" as never)
+      .in("status", ["pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never)
+      .not("assigned_technician_id" as never, "is", null);
+    const assignedQC = (assignedQCData ?? []) as unknown as Array<{ assigned_technician_id: string | null; batch_id: string }>;
+
+    const busyTechMap: Record<string, string> = {};
+    assignedQC.forEach((b) => {
+      if (b.assigned_technician_id) busyTechMap[b.assigned_technician_id] = `QC: ${b.batch_id}`;
+    });
+    activeIncidents.forEach((inc) => {
+      if (inc.assigned_to) busyTechMap[inc.assigned_to] = `Incident: ${inc.category}`;
+    });
+
+    const technicians = rawTechs.map((t) => ({
+      ...t,
+      is_busy: Boolean(busyTechMap[t.id]),
+      active_batch_id: busyTechMap[t.id] ?? null,
+    }));
+
+
+
     return {
       range,
       kpis: {
@@ -112,7 +143,8 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       dispatchQueue: dispatchReadyRes.data ?? [],
       actuators,
       orders: ordersRes.data ?? [],
-      technicians: techsRes.data ?? [],
+      technicians,
       incidents: incidentsRes.data ?? [],
     };
+
   });

@@ -7,21 +7,24 @@ import { motion } from "framer-motion";
 import { TeamSection } from "@/components/administration/TeamSection";
 import { SecuritySection } from "@/components/administration/SecuritySection";
 import { ActivityLogsSection } from "@/components/administration/ActivityLogsSection";
-import { Users, ShieldCheck, ClipboardList, TrendingUp, TrendingDown } from "lucide-react";
+import { FieldIncidentsSection } from "@/components/administration/FieldIncidentsSection";
+import { Users, ShieldCheck, ClipboardList, Flag, TrendingUp, TrendingDown } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
+import { listFieldIncidents } from "@/lib/field-incidents.functions";
 
 export const Route = createFileRoute("/_authenticated/administration")({
   component: AdministrationWorkspace,
 });
 
-type Tab = "team" | "security" | "activity";
+type Tab = "team" | "security" | "activity" | "field";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "team",     label: "Team Management", icon: Users },
   { key: "security", label: "Security Center", icon: ShieldCheck },
   { key: "activity", label: "Activity Logs",   icon: ClipboardList },
+  { key: "field",    label: "Field Incidents", icon: Flag },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
@@ -37,6 +40,7 @@ function AdministrationWorkspace() {
 
   const fetchMembers = useServerFn(listTeamMembers);
   const fetchSecurity = useServerFn(getSecurityOverview);
+  const fetchFieldIncidents = useServerFn(listFieldIncidents);
 
   const { data: members } = useQuery({
     queryKey: ["team-members"],
@@ -48,15 +52,23 @@ function AdministrationWorkspace() {
     queryFn: () => fetchSecurity(),
     enabled: isAdmin,
   });
+  const { data: fieldIncidents } = useQuery({
+    queryKey: ["field-incidents"],
+    queryFn: () => fetchFieldIncidents(),
+    enabled: !isSuperAdmin,
+  });
 
   const memberList = (members ?? []) as any[];
   const pendingMembers = memberList.filter((m) => m.role === "pending").length;
   const securityEvents = security?.logs?.length ?? 0;
+  const fieldIncidentList = fieldIncidents?.incidents ?? [];
+  const openFieldIncidents = fieldIncidentList.filter((i: any) => i.status !== "closed").length;
 
   const counts = {
     team: memberList.length,
     security: securityEvents,
     activity: 0,
+    field: fieldIncidentList.length,
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
@@ -65,6 +77,7 @@ function AdministrationWorkspace() {
     { label: "Team Members", value: memberList.length, up: true },
     { label: "Pending Invites", value: pendingMembers, up: pendingMembers === 0 },
     { label: "Security Events", value: securityEvents, up: securityEvents === 0 },
+    { label: "Open Field Incidents", value: openFieldIncidents, up: openFieldIncidents === 0 },
   ];
 
   return (
@@ -134,7 +147,7 @@ function AdministrationWorkspace() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
-            <div className="space-y-0 divide-y divide-white/8 flex-1">
+            <div className="space-y-0 divide-y divide-border flex-1">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
@@ -142,7 +155,7 @@ function AdministrationWorkspace() {
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-white font-black text-base font-mono">{s.value}</span>
+                    <span className="text-foreground font-black text-base font-mono">{s.value}</span>
                     {s.up
                       ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                       : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -196,6 +209,7 @@ function AdministrationWorkspace() {
             {activeTab === "team" && <TeamSection />}
             {activeTab === "security" && <SecuritySection />}
             {activeTab === "activity" && <ActivityLogsSection />}
+            {activeTab === "field" && <FieldIncidentsSection />}
           </div>
         </div>
 

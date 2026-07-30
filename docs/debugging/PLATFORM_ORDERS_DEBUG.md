@@ -1,5 +1,7 @@
 # Platform Orders Page Debugging Guide
 
+> Last updated: 2026-07-24
+
 ## Issue
 Cannot access `http://localhost:8080/platform/orders`
 

@@ -31,12 +31,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables — keep root .env tracked for public Supabase config,
+# Environment variables — keep root .env tracked for shared public app config,
 # but continue ignoring local/secret environment variants.
-.env
-!.env.example
+.env.local
+.env.*.local
 
 # ML Models & Secrets
 *.pkl
 *.onnx
-.env
