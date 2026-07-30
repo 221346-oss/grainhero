@@ -86,10 +86,10 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
           title: title.trim(),
           category: title.trim(),
           severity,
-          reporter_name: reporterName.trim(),
-          reporter_role: role.trim(),
+          reporter_name: reporterName.trim() || undefined,
+          reporter_role: role.trim() || undefined,
           target_role: targetRole,
-          description: description.trim(),
+          description: description.trim() || undefined,
           silo_id: siloId || null,
         },
       }),
@@ -105,13 +105,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const canSubmit = title.trim().length > 0 && 
-                    severity && 
-                    targetRole && 
-                    reporterName.trim().length > 0 && 
-                    role && 
-                    description.trim().length > 0 && 
-                    !mut.isPending;
+  const canSubmit = title.trim().length > 0 && !mut.isPending;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
@@ -126,7 +120,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
           {/* 1. Title on top */}
           <div className="space-y-1">
             <Label htmlFor="ticket-title" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Incident <span className="text-red-500">*</span>
+              Title / Incident <span className="text-red-500">*</span>
             </Label>
             <Input
               id="ticket-title"
@@ -135,18 +129,17 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
               onChange={(e) => setTitle(e.target.value)}
               className="text-xs h-8"
               autoFocus
-              required
             />
           </div>
 
           {/* 2. Type / Stage of Incident - Dropdown */}
           <div className="space-y-1">
             <Label htmlFor="ticket-severity" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Incident Sensitivity <span className="text-red-500">*</span>
+              Type / Stage of Incident
             </Label>
-            <Select value={severity} onValueChange={(v) => setSeverity(v as "low" | "medium" | "critical")} required>
+            <Select value={severity} onValueChange={(v) => setSeverity(v as "low" | "medium" | "critical")}>
               <SelectTrigger id="ticket-severity" className="text-xs h-8">
-                <SelectValue placeholder="Select sensitivity level" />
+                <SelectValue placeholder="Select severity level" />
               </SelectTrigger>
               <SelectContent>
                 {SEVERITY_OPTIONS.map((opt) => (
@@ -161,9 +154,9 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
           {/* 3. Route Incident To - Dropdown */}
           <div className="space-y-1">
             <Label htmlFor="ticket-target-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Route Incident To <span className="text-red-500">*</span>
+              Route Incident To
             </Label>
-            <Select value={targetRole} onValueChange={(v) => setTargetRole(v as "admin" | "technician")} required>
+            <Select value={targetRole} onValueChange={(v) => setTargetRole(v as "admin" | "technician")}>
               <SelectTrigger id="ticket-target-role" className="text-xs h-8">
                 <SelectValue placeholder="Select recipient" />
               </SelectTrigger>
@@ -181,7 +174,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label htmlFor="ticket-reporter" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Reporter Name <span className="text-red-500">*</span>
+                Reporter Name
               </Label>
               <Input
                 id="ticket-reporter"
@@ -189,13 +182,12 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
                 value={reporterName}
                 onChange={(e) => setReporterName(e.target.value)}
                 className="text-xs h-8"
-                required
               />
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="ticket-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Reporter Role <span className="text-red-500">*</span>
+                My Role
               </Label>
               <Input
                 id="ticket-role"
@@ -232,7 +224,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
           {/* 6. Description at the end */}
           <div className="space-y-1">
             <Label htmlFor="ticket-description" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Description <span className="text-red-500">*</span>
+              Description
             </Label>
             <Textarea
               id="ticket-description"
@@ -241,7 +233,6 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="text-xs resize-none"
-              required
             />
           </div>
         </div>
