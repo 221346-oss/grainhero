@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
 import { createSiloAddonCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
+import { usePlanGate } from "@/lib/plan-gate";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -43,9 +44,22 @@ const emptyAddonForm = { address: "", city: "", country: "", phone: "", notes: "
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const siloGate = usePlanGate("max_silos");
   const addonFn = useServerFn(createSiloAddonCheckoutSession);
   const [addonOpen, setAddonOpen] = useState(false);
   const [addonForm, setAddonForm] = useState(emptyAddonForm);
+
+  function handleRequestSilo() {
+    // Requesting one more silo must stay within the plan limit — if it
+    // wouldn't, send them to upgrade instead of into the payment flow.
+    if (siloGate.data && !siloGate.data.allowed) {
+      navigate({ to: "/plan-management" });
+      return;
+    }
+    setAddonForm(emptyAddonForm);
+    setAddonOpen(true);
+  }
   const addonMut = useMutation({
     mutationFn: () =>
       addonFn({
@@ -94,7 +108,7 @@ function MyOrdersPage() {
           <h1 className="text-2xl font-bold text-slate-900">My install orders</h1>
           <p className="text-sm text-slate-500">Track the technician install for each subscription you purchased.</p>
         </div>
-        <Button onClick={() => { setAddonForm(emptyAddonForm); setAddonOpen(true); }} className="gap-2">
+        <Button onClick={handleRequestSilo} disabled={siloGate.isLoading} className="gap-2">
           <PlusCircle className="h-4 w-4" /> Request new silo
         </Button>
       </div>

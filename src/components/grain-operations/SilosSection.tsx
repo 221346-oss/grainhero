@@ -4,8 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Link } from "@tanstack/react-router";
-import { Warehouse, Plus, Search, Edit2, Trash2, Eye, Loader2, ShoppingCart } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Warehouse, Search, Edit2, Trash2, Eye, Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,9 +16,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { StatusBadge } from "@/components/app/DataListPage";
 import { InlineRename } from "@/components/app/InlineRename";
 import { listSilos, upsertSilo, deleteSilo, listWarehouses, renameSilo } from "@/lib/operations.functions";
-import { parsePlanLimitError } from "@/lib/plan-gate";
+import { parsePlanLimitError, usePlanGate } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
-import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -80,12 +79,27 @@ export function SilosSection() {
   const fetchRole = useServerFn(getMyRole);
   const qc = useQueryClient();
 
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const warehouses = warehousesData ?? [];
   const canRename = RENAME_ROLES.includes(me?.role ?? "");
-  const { canAddSilo, siloLimitMessage } = usePlanLimits();
+  // Admin/manager can never create a silo directly anymore — this only
+  // decides where "Request Silo" sends them: the existing hardware-order
+  // request flow (still within plan headroom) or the plan upgrade page
+  // (would exceed it). Super Admin remains the only path that can actually
+  // insert a silo row (via upsertSilo directly, or the automated
+  // hardware_order_provision_silo trigger once an order's install completes).
+  const siloGate = usePlanGate("max_silos");
+
+  function handleRequestSilo() {
+    if (siloGate.data && !siloGate.data.allowed) {
+      navigate({ to: "/plan-management" });
+      return;
+    }
+    navigate({ to: "/orders" });
+  }
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -119,7 +133,7 @@ export function SilosSection() {
         },
       }),
     onSuccess: () => {
-      toast.success(form.id ? "Silo updated" : "Silo created");
+      toast.success("Silo updated");
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["warehouses"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
@@ -150,10 +164,6 @@ export function SilosSection() {
     onError: (e: Error) => toast.error(e.message || "Delete failed"),
   });
 
-  function openCreate() {
-    setForm({ ...emptyForm, warehouse_id: warehouses[0]?.id ?? "" });
-    setEditOpen(true);
-  }
   function openEdit(s: Silo) {
     setForm({
       id: s.id,
@@ -184,19 +194,16 @@ export function SilosSection() {
               <SelectItem value="maintenance">Maintenance</SelectItem>
             </SelectContent>
           </Select>
-          {canAddSilo ? (
-            <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New silo</Button>
-          ) : (
-            <Button asChild variant="outline" className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30">
-              <Link to="/orders" title={siloLimitMessage ?? "Silo limit reached"}>
-                <ShoppingCart className="w-4 h-4" /> Request new silo
-              </Link>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            onClick={handleRequestSilo}
+            disabled={siloGate.isLoading}
+            className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
+            title="Silo provisioning is handled by Super Admin — this requests a new one."
+          >
+            <ShoppingCart className="w-4 h-4" /> Request Silo
+          </Button>
         </div>
-        {!canAddSilo && siloLimitMessage && (
-          <p className="text-xs text-amber-700 dark:text-amber-400 -mt-1">{siloLimitMessage}</p>
-        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
@@ -252,10 +259,8 @@ export function SilosSection() {
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setForm(emptyForm); }}>
         <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.id ? "Edit silo" : "New silo"}</DialogTitle>
-            <DialogDescription>
-              {form.id ? "Update silo details." : "Create a new silo in your warehouse."}
-            </DialogDescription>
+            <DialogTitle>Edit silo</DialogTitle>
+            <DialogDescription>Update silo details.</DialogDescription>
           </DialogHeader>
           <form id="silo-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
             <div>
@@ -305,7 +310,7 @@ export function SilosSection() {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
             <Button form="silo-form" type="submit" disabled={saveMutation.isPending || !form.warehouse_id || !form.capacity_kg}>
-              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : form.id ? "Save changes" : "Create silo"}
+              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

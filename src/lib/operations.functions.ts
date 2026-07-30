@@ -174,6 +174,14 @@ export const upsertSilo = createServerFn({ method: "POST" })
   .validator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
     if (!data.id) {
+      // Direct creation is super_admin-only — admin/manager go through the
+      // Request Silo → hardware order → payment flow instead, which
+      // provisions silos via a DB trigger (hardware_order_provision_silo),
+      // not through this function. assertPlanAllows is kept below anyway:
+      // super_admin already bypasses it (see computePlanGate's isSuper
+      // check), so it's a no-op safety net for this function's only
+      // remaining caller, not the actual gate.
+      await requireRole(context.supabase, context.userId, ["super_admin"]);
       await assertPlanAllows({ feature: "max_silos", sb: context.supabase, userId: context.userId });
     }
     const location = { description: data.location_description ?? null };
