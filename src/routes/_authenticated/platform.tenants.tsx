@@ -37,6 +37,46 @@ function TenantsPage() {
     return created >= monthAgo;
   }).length;
 
+  if (isLoading) {
+    return (
+      <AdminPageShell title="Platform tenants" subtitle="Organizations and their subscriptions">
+        <div className="space-y-4">
+          {/* 4-tile summary skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                <div className="h-7 w-10 animate-pulse rounded bg-slate-100" />
+                <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+          {/* Filter bar skeleton */}
+          <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
+          {/* Tenant list skeleton */}
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
+              <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />
+              <div className="h-4 w-20 animate-pulse rounded bg-slate-100" />
+            </div>
+            <div className="divide-y divide-slate-50">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="px-4 py-3 flex items-center gap-4">
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-4 w-40 animate-pulse rounded bg-slate-100" />
+                    <div className="h-3 w-56 animate-pulse rounded bg-slate-100" />
+                  </div>
+                  <div className="h-3 w-16 animate-pulse rounded bg-slate-100" />
+                  <div className="h-3 w-16 animate-pulse rounded bg-slate-100" />
+                  <div className="h-5 w-14 animate-pulse rounded-full bg-slate-100" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </AdminPageShell>
+    );
+  }
+
   return (
     <AdminPageShell title="Platform tenants" subtitle="Organizations and their subscriptions">
       <AdminSummaryTiles

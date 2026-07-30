@@ -87,6 +87,56 @@ function UsersPage() {
     return created >= monthAgo;
   }).length;
 
+  // ── Full layout skeleton while loading ─────────────────────────────────
+  if (isLoading) {
+    return (
+      <AdminPageShell title="Platform users" subtitle="All users across tenants and organizations">
+        <div className="space-y-4">
+          {/* 3-tile summary */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                <div className="h-7 w-10 animate-pulse rounded bg-slate-100" />
+                <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+          {/* Filter bar */}
+          <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
+          {/* Users table */}
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
+              <div className="h-4 w-20 animate-pulse rounded bg-slate-100" />
+              <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />
+            </div>
+            {/* Table header */}
+            <div className="px-4 py-2.5 grid grid-cols-5 gap-4 border-b border-slate-100">
+              {["User","Role","Joined","Status","Actions"].map((col) => (
+                <div key={col} className="h-3 w-14 animate-pulse rounded bg-slate-100" />
+              ))}
+            </div>
+            {/* Table rows */}
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="px-4 py-3 grid grid-cols-5 gap-4 items-center border-b border-slate-50">
+                <div className="space-y-1.5">
+                  <div className="h-3.5 w-32 animate-pulse rounded bg-slate-100" />
+                  <div className="h-2.5 w-44 animate-pulse rounded bg-slate-100" />
+                </div>
+                <div className="h-3.5 w-16 animate-pulse rounded bg-slate-100" />
+                <div className="h-3.5 w-20 animate-pulse rounded bg-slate-100" />
+                <div className="h-3.5 w-12 animate-pulse rounded bg-slate-100" />
+                <div className="flex justify-end gap-2">
+                  <div className="h-6 w-16 animate-pulse rounded bg-slate-100" />
+                  <div className="h-6 w-12 animate-pulse rounded bg-slate-100" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AdminPageShell>
+    );
+  }
+
   return (
     <AdminPageShell title="Platform users" subtitle="All users across tenants and organizations">
       <AdminSummaryTiles
