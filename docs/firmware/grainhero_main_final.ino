@@ -35,14 +35,14 @@ String getDateTimeString() {
 
 #define MQTT_BROKER "192.168.100.229" // Replace with your broker
 #define MQTT_PORT 1883
-#define MQTT_USERNAME "" // if needed
-#define MQTT_PASSWORD "" // if needed
+#define MQTT_USERNAME ""                   // if needed
+#define MQTT_PASSWORD ""                   // if needed
 #define AUTH_TOKEN "GrainHero_Secret_2026" // Local Network Security
 
 Servo lidServo;
 
-    const int SERVO_CLOSED_ANGLE = 100; // resting closed
-const int SERVO_OPEN_ANGLE = 170;       // resting open
+const int SERVO_CLOSED_ANGLE = 100; // resting closed
+const int SERVO_OPEN_ANGLE = 170;   // resting open
 int servoCurrentAngle = SERVO_CLOSED_ANGLE;
 bool servoIsOpen = false;
 
@@ -592,7 +592,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       humanOverrideActive = false;
       targetFanSpeed = 0;
       humanRequestedFan = false;
-      Serial.println(F("🔒 FUMIGATION LOCKDOWN ENABLED! All overrides blocked."));
+      Serial.println(
+          F("🔒 FUMIGATION LOCKDOWN ENABLED! All overrides blocked."));
       return;
     } else if (action == "release_lockdown") {
       fumigationLockdown = false;
@@ -813,13 +814,16 @@ void loop() {
   // ================================
   // 4️⃣ FAILSAFE AUTONOMY & EMERGENCY
   // ================================
-  bool cloudDisconnected = (!mqttClient.connected()) || (millis() - lastCloudHeartbeat > 30UL * 60UL * 1000UL);
+  bool cloudDisconnected =
+      (!mqttClient.connected()) ||
+      (millis() - lastCloudHeartbeat > 30UL * 60UL * 1000UL);
 
   if (currentData.temperature >= 35.0 && !fumigationLockdown) {
     // 🚨 EMERGENCY THERMAL OVERRIDE — FAO hot-spot threshold 🚨
     // Per FAO Storage Guidelines: grain temp >= 35°C confirms an active
     // hot-spot (mold/insect infestation). Immediate forced aeration required.
-    Serial.println(F("🚨 HEAT EMERGENCY (>= 35°C / FAO threshold)! FORCING LID OPEN AND FAN ON!"));
+    Serial.println(F("🚨 HEAT EMERGENCY (>= 35°C / FAO threshold)! FORCING LID "
+                     "OPEN AND FAN ON!"));
     requestFanOn(100);
     servoState = true;
     humanOverrideActive = true;

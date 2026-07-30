@@ -35,3 +35,8 @@ dist-ssr
 # but continue ignoring local/secret environment variants.
 .env
 !.env.example
+
+# ML Models & Secrets
+*.pkl
+*.onnx
+.env
