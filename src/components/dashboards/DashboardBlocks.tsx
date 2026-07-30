@@ -1,16 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, ChevronDown, AlertTriangle } from "lucide-react";
+import { ArrowUpRight, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
+import { listGrainBatches } from "@/lib/operations.functions";
+import { listDispatches } from "@/lib/dispatches.functions";
 
 function useExtras() {
   const fn = useServerFn(getDashboardExtras);
@@ -215,6 +219,7 @@ export function AdminSilosCard() {
   const { data } = useExtras();
   const rows = data?.silos ?? [];
   const alerts = data?.siloAlerts ?? [];
+  const [expandedSiloId, setExpandedSiloId] = useState<string | null>(null);
   return (
     <Card className="border-border/60 shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
@@ -227,26 +232,39 @@ export function AdminSilosCard() {
           const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
           const siloAlerts = alerts.filter((a) => a.silo_id === s.id);
           const topAlert = siloAlerts.find((a) => a.priority === "critical") ?? siloAlerts[0];
+          const expanded = expandedSiloId === s.id;
           return (
-            <Link
-              key={s.id}
-              to="/grain-operations"
-              search={{ tab: "silos" }}
-              title={topAlert ? `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg · ${topAlert.title}` : `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
-              className="flex items-center gap-2 group"
-            >
-              <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
-              <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
+            <div key={s.id}>
+              <div className="flex items-center gap-2 group">
+                <Link
+                  to="/grain-operations"
+                  search={{ tab: "silos" }}
+                  title={topAlert ? `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg · ${topAlert.title}` : `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
+                  className="flex items-center gap-2 flex-1 min-w-0"
+                >
+                  <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                    <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
+                  </div>
+                  <span className="text-[11px] tabular-nums font-semibold w-8 text-right">{pct}%</span>
+                </Link>
+                {siloAlerts.length > 0 && (
+                  <span className={`inline-flex items-center gap-0.5 shrink-0 ${topAlert?.priority === "critical" ? "text-red-600" : "text-amber-600"}`}>
+                    <AlertTriangle className="h-3 w-3" />
+                    <span className="text-[10px] font-semibold tabular-nums">{siloAlerts.length}</span>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setExpandedSiloId(expanded ? null : s.id)}
+                  aria-label={expanded ? `Collapse ${s.name}` : `Expand ${s.name} — incoming/outgoing`}
+                  className="shrink-0 text-muted-foreground hover:text-foreground transition"
+                >
+                  {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
               </div>
-              <span className="text-[11px] tabular-nums font-semibold w-8 text-right">{pct}%</span>
-              {siloAlerts.length > 0 && (
-                <span className={`inline-flex items-center gap-0.5 shrink-0 ${topAlert?.priority === "critical" ? "text-red-600" : "text-amber-600"}`}>
-                  <AlertTriangle className="h-3 w-3" />
-                  <span className="text-[10px] font-semibold tabular-nums">{siloAlerts.length}</span>
-                </span>
-              )}
-            </Link>
+              {expanded && <SiloInOutPanel siloId={s.id} />}
+            </div>
           );
         })}
       </CardContent>
@@ -254,9 +272,94 @@ export function AdminSilosCard() {
   );
 }
 
+/**
+ * Compact Incoming/Outgoing tabs shown when a silo row in AdminSilosCard is
+ * expanded — last 3 intake batches and last 3 dispatches for that silo only.
+ * Mirrors the fuller tables on the silo detail page (silos.$siloId.tsx),
+ * just trimmed to widget scale; "View full silo" links there for everything
+ * else (batch/dispatch editing, cost & margin summaries, etc.).
+ */
+function SiloInOutPanel({ siloId }: { siloId: string }) {
+  const listBatchesFn = useServerFn(listGrainBatches);
+  const listDispatchesFn = useServerFn(listDispatches);
+
+  const batchesQ = useQuery({
+    queryKey: ["grain-batches"],
+    queryFn: () => listBatchesFn() as Promise<Array<{
+      id: string; quantity_kg: number; farmer_name: string | null;
+      harvest_date: string | null; intake_date: string | null;
+      silos?: { id: string } | null;
+    }>>,
+  });
+  const dispatchesQ = useQuery({
+    queryKey: ["silo-dispatches", siloId],
+    queryFn: () => listDispatchesFn({ data: { siloId, limit: 3 } }),
+  });
+
+  const incoming = (batchesQ.data ?? []).filter((b) => b.silos?.id === siloId).slice(0, 3);
+  const outgoing = (dispatchesQ.data?.dispatches ?? []) as Array<{
+    id: string; total_qty_kg: number; dispatched_at: string | null; created_at: string | null;
+    buyers?: { name: string } | null;
+  }>;
+
+  return (
+    <div className="ml-[72px] mr-8 mt-1 mb-1 rounded-md border border-border/50 bg-muted/20 p-2">
+      <Tabs defaultValue="incoming">
+        <TabsList className="h-6 p-0.5">
+          <TabsTrigger value="incoming" className="text-[10px] px-2 py-0 h-5">Incoming</TabsTrigger>
+          <TabsTrigger value="outgoing" className="text-[10px] px-2 py-0 h-5">Outgoing</TabsTrigger>
+        </TabsList>
+        <TabsContent value="incoming" className="mt-1.5 space-y-1">
+          {batchesQ.isLoading ? (
+            <p className="text-[10px] text-muted-foreground px-1 py-1">Loading…</p>
+          ) : incoming.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground px-1 py-1">No recent intake</p>
+          ) : (
+            incoming.map((b) => {
+              const date = b.harvest_date ?? b.intake_date;
+              return (
+                <div key={b.id} className="flex items-center justify-between gap-2 text-[10px] px-1">
+                  <span className="truncate text-muted-foreground flex-1 min-w-0">{b.farmer_name ?? "—"}</span>
+                  <span className="tabular-nums font-medium shrink-0">{Number(b.quantity_kg).toLocaleString()}kg</span>
+                  <span className="text-muted-foreground shrink-0">{date ? new Date(date).toLocaleDateString() : "—"}</span>
+                </div>
+              );
+            })
+          )}
+        </TabsContent>
+        <TabsContent value="outgoing" className="mt-1.5 space-y-1">
+          {dispatchesQ.isLoading ? (
+            <p className="text-[10px] text-muted-foreground px-1 py-1">Loading…</p>
+          ) : outgoing.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground px-1 py-1">No recent dispatches</p>
+          ) : (
+            outgoing.map((d) => {
+              const date = d.dispatched_at ?? d.created_at;
+              return (
+                <div key={d.id} className="flex items-center justify-between gap-2 text-[10px] px-1">
+                  <span className="truncate text-muted-foreground flex-1 min-w-0">{d.buyers?.name ?? "—"}</span>
+                  <span className="tabular-nums font-medium shrink-0">{Number(d.total_qty_kg).toLocaleString()}kg</span>
+                  <span className="text-muted-foreground shrink-0">{date ? new Date(date).toLocaleDateString() : "—"}</span>
+                </div>
+              );
+            })
+          )}
+        </TabsContent>
+      </Tabs>
+      <Link
+        to="/silos/$siloId"
+        params={{ siloId }}
+        className="mt-1.5 flex items-center justify-end gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+      >
+        View full silo <ArrowUpRight className="h-3 w-3" />
+      </Link>
+    </div>
+  );
+}
+
 // ── Open Field Incidents widget ───────────────────────────────────────────────
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listTickets, type TicketRow } from "@/lib/tickets.functions";
 import { attachTicketForUser } from "@/lib/ticketMessages";
