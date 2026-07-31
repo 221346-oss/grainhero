@@ -67,7 +67,6 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
           data: { object: Record<string, unknown> };
         };
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { sendCheckoutConfirmationEmail } = await import("@/lib/checkout-emails.functions");
         const { stripeEventAlreadyProcessed, syncSubscriptionFromStripe } = await import(
           "@/lib/billing-sync.server"
         );
@@ -102,7 +101,6 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const planId = s.metadata?.plan_id ?? null;
               const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
               const buyerOrderId = s.metadata?.buyer_order_id ?? null;
-              const sessionId = (s as { id?: string }).id ?? null;
               const planChangeRequestId = s.metadata?.plan_change_request_id ?? null;
 
               // Prorated plan change (upgrade / cycle upsize) confirmed by Stripe.
@@ -199,14 +197,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 }
               }
 
-              // Send buyer confirmation email (idempotent).
-              if (sessionId) {
-                try {
-                  await sendCheckoutConfirmationEmail({ data: { sessionId } });
-                } catch (e) {
-                  console.warn("[stripe-webhook] confirm email failed:", (e as Error).message);
-                }
-              }
+              // Note: the buyer confirmation/activation email is intentionally NOT
+              // sent here — product decision. sendCheckoutConfirmationEmail in
+              // checkout-emails.functions.ts is kept for other transactional
+              // sends; it's just not wired to fire at checkout completion.
               if (userId && s.customer) {
                 await supabaseAdmin
                   .from("profiles")

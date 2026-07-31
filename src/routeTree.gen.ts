@@ -24,7 +24,6 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as ThemeTestRouteImport } from './routes/theme-test'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
@@ -256,11 +255,6 @@ const TeamRoute = TeamRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ThemeTestRoute = ThemeTestRouteImport.update({
-  id: '/theme-test',
-  path: '/theme-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedActivityLogsRoute =
@@ -1184,7 +1178,6 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
@@ -1357,7 +1350,6 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
@@ -1534,7 +1526,6 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/theme-test': typeof ThemeTestRoute
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRoute
@@ -1711,7 +1702,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
-    | '/theme-test'
     | '/activity-logs'
     | '/actuators'
     | '/administration'
@@ -1884,7 +1874,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
-    | '/theme-test'
     | '/activity-logs'
     | '/actuators'
     | '/administration'
@@ -2060,7 +2049,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
-    | '/theme-test'
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
     | '/_authenticated/administration'
@@ -2237,7 +2225,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
-  ThemeTestRoute: typeof ThemeTestRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -2398,13 +2385,6 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/theme-test': {
-      id: '/theme-test'
-      path: '/theme-test'
-      fullPath: '/theme-test'
-      preLoaderRoute: typeof ThemeTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/activity-logs': {
@@ -3922,7 +3902,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
-  ThemeTestRoute: ThemeTestRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,

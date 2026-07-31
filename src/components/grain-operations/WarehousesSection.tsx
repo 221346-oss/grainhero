@@ -17,6 +17,8 @@ import { InlineRename } from "@/components/app/InlineRename";
 import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse } from "@/lib/operations.functions";
 import { parsePlanLimitError } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -38,6 +40,15 @@ type Warehouse = {
   created_at: string | null;
   silos?: Array<{ id: string }> | null;
 };
+
+const warehouseExportColumns: ExportColumn<Warehouse>[] = [
+  { header: "Warehouse ID", value: (w) => w.warehouse_id },
+  { header: "Name", value: (w) => w.name },
+  { header: "Status", value: (w) => w.status ?? "" },
+  { header: "Total capacity (kg)", value: (w) => w.total_capacity_kg ?? "" },
+  { header: "Silo count", value: (w) => w.silos?.length ?? 0 },
+  { header: "Address", value: (w) => w.location?.address ?? "" },
+];
 
 type FormState = {
   id?: string;
@@ -178,6 +189,7 @@ export function WarehousesSection() {
               <SelectItem value="maintenance">Maintenance</SelectItem>
             </SelectContent>
           </Select>
+          <ExportMenu filename="warehouses" title="Warehouses" rows={rows} columns={warehouseExportColumns} />
           <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New warehouse</Button>
         </div>
 

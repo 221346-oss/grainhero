@@ -16,9 +16,17 @@ import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 import { listGrainBatches } from "@/lib/operations.functions";
 import { listDispatches } from "@/lib/dispatches.functions";
 
-function useExtras() {
+// range must match whatever AdminDashboard.tsx's own useQuery is keyed on —
+// same queryKey means react-query dedupes this into the SAME network call
+// instead of firing getDashboardExtras twice (once for the KPI strip, once
+// for these widgets) on every dashboard mount.
+function useExtras(range: string = "mtd") {
   const fn = useServerFn(getDashboardExtras);
-  return useQuery({ queryKey: ["dashboard-extras"], queryFn: () => fn(), refetchInterval: 30_000 });
+  return useQuery({
+    queryKey: ["dashboard-extras", range],
+    queryFn: () => fn({ data: { range } as never }),
+    refetchInterval: 30_000,
+  });
 }
 
 function riskColor(score: number) {
@@ -60,8 +68,8 @@ function CardHeaderLink({ to, search, title, count }: { to: string; search?: Rec
  * the expand affordance, and every row are all real links to the full
  * Batches tab on /grain-operations.
  */
-export function RecentBatchesCard() {
-  const { data } = useExtras();
+export function RecentBatchesCard({ range }: { range?: string } = {}) {
+  const { data } = useExtras(range);
   const rows = data?.recentBatches ?? [];
   const visible = rows.slice(0, 3);
   const overflow = rows.slice(3);
@@ -215,8 +223,8 @@ export function SilosOccupancyCard() {
  * SilosOccupancyCard) so TechnicianDashboard's layout/behavior is
  * untouched — see AdminDashboard.tsx for the only place this is used.
  */
-export function AdminSilosCard() {
-  const { data } = useExtras();
+export function AdminSilosCard({ range }: { range?: string } = {}) {
+  const { data } = useExtras(range);
   const rows = data?.silos ?? [];
   const alerts = data?.siloAlerts ?? [];
   const [expandedSiloId, setExpandedSiloId] = useState<string | null>(null);

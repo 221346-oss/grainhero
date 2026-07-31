@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { Warehouse, Search, Edit2, Trash2, Eye, Loader2, ShoppingCart } from "lucide-react";
+import { Warehouse, Search, Edit2, Trash2, Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { InlineRename } from "@/components/app/InlineRename";
-import { listSilos, upsertSilo, deleteSilo, listWarehouses, renameSilo } from "@/lib/operations.functions";
+import { listSilos, upsertSilo, deleteSilo, listWarehouses, renameSilo, listGrainBatches } from "@/lib/operations.functions";
 import { parsePlanLimitError, usePlanGate } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
+import { SiloOperationsCard, type BatchRow } from "./SiloOperationsCard";
+import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -73,6 +75,7 @@ const emptyForm: FormState = {
 export function SilosSection() {
   const list = useServerFn(listSilos);
   const listWh = useServerFn(listWarehouses);
+  const listBatchesFn = useServerFn(listGrainBatches);
   const upsert = useServerFn(upsertSilo);
   const del = useServerFn(deleteSilo);
   const rename = useServerFn(renameSilo);
@@ -83,8 +86,12 @@ export function SilosSection() {
   const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
   const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
+  const { data: batchesData } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listBatchesFn() as Promise<BatchRow[]> });
   const warehouses = warehousesData ?? [];
+  const batches = batchesData ?? [];
   const canRename = RENAME_ROLES.includes(me?.role ?? "");
+  const isAdmin = me?.role === "admin" || me?.role === "super_admin";
+  const [sellSilo, setSellSilo] = useState<Silo | null>(null);
   // Admin/manager can never create a silo directly anymore — this only
   // decides where "Request Silo" sends them: the existing hardware-order
   // request flow (still within plan headroom) or the plan upgrade page
@@ -214,44 +221,19 @@ export function SilosSection() {
             <p className="text-sm">No silos yet.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Silo</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Warehouse</th>
-                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Capacity</th>
-                  <th className="px-3 py-2 text-right font-semibold text-muted-foreground text-xs uppercase tracking-wider">Current</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rows.map((s) => (
-                  <tr key={s.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
-                    <td className="px-3 py-2 text-foreground font-medium">
-                      <InlineRename
-                        value={s.name}
-                        canRename={canRename}
-                        textClassName="text-foreground font-medium"
-                        onSave={async (next) => { await renameMutation.mutateAsync({ id: s.id, name: next }); }}
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{s.warehouses?.name ?? "—"}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(s.capacity_kg ?? 0).toLocaleString()} kg</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{(s.current_occupancy_kg ?? 0).toLocaleString()} kg</td>
-                    <td className="px-3 py-2"><StatusBadge value={s.status} /></td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setSelected(s); setViewOpen(true); }} className="h-7 w-7 p-0"><Eye className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(s)} className="h-7 w-7 p-0"><Edit2 className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteId(s.id)} className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {rows.map((s) => (
+              <SiloOperationsCard
+                key={s.id}
+                silo={s}
+                batches={batches}
+                isAdmin={isAdmin}
+                onView={(silo) => { setSelected(silo as Silo); setViewOpen(true); }}
+                onEdit={(silo) => openEdit(silo as Silo)}
+                onDelete={(id) => setDeleteId(id)}
+                onSell={(silo) => setSellSilo(silo as Silo)}
+              />
+            ))}
           </div>
         )}
 
@@ -368,6 +350,14 @@ export function SilosSection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sell — creates a dispatch request from this silo, pending admin approval */}
+      <DispatchDialog
+        open={!!sellSilo}
+        onOpenChange={(o) => !o && setSellSilo(null)}
+        siloId={sellSilo?.id ?? null}
+        siloName={sellSilo?.name}
+      />
     </div>
   );
 }

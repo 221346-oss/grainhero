@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireAppOrigin } from "@/lib/app-url";
 
 const input = z.object({ sessionId: z.string().trim().min(5).max(200) });
 
@@ -98,7 +99,7 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
       emailHeaders["X-Connection-Api-Key"] = resendKey;
     }
 
-    const appOrigin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
+    const appOrigin = requireAppOrigin();
     const activateUrl = `${appOrigin}/auth/signup?email=${encodeURIComponent(to)}&redirect=${encodeURIComponent(
       `/checkout/success?session_id=${data.sessionId}`,
     )}`;

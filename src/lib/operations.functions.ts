@@ -439,8 +439,13 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       return row;
     }
 
-    // Intake capacity check: a silo now holds many mixed batches, so every
-    // new intake must fit in whatever room is left (capacity - current stock).
+    // Intake capacity check against *approved* stock only — pending/in-QC
+    // batches don't occupy silo space yet (see occupancy comment below), so
+    // this doesn't account for other not-yet-approved intakes that could
+    // later be approved into the same room. adminReviewBatch re-checks
+    // capacity against then-current occupancy at approval time, which is the
+    // real gate; this check is just an early, cheap reject for the obvious
+    // case (this one intake alone doesn't fit).
     if (data.silo_id != null) {
       const currentOccupancy = Number(silo.current_occupancy_kg ?? 0);
       const capacity = silo.capacity_kg != null ? Number(silo.capacity_kg) : null;
@@ -508,14 +513,11 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       .select("*").single();
     if (error) throw error;
 
-    // Update silo stock only. A silo now holds many mixed batches, so we no
-    // longer point current_batch_id/batch_loaded_date at a single intake.
-    // Occupancy is counted from intake regardless of QC status (confirmed —
-    // no reserved-capacity concept), matching existing behavior exactly.
-    await context.supabase.from("silos").update({
-      current_occupancy_kg: (silo.current_occupancy_kg ?? 0) + data.quantity_kg,
-      updated_by: context.userId,
-    }).eq("id", data.silo_id);
+    // Occupancy is NOT added here anymore — a Manager-created intake sits at
+    // `pending_qc` and must clear the full QC pipeline before an Admin's
+    // final approval (adminReviewBatch, batch-qc.functions.ts) actually adds
+    // its quantity to silo stock. Adding it at creation would let stock count
+    // grow from batches nobody has approved yet.
 
     await logActivity({
       actorId: context.userId,
@@ -543,10 +545,15 @@ export const deleteGrainBatch = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     // free up silo if this was the current batch
     const { data: batch } = await context.supabase
-      .from("grain_batches").select("silo_id, quantity_kg, dispatched_quantity_kg").eq("id", data.id).single();
+      .from("grain_batches").select("silo_id, quantity_kg, dispatched_quantity_kg, status").eq("id", data.id).single();
     const { error } = await context.supabase.from("grain_batches").delete().eq("id", data.id);
     if (error) throw error;
-    if (batch?.silo_id) {
+    // Only a batch that reached "stored" ever added its quantity to silo
+    // occupancy (adminReviewBatch's approve branch) — a batch still sitting
+    // anywhere earlier in the QC pipeline (pending_qc/qc_submitted/qc_failed/
+    // qc_passed/admin_rejected) never did, so deleting it must not
+    // decrement occupancy that was never added.
+    if (batch?.silo_id && (batch as { status?: string }).status === "stored") {
       const { data: silo } = await context.supabase.from("silos").select("id, current_batch_id, current_occupancy_kg").eq("id", batch.silo_id).single();
       const remaining = Math.max(0, (silo?.current_occupancy_kg ?? 0) - Number(batch.quantity_kg ?? 0));
       const patch: { current_occupancy_kg: number; updated_by: string; current_batch_id?: string | null } = { current_occupancy_kg: remaining, updated_by: context.userId };
@@ -1292,43 +1299,56 @@ export const deleteBuyer = createServerFn({ method: "POST" })
 export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [warehouses, silos, batches, sensors, actuators, alerts, buyers] = await Promise.all([
+    // All counts computed server-side via `head: true` (no row bodies over the
+    // wire) instead of pulling up to 1000 rows per table and filtering in JS —
+    // that approach also silently undercounted "active"/"open"/etc. once a
+    // tenant passed 1000 rows in any of these tables, since `.count` reflects
+    // the true total but the filtered rows were capped by `.limit(1000)`.
+    const [
+      warehouses, silos, buyers,
+      batchesTotal, batchesActive,
+      sensorsTotal, sensorsOnline,
+      actuatorsTotal, actuatorsActive,
+      alertsTotal, alertsOpen, alertsCritical,
+    ] = await Promise.all([
       context.supabase.from("warehouses").select("id", { count: "exact", head: true }),
       context.supabase.from("silos").select("id", { count: "exact", head: true }),
-      context.supabase.from("grain_batches").select("id, status", { count: "exact" }).limit(1000),
-      context.supabase.from("sensor_devices").select("id, status", { count: "exact" }).limit(1000),
-      context.supabase.from("actuators").select("id, status", { count: "exact" }).limit(1000),
-      context.supabase.from("grain_alerts").select("id, status, priority", { count: "exact" }).limit(1000),
       context.supabase.from("buyers").select("id", { count: "exact", head: true }),
+      context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
+      context.supabase.from("grain_batches").select("id", { count: "exact", head: true })
+        .in("status", ["stored", "processing", "pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never),
+      context.supabase.from("sensor_devices").select("id", { count: "exact", head: true }),
+      context.supabase.from("sensor_devices").select("id", { count: "exact", head: true }).eq("status", "active"),
+      context.supabase.from("actuators").select("id", { count: "exact", head: true }),
+      context.supabase.from("actuators").select("id", { count: "exact", head: true }).eq("status", "active"),
+      context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }),
+      // grain_alerts.status is the `pending|acknowledged|resolved|escalated` enum —
+      // "open" means anything not yet resolved. Severity lives in `priority`
+      // (`low|medium|high|critical`); `alert_type` is the notification channel
+      // (SMS/email/in-app/...), never "critical"/"high", so that check always matched zero rows.
+      context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }).neq("status", "resolved"),
+      context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }).in("priority", ["critical", "high"]),
     ]);
-    const batchesData = (batches.data ?? []) as Array<{ status: string | null }>;
-    const sensorsData = (sensors.data ?? []) as Array<{ status: string | null }>;
-    const actuatorsData = (actuators.data ?? []) as Array<{ status: string | null }>;
-    const alertsData = (alerts.data ?? []) as Array<{ status: string | null; priority: string | null }>;
     return {
       warehouses: warehouses.count ?? 0,
       silos: silos.count ?? 0,
       buyers: buyers.count ?? 0,
       batches: {
-        total: batches.count ?? 0,
-        active: batchesData.filter((b) => ["stored", "processing", "pending_qc", "qc_submitted", "qc_failed", "qc_passed"].includes(b.status ?? "")).length,
+        total: batchesTotal.count ?? 0,
+        active: batchesActive.count ?? 0,
       },
       sensors: {
-        total: sensors.count ?? 0,
-        online: sensorsData.filter((s) => s.status === "active").length,
+        total: sensorsTotal.count ?? 0,
+        online: sensorsOnline.count ?? 0,
       },
       actuators: {
-        total: actuators.count ?? 0,
-        active: actuatorsData.filter((a) => a.status === "active").length,
+        total: actuatorsTotal.count ?? 0,
+        active: actuatorsActive.count ?? 0,
       },
       alerts: {
-        total: alerts.count ?? 0,
-        // grain_alerts.status is the `pending|acknowledged|resolved|escalated` enum —
-        // "open" means anything not yet resolved. Severity lives in `priority`
-        // (`low|medium|high|critical`); `alert_type` is the notification channel
-        // (SMS/email/in-app/...), never "critical"/"high", so that check always matched zero rows.
-        open: alertsData.filter((a) => a.status !== "resolved").length,
-        critical: alertsData.filter((a) => a.priority === "critical" || a.priority === "high").length,
+        total: alertsTotal.count ?? 0,
+        open: alertsOpen.count ?? 0,
+        critical: alertsCritical.count ?? 0,
       },
     };
   });
