@@ -35,3 +35,8 @@ dist-ssr
 # but continue ignoring local/secret environment variants.
 .env
 !.env.example
+
+# ML Model binaries - stored in Supabase Storage, not Git
+ml-deploy/*.onnx
+ml-deploy/*.pkl
+ml-deploy/*.onnx.bak

@@ -495,3 +495,15 @@ gantt
 
 > [!TIP]
 > This plan is designed to be **incremental** — each phase builds on the previous one and the system remains functional between phases. We can ship Phase 1+2 (insurance) independently of Phase 3+4 (logs+alerts).
+
+---
+
+## Infrastructure & Project Notes
+
+> [!NOTE]
+> **GitHub vs. Infrastructure Access:** Being added as a GitHub collaborator only grants source code access. It does **not** grant access to Supabase or Render. 
+> - **Supabase:** The repo owner must explicitly invite your email from the Supabase organization settings.
+> - **Render:** The owner must add you to their Render Team (requires a paid plan) or handle deployments automatically via GitHub webhooks.
+
+> [!NOTE]
+> **ML Model Predictions:** The ONNX ML models (`app.py` -> `_build_feature_array`) use all **9 features** (Temperature, Humidity, Storage_Days, Airflow, Dew_Point, Ambient_Light, Pest_Presence, Grain_Moisture, Rainfall) for inference, not just temperature. (Calculations like the FAO natural storage life heavily weight temperature, but the ONNX model itself processes the full feature array.)
