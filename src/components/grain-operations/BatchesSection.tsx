@@ -38,7 +38,7 @@ const STATUSES = ["stored","dispatched","sold","damaged","expired","on_hold","pr
 // QC-pipeline statuses aren't offered in the free-form "Status" editor (that
 // would bypass the role-gated QC functions) but users still need to filter
 // the list by them, so the top filter bar gets its own, wider list.
-const QC_STATUSES = ["pending_qc","qc_submitted","qc_failed","qc_passed","admin_rejected"] as const;
+const QC_STATUSES = ["pending_qc","qc_submitted","qc_failed","qc_passed","admin_rejected","pending_approval"] as const;
 const FILTER_STATUSES = [...STATUSES, ...QC_STATUSES] as const;
 type GrainType = typeof GRAIN_TYPES[number];
 type Status = typeof STATUSES[number] | typeof QC_STATUSES[number];
@@ -533,6 +533,11 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
             <DialogTitle>{form.id ? "Edit batch" : "New grain batch"}</DialogTitle>
             <DialogDescription>
               {form.id ? "Update batch details." : "Batch ID and QR code are generated automatically on intake."}
+              {!form.id && myRole === "manager" && (
+                <span className="block mt-2 text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠️ Batch will be submitted for admin approval before stock is committed.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => {
