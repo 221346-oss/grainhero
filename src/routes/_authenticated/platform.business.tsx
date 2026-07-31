@@ -1,137 +1,693 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import React from "react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
-import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
-import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
-import { Badge } from "@/components/ui/badge";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
-import { getPlatformInsuranceOverview } from "@/lib/platform-overviews.functions";
+import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell,
+} from "recharts";
+import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/business")({
   component: PlatformBusinessPage,
 });
 
-const fmtPKR = new Intl.NumberFormat("en-PK", { style: "currency", currency: "PKR", maximumFractionDigits: 0 });
+// ── Brand colours (matches --primary-green: #2FAC0C) ──────────────────────
+const G  = "#2FAC0C";   // primary green
+const G2 = "#1e7a08";   // darker green for active/highlight
+const GL = "rgba(47,172,12,0.10)"; // soft green bg
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 }).format(n);
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const monthLabel = (iso: string) => MONTHS[parseInt(iso.slice(5, 7), 10) - 1] ?? iso.slice(5);
+
+// Plan colours — green-adjacent palette
+const PLAN_META: Record<string, { color: string; label: string }> = {
+  starter:      { color: "#2FAC0C", label: "Starter" },
+  professional: { color: "#0e7490", label: "Professional" },
+  enterprise:   { color: "#7c3aed", label: "Enterprise" },
+};
+const planColor = (p: string) => PLAN_META[p.toLowerCase()]?.color ?? "#64748b";
+const planLabel = (p: string) => PLAN_META[p.toLowerCase()]?.label ?? (p.charAt(0).toUpperCase() + p.slice(1));
+
+const ALL_PLANS = ["starter", "professional", "enterprise"] as const;
+
+// ── Export button row ────────────────────────────────────────────────────────
+function ExportRow({ data, filename, title }: {
+  data: Array<Record<string, any>>; filename: string; title: string;
+}) {
+  const [busy, setBusy] = React.useState(false);
+  return (
+    <div className="flex gap-1 shrink-0">
+      <button
+        onClick={() => exportToCSV(data, filename)}
+        disabled={data.length === 0}
+        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+      >
+        <Download className="w-3 h-3" /> CSV
+      </button>
+      <button
+        onClick={async () => { setBusy(true); await exportToPDF(data, title, filename).catch(console.error); setBusy(false); }}
+        disabled={data.length === 0 || busy}
+        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+      >
+        <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
+      </button>
+    </div>
+  );
+}
+
+// ── Stat tile ────────────────────────────────────────────────────────────────
+function Tile({ label, value, sub, accent }: {
+  label: string; value: string | number; sub?: string; accent?: string;
+}) {
+  return (
+    <div className="border-r last:border-r-0 border-slate-100 px-5 py-4">
+      <div className={`text-lg font-semibold tabular-nums leading-tight ${accent ?? "text-[#252d26]"}`}>{value}</div>
+      <div className="text-xs text-[#404F44]/70 mt-0.5">{label}</div>
+      {sub && <div className="text-[10px] text-slate-400 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
 function PlatformBusinessPage() {
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
-  const insuranceFn = useServerFn(getPlatformInsuranceOverview);
+  const [planFilter, setPlanFilter] = React.useState<string | null>(null); // null = nothing selected
+  const [revenueView, setRevenueView] = React.useState<"monthly" | "yearly">("monthly");
 
-  const revenueQ = useQuery({ queryKey: ["platform-revenue"], queryFn: () => revenueFn(), refetchInterval: 60_000 });
-  const insuranceQ = useQuery({ queryKey: ["platform-insurance"], queryFn: () => insuranceFn(), refetchInterval: 60_000 });
+  const revenueQ = useQuery({
+    queryKey: ["platform-revenue"],
+    queryFn: () => revenueFn(),
+    refetchInterval: 60_000,
+    retry: 2,
+  });
 
-  const kpis = revenueQ.data?.kpis;
-  const planSeries = revenueQ.data?.planSeries ?? [];
-  const expiring = revenueQ.data?.expiring ?? [];
-  const insTotals = insuranceQ.data?.totals;
-  const insRows = insuranceQ.data?.rows ?? [];
+  const kpis       = revenueQ.data?.kpis;
+  const planSeries = revenueQ.data?.planSeries    ?? [];
+  const revSeries  = revenueQ.data?.revenueSeries ?? [];
+  const expiring   = revenueQ.data?.expiring      ?? [];
+  const adminSubs  = (revenueQ.data?.adminSubs    ?? []) as
+    Array<{ name: string; plan: string; mrr: number; joined: string | null }>;
 
-  const revenueTiles = [
-    { key: "mrr", label: "MRR", value: kpis ? fmtPKR.format(kpis.mrr) : "—" },
-    { key: "arr", label: "ARR", value: kpis ? fmtPKR.format(kpis.arr) : "—" },
-    { key: "active", label: "Active subs", value: kpis?.activeCount ?? "—" },
-    { key: "trial", label: "Trial", value: kpis?.trialCount ?? "—" },
-    { key: "churn", label: "Churn (30d)", value: kpis ? `${kpis.churnRate}%` : "—" },
+  // ── Revenue chart data ───────────────────────────────────────────────────
+  // Monthly: 12 bars, one per month
+  const monthlyData = revSeries.length > 0
+    ? revSeries.map((r) => ({ label: monthLabel(r.month), revenue: r.revenue }))
+    : Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(); d.setMonth(d.getMonth() - (11 - i));
+        return { label: MONTHS[d.getMonth()], revenue: 0 };
+      });
+
+  // Yearly: aggregate monthly data into yearly buckets from revSeries
+  const yearlyMap: Record<string, number> = {};
+  for (const r of revSeries) {
+    const yr = r.month.slice(0, 4);
+    yearlyMap[yr] = (yearlyMap[yr] ?? 0) + r.revenue;
+  }
+  const yearlyData = Object.entries(yearlyMap).length > 0
+    ? Object.entries(yearlyMap).map(([yr, revenue]) => ({ label: yr, revenue }))
+    : [{ label: String(new Date().getFullYear()), revenue: 0 }];
+
+  const revenueBarData = revenueView === "monthly" ? monthlyData : yearlyData;
+
+  // ── Donut data ───────────────────────────────────────────────────────────
+  const donutData = planSeries
+    .map((p) => ({
+      name: planLabel(p.plan),
+      value: kpis?.mrr ? Math.round((p.mrr / kpis.mrr) * (kpis.activeCount || 1)) : 0,
+      color: planColor(p.plan),
+    }))
+    .filter((d) => d.value > 0);
+  const donutTotal = donutData.reduce((s, d) => s + d.value, 0);
+
+  const salesTarget = kpis ? Math.round(kpis.arr * 1.25) : 1;
+  const salesPct    = kpis && salesTarget > 0 ? Math.min(100, Math.round((kpis.arr / salesTarget) * 100)) : 0;
+
+  // ── Filtered subscribers — null means table is hidden ───────────────────
+  const filteredSubs = planFilter === null
+    ? []
+    : planFilter === "all"
+      ? adminSubs
+      : adminSubs.filter((a) => a.plan.toLowerCase() === planFilter);
+
+  const planTabs = [
+    { id: "all", label: "All" },
+    ...ALL_PLANS.map((id) => ({ id, label: planLabel(id) })),
   ];
 
-  const insuranceTiles = [
-    { key: "coverage", label: "Total insured value", value: insTotals ? fmtPKR.format(insTotals.coverage) : "—" },
-    { key: "premium", label: "Total premium", value: insTotals ? fmtPKR.format(insTotals.premium) : "—" },
-    { key: "policies", label: "Policies", value: insTotals?.policies ?? "—" },
-    { key: "openClaims", label: "Open claims", value: insTotals?.openClaims ?? "—" },
-  ];
+  // ── Exports ──────────────────────────────────────────────────────────────
+  const subExport = filteredSubs.map((a) => ({
+    Admin: a.name,
+    Plan: planLabel(a.plan),
+    "MRR (PKR)": fmt(a.mrr),
+    Since: a.joined ? new Date(a.joined).toLocaleDateString() : "—",
+  }));
+
+  const planExport = ALL_PLANS.map((planId) => {
+    const live  = planSeries.find((p) => p.plan.toLowerCase() === planId);
+    const mrr   = live?.mrr ?? 0;
+    const subs  = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * (kpis.activeCount || 1)) : 0;
+    const share = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * 100) : 0;
+    return { Plan: planLabel(planId), Subscribers: subs, "MRR (PKR)": mrr > 0 ? fmt(mrr) : "0", "Share %": `${share}%` };
+  });
+
+  // ── Loading — skeleton that mirrors actual page layout ──────────────────
+  if (revenueQ.isLoading) {
+    const Sk = ({ className }: { className: string }) => (
+      <div className={`animate-pulse rounded bg-slate-100 ${className}`} />
+    );
+    return (
+      <AdminPageShell title="Business" subtitle="Subscription revenue and hardware sales">
+        <div className="space-y-4">
+          {/* 7-tile stat strip */}
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-slate-100">
+              {[...Array(7)].map((_, i) => (
+                <div key={i} className="px-5 py-4 space-y-2">
+                  <Sk className="h-6 w-20" />
+                  <Sk className="h-3 w-14" />
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Revenue Insights + Sales Overview */}
+          <div className="grid gap-4 lg:grid-cols-5">
+            <div className="lg:col-span-3 rounded-lg border border-slate-200 bg-white p-6 space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <Sk className="h-3 w-28" />
+                  <Sk className="h-8 w-40" />
+                  <Sk className="h-3 w-36" />
+                </div>
+                <Sk className="h-6 w-24 rounded-md" />
+              </div>
+              <Sk className="h-[150px] w-full rounded-lg" />
+            </div>
+            <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white p-6 space-y-4">
+              <Sk className="h-3 w-24" />
+              <div className="flex justify-center">
+                <Sk className="h-[148px] w-[148px] rounded-full" />
+              </div>
+              <div className="space-y-2">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex justify-between">
+                    <Sk className="h-3 w-20" />
+                    <Sk className="h-3 w-8" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* Plan breakdown table */}
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex justify-between">
+              <Sk className="h-3 w-32" />
+              <div className="flex gap-2">
+                <Sk className="h-6 w-12 rounded" />
+                <Sk className="h-6 w-12 rounded" />
+              </div>
+            </div>
+            <div className="divide-y divide-slate-50">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="px-5 py-3.5 flex items-center gap-4">
+                  <div className="flex items-center gap-2 flex-1">
+                    <Sk className="h-2.5 w-2.5 rounded-full" />
+                    <Sk className="h-3.5 w-24" />
+                  </div>
+                  <Sk className="h-3.5 w-8" />
+                  <Sk className="h-3.5 w-24" />
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Sk className="h-1.5 w-24 rounded-full" />
+                    <Sk className="h-3 w-8" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </AdminPageShell>
+    );
+  }
+
+  // ── Error ─────────────────────────────────────────────────────────────────
+  if (revenueQ.isError) {
+    return (
+      <AdminPageShell title="Business" subtitle="Subscription revenue and hardware sales">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-5 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-red-900">Failed to load analytics</p>
+            <p className="text-xs text-red-600 mt-0.5">
+              {revenueQ.error instanceof Error ? revenueQ.error.message : "Unknown error"}
+            </p>
+            <button onClick={() => revenueQ.refetch()}
+              className="mt-2.5 inline-flex items-center gap-1 text-xs text-red-700 hover:underline">
+              <RefreshCw className="w-3 h-3" /> Retry
+            </button>
+          </div>
+        </div>
+      </AdminPageShell>
+    );
+  }
 
   return (
     <AdminPageShell
       title="Business"
-      subtitle="Revenue, subscriptions, and insurance across every tenant — aggregate view. Read-only."
+      subtitle="Subscription revenue and hardware sales across every tenant"
+      actions={
+        <button onClick={() => revenueQ.refetch()}
+          className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50">
+          <RefreshCw className="w-3 h-3" /> Refresh
+        </button>
+      }
     >
-      <PlatformScopeBanner label="Platform-wide totals. Manage individual tenant billing/insurance from Tenants or the tenant's own Business page." />
-
-      <AdminDataCard title="Revenue & subscriptions" description={kpis ? `${fmtPKR.format(kpis.totalRevenue)} total revenue (invoices + hardware)` : "Loading…"}>
-        <div className="p-4">
-          <AdminSummaryTiles columns={5} tiles={revenueTiles} />
+      {/* ── Flat stat strip ────────────────────────────────────────── */}
+      <div className="rounded-lg border border-slate-200 bg-white overflow-x-auto">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-slate-100 min-w-max lg:min-w-0">
+          <Tile label="MRR"          value={`PKR ${fmt(kpis?.mrr ?? 0)}`} />
+          <Tile label="ARR"          value={`PKR ${fmt(kpis?.arr ?? 0)}`} />
+          <Tile label="Active subs"  value={kpis?.activeCount ?? 0} sub={`${kpis?.totalAdmins ?? 0} total admins`} />
+          <Tile label="Trial"        value={kpis?.trialCount ?? 0} />
+          <Tile label="Hardware"     value={`PKR ${fmt(kpis?.hardwareRevenue ?? 0)}`} sub={`${kpis?.hardwareOrders ?? 0} orders`} />
+          <Tile label="Churn (30d)"  value={`${kpis?.churnRate ?? 0}%`}
+            accent={kpis && kpis.churnRate > 5 ? "text-red-600" : "text-[#252d26]"} />
+          <Tile label="Expiring /7d" value={kpis?.expiringCount ?? 0}
+            accent={kpis && (kpis.expiringCount ?? 0) > 0 ? "text-amber-600" : "text-[#252d26]"} />
         </div>
-      </AdminDataCard>
+      </div>
 
-      <AdminDataCard title="MRR by plan" description="Monthly recurring revenue split across plans">
+      {/* ── Hardware / IoT Revenue Breakdown ───────────────────────── */}
+      {(kpis?.hardwareRevenue ?? 0) > 0 || (kpis?.hardwareOrders ?? 0) > 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <HardDrive className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Hardware / IoT Revenue</span>
+              <span title="Revenue from silo hardware orders, tracked separately from subscription MRR"
+                className="text-slate-400 hover:text-slate-600 cursor-help">
+                <Info className="w-3.5 h-3.5" />
+              </span>
+            </div>
+            <ExportRow
+              data={[{
+                "Hardware Revenue (PKR)": fmt(kpis?.hardwareRevenue ?? 0),
+                "Total Orders": kpis?.hardwareOrders ?? 0,
+                "Avg per Order (PKR)": kpis?.hardwareOrders
+                  ? fmt(Math.round((kpis.hardwareRevenue ?? 0) / kpis.hardwareOrders))
+                  : "—",
+                "% of Total Revenue": kpis?.totalRevenue && kpis.totalRevenue > 0
+                  ? `${Math.round(((kpis.hardwareRevenue ?? 0) / kpis.totalRevenue) * 100)}%`
+                  : "—",
+              }]}
+              filename="hardware-revenue"
+              title="Hardware Revenue — GrainHero"
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-100">
+            {/* Hardware revenue */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Package2 className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Hardware Revenue</span>
+              </div>
+              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+                PKR {fmt(kpis?.hardwareRevenue ?? 0)}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">one-time device sales</div>
+            </div>
+            {/* Orders */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <HardDrive className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Orders</span>
+              </div>
+              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+                {kpis?.hardwareOrders ?? 0}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">approved hardware orders</div>
+            </div>
+            {/* Avg order value */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <TrendingUp className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Avg per Order</span>
+              </div>
+              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+                {kpis?.hardwareOrders
+                  ? `PKR ${fmt(Math.round((kpis.hardwareRevenue ?? 0) / kpis.hardwareOrders))}`
+                  : "—"}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">average order value</div>
+            </div>
+            {/* Share of total revenue */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">% of Total Revenue</span>
+              </div>
+              {(() => {
+                const hwRev   = kpis?.hardwareRevenue ?? 0;
+                const total   = kpis?.totalRevenue ?? 0;
+                const pct     = total > 0 ? Math.round((hwRev / total) * 100) : 0;
+                const subPct  = 100 - pct;
+                return (
+                  <div>
+                    <div className="text-xl font-bold text-[#252d26] tabular-nums">{pct}%</div>
+                    <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+                      <div className="h-full rounded-l-full" style={{ width: `${subPct}%`, background: "#2FAC0C" }} />
+                      <div className="h-full rounded-r-full" style={{ width: `${pct}%`, background: "#0e7490" }} />
+                    </div>
+                    <div className="flex gap-3 mt-1">
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2FAC0C]" /> Subs {subPct}%
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0e7490]" /> HW {pct}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── Revenue Insights + Sales Overview ──────────────────────── */}
+      <div className="grid gap-4 lg:grid-cols-5">
+
+        {/* Revenue Insights */}
+        <div className="lg:col-span-3 rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="px-6 pt-5 pb-0 flex items-start justify-between">
+            <span className="text-xs font-semibold text-[#404F44]/60 uppercase tracking-wider">Revenue Insights</span>
+            {/* Monthly / Yearly toggle */}
+            <div className="flex items-center rounded-md border border-slate-200 overflow-hidden text-[10px] font-medium">
+              <button
+                onClick={() => setRevenueView("monthly")}
+                className="px-2.5 py-1 transition-colors"
+                style={revenueView === "monthly"
+                  ? { background: G, color: "#fff" }
+                  : { background: "transparent", color: "#64748b" }}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setRevenueView("yearly")}
+                className="px-2.5 py-1 transition-colors"
+                style={revenueView === "yearly"
+                  ? { background: G, color: "#fff" }
+                  : { background: "transparent", color: "#64748b" }}
+              >
+                Yearly
+              </button>
+            </div>
+          </div>
+
+          {/* Large amount + delta */}
+          <div className="px-6 pt-3 pb-4">
+            <div className="flex items-baseline gap-2.5 flex-wrap">
+              <span className="text-3xl font-bold text-[#252d26] tabular-nums leading-none">
+                PKR {fmt(kpis?.totalRevenue ?? 0)}
+              </span>
+              {(() => {
+                const last = revenueBarData[revenueBarData.length - 1]?.revenue ?? 0;
+                const prev = revenueBarData[revenueBarData.length - 2]?.revenue ?? 0;
+                const pct  = prev > 0 ? Math.round(((last - prev) / prev) * 100) : null;
+                if (pct === null) return null;
+                const up = pct >= 0;
+                return (
+                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded ${up ? "text-[#2FAC0C]" : "text-red-600"}`}
+                    style={{ background: up ? GL : "rgba(239,68,68,0.08)" }}>
+                    {up ? "+" : ""}{pct}%
+                  </span>
+                );
+              })()}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              vs {revenueView === "monthly" ? "previous month" : "previous year"}
+            </p>
+          </div>
+
+          {/* Bar chart — last bar highlighted in dark green */}
+          <div className="px-2 pb-4">
+            <ResponsiveContainer width="100%" height={150}>
+              <BarChart data={revenueBarData} margin={{ top: 0, right: 8, bottom: 0, left: 0 }} barCategoryGap="28%">
+                <CartesianGrid vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }}
+                  tickFormatter={(v) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)}
+                  width={28} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{ fill: GL }}
+                  formatter={(v: number) => [`PKR ${fmt(v)}`, "Revenue"]}
+                  contentStyle={{ fontSize: 11, border: "1px solid #e2e8f0", borderRadius: 6, boxShadow: "none" }} />
+                <Bar dataKey="revenue" radius={[4, 4, 0, 0]} maxBarSize={32}>
+                  {revenueBarData.map((_, i) => (
+                    <Cell key={i} fill={i === revenueBarData.length - 1 ? G2 : "rgba(47,172,12,0.22)"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Sales Overview — donut */}
+        <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white">
+          <div className="px-6 pt-5 pb-2">
+            <div className="text-xs font-semibold text-[#404F44]/60 uppercase tracking-wider">Sales Overview</div>
+          </div>
+          {donutData.length > 0 ? (
+            <div className="flex flex-col items-center pb-5 px-4">
+              <div className="relative w-[148px] h-[148px]">
+                <PieChart width={148} height={148}>
+                  <Pie data={donutData} cx={74} cy={74} innerRadius={46} outerRadius={66}
+                    paddingAngle={3} dataKey="value" startAngle={90} endAngle={-270} stroke="none">
+                    {donutData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                  </Pie>
+                </PieChart>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-xl font-bold text-[#252d26]">{donutTotal}</span>
+                  <span className="text-[10px] text-slate-400">subscribers</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 w-full mt-2">
+                {donutData.map((d) => (
+                  <div key={d.name} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-2 text-[#404F44]">
+                      <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
+                      {d.name}
+                    </span>
+                    <span className="font-semibold text-[#252d26] tabular-nums">{d.value}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 w-full border-t border-slate-100 pt-3">
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-slate-500">ARR vs target</span>
+                  <span className="font-semibold text-[#2FAC0C]">{salesPct}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${salesPct}%`, background: G }} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-40 flex items-center justify-center text-xs text-slate-400 px-4 text-center">
+              No plan data yet
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Plan Breakdown — click a row to show/hide subscribers ────── */}
+      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Plan Breakdown</span>
+            <span title="Click a plan row to filter and show its subscribers below"
+              className="text-slate-400 hover:text-slate-600 cursor-help">
+              <Info className="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <ExportRow data={planExport} filename="plan-breakdown" title="Plan Breakdown — GrainHero" />
+        </div>
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-            <tr>
-              <th className="text-left px-4 py-2 font-medium">Plan</th>
-              <th className="text-right px-4 py-2 font-medium">MRR</th>
+          <thead>
+            <tr className="text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
+              <th className="text-left px-5 py-2.5 font-semibold">Plan</th>
+              <th className="text-right px-5 py-2.5 font-semibold">Subscribers</th>
+              <th className="text-right px-5 py-2.5 font-semibold">MRR</th>
+              <th className="text-right px-5 py-2.5 font-semibold w-44">Revenue Share</th>
             </tr>
           </thead>
-          <tbody>
-            {planSeries.map((p) => (
-              <tr key={p.plan} className="border-t hover:bg-slate-50">
-                <td className="px-4 py-2 font-medium text-slate-800 capitalize">{p.plan}</td>
-                <td className="px-4 py-2 text-right tabular-nums">{fmtPKR.format(p.mrr)}</td>
-              </tr>
-            ))}
-            {planSeries.length === 0 && !revenueQ.isLoading && (
-              <tr><td colSpan={2} className="text-center text-slate-400 py-8">No active subscriptions yet.</td></tr>
-            )}
+          <tbody className="divide-y divide-slate-50">
+            {ALL_PLANS.map((planId) => {
+              const live   = planSeries.find((p) => p.plan.toLowerCase() === planId);
+              const mrr    = live?.mrr ?? 0;
+              const subs   = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * (kpis.activeCount || 1)) : 0;
+              const share  = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * 100) : 0;
+              const col    = planColor(planId);
+              const lbl    = planLabel(planId);
+              const active = planFilter === planId;
+              return (
+                <tr
+                  key={planId}
+                  onClick={() => setPlanFilter(active ? null : planId)}
+                  className="cursor-pointer transition-colors"
+                  style={active ? { background: col + "0e" } : undefined}
+                  onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "#f8faf8"; }}
+                  onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = ""; }}
+                >
+                  <td className="px-5 py-3.5">
+                    <span className="inline-flex items-center gap-2.5">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: col }} />
+                      <span className={`font-medium ${active ? "text-[#252d26]" : "text-[#404F44]"}`}>{lbl}</span>
+                      {active && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                          style={{ background: col + "18", color: col }}>
+                          selected
+                        </span>
+                      )}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-right tabular-nums font-medium text-[#252d26]">{subs}</td>
+                  <td className="px-5 py-3.5 text-right tabular-nums text-[#404F44]">
+                    {mrr > 0 ? `PKR ${fmt(mrr)}` : <span className="text-slate-300">—</span>}
+                  </td>
+                  <td className="px-5 py-3.5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <div className="w-24 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${share}%`, background: col }} />
+                      </div>
+                      <span className="text-xs text-slate-400 w-8 tabular-nums text-right">{share}%</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-      </AdminDataCard>
+      </div>
 
+      {/* ── Active Subscribers — only shown when a plan is selected ─── */}
+      {planFilter !== null && adminSubs.length > 0 && (
+        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Active Subscribers</span>
+              {/* Plan filter pills */}
+              <div className="flex gap-1.5">
+                {planTabs.map((t) => {
+                  const col   = t.id === "all" ? "#404F44" : planColor(t.id);
+                  const isOn  = planFilter === t.id;
+                  const count = t.id === "all"
+                    ? adminSubs.length
+                    : adminSubs.filter((a) => a.plan.toLowerCase() === t.id).length;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setPlanFilter(t.id === planFilter ? null : t.id)}
+                      className="px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors"
+                      style={isOn
+                        ? { background: col, color: "#fff" }
+                        : { background: "#f1f5f9", color: "#475569" }}
+                    >
+                      {t.label} <span className={isOn ? "opacity-80" : "opacity-60"}>{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <ExportRow
+              data={subExport}
+              filename={`subscribers-${planFilter}`}
+              title={`Active Subscribers — ${planFilter === "all" ? "All Plans" : planLabel(planFilter)} — GrainHero`}
+            />
+          </div>
+
+          {/* Subscriber cards */}
+          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {filteredSubs.map((a, i) => {
+              const col = planColor(a.plan);
+              return (
+                <div key={i} className="rounded-md border border-slate-100 bg-white px-3.5 py-3 hover:border-slate-200 transition-colors">
+                  <div className="text-sm font-medium text-[#252d26] truncate">{a.name}</div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                      style={{ background: col + "15", color: col }}>
+                      {planLabel(a.plan)}
+                    </span>
+                    <span className="text-[11px] text-slate-500 tabular-nums">PKR {fmt(a.mrr)}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-1.5">
+                    {a.joined ? new Date(a.joined).toLocaleDateString("en-PK", { month: "short", year: "numeric" }) : "—"}
+                  </div>
+                </div>
+              );
+            })}
+            {filteredSubs.length === 0 && (
+              <div className="col-span-full text-center text-sm text-slate-400 py-8">
+                No subscribers on {planFilter === "all" ? "any" : planLabel(planFilter)} plan yet.
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          {filteredSubs.length > 0 && (
+            <div className="px-5 py-2.5 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-400">
+                {filteredSubs.length} subscriber{filteredSubs.length !== 1 ? "s" : ""}
+                {planFilter !== "all" ? ` · ${planLabel(planFilter)}` : ""}
+              </span>
+              <span className="text-xs font-semibold text-[#404F44] tabular-nums">
+                PKR {fmt(filteredSubs.reduce((s, a) => s + a.mrr, 0))} / mo
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Expiring soon ───────────────────────────────────────────── */}
       {expiring.length > 0 && (
-        <AdminDataCard title="Expiring soon" description="Subscriptions ending within 7 days">
+        <div className="rounded-lg border border-amber-200 bg-white overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-amber-100 flex items-center justify-between">
+            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+              Expiring within 7 days · {expiring.length}
+            </span>
+            <button
+              onClick={() => exportToCSV(expiring.map((s) => ({
+                Plan: s.plan_name ?? "—",
+                Expires: s.end_date ? new Date(s.end_date).toLocaleDateString() : "—",
+              })), "expiring-subscriptions")}
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100 rounded"
+            >
+              <Download className="w-3 h-3" /> CSV
+            </button>
+          </div>
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="text-left px-4 py-2 font-medium">Plan</th>
-                <th className="text-right px-4 py-2 font-medium">Ends</th>
+            <thead>
+              <tr className="text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <th className="text-left px-5 py-2.5 font-semibold">Plan</th>
+                <th className="text-right px-5 py-2.5 font-semibold">Expires</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-50">
               {expiring.map((s) => (
-                <tr key={s.id} className="border-t hover:bg-slate-50">
-                  <td className="px-4 py-2 text-slate-800">{s.plan_name ?? "—"}</td>
-                  <td className="px-4 py-2 text-right text-amber-700">{s.end_date ? new Date(s.end_date).toLocaleDateString() : "—"}</td>
+                <tr key={s.id} className="hover:bg-slate-50/50">
+                  <td className="px-5 py-3 text-[#404F44]">{s.plan_name ?? "—"}</td>
+                  <td className="px-5 py-3 text-right font-medium text-amber-700">
+                    {s.end_date ? new Date(s.end_date).toLocaleDateString() : "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </AdminDataCard>
-      )}
-
-      <AdminDataCard title="Insurance" description={insTotals ? `${insTotals.policies} policies · ${insTotals.openClaims} open claims` : "Loading…"}>
-        <div className="p-4">
-          <AdminSummaryTiles columns={4} tiles={insuranceTiles} />
         </div>
-      </AdminDataCard>
-
-      <AdminDataCard title="Insurance by tenant" description="Coverage, premium, and claim activity — highest coverage first">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-            <tr>
-              <th className="text-left px-4 py-2 font-medium">Tenant</th>
-              <th className="text-right px-2 py-2 font-medium">Policies</th>
-              <th className="text-right px-2 py-2 font-medium">Coverage</th>
-              <th className="text-right px-4 py-2 font-medium">Open claims</th>
-            </tr>
-          </thead>
-          <tbody>
-            {insRows.slice(0, 25).map((r) => (
-              <tr key={r.admin_id} className="border-t hover:bg-slate-50">
-                <td className="px-4 py-2 font-medium text-slate-800 truncate max-w-[220px]">{r.name}</td>
-                <td className="px-2 py-2 text-right tabular-nums text-slate-600">{r.activePolicies}/{r.policies}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{fmtPKR.format(r.coverage)}</td>
-                <td className="px-4 py-2 text-right">
-                  {r.openClaims > 0 ? <Badge variant="destructive" className="font-mono">{r.openClaims}</Badge> : <span className="text-slate-400">0</span>}
-                </td>
-              </tr>
-            ))}
-            {insRows.length === 0 && !insuranceQ.isLoading && (
-              <tr><td colSpan={4} className="text-center text-slate-400 py-8">No insurance policies yet.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </AdminDataCard>
+      )}
     </AdminPageShell>
   );
 }

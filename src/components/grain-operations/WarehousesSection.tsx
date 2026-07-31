@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Building2, Plus, Search, Edit2, Trash2, Eye, Loader2 } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Eye, Loader2, LayoutList, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +17,7 @@ import { InlineRename } from "@/components/app/InlineRename";
 import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse } from "@/lib/operations.functions";
 import { parsePlanLimitError } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
-import { ExportMenu } from "@/components/app/ExportMenu";
-import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { MultiRegionWarehousesView } from "@/components/grain-operations/MultiRegionWarehousesView";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -86,6 +85,7 @@ export function WarehousesSection() {
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const canRename = RENAME_ROLES.includes(me?.role ?? "");
 
+  const [viewMode, setViewMode] = useState<"list" | "region">("list");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [editOpen, setEditOpen] = useState(false);
@@ -189,11 +189,41 @@ export function WarehousesSection() {
               <SelectItem value="maintenance">Maintenance</SelectItem>
             </SelectContent>
           </Select>
-          <ExportMenu filename="warehouses" title="Warehouses" rows={rows} columns={warehouseExportColumns} />
+
+          {/* View-mode toggle */}
+          <div className="flex rounded-md border border-slate-200 overflow-hidden h-9 shrink-0">
+            <button
+              onClick={() => setViewMode("list")}
+              title="List view"
+              className={`px-3 flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                viewMode === "list"
+                  ? "bg-[#2FAC0C] text-white"
+                  : "bg-white text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <LayoutList className="w-3.5 h-3.5" /> List
+            </button>
+            <button
+              onClick={() => setViewMode("region")}
+              title="By region"
+              className={`px-3 flex items-center gap-1.5 text-xs font-medium border-l border-slate-200 transition-colors ${
+                viewMode === "region"
+                  ? "bg-[#2FAC0C] text-white"
+                  : "bg-white text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5" /> By Region
+            </button>
+          </div>
+
           <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New warehouse</Button>
         </div>
 
-        {isLoading ? (
+        {/* ── Region view ───────────────────────────────────────── */}
+        {viewMode === "region" && <MultiRegionWarehousesView />}
+
+        {/* ── List view ─────────────────────────────────────────── */}
+        {viewMode === "list" && (isLoading ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
           </div>
@@ -239,7 +269,7 @@ export function WarehousesSection() {
               </tbody>
             </table>
           </div>
-        )}
+        ))}
 
       {/* Edit Dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setForm(emptyForm); }}>

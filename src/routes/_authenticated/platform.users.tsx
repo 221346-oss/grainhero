@@ -2,16 +2,18 @@ import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
+import { setUserRole } from "@/lib/platform.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
 import { saveImpersonationSession } from "@/components/app/ImpersonationBanner";
-import { UserCog } from "lucide-react";
+import { UserCog, ShieldCheck } from "lucide-react";
 import { AdminFilterBar } from "@/components/app/admin/AdminFilterBar";
 
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
@@ -31,16 +33,78 @@ const ROLE_TEXT: Record<string, string> = {
   pending: "text-muted-foreground",
 };
 
+const ASSIGNABLE_ROLES = [
+  { value: "technician", label: "Technician" },
+  { value: "manager",    label: "Manager"    },
+  { value: "admin",      label: "Admin"      },
+  { value: "pending",    label: "Pending"    },
+] as const;
+
+interface ChangeRoleDialogProps {
+  user: Row | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onConfirm: (userId: string, role: string) => void;
+  isPending: boolean;
+}
+
+function ChangeRoleDialog({ user, open, onOpenChange, onConfirm, isPending }: ChangeRoleDialogProps) {
+  const [newRole, setNewRole] = useState(user?.role ?? "pending");
+
+  // Sync local state when user changes or dialog opens
+  useEffect(() => {
+    if (open && user) setNewRole(user.role);
+  }, [open, user]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Change role</DialogTitle>
+          <DialogDescription>
+            <span className="font-medium text-slate-700">{user?.name ?? user?.email ?? "This user"}</span>
+            &apos;s role will be updated immediately.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-2 space-y-1.5">
+          <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">New role</label>
+          <Select value={newRole} onValueChange={setNewRole}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ASSIGNABLE_ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button
+            disabled={!user || newRole === user.role || isPending}
+            onClick={() => user && onConfirm(user.id, newRole)}
+          >
+            {isPending ? "Saving…" : "Save role"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function UsersPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
   const impersonateFn = useServerFn(startImpersonation);
+  const setRoleFn = useServerFn(setUserRole);
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
   const [q, setQ] = useState("");
   const [qInput, setQInput] = useState("");
   const [role, setRole] = useState("all");
+  const [roleTarget, setRoleTarget] = useState<Row | null>(null);
 
   const filtered = useMemo(() => data.filter((u) => {
     const s = q.toLowerCase();
@@ -77,6 +141,16 @@ function UsersPage() {
     },
   });
 
+  const changeRole = useMutation({
+    mutationFn: (v: { userId: string; role: string }) => setRoleFn({ data: v }),
+    onSuccess: (_, v) => {
+      toast.success(`Role updated to ${v.role}`);
+      qc.invalidateQueries({ queryKey: ["platform-users"] });
+      setRoleTarget(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const totalUsers = data.length;
   const blockedUsers = data.filter((u) => u.blocked).length;
   const thisMonth = data.filter((u) => {
@@ -86,6 +160,56 @@ function UsersPage() {
     monthAgo.setMonth(monthAgo.getMonth() - 1);
     return created >= monthAgo;
   }).length;
+
+  // ── Full layout skeleton while loading ─────────────────────────────────
+  if (isLoading) {
+    return (
+      <AdminPageShell title="Platform users" subtitle="All users across tenants and organizations">
+        <div className="space-y-4">
+          {/* 3-tile summary */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                <div className="h-7 w-10 animate-pulse rounded bg-slate-100" />
+                <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+          {/* Filter bar */}
+          <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
+          {/* Users table */}
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
+              <div className="h-4 w-20 animate-pulse rounded bg-slate-100" />
+              <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />
+            </div>
+            {/* Table header */}
+            <div className="px-4 py-2.5 grid grid-cols-5 gap-4 border-b border-slate-100">
+              {["User","Role","Joined","Status","Actions"].map((col) => (
+                <div key={col} className="h-3 w-14 animate-pulse rounded bg-slate-100" />
+              ))}
+            </div>
+            {/* Table rows */}
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="px-4 py-3 grid grid-cols-5 gap-4 items-center border-b border-slate-50">
+                <div className="space-y-1.5">
+                  <div className="h-3.5 w-32 animate-pulse rounded bg-slate-100" />
+                  <div className="h-2.5 w-44 animate-pulse rounded bg-slate-100" />
+                </div>
+                <div className="h-3.5 w-16 animate-pulse rounded bg-slate-100" />
+                <div className="h-3.5 w-20 animate-pulse rounded bg-slate-100" />
+                <div className="h-3.5 w-12 animate-pulse rounded bg-slate-100" />
+                <div className="flex justify-end gap-2">
+                  <div className="h-6 w-16 animate-pulse rounded bg-slate-100" />
+                  <div className="h-6 w-12 animate-pulse rounded bg-slate-100" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AdminPageShell>
+    );
+  }
 
   return (
     <AdminPageShell title="Platform users" subtitle="All users across tenants and organizations">
@@ -182,6 +306,15 @@ function UsersPage() {
                         <Button
                           size="sm"
                           variant="link"
+                          onClick={() => setRoleTarget(u)}
+                          className="h-auto p-0 text-slate-500 hover:text-slate-800"
+                        >
+                          <ShieldCheck className="me-1 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
+                          Role
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="link"
                           disabled={toggle.isPending}
                           onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
                           className={`h-auto p-0 ${u.blocked ? "text-primary" : "text-destructive"}`}
@@ -197,6 +330,14 @@ function UsersPage() {
           </div>
         )}
       </AdminDataCard >
+
+      <ChangeRoleDialog
+        user={roleTarget}
+        open={!!roleTarget}
+        onOpenChange={(v) => !v && setRoleTarget(null)}
+        onConfirm={(userId, role) => changeRole.mutate({ userId, role })}
+        isPending={changeRole.isPending}
+      />
     </AdminPageShell >
   );
 }

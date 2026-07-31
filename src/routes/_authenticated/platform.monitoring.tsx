@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
-import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getPlatformEnvironmentalOverview } from "@/lib/platform-monitoring.functions";
@@ -83,8 +82,6 @@ function PlatformMonitoringPage() {
       title="Monitoring"
       subtitle="Environmental status across every tenant — silos, device health, and incidents. Read-only."
     >
-      <PlatformScopeBanner label="Aggregate environmental status across every tenant. No sensor/actuator detail — that's each tenant's own monitoring." />
-
       <AdminSummaryTiles columns={4} tiles={tiles} />
 
       <AdminDataCard

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -10,50 +10,407 @@ import {
   decidePlanChangeRequest,
 } from "@/lib/plan-thresholds.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
-import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
-import { AdminDetailPanel, DetailField } from "@/components/app/admin/AdminDetailPanel";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import {
+  Users, Database, Warehouse, Package, Cpu, Zap,
+  Star, CheckCircle, XCircle, X, Bell, Pencil,
+  TrendingUp, TrendingDown,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/plans")({
   component: PlatformPlansPage,
 });
 
 type Plan = Awaited<ReturnType<typeof listPlanThresholds>>[number];
-type Req = Awaited<ReturnType<typeof listPlanChangeRequests>>[number];
+type Req  = Awaited<ReturnType<typeof listPlanChangeRequests>>[number];
 
+const G  = "#2FAC0C";
+const GL = "rgba(47,172,12,0.10)";
+
+const fmt = (n: number) => new Intl.NumberFormat("en-PK").format(n);
+
+// Per-plan visual identity
+const PLAN_THEME: Record<string, {
+  accent: string; accentLight: string; accentBorder: string;
+  label: string; tagline: string;
+}> = {
+  starter:      { accent: "#3b82f6", accentLight: "rgba(59,130,246,0.08)",  accentBorder: "#bfdbfe", label: "Starter",      tagline: "For small teams getting started" },
+  professional: { accent: "#2FAC0C", accentLight: "rgba(47,172,12,0.08)",   accentBorder: "#bbf7d0", label: "Professional", tagline: "For growing grain businesses" },
+  enterprise:   { accent: "#7c3aed", accentLight: "rgba(124,58,237,0.08)",  accentBorder: "#ddd6fe", label: "Enterprise",   tagline: "Unlimited scale for large operations" },
+};
+const theme = (id: string) =>
+  PLAN_THEME[id.toLowerCase()] ?? { accent: "#64748b", accentLight: "#f8fafc", accentBorder: "#e2e8f0", label: id, tagline: "" };
+
+// Feature limit definitions
+const LIMITS = [
+  { key: "max_users",      icon: Users,     label: "Users",      max: 100 },
+  { key: "max_silos",      icon: Database,  label: "Silos",      max: 50  },
+  { key: "max_warehouses", icon: Warehouse, label: "Warehouses", max: 20  },
+  { key: "max_batches",    icon: Package,   label: "Batches",    max: 500 },
+  { key: "max_sensors",    icon: Cpu,       label: "Sensors",    max: 200 },
+  { key: "max_actuators",  icon: Zap,       label: "Actuators",  max: 100 },
+] as const;
+
+// ── Skeleton Components ──────────────────────────────────────────────────────
+function SkeletonPulse({ className }: { className: string }) {
+  return <div className={`animate-pulse rounded bg-slate-100 ${className}`} />;
+}
+
+function PlanCardSkeleton() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <SkeletonPulse className="h-4 w-24" />
+          <SkeletonPulse className="h-7 w-32" />
+          <SkeletonPulse className="h-3 w-40" />
+        </div>
+        <SkeletonPulse className="h-6 w-16 rounded-full" />
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="space-y-1.5">
+            <div className="flex justify-between">
+              <SkeletonPulse className="h-3 w-16" />
+              <SkeletonPulse className="h-3 w-8" />
+            </div>
+            <SkeletonPulse className="h-1.5 w-full rounded-full" />
+          </div>
+        ))}
+      </div>
+      <SkeletonPulse className="h-9 w-full rounded-lg" />
+    </div>
+  );
+}
+
+function RequestsTableSkeleton() {
+  return (
+    <div className="divide-y divide-slate-50">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="px-5 py-3.5 flex items-center gap-4">
+          <SkeletonPulse className="h-4 w-20" />
+          <SkeletonPulse className="h-4 w-32" />
+          <SkeletonPulse className="h-5 w-16 rounded-full" />
+          <SkeletonPulse className="h-5 w-14 rounded-full" />
+          <div className="ml-auto flex gap-2">
+            <SkeletonPulse className="h-7 w-16 rounded-lg" />
+            <SkeletonPulse className="h-7 w-18 rounded-lg" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Plan Card ────────────────────────────────────────────────────────────────
+function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
+  const t = theme(plan.plan_id);
+  const price = Math.round(plan.price_cents / 100);
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden flex flex-col">
+      {/* Coloured top stripe */}
+      <div className="h-0.5 w-full" style={{ background: t.accent }} />
+
+      <div className="p-3 flex flex-col flex-1">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-0.5">
+          <div>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-xs font-bold text-[#252d26]">{plan.name}</span>
+              {plan.is_popular && (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  <Star className="w-2 h-2" /> Popular
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-400">{t.tagline}</p>
+          </div>
+          {plan.is_active ? (
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+              style={{ background: GL, color: G }}>
+              <CheckCircle className="w-2.5 h-2.5" /> Active
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+              <XCircle className="w-2.5 h-2.5" /> Inactive
+            </span>
+          )}
+        </div>
+
+        {/* Price */}
+        <div className="mt-1.5 mb-2">
+          <span className="text-lg font-bold text-[#252d26] tabular-nums">
+            PKR {fmt(price)}
+          </span>
+          <span className="text-[10px] text-slate-400 ml-1">/ month</span>
+        </div>
+
+        {/* Feature limit meters */}
+        <div className="space-y-1.5 flex-1">
+          {LIMITS.map(({ key, icon: Icon, label, max }) => {
+            const val = Number((plan as any)[key] ?? 0);
+            const pct = Math.min(100, Math.round((val / max) * 100));
+            return (
+              <div key={key}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="flex items-center gap-1 text-[10px] text-[#404F44]">
+                    <Icon className="w-2.5 h-2.5 text-slate-400" />
+                    {label}
+                  </span>
+                  <span className="text-[10px] font-semibold text-[#252d26] tabular-nums">{val}</span>
+                </div>
+                <div className="h-0.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%`, background: t.accent }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Edit button */}
+        <button
+          onClick={onEdit}
+          className="mt-2.5 w-full flex items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium transition-colors"
+          style={{ background: t.accentLight, color: t.accent }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = t.accentBorder)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = t.accentLight)}
+        >
+          <Pencil className="w-2.5 h-2.5" /> Edit plan
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Slide-Over Drawer ────────────────────────────────────────────────────────
+function EditDrawer({
+  plan,
+  open,
+  onClose,
+  onSave,
+  saving,
+}: {
+  plan: Plan | null;
+  open: boolean;
+  onClose: () => void;
+  onSave: (patch: any) => void;
+  saving: boolean;
+}) {
+  const [form, setForm] = useState<any>(null);
+
+  // Reset form when plan changes
+  useEffect(() => {
+    if (plan) {
+      setForm({
+        name:           plan.name,
+        price_cents:    plan.price_cents,
+        max_users:      plan.max_users,
+        max_silos:      plan.max_silos,
+        max_warehouses: (plan as any).max_warehouses ?? 0,
+        max_batches:    plan.max_batches,
+        max_sensors:    plan.max_sensors,
+        max_actuators:  plan.max_actuators,
+        is_active:      plan.is_active,
+        is_popular:     plan.is_popular,
+      });
+    }
+  }, [plan?.plan_id]);
+
+  if (!plan || !form) return null;
+
+  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
+  const origPrice = Math.round(plan.price_cents / 100);
+  const newPrice  = Math.round(form.price_cents / 100);
+
+  const limitKeys = ["max_users","max_silos","max_warehouses","max_batches","max_sensors","max_actuators"];
+  const changedCount =
+    (newPrice !== origPrice ? 1 : 0) +
+    limitKeys.filter((k) => form[k] !== ((plan as any)[k] ?? 0)).length;
+
+  const t = theme(plan.plan_id);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        onClick={onClose}
+      />
+
+      {/* Drawer */}
+      <div
+        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+      >
+        {/* Drawer header */}
+        <div className="h-1.5 w-full" style={{ background: t.accent }} />
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-[#252d26]">Edit — {plan.name}</h2>
+            <p className="text-xs text-slate-400 font-mono mt-0.5">{plan.plan_id}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+          {/* Price */}
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
+              Price (PKR / month)
+            </label>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                min={0}
+                value={newPrice}
+                onChange={(e) => set("price_cents", Math.round(Number(e.target.value) * 100))}
+                className="h-9 text-sm"
+              />
+              {newPrice !== origPrice && (
+                <div className={`flex items-center gap-1 text-xs font-semibold whitespace-nowrap ${newPrice > origPrice ? "text-[#2FAC0C]" : "text-red-500"}`}>
+                  {newPrice > origPrice ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                  was {fmt(origPrice)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Feature limits */}
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">
+              Feature Limits
+            </label>
+            <div className="space-y-3">
+              {LIMITS.map(({ key, icon: Icon, label, max }) => {
+                const orig = Number((plan as any)[key] ?? 0);
+                const cur  = Number(form[key] ?? 0);
+                const diff = cur - orig;
+                const pct  = Math.min(100, Math.round((cur / max) * 100));
+                return (
+                  <div key={key} className="rounded-lg border border-slate-100 p-3 space-y-2"
+                    style={diff !== 0 ? { borderColor: diff > 0 ? "#bbf7d0" : "#fecaca", background: diff > 0 ? "rgba(47,172,12,0.03)" : "rgba(239,68,68,0.03)" } : {}}>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-xs font-medium text-[#404F44]">
+                        <Icon className="w-3.5 h-3.5 text-slate-400" /> {label}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {diff !== 0 && (
+                          <span className={`text-[10px] font-bold ${diff > 0 ? "text-[#2FAC0C]" : "text-red-500"}`}>
+                            {diff > 0 ? `+${diff}` : diff}
+                          </span>
+                        )}
+                        <Input
+                          type="number"
+                          min={0}
+                          value={cur}
+                          onChange={(e) => set(key, Number(e.target.value))}
+                          className="h-7 w-20 text-xs text-right"
+                        />
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-300"
+                        style={{ width: `${pct}%`, background: diff > 0 ? G : diff < 0 ? "#ef4444" : t.accent }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Toggles */}
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">
+              Settings
+            </label>
+            <div className="space-y-2">
+              {([
+                { k: "is_active",  label: "Plan is active",    sub: "Visible and purchasable by tenants" },
+                { k: "is_popular", label: "Mark as popular",   sub: "Highlights this plan on the pricing page" },
+              ] as const).map(({ k, label, sub }) => (
+                <div key={k} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
+                  <div>
+                    <p className="text-xs font-medium text-[#252d26]">{label}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>
+                  </div>
+                  <Switch checked={!!form[k]} onCheckedChange={(v) => set(k, v)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky footer */}
+        <div className="px-6 py-4 border-t border-slate-100 space-y-3">
+          {changedCount > 0 && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+              <Bell className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-800 leading-relaxed">
+                <span className="font-semibold">{changedCount} change{changedCount !== 1 ? "s" : ""}</span> — all tenants on this plan will be updated and notified.
+              </p>
+            </div>
+          )}
+          <div className="flex gap-3">
+            <button onClick={onClose}
+              className="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+              Cancel
+            </button>
+            <button
+              disabled={saving || changedCount === 0}
+              onClick={() => onSave(form)}
+              className="flex-1 py-2 rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-40"
+              style={{ background: changedCount > 0 ? G : "#94a3b8" }}
+            >
+              {saving ? "Saving…" : changedCount > 0 ? "Save & notify" : "No changes"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Main Page ────────────────────────────────────────────────────────────────
 function PlatformPlansPage() {
   const qc = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editPlanId,   setEditPlanId]   = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending">("pending");
+  const [activeView, setActiveView] = useState<"plans" | "pending" | "auto_applied" | "active">("plans");
 
-  const fetchPlans = useServerFn(listPlanThresholds);
+  const fetchPlans    = useServerFn(listPlanThresholds);
   const fetchRequests = useServerFn(listPlanChangeRequests);
-  const savePlan = useServerFn(updatePlanThreshold);
-  const decide = useServerFn(decidePlanChangeRequest);
+  const savePlan      = useServerFn(updatePlanThreshold);
+  const decide        = useServerFn(decidePlanChangeRequest);
 
   const plansQ = useQuery({ queryKey: ["plan-thresholds"], queryFn: () => fetchPlans() });
-  const reqQ = useQuery({
+  const reqQ   = useQuery({
     queryKey: ["plan-change-requests", statusFilter],
-    queryFn: () => fetchRequests({ data: { status: statusFilter } }),
+    queryFn:  () => fetchRequests({ data: { status: statusFilter } }),
   });
 
-  const plans: Plan[] = plansQ.data ?? [];
-  const requests: Req[] = reqQ.data ?? [];
-  const selected = plans.find((p) => p.plan_id === selectedId) ?? null;
+  const plans: Plan[]   = plansQ.data ?? [];
+  const requests: Req[] = reqQ.data   ?? [];
+  const editPlan        = plans.find((p) => p.plan_id === editPlanId) ?? null;
+  const pendingCount    = requests.filter((r) => r.status === "pending").length;
 
-  const tiles = useMemo(
-    () => [
-      { key: "total", label: "Plans", value: plans.length },
-      { key: "active", label: "Active", value: plans.filter((p) => p.is_active).length },
-      { key: "pending", label: "Pending requests", value: requests.filter((r) => r.status === "pending").length },
-      { key: "auto", label: "Auto-applied", value: requests.filter((r) => r.status === "auto_applied").length },
-    ],
-    [plans, requests],
-  );
+  const saveMut = useMutation({
+    mutationFn: (v: any) => savePlan({ data: v }),
+    onSuccess: () => {
+      toast.success("Plan updated — affected tenants have been notified");
+      qc.invalidateQueries({ queryKey: ["plan-thresholds"] });
+      setEditPlanId(null);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
 
   const decideMut = useMutation({
     mutationFn: (v: { id: string; approve: boolean; reason?: string | null }) => decide({ data: v }),
@@ -64,215 +421,277 @@ function PlatformPlansPage() {
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
 
-  const saveMut = useMutation({
-    mutationFn: (v: any) => savePlan({ data: v }),
-    onSuccess: () => {
-      toast.success("Plan updated");
-      qc.invalidateQueries({ queryKey: ["plan-thresholds"] });
+  // ── Stats strip ────────────────────────────────────────────────────────────
+  const totalPlans    = plans.length;
+  const activePlans   = plans.filter((p) => p.is_active).length;
+  const pendingReqs   = pendingCount;
+  const autoApplied   = requests.filter((r) => r.status === "auto_applied").length;
+
+  const PILLARS = [
+    {
+      key: "plans" as const,
+      value: totalPlans,
+      label: "Total Plans",
+      accent: "#64748b",
+      grad: "linear-gradient(160deg, #475569 0%, #334155 100%)",
+      bg: "rgba(100,116,139,0.07)",
     },
-    onError: (e: any) => toast.error(e?.message ?? "Failed"),
-  });
+    {
+      key: "active" as const,
+      value: activePlans,
+      label: "Active",
+      accent: "#2FAC0C",
+      grad: "linear-gradient(160deg, #2FAC0C 0%, #16a34a 100%)",
+      bg: "rgba(47,172,12,0.07)",
+    },
+    {
+      key: "pending" as const,
+      value: pendingReqs,
+      label: "Pending Requests",
+      accent: pendingReqs > 0 ? "#d97706" : "#94a3b8",
+      grad: pendingReqs > 0
+        ? "linear-gradient(160deg, #f59e0b 0%, #d97706 100%)"
+        : "linear-gradient(160deg, #94a3b8 0%, #64748b 100%)",
+      bg: pendingReqs > 0 ? "rgba(217,119,6,0.07)" : "rgba(100,116,139,0.05)",
+    },
+    {
+      key: "auto_applied" as const,
+      value: autoApplied,
+      label: "Auto-applied",
+      accent: "#0e7490",
+      grad: "linear-gradient(160deg, #0891b2 0%, #0e7490 100%)",
+      bg: "rgba(14,116,144,0.07)",
+    },
+  ];
+
+  const StatStrip = () => (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {plansQ.isLoading
+        ? [1,2,3,4].map((i) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
+              <SkeletonPulse className="h-6 w-8" />
+              <SkeletonPulse className="h-2.5 w-16" />
+            </div>
+          ))
+        : PILLARS.map((p) => {
+            const isActive = activeView === p.key;
+            return (
+              <button
+                key={p.key}
+                onClick={() => setActiveView(p.key)}
+                className="group relative rounded-xl border text-left transition-all duration-200 overflow-hidden focus:outline-none"
+                style={{
+                  borderColor: isActive ? p.accent + "60" : "#e2e8f0",
+                  background: isActive ? p.bg : "#fff",
+                  boxShadow: isActive
+                    ? `0 3px 12px 0 ${p.accent}20, 0 1px 3px 0 ${p.accent}10`
+                    : "0 1px 2px 0 rgba(0,0,0,0.03)",
+                  transform: isActive ? "translateY(-1px)" : undefined,
+                }}
+              >
+                {/* Gradient left bar */}
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl transition-all duration-200"
+                  style={{ background: isActive ? p.grad : "#e2e8f0" }}
+                />
+
+                <div className="px-3.5 pt-3 pb-2.5 pl-4">
+                  {/* Big number — top */}
+                  <div
+                    className="text-2xl font-bold tabular-nums leading-none mb-0.5 transition-colors duration-200"
+                    style={{ color: isActive ? p.accent : "#1e293b" }}
+                  >
+                    {p.value}
+                  </div>
+
+                  {/* Subtle divider */}
+                  <div
+                    className="h-px my-2 transition-colors duration-200"
+                    style={{ background: isActive ? p.accent + "25" : "#f1f5f9" }}
+                  />
+
+                  {/* Label — bottom */}
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 transition-colors duration-200 group-hover:text-slate-600 leading-tight">
+                    {p.label}
+                  </div>
+
+                  {/* Active indicator dot */}
+                  {isActive && (
+                    <div
+                      className="mt-1.5 inline-flex items-center gap-0.5 text-[9px] font-bold"
+                      style={{ color: p.accent }}
+                    >
+                      <span
+                        className="inline-block w-1 h-1 rounded-full"
+                        style={{ background: p.accent }}
+                      />
+                      Active
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom gradient fill on hover */}
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-xl"
+                  style={{ background: `linear-gradient(180deg, transparent 45%, ${p.accent}06 100%)` }}
+                />
+              </button>
+            );
+          })}
+    </div>
+  );
 
   return (
     <AdminPageShell
       title="Plans & Thresholds"
-      subtitle="Configure plan limits and review tenant upgrade / downgrade requests."
+      subtitle="Configure plan limits — changes propagate to all tenants on that plan instantly."
     >
-      <AdminSummaryTiles tiles={tiles} columns={4} />
+      <StatStrip />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-5">
-          <AdminDataCard title="Plan tiers" description={`${plans.length} plans configured`}>
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium">Plan</th>
-                  <th className="text-right px-2 py-2 font-medium">Price</th>
-                  <th className="text-right px-2 py-2 font-medium">Users</th>
-                  <th className="text-right px-2 py-2 font-medium">Silos</th>
-                  <th className="text-right px-2 py-2 font-medium">Batches</th>
-                  <th className="text-right px-2 py-2 font-medium">Sensors</th>
-                  <th className="text-center px-2 py-2 font-medium">Active</th>
-                </tr>
-              </thead>
-              <tbody className="">
-                {plans.map((p) => (
-                  <tr
-                    key={p.plan_id}
-                    onClick={() => setSelectedId(p.plan_id)}
-                    className={`cursor-pointer hover:bg-slate-50 ${selectedId === p.plan_id ? "bg-emerald-50/60" : ""}`}
-                  >
-                    <td className="px-4 py-2">
-                      <div className="font-medium text-slate-900">{p.name}</div>
-                      <div className="text-[11px] text-slate-500">{p.plan_id}</div>
-                    </td>
-                    <td className="text-right px-2 py-2 font-mono text-slate-700">
-                      ${(p.price_cents / 100).toFixed(0)}
-                    </td>
-                    <td className="text-right px-2 py-2 text-slate-700">{p.max_users}</td>
-                    <td className="text-right px-2 py-2 text-slate-700">{p.max_silos}</td>
-                    <td className="text-right px-2 py-2 text-slate-700">{p.max_batches}</td>
-                    <td className="text-right px-2 py-2 text-slate-700">{p.max_sensors}</td>
-                    <td className="text-center px-2 py-2">
-                      {p.is_active ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-slate-500">Off</Badge>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {plans.length === 0 && !plansQ.isLoading && (
-                  <tr>
-                    <td colSpan={7} className="text-center text-slate-400 py-10">
-                      No plans configured
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </AdminDataCard>
+      {/* ── Plan cards — shown when activeView is plans or active ─── */}
+      {(activeView === "plans" || activeView === "active") && (
+      <div>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          {activeView === "active" ? "Active Plan Tiers" : "Plan Tiers"} — click "Edit plan" to configure limits
+        </p>
+        {plansQ.isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
+            {[1, 2, 3].map((i) => <PlanCardSkeleton key={i} />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
+            {(activeView === "active" ? plans.filter(p => p.is_active) : plans).map((p) => (
+              <PlanCard key={p.plan_id} plan={p} onEdit={() => setEditPlanId(p.plan_id)} />
+            ))}
+            {plans.length === 0 && (
+              <div className="col-span-3 rounded-2xl border border-dashed border-slate-200 p-12 text-center text-sm text-slate-400">
+                No plans configured yet.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      )}
 
-          <AdminDataCard
-            title="Plan change requests"
-            description={
-              <span className="flex items-center gap-2">
-                <button
-                  className={`text-xs px-2 py-0.5 rounded-full border ${statusFilter === "pending" ? "bg-emerald-600 text-white border-emerald-600" : "border-slate-200 text-slate-600"}`}
-                  onClick={() => setStatusFilter("pending")}
-                >
-                  Pending
-                </button>
-                <button
-                  className={`text-xs px-2 py-0.5 rounded-full border ${statusFilter === "all" ? "bg-emerald-600 text-white border-emerald-600" : "border-slate-200 text-slate-600"}`}
-                  onClick={() => setStatusFilter("all")}
-                >
-                  All
-                </button>
+      {/* ── Change requests — shown when activeView is pending/auto_applied/plans ── */}
+      {(activeView === "pending" || activeView === "auto_applied" || activeView === "plans") && (
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+              Plan Change Requests
+            </span>
+            {pendingCount > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                {pendingCount} pending
               </span>
-            }
-          >
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium">Tenant</th>
-                  <th className="text-left px-2 py-2 font-medium">From → To</th>
-                  <th className="text-left px-2 py-2 font-medium">Direction</th>
-                  <th className="text-left px-2 py-2 font-medium">Status</th>
-                  <th className="text-right px-4 py-2 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody className="">
-                {requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-2 font-mono text-[11px] text-slate-600 truncate max-w-[160px]">
-                      {r.tenant_admin_id.slice(0, 8)}…
-                    </td>
-                    <td className="px-2 py-2 text-slate-700">
-                      {r.current_plan ?? "—"} → <span className="font-medium">{r.requested_plan}</span>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Badge variant="outline" className={r.direction === "upgrade" ? "border-emerald-300 text-emerald-700" : "border-amber-300 text-amber-700"}>
-                        {r.direction}
-                      </Badge>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Badge variant="outline" className="text-slate-600">{r.status}</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {r.status === "pending" ? (
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              const reason = window.prompt("Reason for rejection?");
-                              if (!reason || !reason.trim()) return;
-                              decideMut.mutate({ id: r.id, approve: false, reason: reason.trim() });
-                            }}
-                          >
-                            Reject
-                          </Button>
-                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => decideMut.mutate({ id: r.id, approve: true })}>
-                            Approve
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {requests.length === 0 && !reqQ.isLoading && (
-                  <tr>
-                    <td colSpan={5} className="text-center text-slate-400 py-8">
-                      No {statusFilter === "pending" ? "pending" : ""} requests
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </AdminDataCard>
+            )}
+          </div>
+          <div className="flex gap-1.5">
+            {(["pending", "all"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className="px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors"
+                style={statusFilter === f
+                  ? { background: G, color: "#fff" }
+                  : { background: "#f1f5f9", color: "#475569" }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <AdminDetailPanel title="Edit plan" isEmpty={!selected} emptyText="Select a plan to edit thresholds">
-          {selected && (
-            <PlanEditor
-              key={selected.plan_id}
-              plan={selected}
-              onSave={(patch) => saveMut.mutate({ plan_id: selected.plan_id, ...patch })}
-              saving={saveMut.isPending}
-            />
-          )}
-        </AdminDetailPanel>
+        {reqQ.isLoading ? (
+          <RequestsTableSkeleton />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                  <th className="text-left px-5 py-2.5 font-semibold">Tenant</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Change</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Direction</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Status</th>
+                  <th className="text-right px-5 py-2.5 font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {requests.map((r) => (
+                  <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-3.5 font-mono text-[11px] text-slate-500">
+                      {r.tenant_admin_id.slice(0, 8)}…
+                    </td>
+                    <td className="px-4 py-3.5 text-[#404F44]">
+                      <span className="text-slate-400">{r.current_plan ?? "—"}</span>
+                      {" → "}
+                      <span className="font-semibold text-[#252d26]">{r.requested_plan}</span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={r.direction === "upgrade"
+                          ? { background: GL, color: G }
+                          : { background: "rgba(245,158,11,0.1)", color: "#b45309" }}
+                      >
+                        {r.direction}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      {r.status === "pending" ? (
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            onClick={() => {
+                              const reason = window.prompt("Reason for rejection?");
+                              if (!reason?.trim()) return;
+                              decideMut.mutate({ id: r.id, approve: false, reason: reason.trim() });
+                            }}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={() => decideMut.mutate({ id: r.id, approve: true })}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white transition-colors"
+                            style={{ background: G }}
+                          >
+                            Approve
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {requests.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center text-slate-400 py-10 text-sm">
+                      No {statusFilter === "pending" ? "pending " : ""}requests
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    </AdminPageShell>
-  );
-}
+      )}
 
-function PlanEditor({ plan, onSave, saving }: { plan: Plan; onSave: (patch: any) => void; saving: boolean }) {
-  const [form, setForm] = useState({
-    name: plan.name,
-    price_cents: plan.price_cents,
-    max_users: plan.max_users,
-    max_silos: plan.max_silos,
-    max_batches: plan.max_batches,
-    max_sensors: plan.max_sensors,
-    max_actuators: plan.max_actuators,
-    is_active: plan.is_active,
-    is_popular: plan.is_popular,
-  });
-  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
-  return (
-    <div className="space-y-4">
-      <DetailField label="Name">
-        <Input value={form.name} onChange={(e) => set("name", e.target.value)} />
-      </DetailField>
-      <DetailField label="Price (cents)">
-        <Input type="number" value={form.price_cents} onChange={(e) => set("price_cents", Number(e.target.value))} />
-      </DetailField>
-      <div className="grid grid-cols-2 gap-3">
-        {(["max_users", "max_silos", "max_batches", "max_sensors", "max_actuators"] as const).map((k) => (
-          <DetailField key={k} label={k.replace("max_", "").replace(/_/g, " ")}>
-            <Input type="number" value={form[k]} onChange={(e) => set(k, Number(e.target.value))} />
-          </DetailField>
-        ))}
-      </div>
-      <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
-        <span className="text-sm text-slate-700">Active</span>
-        <Switch checked={form.is_active} onCheckedChange={(v) => set("is_active", v)} />
-      </div>
-      <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
-        <span className="text-sm text-slate-700">Popular</span>
-        <Switch checked={form.is_popular} onCheckedChange={(v) => set("is_popular", v)} />
-      </div>
-      <Button
-        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-        disabled={saving}
-        onClick={() => onSave(form)}
-      >
-        {saving ? "Saving…" : "Save changes"}
-      </Button>
-    </div>
+      {/* ── Slide-over drawer ───────────────────────────────────────── */}
+      <EditDrawer
+        plan={editPlan}
+        open={!!editPlanId}
+        onClose={() => setEditPlanId(null)}
+        onSave={(patch) => saveMut.mutate({ plan_id: editPlanId!, ...patch })}
+        saving={saveMut.isPending}
+      />
+    </AdminPageShell>
   );
 }
