@@ -1411,3 +1411,62 @@ export const exportSensorCSV = createServerFn({ method: "POST" })
 
     return { csv: csvHeader + csvRows.join('\n') };
   });
+
+// ── Multi-region warehouse view ───────────────────────────────────────────
+// Returns the admin's warehouses enriched with resolved manager + technician
+// names. Used by the "By Region" view in WarehousesSection (admin role only).
+export const listWarehousesWithTeam = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const sb = context.supabase;
+
+    // Load warehouses for this tenant (RLS enforces admin_id scoping).
+    const { data: warehouses, error: whErr } = await sb
+      .from("warehouses")
+      .select("id, warehouse_id, name, status, location, total_capacity_kg, total_silos, manager_id, technician_ids, created_at, notes")
+      .order("name", { ascending: true })
+      .limit(500);
+    if (whErr) throw whErr;
+
+    if (!warehouses || warehouses.length === 0) return [];
+
+    // Collect all unique profile IDs we need to resolve names for.
+    const profileIds = new Set<string>();
+    for (const w of warehouses) {
+      if (w.manager_id) profileIds.add(w.manager_id);
+      for (const tid of (w.technician_ids ?? []) as string[]) profileIds.add(tid);
+    }
+
+    // Batch-fetch profiles — only name + role fields needed.
+    const profileMap = new Map<string, { name: string | null; email: string | null }>();
+    if (profileIds.size > 0) {
+      const { data: profiles } = await sb
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", [...profileIds]);
+      for (const p of profiles ?? []) {
+        profileMap.set(p.id, { name: p.name, email: p.email });
+      }
+    }
+
+    const resolve = (id: string | null | undefined) => {
+      if (!id) return null;
+      const p = profileMap.get(id);
+      return p ? (p.name ?? p.email ?? id.slice(0, 8)) : id.slice(0, 8);
+    };
+
+    return (warehouses as any[]).map((w) => ({
+      id:               w.id as string,
+      warehouse_id:     w.warehouse_id as string,
+      name:             w.name as string,
+      status:           (w.status ?? "active") as string,
+      location:         (w.location ?? {}) as { description?: string | null; address?: string | null },
+      total_capacity_kg: (w.total_capacity_kg ?? 0) as number,
+      total_silos:      (w.total_silos ?? 0) as number,
+      notes:            (w.notes ?? null) as string | null,
+      manager_id:       (w.manager_id ?? null) as string | null,
+      manager_name:     resolve(w.manager_id),
+      technician_ids:   ((w.technician_ids ?? []) as string[]),
+      technician_names: ((w.technician_ids ?? []) as string[]).map(resolve).filter(Boolean) as string[],
+    }));
+  });
