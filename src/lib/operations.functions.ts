@@ -274,7 +274,7 @@ export const deleteSilo = createServerFn({ method: "POST" })
       .from("grain_batches")
       .select("id", { count: "exact", head: true })
       .eq("silo_id", data.id)
-      .in("status", ["stored", "on_hold", "processing", "damaged", "expired", "pending_qc", "qc_submitted", "qc_failed", "qc_passed", "admin_rejected"] as never);
+      .in("status", ["stored", "on_hold", "processing", "damaged", "expired", "pending_qc", "qc_submitted", "qc_failed", "qc_passed", "admin_rejected", "pending_approval"] as never);
 
     if (countError) throw countError;
     if (count && count > 0) {
@@ -326,7 +326,7 @@ export const listGrainBatches = createServerFn({ method: "GET" })
 
 
 const grainTypes = ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"] as const;
-const batchStatuses = ["stored", "dispatched", "sold", "damaged", "expired", "on_hold", "processing"] as const;
+const batchStatuses = ["stored", "dispatched", "sold", "damaged", "expired", "on_hold", "processing", "pending_approval"] as const;
 
 const batchInputBase = z.object({
   id: z.string().uuid().optional(),
@@ -367,6 +367,14 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
+    // Get user role for role-based logic
+    const userRole = await context.supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const role = (userRole.data as { role?: string })?.role ?? "pending";
+    
     if (!data.id) {
       // Batch creation starts the QC pipeline — restricted to Manager/Admin.
       // (Technicians only ever act on batches already assigned to them.)
@@ -478,6 +486,11 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
 
     const batchId = data.batch_id ?? `${data.grain_type.slice(0,3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const qrPayload = `GH-${batchId}-${Date.now()}`;
+    
+    // Manager batches need admin approval before grain is added to silo
+    // Admin batches go directly to pending_qc
+    const initialStatus = role === "manager" ? "pending_approval" : "pending_qc";
+    
     const { data: row, error } = await context.supabase
       .from("grain_batches")
       .insert({
@@ -501,7 +514,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         purchase_price_per_kg: data.purchase_price_per_kg ?? null,
         total_purchase_value,
         intake_conditions,
-        status: "pending_qc",
+        status: initialStatus,
         assigned_technician_id: data.assignedTechnicianId,
         notes: data.notes ?? null,
         created_by: context.userId,
@@ -513,11 +526,15 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       .select("*").single();
     if (error) throw error;
 
-    // Occupancy is NOT added here anymore — a Manager-created intake sits at
-    // `pending_qc` and must clear the full QC pipeline before an Admin's
-    // final approval (adminReviewBatch, batch-qc.functions.ts) actually adds
-    // its quantity to silo stock. Adding it at creation would let stock count
-    // grow from batches nobody has approved yet.
+    // Update silo stock ONLY for admin batches (manager batches wait for approval)
+    // Admin batches: grain is added to silo immediately
+    // Manager batches: grain is NOT added until admin approves
+    if (role === "admin") {
+      await context.supabase.from("silos").update({
+        current_occupancy_kg: (silo.current_occupancy_kg ?? 0) + data.quantity_kg,
+        updated_by: context.userId,
+      }).eq("id", data.silo_id);
+    }
 
     await logActivity({
       actorId: context.userId,

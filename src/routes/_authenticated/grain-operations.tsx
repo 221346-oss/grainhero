@@ -10,9 +10,7 @@ import { WarehousesSection } from "@/components/grain-operations/WarehousesSecti
 import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { Package, Warehouse, Building2, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { listGrainBatches, listSilos, listWarehouses, listBuyers } from "@/lib/operations.functions";
-import { SiloStatusPie, type StatusSlice } from "@/components/grain-operations/SiloStatusPie";
-import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
-import type { FlowGroup } from "@/components/grain-operations/SiloFlowDiagram";
+import { getMyRole } from "@/lib/roles.functions";
 
 type Tab = "batches" | "silos" | "warehouses" | "buyers";
 
@@ -33,9 +31,8 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   component: GrainOperationsWorkspace,
 });
 
-// Silos first — this is the primary, silo-centric view of the page now;
-// the rest remain as secondary CRUD/management tabs.
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+  { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "silos",      label: "Silos",         icon: Warehouse },
   { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "warehouses", label: "Warehouses",    icon: Building2 },
@@ -48,9 +45,29 @@ function GrainOperationsWorkspace() {
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTabState] = useState<Tab>(tab);
 
+  // Fetch user role to determine which tabs to show
+  const roleFn = useServerFn(getMyRole);
+  const { data: roleData } = useQuery({
+    queryKey: ["my-role"],
+    queryFn: () => roleFn(),
+  });
+  const userRole = roleData?.role ?? "pending";
+
+  // Filter tabs based on role - manager doesn't see warehouses
+  const TABS = userRole === "manager"
+    ? ALL_TABS.filter(t => t.key !== "warehouses")
+    : ALL_TABS;
+
   useEffect(() => {
     setActiveTabState(tab);
   }, [tab]);
+
+  // If current tab is warehouses and user is manager, redirect to batches
+  useEffect(() => {
+    if (userRole === "manager" && activeTab === "warehouses") {
+      setActiveTab("batches");
+    }
+  }, [userRole, activeTab]);
 
   function setActiveTab(next: Tab) {
     setActiveTabState(next);
