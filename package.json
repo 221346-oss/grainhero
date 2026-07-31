@@ -57,6 +57,8 @@
     "framer-motion": "^12.42.2",
     "gsap": "^3.15.0",
     "input-otp": "^1.4.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.575.0",
     "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",

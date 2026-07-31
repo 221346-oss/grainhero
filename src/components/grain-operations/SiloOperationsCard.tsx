@@ -1,0 +1,214 @@
+import { useState, useMemo } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import {
+  ChevronDown, ChevronUp, Edit2, Trash2, Eye, ArrowUpRight,
+  ShoppingCart, PackagePlus, PackageMinus,
+} from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/app/DataListPage";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import { SiloFlowDiagram, type FlowGroup } from "./SiloFlowDiagram";
+import { SiloStatusPie, type StatusSlice } from "./SiloStatusPie";
+import { DispatchApprovalPanel } from "./DispatchApprovalPanel";
+import { listDispatches } from "@/lib/dispatches.functions";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
+
+export type SiloRow = {
+  id: string;
+  silo_id: string;
+  name: string;
+  capacity_kg: number | null;
+  current_occupancy_kg: number | null;
+  status: string | null;
+  warehouses?: { name: string } | null;
+};
+
+export type BatchRow = {
+  id: string;
+  batch_id: string;
+  grain_type: string;
+  quantity_kg: number;
+  status: string | null;
+  created_at: string;
+  silos?: { id: string } | null;
+};
+
+// Task's explicit mapping: yellow = processing/in-progress, green =
+// completed/stored, red = error/QC-failed/rejected.
+export const BATCH_TONE: Record<string, FlowGroup["tone"]> = {
+  pending_qc: "yellow", qc_submitted: "yellow", qc_passed: "yellow", processing: "yellow", on_hold: "yellow",
+  stored: "green", sold: "green", dispatched: "green", ready: "green",
+  qc_failed: "red", admin_rejected: "red", damaged: "red", expired: "red", rejected: "red",
+};
+const DISPATCH_TONE: Record<string, FlowGroup["tone"]> = {
+  draft: "yellow", staged: "yellow", in_transit: "yellow",
+  confirmed: "green", delivered: "green",
+  cancelled: "red",
+};
+
+function groupByTone<T extends { status: string | null }>(
+  rows: T[],
+  toneMap: Record<string, FlowGroup["tone"]>,
+  qtyOf: (r: T) => number,
+): FlowGroup[] {
+  const byTone: Record<FlowGroup["tone"], { count: number; kg: number }> = {
+    yellow: { count: 0, kg: 0 }, green: { count: 0, kg: 0 }, red: { count: 0, kg: 0 },
+  };
+  for (const r of rows) {
+    const tone = toneMap[String(r.status ?? "")] ?? "yellow";
+    byTone[tone].count += 1;
+    byTone[tone].kg += qtyOf(r);
+  }
+  const labels: Record<FlowGroup["tone"], string> = { yellow: "In progress", green: "Completed", red: "Error / rejected" };
+  return (["yellow", "green", "red"] as const)
+    .filter((t) => byTone[t].count > 0)
+    .map((t) => ({ label: labels[t], count: byTone[t].count, kg: byTone[t].kg, tone: t }));
+}
+
+export function SiloOperationsCard({
+  silo,
+  batches,
+  onEdit,
+  onDelete,
+  onView,
+  onSell,
+  isAdmin,
+}: {
+  silo: SiloRow;
+  batches: BatchRow[];
+  onEdit: (s: SiloRow) => void;
+  onDelete: (id: string) => void;
+  onView: (s: SiloRow) => void;
+  onSell: (s: SiloRow) => void;
+  isAdmin: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const listDispatchesFn = useServerFn(listDispatches);
+
+  const cap = Number(silo.capacity_kg ?? 0);
+  const occ = Number(silo.current_occupancy_kg ?? 0);
+  const pct = cap ? Math.round((occ / cap) * 100) : 0;
+  const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
+
+  const siloBatches = useMemo(() => batches.filter((b) => b.silos?.id === silo.id), [batches, silo.id]);
+
+  const dispatchesQ = useQuery({
+    queryKey: ["silo-dispatches", silo.id],
+    queryFn: () => listDispatchesFn({ data: { siloId: silo.id, limit: 100 } }),
+    enabled: expanded,
+  });
+  const dispatches = (dispatchesQ.data?.dispatches ?? []) as Array<{
+    id: string; status: string | null; total_qty_kg: number; dispatch_number: string;
+  }>;
+
+  const incoming = useMemo(() => groupByTone(siloBatches, BATCH_TONE, (b) => Number(b.quantity_kg ?? 0)), [siloBatches]);
+  const outgoing = useMemo(
+    () => (expanded ? groupByTone(dispatches, DISPATCH_TONE, (d) => Number(d.total_qty_kg ?? 0)) : []),
+    [dispatches, expanded],
+  );
+  const pieData: StatusSlice[] = useMemo(() => {
+    const byTone: Record<FlowGroup["tone"], number> = { yellow: 0, green: 0, red: 0 };
+    for (const b of siloBatches) byTone[BATCH_TONE[String(b.status ?? "")] ?? "yellow"] += 1;
+    const labels: Record<FlowGroup["tone"], string> = { yellow: "In progress", green: "Stored", red: "Rejected/error" };
+    return (["yellow", "green", "red"] as const).filter((t) => byTone[t] > 0).map((t) => ({ name: labels[t], value: byTone[t], tone: t }));
+  }, [siloBatches]);
+
+  const incomingCount = siloBatches.length;
+  const outgoingCount = dispatches.length;
+
+  const exportColumns: ExportColumn<BatchRow>[] = [
+    { header: "Batch ID", value: (b) => b.batch_id },
+    { header: "Grain type", value: (b) => b.grain_type },
+    { header: "Quantity (kg)", value: (b) => b.quantity_kg },
+    { header: "Status", value: (b) => b.status ?? "" },
+    { header: "Created", value: (b) => new Date(b.created_at).toLocaleDateString() },
+  ];
+
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardHeader className="p-3 pb-2 flex flex-row items-start justify-between space-y-0">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold truncate">{silo.name}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{silo.warehouses?.name ?? "—"} · {silo.silo_id}</p>
+        </div>
+        <StatusBadge value={silo.status} />
+      </CardHeader>
+      <CardContent className="p-3 pt-0 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+            <div className={`h-full ${barColor} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
+          </div>
+          <span className="text-[11px] tabular-nums font-semibold w-9 text-right">{pct}%</span>
+        </div>
+        <p className="text-[10px] text-muted-foreground tabular-nums">{occ.toLocaleString()} / {cap.toLocaleString()} kg</p>
+
+        {/* Incoming/Outgoing stat mini-cards */}
+        <div className="grid grid-cols-2 gap-1.5">
+          <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2 py-1">
+            <PackagePlus className="h-3 w-3 text-emerald-600 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[9px] text-muted-foreground leading-none">Incoming</p>
+              <p className="text-xs font-semibold tabular-nums leading-tight">{incomingCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2 py-1">
+            <PackageMinus className="h-3 w-3 text-sky-600 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[9px] text-muted-foreground leading-none">Outgoing</p>
+              <p className="text-xs font-semibold tabular-nums leading-tight">{expanded ? outgoingCount : "—"}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Button size="sm" className="h-7 flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs" onClick={() => onSell(silo)}>
+            <ShoppingCart className="h-3 w-3" /> Sell
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onView(silo)} title="View"><Eye className="h-3.5 w-3.5" /></Button>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onEdit(silo)} title="Edit"><Edit2 className="h-3.5 w-3.5" /></Button>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700" onClick={() => onDelete(silo.id)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
+          <Button
+            size="sm" variant="ghost" className="h-7 w-7 p-0"
+            onClick={() => setExpanded((v) => !v)}
+            aria-label={expanded ? "Collapse" : "Expand — flow diagram, breakdown, sales"}
+          >
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </Button>
+        </div>
+
+        {expanded && (
+          <div className="pt-2 border-t border-border/50 space-y-2">
+            <SiloFlowDiagram siloName={silo.name} occupancyPct={pct} incoming={incoming} outgoing={outgoing} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Batch status breakdown</p>
+                <SiloStatusPie data={pieData} />
+              </div>
+              <div className="flex flex-col justify-between">
+                <DispatchApprovalPanel siloId={silo.id} isAdmin={isAdmin} />
+                <div className="flex items-center justify-between mt-2">
+                  <ExportMenu
+                    filename={`${silo.silo_id}-batches`}
+                    title={`${silo.name} — batches`}
+                    rows={siloBatches}
+                    columns={exportColumns}
+                  />
+                  <Link
+                    to="/silos/$siloId"
+                    params={{ siloId: silo.id }}
+                    className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+                  >
+                    View full silo <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

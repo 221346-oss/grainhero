@@ -220,3 +220,123 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
       pipeline,
     };
   });
+
+// ── Super admin: fetch team members for a specific tenant admin ────────────
+// Returns profiles whose admin_id = targetAdminId, plus their highest role.
+// Intentionally excludes grain operations data (silos, batches) — super admin
+// can only see who is on the team, not what they store.
+export const getAdminTeam = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { adminId: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ data: members }, { data: roles }] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("id, name, email, created_at, last_login, blocked")
+        .eq("admin_id", data.adminId)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabaseAdmin
+        .from("user_roles")
+        .select("user_id, role"),
+    ]);
+
+    const order = ["super_admin", "admin", "manager", "technician", "pending"];
+    const rmap = new Map<string, string>();
+    for (const r of roles ?? []) {
+      const cur = rmap.get(r.user_id);
+      if (!cur || order.indexOf(r.role) < order.indexOf(cur)) rmap.set(r.user_id, r.role);
+    }
+
+    return (members ?? []).map((m: any) => ({
+      id:         m.id,
+      name:       m.name ?? m.email ?? m.id.slice(0, 8),
+      email:      m.email ?? null,
+      role:       rmap.get(m.id) ?? "pending",
+      last_login: m.last_login ?? null,
+      blocked:    m.blocked ?? false,
+    }));
+  });
+
+// ── Super admin: lightweight API health check ─────────────────────────────
+// Pings each Supabase endpoint via a trivial query and measures round-trip ms.
+// Falls back gracefully — a query error marks the endpoint "degraded".
+export const getPlatformApiHealth = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperAdmin(context.supabase, context.userId);
+    const sa = context.supabase;
+
+    async function ping(
+      label: string,
+      fn: () => Promise<unknown>,
+    ): Promise<{ label: string; status: "healthy" | "degraded" | "down"; latencyMs: number }> {
+      const t0 = Date.now();
+      try {
+        await fn();
+        return { label, status: "healthy", latencyMs: Date.now() - t0 };
+      } catch {
+        return { label, status: "degraded", latencyMs: Date.now() - t0 };
+      }
+    }
+
+    const [profiles, realtime, storage] = await Promise.all([
+      ping("Profiles API", () =>
+        sa.from("profiles").select("id", { count: "exact", head: true }),
+      ),
+      ping("Realtime / Subscriptions", () =>
+        sa.from("subscriptions").select("id", { count: "exact", head: true }),
+      ),
+      ping("Activity Logs", () =>
+        sa.from("activity_logs").select("id", { count: "exact", head: true }),
+      ),
+    ]);
+
+    const checks = [profiles, realtime, storage];
+    const allHealthy = checks.every((c) => c.status === "healthy");
+    const anyDown    = checks.some((c) => c.status === "down");
+
+    return {
+      overall: allHealthy ? "healthy" : anyDown ? "down" : "degraded",
+      checkedAt: new Date().toISOString(),
+      checks,
+    };
+  });
+
+/* ---------------- Set / change a user's role ---------------- */
+
+export const setUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; role: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.supabase, context.userId);
+    if (data.userId === context.userId) throw new Error("Cannot change your own role");
+
+    const VALID_ROLES = ["admin", "manager", "technician", "pending"] as const;
+    if (!VALID_ROLES.includes(data.role as never)) {
+      throw new Error(`Invalid role: ${data.role}`);
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Remove all existing non-super_admin roles for this user
+    const { error: delErr } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId)
+      .neq("role", "super_admin");
+    if (delErr) throw delErr;
+
+    // Insert the new role (unless it's "pending" — pending = no role row)
+    if (data.role !== "pending") {
+      const { error: insErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: data.userId, role: data.role, granted_by: context.userId });
+      if (insErr) throw insErr;
+    }
+
+    return { ok: true };
+  });

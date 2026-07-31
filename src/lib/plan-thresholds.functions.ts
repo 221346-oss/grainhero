@@ -51,6 +51,7 @@ const updatePlanInput = z.object({
   price_cents: z.number().int().min(0).optional(),
   max_users: z.number().int().min(0).optional(),
   max_silos: z.number().int().min(0).optional(),
+  max_warehouses: z.number().int().min(0).optional(),
   max_batches: z.number().int().min(0).optional(),
   max_sensors: z.number().int().min(0).optional(),
   max_actuators: z.number().int().min(0).optional(),
@@ -70,6 +71,50 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
       .update(patch as never)
       .eq("plan_id", plan_id);
     if (error) throw error;
+
+    // Notify all tenant admins on this plan so they see updated limits immediately.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+      // Fetch the updated plan name for the notification body.
+      const { data: planRow } = await supabaseAdmin
+        .from("plan_thresholds")
+        .select("name")
+        .eq("plan_id", plan_id)
+        .maybeSingle();
+      const planName = planRow?.name ?? plan_id;
+
+      // Find every tenant admin whose profile has this plan set.
+      const { data: affectedProfiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("subscription_plan", plan_id)
+        .is("admin_id", null); // admins only (not sub-users)
+
+      const affected = affectedProfiles ?? [];
+      if (affected.length > 0) {
+        await Promise.allSettled(
+          affected.map((prof: { id: string }) =>
+            emitNotification(supabaseAdmin, {
+              recipientId: prof.id,
+              tenantAdminId: prof.id,
+              category: "plan",
+              severity: "info",
+              title: `Your ${planName} plan has been updated`,
+              body: "Your plan limits have been adjusted by GrainHero. Your account reflects the new limits immediately.",
+              link: "/subscription",
+              entityType: "plan_threshold",
+              entityId: plan_id,
+              metadata: { plan_id, updated_fields: Object.keys(patch) },
+            }),
+          ),
+        );
+      }
+    } catch (err) {
+      // Never fail the save if notifications error — log and continue.
+      console.warn("[updatePlanThreshold] notification dispatch failed", err);
+    }
+
     return { ok: true };
   });
 

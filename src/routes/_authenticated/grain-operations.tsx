@@ -23,7 +23,7 @@ type GrainOpsSearch = { tab: Tab; status?: string };
 
 export const Route = createFileRoute("/_authenticated/grain-operations")({
   validateSearch: (search: Record<string, unknown>): GrainOpsSearch => ({
-    tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "batches",
+    tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "silos",
     // Optional deep-link filter for the Batches tab (e.g. the global search
     // bar sending "spoiled batches" straight to ?tab=batches&status=damaged).
     ...(typeof search.status === "string" ? { status: search.status } : {}),
@@ -34,11 +34,11 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
 const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "silos",      label: "Silos",         icon: Warehouse },
+  { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "warehouses", label: "Warehouses",    icon: Building2 },
   { key: "buyers",     label: "Buyers",        icon: Users     },
 ];
 
-const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function GrainOperationsWorkspace() {
   const { tab, status } = Route.useSearch();
@@ -95,7 +95,18 @@ function GrainOperationsWorkspace() {
   const totalKg      = Array.isArray(batches) ? (batches as { quantity_kg?: number }[]).reduce((a, b) => a + (b.quantity_kg ?? 0), 0) : 0;
   const dispatchedKg = Array.isArray(batches) ? (batches as { dispatched_quantity_kg?: number }[]).reduce((a, b) => a + (b.dispatched_quantity_kg ?? 0), 0) : 0;
 
-  const maxCount = Math.max(counts.batches, counts.silos, counts.warehouses, counts.buyers, 1);
+  // Batch status breakdown across every silo — same yellow/green/red tone
+  // mapping used on each silo card, just aggregated for the bird's-eye view.
+  const statusPieData: StatusSlice[] = (() => {
+    const byTone: Record<FlowGroup["tone"], number> = { yellow: 0, green: 0, red: 0 };
+    if (Array.isArray(batches)) {
+      for (const b of batches as Array<{ status?: string | null }>) {
+        byTone[BATCH_TONE[String(b.status ?? "")] ?? "yellow"] += 1;
+      }
+    }
+    const labels: Record<FlowGroup["tone"], string> = { yellow: "In progress", green: "Stored", red: "Rejected/error" };
+    return (["yellow", "green", "red"] as const).filter((t) => byTone[t] > 0).map((t) => ({ name: labels[t], value: byTone[t], tone: t }));
+  })();
 
   const stats = [
     { label: "Total Grain (kg)", value: totalKg.toLocaleString(), up: true  },
@@ -125,41 +136,22 @@ function GrainOperationsWorkspace() {
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          {/* Bar Chart Panel */}
+          {/* Batch status breakdown — pie chart, replacing the old plain bar list */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
-              Operations Overview
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+              Batch Status Breakdown
             </p>
-            <div className="space-y-4">
-              {TABS.map((tab, i) => {
-                const count = counts[tab.key];
-                const pct   = Math.max((count / maxCount) * 100, count > 0 ? 4 : 0);
-                return (
-                  <div key={tab.key} className="flex items-center gap-4">
-                    <span className="w-24 text-xs text-muted-foreground font-mono truncate text-right shrink-0">
-                      {tab.label.split(" ")[0]}…
-                    </span>
-                    <div className="flex-1 h-8 bg-muted rounded-md overflow-hidden relative">
-                      <div
-                        className={`h-full rounded-md bg-gradient-to-r ${BAR_COLORS[i]} transition-all duration-700`}
-                        style={{ width: `${pct}%`, boxShadow: "0 0 12px rgba(99,102,241,0.3)" }}
-                      />
-                      {/* dot grid overlay */}
-                      <div
-                        className="absolute inset-0 pointer-events-none opacity-10"
-                        style={{
-                          backgroundImage:
-                            "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-                          backgroundSize: "8px 8px",
-                        }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-xs text-foreground/70 font-mono shrink-0">
-                      {count}
-                    </span>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
+              <SiloStatusPie data={statusPieData} />
+              <div className="flex sm:flex-col gap-3 sm:gap-1.5 flex-wrap">
+                {TABS.map((tab) => (
+                  <div key={tab.key} className="flex items-center gap-2 text-xs">
+                    <tab.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{tab.label}</span>
+                    <span className="font-mono font-semibold text-foreground">{counts[tab.key]}</span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           </div>
 

@@ -32,6 +32,8 @@ import { getMyRole } from "@/lib/roles.functions";
 import { listAvailableTechnicians } from "@/lib/batch-qc.functions";
 import { BatchQCDialog, type QCMode } from "./BatchQCDialog";
 import { cn } from "@/lib/utils";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 const GRAIN_TYPES = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
 const STATUSES = ["stored","dispatched","sold","damaged","expired","on_hold","processing"] as const;
@@ -79,6 +81,17 @@ type Batch = {
 };
 
 type Silo = { id: string; silo_id: string; name: string; capacity_kg: number; current_occupancy_kg: number | null; warehouse_id: string | null; warehouses?: { name: string } | null };
+
+const batchExportColumns: ExportColumn<Batch>[] = [
+  { header: "Batch ID", value: (b) => b.batch_id },
+  { header: "Grain type", value: (b) => b.grain_type },
+  { header: "Supplier", value: (b) => b.farmer_name ?? "" },
+  { header: "Silo", value: (b) => b.silos?.name ?? "" },
+  { header: "Intake (kg)", value: (b) => b.quantity_kg },
+  { header: "Remaining (kg)", value: (b) => Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)) },
+  { header: "Intake date", value: (b) => b.intake_date ? new Date(b.intake_date).toLocaleDateString() : "" },
+  { header: "Status", value: (b) => b.status },
+];
 
 type Form = {
   id?: string;
@@ -441,6 +454,12 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
             {FILTER_STATUSES.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
           </SelectContent>
         </Select>
+        <ExportMenu
+          filename="grain-batches"
+          title="Grain Batches"
+          rows={rows}
+          columns={batchExportColumns}
+        />
         {canCreate && (
           <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New batch</Button>
         )}

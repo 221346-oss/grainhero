@@ -54,7 +54,7 @@ export const listAvailableTechnicians = createServerFn({ method: "GET" })
 async function loadBatchForTransition(supabase: Row, batchId: string) {
   const { data, error } = await supabase
     .from("grain_batches")
-    .select("id, admin_id, batch_id, status, assigned_technician_id")
+    .select("id, admin_id, batch_id, status, assigned_technician_id, silo_id, quantity_kg")
     .eq("id", batchId).maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("Batch not found");
@@ -159,8 +159,35 @@ export const adminReviewBatch = createServerFn({ method: "POST" })
     if (b.status !== "qc_passed") throw new Error(`Batch isn't awaiting admin review (currently ${b.status})`);
 
     const toStatus = data.decision === "approve" ? "stored" : "admin_rejected";
-    // Occupancy was already counted at intake (confirmed — no reserved-capacity
-    // change), so approval is a pure status flip; nothing else to update.
+
+    if (data.decision === "approve" && b.silo_id) {
+      // This is the actual stock-effective moment: occupancy is added here,
+      // not at intake creation (see upsertGrainBatch in operations.functions.ts).
+      // Re-check capacity against *current* occupancy — other batches may have
+      // been approved into this silo since this one passed QC, so the
+      // intake-time check alone can't guarantee it still fits.
+      const { data: silo, error: siloErr } = await context.supabase
+        .from("silos")
+        .select("id, capacity_kg, current_occupancy_kg")
+        .eq("id", b.silo_id)
+        .single();
+      if (siloErr) throw siloErr;
+      const currentOccupancy = Number((silo as Row)?.current_occupancy_kg ?? 0);
+      const capacity = (silo as Row)?.capacity_kg != null ? Number((silo as Row).capacity_kg) : null;
+      const qty = Number(b.quantity_kg ?? 0);
+      if (capacity != null && currentOccupancy + qty > capacity) {
+        const free = Math.max(0, capacity - currentOccupancy);
+        throw new Error(
+          `Cannot approve: silo now only has ${free.toLocaleString()}kg free (capacity ${capacity.toLocaleString()}kg), this batch needs ${qty.toLocaleString()}kg. Another batch was likely approved into this silo since QC passed.`
+        );
+      }
+      const { error: occErr } = await context.supabase
+        .from("silos")
+        .update({ current_occupancy_kg: currentOccupancy + qty, updated_by: context.userId } as never)
+        .eq("id", b.silo_id);
+      if (occErr) throw occErr;
+    }
+
     const { error } = await context.supabase
       .from("grain_batches")
       .update({ status: toStatus as never, updated_by: context.userId } as never)

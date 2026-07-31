@@ -12,7 +12,6 @@ const navLinks = [
   { to: '/team', label: 'Team' },
   { to: '/blog', label: 'Blog' },
   { to: '/contact', label: 'Contact' },
-  { to: '/theme-test', label: 'Theme Test' },
 ]
 
 export function NewGlassNav() {
