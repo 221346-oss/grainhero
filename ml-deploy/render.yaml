@@ -4,5 +4,5 @@ services:
     env: docker
     plan: free
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /health
+    healthCheckPath: /
     autoDeploy: true

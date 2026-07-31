@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import logging
 import os
+import requests
 from contextlib import asynccontextmanager
 from functools import lru_cache
 from pathlib import Path
@@ -260,10 +261,12 @@ class PredictionRequest(BaseModel):
     Airflow:        float = Field(0.0, ge=0.0, le=1.0)
     Dew_Point:      float = Field(0.0, ge=-20, le=50)
     Ambient_Light:  float = Field(0.0, ge=0.0, le=100)
-    Pest_Presence:  Optional[float] = Field(None, ge=0.0, le=1.0,
-                        description="0–1 pest presence. Omit to use VOC proxy.")
+    Pest_Presence:  Optional[float] = Field(None, ge=0.0, le=100.0,
+                        description="0–100% pest presence. Omit to use VOC proxy.")
     Grain_Moisture: float = Field(..., ge=0,   le=50)
     Rainfall:       float = Field(0.0, ge=0.0)
+    latitude:       Optional[float] = Field(None, description="Used to auto-fetch rainfall if omitted")
+    longitude:      Optional[float] = Field(None, description="Used to auto-fetch rainfall if omitted")
     tvoc_ppb:       Optional[float] = Field(None,
                         description="Raw TVOC in ppb (used if Pest_Presence omitted)")
 
@@ -303,18 +306,22 @@ class BatchPredictionRequest(BaseModel):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _pest_proxy(req: PredictionRequest) -> float:
+    """Returns pest presence as a percentage 0-100%"""
     if req.Pest_Presence is not None:
         return req.Pest_Presence
     tvoc = max(0.0, req.tvoc_ppb or 0.0)
-    return min(1.0, (tvoc / 1000.0) * 0.5)
+    # Estimate pest % from VOC: 1000 ppb = 50%
+    return min(100.0, (tvoc / 1000.0) * 50.0)
 
 
 def _build_feature_array(req: PredictionRequest) -> np.ndarray:
-    pest = _pest_proxy(req)
+    pest_percent = _pest_proxy(req)
+    # Model was trained on 0.0-1.0 float, so we scale the percentage back down internally
+    pest_scaled = pest_percent / 100.0
     return np.array([[
         req.Temperature, req.Humidity, float(req.Storage_Days),
         req.Airflow, req.Dew_Point, req.Ambient_Light,
-        pest, req.Grain_Moisture, req.Rainfall,
+        pest_scaled, req.Grain_Moisture, req.Rainfall,
     ]], dtype=np.float32)
 
 
@@ -382,8 +389,29 @@ def _compute_ensemble_breakdown(grain: str, X: np.ndarray, class_labels: List[st
 
 
 # ── Core inference ────────────────────────────────────────────────────────────
+def _fetch_rainfall(lat: float, lon: float) -> float:
+    api_key = os.environ.get("OPENWEATHER_API_KEY")
+    if not api_key:
+        return 0.0
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}"
+        resp = requests.get(url, timeout=3)
+        if resp.status_code == 200:
+            data = resp.json()
+            # OpenWeather returns rain in mm for the last 1h
+            if "rain" in data and "1h" in data["rain"]:
+                return float(data["rain"]["1h"])
+    except Exception as exc:
+        logger.warning(f"Failed to fetch OpenWeather API: {exc}")
+    return 0.0
+
+
 def _run_inference(req: PredictionRequest) -> PredictionResponse:
     grain = req.grain_type
+
+    # Auto-fetch rainfall if 0.0 and coordinates exist
+    if req.Rainfall == 0.0 and req.latitude is not None and req.longitude is not None:
+        req.Rainfall = _fetch_rainfall(req.latitude, req.longitude)
 
     # Critical sensor fault check
     faults = [k for k, v in {

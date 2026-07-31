@@ -58,7 +58,7 @@ export function ReportsSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <p className="text-sm text-white/40">Downloadable operational and financial reports.</p>
+        <p className="text-sm text-muted-foreground">Downloadable operational and financial reports.</p>
         <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>

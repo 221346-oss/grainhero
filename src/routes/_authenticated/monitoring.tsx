@@ -138,7 +138,7 @@ function MonitoringWorkspace() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
-            <div className="space-y-0 divide-y divide-white/8 flex-1">
+            <div className="space-y-0 divide-y divide-border flex-1">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-4">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
@@ -146,7 +146,7 @@ function MonitoringWorkspace() {
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-white font-black text-base font-mono">{s.value}</span>
+                    <span className="text-foreground font-black text-base font-mono">{s.value}</span>
                     {s.up
                       ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                       : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />

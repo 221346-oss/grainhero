@@ -75,7 +75,7 @@ cd /tmp/grainhero-ml
 
 > On Windows PowerShell: `Copy-Item -Recurse ml-deploy C:\temp\grainhero-ml; cd C:\temp\grainhero-ml`
 
-The large `.pkl` model files are NOT in the repo — the Dockerfile pulls them from Lovable's CDN automatically during the Render build (see `MODEL_URLS.txt`). You don't need to touch them.
+The 5 grain models are shipped as `.onnx` files inside `ml-deploy/` (~87 MB total, committed to git). ONNX Runtime loads them natively — much smaller and ~5× faster than the old `.pkl` files, and they fit comfortably in Render Free's 512 MB RAM. You don't need to download anything separately.
 
 ### A4. Push it to GitHub
 
@@ -100,7 +100,7 @@ git push -u origin main
    - **Health check path**: `/health`
 5. Click **Create Web Service**
 
-**Wait 5–8 minutes.** Render is downloading the models (~400 MB) and building the container. You'll see live logs. When you see `Uvicorn running on http://0.0.0.0:7860`, it's ready.
+**Wait 3–5 minutes.** Render is building the container (installing `onnxruntime`, `fastapi`, etc.). You'll see live logs. When you see `Uvicorn running on http://0.0.0.0:7860`, it's ready.
 
 ### A6. Copy your Render URL
 
@@ -121,6 +121,34 @@ curl -X POST https://grainhero-ml.onrender.com/predict \
 ```
 
 You should get back JSON with `risk_class`, `risk_score`, and `confidence`. If yes, the ML service is live. 🎉
+
+---
+
+## Part A½ — Keep the ML service awake with UptimeRobot (2 min, CRITICAL)
+
+Render Free shuts your server down after **15 minutes of no traffic**. When a request arrives cold, Python + ONNX takes **30–60 seconds** to wake up — long enough that your ESP32 will time out and the prediction is lost.
+
+The fix is a free "keep-alive" ping every 10 minutes. Render sees constant traffic and never sleeps, so live IoT hardware always gets an instant response.
+
+### A½.1. Sign up
+
+1. Go to https://uptimerobot.com → **Register for FREE** (no card).
+2. Verify your email.
+
+### A½.2. Add the monitor
+
+1. Dashboard → **+ New monitor**
+2. Monitor Type: **HTTP(s)**
+3. Friendly Name: `GrainHero ML`
+4. URL: `https://grainhero-ml.onrender.com/health`
+5. Monitoring Interval: **5 minutes** (free tier max — anything ≤10 min works)
+6. Click **Create Monitor**
+
+### A½.3. Confirm it's working
+
+After ~10 minutes the monitor shows a green **Up** badge and average response time in milliseconds. Your Render dashboard will show a steady trickle of `GET /health` hits every 5 min — that's the whole trick. The service never sleeps again.
+
+> ⚠️ Do NOT skip this step if your ESP32s send readings on a schedule. Without UptimeRobot, ~1 in every 4 predictions will time out.
 
 ---
 
@@ -247,16 +275,20 @@ I'll save each one into secure storage. No code changes needed — the app autom
 | `/ai-predictions` empty | Render service asleep (cold start ~30s) — retry. Or the app falls back to threshold heuristic. |
 | Sensor rows not appearing | Firebase Data tab — is `/devices/<id>/live` updating? If not, firmware issue. |
 | Prediction always "Safe" | No live sensor data + no batch moisture → defaults used. Create a batch with real moisture. |
-| Render build fails | Check Render logs for `curl` errors — one of the model URLs in `MODEL_URLS.txt` is broken. |
-| `Killed` in Render logs | Out of RAM on free tier. Remove `smartbin_model.pkl` from `MODEL_URLS.txt` (legacy, optional). |
+| Render build fails | Check Render logs — usually a `pip install` timeout, click **Manual Deploy → Deploy latest commit** to retry. |
+| `Killed` in Render logs | Out of RAM. ONNX runtime is lean, but if you added heavy deps (e.g. `sentence-transformers`), revert them. |
+| Predictions randomly slow | UptimeRobot monitor is paused or the URL is wrong — check https://uptimerobot.com dashboard. |
 
 ### E4. Free tier limits (know before you scale)
 
-- **Render Free**: sleeps after 15 min idle, 512 MB RAM, 750 hrs/month. Fine for demos and up to ~10 silos.
+- **Render Free**: 512 MB RAM, 750 hrs/month. Sleeps after 15 min idle — **UptimeRobot (Part A½) prevents that**. Fine for demos and up to ~10 silos.
+- **UptimeRobot Free**: 50 monitors, 5-min interval. You only need 1.
 - **Firebase Spark**: 1 GB storage, 10 GB/month download. Fine for ~50 devices publishing every 5 s.
 - **Supabase Free**: 500 MB DB, 2 GB bandwidth. Fine for ~5 tenants.
 
 When you outgrow any of these, upgrade individually — nothing else needs to change.
+
+**When to leave Render:** the current lightweight ONNX inference API fits in 512 MB and stays fast. The moment you add the **RAG / research-paper reasoning layer** (vector DB + embedding model), memory jumps past 512 MB and Render Free will start OOM-killing. At that point migrate the ML service to a **Hugging Face Docker Space** (16 GB RAM, requires PRO subscription ≈ $9/mo) — the same `Dockerfile` in `ml-deploy/` works there unchanged. Until you've got funding for that upgrade, keep RAG features disabled and stay on Render.
 
 ---
 
@@ -264,6 +296,7 @@ When you outgrow any of these, upgrade individually — nothing else needs to ch
 
 - [ ] Render service shows **Live** with green `/health`
 - [ ] `curl` test to `/predict` returns valid JSON
+- [ ] UptimeRobot monitor is **Up** and pinging `/health` every 5 min
 - [ ] `GRAINHERO_ML_API_URL` secret saved in Lovable
 - [ ] `FIREBASE_DATABASE_URL` + `FIREBASE_SERVICE_ACCOUNT_JSON` saved (if using IoT)
 - [ ] Signed in as Admin, created a silo + grain batch
@@ -271,7 +304,7 @@ When you outgrow any of these, upgrade individually — nothing else needs to ch
 - [ ] Signed in as SuperAdmin, `/ml-models` shows the 5 grain cards
 - [ ] Retrain button on `/ml-models` triggers a run in `/platform/logs`
 
-If all 8 boxes are ticked, your GrainHero deployment is production-ready. 🌾
+If all 9 boxes are ticked, your GrainHero deployment is production-ready. 🌾
 
 ---
 

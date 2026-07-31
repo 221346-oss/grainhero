@@ -1,9 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, ChevronDown, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
 function useExtras() {
@@ -245,5 +251,235 @@ export function AdminSilosCard() {
         })}
       </CardContent>
     </Card>
+  );
+}
+
+// ── Open Field Incidents widget ───────────────────────────────────────────────
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { listTickets, type TicketRow } from "@/lib/tickets.functions";
+import { attachTicketForUser } from "@/lib/ticketMessages";
+import { TicketCardForm } from "@/components/app/tickets/TicketCardForm";
+import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
+import { TicketDiscussion } from "@/components/app/tickets/TicketDiscussion";
+import { TicketSidePanel } from "@/components/app/tickets/TicketSidePanel";
+import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
+import { useTicketUnread } from "@/hooks/useTicketUnread";
+
+const PRIORITY_DOT: Record<string, string> = {
+  low: "bg-slate-400",
+  medium: "bg-amber-400",
+  high: "bg-red-500",
+};
+const PRIORITY_LABEL: Record<string, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
+const PRIORITY_BADGE_CLS: Record<string, string> = {
+  low: "bg-slate-100 text-slate-600",
+  medium: "bg-amber-50 text-amber-700",
+  high: "bg-red-50 text-red-700",
+};
+
+function fmtShort(iso: string) {
+  return new Date(iso).toLocaleString([], {
+    day: "2-digit", month: "short",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+export function OpenFieldIncidentsCard({
+  onViewAll,
+  ticketPanelOpen,
+  onTicketPanelClose,
+}: {
+  onViewAll?: () => void;
+  ticketPanelOpen?: boolean;
+  onTicketPanelClose?: () => void;
+}) {
+  const fn = useServerFn(listTickets);
+  const qc = useQueryClient();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["field-tickets", "open"],
+    queryFn: () => fn({ data: { status: "open" } }),
+    staleTime: 30_000,
+  });
+
+  useRealtimeInvalidate("field_tickets", [["field-tickets", "open"]]);
+
+  const tickets: TicketRow[] = data?.tickets ?? [];
+
+  const [showNewTicket, setShowNewTicket] = useState(false);
+  const [selected, setSelected] = useState<TicketRow | null>(null);
+  const [discuss, setDiscuss] = useState<TicketRow | null>(null);
+  const [currentUserId, setCurrentUserId] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: d }) => setCurrentUserId(d.user?.id ?? ""));
+  }, []);
+
+  // Attach channels with unread tracking for each ticket
+  useEffect(() => {
+    if (!currentUserId) return;
+    tickets.forEach((t) => attachTicketForUser(t.id, currentUserId));
+  }, [tickets, currentUserId]);
+
+  const { unreadFor, markRead } = useTicketUnread(currentUserId);
+
+  function handleFormSuccess() {
+    setShowNewTicket(false);
+    qc.invalidateQueries({ queryKey: ["field-tickets"] });
+  }
+
+  function handleDetailClose() {
+    setSelected(null);
+    qc.invalidateQueries({ queryKey: ["field-tickets"] });
+  }
+
+  function openDiscuss(t: TicketRow) {
+    setDiscuss(t);
+    markRead(t.id);
+  }
+
+  return (
+    <>
+      <Card className="border-border/60 shadow-sm flex flex-col">
+        {/* Header — no icon, just text + count + actions */}
+        <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 shrink-0">
+          <CardTitle className="text-sm flex items-center gap-2">
+            Open field incidents
+            <Badge
+              variant="outline"
+              className="h-5 px-1.5 text-[10px] font-mono tabular-nums"
+            >
+              {tickets.length}
+            </Badge>
+          </CardTitle>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowNewTicket(true)}
+              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+            >
+              + New Ticket
+            </button>
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+            >
+              View all
+            </button>
+          </div>
+        </CardHeader>
+
+        {/* Ticket list — fixed height with scroll, matching silos card */}
+        <CardContent className="p-0 flex-1">
+          {isLoading ? (
+            <p className="text-xs text-muted-foreground px-3 py-4 text-center">Loading…</p>
+          ) : tickets.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-3 py-6 text-center">
+              No open incidents
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/40 overflow-y-auto"
+                style={{ maxHeight: "132px" }}>
+              {tickets.map((t) => {
+                const unread = unreadFor(t.id);
+                return (
+                  <li
+                    key={t.id}
+                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition"
+                  >
+                    {/* Priority dot */}
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`}
+                    />
+                    {/* Title + timestamp — click opens detail */}
+                    <button
+                      type="button"
+                      onClick={() => setSelected(t)}
+                      className="flex-1 min-w-0 text-left"
+                    >
+                      <p className="text-xs font-medium truncate">{t.title}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {fmtShort(t.created_at)}
+                        {t.status === "resolved" && (
+                          <span className="ml-1 text-emerald-600 font-medium">· Resolved</span>
+                        )}
+                      </p>
+                    </button>
+                    {/* Priority label */}
+                    <span
+                      className={`shrink-0 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${PRIORITY_BADGE_CLS[t.priority]}`}
+                    >
+                      {PRIORITY_LABEL[t.priority]}
+                    </span>
+                    {/* Discuss button with unread badge */}
+                    <button
+                      type="button"
+                      onClick={() => openDiscuss(t)}
+                      className="relative shrink-0 text-[10px] font-semibold text-slate-500 border border-slate-200 rounded px-1.5 py-0.5 hover:border-emerald-400 hover:text-emerald-700 transition"
+                    >
+                      Discuss
+                      {unread > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[9px] font-bold grid place-items-center px-0.5 leading-none">
+                          {unread > 9 ? "9+" : unread}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* New Ticket popup — Dialog instead of inline/new page */}
+      <Dialog open={showNewTicket} onOpenChange={(o) => !o && setShowNewTicket(false)}>
+        <DialogContent className="w-full max-w-lg p-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-200">
+            <DialogTitle className="text-sm font-bold text-slate-900">
+              New incident ticket
+            </DialogTitle>
+          </DialogHeader>
+          <div className="px-5 py-4">
+            <TicketCardForm
+              onSuccess={handleFormSuccess}
+              onCancel={() => setShowNewTicket(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail sheet */}
+      <TicketDetailSheet
+        ticket={selected}
+        open={!!selected}
+        onClose={handleDetailClose}
+      />
+
+      {/* Discussion popup */}
+      {discuss && (
+        <TicketDiscussion
+          ticketId={discuss.id}
+          ticketTitle={discuss.title}
+          open={!!discuss}
+          onClose={() => setDiscuss(null)}
+          currentUserId={currentUserId}
+          currentUserLabel="Admin"
+        />
+      )}
+
+      {/* #tickets panel — opened when user clicks "View all" */}
+      <TicketSidePanel
+        controlledOpen={ticketPanelOpen}
+        onControlledClose={onTicketPanelClose}
+      />
+    </>
   );
 }

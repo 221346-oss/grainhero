@@ -83,50 +83,6 @@ export const getPlatformAnalyticsBreakdown = createServerFn({ method: "GET" })
     return { rows, totals, totalTenants: rows.length };
   });
 
-// -------- ML Models: inference volume / anomaly rate per tenant --------
-export const getPlatformMLInference = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertSuper(context.supabase, context.userId);
-    const { supabaseAdmin: sa } = await import("@/integrations/supabase/client.server");
-    const tenants = await loadTenants(sa);
-
-    const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-    const { data: readings } = await sa
-      .from("sensor_readings")
-      .select("admin_id, ml_risk_score, ml_risk_class, ml_confidence, anomaly_detected, reading_timestamp")
-      .gte("reading_timestamp", since)
-      .limit(20000);
-
-    const agg = new Map<string, { admin_id: string; inferences: number; anomalies: number; confSum: number; confN: number; critical: number }>();
-    let totalInferences = 0;
-    let totalAnomalies = 0;
-    for (const r of (readings ?? []) as any[]) {
-      const k = r.admin_id ?? "unknown";
-      const cur = agg.get(k) ?? { admin_id: k, inferences: 0, anomalies: 0, confSum: 0, confN: 0, critical: 0 };
-      if (r.ml_risk_class != null) {
-        cur.inferences += 1;
-        totalInferences += 1;
-        if (r.ml_confidence != null) { cur.confSum += Number(r.ml_confidence); cur.confN += 1; }
-        if (String(r.ml_risk_class).toLowerCase() === "critical") cur.critical += 1;
-      }
-      if (r.anomaly_detected) { cur.anomalies += 1; totalAnomalies += 1; }
-      agg.set(k, cur);
-    }
-
-    const rows = Array.from(agg.values()).map((t) => ({
-      admin_id: t.admin_id,
-      name: tenantName(tenants, t.admin_id),
-      inferences: t.inferences,
-      anomalies: t.anomalies,
-      critical: t.critical,
-      avgConfidence: t.confN > 0 ? t.confSum / t.confN : 0,
-      anomalyRate: t.inferences > 0 ? t.anomalies / t.inferences : 0,
-    })).sort((a, b) => b.inferences - a.inferences);
-
-    return { rows, totalInferences, totalAnomalies, windowDays: 7 };
-  });
-
 // -------- Insurance: insured value + claim rate per tenant --------
 export const getPlatformInsuranceOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

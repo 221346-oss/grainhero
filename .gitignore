@@ -31,12 +31,16 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables — keep root .env tracked for public Supabase config,
+# Environment variables — keep root .env tracked for shared public app config,
 # but continue ignoring local/secret environment variants.
 .env
 !.env.example
+.env.local
+.env.*.local
 
-# ML Model binaries - stored in Supabase Storage, not Git
+# ML Models & Secrets
 ml-deploy/*.onnx
 ml-deploy/*.pkl
 ml-deploy/*.onnx.bak
+*.pkl
+*.onnx
