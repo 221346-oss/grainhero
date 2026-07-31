@@ -55,10 +55,10 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
 
   return (
     <>
-      {/* Backdrop - only render when open */}
+      {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-40 transition-opacity duration-300 ease-in-out"
+          className="fixed inset-0 z-40 transition-opacity duration-300 ease-in-out"
           onClick={onClose}
           style={{
             opacity: isOpen ? 1 : 0
