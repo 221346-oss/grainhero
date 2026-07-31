@@ -5,9 +5,9 @@ import { z } from "zod";
 import { Loader2, CheckCircle2, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { isAuthApiError, isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
-import { sendCheckoutConfirmationEmail } from "@/lib/checkout-emails.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
 
 const search = z.object({
@@ -45,115 +45,148 @@ function readDraft() {
 
 type Status = "loading" | "creating_account" | "done" | "error";
 
+// Guards against ever showing a raw "{}" or "[object Object]" — anything
+// thrown that isn't a proper Error (a rejected fetch, a bare object, etc.)
+// falls back to a message that at least tells the user what to do next.
+function describeError(e: unknown): string {
+  if (e instanceof Error && e.message) return e.message;
+  if (typeof e === "string" && e) return e;
+  return "Payment succeeded but we couldn't finish setting up your account. Please try logging in, or contact support if this keeps happening.";
+}
+
+// Detects "this email is already registered" from a supabase.auth.signUp()
+// error. There are two shapes this actually takes:
+//  1. The clean path — GoTrue returns 422 with error_code "user_already_exists".
+//     supabase-js surfaces this as AuthApiError with .code === "user_already_exists".
+//  2. The path this app actually hits — GoTrue's insert for a duplicate email
+//     fails server-side with a 5xx instead. supabase-js's fetch handler treats
+//     EVERY 5xx as a generic "retryable" infra error and deliberately never
+//     parses the response body for those (see NETWORK_ERROR_CODES in
+//     @supabase/auth-js/lib/fetch.js) — so the real error_code/message is
+//     thrown away. The message it builds instead is JSON.stringify(rawResponse);
+//     a fetch Response object has no enumerable own properties, so that
+//     literally serializes to the string "{}" — which is the exact crash text
+//     reported. AuthRetryableFetchError + a 5xx status during signUp is the
+//     confirmed signature of a duplicate-email attempt in this environment.
+function isDuplicateEmailSignUpError(e: unknown): boolean {
+  if (isAuthApiError(e) && e.code === "user_already_exists") return true;
+  if (e instanceof Error && /already registered|already exists/i.test(e.message)) return true;
+  if (isAuthRetryableFetchError(e) && e.status >= 500 && e.status < 600) return true;
+  return false;
+}
+
 function SuccessPage() {
   const navigate = useNavigate();
   const { session_id: sessionId } = Route.useSearch();
   const summaryFn = useServerFn(getCheckoutSessionSummary);
   const confirmFn = useServerFn(autoConfirmUserEmail);
   const claimFn = useServerFn(claimPaidCheckoutForUser);
-  const sendConfirmFn = useServerFn(sendCheckoutConfirmationEmail);
 
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const ran = useRef(false);
-  const confirmEmailSent = useRef(false);
-
-  // Send buyer confirmation email — idempotent, best-effort
-  useEffect(() => {
-    if (!sessionId || confirmEmailSent.current) return;
-    confirmEmailSent.current = true;
-    sendConfirmFn({ data: { sessionId } }).catch((e) =>
-      console.warn("[confirm email]", (e as Error).message),
-    );
-  }, [sendConfirmFn, sessionId]);
 
   useEffect(() => {
     if (ran.current) return;
     ran.current = true;
 
     (async () => {
-      if (sessionId) {
-        try { window.localStorage.setItem(PENDING_SESSION_KEY, sessionId); } catch { /* ignore */ }
-      }
+      try {
+        if (sessionId) {
+          try { window.localStorage.setItem(PENDING_SESSION_KEY, sessionId); } catch { /* ignore */ }
+        }
 
-      const draft = readDraft();
-      let email = draft.customerEmail;
-      const password = draft.customerPassword;
-      const name = draft.customerName;
+        const draft = readDraft();
+        let email = draft.customerEmail;
+        const password = draft.customerPassword;
+        const name = draft.customerName;
 
-      // Get email from Stripe session if draft is empty
-      if (!email && sessionId) {
-        try {
-          const s = await summaryFn({ data: { sessionId } });
-          email = s?.email ?? "";
-        } catch { /* ignore */ }
-      }
+        // Get email from Stripe session if draft is empty
+        if (!email && sessionId) {
+          try {
+            const s = await summaryFn({ data: { sessionId } });
+            email = s?.email ?? "";
+          } catch { /* ignore */ }
+        }
 
-      if (!email) {
-        navigate({ to: "/auth/login", replace: true });
-        return;
-      }
+        if (!email) {
+          navigate({ to: "/auth/login", replace: true });
+          return;
+        }
 
-      if (!password) {
-        // Payment succeeded but password wasn't saved — finish signup manually.
-        try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-        navigate({
-          to: "/auth/signup",
-          search: {
-            email,
-            redirect: sessionId ? `/checkout/success?session_id=${sessionId}` : undefined,
-          } as never,
-          replace: true,
+        if (!password) {
+          // Payment succeeded but password wasn't saved — finish signup manually.
+          try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+          navigate({
+            to: "/auth/signup",
+            search: {
+              email,
+              redirect: sessionId ? `/checkout/success?session_id=${sessionId}` : undefined,
+            } as never,
+            replace: true,
+          });
+          return;
+        }
+
+        // Create account, link the paid order, and sign in.
+        setStatus("creating_account");
+
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name, business_type: "farm" } },
         });
-        return;
-      }
 
-      // Create account, link the paid order, and sign in.
-      setStatus("creating_account");
+        if (signUpError) {
+          // Always log the real error for developers — only the user-facing
+          // copy below is sanitized.
+          console.error("[checkout/success] signUp failed:", signUpError);
 
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { name, business_type: "farm" } },
-      });
+          if (isDuplicateEmailSignUpError(signUpError)) {
+            setStatus("error");
+            setErrorMsg("An account with this email already exists. Please log in instead.");
+            return;
+          }
 
-      const alreadyRegistered = signUpError?.message.toLowerCase().includes("already registered");
+          setStatus("error");
+          setErrorMsg("Something went wrong creating your account. Please contact support or try again.");
+          return;
+        }
 
-      if (signUpError && !alreadyRegistered) {
-        setStatus("error");
-        setErrorMsg(signUpError.message);
-        return;
-      }
+        try {
+          await confirmFn({ data: { email } });
+        } catch (e) {
+          console.warn("[success] auto-confirm failed:", describeError(e));
+        }
 
-      try {
-        await confirmFn({ data: { email } });
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          setStatus("error");
+          setErrorMsg(`Payment received but sign-in failed: ${describeError(signInError)}. Try logging in with your email.`);
+          return;
+        }
+
+        try {
+          await claimFn({ data: sessionId ? { sessionId } : {} });
+        } catch (e) {
+          console.warn("[success] claim checkout failed:", describeError(e));
+        }
+
+        try {
+          window.localStorage.removeItem(DRAFT_KEY);
+          window.localStorage.removeItem(PENDING_SESSION_KEY);
+        } catch { /* ignore */ }
+
+        setStatus("done");
+
+        setTimeout(() => {
+          navigate({ to: "/dashboard", replace: true });
+        }, 800);
       } catch (e) {
-        console.warn("[success] auto-confirm failed:", (e as Error).message);
-      }
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
+        console.warn("[success] unexpected failure:", e);
         setStatus("error");
-        setErrorMsg(`Payment received but sign-in failed: ${signInError.message}. Try logging in with your email.`);
-        return;
+        setErrorMsg(describeError(e));
       }
-
-      try {
-        await claimFn({ data: sessionId ? { sessionId } : {} });
-      } catch (e) {
-        console.warn("[success] claim checkout failed:", (e as Error).message);
-      }
-
-      try {
-        window.localStorage.removeItem(DRAFT_KEY);
-        window.localStorage.removeItem(PENDING_SESSION_KEY);
-      } catch { /* ignore */ }
-
-      setStatus("done");
-
-      setTimeout(() => {
-        navigate({ to: "/dashboard", replace: true });
-      }, 800);
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

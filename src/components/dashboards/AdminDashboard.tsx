@@ -43,8 +43,8 @@ export function AdminDashboard({ name }: { name?: string }) {
             pipeline={extras?.pipeline}
           />
           <div className="grid gap-3 lg:grid-cols-3">
-            <AdminSilosCard />
-            <RecentBatchesCard />
+            <AdminSilosCard range={range} />
+            <RecentBatchesCard range={range} />
             <OpenFieldIncidentsCard
               onViewAll={() => setTicketPanelOpen(true)}
               ticketPanelOpen={ticketPanelOpen}

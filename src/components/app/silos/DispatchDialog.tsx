@@ -103,10 +103,8 @@ export function DispatchDialog({
       } });
     },
     onSuccess: (r) => {
-      toast.success(`Dispatch ${r.dispatchNumber} created`);
-      qc.invalidateQueries({ queryKey: ["silos"] });
-      qc.invalidateQueries({ queryKey: ["grain-batches"] });
-      qc.invalidateQueries({ queryKey: ["silo-batches", siloId] });
+      toast.success(`Sale request ${r.dispatchNumber} submitted — awaiting admin approval`);
+      qc.invalidateQueries({ queryKey: ["silo-dispatch-drafts", siloId] });
       qc.invalidateQueries({ queryKey: ["silo-dispatches", siloId] });
       onOpenChange(false);
     },
@@ -117,8 +115,8 @@ export function DispatchDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Truck className="h-4 w-4 text-emerald-600" /> Dispatch from {siloName ?? "silo"}</DialogTitle>
-          <DialogDescription>Sell grain from this silo. We&apos;ll draw FIFO from oldest batches and average their cost for profit tracking.</DialogDescription>
+          <DialogTitle className="flex items-center gap-2"><Truck className="h-4 w-4 text-emerald-600" /> Sell from {siloName ?? "silo"}</DialogTitle>
+          <DialogDescription>Requests a sale from this silo (FIFO cost preview below). Stock isn&apos;t deducted until an Admin approves the request.</DialogDescription>
         </DialogHeader>
 
         {batchesQ.isLoading ? (
@@ -241,7 +239,7 @@ export function DispatchDialog({
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending || batches.length === 0} className="gap-1.5">
-            {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />} Create dispatch
+            {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />} Request sale (needs admin approval)
           </Button>
         </DialogFooter>
       </DialogContent>

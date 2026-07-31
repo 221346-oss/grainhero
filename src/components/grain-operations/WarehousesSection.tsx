@@ -40,6 +40,15 @@ type Warehouse = {
   silos?: Array<{ id: string }> | null;
 };
 
+const warehouseExportColumns: ExportColumn<Warehouse>[] = [
+  { header: "Warehouse ID", value: (w) => w.warehouse_id },
+  { header: "Name", value: (w) => w.name },
+  { header: "Status", value: (w) => w.status ?? "" },
+  { header: "Total capacity (kg)", value: (w) => w.total_capacity_kg ?? "" },
+  { header: "Silo count", value: (w) => w.silos?.length ?? 0 },
+  { header: "Address", value: (w) => w.location?.address ?? "" },
+];
+
 type FormState = {
   id?: string;
   name: string;

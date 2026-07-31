@@ -45,8 +45,8 @@ function loadMaps(): Promise<typeof google> {
 
 export interface PickedLocation {
   address: string;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   city?: string;
   country?: string;
 }
@@ -71,8 +71,9 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
+  const pickingRef = useRef(false);
 
-  const emit = useCallback((address: string, lat: number, lng: number, comps?: google.maps.GeocoderAddressComponent[]) => {
+  const emit = useCallback((address: string, lat: number | null, lng: number | null, comps?: google.maps.GeocoderAddressComponent[]) => {
     let city: string | undefined;
     let country: string | undefined;
     for (const c of comps ?? []) {
@@ -218,6 +219,17 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
     if (window.google) sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
   };
 
+  // Manual fallback: commits whatever the user typed as the address, with no
+  // coordinates. This is the only path that works when Google Maps fails to
+  // load or the Places API is rejected (RefererNotAllowedMapError, 403, etc.)
+  // — without it, typing into the box never reaches the parent form's state
+  // and checkout/signup can never proceed.
+  const commitManualAddress = useCallback(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 3 || trimmed === value.address.trim()) return;
+    emit(trimmed, null, null);
+  }, [query, value.address, emit]);
+
   const useMyLocation = () => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -243,7 +255,17 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => suggestions.length && setOpen(true)}
-            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            onBlur={() => setTimeout(() => {
+              setOpen(false);
+              if (!pickingRef.current) commitManualAddress();
+            }, 150)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                setOpen(false);
+                if (!pickingRef.current) commitManualAddress();
+              }
+            }}
             placeholder="Search address, area, landmark…"
             className="pl-9 pr-10"
             maxLength={300}
@@ -263,7 +285,11 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
               <button
                 key={s.placeId}
                 type="button"
-                onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s.placeId, s.primary, s.secondary); }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  pickingRef.current = true;
+                  pickSuggestion(s.placeId, s.primary, s.secondary).finally(() => { pickingRef.current = false; });
+                }}
                 className="w-full text-left px-3 py-2 hover:bg-accent flex items-start gap-2 border-b last:border-b-0"
               >
                 <MapPin className="h-4 w-4 mt-0.5 text-emerald-600 shrink-0" />
@@ -287,7 +313,8 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
         {status === "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted/60 p-4 text-center">
             <p className="text-sm text-red-600">Couldn't load map: {error}</p>
-            <Button size="sm" variant="outline" onClick={() => window.location.reload()}>Retry</Button>
+            <p className="text-xs text-muted-foreground max-w-xs">No problem — just type your address in the box above and continue. You won't need the map to finish checkout.</p>
+            <Button size="sm" variant="outline" onClick={() => window.location.reload()}>Retry map</Button>
           </div>
         )}
       </div>

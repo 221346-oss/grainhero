@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { listBuyers, upsertBuyer, deleteBuyer } from "@/lib/operations.functions";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 const BUYER_TYPES = ["local_mill","exporter","wholesaler","retailer","government"] as const;
 const GRAIN_TYPES = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
@@ -31,6 +33,16 @@ type Buyer = {
   last_order_at: string | null; last_interaction_at: string | null;
   created_at: string | null;
 };
+
+const buyerExportColumns: ExportColumn<Buyer>[] = [
+  { header: "Name", value: (b) => b.name },
+  { header: "Company", value: (b) => b.company_name ?? "" },
+  { header: "Type", value: (b) => b.buyer_type ?? "" },
+  { header: "Status", value: (b) => b.status ?? "" },
+  { header: "Phone", value: (b) => b.contact_phone ?? "" },
+  { header: "Email", value: (b) => b.contact_email ?? "" },
+  { header: "City", value: (b) => b.city ?? "" },
+];
 
 type Form = {
   id?: string;
@@ -180,6 +192,7 @@ export function BuyersSection() {
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
+          <ExportMenu filename="buyers" title="Buyers" rows={rows} columns={buyerExportColumns} />
           <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New buyer</Button>
         </div>
 
