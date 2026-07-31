@@ -9,7 +9,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
-import { Download, FileDown, RefreshCw, AlertCircle, Info } from "lucide-react";
+import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/business")({
   component: PlatformBusinessPage,
@@ -281,6 +281,102 @@ function PlatformBusinessPage() {
             accent={kpis && (kpis.expiringCount ?? 0) > 0 ? "text-amber-600" : "text-[#252d26]"} />
         </div>
       </div>
+
+      {/* ── Hardware / IoT Revenue Breakdown ───────────────────────── */}
+      {(kpis?.hardwareRevenue ?? 0) > 0 || (kpis?.hardwareOrders ?? 0) > 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <HardDrive className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Hardware / IoT Revenue</span>
+              <span title="Revenue from silo hardware orders, tracked separately from subscription MRR"
+                className="text-slate-400 hover:text-slate-600 cursor-help">
+                <Info className="w-3.5 h-3.5" />
+              </span>
+            </div>
+            <ExportRow
+              data={[{
+                "Hardware Revenue (PKR)": fmt(kpis?.hardwareRevenue ?? 0),
+                "Total Orders": kpis?.hardwareOrders ?? 0,
+                "Avg per Order (PKR)": kpis?.hardwareOrders
+                  ? fmt(Math.round((kpis.hardwareRevenue ?? 0) / kpis.hardwareOrders))
+                  : "—",
+                "% of Total Revenue": kpis?.totalRevenue && kpis.totalRevenue > 0
+                  ? `${Math.round(((kpis.hardwareRevenue ?? 0) / kpis.totalRevenue) * 100)}%`
+                  : "—",
+              }]}
+              filename="hardware-revenue"
+              title="Hardware Revenue — GrainHero"
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-100">
+            {/* Hardware revenue */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Package2 className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Hardware Revenue</span>
+              </div>
+              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+                PKR {fmt(kpis?.hardwareRevenue ?? 0)}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">one-time device sales</div>
+            </div>
+            {/* Orders */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <HardDrive className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Orders</span>
+              </div>
+              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+                {kpis?.hardwareOrders ?? 0}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">approved hardware orders</div>
+            </div>
+            {/* Avg order value */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <TrendingUp className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Avg per Order</span>
+              </div>
+              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+                {kpis?.hardwareOrders
+                  ? `PKR ${fmt(Math.round((kpis.hardwareRevenue ?? 0) / kpis.hardwareOrders))}`
+                  : "—"}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">average order value</div>
+            </div>
+            {/* Share of total revenue */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">% of Total Revenue</span>
+              </div>
+              {(() => {
+                const hwRev   = kpis?.hardwareRevenue ?? 0;
+                const total   = kpis?.totalRevenue ?? 0;
+                const pct     = total > 0 ? Math.round((hwRev / total) * 100) : 0;
+                const subPct  = 100 - pct;
+                return (
+                  <div>
+                    <div className="text-xl font-bold text-[#252d26] tabular-nums">{pct}%</div>
+                    <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+                      <div className="h-full rounded-l-full" style={{ width: `${subPct}%`, background: "#2FAC0C" }} />
+                      <div className="h-full rounded-r-full" style={{ width: `${pct}%`, background: "#0e7490" }} />
+                    </div>
+                    <div className="flex gap-3 mt-1">
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2FAC0C]" /> Subs {subPct}%
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0e7490]" /> HW {pct}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* ── Revenue Insights + Sales Overview ──────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-5">

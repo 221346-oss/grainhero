@@ -59,7 +59,7 @@ function SkeletonPulse({ className }: { className: string }) {
 
 function PlanCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-5">
+    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <SkeletonPulse className="h-4 w-24" />
@@ -109,59 +109,59 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
   const price = Math.round(plan.price_cents / 100);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden flex flex-col">
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden flex flex-col">
       {/* Coloured top stripe */}
-      <div className="h-1.5 w-full" style={{ background: t.accent }} />
+      <div className="h-0.5 w-full" style={{ background: t.accent }} />
 
-      <div className="p-6 flex flex-col flex-1">
+      <div className="p-3 flex flex-col flex-1">
         {/* Header */}
-        <div className="flex items-start justify-between mb-1">
+        <div className="flex items-start justify-between mb-0.5">
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-base font-bold text-[#252d26]">{plan.name}</span>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-xs font-bold text-[#252d26]">{plan.name}</span>
               {plan.is_popular && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                  <Star className="w-2.5 h-2.5" /> Popular
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  <Star className="w-2 h-2" /> Popular
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400">{t.tagline}</p>
+            <p className="text-[10px] text-slate-400">{t.tagline}</p>
           </div>
           {plan.is_active ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
               style={{ background: GL, color: G }}>
-              <CheckCircle className="w-3 h-3" /> Active
+              <CheckCircle className="w-2.5 h-2.5" /> Active
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">
-              <XCircle className="w-3 h-3" /> Inactive
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+              <XCircle className="w-2.5 h-2.5" /> Inactive
             </span>
           )}
         </div>
 
         {/* Price */}
-        <div className="mt-4 mb-5">
-          <span className="text-3xl font-bold text-[#252d26] tabular-nums">
+        <div className="mt-1.5 mb-2">
+          <span className="text-lg font-bold text-[#252d26] tabular-nums">
             PKR {fmt(price)}
           </span>
-          <span className="text-sm text-slate-400 ml-1">/ month</span>
+          <span className="text-[10px] text-slate-400 ml-1">/ month</span>
         </div>
 
         {/* Feature limit meters */}
-        <div className="space-y-3 flex-1">
+        <div className="space-y-1.5 flex-1">
           {LIMITS.map(({ key, icon: Icon, label, max }) => {
             const val = Number((plan as any)[key] ?? 0);
             const pct = Math.min(100, Math.round((val / max) * 100));
             return (
               <div key={key}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="flex items-center gap-1.5 text-xs text-[#404F44]">
-                    <Icon className="w-3 h-3 text-slate-400" />
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="flex items-center gap-1 text-[10px] text-[#404F44]">
+                    <Icon className="w-2.5 h-2.5 text-slate-400" />
                     {label}
                   </span>
-                  <span className="text-xs font-semibold text-[#252d26] tabular-nums">{val}</span>
+                  <span className="text-[10px] font-semibold text-[#252d26] tabular-nums">{val}</span>
                 </div>
-                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-0.5 rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${pct}%`, background: t.accent }}
@@ -175,12 +175,12 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
         {/* Edit button */}
         <button
           onClick={onEdit}
-          className="mt-5 w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors"
+          className="mt-2.5 w-full flex items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium transition-colors"
           style={{ background: t.accentLight, color: t.accent }}
           onMouseEnter={(e) => (e.currentTarget.style.background = t.accentBorder)}
           onMouseLeave={(e) => (e.currentTarget.style.background = t.accentLight)}
         >
-          <Pencil className="w-3.5 h-3.5" /> Edit plan
+          <Pencil className="w-2.5 h-2.5" /> Edit plan
         </button>
       </div>
     </div>
@@ -245,7 +245,7 @@ function EditDrawer({
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Drawer header */}
         <div className="h-1.5 w-full" style={{ background: t.accent }} />
@@ -384,6 +384,7 @@ function PlatformPlansPage() {
   const qc = useQueryClient();
   const [editPlanId,   setEditPlanId]   = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending">("pending");
+  const [activeView, setActiveView] = useState<"plans" | "pending" | "auto_applied" | "active">("plans");
 
   const fetchPlans    = useServerFn(listPlanThresholds);
   const fetchRequests = useServerFn(listPlanChangeRequests);
@@ -421,32 +422,122 @@ function PlatformPlansPage() {
   });
 
   // ── Stats strip ────────────────────────────────────────────────────────────
+  const totalPlans    = plans.length;
+  const activePlans   = plans.filter((p) => p.is_active).length;
+  const pendingReqs   = pendingCount;
+  const autoApplied   = requests.filter((r) => r.status === "auto_applied").length;
+
+  const PILLARS = [
+    {
+      key: "plans" as const,
+      value: totalPlans,
+      label: "Total Plans",
+      accent: "#64748b",
+      grad: "linear-gradient(160deg, #475569 0%, #334155 100%)",
+      bg: "rgba(100,116,139,0.07)",
+    },
+    {
+      key: "active" as const,
+      value: activePlans,
+      label: "Active",
+      accent: "#2FAC0C",
+      grad: "linear-gradient(160deg, #2FAC0C 0%, #16a34a 100%)",
+      bg: "rgba(47,172,12,0.07)",
+    },
+    {
+      key: "pending" as const,
+      value: pendingReqs,
+      label: "Pending Requests",
+      accent: pendingReqs > 0 ? "#d97706" : "#94a3b8",
+      grad: pendingReqs > 0
+        ? "linear-gradient(160deg, #f59e0b 0%, #d97706 100%)"
+        : "linear-gradient(160deg, #94a3b8 0%, #64748b 100%)",
+      bg: pendingReqs > 0 ? "rgba(217,119,6,0.07)" : "rgba(100,116,139,0.05)",
+    },
+    {
+      key: "auto_applied" as const,
+      value: autoApplied,
+      label: "Auto-applied",
+      accent: "#0e7490",
+      grad: "linear-gradient(160deg, #0891b2 0%, #0e7490 100%)",
+      bg: "rgba(14,116,144,0.07)",
+    },
+  ];
+
   const StatStrip = () => (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-x-auto">
-      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-100 min-w-max sm:min-w-0">
-        {plansQ.isLoading ? (
-          [1,2,3,4].map((i) => (
-            <div key={i} className="px-5 py-4 space-y-2">
-              <SkeletonPulse className="h-7 w-10" />
-              <SkeletonPulse className="h-3 w-20" />
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {plansQ.isLoading
+        ? [1,2,3,4].map((i) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
+              <SkeletonPulse className="h-6 w-8" />
+              <SkeletonPulse className="h-2.5 w-16" />
             </div>
           ))
-        ) : (
-          [
-            { label: "Total Plans",      value: plans.length },
-            { label: "Active",           value: plans.filter((p) => p.is_active).length },
-            { label: "Pending Requests", value: pendingCount, warn: pendingCount > 0 },
-            { label: "Auto-applied",     value: requests.filter((r) => r.status === "auto_applied").length },
-          ].map((s) => (
-            <div key={s.label} className="px-5 py-4">
-              <div className={`text-2xl font-bold tabular-nums ${s.warn ? "text-amber-600" : "text-[#252d26]"}`}>
-                {s.value}
-              </div>
-              <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
-            </div>
-          ))
-        )}
-      </div>
+        : PILLARS.map((p) => {
+            const isActive = activeView === p.key;
+            return (
+              <button
+                key={p.key}
+                onClick={() => setActiveView(p.key)}
+                className="group relative rounded-xl border text-left transition-all duration-200 overflow-hidden focus:outline-none"
+                style={{
+                  borderColor: isActive ? p.accent + "60" : "#e2e8f0",
+                  background: isActive ? p.bg : "#fff",
+                  boxShadow: isActive
+                    ? `0 3px 12px 0 ${p.accent}20, 0 1px 3px 0 ${p.accent}10`
+                    : "0 1px 2px 0 rgba(0,0,0,0.03)",
+                  transform: isActive ? "translateY(-1px)" : undefined,
+                }}
+              >
+                {/* Gradient left bar */}
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl transition-all duration-200"
+                  style={{ background: isActive ? p.grad : "#e2e8f0" }}
+                />
+
+                <div className="px-3.5 pt-3 pb-2.5 pl-4">
+                  {/* Big number — top */}
+                  <div
+                    className="text-2xl font-bold tabular-nums leading-none mb-0.5 transition-colors duration-200"
+                    style={{ color: isActive ? p.accent : "#1e293b" }}
+                  >
+                    {p.value}
+                  </div>
+
+                  {/* Subtle divider */}
+                  <div
+                    className="h-px my-2 transition-colors duration-200"
+                    style={{ background: isActive ? p.accent + "25" : "#f1f5f9" }}
+                  />
+
+                  {/* Label — bottom */}
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 transition-colors duration-200 group-hover:text-slate-600 leading-tight">
+                    {p.label}
+                  </div>
+
+                  {/* Active indicator dot */}
+                  {isActive && (
+                    <div
+                      className="mt-1.5 inline-flex items-center gap-0.5 text-[9px] font-bold"
+                      style={{ color: p.accent }}
+                    >
+                      <span
+                        className="inline-block w-1 h-1 rounded-full"
+                        style={{ background: p.accent }}
+                      />
+                      Active
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom gradient fill on hover */}
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-xl"
+                  style={{ background: `linear-gradient(180deg, transparent 45%, ${p.accent}06 100%)` }}
+                />
+              </button>
+            );
+          })}
     </div>
   );
 
@@ -457,18 +548,19 @@ function PlatformPlansPage() {
     >
       <StatStrip />
 
-      {/* ── Plan cards ──────────────────────────────────────────────── */}
+      {/* ── Plan cards — shown when activeView is plans or active ─── */}
+      {(activeView === "plans" || activeView === "active") && (
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-          Plan Tiers — click "Edit plan" to configure limits
+          {activeView === "active" ? "Active Plan Tiers" : "Plan Tiers"} — click "Edit plan" to configure limits
         </p>
         {plansQ.isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
             {[1, 2, 3].map((i) => <PlanCardSkeleton key={i} />)}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {plans.map((p) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
+            {(activeView === "active" ? plans.filter(p => p.is_active) : plans).map((p) => (
               <PlanCard key={p.plan_id} plan={p} onEdit={() => setEditPlanId(p.plan_id)} />
             ))}
             {plans.length === 0 && (
@@ -479,8 +571,10 @@ function PlatformPlansPage() {
           </div>
         )}
       </div>
+      )}
 
-      {/* ── Change requests ─────────────────────────────────────────── */}
+      {/* ── Change requests — shown when activeView is pending/auto_applied/plans ── */}
+      {(activeView === "pending" || activeView === "auto_applied" || activeView === "plans") && (
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
@@ -588,6 +682,7 @@ function PlatformPlansPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* ── Slide-over drawer ───────────────────────────────────────── */}
       <EditDrawer

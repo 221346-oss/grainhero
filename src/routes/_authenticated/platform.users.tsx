@@ -2,16 +2,18 @@ import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
+import { setUserRole } from "@/lib/platform.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
 import { saveImpersonationSession } from "@/components/app/ImpersonationBanner";
-import { UserCog } from "lucide-react";
+import { UserCog, ShieldCheck } from "lucide-react";
 import { AdminFilterBar } from "@/components/app/admin/AdminFilterBar";
 
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
@@ -31,16 +33,78 @@ const ROLE_TEXT: Record<string, string> = {
   pending: "text-muted-foreground",
 };
 
+const ASSIGNABLE_ROLES = [
+  { value: "technician", label: "Technician" },
+  { value: "manager",    label: "Manager"    },
+  { value: "admin",      label: "Admin"      },
+  { value: "pending",    label: "Pending"    },
+] as const;
+
+interface ChangeRoleDialogProps {
+  user: Row | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onConfirm: (userId: string, role: string) => void;
+  isPending: boolean;
+}
+
+function ChangeRoleDialog({ user, open, onOpenChange, onConfirm, isPending }: ChangeRoleDialogProps) {
+  const [newRole, setNewRole] = useState(user?.role ?? "pending");
+
+  // Sync local state when user changes or dialog opens
+  useEffect(() => {
+    if (open && user) setNewRole(user.role);
+  }, [open, user]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Change role</DialogTitle>
+          <DialogDescription>
+            <span className="font-medium text-slate-700">{user?.name ?? user?.email ?? "This user"}</span>
+            &apos;s role will be updated immediately.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-2 space-y-1.5">
+          <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">New role</label>
+          <Select value={newRole} onValueChange={setNewRole}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ASSIGNABLE_ROLES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button
+            disabled={!user || newRole === user.role || isPending}
+            onClick={() => user && onConfirm(user.id, newRole)}
+          >
+            {isPending ? "Saving…" : "Save role"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function UsersPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
   const impersonateFn = useServerFn(startImpersonation);
+  const setRoleFn = useServerFn(setUserRole);
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
   const [q, setQ] = useState("");
   const [qInput, setQInput] = useState("");
   const [role, setRole] = useState("all");
+  const [roleTarget, setRoleTarget] = useState<Row | null>(null);
 
   const filtered = useMemo(() => data.filter((u) => {
     const s = q.toLowerCase();
@@ -75,6 +139,16 @@ function UsersPage() {
       console.error("Impersonation error:", e);
       toast.error(e.message);
     },
+  });
+
+  const changeRole = useMutation({
+    mutationFn: (v: { userId: string; role: string }) => setRoleFn({ data: v }),
+    onSuccess: (_, v) => {
+      toast.success(`Role updated to ${v.role}`);
+      qc.invalidateQueries({ queryKey: ["platform-users"] });
+      setRoleTarget(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const totalUsers = data.length;
@@ -232,6 +306,15 @@ function UsersPage() {
                         <Button
                           size="sm"
                           variant="link"
+                          onClick={() => setRoleTarget(u)}
+                          className="h-auto p-0 text-slate-500 hover:text-slate-800"
+                        >
+                          <ShieldCheck className="me-1 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
+                          Role
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="link"
                           disabled={toggle.isPending}
                           onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
                           className={`h-auto p-0 ${u.blocked ? "text-primary" : "text-destructive"}`}
@@ -247,6 +330,14 @@ function UsersPage() {
           </div>
         )}
       </AdminDataCard >
+
+      <ChangeRoleDialog
+        user={roleTarget}
+        open={!!roleTarget}
+        onOpenChange={(v) => !v && setRoleTarget(null)}
+        onConfirm={(userId, role) => changeRole.mutate({ userId, role })}
+        isPending={changeRole.isPending}
+      />
     </AdminPageShell >
   );
 }
