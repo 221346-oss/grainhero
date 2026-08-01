@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 import os
-import requests
+
 from contextlib import asynccontextmanager
 from functools import lru_cache
 from pathlib import Path
