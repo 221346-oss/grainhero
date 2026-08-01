@@ -10,8 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# ONNX models (~87 MB total) are committed in this folder, no download step needed.
-RUN ls -lh *.onnx
+# ONNX models are downloaded dynamically from Supabase at runtime by the hot-swap poller.
 
 ENV PORT=7860
 EXPOSE 7860
