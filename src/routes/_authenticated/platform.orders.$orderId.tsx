@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { ArrowLeft, Truck, UserCheck, XCircle, Cpu } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -87,9 +87,9 @@ function OrderDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge className={STATUS_COLOR[status]}>{status.replace("_", " ")}</Badge>
-          <AssignDialog technicians={techData?.technicians ?? []} onSubmit={(v) => assign.mutate(v)} />
-          <ShipDialog onSubmit={(v) => ship.mutate(v)} />
-          <CancelDialog onSubmit={(v) => cancel.mutate(v)} />
+          <AssignSheet technicians={techData?.technicians ?? []} onSubmit={(v) => assign.mutate(v)} />
+          <ShipSheet onSubmit={(v) => ship.mutate(v)} />
+          <CancelSheet onSubmit={(v) => cancel.mutate(v)} />
         </div>
       </div>
 
@@ -186,74 +186,88 @@ function OrderDetailPage() {
   );
 }
 
-function AssignDialog({ technicians, onSubmit }: { technicians: Array<Record<string, unknown>>; onSubmit: (v: { technicianId: string; scheduledFor?: string }) => void }) {
+function AssignSheet({ technicians, onSubmit }: { technicians: Array<Record<string, unknown>>; onSubmit: (v: { technicianId: string; scheduledFor?: string }) => void }) {
   const [open, setOpen] = useState(false);
   const [techId, setTechId] = useState("");
   const [when, setWhen] = useState("");
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="outline"><UserCheck className="h-4 w-4 mr-1" />Assign</Button></DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Assign technician</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1"><Label>Technician</Label>
-            <Select value={techId} onValueChange={setTechId}>
-              <SelectTrigger><SelectValue placeholder="Pick technician" /></SelectTrigger>
-              <SelectContent>
-                {technicians.map((t) => (
-                  <SelectItem key={t.id as string} value={t.id as string}>{(t.name as string) || (t.email as string)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}><UserCheck className="h-4 w-4 mr-1" />Assign</Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent className="sm:max-w-sm">
+          <SheetHeader><SheetTitle>Assign technician</SheetTitle></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label>Technician</Label>
+              <Select value={techId} onValueChange={setTechId}>
+                <SelectTrigger><SelectValue placeholder="Pick technician" /></SelectTrigger>
+                <SelectContent>
+                  {technicians.map((t) => (
+                    <SelectItem key={t.id as string} value={t.id as string}>{(t.name as string) || (t.email as string)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Scheduled for (optional)</Label>
+              <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+            </div>
           </div>
-          <div className="space-y-1"><Label>Scheduled for (optional)</Label>
-            <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button disabled={!techId} onClick={() => { onSubmit({ technicianId: techId, scheduledFor: when ? new Date(when).toISOString() : undefined }); setOpen(false); }}>Assign</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <SheetFooter className="mt-6">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button disabled={!techId} onClick={() => { onSubmit({ technicianId: techId, scheduledFor: when ? new Date(when).toISOString() : undefined }); setOpen(false); }}>Assign</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
-function ShipDialog({ onSubmit }: { onSubmit: (v: { carrier: string; trackingNumber: string; eta?: string }) => void }) {
+function ShipSheet({ onSubmit }: { onSubmit: (v: { carrier: string; trackingNumber: string; eta?: string }) => void }) {
   const [open, setOpen] = useState(false);
   const [carrier, setCarrier] = useState("");
   const [tn, setTn] = useState("");
   const [eta, setEta] = useState("");
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="outline"><Truck className="h-4 w-4 mr-1" />Mark shipped</Button></DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Mark as shipped</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1"><Label>Carrier</Label><Input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="TCS / Leopards / DHL" /></div>
-          <div className="space-y-1"><Label>Tracking number</Label><Input value={tn} onChange={(e) => setTn(e.target.value)} /></div>
-          <div className="space-y-1"><Label>ETA (optional)</Label><Input type="date" value={eta} onChange={(e) => setEta(e.target.value)} /></div>
-        </div>
-        <DialogFooter>
-          <Button disabled={!carrier || !tn} onClick={() => { onSubmit({ carrier, trackingNumber: tn, eta: eta ? new Date(eta).toISOString() : undefined }); setOpen(false); }}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}><Truck className="h-4 w-4 mr-1" />Mark shipped</Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent className="sm:max-w-sm">
+          <SheetHeader><SheetTitle>Mark as shipped</SheetTitle></SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="space-y-1.5"><Label>Carrier</Label><Input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="TCS / Leopards / DHL" /></div>
+            <div className="space-y-1.5"><Label>Tracking number</Label><Input value={tn} onChange={(e) => setTn(e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>ETA (optional)</Label><Input type="date" value={eta} onChange={(e) => setEta(e.target.value)} /></div>
+          </div>
+          <SheetFooter className="mt-6">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button disabled={!carrier || !tn} onClick={() => { onSubmit({ carrier, trackingNumber: tn, eta: eta ? new Date(eta).toISOString() : undefined }); setOpen(false); }}>Save</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
-function CancelDialog({ onSubmit }: { onSubmit: (v: { reason: string }) => void }) {
+function CancelSheet({ onSubmit }: { onSubmit: (v: { reason: string }) => void }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="outline" className="text-rose-700"><XCircle className="h-4 w-4 mr-1" />Cancel</Button></DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Cancel order</DialogTitle></DialogHeader>
-        <div className="space-y-1"><Label>Reason</Label><Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} /></div>
-        <DialogFooter>
-          <Button variant="destructive" disabled={reason.trim().length < 3} onClick={() => { onSubmit({ reason: reason.trim() }); setOpen(false); }}>Cancel order</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button size="sm" variant="outline" className="text-rose-700" onClick={() => setOpen(true)}><XCircle className="h-4 w-4 mr-1" />Cancel</Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent className="sm:max-w-sm">
+          <SheetHeader><SheetTitle>Cancel order</SheetTitle></SheetHeader>
+          <div className="mt-6 space-y-1.5">
+            <Label>Reason</Label>
+            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} />
+          </div>
+          <SheetFooter className="mt-6">
+            <Button variant="outline" onClick={() => setOpen(false)}>Back</Button>
+            <Button variant="destructive" disabled={reason.trim().length < 3} onClick={() => { onSubmit({ reason: reason.trim() }); setOpen(false); }}>Cancel order</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

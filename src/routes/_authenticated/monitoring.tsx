@@ -4,17 +4,21 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { SensorsSection } from "@/components/monitoring/SensorsSection";
-import { ActuatorsSection } from "@/components/monitoring/ActuatorsSection";
-import { AlertsSection } from "@/components/monitoring/AlertsSection";
-import { EnvironmentalSection } from "@/components/monitoring/EnvironmentalSection";
-import { DeviceHealthSection } from "@/components/monitoring/DeviceHealthSection";
-import { MaintenanceSection } from "@/components/monitoring/MaintenanceSection";
+// Hidden section imports — retained for when tabs are re-enabled
+// import { SensorsSection } from "@/components/monitoring/SensorsSection";
+// import { ActuatorsSection } from "@/components/monitoring/ActuatorsSection";
+// import { AlertsSection } from "@/components/monitoring/AlertsSection";
+// import { EnvironmentalSection } from "@/components/monitoring/EnvironmentalSection";
+// import { DeviceHealthSection } from "@/components/monitoring/DeviceHealthSection";
+// import { MaintenanceSection } from "@/components/monitoring/MaintenanceSection";
 import { IncidentsSection } from "@/components/monitoring/IncidentsSection";
-import { Cpu, Zap, AlertTriangle, Wind, Server, Wrench, AlertOctagon, TrendingUp, TrendingDown } from "lucide-react";
-import { listSensorDevices, listActuators, listGrainAlerts } from "@/lib/operations.functions";
-import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.functions";
+import { AlertOctagon, TrendingUp, TrendingDown } from "lucide-react";
+// Hidden icon imports — retained for when tabs are re-enabled
+// import { Cpu, Zap, AlertTriangle, Wind, Server, Wrench } from "lucide-react";
 import { getIncidents } from "@/lib/monitoring.functions";
+// Hidden data imports — retained for when tabs are re-enabled
+// import { listSensorDevices, listActuators, listGrainAlerts } from "@/lib/operations.functions";
+// import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.functions";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
   component: MonitoringWorkspace,
@@ -22,53 +26,61 @@ export const Route = createFileRoute("/_authenticated/monitoring")({
 
 type Tab = "sensors" | "actuators" | "alerts" | "environmental" | "health" | "maintenance" | "incidents";
 
+// Only Incidents is shown for now. Other tabs hidden until IoT sensors are
+// fully defined and integrated. Code retained for future use.
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "sensors",       label: "Sensors",        icon: Cpu },
-  { key: "actuators",     label: "Actuators",      icon: Zap },
-  { key: "alerts",        label: "Alerts",         icon: AlertTriangle },
-  { key: "environmental", label: "Environmental",  icon: Wind },
-  { key: "health",        label: "Device Health",  icon: Server },
-  { key: "maintenance",   label: "Maintenance",    icon: Wrench },
-  { key: "incidents",     label: "Incidents",      icon: AlertOctagon },
+  // { key: "sensors",       label: "Sensors",       icon: Cpu },
+  // { key: "actuators",     label: "Actuators",     icon: Zap },
+  // { key: "alerts",        label: "Alerts",        icon: AlertTriangle },
+  // { key: "environmental", label: "Environmental", icon: Wind },
+  // { key: "health",        label: "Device Health", icon: Server },
+  // { key: "maintenance",   label: "Maintenance",   icon: Wrench },
+  { key: "incidents",     label: "Incidents",     icon: AlertOctagon },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function MonitoringWorkspace() {
-  const [activeTab, setActiveTab] = useState<Tab>("sensors");
+  const [activeTab, setActiveTab] = useState<Tab>("incidents");
 
-  const listSensorsFn = useServerFn(listSensorDevices);
-  const listActuatorsFn = useServerFn(listActuators);
-  const listAlertsFn = useServerFn(listGrainAlerts);
   const getIncidentsFn = useServerFn(getIncidents);
-  const getMaintenanceFn = useServerFn(getMaintenanceOverview);
-  const getHealthFn = useServerFn(getDeviceHealth);
+  // Hidden server functions — retained for when tabs are re-enabled
+  // const listSensorsFn = useServerFn(listSensorDevices);
+  // const listActuatorsFn = useServerFn(listActuators);
+  // const listAlertsFn = useServerFn(listGrainAlerts);
+  // const getMaintenanceFn = useServerFn(getMaintenanceOverview);
+  // const getHealthFn = useServerFn(getDeviceHealth);
 
-  const { data: sensors } = useQuery({ queryKey: ["sensor-devices"], queryFn: () => listSensorsFn() });
-  const { data: actuators } = useQuery({ queryKey: ["actuators"], queryFn: () => listActuatorsFn() });
-  const { data: alerts } = useQuery({ queryKey: ["grain-alerts"], queryFn: () => listAlertsFn() });
   const { data: incidents } = useQuery({ queryKey: ["incidents"], queryFn: () => getIncidentsFn() });
-  const { data: maintenance } = useQuery({ queryKey: ["maintenance-overview"], queryFn: () => getMaintenanceFn() });
-  const { data: health } = useQuery({ queryKey: ["device-health"], queryFn: () => getHealthFn(), refetchInterval: 15_000 });
+  // Hidden queries — retained for when tabs are re-enabled
+  // const { data: sensors }     = useQuery({ queryKey: ["sensor-devices"],       queryFn: () => listSensorsFn() });
+  // const { data: actuators }   = useQuery({ queryKey: ["actuators"],             queryFn: () => listActuatorsFn() });
+  // const { data: alerts }      = useQuery({ queryKey: ["grain-alerts"],          queryFn: () => listAlertsFn() });
+  // const { data: maintenance } = useQuery({ queryKey: ["maintenance-overview"],  queryFn: () => getMaintenanceFn() });
+  // const { data: health }      = useQuery({ queryKey: ["device-health"],         queryFn: () => getHealthFn(), refetchInterval: 15_000 });
 
   const counts = {
-    sensors: Array.isArray(sensors) ? sensors.length : 0,
-    actuators: Array.isArray(actuators) ? actuators.length : 0,
-    alerts: Array.isArray(alerts) ? alerts.filter((a: any) => a.status === "pending").length : 0,
-    environmental: 0,
-    health: health?.totals?.total ?? 0,
-    maintenance: Array.isArray(maintenance?.devices)
-      ? maintenance.devices.filter((d: any) => d.next_maintenance_date || d.calibration_due_date).length
-      : 0,
+    // Hidden tabs — counts retained for when they are re-enabled
+    // sensors: Array.isArray(sensors) ? sensors.length : 0,
+    // actuators: Array.isArray(actuators) ? actuators.length : 0,
+    // alerts: Array.isArray(alerts) ? alerts.filter((a: any) => a.status === "pending").length : 0,
+    // environmental: 0,
+    // health: health?.totals?.total ?? 0,
+    // maintenance: Array.isArray(maintenance?.devices)
+    //   ? maintenance.devices.filter((d: any) => d.next_maintenance_date || d.calibration_due_date).length
+    //   : 0,
     incidents: Array.isArray(incidents) ? incidents.length : 0,
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Online Devices", value: health?.totals?.online ?? 0, up: true },
-    { label: "Active Alerts", value: counts.alerts.toString(), up: false },
-    { label: "Low Battery", value: health?.totals?.lowBattery ?? 0, up: false },
+    { label: "Open Incidents", value: Array.isArray(incidents) ? incidents.filter((i: any) => i.status !== "resolved").length : 0, up: false },
+    { label: "Total Incidents", value: Array.isArray(incidents) ? incidents.length : 0, up: true },
+    // Hidden until sensors are defined:
+    // { label: "Online Devices", value: health?.totals?.online ?? 0, up: true },
+    // { label: "Active Alerts",  value: counts.alerts ?? 0,          up: false },
+    // { label: "Low Battery",    value: health?.totals?.lowBattery ?? 0, up: false },
   ];
 
   return (
@@ -197,13 +209,14 @@ function MonitoringWorkspace() {
 
           {/* Tab Content */}
           <div className="p-4 md:p-6">
-            {activeTab === "sensors" && <SensorsSection />}
-            {activeTab === "actuators" && <ActuatorsSection />}
-            {activeTab === "alerts" && <AlertsSection />}
-            {activeTab === "environmental" && <EnvironmentalSection />}
-            {activeTab === "health" && <DeviceHealthSection />}
-            {activeTab === "maintenance" && <MaintenanceSection />}
             {activeTab === "incidents" && <IncidentsSection />}
+            {/* Hidden until IoT sensors are defined — code retained */}
+            {/* {activeTab === "sensors"       && <SensorsSection />}       */}
+            {/* {activeTab === "actuators"     && <ActuatorsSection />}     */}
+            {/* {activeTab === "alerts"        && <AlertsSection />}        */}
+            {/* {activeTab === "environmental" && <EnvironmentalSection />} */}
+            {/* {activeTab === "health"        && <DeviceHealthSection />}  */}
+            {/* {activeTab === "maintenance"   && <MaintenanceSection />}   */}
           </div>
         </div>
 

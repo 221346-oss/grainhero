@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,9 @@ import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { Package, Warehouse, Building2, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { listGrainBatches, listSilos, listWarehouses, listBuyers } from "@/lib/operations.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { SiloStatusPie, type StatusSlice } from "@/components/grain-operations/SiloStatusPie";
+import { type FlowGroup } from "@/components/grain-operations/SiloFlowDiagram";
+import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 
 type Tab = "batches" | "silos" | "warehouses" | "buyers";
 
@@ -34,7 +38,6 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
 const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "silos",      label: "Silos",         icon: Warehouse },
-  { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "warehouses", label: "Warehouses",    icon: Building2 },
   { key: "buyers",     label: "Buyers",        icon: Users     },
 ];
