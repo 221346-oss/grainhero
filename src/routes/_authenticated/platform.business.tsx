@@ -11,6 +11,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
+import {
+  NEON, NeonPatternDefs, useNeonCharts, neonFill, neonGrid, neonAxis,
+  neonTooltipStyle, HairlineGrid, NeonPanel, NeonLegend, ChartEmpty,
+} from "@/components/charts/neon";
 import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/business")({
@@ -30,11 +34,11 @@ const monthLabel = (iso: string) => MONTHS[parseInt(iso.slice(5, 7), 10) - 1] ??
 
 // Plan colours — green-adjacent palette
 const PLAN_META: Record<string, { color: string; label: string }> = {
-  starter:      { color: "#2FAC0C", label: "Starter" },
-  professional: { color: "#0e7490", label: "Professional" },
-  enterprise:   { color: "#7c3aed", label: "Enterprise" },
+  starter:      { color: NEON.brand, label: "Starter" },
+  professional: { color: NEON.brand2, label: "Professional" },
+  enterprise:   { color: NEON.accent, label: "Enterprise" },
 };
-const planColor = (p: string) => PLAN_META[p.toLowerCase()]?.color ?? "#64748b";
+const planColor = (p: string) => PLAN_META[p.toLowerCase()]?.color ?? NEON.neutral;
 const planLabel = (p: string) => PLAN_META[p.toLowerCase()]?.label ?? (p.charAt(0).toUpperCase() + p.slice(1));
 
 const ALL_PLANS = ["starter", "professional", "enterprise"] as const;
@@ -284,6 +288,7 @@ function PlatformBusinessPage() {
         </button>
       }
     >
+      <NeonPatternDefs />
       {/* ── Flat stat strip ────────────────────────────────────────── */}
       <div className="rounded-lg border border-slate-200 bg-white overflow-x-auto">
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-slate-100 min-w-max lg:min-w-0">
@@ -396,11 +401,11 @@ function PlatformBusinessPage() {
       ) : null}
 
       {/* ── Revenue Insights + Sales Overview ──────────────────────── */}
-      <div className="grid gap-4 lg:grid-cols-5">
+      <HairlineGrid cols="grid-cols-1 lg:grid-cols-5">
 
         {/* Revenue Insights */}
-        <div className="lg:col-span-3 rounded-lg border border-slate-200 bg-white overflow-hidden">
-          <div className="px-6 pt-5 pb-0 flex items-start justify-between">
+        <NeonPanel className="lg:col-span-3" bodyClassName="">
+          <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-[#404F44]/60 uppercase tracking-wider">Revenue Insights</span>
             {/* Monthly / Yearly toggle */}
             <div className="flex items-center rounded-md border border-slate-200 overflow-hidden text-[10px] font-medium">
