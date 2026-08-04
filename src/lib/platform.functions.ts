@@ -284,15 +284,15 @@ export const getPlatformApiHealth = createServerFn({ method: "GET" })
     }
 
     const [profiles, realtime, storage] = await Promise.all([
-      ping("Profiles API", () =>
-        sa.from("profiles").select("id", { count: "exact", head: true }),
-      ),
-      ping("Realtime / Subscriptions", () =>
-        sa.from("subscriptions").select("id", { count: "exact", head: true }),
-      ),
-      ping("Activity Logs", () =>
-        sa.from("activity_logs").select("id", { count: "exact", head: true }),
-      ),
+      ping("Profiles API", async () => {
+        await sa.from("profiles").select("id", { count: "exact", head: true });
+      }),
+      ping("Realtime / Subscriptions", async () => {
+        await sa.from("subscriptions").select("id", { count: "exact", head: true });
+      }),
+      ping("Activity Logs", async () => {
+        await sa.from("activity_logs").select("id", { count: "exact", head: true });
+      }),
     ]);
 
     const checks = [profiles, realtime, storage];

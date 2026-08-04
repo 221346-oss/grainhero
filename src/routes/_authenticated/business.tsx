@@ -55,8 +55,8 @@ function BusinessWorkspace() {
   const counts = {
     revenue: totals.countInvoices ?? 0,
     subscription: sub ? 1 : 0,
-    // insurance: policyList.length, // hidden until bank partnership confirmed
-  };
+    insurance: policyList.length, // tab hidden until bank partnership confirmed
+  } satisfies Record<Tab, number>;
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
