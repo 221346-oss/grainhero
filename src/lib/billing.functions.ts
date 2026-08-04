@@ -111,11 +111,11 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
 
     let invQuery = context.supabase
       .from("buyer_invoices")
-      .select("id, invoice_number, buyer_name, buyer_company, batch_ref, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at");
+      .select("id, invoice_number, buyer_name, buyer_company, batch_ref, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at, dispatch_id, grain_dispatches:dispatch_id(dispatch_number, total_qty_kg, vehicle_number, driver_name)");
 
     let payQuery = context.supabase
       .from("buyer_payments")
-      .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, created_at");
+      .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, dispatch_id, receipt_url, created_at, grain_dispatches:dispatch_id(dispatch_number)");
 
     if (adminId) {
       invQuery = invQuery.eq("admin_id", adminId);
@@ -130,14 +130,18 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
     const invoices = (invRes.data ?? []) as any[];
     const payments = (payRes.data ?? []) as any[];
 
+    const invoiced = invoices.reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
+    const collected = payments.filter((p) => (p.status ?? "completed") === "completed").reduce((s, p) => s + Number(p.amount ?? 0), 0);
     const totals = {
-      invoiced: invoices.reduce((s, x) => s + Number(x.total_amount ?? 0), 0),
+      invoiced,
+      // "paid" kept for back-compat with any older callers; Collected/Outstanding
+      // tiles use `collected` (actual recorded payments) per the spec.
       paid: invoices.reduce((s, x) => s + Number(x.amount_paid ?? 0), 0),
-      outstanding: invoices.reduce((s, x) => s + Math.max(0, Number(x.total_amount ?? 0) - Number(x.amount_paid ?? 0)), 0),
+      collected,
+      outstanding: Math.max(0, invoiced - collected),
       overdue: invoices.filter((x) => x.due_date && new Date(x.due_date) < new Date() && x.payment_status !== "paid").length,
       countInvoices: invoices.length,
       countPayments: payments.length,
-      collected: payments.filter((p) => (p.status ?? "completed") !== "failed").reduce((s, p) => s + Number(p.amount ?? 0), 0),
     };
 
     const byStatus: Record<string, number> = {};

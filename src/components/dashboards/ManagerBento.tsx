@@ -183,13 +183,15 @@ export function ManagerBento({
       <BentoCard title="QC queue" icon={ClipboardCheck} count={qcQueue.length} to="/grain-operations" search={{ tab: "batches" }}
         tooltip="Batches currently in intake / processing / treatment awaiting QC sign-off."
         rows={qcRows} empty="No batches pending QC." />
-      {/* ── Open Field Incidents – self-fetching, scrollable ── */}
+      {/* ── Mobile Field Reports – self-fetching, scrollable ── */}
+      {/* This is the older mobile-sync field_incidents system (field-settings.functions.ts),
+          not the new auto-routing Field Incidents feature (Administration tab, grain_alerts). */}
       <div className="rounded-xl border bg-card/60 flex flex-col min-h-0">
         <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl">
           <div className="flex items-center gap-2 min-w-0">
             <AlertTriangle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            <h3 className="text-xs font-semibold truncate">Open field incidents</h3>
-            <InfoDot text="Active field incidents — click Discuss to open the thread." />
+            <h3 className="text-xs font-semibold truncate">Mobile Field Reports</h3>
+            <InfoDot text="Reports from the mobile app — click Discuss to open the thread. Separate from Administration → Field Incidents." />
             {incList.length > 0 && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                 {incList.length}
@@ -201,7 +203,7 @@ export function ManagerBento({
               id="manager-new-ticket-btn"
               onClick={() => setTicketDialogOpen(true)}
               className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
-              title="Report a new field incident ticket"
+              title="Report a new mobile field report"
             >
               <Plus className="h-3 w-3" /> New Ticket
             </button>
@@ -216,7 +218,7 @@ export function ManagerBento({
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           ) : incList.length === 0 ? (
-            <p className="text-xs text-muted-foreground px-3 py-6 text-center">No open field incidents.</p>
+            <p className="text-xs text-muted-foreground px-3 py-6 text-center">No open mobile field reports.</p>
           ) : (
             <ul className="divide-y">
               {incList.map((inc) => (

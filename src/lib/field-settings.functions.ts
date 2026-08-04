@@ -134,7 +134,18 @@ export const resolveFieldIncident = createServerFn({ method: "POST" })
   });
 
 // ─── Report a new ticket (manager or technician) ──────────────────────────────
-export const reportFieldIncident = createServerFn({ method: "POST" })
+/**
+ * Mobile field report — this is the OLDER, pre-existing "web-side create" for
+ * the mobile-sync `field_incidents` table (see the sync layer at
+ * src/routes/api/public/v1/sync/field-incidents.ts and
+ * src/lib/mobile-action-registry.server.ts, neither of which call this
+ * function — they insert directly). Renamed from `reportFieldIncident` to
+ * stop colliding in name (though never in code, different files) with the
+ * unrelated, newer auto-routing feature in field-incidents.functions.ts,
+ * which is backed by grain_alerts, not this table. Pure rename — behavior,
+ * table, and callers below are unchanged.
+ */
+export const reportMobileFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v) => z.object({
     title: z.string().min(1).max(200).optional(),
@@ -193,7 +204,7 @@ export const reportFieldIncident = createServerFn({ method: "POST" })
         entityId: (inserted as { id?: string } | null)?.id ?? null,
       });
     } catch (e) {
-      console.warn("[reportFieldIncident] Failed to emit role notification:", e);
+      console.warn("[reportMobileFieldIncident] Failed to emit role notification:", e);
     }
 
     return { ok: true };

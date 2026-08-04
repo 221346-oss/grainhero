@@ -71,6 +71,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
+    "tesseract.js": "^5.1.1",
     "tw-animate-css": "^1.3.4",
     "valibot": "^1.4.2",
     "vaul": "^1.1.2",

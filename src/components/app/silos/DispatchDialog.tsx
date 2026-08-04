@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createDispatchFromSilo, listSiloAvailableBatches } from "@/lib/dispatches.functions";
 import { listBuyers } from "@/lib/operations.functions";
 import { getPriceSettings } from "@/lib/suppliers.functions";
+import { pricePerKgToPerMan } from "@/lib/units";
 
 type Batch = { id: string; batch_id: string; grain_type: string; remaining_kg: number | string; purchase_price_per_kg: number | string | null };
 type Buyer = { id: string; name: string; company_name: string | null };
@@ -28,6 +29,7 @@ export function DispatchDialog({
   const [currency] = useState("PKR");
   const [vehicle, setVehicle] = useState("");
   const [driver, setDriver] = useState("");
+  const [driverPhone, setDriverPhone] = useState("");
   const [destination, setDestination] = useState("");
   const [notes, setNotes] = useState("");
   const [expected, setExpected] = useState("");
@@ -35,7 +37,7 @@ export function DispatchDialog({
   const [stage, setStage] = useState<"staged" | "in_transit">("staged");
 
   useEffect(() => {
-    if (open) { setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDestination(""); setNotes(""); setExpected(""); setBasis("manual"); setStage("staged"); }
+    if (open) { setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDriverPhone(""); setDestination(""); setNotes(""); setExpected(""); setBasis("manual"); setStage("staged"); }
   }, [open]);
 
   const listBatchesFn = useServerFn(listSiloAvailableBatches);
@@ -97,7 +99,7 @@ export function DispatchDialog({
         siloId, grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency,
         buyerId: buyerId || null,
         newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
-        vehicleNumber: vehicle || null, driverName: driver || null, destination: destination || null,
+        vehicleNumber: vehicle || null, driverName: driver || null, driverContact: driverPhone || null, destination: destination || null,
         notes: notes || null, expectedDate: expected || null,
         priceBasis: basis, marketPriceSnapshot: suggestedMarket, stage,
       } });
@@ -184,7 +186,10 @@ export function DispatchDialog({
               <Input className="h-9" placeholder="Vehicle #" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
               <Input className="h-9" placeholder="Driver name" value={driver} onChange={(e) => setDriver(e.target.value)} />
             </div>
-            <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input className="h-9" placeholder="Driver phone" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
+              <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
+            </div>
             <Textarea rows={2} placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
             <div>
@@ -204,6 +209,7 @@ export function DispatchDialog({
             {qtyNum > 0 && (
               <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-xs">
                 <div className="flex justify-between"><span className="text-muted-foreground">Revenue</span><span className="font-medium tabular-nums">{currency} {total.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Priced at</span><span className="tabular-nums">{currency} {priceNum.toFixed(2)}/kg · {currency} {pricePerKgToPerMan(priceNum).toFixed(2)}/man</span></div>
                 {avgCost != null && (
                   <>
                     <div className="flex justify-between"><span className="text-muted-foreground">Avg cost / kg</span><span className="tabular-nums">{currency} {avgCost.toFixed(2)}</span></div>
