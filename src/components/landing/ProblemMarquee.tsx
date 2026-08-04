@@ -28,13 +28,12 @@ export function ProblemMarquee() {
       className="gh-grain relative overflow-hidden bg-[#FAFAF7] py-20 dark:bg-background sm:py-28"
     >
       <div className="mx-auto max-w-3xl px-5 text-center">
-        <span className="gh-eyebrow text-[#2FA84F]">The daily unknowns</span>
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-5 text-3xl font-black leading-[1.05] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl"
+          className="text-[1.75rem] font-black leading-[1.05] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl"
         >
           What if the silo{' '}
           <span className="bg-gradient-to-r from-[#2FA84F] to-[#A8E6A1] bg-clip-text text-transparent">
