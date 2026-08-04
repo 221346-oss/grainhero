@@ -27,7 +27,9 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
     const { data: profiles, error } = await context.supabase
       .from("profiles")
-      .select("id, name, email, phone, avatar, status, blocked, email_verified, department, employee_id, created_at, warehouse_id")
+      .select(
+        "id, name, email, phone, avatar, status, blocked, email_verified, department, employee_id, created_at, warehouse_id",
+      )
       .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -51,15 +53,40 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
   .handler(async ({ data, context }) => {
+    console.log(
+      "[inviteTeamMember] Starting invite for",
+      data.email,
+      "as",
+      data.role,
+      "from user",
+      context.userId,
+    );
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
+    console.log("[inviteTeamMember] Role flags:", { isSuper, isAdmin, isManager });
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
-    if (isManager && !isAdmin && !isSuper && data.role !== "technician") throw new Error("Managers can only invite technicians");
-    if (isAdmin && !isSuper && data.role === "admin") throw new Error("Only super admins can invite admins");
+    if (isManager && !isAdmin && !isSuper && data.role !== "technician")
+      throw new Error("Managers can only invite technicians");
+    if (isAdmin && !isSuper && data.role === "admin")
+      throw new Error("Only super admins can invite admins");
 
-    const tenantId = context.userId;
+    // Get the tenant admin ID - for managers/technicians, this is their admin's ID
+    // For admins, this is their own ID
     const { data: tenantRow } = await context.supabase
-      .from("profiles").select("admin_id, id").eq("id", context.userId).maybeSingle();
-    const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? tenantId;
+      .from("profiles")
+      .select("admin_id, id")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? context.userId;
+
+    console.log(
+      "[inviteTeamMember] Tenant resolution - userId:",
+      context.userId,
+      "tenantRow:",
+      tenantRow,
+      "resolved admin_id:",
+      admin_id,
+    );
 
     // Enforce plan-based staff limit via central gate.
     await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
@@ -67,6 +94,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.trim().toLowerCase();
     let uid: string | undefined;
+    console.log("[inviteTeamMember] Creating auth user for email:", email);
     // 1) Ensure an auth user exists. Prefer createUser (doesn't require SMTP);
     //    fall back to locating an existing user if the email is already registered.
     const createRes = await supabaseAdmin.auth.admin.createUser({
@@ -81,12 +109,17 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         console.error("[inviteTeamMember] createUser failed", createRes.error);
         throw new Error(msg || "Could not create the user in Supabase Auth.");
       }
-      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      console.log("[inviteTeamMember] User already exists, looking up...");
+      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
       if (listErr) throw new Error(listErr.message || "Failed to look up existing user");
       uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
       if (!uid) throw new Error("A user with that email already exists but could not be located.");
     } else {
       uid = createRes.data.user?.id;
+      console.log("[inviteTeamMember] Auth user created successfully, uid:", uid);
     }
 
     // 2) Generate an invite/magic link (does not send email; we send via Resend).
@@ -122,18 +155,49 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       console.warn("[inviteTeamMember] email send failed (non-fatal)", e);
     }
     if (uid) {
-      const { error: pErr } = await supabaseAdmin.from("profiles").upsert({ id: uid, email, name: data.name ?? email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
-      if (pErr) { console.error("[inviteTeamMember] profiles upsert failed", pErr); throw new Error(pErr.message || "Failed to save profile"); }
+      console.log("[inviteTeamMember] Upserting profile for uid:", uid, "with admin_id:", admin_id);
+      const { error: pErr } = await supabaseAdmin.from("profiles").upsert(
+        {
+          id: uid,
+          email,
+          name: data.name ?? email.split("@")[0],
+          admin_id,
+          invited_by: context.userId,
+          invitation_role: data.role,
+        },
+        { onConflict: "id" },
+      );
+      if (pErr) {
+        console.error("[inviteTeamMember] profiles upsert failed", pErr);
+        throw new Error(pErr.message || "Failed to save profile");
+      }
+      console.log("[inviteTeamMember] Profile upserted successfully");
+
       await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
-      const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
-      if (rErr) { console.error("[inviteTeamMember] user_roles insert failed", rErr); throw new Error(rErr.message || "Failed to assign role"); }
+      const { error: rErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: uid, role: data.role });
+      if (rErr) {
+        console.error("[inviteTeamMember] user_roles insert failed", rErr);
+        throw new Error(rErr.message || "Failed to assign role");
+      }
+      console.log("[inviteTeamMember] User role assigned successfully");
     }
+    console.log("[inviteTeamMember] Invite completed successfully");
     return { ok: true };
   });
 
 export const updateTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
+  .validator(
+    (d: {
+      id: string;
+      name?: string;
+      phone?: string;
+      role?: "admin" | "manager" | "technician" | "pending";
+      blocked?: boolean;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
@@ -143,7 +207,10 @@ export const updateTeamMember = createServerFn({ method: "POST" })
     if (data.phone !== undefined) update.phone = data.phone;
     if (data.blocked !== undefined) update.blocked = data.blocked;
     if (Object.keys(update).length) {
-      const { error } = await context.supabase.from("profiles").update(update as any).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("profiles")
+        .update(update as any)
+        .eq("id", data.id);
       if (error) throw error;
     }
     if (data.role) {
@@ -174,7 +241,9 @@ export const getMySettings = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("id, name, email, phone, avatar, business_type, address, location, preferences, department, employee_id, shift_pattern, certification_level")
+      .select(
+        "id, name, email, phone, avatar, business_type, address, location, preferences, department, employee_id, shift_pattern, certification_level",
+      )
       .eq("id", context.userId)
       .maybeSingle();
     if (error) throw error;
@@ -183,17 +252,34 @@ export const getMySettings = createServerFn({ method: "GET" })
 
 export const updateMySettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: {
-    name?: string; phone?: string; business_type?: string; avatar?: string | null;
-    address?: Record<string, unknown>; location?: Record<string, unknown>;
-    preferences?: Record<string, unknown>;
-  }) => d)
+  .validator(
+    (d: {
+      name?: string;
+      phone?: string;
+      business_type?: string;
+      avatar?: string | null;
+      address?: Record<string, unknown>;
+      location?: Record<string, unknown>;
+      preferences?: Record<string, unknown>;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     const update: Record<string, any> = {};
-    for (const k of ["name","phone","business_type","avatar","address","location","preferences"] as const) {
+    for (const k of [
+      "name",
+      "phone",
+      "business_type",
+      "avatar",
+      "address",
+      "location",
+      "preferences",
+    ] as const) {
       if (data[k] !== undefined) update[k] = data[k];
     }
-    const { error } = await context.supabase.from("profiles").update(update as any).eq("id", context.userId);
+    const { error } = await context.supabase
+      .from("profiles")
+      .update(update as any)
+      .eq("id", context.userId);
     if (error) throw error;
     return { ok: true };
   });
@@ -201,21 +287,47 @@ export const updateMySettings = createServerFn({ method: "POST" })
 // ============= INSURANCE =============
 
 export type InsurancePolicyRow = {
-  id: string; policy_number: string; provider_name: string; coverage_type: string;
-  coverage_amount: number; premium_amount: number; deductible: number; status: string;
-  start_date: string | null; end_date: string | null; renewal_date: string | null;
-  covered_batches: any; risk_factors: any; notes: string | null; created_at: string;
+  id: string;
+  policy_number: string;
+  provider_name: string;
+  coverage_type: string;
+  coverage_amount: number;
+  premium_amount: number;
+  deductible: number;
+  status: string;
+  start_date: string | null;
+  end_date: string | null;
+  renewal_date: string | null;
+  covered_batches: any;
+  risk_factors: any;
+  notes: string | null;
+  created_at: string;
 };
 
 export type InsuranceClaimRow = {
-  id: string; claim_number: string; policy_id: string | null; claim_type: string;
-  description: string | null; amount_claimed: number; amount_approved: number; status: string;
-  incident_date: string | null; filed_date: string | null; approved_date: string | null;
-  batch_affected: any; photos: any; notes: string | null; created_at: string;
+  id: string;
+  claim_number: string;
+  policy_id: string | null;
+  claim_type: string;
+  description: string | null;
+  amount_claimed: number;
+  amount_approved: number;
+  status: string;
+  incident_date: string | null;
+  filed_date: string | null;
+  approved_date: string | null;
+  batch_affected: any;
+  photos: any;
+  notes: string | null;
+  created_at: string;
 };
 
 async function tenantAdminId(supabase: any, userId: string): Promise<string> {
-  const { data } = await supabase.from("profiles").select("admin_id, id").eq("id", userId).maybeSingle();
+  const { data } = await supabase
+    .from("profiles")
+    .select("admin_id, id")
+    .eq("id", userId)
+    .maybeSingle();
   return data?.admin_id ?? data?.id ?? userId;
 }
 
@@ -223,7 +335,9 @@ export const listPolicies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("insurance_policies").select("*").order("created_at", { ascending: false });
+      .from("insurance_policies")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsurancePolicyRow[];
   });
@@ -233,7 +347,11 @@ export const upsertPolicy = createServerFn({ method: "POST" })
   .validator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
     if (!data.id) {
-      await assertPlanAllows({ feature: "insurance", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "insurance",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
@@ -254,11 +372,18 @@ export const upsertPolicy = createServerFn({ method: "POST" })
       created_by: context.userId,
     };
     if (data.id) {
-      const { error } = await context.supabase.from("insurance_policies").update(row).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("insurance_policies")
+        .update(row)
+        .eq("id", data.id);
       if (error) throw error;
       return { id: data.id };
     }
-    const { data: ins, error } = await context.supabase.from("insurance_policies").insert(row).select("id").single();
+    const { data: ins, error } = await context.supabase
+      .from("insurance_policies")
+      .insert(row)
+      .select("id")
+      .single();
     if (error) throw error;
     return { id: ins.id };
   });
@@ -276,7 +401,9 @@ export const listClaims = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("insurance_claims").select("*").order("created_at", { ascending: false });
+      .from("insurance_claims")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsuranceClaimRow[];
   });
@@ -304,11 +431,18 @@ export const upsertClaim = createServerFn({ method: "POST" })
       created_by: context.userId,
     };
     if (data.id) {
-      const { error } = await context.supabase.from("insurance_claims").update(row).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("insurance_claims")
+        .update(row)
+        .eq("id", data.id);
       if (error) throw error;
       return { id: data.id };
     }
-    const { data: ins, error } = await context.supabase.from("insurance_claims").insert(row).select("id").single();
+    const { data: ins, error } = await context.supabase
+      .from("insurance_claims")
+      .insert(row)
+      .select("id")
+      .single();
     if (error) throw error;
     return { id: ins.id };
   });
