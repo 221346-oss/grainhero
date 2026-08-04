@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 /* ── palette ─────────────────────────────────────────────────────────────── */
 
 /** Brand-first series palette. Emerald family leads, semantics only where they mean something. */
-export const NEON = {
+export const NEON: Record<string, string> = {
   brand: "var(--chart-1)",
   brand2: "var(--chart-2)",
   accent: "var(--chart-3)",
@@ -30,7 +30,7 @@ export const NEON = {
   high: "var(--severity-high)",
   medium: "var(--severity-medium)",
   low: "var(--severity-low)",
-} as const;
+};
 
 /** Ordered palette for anonymous / dynamic series (categories, plans, regions…). */
 export const NEON_SERIES: string[] = [
