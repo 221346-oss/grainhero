@@ -3,9 +3,9 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Html, Environment, ContactShadows, Float } from '@react-three/drei'
 import type { Group } from 'three'
 
-const GREEN = '#2FAC0C'
-const LIME = '#8FE04B'
-const CREAM = '#EDE9D4'
+const GREEN = '#2FA84F'
+const LIME = '#A8E6A1'
+const CREAM = '#FAFAF7'
 
 const hotspots = [
   { id: 'temp', label: 'Temperature probe', pos: [0.95, 1.15, 0] as const },
@@ -35,7 +35,7 @@ function Silo({ active, setActive }: { active: string | null; setActive: (v: str
       {[-1.2, -0.7, -0.2, 0.3, 0.8, 1.3].map((y) => (
         <mesh key={y} position={[0, y, 0]}>
           <torusGeometry args={[1.005, 0.028, 10, 60]} />
-          <meshStandardMaterial color="#c9c6ae" metalness={0.8} roughness={0.4} />
+          <meshStandardMaterial color="#C7D9C1" metalness={0.8} roughness={0.4} />
         </mesh>
       ))}
       {/* roof */}
@@ -51,7 +51,7 @@ function Silo({ active, setActive }: { active: string | null; setActive: (v: str
       {/* base */}
       <mesh receiveShadow position={[0, -1.62, 0]}>
         <cylinderGeometry args={[1.18, 1.18, 0.24, 48]} />
-        <meshStandardMaterial color="#3a4a3c" metalness={0.2} roughness={0.8} />
+        <meshStandardMaterial color="#2A342B" metalness={0.2} roughness={0.8} />
       </mesh>
 
       {hotspots.map((h) => (
@@ -74,8 +74,8 @@ function Silo({ active, setActive }: { active: string | null; setActive: (v: str
             <div
               className={`pointer-events-none whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-bold transition-all duration-200 ${
                 active === h.id
-                  ? 'bg-[#8FE04B] text-[#252d26] opacity-100'
-                  : 'bg-[#252d26]/70 text-[#EDE9D4] opacity-0'
+                  ? 'bg-[#A8E6A1] text-[#111512] opacity-100'
+                  : 'bg-[#111512]/70 text-[#FAFAF7] opacity-0'
               }`}
               style={{ transform: 'translateY(-28px)' }}
             >

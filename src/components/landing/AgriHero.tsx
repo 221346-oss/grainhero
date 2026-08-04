@@ -15,7 +15,7 @@ export function AgriHero() {
   }, [])
 
   return (
-    <div className="relative min-h-[100svh] w-full overflow-hidden bg-[#252d26]">
+    <div className="relative min-h-[100svh] w-full overflow-hidden bg-[#111512]">
       <video
         ref={videoRef}
         className="absolute inset-0 h-full w-full object-cover"
@@ -29,7 +29,7 @@ export function AgriHero() {
       </video>
 
       {/* Cinematic grade */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#252d26]/85 via-[#252d26]/20 to-[#252d26]/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#111512]/85 via-[#111512]/20 to-[#111512]/70" />
 
       {/* Copy */}
       <div className="relative z-10 flex min-h-[100svh] items-start">
@@ -38,7 +38,7 @@ export function AgriHero() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-4xl text-[2.6rem] font-black leading-[0.95] tracking-tight text-[#8FE04B] sm:text-6xl lg:text-8xl"
+            className="max-w-4xl text-[2.6rem] font-black leading-[0.95] tracking-tight text-[#A8E6A1] sm:text-6xl lg:text-8xl"
           >
             The Future of
             <br />
@@ -48,7 +48,7 @@ export function AgriHero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.8 }}
-            className="mt-5 max-w-xl text-lg font-medium text-[#EDE9D4] sm:text-2xl"
+            className="mt-5 max-w-xl text-lg font-medium text-[#FAFAF7] sm:text-2xl"
           >
             Turning Sensor Data Into Saved Harvests
           </motion.p>
@@ -60,14 +60,14 @@ export function AgriHero() {
           >
             <Link
               to="/marketplace"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#2FAC0C] px-8 py-4 text-base font-bold text-white transition-all hover:scale-105 hover:bg-[#8FE04B] hover:text-[#252d26]"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#2FA84F] px-8 py-4 text-base font-bold text-white transition-all hover:scale-105 hover:bg-[#A8E6A1] hover:text-[#111512]"
             >
               Explore Smart Silos
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
             <a
               href="#how-it-works"
-              className="inline-flex items-center justify-center rounded-full border-2 border-[#EDE9D4]/60 px-8 py-4 text-base font-semibold text-[#EDE9D4] transition-all hover:scale-105 hover:bg-[#EDE9D4] hover:text-[#252d26]"
+              className="inline-flex items-center justify-center rounded-full border-2 border-[#FAFAF7]/60 px-8 py-4 text-base font-semibold text-[#FAFAF7] transition-all hover:scale-105 hover:bg-[#FAFAF7] hover:text-[#111512]"
             >
               See How It Works
             </a>

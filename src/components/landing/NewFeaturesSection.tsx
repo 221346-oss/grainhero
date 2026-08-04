@@ -15,7 +15,7 @@ const features = [
     title: 'Real-Time Monitoring',
     description:
       'Track temperature, humidity, moisture, and CO₂ levels 24/7 with industrial IoT sensors providing second-by-second updates.',
-    color: '#2FAC0C',
+    color: '#2FA84F',
     image: '/images/features/Real_time_monitoring.png',
   },
   {
@@ -23,7 +23,7 @@ const features = [
     title: 'AI Spoilage Prediction',
     description:
       'Machine learning algorithms analyze patterns to predict spoilage 24-48 hours in advance, preventing costly grain losses.',
-    color: '#2FAC0C',
+    color: '#2FA84F',
     image: '/images/features/AI_Spoilage_Prediction.png',
   },
   {
@@ -31,7 +31,7 @@ const features = [
     title: 'Instant Alerts',
     description:
       'Receive immediate notifications via SMS, email, or push when conditions exceed safe thresholds. Never miss a critical event.',
-    color: '#2FAC0C',
+    color: '#2FA84F',
     image: '/images/features/Mobile_Alert_Notification.png',
   },
   {
@@ -39,7 +39,7 @@ const features = [
     title: 'Analytics Dashboard',
     description:
       'Comprehensive insights with historical data visualization, trend analysis, and automated reports for informed decision-making.',
-    color: '#2FAC0C',
+    color: '#2FA84F',
     image: '/images/features/Analytics_Dashboard.png',
   },
   {
@@ -47,7 +47,7 @@ const features = [
     title: 'Remote Control',
     description:
       'Integrate with ventilation, cooling, and aeration systems for automated climate control based on AI recommendations.',
-    color: '#2FAC0C',
+    color: '#2FA84F',
     image: '/images/features/Remote_Control.png',
   },
   {
@@ -55,7 +55,7 @@ const features = [
     title: 'Multi-Silo Management',
     description:
       'Monitor unlimited silos across multiple locations from a single dashboard. Scale effortlessly as your operation grows.',
-    color: '#2FAC0C',
+    color: '#2FA84F',
     image: '/images/features/Multi_Silo_Management.png',
   },
 ]
@@ -81,11 +81,11 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
   const [isHovered, setIsHovered] = useState(false)
   const isDark = useIsDark()
 
-  const cardFrontBg   = isDark ? '#1e2420' : '#ffffff'
-  const cardBackBg    = isDark ? '#252e27' : '#EDE9D4'
+  const cardFrontBg   = isDark ? '#141A15' : '#ffffff'
+  const cardBackBg    = isDark ? '#1A201B' : '#FAFAF7'
   const titleBarBg    = isDark ? 'rgba(30, 36, 32, 0.95)' : 'rgba(255, 255, 255, 0.95)'
-  const titleColor    = isDark ? '#d1fae5' : '#252d26'
-  const descColor     = isDark ? '#a7f3d0' : '#252d26'
+  const titleColor    = isDark ? '#d1fae5' : '#111512'
+  const descColor     = isDark ? '#a7f3d0' : '#111512'
 
   return (
     <motion.div
@@ -201,7 +201,7 @@ function FlipCard({ feature, index }: { feature: typeof features[0]; index: numb
 
 export function NewFeaturesSection() {
   return (
-    <section id="features" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4] dark:bg-background transition-colors">
+    <section id="features" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7] dark:bg-background transition-colors">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -211,16 +211,16 @@ export function NewFeaturesSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-8 sm:mb-12"
         >
-          <div className="inline-block bg-[#2FAC0C]/10 px-4 py-2 rounded-full mb-3">
-            <span className="text-[#2FAC0C] text-sm font-semibold uppercase tracking-wider">
+          <div className="inline-block bg-[#2FA84F]/10 px-4 py-2 rounded-full mb-3">
+            <span className="text-[#2FA84F] text-sm font-semibold uppercase tracking-wider">
               Powerful Features
             </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#252d26] dark:text-foreground mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#111512] dark:text-foreground mb-4">
             Everything You Need to <br className="hidden sm:block" />
-            <span className="text-[#2FAC0C]">Protect Your Grain</span>
+            <span className="text-[#2FA84F]">Protect Your Grain</span>
           </h2>
-          <p className="text-lg sm:text-xl text-[#404F44] dark:text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-[#4A554C] dark:text-muted-foreground max-w-3xl mx-auto">
             Comprehensive grain storage management with enterprise-grade monitoring and AI-powered insights
           </p>
         </motion.div>
@@ -243,19 +243,19 @@ export function NewFeaturesSection() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center mt-10 sm:mt-12"
         >
-          <p className="text-[#404F44] dark:text-muted-foreground mb-6 text-lg">
+          <p className="text-[#4A554C] dark:text-muted-foreground mb-6 text-lg">
             Ready to see GrainHero in action?
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => { window.location.href = '/checkout' }}
-              className="bg-[#2FAC0C] text-white font-bold px-8 py-3.5 rounded-full hover:bg-[#2FAC0C]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+              className="bg-[#2FA84F] text-white font-bold px-8 py-3.5 rounded-full hover:bg-[#2FA84F]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
             >
               View Plans & Pricing
             </button>
             <button
               onClick={() => { document.querySelector('#how-it-works')?.scrollIntoView({ behavior: 'smooth' }) }}
-              className="bg-transparent border-2 border-[#2FAC0C] text-[#2FAC0C] font-semibold px-8 py-3.5 rounded-full hover:bg-[#2FAC0C]/10 transition-all duration-300 hover:scale-105"
+              className="bg-transparent border-2 border-[#2FA84F] text-[#2FA84F] font-semibold px-8 py-3.5 rounded-full hover:bg-[#2FA84F]/10 transition-all duration-300 hover:scale-105"
             >
               Learn More
             </button>

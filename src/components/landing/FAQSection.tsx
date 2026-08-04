@@ -53,7 +53,7 @@ export function FAQSection() {
   }
 
   return (
-    <section id="faq" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4]">
+    <section id="faq" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.div
@@ -63,10 +63,10 @@ export function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-8 sm:mb-12"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#252d26] mb-4">
-            Frequently Asked <span className="text-[#2FAC0C]">Questions</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#111512] mb-4">
+            Frequently Asked <span className="text-[#2FA84F]">Questions</span>
           </h2>
-          <p className="text-lg text-[#404F44]">
+          <p className="text-lg text-[#4A554C]">
             Everything you need to know about GrainHero
           </p>
         </motion.div>
@@ -80,24 +80,24 @@ export function FAQSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
-              className="bg-white rounded-xl shadow-sm border border-[#2FAC0C]/10 overflow-hidden hover:scale-105 transition-transform duration-300"
+              className="bg-white rounded-xl shadow-sm border border-[#2FA84F]/10 overflow-hidden hover:scale-105 transition-transform duration-300"
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#2FAC0C]/5 transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#2FA84F]/5 transition-colors"
               >
-                <span className="text-[#252d26] font-bold text-base sm:text-lg pr-4">
+                <span className="text-[#111512] font-bold text-base sm:text-lg pr-4">
                   {faq.question}
                 </span>
                 <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-full bg-[#2FAC0C]/10 flex items-center justify-center transition-transform duration-300 ${
+                  className={`flex-shrink-0 w-8 h-8 rounded-full bg-[#2FA84F]/10 flex items-center justify-center transition-transform duration-300 ${
                     openIndex === index ? 'rotate-180' : ''
                   }`}
                 >
                   {openIndex === index ? (
-                    <Minus className="w-5 h-5 text-[#2FAC0C]" />
+                    <Minus className="w-5 h-5 text-[#2FA84F]" />
                   ) : (
-                    <Plus className="w-5 h-5 text-[#2FAC0C]" />
+                    <Plus className="w-5 h-5 text-[#2FA84F]" />
                   )}
                 </div>
               </button>
@@ -111,7 +111,7 @@ export function FAQSection() {
                     transition={{ duration: 0.3, ease: 'easeInOut' }}
                     className="overflow-hidden"
                   >
-                    <div className="px-6 pb-5 text-[#404F44] leading-relaxed">
+                    <div className="px-6 pb-5 text-[#4A554C] leading-relaxed">
                       {faq.answer}
                     </div>
                   </motion.div>
@@ -127,19 +127,19 @@ export function FAQSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-10 text-center p-8 bg-white rounded-2xl border border-[#2FAC0C]/20"
+          className="mt-10 text-center p-8 bg-white rounded-2xl border border-[#2FA84F]/20"
         >
-          <h3 className="text-xl font-bold text-[#252d26] mb-2">
+          <h3 className="text-xl font-bold text-[#111512] mb-2">
             Still have questions?
           </h3>
-          <p className="text-[#404F44] mb-4">
+          <p className="text-[#4A554C] mb-4">
             Our team is here to help you get started
           </p>
           <button
             onClick={() => {
               window.location.href = '/contact'
             }}
-            className="bg-[#2FAC0C] text-white font-semibold px-8 py-3 rounded-full hover:bg-[#2FAC0C]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+            className="bg-[#2FA84F] text-white font-semibold px-8 py-3 rounded-full hover:bg-[#2FA84F]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
           >
             Contact Support
           </button>
