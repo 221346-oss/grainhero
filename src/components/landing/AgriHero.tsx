@@ -1,16 +1,8 @@
 import { useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Home, Wheat, Radio, Thermometer, Droplets } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import heroLoop from '@/assets/hero-loop.mp4.asset.json'
-
-const pins = [
-  { icon: Home, top: '38%', left: '7%', delay: 0 },
-  { icon: Radio, top: '26%', left: '30%', delay: 0.4 },
-  { icon: Wheat, top: '58%', left: '63%', delay: 0.8 },
-  { icon: Thermometer, top: '32%', left: '80%', delay: 1.2 },
-  { icon: Droplets, top: '68%', left: '41%', delay: 1.6 },
-]
+import heroLoop from '@/assets/silo-flight.mp4.asset.json'
 
 export function AgriHero() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -37,32 +29,11 @@ export function AgriHero() {
       </video>
 
       {/* Cinematic grade */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#252d26] via-[#252d26]/35 to-[#252d26]/60" />
-
-      {/* Map pins */}
-      <div className="pointer-events-none absolute inset-0 hidden sm:block">
-        {pins.map((p, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: -18, scale: 0.7 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.8 + p.delay, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute"
-            style={{ top: p.top, left: p.left }}
-          >
-            <div className="relative">
-              <span className="absolute inset-0 animate-ping rounded-full bg-[#2FAC0C]/40" />
-              <div className="relative flex h-11 w-11 items-center justify-center rounded-full rounded-bl-none border-2 border-[#2FAC0C] bg-[#252d26]/70 backdrop-blur-sm">
-                <p.icon className="h-5 w-5 text-[#8FE04B]" />
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#252d26]/85 via-[#252d26]/20 to-[#252d26]/70" />
 
       {/* Copy */}
-      <div className="relative z-10 flex min-h-[100svh] items-end">
-        <div className="container mx-auto px-5 pb-24 sm:px-8 sm:pb-32 lg:px-12">
+      <div className="relative z-10 flex min-h-[100svh] items-start">
+        <div className="container mx-auto px-5 pt-28 sm:px-8 sm:pt-36 lg:px-12">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
