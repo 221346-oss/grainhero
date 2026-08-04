@@ -663,7 +663,6 @@ export function DataVisualizationPanel() {
                   type="monotone"
                   dataKey="temperature"
                   name="Temperature (°C)"
-                  strokeWidth={2}
                   dot={false}
                   {...neonFill(NEON.red)}
                   {...neonAnim}
@@ -673,7 +672,6 @@ export function DataVisualizationPanel() {
                   type="monotone"
                   dataKey="humidity"
                   name="Humidity (%)"
-                  strokeWidth={2}
                   dot={false}
                   {...neonFill(NEON.info)}
                   {...neonAnim}
@@ -795,14 +793,12 @@ export function DataVisualizationPanel() {
                   <Radar
                     name="Core Readings"
                     dataKey="value"
-                    strokeWidth={2}
                     {...neonFill(NEON.brand)}
                   />
                   <Radar
                     name="Safe Threshold"
                     dataKey="safe"
                     strokeDasharray="4 4"
-                    strokeWidth={1.5}
                     {...neonFill(NEON.success)}
                   />
                   <Legend />
