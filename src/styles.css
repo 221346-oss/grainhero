@@ -209,10 +209,10 @@
   .dark .auth-bg      { background: oklch(0.20 0.015 150) !important; }
 
   /* ── Landing page section overrides ─────────────────────────────────────
-     Sections use bg-[#EDE9D4] or bg-[#252d26] as hardcoded Tailwind classes.
+     Sections use bg-[#FAFAF7] or bg-[#111512] as hardcoded Tailwind classes.
      We target them via the CSS custom selector. */
-  .dark [class*="bg-[#EDE9D4]"]  { background-color: oklch(0.20 0.015 150) !important; }
-  .dark [class*="bg-[#252d26]"]  { background-color: oklch(0.17 0.015 150) !important; }
+  .dark [class*="bg-[#FAFAF7]"]  { background-color: oklch(0.20 0.015 150) !important; }
+  .dark [class*="bg-[#111512]"]  { background-color: oklch(0.17 0.015 150) !important; }
   .dark [class*="bg-[#404F44]"]  { background-color: oklch(0.30 0.015 150) !important; }
 
   /* Landing text colors */
