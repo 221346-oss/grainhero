@@ -789,34 +789,28 @@ export function DataVisualizationPanel() {
             {radarData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="metric" fontSize={11} stroke="#64748b" />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} fontSize={9} />
+                  <PolarGrid stroke="var(--border)" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} />
                   <Radar
                     name="Core Readings"
                     dataKey="value"
-                    stroke="#4f46e5"
-                    fill="#4f46e5"
-                    fillOpacity={0.25}
                     strokeWidth={2}
+                    {...neonFill(NEON.brand)}
                   />
                   <Radar
                     name="Safe Threshold"
                     dataKey="safe"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.08}
                     strokeDasharray="4 4"
                     strokeWidth={1.5}
+                    {...neonFill(NEON.success)}
                   />
                   <Legend />
-                  <Tooltip />
+                  <Tooltip {...neonTooltipStyle} />
                 </RadarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                Waiting for device indicators...
-              </div>
+              <ChartEmpty label="Waiting for device indicators..." height={280} />
             )}
           </CardContent>
         </Card>
