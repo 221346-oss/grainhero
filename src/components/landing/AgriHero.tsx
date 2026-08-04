@@ -1,0 +1,108 @@
+import { useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { ArrowRight, Home, Wheat, Radio, Thermometer, Droplets } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import heroLoop from '@/assets/hero-loop.mp4.asset.json'
+
+const pins = [
+  { icon: Home, top: '38%', left: '7%', delay: 0 },
+  { icon: Radio, top: '26%', left: '30%', delay: 0.4 },
+  { icon: Wheat, top: '58%', left: '63%', delay: 0.8 },
+  { icon: Thermometer, top: '32%', left: '80%', delay: 1.2 },
+  { icon: Droplets, top: '68%', left: '41%', delay: 1.6 },
+]
+
+export function AgriHero() {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    v.muted = true
+    v.play().catch(() => {})
+  }, [])
+
+  return (
+    <div className="relative min-h-[100svh] w-full overflow-hidden bg-[#252d26]">
+      <video
+        ref={videoRef}
+        className="absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+      >
+        <source src={heroLoop.url} type="video/mp4" />
+      </video>
+
+      {/* Cinematic grade */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#252d26] via-[#252d26]/35 to-[#252d26]/60" />
+
+      {/* Map pins */}
+      <div className="pointer-events-none absolute inset-0 hidden sm:block">
+        {pins.map((p, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: -18, scale: 0.7 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.8 + p.delay, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute"
+            style={{ top: p.top, left: p.left }}
+          >
+            <div className="relative">
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#2FAC0C]/40" />
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-full rounded-bl-none border-2 border-[#2FAC0C] bg-[#252d26]/70 backdrop-blur-sm">
+                <p.icon className="h-5 w-5 text-[#8FE04B]" />
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Copy */}
+      <div className="relative z-10 flex min-h-[100svh] items-end">
+        <div className="container mx-auto px-5 pb-24 sm:px-8 sm:pb-32 lg:px-12">
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-4xl text-[2.6rem] font-black leading-[0.95] tracking-tight text-[#8FE04B] sm:text-6xl lg:text-8xl"
+          >
+            The Future of
+            <br />
+            Grain Storage
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.8 }}
+            className="mt-5 max-w-xl text-lg font-medium text-[#EDE9D4] sm:text-2xl"
+          >
+            Turning Sensor Data Into Saved Harvests
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 0.8 }}
+            className="mt-9 flex flex-col gap-3 sm:flex-row"
+          >
+            <Link
+              to="/marketplace"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#2FAC0C] px-8 py-4 text-base font-bold text-white transition-all hover:scale-105 hover:bg-[#8FE04B] hover:text-[#252d26]"
+            >
+              Explore Smart Silos
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <a
+              href="#how-it-works"
+              className="inline-flex items-center justify-center rounded-full border-2 border-[#EDE9D4]/60 px-8 py-4 text-base font-semibold text-[#EDE9D4] transition-all hover:scale-105 hover:bg-[#EDE9D4] hover:text-[#252d26]"
+            >
+              See How It Works
+            </a>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  )
+}
