@@ -51,6 +51,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-high: var(--severity-high);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-low: var(--severity-low);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -87,6 +94,15 @@
   --chart-3: oklch(0.7 0.25 300);
   --chart-4: oklch(0.75 0.18 90);
   --chart-5: oklch(0.65 0.22 25);
+
+  /* Neon analytics kit — semantic series tokens */
+  --success: oklch(0.62 0.17 152);
+  --warning: oklch(0.72 0.16 75);
+  --info: oklch(0.62 0.14 235);
+  --severity-critical: oklch(0.58 0.22 25);
+  --severity-high: oklch(0.68 0.18 55);
+  --severity-medium: oklch(0.75 0.15 85);
+  --severity-low: oklch(0.62 0.17 152);
 
   /* Electric Fusion palette */
   --fusion-lime: #DCF095;
@@ -132,6 +148,15 @@
   --chart-3: #C674F2;
   --chart-4: oklch(0.75 0.18 90);
   --chart-5: oklch(0.65 0.22 25);
+
+  /* Neon analytics kit — semantic series tokens (dark) */
+  --success: oklch(0.80 0.20 150);
+  --warning: oklch(0.82 0.17 82);
+  --info: oklch(0.75 0.15 235);
+  --severity-critical: oklch(0.70 0.22 22);
+  --severity-high: oklch(0.78 0.19 55);
+  --severity-medium: oklch(0.85 0.17 88);
+  --severity-low: oklch(0.80 0.20 150);
 
   --sidebar: oklch(0.17 0.02 150);
   --sidebar-foreground: oklch(0.92 0.02 130);
