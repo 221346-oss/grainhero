@@ -4,12 +4,12 @@ const partners = ['NICAT', 'HUAWEI', 'NUST', 'HEC', 'NCRA', 'PARC']
 
 export function PartnersStrip() {
   return (
-    <section className="border-y border-[#111512]/10 bg-[#F2F4EE] py-14 dark:bg-background">
+    <section className="gh-grain relative border-y border-[#111512]/10 bg-[#FAFAF7] py-16 dark:bg-background">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <p className="text-center text-xs font-bold uppercase tracking-[0.3em] text-[#4A554C]/60 dark:text-muted-foreground">
+        <p className="text-center text-[0.625rem] font-bold uppercase tracking-[0.32em] text-[#4A554C]/55 dark:text-muted-foreground">
           Backed &amp; supported by
         </p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-x-12 gap-y-8 sm:gap-x-20">
+        <div className="gh-stagger mt-10 flex flex-wrap items-center justify-center gap-x-12 gap-y-8 sm:gap-x-20">
           {partners.map((p, i) => (
             <motion.span
               key={p}
