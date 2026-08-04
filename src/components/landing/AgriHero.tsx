@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import heroLoop from '@/assets/silo-flight.mp4.asset.json'
+import heroLoop from '@/assets/silo-flight-v2.mp4.asset.json'
 
 export function AgriHero() {
   const videoRef = useRef<HTMLVideoElement>(null)
