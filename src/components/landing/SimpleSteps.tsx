@@ -11,13 +11,12 @@ export function SimpleSteps() {
   return (
     <section id="how-it-works" className="relative bg-[#111512] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <span className="gh-eyebrow text-[#A8E6A1]">The system</span>
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-5 max-w-2xl text-3xl font-black leading-[1.02] tracking-tight text-[#FAFAF7] sm:text-5xl"
+          className="max-w-2xl text-[1.75rem] font-black leading-[1.02] tracking-tight text-[#FAFAF7] sm:text-5xl"
         >
           Four steps.
           <br />

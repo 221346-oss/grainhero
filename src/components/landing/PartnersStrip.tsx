@@ -4,12 +4,9 @@ const partners = ['NICAT', 'HUAWEI', 'NUST', 'HEC', 'NCRA', 'PARC']
 
 export function PartnersStrip() {
   return (
-    <section className="gh-grain relative border-y border-[#111512]/10 bg-[#FAFAF7] py-16 dark:bg-background">
+    <section className="gh-grain relative border-y border-[#111512]/10 bg-[#FAFAF7] py-12 dark:bg-background sm:py-14">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <p className="text-center text-[0.625rem] font-bold uppercase tracking-[0.32em] text-[#4A554C]/55 dark:text-muted-foreground">
-          Backed &amp; supported by
-        </p>
-        <div className="gh-stagger mt-10 flex flex-wrap items-center justify-center gap-x-12 gap-y-8 sm:gap-x-20">
+        <div className="gh-stagger flex flex-wrap items-center justify-center gap-x-8 gap-y-6 sm:gap-x-20 sm:gap-y-8">
           {partners.map((p, i) => (
             <motion.span
               key={p}
@@ -17,7 +14,7 @@ export function PartnersStrip() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.07 }}
-              className="cursor-default text-xl font-black tracking-[0.18em] text-[#111512]/35 grayscale transition-all duration-300 hover:text-[#2FA84F] hover:opacity-100 dark:text-foreground/40 sm:text-2xl"
+              className="cursor-default text-base font-black tracking-[0.18em] text-[#111512]/35 grayscale transition-all duration-300 hover:text-[#2FA84F] hover:opacity-100 dark:text-foreground/40 sm:text-2xl"
             >
               {p}
             </motion.span>
