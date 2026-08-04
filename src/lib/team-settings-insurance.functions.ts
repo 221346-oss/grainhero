@@ -1,7 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
+import { randomInt } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { assertPlanAllows } from "@/lib/plan-gate";
+
+// Excludes visually ambiguous characters (0/O, 1/I/L).
+const INVITE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const INVITE_CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function generateInvitationCode(length = 8): string {
+  let out = "";
+  for (let i = 0; i < length; i++)
+    out += INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)];
+  return out;
+}
 
 async function roleFlags(supabase: any, userId: string) {
   const r = await getEffectiveRole(supabase, userId);
@@ -27,7 +39,9 @@ export const listTeamMembers = createServerFn({ method: "GET" })
 
     const { data: profiles, error } = await context.supabase
       .from("profiles")
-      .select("id, name, email, phone, avatar, status, blocked, email_verified, department, employee_id, created_at, warehouse_id")
+      .select(
+        "id, name, email, phone, avatar, status, blocked, email_verified, department, employee_id, created_at, warehouse_id",
+      )
       .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
       .order("created_at", { ascending: false });
     if (error) throw error;
@@ -53,12 +67,17 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
-    if (isManager && !isAdmin && !isSuper && data.role !== "technician") throw new Error("Managers can only invite technicians");
-    if (isAdmin && !isSuper && data.role === "admin") throw new Error("Only super admins can invite admins");
+    if (isManager && !isAdmin && !isSuper && data.role !== "technician")
+      throw new Error("Managers can only invite technicians");
+    if (isAdmin && !isSuper && data.role === "admin")
+      throw new Error("Only super admins can invite admins");
 
     const tenantId = context.userId;
     const { data: tenantRow } = await context.supabase
-      .from("profiles").select("admin_id, id").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("admin_id, id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? tenantId;
 
     // Enforce plan-based staff limit via central gate.
@@ -81,7 +100,10 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         console.error("[inviteTeamMember] createUser failed", createRes.error);
         throw new Error(msg || "Could not create the user in Supabase Auth.");
       }
-      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
       if (listErr) throw new Error(listErr.message || "Failed to look up existing user");
       uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
       if (!uid) throw new Error("A user with that email already exists but could not be located.");
@@ -89,32 +111,30 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       uid = createRes.data.user?.id;
     }
 
-    // 2) Generate an invite/magic link (does not send email; we send via Resend).
-    let inviteLink: string | null = null;
-    try {
-      const linkRes = await supabaseAdmin.auth.admin.generateLink({
-        type: "invite",
-        email,
-        options: { data: { name: data.name ?? "", invited_role: data.role, admin_id } },
-      });
-      if (!linkRes.error) inviteLink = linkRes.data.properties?.action_link ?? null;
-    } catch (e) {
-      console.warn("[inviteTeamMember] generateLink failed (non-fatal)", e);
-    }
+    // 2) Generate a one-time invitation code. Replaces the old Supabase magic-link
+    //    invite, which the Flutter technician app can't open (no deep-link handling
+    //    set up) — a code works identically for the web (manager) and app (technician)
+    //    acceptance flows via /api/public/v1/auth/validate-invitation + accept-invite.
+    const invitationCode = generateInvitationCode();
+    const invitationExpires = new Date(Date.now() + INVITE_CODE_TTL_MS).toISOString();
+    const acceptUrl = `https://grainheroo.lovable.app/auth/accept-invite?email=${encodeURIComponent(email)}`;
 
     // 3) Send the invitation email via Resend (already configured in this project).
     try {
       const { sendEmailViaResend } = await import("@/lib/resend.server");
-      const cta = inviteLink
-        ? `<p><a href="${inviteLink}" style="display:inline-block;background:#059669;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Accept invitation</a></p>`
-        : `<p>Sign in at <a href="https://grainheroo.lovable.app/auth">grainheroo.lovable.app/auth</a> using this email to accept.</p>`;
+      const cta =
+        data.role === "technician"
+          ? `<p>Open the GrainHero app and enter this code to finish setting up your account.</p>`
+          : `<p>Enter this code at <a href="${acceptUrl}">${acceptUrl}</a> to finish setting up your account.</p>`;
       await sendEmailViaResend({
         to: email,
         subject: `You've been invited to GrainHero as ${data.role}`,
         html: `<div style="font-family:Inter,Arial,sans-serif;color:#0f172a;max-width:520px;margin:auto">
           <h2 style="color:#065f46">You're invited to GrainHero</h2>
           <p>Hi ${data.name ?? "there"}, you've been added to a GrainHero tenant as <strong>${data.role}</strong>.</p>
+          <p style="font-size:28px;font-weight:700;letter-spacing:6px;background:#f1f5f9;padding:14px 20px;border-radius:8px;display:inline-block;font-family:monospace">${invitationCode}</p>
           ${cta}
+          <p style="color:#64748b;font-size:12px">This code expires in 7 days.</p>
           <p style="color:#64748b;font-size:12px;margin-top:24px">If you didn't expect this, you can ignore this email.</p>
         </div>`,
       });
@@ -122,18 +142,46 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       console.warn("[inviteTeamMember] email send failed (non-fatal)", e);
     }
     if (uid) {
-      const { error: pErr } = await supabaseAdmin.from("profiles").upsert({ id: uid, email, name: data.name ?? email.split("@")[0], admin_id, invited_by: context.userId, invitation_role: data.role }, { onConflict: "id" });
-      if (pErr) { console.error("[inviteTeamMember] profiles upsert failed", pErr); throw new Error(pErr.message || "Failed to save profile"); }
+      const { error: pErr } = await supabaseAdmin.from("profiles").upsert(
+        {
+          id: uid,
+          email,
+          name: data.name ?? email.split("@")[0],
+          admin_id,
+          invited_by: context.userId,
+          invitation_role: data.role,
+          invitation_token: invitationCode,
+          invitation_expires: invitationExpires,
+        },
+        { onConflict: "id" },
+      );
+      if (pErr) {
+        console.error("[inviteTeamMember] profiles upsert failed", pErr);
+        throw new Error(pErr.message || "Failed to save profile");
+      }
       await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
-      const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
-      if (rErr) { console.error("[inviteTeamMember] user_roles insert failed", rErr); throw new Error(rErr.message || "Failed to assign role"); }
+      const { error: rErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: uid, role: data.role });
+      if (rErr) {
+        console.error("[inviteTeamMember] user_roles insert failed", rErr);
+        throw new Error(rErr.message || "Failed to assign role");
+      }
     }
     return { ok: true };
   });
 
 export const updateTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string; name?: string; phone?: string; role?: "admin" | "manager" | "technician" | "pending"; blocked?: boolean }) => d)
+  .validator(
+    (d: {
+      id: string;
+      name?: string;
+      phone?: string;
+      role?: "admin" | "manager" | "technician" | "pending";
+      blocked?: boolean;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
@@ -143,7 +191,10 @@ export const updateTeamMember = createServerFn({ method: "POST" })
     if (data.phone !== undefined) update.phone = data.phone;
     if (data.blocked !== undefined) update.blocked = data.blocked;
     if (Object.keys(update).length) {
-      const { error } = await context.supabase.from("profiles").update(update as any).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("profiles")
+        .update(update as any)
+        .eq("id", data.id);
       if (error) throw error;
     }
     if (data.role) {
@@ -174,7 +225,9 @@ export const getMySettings = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("id, name, email, phone, avatar, business_type, address, location, preferences, department, employee_id, shift_pattern, certification_level")
+      .select(
+        "id, name, email, phone, avatar, business_type, address, location, preferences, department, employee_id, shift_pattern, certification_level",
+      )
       .eq("id", context.userId)
       .maybeSingle();
     if (error) throw error;
@@ -183,17 +236,34 @@ export const getMySettings = createServerFn({ method: "GET" })
 
 export const updateMySettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: {
-    name?: string; phone?: string; business_type?: string; avatar?: string | null;
-    address?: Record<string, unknown>; location?: Record<string, unknown>;
-    preferences?: Record<string, unknown>;
-  }) => d)
+  .validator(
+    (d: {
+      name?: string;
+      phone?: string;
+      business_type?: string;
+      avatar?: string | null;
+      address?: Record<string, unknown>;
+      location?: Record<string, unknown>;
+      preferences?: Record<string, unknown>;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     const update: Record<string, any> = {};
-    for (const k of ["name","phone","business_type","avatar","address","location","preferences"] as const) {
+    for (const k of [
+      "name",
+      "phone",
+      "business_type",
+      "avatar",
+      "address",
+      "location",
+      "preferences",
+    ] as const) {
       if (data[k] !== undefined) update[k] = data[k];
     }
-    const { error } = await context.supabase.from("profiles").update(update as any).eq("id", context.userId);
+    const { error } = await context.supabase
+      .from("profiles")
+      .update(update as any)
+      .eq("id", context.userId);
     if (error) throw error;
     return { ok: true };
   });
@@ -201,21 +271,47 @@ export const updateMySettings = createServerFn({ method: "POST" })
 // ============= INSURANCE =============
 
 export type InsurancePolicyRow = {
-  id: string; policy_number: string; provider_name: string; coverage_type: string;
-  coverage_amount: number; premium_amount: number; deductible: number; status: string;
-  start_date: string | null; end_date: string | null; renewal_date: string | null;
-  covered_batches: any; risk_factors: any; notes: string | null; created_at: string;
+  id: string;
+  policy_number: string;
+  provider_name: string;
+  coverage_type: string;
+  coverage_amount: number;
+  premium_amount: number;
+  deductible: number;
+  status: string;
+  start_date: string | null;
+  end_date: string | null;
+  renewal_date: string | null;
+  covered_batches: any;
+  risk_factors: any;
+  notes: string | null;
+  created_at: string;
 };
 
 export type InsuranceClaimRow = {
-  id: string; claim_number: string; policy_id: string | null; claim_type: string;
-  description: string | null; amount_claimed: number; amount_approved: number; status: string;
-  incident_date: string | null; filed_date: string | null; approved_date: string | null;
-  batch_affected: any; photos: any; notes: string | null; created_at: string;
+  id: string;
+  claim_number: string;
+  policy_id: string | null;
+  claim_type: string;
+  description: string | null;
+  amount_claimed: number;
+  amount_approved: number;
+  status: string;
+  incident_date: string | null;
+  filed_date: string | null;
+  approved_date: string | null;
+  batch_affected: any;
+  photos: any;
+  notes: string | null;
+  created_at: string;
 };
 
 async function tenantAdminId(supabase: any, userId: string): Promise<string> {
-  const { data } = await supabase.from("profiles").select("admin_id, id").eq("id", userId).maybeSingle();
+  const { data } = await supabase
+    .from("profiles")
+    .select("admin_id, id")
+    .eq("id", userId)
+    .maybeSingle();
   return data?.admin_id ?? data?.id ?? userId;
 }
 
@@ -223,7 +319,9 @@ export const listPolicies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("insurance_policies").select("*").order("created_at", { ascending: false });
+      .from("insurance_policies")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsurancePolicyRow[];
   });
@@ -233,7 +331,11 @@ export const upsertPolicy = createServerFn({ method: "POST" })
   .validator((d: Partial<InsurancePolicyRow> & { id?: string }) => d)
   .handler(async ({ data, context }) => {
     if (!data.id) {
-      await assertPlanAllows({ feature: "insurance", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "insurance",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     const admin_id = await tenantAdminId(context.supabase, context.userId);
     const row: any = {
@@ -254,11 +356,18 @@ export const upsertPolicy = createServerFn({ method: "POST" })
       created_by: context.userId,
     };
     if (data.id) {
-      const { error } = await context.supabase.from("insurance_policies").update(row).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("insurance_policies")
+        .update(row)
+        .eq("id", data.id);
       if (error) throw error;
       return { id: data.id };
     }
-    const { data: ins, error } = await context.supabase.from("insurance_policies").insert(row).select("id").single();
+    const { data: ins, error } = await context.supabase
+      .from("insurance_policies")
+      .insert(row)
+      .select("id")
+      .single();
     if (error) throw error;
     return { id: ins.id };
   });
@@ -276,7 +385,9 @@ export const listClaims = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("insurance_claims").select("*").order("created_at", { ascending: false });
+      .from("insurance_claims")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsuranceClaimRow[];
   });
@@ -304,11 +415,18 @@ export const upsertClaim = createServerFn({ method: "POST" })
       created_by: context.userId,
     };
     if (data.id) {
-      const { error } = await context.supabase.from("insurance_claims").update(row).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("insurance_claims")
+        .update(row)
+        .eq("id", data.id);
       if (error) throw error;
       return { id: data.id };
     }
-    const { data: ins, error } = await context.supabase.from("insurance_claims").insert(row).select("id").single();
+    const { data: ins, error } = await context.supabase
+      .from("insurance_claims")
+      .insert(row)
+      .select("id")
+      .single();
     if (error) throw error;
     return { id: ins.id };
   });

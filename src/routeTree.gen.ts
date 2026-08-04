@@ -59,6 +59,7 @@ import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authent
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
 import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
+import { Route as AuthAcceptInviteRouteImport } from './routes/auth.accept-invite'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -153,6 +154,8 @@ import { Route as ApiPublicV1ActionsAckAlertRouteImport } from './routes/api/pub
 import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
 import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
 import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
+import { Route as ApiPublicV1AuthAcceptInviteRouteImport } from './routes/api/public/v1/auth/accept-invite'
+import { Route as ApiPublicV1AuthValidateInvitationRouteImport } from './routes/api/public/v1/auth/validate-invitation'
 import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
 import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
 import { Route as ApiPublicV1CommerceCheckoutRouteImport } from './routes/api/public/v1/commerce/checkout'
@@ -447,6 +450,11 @@ const AuthenticatedTraceabilityRoute =
     path: '/traceability',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthAcceptInviteRoute = AuthAcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
@@ -995,6 +1003,18 @@ const ApiPublicV1ActionsReplayRoute =
     path: '/api/public/v1/actions/replay',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1AuthAcceptInviteRoute =
+  ApiPublicV1AuthAcceptInviteRouteImport.update({
+    id: '/api/public/v1/auth/accept-invite',
+    path: '/api/public/v1/auth/accept-invite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthValidateInvitationRoute =
+  ApiPublicV1AuthValidateInvitationRouteImport.update({
+    id: '/api/public/v1/auth/validate-invitation',
+    path: '/api/public/v1/auth/validate-invitation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1CommerceAddressesRoute =
   ApiPublicV1CommerceAddressesRouteImport.update({
     id: '/api/public/v1/commerce/addresses',
@@ -1219,6 +1239,7 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
+  '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1313,6 +1334,8 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/auth/accept-invite': typeof ApiPublicV1AuthAcceptInviteRoute
+  '/api/public/v1/auth/validate-invitation': typeof ApiPublicV1AuthValidateInvitationRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
@@ -1392,6 +1415,7 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
+  '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1486,6 +1510,8 @@ export interface FileRoutesByTo {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/auth/accept-invite': typeof ApiPublicV1AuthAcceptInviteRoute
+  '/api/public/v1/auth/validate-invitation': typeof ApiPublicV1AuthValidateInvitationRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
@@ -1569,6 +1595,7 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
+  '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1663,6 +1690,8 @@ export interface FileRoutesById {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/auth/accept-invite': typeof ApiPublicV1AuthAcceptInviteRoute
+  '/api/public/v1/auth/validate-invitation': typeof ApiPublicV1AuthValidateInvitationRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
@@ -1746,6 +1775,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team-management'
     | '/traceability'
+    | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -1840,6 +1870,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/auth/accept-invite'
+    | '/api/public/v1/auth/validate-invitation'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/checkout'
@@ -1919,6 +1951,7 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team-management'
     | '/traceability'
+    | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -2013,6 +2046,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/auth/accept-invite'
+    | '/api/public/v1/auth/validate-invitation'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/checkout'
@@ -2095,6 +2130,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
     | '/_authenticated/traceability'
+    | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -2189,6 +2225,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/auth/accept-invite'
+    | '/api/public/v1/auth/validate-invitation'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/checkout'
@@ -2262,6 +2300,8 @@ export interface RootRouteChildren {
   ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
   ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
   ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
+  ApiPublicV1AuthAcceptInviteRoute: typeof ApiPublicV1AuthAcceptInviteRoute
+  ApiPublicV1AuthValidateInvitationRoute: typeof ApiPublicV1AuthValidateInvitationRoute
   ApiPublicV1CommerceAddressesRoute: typeof ApiPublicV1CommerceAddressesRoute
   ApiPublicV1CommerceCartRoute: typeof ApiPublicV1CommerceCartRoute
   ApiPublicV1CommerceCheckoutRoute: typeof ApiPublicV1CommerceCheckoutRoute
@@ -2644,6 +2684,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/traceability'
       preLoaderRoute: typeof AuthenticatedTraceabilityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/accept-invite': {
+      id: '/auth/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/auth/accept-invite'
+      preLoaderRoute: typeof AuthAcceptInviteRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/auth/forgot-password': {
       id: '/auth/forgot-password'
@@ -3303,6 +3350,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ActionsReplayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/auth/accept-invite': {
+      id: '/api/public/v1/auth/accept-invite'
+      path: '/api/public/v1/auth/accept-invite'
+      fullPath: '/api/public/v1/auth/accept-invite'
+      preLoaderRoute: typeof ApiPublicV1AuthAcceptInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/validate-invitation': {
+      id: '/api/public/v1/auth/validate-invitation'
+      path: '/api/public/v1/auth/validate-invitation'
+      fullPath: '/api/public/v1/auth/validate-invitation'
+      preLoaderRoute: typeof ApiPublicV1AuthValidateInvitationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/commerce/addresses': {
       id: '/api/public/v1/commerce/addresses'
       path: '/api/public/v1/commerce/addresses'
@@ -3844,6 +3905,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface AuthRouteChildren {
+  AuthAcceptInviteRoute: typeof AuthAcceptInviteRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
@@ -3852,6 +3914,7 @@ interface AuthRouteChildren {
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthAcceptInviteRoute: AuthAcceptInviteRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
@@ -3950,6 +4013,9 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ActionsConfirmDeliveryRoute,
   ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
   ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
+  ApiPublicV1AuthAcceptInviteRoute: ApiPublicV1AuthAcceptInviteRoute,
+  ApiPublicV1AuthValidateInvitationRoute:
+    ApiPublicV1AuthValidateInvitationRoute,
   ApiPublicV1CommerceAddressesRoute: ApiPublicV1CommerceAddressesRoute,
   ApiPublicV1CommerceCartRoute: ApiPublicV1CommerceCartRoute,
   ApiPublicV1CommerceCheckoutRoute: ApiPublicV1CommerceCheckoutRoute,

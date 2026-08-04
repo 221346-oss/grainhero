@@ -56,7 +56,7 @@ function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
-      options: { 
+      options: {
         shouldCreateUser: true,
         emailRedirectTo: window.location.origin + (redirect ?? "/dashboard"),
       },
@@ -116,12 +116,25 @@ function LoginPage() {
           </Link>
         </p>
         <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors inline-flex items-center gap-1">
+          <Link
+            to="/"
+            className="hover:text-foreground transition-colors inline-flex items-center gap-1"
+          >
             ← Go to home
           </Link>
           <span>·</span>
-          <Link to="/auth/forgot-password" className="hover:text-[#00a63e] hover:underline transition-colors">
+          <Link
+            to="/auth/forgot-password"
+            className="hover:text-[#00a63e] hover:underline transition-colors"
+          >
             Forgot password?
+          </Link>
+          <span>·</span>
+          <Link
+            to="/auth/accept-invite"
+            className="hover:text-[#00a63e] hover:underline transition-colors"
+          >
+            Have an invite code?
           </Link>
         </div>
       </div>
