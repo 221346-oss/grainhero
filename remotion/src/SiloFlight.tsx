@@ -50,9 +50,11 @@ const Shot: React.FC<{
     extrapolateRight: "clamp",
   });
 
+  const fi = Math.max(fadeIn, 0.01);
+  const fo = Math.max(fadeOut, 0.01);
   const opacity = interpolate(
     local,
-    [-fadeIn, 0, duration - fadeOut, duration],
+    [-fi, 0, duration - fo, duration],
     [0, 1, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: ease },
   );
