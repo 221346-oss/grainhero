@@ -23,7 +23,7 @@ export function SimpleSteps() {
           <span className="text-[#2FA84F]">That&apos;s the whole system.</span>
         </motion.h2>
 
-        <div className="gh-stagger mt-14 grid gap-px overflow-hidden rounded-2xl bg-[#FAFAF7]/10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="gh-stagger mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-[#FAFAF7]/10 lg:grid-cols-4">
           {steps.map(([num, title, body], i) => (
             <motion.div
               key={title}
@@ -31,13 +31,15 @@ export function SimpleSteps() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.5, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
-              className="group relative bg-[#111512] p-7 transition-colors duration-300 hover:bg-[#161C17]"
+              className="group relative bg-[#111512] p-4 transition-colors duration-300 hover:bg-[#161C17] sm:p-7"
             >
               <span className="font-mono text-[0.625rem] tracking-[0.3em] text-[#2FA84F]">
                 {num}
               </span>
-              <h3 className="mt-6 text-xl font-black text-[#FAFAF7]">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#FAFAF7]/60">{body}</p>
+              <h3 className="mt-3 text-base font-black text-[#FAFAF7] sm:mt-6 sm:text-xl">{title}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-[#FAFAF7]/60 sm:mt-2 sm:text-sm">
+                {body}
+              </p>
               <span className="absolute bottom-0 left-0 h-px w-0 bg-[#A8E6A1] transition-all duration-500 group-hover:w-full" />
             </motion.div>
           ))}
