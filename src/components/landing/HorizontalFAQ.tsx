@@ -18,9 +18,10 @@ export function HorizontalFAQ() {
   return (
     <section id="faq" ref={ref} className="relative h-[240vh] bg-[#111512]">
       <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
-        <div className="mx-auto mb-8 w-full max-w-7xl px-5 sm:px-8">
-          <h2 className="text-2xl font-black tracking-tight text-[#FAFAF7] sm:text-3xl">
-            Questions
+        <div className="mx-auto mb-10 w-full max-w-7xl px-5 sm:px-8">
+          <span className="gh-eyebrow text-[#A8E6A1]">Questions</span>
+          <h2 className="mt-4 text-3xl font-black tracking-tight text-[#FAFAF7] sm:text-4xl">
+            Everything worth asking.
           </h2>
         </div>
 
