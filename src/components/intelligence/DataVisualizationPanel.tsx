@@ -62,6 +62,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
+import { NEON, NeonPatternDefs, neonFill, neonGrid, neonAxis, neonTooltipStyle, neonAnim, ChartEmpty, HairlineGrid, NeonPanel, StatusBadge as NeonStatusBadge } from "@/components/charts/neon";
 import { useFirebaseSensor } from "@/hooks/use-firebase-sensor";
 import {
   listSensorDevices,
@@ -329,6 +330,7 @@ export function DataVisualizationPanel() {
 
   return (
     <div className="space-y-6">
+      <NeonPatternDefs />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -650,48 +652,38 @@ export function DataVisualizationPanel() {
           ) : history.length > 1 ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={history} margin={{ left: -10, right: 10, top: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="humGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="time" minTickGap={45} fontSize={11} stroke="#94a3b8" />
-                <YAxis yAxisId="left" fontSize={11} stroke="#94a3b8" label={{ value: "°C", position: "insideTopLeft", offset: -5 }} />
-                <YAxis yAxisId="right" orientation="right" fontSize={11} stroke="#94a3b8" label={{ value: "%", position: "insideTopRight", offset: -5 }} />
-                <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }} />
+                <CartesianGrid {...neonGrid} />
+                <XAxis dataKey="time" minTickGap={45} {...neonAxis} />
+                <YAxis yAxisId="left" {...neonAxis} label={{ value: "°C", position: "insideTopLeft", offset: -5 }} />
+                <YAxis yAxisId="right" orientation="right" {...neonAxis} label={{ value: "%", position: "insideTopRight", offset: -5 }} />
+                <Tooltip {...neonTooltipStyle} />
                 <Legend />
                 <Area
                   yAxisId="left"
                   type="monotone"
                   dataKey="temperature"
-                  stroke="#ef4444"
-                  fill="url(#tempGrad)"
                   name="Temperature (°C)"
                   strokeWidth={2}
                   dot={false}
+                  {...neonFill(NEON.red)}
+                  {...neonAnim}
                 />
                 <Area
                   yAxisId="right"
                   type="monotone"
                   dataKey="humidity"
-                  stroke="#3b82f6"
-                  fill="url(#humGrad)"
                   name="Humidity (%)"
                   strokeWidth={2}
                   dot={false}
+                  {...neonFill(NEON.info)}
+                  {...neonAnim}
                 />
                 {history.some((h) => h.dewPoint !== null) && (
                   <Line
                     yAxisId="left"
                     type="monotone"
                     dataKey="dewPoint"
-                    stroke="#06b6d4"
+                    stroke={NEON.brand2}
                     strokeDasharray="5 5"
                     name="Dew Point (°C)"
                     dot={false}
@@ -701,10 +693,7 @@ export function DataVisualizationPanel() {
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-400">
-              <Activity className="h-6 w-6 mr-2 animate-pulse" />
-              Waiting for sensor readings to accumulate...
-            </div>
+            <ChartEmpty label="Waiting for sensor readings to accumulate..." height={320} />
           )}
         </CardContent>
       </Card>

@@ -672,9 +672,9 @@ function PlatformBusinessPage() {
       )}
 
       {/* ── Expiring soon ───────────────────────────────────────────── */}
-      <div className="rounded-lg border border-amber-200 bg-white overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-amber-100 flex items-center justify-between">
-          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+      <div className="rounded-md border border-border bg-background overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
+          <span className="text-[13px] font-medium" style={{ color: NEON.warning }}>
             Expiring within 7 days
             {expiring.length > 0 && ` · ${expiring.length}`}
           </span>
@@ -685,54 +685,56 @@ function PlatformBusinessPage() {
                 Plan: s.plan_name ?? "—",
                 Expires: s.end_date ? new Date(s.end_date).toLocaleDateString() : "—",
               })), "expiring-subscriptions")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100 rounded"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 rounded"
             >
               <Download className="w-3 h-3" /> CSV
             </button>
           )}
         </div>
-        {expiring.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-6">
-            No subscriptions expiring in the next 7 days.
-          </p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <th className="text-left px-5 py-2.5 font-semibold">Tenant</th>
-                <th className="text-left px-3 py-2.5 font-semibold">Plan</th>
-                <th className="text-right px-3 py-2.5 font-semibold">Expires</th>
-                <th className="text-right px-5 py-2.5 font-semibold">Action</th>
+        <div className="overflow-x-auto">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant</th>
+              <th className="text-left font-medium text-muted-foreground px-3 py-2">Plan</th>
+              <th className="text-right font-medium text-muted-foreground px-3 py-2">Expires</th>
+              <th className="text-right font-medium text-muted-foreground px-3 py-2">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {expiring.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
+                  No subscriptions expiring in the next 7 days.
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {(expiring as any[]).map((s) => {
+            ) : (expiring as any[]).map((s) => {
                 const days = s.end_date
                   ? Math.ceil((new Date(s.end_date).getTime() - Date.now()) / 86_400_000)
                   : null;
                 const alreadyNotified = notified.has(s.admin_id);
                 return (
-                  <tr key={s.id} className="hover:bg-amber-50/30">
-                    <td className="px-5 py-3 text-[#404F44] font-medium truncate max-w-[160px]">
+                  <tr key={s.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="px-3 py-2 text-foreground font-medium truncate max-w-[160px]">
                       {s.admin_name ?? s.admin_id?.slice(0, 8) ?? "—"}
                     </td>
-                    <td className="px-3 py-3 text-slate-600">{s.plan_name ?? "—"}</td>
-                    <td className="px-3 py-3 text-right">
-                      <div className="font-medium text-amber-700">
+                    <td className="px-3 py-2 text-muted-foreground">{s.plan_name ?? "—"}</td>
+                    <td className="px-3 py-2 text-right">
+                      <div className="font-medium tabular-nums" style={{ color: NEON.warning }}>
                         {s.end_date ? new Date(s.end_date).toLocaleDateString() : "—"}
                       </div>
                       {days !== null && (
-                        <div className="text-[10px] text-amber-500">{days} day{days !== 1 ? "s" : ""} left</div>
+                        <div className="text-[10px]" style={{ color: NEON.warning }}>{days} day{days !== 1 ? "s" : ""} left</div>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="px-3 py-2 text-right">
                       <button
                         onClick={() => notifyMut.mutate(s.admin_id)}
                         disabled={notifyMut.isPending || alreadyNotified || !s.admin_id}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-40 ${
                           alreadyNotified
-                            ? "bg-emerald-100 text-emerald-700 cursor-default"
-                            : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                            ? "bg-emerald-100 text-emerald-700 cursor-default dark:bg-emerald-950/40 dark:text-emerald-400"
+                            : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-400"
                         }`}
                       >
                         <Bell className="w-3 h-3" />
@@ -741,10 +743,10 @@ function PlatformBusinessPage() {
                     </td>
                   </tr>
                 );
-              })}
-            </tbody>
-          </table>
-        )}
+            })}
+          </tbody>
+        </table>
+        </div>
       </div>
     </AdminPageShell>
   );
