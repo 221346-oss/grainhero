@@ -2,75 +2,68 @@ import { motion } from 'framer-motion'
 
 const rows = [
   {
-    speed: 46,
+    speed: 44,
     reverse: false,
     items: [
-      'How much grain did we lose last season?',
-      'Is the moisture rising inside silo 3?',
-      'Why did that batch spoil overnight?',
-      'Who last checked the aeration fans?',
+      'Is moisture rising in silo 3?',
+      'Why did that batch spoil?',
+      'Can we predict spoilage?',
     ],
   },
   {
-    speed: 58,
+    speed: 56,
     reverse: true,
     items: [
-      'Can we predict spoilage before it starts?',
-      'Which warehouse needs attention today?',
-      'How do we prove quality to buyers?',
-      'What is the safe storage window left?',
-    ],
-  },
-  {
-    speed: 52,
-    reverse: false,
-    items: [
-      'Are the sensors even online right now?',
-      'How do we scale to ten more silos?',
-      'Can my team see this from the field?',
-      'What does the data actually tell us?',
+      'Are the sensors online?',
+      'Which silo needs attention?',
+      'How much did we lose?',
     ],
   },
 ]
 
-function Chip({ text, tone }: { text: string; tone: number }) {
-  const tones = ['bg-[#2FA84F] text-white', 'bg-[#A8E6A1] text-[#111512]', 'bg-[#C7D9C1] text-[#111512]']
-  return (
-    <span
-      className={`mx-2 inline-flex shrink-0 items-center gap-3 rounded-full px-6 py-3.5 text-sm font-bold sm:text-base ${tones[tone % 3]}`}
-    >
-      <span className="h-7 w-7 shrink-0 rounded-full bg-current opacity-20" />
-      {text}
-    </span>
-  )
-}
-
 export function ProblemMarquee() {
   return (
-    <section id="problem" className="overflow-hidden bg-[#F2F4EE] py-20 dark:bg-background sm:py-28">
-      <div className="mx-auto max-w-5xl px-5 text-center">
+    <section
+      id="problem"
+      className="gh-grain relative overflow-hidden bg-[#FAFAF7] py-20 dark:bg-background sm:py-28"
+    >
+      <div className="mx-auto max-w-3xl px-5 text-center">
+        <span className="gh-eyebrow text-[#2FA84F]">The daily unknowns</span>
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="text-3xl font-black leading-[1.08] tracking-tight text-[#2FA84F] sm:text-5xl lg:text-6xl"
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-5 text-3xl font-black leading-[1.05] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl"
         >
-          Grain operators juggle dozens of unknowns every single day. What if the silo answered
-          them for you?
+          What if the silo{' '}
+          <span className="bg-gradient-to-r from-[#2FA84F] to-[#A8E6A1] bg-clip-text text-transparent">
+            answered back?
+          </span>
         </motion.h2>
       </div>
 
-      <div className="mt-14 space-y-4">
+      <div className="mt-14 space-y-6">
         {rows.map((row, ri) => (
           <div key={ri} className="relative flex overflow-hidden">
             <motion.div
-              className="flex whitespace-nowrap"
+              className="flex shrink-0 items-center whitespace-nowrap"
               animate={{ x: row.reverse ? ['-50%', '0%'] : ['0%', '-50%'] }}
               transition={{ duration: row.speed, ease: 'linear', repeat: Infinity }}
             >
               {[...row.items, ...row.items, ...row.items, ...row.items].map((t, i) => (
-                <Chip key={i} text={t} tone={i + ri} />
+                <span key={i} className="flex shrink-0 items-center">
+                  <span
+                    className={`px-8 text-2xl font-black tracking-tight sm:text-4xl ${
+                      (i + ri) % 2 === 0
+                        ? 'text-[#111512] dark:text-foreground'
+                        : 'text-[#C7D9C1] dark:text-muted-foreground/50'
+                    }`}
+                  >
+                    {t}
+                  </span>
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#2FA84F]" />
+                </span>
               ))}
             </motion.div>
           </div>
