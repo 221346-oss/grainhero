@@ -51,6 +51,7 @@ const updatePlanInput = z.object({
   price_cents: z.number().int().min(0).optional(),
   max_users: z.number().int().min(0).optional(),
   max_silos: z.number().int().min(0).optional(),
+  max_warehouses: z.number().int().min(0).optional(),
   max_batches: z.number().int().min(0).optional(),
   max_sensors: z.number().int().min(0).optional(),
   max_actuators: z.number().int().min(0).optional(),
@@ -70,6 +71,96 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
       .update(patch as never)
       .eq("plan_id", plan_id);
     if (error) throw error;
+
+    // Propagate updated limits to all live subscription rows on this plan
+    // so usePlanLimits on the admin side reflects the change immediately.
+    // Uses context.supabase first (super_admin passes RLS), falls back to
+    // supabaseAdmin only if the service role key is available.
+    try {
+      const limitPatch: Record<string, number> = {};
+      if (patch.max_silos      !== undefined) limitPatch.max_silos      = patch.max_silos;
+      if (patch.max_warehouses !== undefined) limitPatch.max_warehouses = patch.max_warehouses;
+      if (patch.max_users      !== undefined) limitPatch.max_users      = patch.max_users;
+      if (patch.max_batches    !== undefined) limitPatch.max_batches    = patch.max_batches;
+      if (patch.max_sensors    !== undefined) limitPatch.max_sensors    = patch.max_sensors;
+      if (patch.max_actuators  !== undefined) limitPatch.max_actuators  = patch.max_actuators;
+
+      if (Object.keys(limitPatch).length > 0) {
+        // super_admin passes RLS on subscriptions — context.supabase is enough
+        await context.supabase
+          .from("subscriptions")
+          .update(limitPatch as never)
+          .eq("plan_name", plan_id)
+          .in("status", ["active", "trial"]);
+      }
+    } catch (err) {
+      console.warn("[updatePlanThreshold] subscription limit sync failed", err);
+    }
+
+    // Notify all tenant admins on this plan so they see updated limits immediately.
+    try {
+      // Fetch plan name — context.supabase (super_admin) can read plan_thresholds
+      const { data: planRow } = await context.supabase
+        .from("plan_thresholds")
+        .select("name")
+        .eq("plan_id", plan_id)
+        .maybeSingle();
+      const planName = planRow?.name ?? plan_id;
+
+      // Find affected tenant admin IDs via two sources.
+      // super_admin passes RLS on both profiles and subscriptions tables,
+      // so context.supabase works here — no service role key needed.
+
+      // Source 1 — profiles.subscription_plan exact match
+      const { data: profileRows } = await context.supabase
+        .from("profiles")
+        .select("id")
+        .eq("subscription_plan", plan_id)
+        .is("admin_id", null);
+
+      // Source 2 — subscriptions.plan_name match (active/trial rows)
+      const { data: subRows } = await context.supabase
+        .from("subscriptions")
+        .select("admin_id")
+        .eq("plan_name", plan_id)
+        .in("status", ["active", "trial"]);
+
+      // Union and deduplicate
+      const fromProfiles = (profileRows ?? []).map((r: { id: string }) => r.id);
+      const fromSubs = (subRows ?? [])
+        .map((r: { admin_id: string | null }) => r.admin_id)
+        .filter(Boolean) as string[];
+      const affected = Array.from(new Set([...fromProfiles, ...fromSubs]));
+
+      if (affected.length > 0) {
+        // Insert notifications directly using context.supabase — super_admin
+        // passes the INSERT RLS policy (has_role = super_admin check).
+        const notifRows = affected.map((id: string) => ({
+          admin_id: id,
+          user_id: id,
+          type: "info",
+          category: "plan",
+          title: `Your ${planName} plan has been updated`,
+          message: "Your plan limits have been adjusted by GrainHero. Your account reflects the new limits immediately.",
+          action_url: "/subscription",
+          entity_type: "plan_threshold",
+          entity_id: plan_id,
+          metadata: { plan_id, updated_fields: Object.keys(patch) },
+          read: false,
+        }));
+
+        const { error: notifErr } = await context.supabase
+          .from("notifications")
+          .insert(notifRows as never);
+
+        if (notifErr) {
+          console.warn("[updatePlanThreshold] notification insert failed:", notifErr.message);
+        }
+      }
+    } catch (err) {
+      console.warn("[updatePlanThreshold] notification dispatch failed", err);
+    }
+
     return { ok: true };
   });
 
@@ -151,22 +242,35 @@ export const requestPlanChange = createServerFn({ method: "POST" })
     }
 
     // Notify super-admins of the incoming request (or auto-applied change).
+    // Use insert_notification RPC (security-definer) so no service role key needed.
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await emitToSuperAdmins(supabaseAdmin, {
-        category: "plan",
-        severity: autoApply ? "info" : "warning",
-        title: autoApply
-          ? `Auto-upgrade: ${current} → ${data.requested_plan}`
-          : `Plan change requested: ${current} → ${data.requested_plan}`,
-        body: autoApply
-          ? `Tenant auto-upgraded to ${data.requested_plan}.`
-          : `A tenant requested to switch to ${data.requested_plan}. Review in Plan requests.`,
-        link: "/platform/plans",
-        entityType: "plan_change_request",
-        entityId: inserted?.id ?? null,
-        metadata: { tenant_admin_id: tenantAdminId, direction, from: current, to: data.requested_plan },
-      });
+      const { data: superAdmins } = await context.supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "super_admin");
+
+      const saIds = ((superAdmins ?? []) as { user_id: string }[]).map((r) => r.user_id);
+      const notifTitle = autoApply
+        ? `Auto-upgrade: ${current} → ${data.requested_plan}`
+        : `Plan change requested: ${current} → ${data.requested_plan}`;
+      const notifBody = autoApply
+        ? `Tenant auto-upgraded to ${data.requested_plan}.`
+        : `A tenant requested to switch to ${data.requested_plan}. Review in Plan requests.`;
+
+      for (const saId of saIds) {
+        await (context.supabase as any).rpc("insert_notification", {
+          p_user_id: saId,
+          p_admin_id: context.userId,
+          p_title: notifTitle,
+          p_message: notifBody,
+          p_category: "plan",
+          p_type: autoApply ? "info" : "warning",
+          p_action_url: "/platform/plans",
+          p_entity_type: "plan_change_request",
+          p_entity_id: inserted?.id ?? null,
+          p_metadata: { tenant_admin_id: tenantAdminId, direction, from: current, to: data.requested_plan },
+        });
+      }
     } catch (err) {
       console.warn("[requestPlanChange] super-admin notify failed", err);
     }
@@ -253,8 +357,8 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
       // Best-effort: keep any live subscription row's plan_name in sync so
       // financials + gates pick it up immediately. Skip if none exists.
       try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin
+        // super_admin passes RLS on subscriptions — context.supabase is sufficient
+        await context.supabase
           .from("subscriptions")
           .update({ plan_name: req.requested_plan } as never)
           .eq("admin_id", req.tenant_admin_id)
@@ -278,10 +382,9 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
       sb: context.supabase,
     });
 
-    // Security event via admin client (RLS-free insert).
+    // Security event — super_admin passes RLS on security_events
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("security_events").insert({
+      await (context.supabase as any).from("security_events").insert({
         user_id: context.userId,
         tenant_id: req.tenant_admin_id,
         event: data.approve ? "plan_change.approved" : "plan_change.rejected",
@@ -292,25 +395,23 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
     }
 
     if (req.requested_by) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await emitNotification(supabaseAdmin, {
-        recipientId: req.requested_by,
-        tenantAdminId: req.tenant_admin_id,
-        category: "plan",
-        severity: data.approve ? "success" : "warning",
-        title: data.approve ? "Plan change approved" : "Plan change rejected",
-        body: data.approve
+      // Use insert_notification RPC (security-definer) — works without service role key.
+      // super_admin also passes RLS but RPC is more reliable for cross-tenant inserts.
+      const { error: rpcErr } = await (context.supabase as any).rpc("insert_notification", {
+        p_user_id: req.requested_by,
+        p_admin_id: req.tenant_admin_id,
+        p_title: data.approve ? "Plan change approved" : "Plan change rejected",
+        p_message: data.approve
           ? `Your plan has been changed to ${req.requested_plan}.`
           : `Your request to switch to ${req.requested_plan} was rejected: ${decisionNote}`,
-        link: "/subscription",
-        entityType: "plan_change_request",
-        entityId: data.id,
-        metadata: {
-          from: req.current_plan,
-          to: req.requested_plan,
-          status: newStatus,
-        },
+        p_category: "plan",
+        p_type: data.approve ? "success" : "warning",
+        p_action_url: "/subscription",
+        p_entity_type: "plan_change_request",
+        p_entity_id: data.id,
+        p_metadata: { from: req.current_plan, to: req.requested_plan, status: data.approve ? "approved" : "rejected" },
       });
+      if (rpcErr) console.warn("[decide] notification RPC failed:", rpcErr.message);
     }
 
     return { ok: true };

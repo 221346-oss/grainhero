@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { reportFieldIncident } from "@/lib/field-settings.functions";
+import { reportMobileFieldIncident } from "@/lib/field-settings.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -16,11 +16,15 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Ticket } from "lucide-react";
 
-const STAGES = [
-  { value: "low",      label: "Low",      cls: "text-sky-600 border-sky-300" },
-  { value: "medium",   label: "Medium",   cls: "text-amber-600 border-amber-300" },
-  { value: "high",     label: "High",     cls: "text-orange-600 border-orange-300" },
-  { value: "critical", label: "Critical", cls: "text-red-600 border-red-300" },
+const SEVERITY_OPTIONS = [
+  { value: "critical", label: "Critical" },
+  { value: "medium",   label: "Medium" },
+  { value: "low",      label: "Low" },
+] as const;
+
+const ROUTE_OPTIONS = [
+  { value: "admin",      label: "Admin" },
+  { value: "technician", label: "Technician" },
 ] as const;
 
 type Silo = { id: string; name: string; silo_id: string };
@@ -35,7 +39,7 @@ interface Props {
 
 export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvalidate = [] }: Props) {
   const qc = useQueryClient();
-  const reportFn = useServerFn(reportFieldIncident);
+  const reportFn = useServerFn(reportMobileFieldIncident);
   const getRoleFn = useServerFn(getMyRole);
 
   const { data: roleData } = useQuery({
@@ -46,26 +50,10 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
 
   const detectedRole = roleData?.role ?? "manager";
   const userProfileName = roleData?.profile?.name || roleData?.profile?.email || "";
-  const isTechnician = detectedRole === "technician";
-
-  // Target role options based on user role:
-  // For Manager: Admin and Technician
-  // For Technician: Manager and Admin
-  const targetRoleOptions: Array<{ value: "admin" | "manager" | "technician"; label: string }> = isTechnician
-    ? [
-        { value: "manager", label: "Manager" },
-        { value: "admin", label: "Admin" },
-      ]
-    : [
-        { value: "admin", label: "Admin" },
-        { value: "technician", label: "Technician" },
-      ];
 
   const [title, setTitle] = useState("");
-  const [severity, setSeverity] = useState<"low" | "medium" | "high" | "critical">("medium");
-  const [targetRole, setTargetRole] = useState<"admin" | "manager" | "technician">(
-    isTechnician ? "manager" : "technician"
-  );
+  const [severity, setSeverity] = useState<"low" | "medium" | "critical">("medium");
+  const [targetRole, setTargetRole] = useState<"admin" | "technician">("technician");
   const [reporterName, setReporterName] = useState("");
   const [role, setRole] = useState("manager");
   const [description, setDescription] = useState("");
@@ -74,7 +62,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
   useEffect(() => {
     if (detectedRole) {
       setRole(detectedRole);
-      setTargetRole(detectedRole === "technician" ? "manager" : "technician");
+      setTargetRole("technician");
     }
     if (userProfileName && !reporterName) {
       setReporterName(userProfileName);
@@ -84,7 +72,7 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
   function reset() {
     setTitle("");
     setSeverity("medium");
-    setTargetRole(isTechnician ? "manager" : "technician");
+    setTargetRole("technician");
     setReporterName(userProfileName);
     setRole(detectedRole);
     setDescription("");
@@ -121,18 +109,17 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <Ticket className="h-4 w-4 text-amber-600" />
-            Report Incident Ticket
+          <DialogTitle className="text-sm font-semibold">
+            Report Incident
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-1">
+        <div className="space-y-3 py-1">
           {/* 1. Title on top */}
-          <div className="space-y-1.5">
-            <Label htmlFor="ticket-title" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="space-y-1">
+            <Label htmlFor="ticket-title" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Title / Incident <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -140,61 +127,53 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
               placeholder="Enter incident title e.g. Conveyor Motor Overheating"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-sm"
+              className="text-xs h-8"
               autoFocus
             />
           </div>
 
-          {/* 2. Type / Stage of Incident (Critical, High, Medium, Low) */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {/* 2. Type / Stage of Incident - Dropdown */}
+          <div className="space-y-1">
+            <Label htmlFor="ticket-severity" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Type / Stage of Incident
             </Label>
-            <div className="grid grid-cols-4 gap-2">
-              {STAGES.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => setSeverity(s.value)}
-                  className={`py-1.5 px-2 rounded-lg text-xs font-semibold border transition-all text-center ${
-                    severity === s.value
-                      ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-sm"
-                      : "border-border text-muted-foreground hover:border-slate-400 bg-background"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
+            <Select value={severity} onValueChange={(v) => setSeverity(v as "low" | "medium" | "critical")}>
+              <SelectTrigger id="ticket-severity" className="text-xs h-8">
+                <SelectValue placeholder="Select severity level" />
+              </SelectTrigger>
+              <SelectContent>
+                {SEVERITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Target Role Option — Admin & Technician to Manager; Manager & Admin to Technician */}
-          <div className="space-y-1.5">
-            <Label htmlFor="ticket-target-role" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Send / Route Incident To
+          {/* 3. Route Incident To - Dropdown */}
+          <div className="space-y-1">
+            <Label htmlFor="ticket-target-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Route Incident To
             </Label>
-            <div className="grid grid-cols-2 gap-2">
-              {targetRoleOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setTargetRole(opt.value)}
-                  className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all text-center flex items-center justify-center gap-1.5 ${
-                    targetRole === opt.value
-                      ? "bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:border-amber-500 shadow-sm"
-                      : "border-border text-muted-foreground hover:border-slate-400 bg-background"
-                  }`}
-                >
-                  <span className="capitalize">{opt.label}</span>
-                </button>
-              ))}
-            </div>
+            <Select value={targetRole} onValueChange={(v) => setTargetRole(v as "admin" | "technician")}>
+              <SelectTrigger id="ticket-target-role" className="text-xs h-8">
+                <SelectValue placeholder="Select recipient" />
+              </SelectTrigger>
+              <SelectContent>
+                {ROUTE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* 3. Reporter Name & 4. Role field (2-col grid) */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="ticket-reporter" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {/* 4. Reporter Name & 5. Role field (2-col grid) */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="ticket-reporter" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Reporter Name
               </Label>
               <Input
@@ -202,12 +181,12 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
                 placeholder="Reporter name"
                 value={reporterName}
                 onChange={(e) => setReporterName(e.target.value)}
-                className="text-sm"
+                className="text-xs h-8"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="ticket-role" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="space-y-1">
+              <Label htmlFor="ticket-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 My Role
               </Label>
               <Input
@@ -215,25 +194,25 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
                 value={role}
                 readOnly
                 disabled
-                className="text-sm bg-muted/50 capitalize font-medium cursor-not-allowed"
+                className="text-xs h-8 bg-muted/50 capitalize font-medium cursor-not-allowed"
               />
             </div>
           </div>
 
           {/* Affected Silo (Optional if silos available) */}
           {silos.length > 0 && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="space-y-1">
+              <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Affected Silo <span className="text-muted-foreground font-normal">(optional)</span>
               </Label>
               <Select value={siloId} onValueChange={setSiloId}>
-                <SelectTrigger id="ticket-silo">
-                  <SelectValue placeholder="None / General field" />
+                <SelectTrigger id="ticket-silo" className="text-xs h-8">
+                  <SelectValue placeholder="None" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None / General field</SelectItem>
+                  <SelectItem value="" className="text-xs">None</SelectItem>
                   {silos.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
+                    <SelectItem key={s.id} value={s.id} className="text-xs">
                       {s.name} ({s.silo_id})
                     </SelectItem>
                   ))}
@@ -242,33 +221,34 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
             </div>
           )}
 
-          {/* 5. Description at the end */}
-          <div className="space-y-1.5">
-            <Label htmlFor="ticket-description" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {/* 6. Description at the end */}
+          <div className="space-y-1">
+            <Label htmlFor="ticket-description" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Description
             </Label>
             <Textarea
               id="ticket-description"
-              rows={3}
+              rows={2}
               placeholder="Describe the incident, observed symptoms, or immediate actions taken…"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="text-sm resize-none"
+              className="text-xs resize-none"
             />
           </div>
         </div>
 
-        <DialogFooter className="gap-2 pt-2">
-          <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }} disabled={mut.isPending}>
+        <DialogFooter className="gap-2 pt-1">
+          <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }} disabled={mut.isPending} size="sm" className="text-xs">
             Cancel
           </Button>
           <Button
             id="ticket-submit"
             onClick={() => mut.mutate()}
             disabled={!canSubmit}
-            className="gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium"
+            size="sm"
+            className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs"
           >
-            {mut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ticket className="h-3.5 w-3.5" />}
+            {mut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Ticket className="h-3 w-3" />}
             Report Ticket
           </Button>
         </DialogFooter>

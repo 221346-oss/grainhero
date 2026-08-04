@@ -32,13 +32,15 @@ import { getMyRole } from "@/lib/roles.functions";
 import { listAvailableTechnicians } from "@/lib/batch-qc.functions";
 import { BatchQCDialog, type QCMode } from "./BatchQCDialog";
 import { cn } from "@/lib/utils";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 const GRAIN_TYPES = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
 const STATUSES = ["stored","dispatched","sold","damaged","expired","on_hold","processing"] as const;
 // QC-pipeline statuses aren't offered in the free-form "Status" editor (that
 // would bypass the role-gated QC functions) but users still need to filter
 // the list by them, so the top filter bar gets its own, wider list.
-const QC_STATUSES = ["pending_qc","qc_submitted","qc_failed","qc_passed","admin_rejected"] as const;
+const QC_STATUSES = ["pending_qc","qc_submitted","qc_failed","qc_passed","admin_rejected","pending_approval"] as const;
 const FILTER_STATUSES = [...STATUSES, ...QC_STATUSES] as const;
 type GrainType = typeof GRAIN_TYPES[number];
 type Status = typeof STATUSES[number] | typeof QC_STATUSES[number];
@@ -79,6 +81,17 @@ type Batch = {
 };
 
 type Silo = { id: string; silo_id: string; name: string; capacity_kg: number; current_occupancy_kg: number | null; warehouse_id: string | null; warehouses?: { name: string } | null };
+
+const batchExportColumns: ExportColumn<Batch>[] = [
+  { header: "Batch ID", value: (b) => b.batch_id },
+  { header: "Grain type", value: (b) => b.grain_type },
+  { header: "Supplier", value: (b) => b.farmer_name ?? "" },
+  { header: "Silo", value: (b) => b.silos?.name ?? "" },
+  { header: "Intake (kg)", value: (b) => b.quantity_kg },
+  { header: "Remaining (kg)", value: (b) => Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)) },
+  { header: "Intake date", value: (b) => b.intake_date ? new Date(b.intake_date).toLocaleDateString() : "" },
+  { header: "Status", value: (b) => b.status },
+];
 
 type Form = {
   id?: string;
@@ -441,6 +454,12 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
             {FILTER_STATUSES.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
           </SelectContent>
         </Select>
+        <ExportMenu
+          filename="grain-batches"
+          title="Grain Batches"
+          rows={rows}
+          columns={batchExportColumns}
+        />
         {canCreate && (
           <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New batch</Button>
         )}
@@ -533,6 +552,11 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
             <DialogTitle>{form.id ? "Edit batch" : "New grain batch"}</DialogTitle>
             <DialogDescription>
               {form.id ? "Update batch details." : "Batch ID and QR code are generated automatically on intake."}
+              {!form.id && myRole === "manager" && (
+                <span className="block mt-2 text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠️ Batch will be submitted for admin approval before stock is committed.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => {

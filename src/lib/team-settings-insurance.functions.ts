@@ -65,20 +65,40 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: { email: string; name?: string; role: "admin" | "manager" | "technician" }) => d)
   .handler(async ({ data, context }) => {
+    console.log(
+      "[inviteTeamMember] Starting invite for",
+      data.email,
+      "as",
+      data.role,
+      "from user",
+      context.userId,
+    );
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
+    console.log("[inviteTeamMember] Role flags:", { isSuper, isAdmin, isManager });
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
     if (isManager && !isAdmin && !isSuper && data.role !== "technician")
       throw new Error("Managers can only invite technicians");
     if (isAdmin && !isSuper && data.role === "admin")
       throw new Error("Only super admins can invite admins");
 
-    const tenantId = context.userId;
+    // Get the tenant admin ID - for managers/technicians, this is their admin's ID
+    // For admins, this is their own ID
     const { data: tenantRow } = await context.supabase
       .from("profiles")
       .select("admin_id, id")
       .eq("id", context.userId)
       .maybeSingle();
-    const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? tenantId;
+
+    const admin_id = tenantRow?.admin_id ?? tenantRow?.id ?? context.userId;
+
+    console.log(
+      "[inviteTeamMember] Tenant resolution - userId:",
+      context.userId,
+      "tenantRow:",
+      tenantRow,
+      "resolved admin_id:",
+      admin_id,
+    );
 
     // Enforce plan-based staff limit via central gate.
     await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
@@ -86,6 +106,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.trim().toLowerCase();
     let uid: string | undefined;
+    console.log("[inviteTeamMember] Creating auth user for email:", email);
     // 1) Ensure an auth user exists. Prefer createUser (doesn't require SMTP);
     //    fall back to locating an existing user if the email is already registered.
     const createRes = await supabaseAdmin.auth.admin.createUser({
@@ -100,6 +121,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         console.error("[inviteTeamMember] createUser failed", createRes.error);
         throw new Error(msg || "Could not create the user in Supabase Auth.");
       }
+      console.log("[inviteTeamMember] User already exists, looking up...");
       const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
         page: 1,
         perPage: 200,
@@ -109,6 +131,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       if (!uid) throw new Error("A user with that email already exists but could not be located.");
     } else {
       uid = createRes.data.user?.id;
+      console.log("[inviteTeamMember] Auth user created successfully, uid:", uid);
     }
 
     // 2) Generate a one-time invitation code. Replaces the old Supabase magic-link
@@ -142,6 +165,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       console.warn("[inviteTeamMember] email send failed (non-fatal)", e);
     }
     if (uid) {
+      console.log("[inviteTeamMember] Upserting profile for uid:", uid, "with admin_id:", admin_id);
       const { error: pErr } = await supabaseAdmin.from("profiles").upsert(
         {
           id: uid,
@@ -159,6 +183,8 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         console.error("[inviteTeamMember] profiles upsert failed", pErr);
         throw new Error(pErr.message || "Failed to save profile");
       }
+      console.log("[inviteTeamMember] Profile upserted successfully");
+
       await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
       const { error: rErr } = await supabaseAdmin
         .from("user_roles")
@@ -167,7 +193,9 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         console.error("[inviteTeamMember] user_roles insert failed", rErr);
         throw new Error(rErr.message || "Failed to assign role");
       }
+      console.log("[inviteTeamMember] User role assigned successfully");
     }
+    console.log("[inviteTeamMember] Invite completed successfully");
     return { ok: true };
   });
 

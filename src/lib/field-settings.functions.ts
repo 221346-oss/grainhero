@@ -130,11 +130,34 @@ export const resolveFieldIncident = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("field_incidents")
       .update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    // Clear discussion history when incident is closed
+    if (data.status === "resolved" || data.status === "dismissed") {
+      const { error: deleteErr } = await (context.supabase
+        .from("field_incident_comments" as any) as any)
+        .delete()
+        .eq("incident_id", data.id);
+      if (deleteErr) {
+        console.warn("[resolveFieldIncident] Failed to clear discussion comments:", deleteErr.message);
+      }
+    }
+
     return { ok: true };
   });
 
 // ─── Report a new ticket (manager or technician) ──────────────────────────────
-export const reportFieldIncident = createServerFn({ method: "POST" })
+/**
+ * Mobile field report — this is the OLDER, pre-existing "web-side create" for
+ * the mobile-sync `field_incidents` table (see the sync layer at
+ * src/routes/api/public/v1/sync/field-incidents.ts and
+ * src/lib/mobile-action-registry.server.ts, neither of which call this
+ * function — they insert directly). Renamed from `reportFieldIncident` to
+ * stop colliding in name (though never in code, different files) with the
+ * unrelated, newer auto-routing feature in field-incidents.functions.ts,
+ * which is backed by grain_alerts, not this table. Pure rename — behavior,
+ * table, and callers below are unchanged.
+ */
+export const reportMobileFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v) => z.object({
     title: z.string().min(1).max(200).optional(),
@@ -193,7 +216,7 @@ export const reportFieldIncident = createServerFn({ method: "POST" })
         entityId: (inserted as { id?: string } | null)?.id ?? null,
       });
     } catch (e) {
-      console.warn("[reportFieldIncident] Failed to emit role notification:", e);
+      console.warn("[reportMobileFieldIncident] Failed to emit role notification:", e);
     }
 
     return { ok: true };
@@ -218,6 +241,23 @@ export const listIncidentComments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v) => z.object({ incident_id: z.string().uuid() }).parse(v))
   .handler(async ({ data, context }) => {
+    // Check if the caller is a participant (reporter or assignee)
+    const { data: incident } = await context.supabase
+      .from("field_incidents")
+      .select("reporter_user_id, assigned_to, status")
+      .eq("id", data.incident_id)
+      .maybeSingle();
+
+    const inc = incident as { reporter_user_id: string | null; assigned_to: string | null; status: string } | null;
+    const isParticipant =
+      inc?.reporter_user_id === context.userId ||
+      inc?.assigned_to === context.userId;
+
+    if (!isParticipant) {
+      // Non-participants receive empty list with participation flag
+      return { comments: [], isParticipant: false };
+    }
+
     const { data: comments, error } = await (context.supabase
       .from("field_incident_comments" as any) as any)
       .select("id, incident_id, user_id, author_name, author_role, message, created_at")
@@ -226,17 +266,20 @@ export const listIncidentComments = createServerFn({ method: "GET" })
 
     if (error) {
       console.warn("[listIncidentComments] error fetching comments:", error.message);
-      return [];
+      return { comments: [], isParticipant: true };
     }
-    return (comments ?? []) as Array<{
-      id: string;
-      incident_id: string;
-      user_id: string;
-      author_name: string;
-      author_role: string;
-      message: string;
-      created_at: string;
-    }>;
+    return {
+      isParticipant: true,
+      comments: (comments ?? []) as Array<{
+        id: string;
+        incident_id: string;
+        user_id: string;
+        author_name: string;
+        author_role: string;
+        message: string;
+        created_at: string;
+      }>,
+    };
   });
 
 // ─── Add Comment / Discussion Message to an Incident Ticket ─────────────────
@@ -247,6 +290,26 @@ export const addIncidentComment = createServerFn({ method: "POST" })
     message: z.string().min(1).max(2000),
   }).parse(v))
   .handler(async ({ data, context }) => {
+    // Participant gate: only the reporter or assignee may post
+    const { data: incidentCheck } = await context.supabase
+      .from("field_incidents")
+      .select("reporter_user_id, assigned_to, status")
+      .eq("id", data.incident_id)
+      .maybeSingle();
+
+    const inc = incidentCheck as { reporter_user_id: string | null; assigned_to: string | null; status: string } | null;
+    const isParticipant =
+      inc?.reporter_user_id === context.userId ||
+      inc?.assigned_to === context.userId;
+
+    if (!isParticipant) {
+      throw new Error("Not authorised to discuss this incident.");
+    }
+
+    if (inc?.status === "resolved" || inc?.status === "dismissed") {
+      throw new Error("Discussion is closed — this incident has been resolved.");
+    }
+
     const { getEffectiveRole } = await import("./rbac.server");
     const role = await getEffectiveRole(context.supabase, context.userId);
 

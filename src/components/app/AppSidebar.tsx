@@ -6,8 +6,6 @@ import { Sidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import {
   Package,
-  QrCode,
-  Settings,
   Wheat,
   Activity,
   Sparkles,
@@ -16,8 +14,10 @@ import {
   Building2,
   EyeOff,
   ChevronRight,
-  Gauge,
+  CreditCard,
 } from "lucide-react";
+// QrCode import retained — used by Traceability nav item when re-enabled
+// import { QrCode } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FlowingNavItem } from "@/components/app/FlowingNavItem";
 import { getMyRole, type AppRole } from "@/lib/roles.functions";
@@ -40,31 +40,34 @@ type NavItem = {
   marqueeItems?: string[];
 };
 
-// Group 2 — the five consolidated workspaces, plus Traceability as a tab
-// alongside them.
+// Group 2 — the five consolidated workspaces.
+// Traceability removed from sidebar — its purpose is covered by the silo-centric
+// grain operations view and activity logs. Route + code retained for future use.
 const workspaceNav: NavItem[] = [
   { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", icon: Wheat, roles: ["admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
-  { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["admin", "manager", "technician"], marqueeItems: ["Sensors", "Actuators", "Alerts", "Environmental", "Device Health", "Maintenance", "Incidents"] },
+  { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["admin", "manager", "technician"], marqueeItems: ["Incidents"] },
   { name: "intelligence", label: "Intelligence", to: "/intelligence", icon: Sparkles, roles: ["admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
-  { name: "business", label: "Business", to: "/business", icon: Briefcase, roles: ["super_admin", "admin", "manager"], marqueeItems: ["Revenue", "Subscription", "Insurance"] },
-  { name: "administration", label: "Administration", to: "/administration", icon: ShieldCheck, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
-  { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
+  // /business is tenant-scoped (invoices, own subscription) — admin and manager only.
+  // Insurance tab hidden until bank partnership confirmed.
+  // super_admin uses /platform/business instead.
+  { name: "business", label: "Business", to: "/business", icon: Briefcase, roles: ["admin", "manager"], marqueeItems: ["Revenue", "Subscription"] },
+  // super_admin has no tenant team/security/logs — those tabs are all disabled for them.
+  { name: "administration", label: "Administration", to: "/administration", icon: ShieldCheck, roles: ["admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
+  // { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
 ];
 
 // Group 3 — super-admin-only platform entries.
 const utilityNav: NavItem[] = [
-  { name: "platform-monitoring", label: "Monitoring", to: "/platform/monitoring", icon: Activity, roles: ["super_admin"], marqueeItems: ["Silos", "Device health", "Incidents"] },
-  { name: "platform-intelligence", label: "Intelligence", to: "/platform/intelligence", icon: Sparkles, roles: ["super_admin"], marqueeItems: ["Model status", "Request volume", "Failures"] },
-  { name: "platform-key-metrics", label: "Key Metrics", to: "/platform/key-metrics", icon: Gauge, roles: ["super_admin"], marqueeItems: ["Device stock", "Live vs down"] },
-  { name: "platform-business", label: "Business", to: "/platform/business", icon: Briefcase, roles: ["super_admin"], marqueeItems: ["Revenue", "Subscriptions", "Insurance"] },
-  { name: "platform-orders", label: "Install Orders", to: "/platform/orders", icon: Package, roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
-  { name: "platform", label: "Platform", to: "/platform", icon: Building2, roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Plans & Thresholds", "Pipeline", "Leads", "System Health", "Audit Logs", "Activity Feed"] },
+  { name: "platform-plans",      label: "Plans",          to: "/platform/plans",      icon: CreditCard, roles: ["super_admin"], marqueeItems: ["Edit limits", "Active/inactive", "Popular badge", "Change requests"] },
+  { name: "platform-business",   label: "Business",       to: "/platform/business",   icon: Briefcase,  roles: ["super_admin"], marqueeItems: ["Revenue", "Subscriptions", "Hardware"] },
+  { name: "platform-monitoring", label: "Monitoring",     to: "/platform/monitoring", icon: Activity,   roles: ["super_admin"], marqueeItems: ["Incidents", "Environmental", "Maintenance"] },
+  { name: "platform-orders",     label: "Install Orders", to: "/platform/orders",     icon: Package,    roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
+  { name: "platform",            label: "Platform",       to: "/platform",            icon: Building2,  roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Pipeline", "Leads", "System Health", "Audit Logs"] },
 ];
 
-// Bottom "admin" strip — Slack shows Admin at the bottom of the workspace rail.
-const bottomNav: NavItem[] = [
-  { name: "settings", label: "Settings", to: "/settings", icon: Settings, roles: ["super_admin", "admin", "manager", "technician"], marqueeItems: ["Profile", "Location", "Notifications", "Appearance"] },
-];
+// Bottom nav — intentionally empty; Settings is accessible via the profile
+// menu in the top-right header to avoid duplication in the sidebar rail.
+const bottomNav: NavItem[] = [];
 
 function Section({ items, role, currentPath, collapsed }: { label?: string; items: NavItem[]; role: AppRole; currentPath: string; showLabel?: boolean; collapsed: boolean }) {
   const visible = items.filter((i) => i.roles.includes(role));

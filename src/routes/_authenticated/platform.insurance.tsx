@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+// Dialog import removed — all popups replaced with Sheet sidebars
 import { InsuranceCommandSkeleton } from "@/components/app/skeletons";
 import { Shield, ShieldCheck, AlertTriangle, DollarSign, Clock, TrendingDown, Plus, Trash2, ScrollText, BarChart3 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -338,53 +338,56 @@ function ProductsTab() {
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">{(data?.products ?? []).length} products</div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button size="sm" className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" />New product</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>New insurance product</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
-                <Select value={form.carrier_id} onValueChange={(v) => setForm({...form, carrier_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Carrier" /></SelectTrigger>
-                  <SelectContent>
-                    {(carriers?.carriers ?? []).map((c: Record<string, unknown>) => (
-                      <SelectItem key={c.id as string} value={c.id as string}>{c.name as string}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={form.coverage_type} onValueChange={(v) => setForm({...form, coverage_type: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="batch">Batch</SelectItem>
-                    <SelectItem value="shipment">Shipment</SelectItem>
-                    <SelectItem value="hardware">Hardware</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input placeholder="Code (e.g. BATCH-STD)" value={form.code} onChange={(e) => setForm({...form, code: e.target.value})} />
-                <Input placeholder="Name" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
-                <Input placeholder="Premium (bps)" type="number" value={form.base_premium_bps} onChange={(e) => setForm({...form, base_premium_bps: e.target.value})} />
-                <Input placeholder="Deductible (bps)" type="number" value={form.deductible_bps} onChange={(e) => setForm({...form, deductible_bps: e.target.value})} />
-                <Input placeholder="Currency" value={form.currency} onChange={(e) => setForm({...form, currency: e.target.value.toUpperCase().slice(0,3)})} />
-              </div>
-              <DialogFooter>
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700"
-                  onClick={async () => {
-                    try {
-                      await upsert({ data: {
-                        carrier_id: form.carrier_id, code: form.code, name: form.name,
-                        coverage_type: form.coverage_type as "batch"|"shipment"|"hardware",
-                        base_premium_bps: Number(form.base_premium_bps),
-                        deductible_bps: Number(form.deductible_bps),
-                        currency: form.currency, active: true,
-                      }});
-                      toast.success("Product created"); setOpen(false); invalidate();
-                    } catch (e) { toast.error((e as Error).message); }
-                  }}
-                >Create</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />New product
+          </Button>
         </div>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent className="sm:max-w-md overflow-y-auto">
+            <SheetHeader><SheetTitle>New insurance product</SheetTitle></SheetHeader>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <Select value={form.carrier_id} onValueChange={(v) => setForm({...form, carrier_id: v})}>
+                <SelectTrigger><SelectValue placeholder="Carrier" /></SelectTrigger>
+                <SelectContent>
+                  {(carriers?.carriers ?? []).map((c: Record<string, unknown>) => (
+                    <SelectItem key={c.id as string} value={c.id as string}>{c.name as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={form.coverage_type} onValueChange={(v) => setForm({...form, coverage_type: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="batch">Batch</SelectItem>
+                  <SelectItem value="shipment">Shipment</SelectItem>
+                  <SelectItem value="hardware">Hardware</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input placeholder="Code (e.g. BATCH-STD)" value={form.code} onChange={(e) => setForm({...form, code: e.target.value})} />
+              <Input placeholder="Name" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
+              <Input placeholder="Premium (bps)" type="number" value={form.base_premium_bps} onChange={(e) => setForm({...form, base_premium_bps: e.target.value})} />
+              <Input placeholder="Deductible (bps)" type="number" value={form.deductible_bps} onChange={(e) => setForm({...form, deductible_bps: e.target.value})} />
+              <Input placeholder="Currency" value={form.currency} onChange={(e) => setForm({...form, currency: e.target.value.toUpperCase().slice(0,3)})} />
+            </div>
+            <SheetFooter className="mt-6">
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={async () => {
+                  try {
+                    await upsert({ data: {
+                      carrier_id: form.carrier_id, code: form.code, name: form.name,
+                      coverage_type: form.coverage_type as "batch"|"shipment"|"hardware",
+                      base_premium_bps: Number(form.base_premium_bps),
+                      deductible_bps: Number(form.deductible_bps),
+                      currency: form.currency, active: true,
+                    }});
+                    toast.success("Product created"); setOpen(false); invalidate();
+                  } catch (e) { toast.error((e as Error).message); }
+                }}
+              >Create</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
         <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
@@ -441,34 +444,37 @@ function CarriersTab() {
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">{(data?.carriers ?? []).length} carriers</div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button size="sm" className="bg-emerald-600 hover:bg-emerald-700"><Plus className="h-4 w-4 mr-1" />New carrier</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>New insurance carrier</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <Input placeholder="Name" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
-                <Input placeholder="Contact email" value={form.contact_email} onChange={(e) => setForm({...form, contact_email: e.target.value})} />
-                <Input placeholder="Contact phone" value={form.contact_phone} onChange={(e) => setForm({...form, contact_phone: e.target.value})} />
-              </div>
-              <DialogFooter>
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700"
-                  onClick={async () => {
-                    try {
-                      await upsert({ data: {
-                        name: form.name,
-                        contact_email: form.contact_email || null,
-                        contact_phone: form.contact_phone || null,
-                        api_mode: "manual", active: true,
-                      }});
-                      toast.success("Carrier saved"); setOpen(false); setForm({ name: "", contact_email: "", contact_phone: "" }); invalidate();
-                    } catch (e) { toast.error((e as Error).message); }
-                  }}
-                >Save</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />New carrier
+          </Button>
         </div>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent className="sm:max-w-sm">
+            <SheetHeader><SheetTitle>New insurance carrier</SheetTitle></SheetHeader>
+            <div className="mt-6 space-y-3">
+              <Input placeholder="Name" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
+              <Input placeholder="Contact email" value={form.contact_email} onChange={(e) => setForm({...form, contact_email: e.target.value})} />
+              <Input placeholder="Contact phone" value={form.contact_phone} onChange={(e) => setForm({...form, contact_phone: e.target.value})} />
+            </div>
+            <SheetFooter className="mt-6">
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={async () => {
+                  try {
+                    await upsert({ data: {
+                      name: form.name,
+                      contact_email: form.contact_email || null,
+                      contact_phone: form.contact_phone || null,
+                      api_mode: "manual", active: true,
+                    }});
+                    toast.success("Carrier saved"); setOpen(false); setForm({ name: "", contact_email: "", contact_phone: "" }); invalidate();
+                  } catch (e) { toast.error((e as Error).message); }
+                }}
+              >Save</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
         <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead>Active</TableHead><TableHead></TableHead></TableRow></TableHeader>

@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
 import { createSiloAddonCheckoutSession } from "@/lib/stripe-checkout.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
+import { usePlanGate } from "@/lib/plan-gate";
+import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -42,10 +44,37 @@ const emptyAddonForm = { address: "", city: "", country: "", phone: "", notes: "
 
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
+  const settingsFn = useServerFn(getPlatformSettings);
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const siloGate = usePlanGate("max_silos");
   const addonFn = useServerFn(createSiloAddonCheckoutSession);
   const [addonOpen, setAddonOpen] = useState(false);
   const [addonForm, setAddonForm] = useState(emptyAddonForm);
+  const [selectedSkuId, setSelectedSkuId] = useState<string>("");
+
+  // Load IoT pricing set by super admin
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platform-settings-public"],
+    queryFn: () => settingsFn(),
+    staleTime: 5 * 60_000,
+  });
+  const iotPricing = platformSettings?.iot_pricing ?? [];
+  const selectedSku = iotPricing.find((s) => s.id === selectedSkuId) ?? iotPricing[0] ?? null;
+
+  const fmtPKR = (n: number) =>
+    new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 }).format(n);
+
+  function handleRequestSilo() {
+    // Requesting one more silo must stay within the plan limit — if it
+    // wouldn't, send them to upgrade instead of into the payment flow.
+    if (siloGate.data && !siloGate.data.allowed) {
+      navigate({ to: "/plan-management" });
+      return;
+    }
+    setAddonForm(emptyAddonForm);
+    setAddonOpen(true);
+  }
   const addonMut = useMutation({
     mutationFn: () =>
       addonFn({
@@ -94,7 +123,7 @@ function MyOrdersPage() {
           <h1 className="text-2xl font-bold text-slate-900">My install orders</h1>
           <p className="text-sm text-slate-500">Track the technician install for each subscription you purchased.</p>
         </div>
-        <Button onClick={() => { setAddonForm(emptyAddonForm); setAddonOpen(true); }} className="gap-2">
+        <Button onClick={handleRequestSilo} disabled={siloGate.isLoading} className="gap-2">
           <PlusCircle className="h-4 w-4" /> Request new silo
         </Button>
       </div>
@@ -179,14 +208,46 @@ function MyOrdersPage() {
           <DialogHeader>
             <DialogTitle>Request a new silo</DialogTitle>
             <DialogDescription>
-              One-time hardware &amp; install fee for one additional silo beyond your plan's included limit.
-              We'll charge you now and dispatch a technician to install it.
+              Select a hardware package below, fill in your install details, and we'll dispatch a technician.
             </DialogDescription>
           </DialogHeader>
           <form
             className="grid gap-3 py-1"
             onSubmit={(e) => { e.preventDefault(); addonMut.mutate(); }}
           >
+            {/* IoT pricing picker — only shown when super admin has set pricing */}
+            {iotPricing.length > 0 && (
+              <div className="grid gap-1.5">
+                <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Select hardware package</Label>
+                <div className="grid gap-2">
+                  {iotPricing.map((sku) => (
+                    <button
+                      key={sku.id}
+                      type="button"
+                      onClick={() => setSelectedSkuId(sku.id)}
+                      className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                        (selectedSkuId || iotPricing[0]?.id) === sku.id
+                          ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-400/40"
+                          : "border-slate-200 hover:border-slate-300 bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-800">{sku.name}</p>
+                          {sku.description && (
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">{sku.description}</p>
+                          )}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-bold text-slate-800">PKR {fmtPKR(sku.price_pkr)}</p>
+                          <p className="text-[10px] text-slate-400">{sku.unit}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid gap-1.5">
               <Label htmlFor="addon-address">Install address</Label>
               <Input

@@ -4,15 +4,60 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireRole } from "@/lib/rbac.server";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
+/** FIFO-allocate `qtyKg` of `grainType` out of `siloId`'s available batches, oldest first. */
+async function computeFifoAllocation(sb: Row, siloId: string, grainType: string, qtyKg: number) {
+  const { data: batchesRaw, error: bErr } = await sb
+    .from("grain_batches")
+    .select("id, batch_id, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
+    .eq("silo_id", siloId)
+    .eq("grain_type", grainType as never)
+    .order("harvest_date", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+  if (bErr) throw bErr;
+  // remaining_kg is only backfilled once a batch has been through the
+  // dispatch-allocation trigger — a batch that's never been dispatched from
+  // still has remaining_kg = NULL even though it clearly has stock.
+  const batches: Row[] = ((batchesRaw ?? []) as Row[])
+    .map((b) => ({
+      ...b,
+      remaining_kg: b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
+    }))
+    .filter((b) => Number(b.remaining_kg) > 0);
+  const totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
+  if (totalAvailable < qtyKg) {
+    throw new Error(`Not enough ${grainType} in silo (have ${totalAvailable} kg, need ${qtyKg} kg)`);
+  }
+
+  const allocs: { batch_id: string; qty_kg: number; unit_cost: number | null }[] = [];
+  let need = qtyKg;
+  let totalCost = 0;
+  let costedQty = 0;
+  for (const b of batches) {
+    if (need <= 0) break;
+    const take = Math.min(need, Number(b.remaining_kg));
+    const unit = b.purchase_price_per_kg == null ? null : Number(b.purchase_price_per_kg);
+    allocs.push({ batch_id: b.id, qty_kg: take, unit_cost: unit });
+    if (unit != null) {
+      totalCost += unit * take;
+      costedQty += take;
+    }
+    need -= take;
+  }
+  const avgCost = costedQty > 0 ? totalCost / costedQty : null;
+  return { allocs, avgCost };
+}
+
 const createInput = z.object({
   siloId: z.string().uuid(),
   buyerId: z.string().uuid().nullable().optional(),
+  invoiceId: z.string().uuid().nullable().optional(),
   newBuyer: z
     .object({
       name: z.string().min(1).max(200),
@@ -63,12 +108,18 @@ export const listSiloAvailableBatches = createServerFn({ method: "GET" })
     return { batches };
   });
 
+/**
+ * Creates a dispatch (sale) request as a "draft" — this only records what's
+ * being requested and a cost/profit *preview*. It does NOT touch batch
+ * remaining_kg or silo occupancy yet: grain must not leave the books until an
+ * Admin approves it (see approveDispatch below), mirroring how the intake QC
+ * pipeline gates stock on adminReviewBatch rather than on batch creation.
+ */
 export const createDispatchFromSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => createInput.parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase;
-    // 1. Silo + tenant
     const { data: silo, error: sErr } = await sb
       .from("silos")
       .select("id, admin_id, warehouse_id, current_occupancy_kg")
@@ -77,52 +128,32 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     if (sErr || !silo) throw new Error("Silo not found");
     const adminId = (silo as Row).admin_id as string;
 
-    // 2. FIFO batches (oldest first)
-    const { data: batchesRaw, error: bErr } = await sb
-      .from("grain_batches")
-      .select("id, batch_id, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
-      .eq("silo_id", data.siloId)
-      .eq("grain_type", data.grainType as never)
-      .order("harvest_date", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: true });
-    if (bErr) throw bErr;
-    // Same remaining_kg-can-be-NULL fallback as listSiloAvailableBatches —
-    // see comment there. Without this, a batch that's never been dispatched
-    // from is invisible to FIFO allocation too, not just the picker list.
-    const batches: Row[] = ((batchesRaw ?? []) as Row[])
-      .map((b) => ({
-        ...b,
-        remaining_kg: b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
-      }))
-      .filter((b) => Number(b.remaining_kg) > 0);
-    const totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
-    if (totalAvailable < data.qtyKg) {
-      throw new Error(`Not enough ${data.grainType} in silo (have ${totalAvailable} kg, need ${data.qtyKg} kg)`);
+    // If this dispatch is fulfilling a Step-1 invoice/quote, pull the buyer off
+    // it and make sure it's a real, unlinked, same-tenant invoice.
+    let invoiceBuyerId: string | null = null;
+    if (data.invoiceId) {
+      const { data: inv, error: invErr } = await sb
+        .from("buyer_invoices")
+        .select("id, admin_id, buyer_id, dispatch_id")
+        .eq("id", data.invoiceId)
+        .maybeSingle();
+      if (invErr) throw invErr;
+      if (!inv) throw new Error("Invoice not found");
+      const invoiceRow = inv as Row;
+      if (invoiceRow.admin_id !== adminId) throw new Error("Invoice belongs to a different tenant");
+      if (invoiceRow.dispatch_id) throw new Error("Invoice is already linked to a dispatch");
+      invoiceBuyerId = invoiceRow.buyer_id as string | null;
     }
 
-    // 3. Allocate FIFO
-    const allocs: { batch_id: string; qty_kg: number; unit_cost: number | null }[] = [];
-    let need = data.qtyKg;
-    let totalCost = 0;
-    let costedQty = 0;
-    for (const b of batches) {
-      if (need <= 0) break;
-      const take = Math.min(need, Number(b.remaining_kg));
-      const unit = b.purchase_price_per_kg == null ? null : Number(b.purchase_price_per_kg);
-      allocs.push({ batch_id: b.id, qty_kg: take, unit_cost: unit });
-      if (unit != null) {
-        totalCost += unit * take;
-        costedQty += take;
-      }
-      need -= take;
-    }
-    const avgCost = costedQty > 0 ? totalCost / costedQty : null;
+    // Preview-only FIFO simulation, purely for the cost/profit estimate shown
+    // to whoever is creating the request — the real allocation is redone at
+    // approval time against then-current stock.
+    const { allocs, avgCost } = await computeFifoAllocation(sb, data.siloId, data.grainType, data.qtyKg);
     const totalCostVal = avgCost != null ? Number((avgCost * data.qtyKg).toFixed(2)) : null;
     const totalAmount = Number((data.pricePerKg * data.qtyKg).toFixed(2));
     const profit = totalCostVal != null ? Number((totalAmount - totalCostVal).toFixed(2)) : null;
 
-    // 4. Resolve or create buyer
-    let buyerId = data.buyerId ?? null;
+    let buyerId = data.buyerId ?? invoiceBuyerId ?? null;
     if (!buyerId && data.newBuyer?.name) {
       const { data: nb, error: nErr } = await sb
         .from("buyers")
@@ -141,7 +172,6 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
       buyerId = (nb as Row).id as string;
     }
 
-    // 5. Insert dispatch
     const dispatchNumber = `DSP-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const { data: disp, error: dErr } = await sb
       .from("grain_dispatches")
@@ -159,9 +189,9 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
         avg_unit_cost: avgCost,
         total_cost: totalCostVal,
         profit,
-        status: "confirmed",
+        status: "draft",
         expected_date: data.expectedDate ?? null,
-        dispatched_at: data.stage === "staged" ? null : new Date().toISOString(),
+        dispatched_at: null,
         stage: data.stage,
         price_basis: data.priceBasis ?? "manual",
         market_price_snapshot: data.marketPriceSnapshot ?? null,
@@ -178,26 +208,124 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     if (dErr) throw dErr;
     const dispatchId = (disp as Row).id as string;
 
-    // 6. Allocations (trigger will recompute remaining_kg + status per batch)
-    const { error: aErr } = await sb.from("grain_dispatch_allocations").insert(
-      allocs.map((a) => ({ ...a, dispatch_id: dispatchId })) as never,
-    );
-    if (aErr) throw aErr;
-
-    // 7. Update silo occupancy
-    const newOcc = Math.max(0, Number((silo as Row).current_occupancy_kg ?? 0) - data.qtyKg);
-    await sb.from("silos").update({ current_occupancy_kg: newOcc, updated_by: context.userId } as never).eq("id", data.siloId);
+    if (data.invoiceId) {
+      const { error: linkErr } = await sb
+        .from("buyer_invoices")
+        .update({ dispatch_id: dispatchId } as never)
+        .eq("id", data.invoiceId);
+      if (linkErr) throw linkErr;
+    }
 
     await logActivity({
       actorId: context.userId,
       tenantAdminId: adminId,
-      action: "dispatch.created",
+      action: "dispatch.requested",
       targetType: "grain_dispatch",
       targetId: dispatchId,
       meta: { siloId: data.siloId, qtyKg: data.qtyKg, pricePerKg: data.pricePerKg, totalAmount, profit },
     });
 
-    return { id: dispatchId, dispatchNumber, totalAmount, avgCost, profit, allocations: allocs.length };
+    return { id: dispatchId, dispatchNumber, totalAmount, avgCost, profit, allocations: allocs.length, status: "draft" as const };
+  });
+
+/**
+ * Admin-only: approves a draft dispatch. This is the actual stock-effective
+ * moment — FIFO allocation is (re)computed against current batch stock (not
+ * whatever was available when the draft was requested), allocation rows are
+ * inserted (firing the recalc trigger on grain_batches), and silo occupancy
+ * is decremented. If stock has moved since the draft was requested and no
+ * longer covers it, this throws rather than partially fulfilling.
+ */
+export const approveDispatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, ["admin"]);
+    const sb = context.supabase;
+
+    const { data: full, error: fullErr } = await sb
+      .from("grain_dispatches")
+      .select("id, admin_id, silo_id, grain_type, total_qty_kg, price_per_kg, stage, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fullErr) throw fullErr;
+    if (!full) throw new Error("Dispatch not found");
+    const disp = full as Row;
+    if (disp.status !== "draft") throw new Error(`Dispatch isn't awaiting approval (currently ${disp.status})`);
+
+    const { data: silo, error: sErr } = await sb
+      .from("silos")
+      .select("id, current_occupancy_kg")
+      .eq("id", disp.silo_id)
+      .single();
+    if (sErr || !silo) throw new Error("Silo not found");
+
+    // Re-run FIFO now — this is the real allocation, superseding the preview
+    // computed when the draft was created.
+    const { allocs, avgCost } = await computeFifoAllocation(sb, disp.silo_id, disp.grain_type, Number(disp.total_qty_kg));
+    const totalCostVal = avgCost != null ? Number((avgCost * Number(disp.total_qty_kg)).toFixed(2)) : null;
+    const totalAmount = Number((Number(disp.price_per_kg) * Number(disp.total_qty_kg)).toFixed(2));
+    const profit = totalCostVal != null ? Number((totalAmount - totalCostVal).toFixed(2)) : null;
+
+    const { error: aErr } = await sb.from("grain_dispatch_allocations").insert(
+      allocs.map((a) => ({ ...a, dispatch_id: data.id })) as never,
+    );
+    if (aErr) throw aErr;
+
+    const newOcc = Math.max(0, Number((silo as Row).current_occupancy_kg ?? 0) - Number(disp.total_qty_kg));
+    const { error: occErr } = await sb.from("silos")
+      .update({ current_occupancy_kg: newOcc, updated_by: context.userId } as never)
+      .eq("id", disp.silo_id);
+    if (occErr) throw occErr;
+
+    const { error: updErr } = await sb.from("grain_dispatches").update({
+      status: "confirmed",
+      avg_unit_cost: avgCost,
+      total_cost: totalCostVal,
+      profit,
+      avg_cost_snapshot: avgCost,
+      dispatched_at: disp.stage === "staged" ? null : new Date().toISOString(),
+    } as never).eq("id", data.id);
+    if (updErr) throw updErr;
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: disp.admin_id,
+      action: "dispatch.approved",
+      targetType: "grain_dispatch",
+      targetId: data.id,
+      meta: { siloId: disp.silo_id, qtyKg: disp.total_qty_kg, profit },
+    });
+
+    return { ok: true, avgCost, profit, allocations: allocs.length };
+  });
+
+/** Admin-only: rejects a draft dispatch. No stock was ever committed, so this is a pure status flip. */
+export const rejectDispatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), reason: z.string().trim().max(500).optional().nullable() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, ["admin"]);
+    const { data: disp, error: dErr } = await context.supabase
+      .from("grain_dispatches").select("id, admin_id, silo_id, status").eq("id", data.id).maybeSingle();
+    if (dErr) throw dErr;
+    if (!disp) throw new Error("Dispatch not found");
+    if ((disp as Row).status !== "draft") throw new Error(`Dispatch isn't awaiting approval (currently ${(disp as Row).status})`);
+
+    const { error } = await context.supabase.from("grain_dispatches")
+      .update({ status: "cancelled", notes: data.reason ?? null } as never)
+      .eq("id", data.id);
+    if (error) throw error;
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: (disp as Row).admin_id,
+      action: "dispatch.rejected",
+      targetType: "grain_dispatch",
+      targetId: data.id,
+      meta: { reason: data.reason ?? null },
+    });
+    return { ok: true };
   });
 
 export const listDispatches = createServerFn({ method: "GET" })
