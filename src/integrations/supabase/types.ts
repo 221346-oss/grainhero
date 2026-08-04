@@ -7860,10 +7860,14 @@ export type Database = {
           last_payment_date: string | null
           last_synced_at: string | null
           latest_invoice_id: string | null
+          max_actuators: number | null
           max_batches: number | null
           max_devices: number | null
+          max_sensors: number | null
+          max_silos: number | null
           max_storage_gb: number | null
           max_users: number | null
+          max_warehouses: number | null
           next_payment_date: string | null
           notes: string | null
           notified_expiry_thresholds: number[]
@@ -7871,6 +7875,7 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           plan_description: string | null
           plan_name: Database["public"]["Enums"]["plan_name"]
+          price: number | null
           price_per_month: number
           price_per_year: number | null
           priority_support: boolean | null
@@ -7909,10 +7914,14 @@ export type Database = {
           last_payment_date?: string | null
           last_synced_at?: string | null
           latest_invoice_id?: string | null
+          max_actuators?: number | null
           max_batches?: number | null
           max_devices?: number | null
+          max_sensors?: number | null
+          max_silos?: number | null
           max_storage_gb?: number | null
           max_users?: number | null
+          max_warehouses?: number | null
           next_payment_date?: string | null
           notes?: string | null
           notified_expiry_thresholds?: number[]
@@ -7920,6 +7929,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           plan_description?: string | null
           plan_name?: Database["public"]["Enums"]["plan_name"]
+          price?: number | null
           price_per_month?: number
           price_per_year?: number | null
           priority_support?: boolean | null
@@ -7958,10 +7968,14 @@ export type Database = {
           last_payment_date?: string | null
           last_synced_at?: string | null
           latest_invoice_id?: string | null
+          max_actuators?: number | null
           max_batches?: number | null
           max_devices?: number | null
+          max_sensors?: number | null
+          max_silos?: number | null
           max_storage_gb?: number | null
           max_users?: number | null
+          max_warehouses?: number | null
           next_payment_date?: string | null
           notes?: string | null
           notified_expiry_thresholds?: number[]
@@ -7969,6 +7983,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           plan_description?: string | null
           plan_name?: Database["public"]["Enums"]["plan_name"]
+          price?: number | null
           price_per_month?: number
           price_per_year?: number | null
           priority_support?: boolean | null
@@ -9128,6 +9143,7 @@ export type Database = {
         | "treatment"
         | "ready"
         | "rejected"
+        | "pending_approval"
       billing_cycle: "monthly" | "yearly" | "quarterly"
       buyer_order_status:
         | "pending"
@@ -9350,6 +9366,7 @@ export const Constants = {
         "treatment",
         "ready",
         "rejected",
+        "pending_approval",
       ],
       billing_cycle: ["monthly", "yearly", "quarterly"],
       buyer_order_status: [
