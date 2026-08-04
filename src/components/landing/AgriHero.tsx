@@ -36,7 +36,7 @@ export function AgriHero() {
 
       {/* Copy */}
       <div className="relative z-10 mx-auto flex min-h-[92svh] max-w-7xl items-center px-5 text-left sm:min-h-[100svh] sm:px-8 lg:px-12">
-        <div className="max-w-4xl pb-16 sm:pb-20">
+        <div className="max-w-4xl translate-y-12 pb-16 sm:pb-20 sm:translate-y-16">
           <motion.h1
             initial={{ opacity: 0, y: 26, filter: 'blur(8px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
