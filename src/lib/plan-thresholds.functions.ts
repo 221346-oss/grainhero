@@ -90,7 +90,7 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
         await context.supabase
           .from("subscriptions")
           .update(limitPatch as never)
-          .eq("plan_name", plan_id)
+          .eq("plan_name", plan_id as never)
           .in("status", ["active", "trial"]);
       }
     } catch (err) {
@@ -122,7 +122,7 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
       const { data: subRows } = await context.supabase
         .from("subscriptions")
         .select("admin_id")
-        .eq("plan_name", plan_id)
+        .eq("plan_name", plan_id as never)
         .in("status", ["active", "trial"]);
 
       // Union and deduplicate

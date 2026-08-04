@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
 import { SubscriptionSection } from "@/components/business/SubscriptionSection";
@@ -19,7 +19,7 @@ type Tab = "revenue" | "subscription" | "insurance";
 
 // Insurance tab hidden from UI for now — code retained for future use
 // when a bank partnership is confirmed.
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "revenue",      label: "Revenue",      icon: Wallet },
   { key: "subscription", label: "Subscription", icon: CreditCard },
   // { key: "insurance", label: "Insurance", icon: Shield },
@@ -55,8 +55,8 @@ function BusinessWorkspace() {
   const counts = {
     revenue: totals.countInvoices ?? 0,
     subscription: sub ? 1 : 0,
-    // insurance: policyList.length, // hidden until bank partnership confirmed
-  };
+    insurance: policyList.length, // tab hidden until bank partnership confirmed
+  } satisfies Record<Tab, number>;
 
   const maxCount = Math.max(...Object.values(counts), 1);
 

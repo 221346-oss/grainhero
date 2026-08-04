@@ -4,7 +4,7 @@ import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
 import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   component: GrainOperationsWorkspace,
 });
 
-const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const ALL_TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "silos",      label: "Silos",         icon: Warehouse },
   { key: "warehouses", label: "Warehouses",    icon: Building2 },
