@@ -20,7 +20,7 @@ export function NewHeroSection() {
   }, [])
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#252d26]">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#111512]">
       {/* Background Video */}
       <video
         ref={videoRef}
@@ -38,18 +38,18 @@ export function NewHeroSection() {
       </video>
 
       {/* Enhanced Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#252d26] via-[#252d26]/95 to-[#252d26]/90" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#111512] via-[#111512]/95 to-[#111512]/90" />
       
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-[#2FAC0C]/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 left-20 w-64 h-64 bg-[#2FAC0C]/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-20 right-20 w-96 h-96 bg-[#2FA84F]/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 left-20 w-64 h-64 bg-[#2FA84F]/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
       {/* Floating Wheat Icons - More Subtle */}
-      <Wheat className="absolute top-32 left-10 w-12 h-12 text-[#2FAC0C]/10 animate-float" />
-      <Wheat className="absolute top-1/4 right-16 w-16 h-16 text-[#2FAC0C]/10 animate-float-delay-1" />
-      <Wheat className="absolute bottom-32 left-1/4 w-10 h-10 text-[#2FAC0C]/10 animate-float-delay-2" />
+      <Wheat className="absolute top-32 left-10 w-12 h-12 text-[#2FA84F]/10 animate-float" />
+      <Wheat className="absolute top-1/4 right-16 w-16 h-16 text-[#2FA84F]/10 animate-float-delay-1" />
+      <Wheat className="absolute bottom-32 left-1/4 w-10 h-10 text-[#2FA84F]/10 animate-float-delay-2" />
 
       {/* Hero Content - Centered */}
       <div className="relative z-10 min-h-screen flex items-center">
@@ -62,13 +62,13 @@ export function NewHeroSection() {
               transition={{ delay: 0.4 }}
               className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.1] mb-6"
             >
-              <span className="text-[#EDE9D4] block">
+              <span className="text-[#FAFAF7] block">
                 SMART GRAIN
               </span>
-              <span className="text-[#EDE9D4] block">
+              <span className="text-[#FAFAF7] block">
                 STORAGE
               </span>
-              <span className="text-[#2FAC0C] block mt-2">
+              <span className="text-[#2FA84F] block mt-2">
                 Powered by AI
               </span>
             </motion.h1>
@@ -78,7 +78,7 @@ export function NewHeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="text-[#EDE9D4]/80 text-xl sm:text-2xl leading-relaxed mb-10 max-w-3xl mx-auto"
+              className="text-[#FAFAF7]/80 text-xl sm:text-2xl leading-relaxed mb-10 max-w-3xl mx-auto"
             >
               Real-time IoT monitoring and predictive AI analytics that prevent spoilage,
               reduce losses, and maximize your profits.
@@ -93,7 +93,7 @@ export function NewHeroSection() {
             >
               <Link
                 to="/checkout"
-                className="group bg-[#2FAC0C] text-white font-bold px-10 py-4 rounded-full hover:bg-[#2FAC0C]/90 transition-all duration-300 shadow-2xl hover:shadow-[#2FAC0C]/50 hover:scale-105 flex items-center justify-center gap-2 text-lg"
+                className="group bg-[#2FA84F] text-white font-bold px-10 py-4 rounded-full hover:bg-[#2FA84F]/90 transition-all duration-300 shadow-2xl hover:shadow-[#2FA84F]/50 hover:scale-105 flex items-center justify-center gap-2 text-lg"
               >
                 View Plans & Pricing
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -103,7 +103,7 @@ export function NewHeroSection() {
                   const el = document.querySelector('#how-it-works')
                   el?.scrollIntoView({ behavior: 'smooth' })
                 }}
-                className="bg-transparent border-2 border-[#EDE9D4] text-[#EDE9D4] font-semibold px-10 py-4 rounded-full hover:bg-[#EDE9D4] hover:text-[#252d26] transition-all duration-300 text-lg hover:scale-105"
+                className="bg-transparent border-2 border-[#FAFAF7] text-[#FAFAF7] font-semibold px-10 py-4 rounded-full hover:bg-[#FAFAF7] hover:text-[#111512] transition-all duration-300 text-lg hover:scale-105"
               >
                 See How It Works
               </button>

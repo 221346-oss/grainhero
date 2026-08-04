@@ -34,7 +34,7 @@ const rows = [
 ]
 
 function Chip({ text, tone }: { text: string; tone: number }) {
-  const tones = ['bg-[#2FAC0C] text-white', 'bg-[#8FE04B] text-[#252d26]', 'bg-[#DDEFC4] text-[#252d26]']
+  const tones = ['bg-[#2FA84F] text-white', 'bg-[#A8E6A1] text-[#111512]', 'bg-[#C7D9C1] text-[#111512]']
   return (
     <span
       className={`mx-2 inline-flex shrink-0 items-center gap-3 rounded-full px-6 py-3.5 text-sm font-bold sm:text-base ${tones[tone % 3]}`}
@@ -47,14 +47,14 @@ function Chip({ text, tone }: { text: string; tone: number }) {
 
 export function ProblemMarquee() {
   return (
-    <section id="problem" className="overflow-hidden bg-[#F7F8EE] py-20 dark:bg-background sm:py-28">
+    <section id="problem" className="overflow-hidden bg-[#F2F4EE] py-20 dark:bg-background sm:py-28">
       <div className="mx-auto max-w-5xl px-5 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="text-3xl font-black leading-[1.08] tracking-tight text-[#2FAC0C] sm:text-5xl lg:text-6xl"
+          className="text-3xl font-black leading-[1.08] tracking-tight text-[#2FA84F] sm:text-5xl lg:text-6xl"
         >
           Grain operators juggle dozens of unknowns every single day. What if the silo answered
           them for you?

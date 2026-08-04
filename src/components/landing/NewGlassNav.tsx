@@ -80,7 +80,7 @@ export function NewGlassNav() {
         <div
           className={`w-full px-4 sm:px-8 lg:px-12 py-3 sm:py-4 transition-all duration-300 ease-out ${
             isScrolled
-              ? 'bg-[#252d26]/95 backdrop-blur-md shadow-lg'
+              ? 'bg-[#111512]/95 backdrop-blur-md shadow-lg'
               : 'bg-transparent'
           }`}
         >
@@ -90,8 +90,8 @@ export function NewGlassNav() {
               to="/"
               className="flex items-center gap-2 cursor-pointer"
             >
-              <Wheat className="w-6 h-6 sm:w-8 sm:h-8 text-[#2FAC0C]" />
-              <span className="text-[#EDE9D4] text-lg sm:text-xl font-bold tracking-wide">
+              <Wheat className="w-6 h-6 sm:w-8 sm:h-8 text-[#2FA84F]" />
+              <span className="text-[#FAFAF7] text-lg sm:text-xl font-bold tracking-wide">
                 GrainHero
               </span>
             </Link>
@@ -103,10 +103,10 @@ export function NewGlassNav() {
                   key={`${link.to}-${link.hash || ''}`}
                   to={link.to}
                   hash={link.hash}
-                  className="text-[#EDE9D4]/90 hover:text-[#EDE9D4] font-medium transition-all duration-300 hover:scale-105 text-sm tracking-wide relative group cursor-pointer"
+                  className="text-[#FAFAF7]/90 hover:text-[#FAFAF7] font-medium transition-all duration-300 hover:scale-105 text-sm tracking-wide relative group cursor-pointer"
                 >
                   {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#2FAC0C] group-hover:w-full transition-all duration-300" />
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#2FA84F] group-hover:w-full transition-all duration-300" />
                 </Link>
               ))}
             </div>
@@ -115,13 +115,13 @@ export function NewGlassNav() {
             <div className="flex items-center space-x-3">
               <Link
                 to="/auth/login"
-                className="hidden sm:inline-block text-[#EDE9D4]/90 hover:text-[#EDE9D4] font-medium transition-colors text-sm"
+                className="hidden sm:inline-block text-[#FAFAF7]/90 hover:text-[#FAFAF7] font-medium transition-colors text-sm"
               >
                 Login
               </Link>
               <Link
                 to="/checkout"
-                className="hidden sm:inline-block bg-[#2FAC0C] text-white font-semibold px-5 py-2.5 rounded-full hover:bg-[#2FAC0C]/90 transition-all duration-300 text-sm shadow-lg hover:shadow-xl hover:scale-105"
+                className="hidden sm:inline-block bg-[#2FA84F] text-white font-semibold px-5 py-2.5 rounded-full hover:bg-[#2FA84F]/90 transition-all duration-300 text-sm shadow-lg hover:shadow-xl hover:scale-105"
               >
                 Get Started
               </Link>
@@ -131,7 +131,7 @@ export function NewGlassNav() {
                 type="button"
                 onClick={handleToggle}
                 aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-                className="hidden sm:grid h-9 w-9 place-items-center rounded-full bg-white/10 text-[#EDE9D4] hover:bg-white/20 transition-colors"
+                className="hidden sm:grid h-9 w-9 place-items-center rounded-full bg-white/10 text-[#FAFAF7] hover:bg-white/20 transition-colors"
               >
                 {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
@@ -139,7 +139,7 @@ export function NewGlassNav() {
               {/* Mobile: MENU Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden text-[#EDE9D4] p-2 cursor-pointer hover:text-[#2FAC0C] transition-colors"
+                className="md:hidden text-[#FAFAF7] p-2 cursor-pointer hover:text-[#2FA84F] transition-colors"
                 aria-label="Open menu"
               >
                 <Menu className="w-7 h-7" />
@@ -157,13 +157,13 @@ export function NewGlassNav() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden fixed inset-0 z-[3000] bg-[#252d26]"
+            className="md:hidden fixed inset-0 z-[3000] bg-[#111512]"
           >
             {/* Close Button */}
             <div className="absolute top-6 right-6">
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="text-[#EDE9D4] p-2 hover:text-[#2FAC0C] transition-colors"
+                className="text-[#FAFAF7] p-2 hover:text-[#2FA84F] transition-colors"
                 aria-label="Close menu"
               >
                 <X className="w-8 h-8" />
@@ -172,8 +172,8 @@ export function NewGlassNav() {
 
             {/* Logo */}
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 left-6 flex items-center gap-2">
-              <Wheat className="w-7 h-7 text-[#2FAC0C]" />
-              <span className="text-[#EDE9D4] text-xl font-bold">GrainHero</span>
+              <Wheat className="w-7 h-7 text-[#2FA84F]" />
+              <span className="text-[#FAFAF7] text-xl font-bold">GrainHero</span>
             </Link>
 
             {/* Nav Links */}
@@ -189,7 +189,7 @@ export function NewGlassNav() {
                     to={link.to}
                     hash={link.hash}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-[#EDE9D4] text-2xl font-medium hover:text-[#2FAC0C] transition-colors cursor-pointer"
+                    className="text-[#FAFAF7] text-2xl font-medium hover:text-[#2FA84F] transition-colors cursor-pointer"
                   >
                     {link.label}
                   </Link>
@@ -205,14 +205,14 @@ export function NewGlassNav() {
                 <Link
                   to="/auth/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-[#EDE9D4] text-xl font-medium hover:text-[#2FAC0C] transition-colors text-center"
+                  className="text-[#FAFAF7] text-xl font-medium hover:text-[#2FA84F] transition-colors text-center"
                 >
                   Login
                 </Link>
                 <Link
                   to="/checkout"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="bg-[#2FAC0C] text-white font-semibold px-8 py-3 rounded-full hover:bg-[#2FAC0C]/90 transition-all text-center"
+                  className="bg-[#2FA84F] text-white font-semibold px-8 py-3 rounded-full hover:bg-[#2FA84F]/90 transition-all text-center"
                 >
                   Get Started
                 </Link>

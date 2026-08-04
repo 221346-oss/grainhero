@@ -26,7 +26,7 @@ const steps = [
 
 export function SimpleSteps() {
   return (
-    <section id="how-it-works" className="bg-[#252d26] py-20 sm:py-28">
+    <section id="how-it-works" className="bg-[#111512] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -35,15 +35,15 @@ export function SimpleSteps() {
           transition={{ duration: 0.7 }}
           className="max-w-3xl"
         >
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#8FE04B]">
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#A8E6A1]">
             How it works
           </span>
-          <h2 className="mt-4 text-3xl font-black leading-[1.05] tracking-tight text-[#EDE9D4] sm:text-5xl lg:text-6xl">
+          <h2 className="mt-4 text-3xl font-black leading-[1.05] tracking-tight text-[#FAFAF7] sm:text-5xl lg:text-6xl">
             Four steps. That&apos;s the whole system.
           </h2>
         </motion.div>
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-3xl bg-[#EDE9D4]/15 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid gap-px overflow-hidden rounded-3xl bg-[#FAFAF7]/15 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
             <motion.div
               key={s.title}
@@ -51,12 +51,12 @@ export function SimpleSteps() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group relative bg-[#252d26] p-8 transition-colors hover:bg-[#2c352d] sm:p-10"
+              className="group relative bg-[#111512] p-8 transition-colors hover:bg-[#1A201B] sm:p-10"
             >
-              <span className="text-sm font-black text-[#8FE04B]/50">0{i + 1}</span>
-              <s.icon className="mt-6 h-9 w-9 text-[#8FE04B] transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-110" />
-              <h3 className="mt-6 text-2xl font-black text-[#EDE9D4]">{s.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-[#EDE9D4]/70">{s.body}</p>
+              <span className="text-sm font-black text-[#A8E6A1]/50">0{i + 1}</span>
+              <s.icon className="mt-6 h-9 w-9 text-[#A8E6A1] transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-110" />
+              <h3 className="mt-6 text-2xl font-black text-[#FAFAF7]">{s.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-[#FAFAF7]/70">{s.body}</p>
             </motion.div>
           ))}
         </div>

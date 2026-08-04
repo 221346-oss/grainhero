@@ -31,7 +31,7 @@ export function StatsSection() {
       id="stats-section"
       className="relative py-10 sm:py-16 overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #2FAC0C 0%, #2FAC0C 40%, #252d26 100%)'
+        background: 'linear-gradient(135deg, #2FA84F 0%, #2FA84F 40%, #111512 100%)'
       }}
     >
       {/* Background pattern */}

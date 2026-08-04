@@ -16,7 +16,7 @@ const browser = await openBrowser("chrome", {
   chromeMode: "chrome-for-testing",
 });
 
-const composition = await selectComposition({ serveUrl: bundled, id: "silo-flight", puppeteerInstance: browser });
+const composition = await selectComposition({ serveUrl: bundled, id: process.env.COMP ?? "silo-flight", puppeteerInstance: browser });
 
 await renderMedia({
   composition,
