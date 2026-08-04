@@ -1,10 +1,8 @@
-import { Suspense, lazy } from 'react'
-import { ClientOnly } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Cpu, Wifi, Gauge, Wrench } from 'lucide-react'
-
-const SiloScene = lazy(() => import('./SiloScene'))
+import controllerImg from '@/assets/landing/controller.jpg'
+import sensorImg from '@/assets/landing/sensor.jpg'
 
 const specs = [
   { icon: Cpu, title: 'Edge controller', body: 'On-site brain that keeps logging even when the network drops.' },
@@ -17,17 +15,58 @@ export function HardwareSection() {
   return (
     <section id="hardware" className="relative overflow-hidden bg-[#F2F4EE] py-20 dark:bg-background sm:py-28">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-2 lg:gap-16">
-        {/* 3D */}
-        <div className="relative order-2 h-[380px] w-full sm:h-[520px] lg:order-1">
-          <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-[#2FA84F]/10 to-transparent" />
-          <ClientOnly fallback={<div className="h-full w-full animate-pulse rounded-[2rem] bg-[#2FA84F]/5" />}>
-            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-[2rem] bg-[#2FA84F]/5" />}>
-              <SiloScene />
-            </Suspense>
-          </ClientOnly>
-          <p className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-semibold uppercase tracking-widest text-[#4A554C]/50">
-            Hover the glowing nodes
-          </p>
+        {/* Hardware imagery */}
+        <div className="order-2 grid grid-cols-2 gap-4 lg:order-1">
+          <motion.figure
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="col-span-2 overflow-hidden rounded-3xl bg-[#111512]"
+          >
+            <img
+              src={controllerImg}
+              alt="GrainHero IoT edge controller mounted inside a grain silo"
+              loading="lazy"
+              width={1920}
+              height={1088}
+              className="h-[240px] w-full object-cover transition-transform duration-700 hover:scale-105 sm:h-[320px]"
+            />
+            <figcaption className="flex items-center justify-between px-5 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#C7D9C1]">
+              <span>Edge controller</span>
+              <span className="text-[#A8E6A1]">IP66 · live</span>
+            </figcaption>
+          </motion.figure>
+
+          <motion.figure
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="overflow-hidden rounded-3xl bg-[#111512]"
+          >
+            <img
+              src={sensorImg}
+              alt="Temperature and humidity probe on the silo wall"
+              loading="lazy"
+              width={1920}
+              height={1088}
+              className="h-[150px] w-full object-cover transition-transform duration-700 hover:scale-105 sm:h-[180px]"
+            />
+          </motion.figure>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.18 }}
+            className="flex flex-col justify-center rounded-3xl border border-[#2FA84F]/20 bg-white p-6 dark:bg-card"
+          >
+            <span className="text-4xl font-black text-[#2FA84F]">6</span>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-[#4A554C] dark:text-muted-foreground">
+              sensor types per silo, reporting every 60 seconds.
+            </p>
+          </motion.div>
         </div>
 
         {/* Copy */}
@@ -38,9 +77,7 @@ export function HardwareSection() {
           transition={{ duration: 0.7 }}
           className="order-1 lg:order-2"
         >
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#2FA84F]">
-            The hardware
-          </span>
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#2FA84F]">The hardware</span>
           <h2 className="mt-4 text-3xl font-black leading-[1.05] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl">
             Start with the silo.
             <br />

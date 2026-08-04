@@ -36,7 +36,7 @@ export const Route = createFileRoute('/')({
 
 function NewHomePage() {
   return (
-    <main className="min-h-screen bg-[#FAFAF7] text-[#4A554C] landing-bg dark:text-foreground">
+    <main className="landing-type min-h-screen bg-[#FAFAF7] text-[#4A554C] landing-bg dark:text-foreground">
       <NewGlassNav />
       <section id="hero" aria-label="Hero section">
         <AgriHero />

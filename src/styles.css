@@ -413,3 +413,16 @@ button:hover > .vfh .vfh-letter {
 .dark .app-scope .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
 .dark .app-scope .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
 .dark .app-scope .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }
+
+/* ── Landing typography: Clean Agritech (Outfit / Figtree) ───────────── */
+.landing-type {
+  font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+}
+.landing-type h1,
+.landing-type h2,
+.landing-type h3,
+.landing-type .font-black,
+.landing-type .font-extrabold {
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
