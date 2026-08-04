@@ -128,6 +128,7 @@ import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './ro
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
 import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedPlatformTenantsAdminIdRouteImport } from './routes/_authenticated/platform.tenants.$adminId'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
 import { Route as ApiPublicCronApplyScheduledPlanChangesRouteImport } from './routes/api/public/cron/apply-scheduled-plan-changes'
 import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
@@ -849,6 +850,12 @@ const AuthenticatedPlatformOrdersOrderIdRoute =
     path: '/$orderId',
     getParentRoute: () => AuthenticatedPlatformOrdersRoute,
   } as any)
+const AuthenticatedPlatformTenantsAdminIdRoute =
+  AuthenticatedPlatformTenantsAdminIdRouteImport.update({
+    id: '/$adminId',
+    path: '/$adminId',
+    getParentRoute: () => AuthenticatedPlatformTenantsRoute,
+  } as any)
 const AuthenticatedTechnicianInstallsInstallIdRoute =
   AuthenticatedTechnicianInstallsInstallIdRouteImport.update({
     id: '/$installId',
@@ -1260,7 +1267,7 @@ export interface FileRoutesByFullPath {
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
-  '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
@@ -1282,6 +1289,7 @@ export interface FileRoutesByFullPath {
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/platform/tenants/$adminId': typeof AuthenticatedPlatformTenantsAdminIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1432,7 +1440,7 @@ export interface FileRoutesByTo {
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
-  '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
@@ -1454,6 +1462,7 @@ export interface FileRoutesByTo {
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/platform/tenants/$adminId': typeof AuthenticatedPlatformTenantsAdminIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1608,7 +1617,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
-  '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
@@ -1630,6 +1639,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/_authenticated/platform/tenants/$adminId': typeof AuthenticatedPlatformTenantsAdminIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1806,6 +1816,7 @@ export interface FileRouteTypes {
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
+    | '/platform/tenants/$adminId'
     | '/technician/installs/$installId'
     | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
@@ -1978,6 +1989,7 @@ export interface FileRouteTypes {
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
+    | '/platform/tenants/$adminId'
     | '/technician/installs/$installId'
     | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
@@ -2153,6 +2165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/logistics/fleet'
     | '/_authenticated/platform/orders/$orderId'
+    | '/_authenticated/platform/tenants/$adminId'
     | '/_authenticated/technician/installs/$installId'
     | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
@@ -3115,6 +3128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
       parentRoute: typeof AuthenticatedPlatformOrdersRoute
     }
+    '/_authenticated/platform/tenants/$adminId': {
+      id: '/_authenticated/platform/tenants/$adminId'
+      path: '/$adminId'
+      fullPath: '/platform/tenants/$adminId'
+      preLoaderRoute: typeof AuthenticatedPlatformTenantsAdminIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformTenantsRoute
+    }
     '/_authenticated/technician/installs/$installId': {
       id: '/_authenticated/technician/installs/$installId'
       path: '/$installId'
@@ -3611,6 +3631,21 @@ const AuthenticatedPlatformOrdersRouteWithChildren =
     AuthenticatedPlatformOrdersRouteChildren,
   )
 
+interface AuthenticatedPlatformTenantsRouteChildren {
+  AuthenticatedPlatformTenantsAdminIdRoute: typeof AuthenticatedPlatformTenantsAdminIdRoute
+}
+
+const AuthenticatedPlatformTenantsRouteChildren: AuthenticatedPlatformTenantsRouteChildren =
+  {
+    AuthenticatedPlatformTenantsAdminIdRoute:
+      AuthenticatedPlatformTenantsAdminIdRoute,
+  }
+
+const AuthenticatedPlatformTenantsRouteWithChildren =
+  AuthenticatedPlatformTenantsRoute._addFileChildren(
+    AuthenticatedPlatformTenantsRouteChildren,
+  )
+
 interface AuthenticatedTechnicianInstallsRouteChildren {
   AuthenticatedTechnicianInstallsInstallIdRoute: typeof AuthenticatedTechnicianInstallsInstallIdRoute
 }
@@ -3700,7 +3735,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
-  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
+  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRouteWithChildren
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedSilosSiloIdRoute: typeof AuthenticatedSilosSiloIdRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
@@ -3804,7 +3839,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
-  AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
+  AuthenticatedPlatformTenantsRoute:
+    AuthenticatedPlatformTenantsRouteWithChildren,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedSilosSiloIdRoute: AuthenticatedSilosSiloIdRoute,
   AuthenticatedTechnicianInstallsRoute:

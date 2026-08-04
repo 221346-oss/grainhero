@@ -17,10 +17,12 @@ export const Route = createFileRoute("/_authenticated/business")({
 
 type Tab = "revenue" | "subscription" | "insurance";
 
+// Insurance tab hidden from UI for now — code retained for future use
+// when a bank partnership is confirmed.
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "revenue",      label: "Revenue",      icon: Wallet },
   { key: "subscription", label: "Subscription", icon: CreditCard },
-  { key: "insurance",    label: "Insurance",    icon: Shield },
+  // { key: "insurance", label: "Insurance", icon: Shield },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
@@ -53,16 +55,17 @@ function BusinessWorkspace() {
   const counts = {
     revenue: totals.countInvoices ?? 0,
     subscription: sub ? 1 : 0,
-    insurance: policyList.length,
+    // insurance: policyList.length, // hidden until bank partnership confirmed
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Collected", value: money(totals.paid), up: true },
-    { label: "Outstanding", value: money(totals.outstanding), up: false },
-    { label: "Coverage", value: money(totalCoverage), up: true },
-    { label: "Open Claims", value: openClaims, up: openClaims === 0 },
+    { label: "Collected",    value: money(totals.paid),        up: true  },
+    { label: "Outstanding",  value: money(totals.outstanding), up: false },
+    // Coverage and Open Claims hidden until Insurance is re-enabled
+    // { label: "Coverage",   value: money(totalCoverage),      up: true  },
+    // { label: "Open Claims", value: openClaims,               up: openClaims === 0 },
   ];
 
   return (
@@ -193,7 +196,8 @@ function BusinessWorkspace() {
           <div className="p-4 md:p-6">
             {activeTab === "revenue" && <RevenueSection />}
             {activeTab === "subscription" && <SubscriptionSection />}
-            {activeTab === "insurance" && <InsuranceSection />}
+            {/* Insurance hidden until bank partnership confirmed */}
+            {/* {activeTab === "insurance" && <InsuranceSection />} */}
           </div>
         </div>
 

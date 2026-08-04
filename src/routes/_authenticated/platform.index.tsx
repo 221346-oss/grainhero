@@ -1,10 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getPlatformMetrics,
   getPlatformOverviewWidgets,
-  getAdminTeam,
   getPlatformApiHealth,
 } from "@/lib/platform.functions";
 import { listAllHardwareOrders } from "@/lib/hardware-orders.functions";
@@ -13,7 +12,7 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp, TrendingDown, Users, DollarSign, AlertTriangle,
-  Activity, Database, X, CheckCircle2, AlertCircle, Loader2,
+  Activity, Database, CheckCircle2, AlertCircle, Loader2,
   ChevronRight,
 } from "lucide-react";
 import React from "react";
@@ -125,100 +124,6 @@ function HealthPill({
   );
 }
 
-// ── Team side panel ──────────────────────────────────────────────────────────
-function TeamPanel({
-  adminId, adminName, open, onClose,
-}: {
-  adminId: string | null; adminName: string; open: boolean; onClose: () => void;
-}) {
-  const fetchTeam = useServerFn(getAdminTeam);
-  const teamQ = useQuery({
-    queryKey: ["admin-team", adminId],
-    queryFn:  () => fetchTeam({ data: { adminId: adminId! } }),
-    enabled:  !!adminId && open,
-  });
-
-  const roleColor: Record<string, string> = {
-    admin:      "bg-[#2FAC0C]/10 text-[#2FAC0C]",
-    manager:    "bg-blue-100 text-blue-700",
-    technician: "bg-purple-100 text-purple-700",
-    pending:    "bg-slate-100 text-slate-500",
-  };
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/25 z-40 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={onClose}
-      />
-      {/* Drawer */}
-      <div
-        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-xl z-50 flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
-          <div>
-            <p className="text-sm font-semibold text-slate-900 truncate max-w-[220px]">{adminName}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Team members · read-only</p>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto">
-          {teamQ.isLoading && (
-            <div className="flex items-center justify-center py-16 text-slate-400">
-              <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading…
-            </div>
-          )}
-          {teamQ.isError && (
-            <div className="px-5 py-8 text-center">
-              <AlertCircle className="w-5 h-5 text-red-400 mx-auto mb-2" />
-              <p className="text-sm text-red-600">Failed to load team</p>
-            </div>
-          )}
-          {teamQ.data && teamQ.data.length === 0 && (
-            <div className="px-5 py-12 text-center text-sm text-slate-400">
-              No team members yet
-            </div>
-          )}
-          {(teamQ.data ?? []).map((m: any) => (
-            <div key={m.id} className="px-5 py-3.5 border-b border-slate-50 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{m.name}</p>
-                {m.email && <p className="text-[11px] text-slate-400 truncate">{m.email}</p>}
-                {m.last_login && (
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    Last login {new Date(m.last_login).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-1.5 shrink-0">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${roleColor[m.role] ?? "bg-slate-100 text-slate-500"}`}>
-                  {m.role}
-                </span>
-                {m.blocked && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
-                    blocked
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-        {/* Footer note */}
-        <div className="px-5 py-3 border-t border-slate-100 bg-slate-50">
-          <p className="text-[10px] text-slate-400 leading-relaxed">
-            Super admin can view team membership only. Grain operations (silos, batches, inventory) are not accessible from here.
-          </p>
-        </div>
-      </div>
-    </>
-  );
-}
-
 // ── Main page component ──────────────────────────────────────────────────────
 function PlatformOverviewPage() {
   const fetchMetrics  = useServerFn(getPlatformMetrics);
@@ -241,8 +146,7 @@ function PlatformOverviewPage() {
     refetchInterval: 60_000,
   });
 
-  // Team panel state
-  const [teamPanel, setTeamPanel] = React.useState<{ id: string; name: string } | null>(null);
+  const navigate = useNavigate();
 
   const m = metricsQ.data;
   const w = widgetsQ.data;
@@ -385,7 +289,7 @@ function PlatformOverviewPage() {
                   <tr
                     key={s.id}
                     className="hover:bg-slate-50/60 cursor-pointer group"
-                    onClick={() => setTeamPanel({ id: s.id, name: s.name ?? s.email ?? s.id })}
+                    onClick={() => navigate({ to: "/platform/tenants/$adminId", params: { adminId: s.id } })}
                   >
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-1.5">
@@ -414,7 +318,7 @@ function PlatformOverviewPage() {
             </table>
           </div>
           <div className="px-4 py-2 border-t border-slate-50 text-[10px] text-slate-400">
-            Click a row to view that admin's team
+            Click a row to view tenant details
           </div>
         </div>
 
@@ -468,14 +372,6 @@ function PlatformOverviewPage() {
           </div>
         </div>
       </div>
-
-      {/* ── Team drill-down panel ────────────────────────────────────── */}
-      <TeamPanel
-        adminId={teamPanel?.id ?? null}
-        adminName={teamPanel?.name ?? ""}
-        open={!!teamPanel}
-        onClose={() => setTeamPanel(null)}
-      />
 
     </AdminPageShell>
   );
