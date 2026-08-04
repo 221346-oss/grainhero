@@ -54,30 +54,18 @@ export function AgriHero() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35, duration: 0.8 }}
-            className="mt-8 flex flex-col items-center justify-center gap-5 sm:flex-row sm:gap-8"
+            className="mt-10 flex justify-center"
           >
-            <p className="max-w-xs text-sm font-medium leading-relaxed text-[#FAFAF7]/80 sm:text-left sm:text-base">
-              Sensors in the silo. Spoilage flagged before it starts.
-            </p>
             <Link
-              to="/marketplace"
+              to="/contact"
               className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#2FA84F] px-7 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:bg-[#FAFAF7] hover:text-[#111512]"
             >
-              Explore smart silos
+              Let&apos;s talk
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>
         </div>
       </div>
-
-      {/* Scroll hint */}
-      <a
-        href="#problem"
-        aria-label="Scroll to next section"
-        className="absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 sm:block"
-      >
-        <span className="block h-14 w-px bg-gradient-to-b from-[#2FA84F] to-transparent" />
-      </a>
     </div>
   )
 }
