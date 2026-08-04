@@ -20,7 +20,7 @@
         "@types/bun": "latest",
       },
       "peerDependencies": {
-        "typescript": "^7.0.2",
+        "typescript": "5.7.3",
       },
     },
   },
