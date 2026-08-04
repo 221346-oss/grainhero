@@ -4,14 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Cpu } from 'lucide-react'
 
 import { NewGlassNav } from '@/components/landing/NewGlassNav'
-import { NewHeroSection } from '@/components/landing/NewHeroSection'
-import { NewFeaturesSection } from '@/components/landing/NewFeaturesSection'
-import { NewHowItWorks } from '@/components/landing/NewHowItWorks'
-import { BenefitsSection } from '@/components/landing/BenefitsSection'
-import { TechnologySection } from '@/components/landing/TechnologySection'
+import { AgriHero } from '@/components/landing/AgriHero'
+import { ProblemMarquee } from '@/components/landing/ProblemMarquee'
+import { SimpleSteps } from '@/components/landing/SimpleSteps'
+import { HardwareSection } from '@/components/landing/HardwareSection'
+import { AdShowcase } from '@/components/landing/AdShowcase'
+import { PartnersStrip } from '@/components/landing/PartnersStrip'
+import { HorizontalFAQ } from '@/components/landing/HorizontalFAQ'
+import { ContactCTA } from '@/components/landing/ContactCTA'
 import { StatsSection } from '@/components/landing/StatsSection'
-import { FAQSection } from '@/components/landing/FAQSection'
-import { NewCTASection } from '@/components/landing/NewCTASection'
 import { NewFooter } from '@/components/landing/NewFooter'
 import pricingData from '@/lib/pricing-data'
 
@@ -55,31 +56,32 @@ function NewHomePage() {
     <main className="min-h-screen bg-[#EDE9D4] text-[#404F44] landing-bg dark:text-foreground">
       <NewGlassNav />
       <section id="hero" aria-label="Hero section">
-        <NewHeroSection />
+        <AgriHero />
       </section>
-      <section id="features" aria-label="Features section">
-        <NewFeaturesSection />
+      <section id="problem" aria-label="The problem">
+        <ProblemMarquee />
       </section>
       <section id="how-it-works" aria-label="How it works">
-        <NewHowItWorks />
+        <SimpleSteps />
       </section>
-      <section id="benefits" aria-label="Benefits">
-        <BenefitsSection />
+      <section id="hardware" aria-label="Hardware and 3D silo">
+        <HardwareSection />
       </section>
-      <section id="technology" aria-label="Technology">
-        <TechnologySection />
+      <section aria-label="Brand film">
+        <AdShowcase />
       </section>
       <section aria-label="Statistics">
         <StatsSection />
       </section>
+      <section aria-label="Partners">
+        <PartnersStrip />
+      </section>
+      <HorizontalFAQ />
       <section id="pricing" aria-label="Pricing">
         <PricingShowcase />
       </section>
-      <section id="faq" aria-label="FAQ">
-        <FAQSection />
-      </section>
       <section aria-label="Call to action">
-        <NewCTASection />
+        <ContactCTA />
       </section>
       <NewFooter />
     </main>
