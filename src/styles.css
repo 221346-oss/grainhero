@@ -303,6 +303,36 @@
 
 html { scroll-behavior: smooth; }
 
+/* Landing sections use a restrained reveal so transitions read as one story. */
+@keyframes landing-section-enter {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.landing-section {
+  position: relative;
+  overflow: clip;
+}
+
+@supports (animation-timeline: view()) {
+  .landing-section:not(#hero) {
+    animation: landing-section-enter both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 24%;
+  }
+}
+
+@media (max-width: 639px) {
+  .landing-section:not(#hero) {
+    scroll-margin-top: 4.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .landing-section { animation: none !important; }
+}
+
 /* Hidden scrollbar utility (sidebar, popovers) */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
