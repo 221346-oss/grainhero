@@ -7,7 +7,7 @@ import { listGrainAlerts } from "@/lib/operations.functions";
 import { Badge } from "@/components/ui/badge";
 import { AlertsFunnel } from "./AlertsFunnel";
 
-const PRIO_ICON: Record<string, React.ElementType> = {
+const PRIO_ICON: Record<string, ComponentType<{ className?: string }>> = {
   critical: AlertTriangle,
   high: AlertCircle,
   medium: Bell,
