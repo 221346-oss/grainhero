@@ -952,61 +952,57 @@ export function DataVisualizationPanel() {
                 Most recent {Math.min(20, history.length)} telemetry datapoints loaded from database
               </CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="text-xs uppercase text-slate-500 border-b border-slate-100 font-bold">
-                    <th className="py-3 px-4">Timestamp</th>
-                    <th className="py-3 px-4">Temp (°C)</th>
-                    <th className="py-3 px-4">Hum (%)</th>
-                    <th className="py-3 px-4">VOC Index</th>
-                    <th className="py-3 px-4">Dew Pt</th>
-                    <th className="py-3 px-4">Risk Index</th>
-                    <th className="py-3 px-4">Fan State</th>
-                    <th className="py-3 px-4">Fan PWM</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history
-                    .slice()
-                    .reverse()
-                    .slice(0, 20)
-                    .map((row, idx) => (
-                      <tr key={idx} className="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors">
-                        <td className="py-3 px-4 text-xs font-mono text-slate-500">{row.fullTime}</td>
-                        <td className="py-3 px-4 font-bold text-slate-800">{row.temperature.toFixed(1)}°C</td>
-                        <td className="py-3 px-4 text-slate-700">{row.humidity.toFixed(1)}%</td>
-                        <td className="py-3 px-4 text-slate-700">{row.tvoc} ppb</td>
-                        <td className="py-3 px-4 text-slate-700">
-                          {row.dewPoint !== null ? `${row.dewPoint.toFixed(1)}°C` : "—"}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`font-bold ${riskColor(row.riskIndex)}`}>
-                            {row.riskIndex}/100
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          {row.fanOn === 1 ? (
-                            <span className="text-emerald-600 font-bold flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> ON
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">OFF</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-slate-600">{row.pwm}%</td>
-                      </tr>
-                    ))}
-                  {history.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="py-8 text-center text-slate-400">
-                        <RefreshCw className="h-4 w-4 inline mr-2 animate-spin" />
-                        No active IoT history records available.
-                      </td>
+            <CardContent>
+              <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Timestamp</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Temp (°C)</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Hum (%)</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">VOC Index</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Dew Pt</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Risk Index</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Fan State</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Fan PWM</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {history
+                      .slice()
+                      .reverse()
+                      .slice(0, 20)
+                      .map((row, idx) => (
+                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 text-muted-foreground tabular-nums">{row.fullTime}</td>
+                          <td className="px-3 py-2 font-medium text-foreground tabular-nums">{row.temperature.toFixed(1)}°C</td>
+                          <td className="px-3 py-2 tabular-nums">{row.humidity.toFixed(1)}%</td>
+                          <td className="px-3 py-2 tabular-nums">{row.tvoc} ppb</td>
+                          <td className="px-3 py-2 tabular-nums">
+                            {row.dewPoint !== null ? `${row.dewPoint.toFixed(1)}°C` : "—"}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`font-medium tabular-nums ${riskColor(row.riskIndex)}`}>
+                              {row.riskIndex}/100
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <NeonStatusBadge status={row.fanOn === 1 ? "active" : "closed"} label={row.fanOn === 1 ? "ON" : "OFF"} />
+                          </td>
+                          <td className="px-3 py-2 tabular-nums">{row.pwm}%</td>
+                        </tr>
+                      ))}
+                    {history.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                          <RefreshCw className="h-4 w-4 inline mr-2 animate-spin" />
+                          No active IoT history records available.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -56,6 +56,9 @@ function MonitoringWorkspace() {
   const getMaintenanceFn = useServerFn(getMaintenanceOverview);
   const getHealthFn = useServerFn(getDeviceHealth);
   const roleFn = useServerFn(getMyRole);
+  const listSensorsFn = useServerFn(listSensorDevices);
+  const listActuatorsFn = useServerFn(listActuators);
+  const listAlertsFn = useServerFn(listGrainAlerts);
 
   const { data: sensors } = useQuery({
     queryKey: ["sensor-devices"],
