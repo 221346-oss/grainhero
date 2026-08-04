@@ -1,31 +1,18 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { listAllTenants, getTenantDetail } from "@/lib/platform-no-admin.functions";
-import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
-import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
-import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { Badge } from "@/components/ui/badge";
+import { getTenantDetail } from "@/lib/platform-no-admin.functions";
 
-export const Route = createFileRoute("/_authenticated/platform/tenants")({ component: TenantsPage });
+export const Route = createFileRoute("/_authenticated/platform/tenants/$adminId")({
+  component: TenantDetailSheet,
+});
 
-type Tenant = {
-  id: string; name: string | null; email: string | null;
-  business_type: string | null; created_at: string | null;
-  blocked: boolean | null; subscription_plan: string | null;
-  team_size: number; batch_count: number;
-};
-
-// ── Skeleton pulse ────────────────────────────────────────────────────────────
 function Sk({ className }: { className: string }) {
   return <div className={`animate-pulse rounded bg-slate-100 ${className}`} />;
 }
 
-// ── Usage bar ─────────────────────────────────────────────────────────────────
 function UsageBar({ used, max, label }: { used: number; max: number; label: string }) {
   const pct = max > 0 ? Math.min(100, Math.round((used / max) * 100)) : 0;
   const color = pct >= 90 ? "#ef4444" : pct >= 70 ? "#f59e0b" : "#2FAC0C";
@@ -42,15 +29,20 @@ function UsageBar({ used, max, label }: { used: number; max: number; label: stri
   );
 }
 
-// ── Tenant detail Sheet ───────────────────────────────────────────────────────
-function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () => void }) {
+function TenantDetailSheet() {
+  const { adminId } = Route.useParams();
+  const navigate = useNavigate();
   const fn = useServerFn(getTenantDetail);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["tenant-detail", adminId],
     queryFn: () => fn({ data: { adminId } }),
-    enabled: !!adminId,
     staleTime: 30_000,
   });
+
+  function onClose() {
+    navigate({ to: "/platform/tenants" });
+  }
 
   const { profile, subscription: sub, usage, silos, team, recentBatches, activityLogs } = data ?? {};
 
@@ -70,7 +62,9 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
         <SheetHeader>
           <SheetTitle>{profile?.name ?? profile?.email ?? "Tenant"}</SheetTitle>
           {profile?.email && (
-            <p className="text-xs text-slate-500">{profile.email}{profile.business_type ? ` · ${profile.business_type}` : ""}</p>
+            <p className="text-xs text-slate-500">
+              {profile.email}{profile.business_type ? ` · ${profile.business_type}` : ""}
+            </p>
           )}
         </SheetHeader>
 
@@ -91,7 +85,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
         {data && profile && (
           <div className="mt-6 space-y-5">
 
-            {/* ── Stats strip ── */}
+            {/* Stats strip */}
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-base font-bold text-slate-800">{sub?.plan_name ?? profile.subscription_plan ?? "—"}</div>
@@ -115,7 +109,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
               </div>
             </div>
 
-            {/* ── Plan usage bars ── */}
+            {/* Plan usage bars */}
             {sub && (
               <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Plan Usage</p>
@@ -133,7 +127,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
               </div>
             )}
 
-            {/* ── Profile info ── */}
+            {/* Profile */}
             <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2 text-sm">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Profile</p>
               <div className="flex justify-between">
@@ -154,7 +148,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
               )}
             </div>
 
-            {/* ── Silos list ── */}
+            {/* Silos */}
             {(silos ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -173,7 +167,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
               </div>
             )}
 
-            {/* ── Team ── */}
+            {/* Team */}
             {(team ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -193,7 +187,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
               </div>
             )}
 
-            {/* ── Recent batches ── */}
+            {/* Recent batches */}
             {(recentBatches ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -212,7 +206,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
               </div>
             )}
 
-            {/* ── Activity ── */}
+            {/* Activity */}
             {(activityLogs ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -236,130 +230,5 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
         )}
       </SheetContent>
     </Sheet>
-  );
-}
-
-// ── Main page ─────────────────────────────────────────────────────────────────
-function TenantsPage() {
-  const fn = useServerFn(listAllTenants);
-  const { data = [], isLoading } = useQuery({ queryKey: ["platform-tenants"], queryFn: () => fn() as Promise<Tenant[]> });
-  const [q, setQ] = useState("");
-  const [qInput, setQInput] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const filtered = useMemo(() => data.filter((t) => {
-    const s = q.toLowerCase();
-    return !s || (t.name ?? "").toLowerCase().includes(s) || (t.email ?? "").toLowerCase().includes(s);
-  }), [data, q]);
-
-  const totalTenants   = data.length;
-  const activeTenants  = data.filter((t) => !t.blocked).length;
-  const blockedTenants = data.filter((t) => t.blocked).length;
-  const thisMonth = data.filter((t) => {
-    if (!t.created_at) return false;
-    const created = new Date(t.created_at);
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
-    return created >= monthAgo;
-  }).length;
-
-  if (isLoading) {
-    return (
-      <AdminPageShell title="Platform tenants" subtitle="Organizations and their subscriptions">
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
-                <Sk className="h-7 w-10" /><Sk className="h-3 w-20" />
-              </div>
-            ))}
-          </div>
-          <Sk className="h-12 rounded-lg" />
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
-              <Sk className="h-4 w-24" /><Sk className="h-4 w-20" />
-            </div>
-            <div className="divide-y divide-slate-50">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="px-4 py-3 flex items-center gap-4">
-                  <div className="flex-1 space-y-1.5"><Sk className="h-4 w-40" /><Sk className="h-3 w-56" /></div>
-                  <Sk className="h-3 w-16" /><Sk className="h-5 w-14 rounded-full" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </AdminPageShell>
-    );
-  }
-
-  return (
-    <AdminPageShell title="Platform tenants" subtitle="Organizations and their subscriptions">
-      <AdminSummaryTiles
-        columns={4}
-        tiles={[
-          { key: "all",     label: "Total tenants", value: totalTenants },
-          { key: "active",  label: "Active",        value: activeTenants },
-          { key: "month",   label: "This month",    value: thisMonth },
-          { key: "blocked", label: "Blocked",       value: blockedTenants },
-        ]}
-      />
-
-      <AdminFilterBar onSubmit={() => setQ(qInput)}>
-        <AdminFilterField label="Search" width="flex-1 min-w-[240px]">
-          <Input value={qInput} onChange={(e) => setQInput(e.target.value)} placeholder="Search tenants by name or email…" />
-        </AdminFilterField>
-      </AdminFilterBar>
-
-      <AdminDataCard title="All tenants" description={`Showing ${filtered.length} of ${data.length}`}>
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
-            <p className="text-sm">No tenants found</p>
-          </div>
-        ) : (
-          <div>
-            {filtered.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setSelectedId(t.id)}
-                className="w-full flex flex-wrap items-center gap-4 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-900 truncate">{t.name ?? "Unnamed organization"}</div>
-                  <div className="text-xs text-slate-500 truncate mt-0.5">
-                    {t.email}
-                    {t.business_type && <span className="ml-2">• {t.business_type}</span>}
-                    {t.created_at && <span className="ml-2 text-slate-400">• Joined {new Date(t.created_at).toLocaleDateString()}</span>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span><span className="font-semibold text-slate-700">{t.team_size}</span> <span className="text-slate-500">users</span></span>
-                  <span><span className="font-semibold text-slate-700">{t.batch_count}</span> <span className="text-slate-500">batches</span></span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={t.blocked ? "bg-red-100 text-red-700 border-red-200" : "bg-emerald-100 text-emerald-700 border-emerald-200"}>
-                    {t.blocked ? "Blocked" : "Active"}
-                  </Badge>
-                  {t.subscription_plan && (
-                    <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
-                      {t.subscription_plan}
-                    </Badge>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </AdminDataCard>
-
-      {/* Tenant detail Sheet */}
-      {selectedId && (
-        <TenantDetailSheet adminId={selectedId} onClose={() => setSelectedId(null)} />
-      )}
-
-      {/* Child route outlet — required by router even though we use Sheet */}
-      <Outlet />
-    </AdminPageShell>
   );
 }

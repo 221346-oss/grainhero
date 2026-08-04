@@ -13,6 +13,7 @@ import { getCustomerFeedback, getWarehouseOperationsMetrics, getTechnicianPerfor
 import { listTickets, deleteTicket, type TicketRow } from "@/lib/tickets.functions";
 import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
 import { attachTicketForUser } from "@/lib/ticketMessages";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Star, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -497,7 +498,11 @@ function PlatformReportingPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <AdminDataCard title="Top utilized warehouses" description="Highest capacity usage">
               {loadingWarehouses ? (
-                <p className="p-6 text-sm text-slate-500">Loading...</p>
+                <div className="p-4 space-y-3">
+                  <Skeleton className="h-10 w-full rounded-md" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
               ) : warehouses.insights.topUtilized.length === 0 ? (
                 <p className="p-6 text-sm text-slate-400 text-center">No data</p>
               ) : (
@@ -559,7 +564,11 @@ function PlatformReportingPage() {
         <TabsContent value="technicians" className="mt-4">
           <AdminDataCard title="Technician performance" description="Installation metrics and customer ratings">
             {loadingTech ? (
-              <p className="p-6 text-sm text-slate-500">Loading...</p>
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-10 w-full rounded-md" />
+                <Skeleton className="h-10 w-full rounded-md" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
             ) : technicians.technicians.length === 0 ? (
               <p className="p-6 text-sm text-slate-400 text-center">No technicians yet</p>
             ) : (

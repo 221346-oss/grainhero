@@ -40,13 +40,23 @@ function LoginPage() {
           : null,
   );
 
-  // If already signed in, go straight to dashboard
+  // If already signed in or active session exists, go straight to dashboard
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         navigate({ to: redirect ?? "/dashboard", replace: true });
       }
     });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        navigate({ to: redirect ?? "/dashboard", replace: true });
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, [navigate, redirect]);
 
   const submit = async (e: React.FormEvent) => {

@@ -15,9 +15,7 @@ const RENAME_ROLES = ["super_admin", "admin", "manager"] as const;
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
   if (r.success) return r.data;
-  const msg = r.error.issues
-    .map((i) => `${i.path.join(".") || "field"}: ${i.message}`)
-    .join(" · ");
+  const msg = r.error.issues.map((i) => `${i.path.join(".") || "field"}: ${i.message}`).join(" · ");
   throw new Error(msg);
 }
 
@@ -51,7 +49,11 @@ export const upsertWarehouse = createServerFn({ method: "POST" })
   .validator((d: unknown) => parseOrThrow(warehouseInput, d))
   .handler(async ({ data, context }) => {
     if (!data.id) {
-      await assertPlanAllows({ feature: "max_warehouses", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "max_warehouses",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
     // Managers/technicians have profiles.admin_id set to their tenant admin; admins have it null.
@@ -151,7 +153,9 @@ export const listSilos = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("silos")
-      .select("*, warehouses(id, name, warehouse_id), current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type)")
+      .select(
+        "*, warehouses(id, name, warehouse_id), current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type)",
+      )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -182,7 +186,11 @@ export const upsertSilo = createServerFn({ method: "POST" })
       // check), so it's a no-op safety net for this function's only
       // remaining caller, not the actual gate.
       await requireRole(context.supabase, context.userId, ["super_admin"]);
-      await assertPlanAllows({ feature: "max_silos", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "max_silos",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     const location = { description: data.location_description ?? null };
     if (data.id) {
@@ -274,11 +282,25 @@ export const deleteSilo = createServerFn({ method: "POST" })
       .from("grain_batches")
       .select("id", { count: "exact", head: true })
       .eq("silo_id", data.id)
-      .in("status", ["stored", "on_hold", "processing", "damaged", "expired", "pending_qc", "qc_submitted", "qc_failed", "qc_passed", "admin_rejected"] as never);
+      .in("status", [
+        "stored",
+        "on_hold",
+        "processing",
+        "damaged",
+        "expired",
+        "pending_qc",
+        "qc_submitted",
+        "qc_failed",
+        "qc_passed",
+        "admin_rejected",
+        "pending_approval",
+      ] as never);
 
     if (countError) throw countError;
     if (count && count > 0) {
-      throw new Error("Cannot delete silo: it contains active grain batches. Dispatch or reassign them first.");
+      throw new Error(
+        "Cannot delete silo: it contains active grain batches. Dispatch or reassign them first.",
+      );
     }
 
     const { error } = await context.supabase.from("silos").delete().eq("id", data.id);
@@ -291,7 +313,9 @@ export const listGrainBatches = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data: batches, error } = await context.supabase
       .from("grain_batches")
-      .select("*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)")
+      .select(
+        "*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)",
+      )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -301,7 +325,8 @@ export const listGrainBatches = createServerFn({ method: "GET" })
     // grain_batches yet (see the same `as never`/`as any` workaround used
     // elsewhere for this column), so it's read via an untyped accessor here
     // rather than widening `batches`'s inferred type for all consumers.
-    const technicianIdOf = (b: object) => (b as { assigned_technician_id?: string | null }).assigned_technician_id ?? null;
+    const technicianIdOf = (b: object) =>
+      (b as { assigned_technician_id?: string | null }).assigned_technician_id ?? null;
     const techIds = Array.from(new Set(batches.map(technicianIdOf).filter(Boolean))) as string[];
     let techMap: Record<string, { id: string; name: string | null; email: string | null }> = {};
     if (techIds.length > 0) {
@@ -318,15 +343,22 @@ export const listGrainBatches = createServerFn({ method: "GET" })
       const technicianId = technicianIdOf(b);
       return {
         ...b,
-        assigned_technician: technicianId ? techMap[technicianId] ?? null : null,
+        assigned_technician: technicianId ? (techMap[technicianId] ?? null) : null,
       };
     });
   });
 
-
-
 const grainTypes = ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"] as const;
-const batchStatuses = ["stored", "dispatched", "sold", "damaged", "expired", "on_hold", "processing"] as const;
+const batchStatuses = [
+  "stored",
+  "dispatched",
+  "sold",
+  "damaged",
+  "expired",
+  "on_hold",
+  "processing",
+  "pending_approval",
+] as const;
 
 const batchInputBase = z.object({
   id: z.string().uuid().optional(),
@@ -350,7 +382,10 @@ const batchInputBase = z.object({
   status: z.enum(batchStatuses).optional(),
   notes: z.string().max(2000).optional().nullable(),
   supplier_id: z.string().uuid().optional().nullable(),
-  source_kind: z.enum(["external", "own_farm", "internal_transfer", "anonymous"]).optional().nullable(),
+  source_kind: z
+    .enum(["external", "own_farm", "internal_transfer", "anonymous"])
+    .optional()
+    .nullable(),
   unit_cost: z.number().nonnegative().optional().nullable(),
   currency: z.string().min(3).max(3).optional().nullable(),
   // QC pipeline: required on create (a new batch must be assigned a
@@ -358,20 +393,32 @@ const batchInputBase = z.object({
   // through the dedicated QC functions, not this generic upsert.
   assignedTechnicianId: z.string().uuid().optional().nullable(),
 });
-const batchInput = batchInputBase.refine(
-  (d) => d.id || d.assignedTechnicianId,
-  { message: "Assign a technician to the new batch", path: ["assignedTechnicianId"] },
-);
+const batchInput = batchInputBase.refine((d) => d.id || d.assignedTechnicianId, {
+  message: "Assign a technician to the new batch",
+  path: ["assignedTechnicianId"],
+});
 
 export const upsertGrainBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(batchInput, d))
   .handler(async ({ data, context }) => {
+    // Get user role for role-based logic
+    const userRole = await context.supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const role = (userRole.data as { role?: string })?.role ?? "pending";
+
     if (!data.id) {
       // Batch creation starts the QC pipeline — restricted to Manager/Admin.
       // (Technicians only ever act on batches already assigned to them.)
       await requireRole(context.supabase, context.userId, ["admin", "manager"]);
-      await assertPlanAllows({ feature: "max_batches", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "max_batches",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
     // Managers/technicians have profiles.admin_id set to their tenant admin; admins have it null.
@@ -384,20 +431,31 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
     const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
     // resolve warehouse from silo
     const { data: silo, error: siloErr } = await context.supabase
-      .from("silos").select("id, warehouse_id, capacity_kg, current_occupancy_kg").eq("id", data.silo_id).single();
+      .from("silos")
+      .select("id, warehouse_id, capacity_kg, current_occupancy_kg")
+      .eq("id", data.silo_id)
+      .single();
     if (siloErr) throw siloErr;
     if (!silo?.warehouse_id) throw new Error("Silo has no warehouse");
 
-    const intake_conditions = (data.intake_temperature != null || data.intake_humidity != null) ? {
-      temperature: data.intake_temperature ?? null,
-      humidity: data.intake_humidity ?? null,
-    } : null;
+    const intake_conditions =
+      data.intake_temperature != null || data.intake_humidity != null
+        ? {
+            temperature: data.intake_temperature ?? null,
+            humidity: data.intake_humidity ?? null,
+          }
+        : null;
 
-    const total_purchase_value = data.purchase_price_per_kg != null
-      ? Number((data.purchase_price_per_kg * data.quantity_kg).toFixed(2))
-      : null;
+    const total_purchase_value =
+      data.purchase_price_per_kg != null
+        ? Number((data.purchase_price_per_kg * data.quantity_kg).toFixed(2))
+        : null;
 
     if (data.id) {
+      // Enforce status restriction for managers on updates
+      // Managers cannot bypass approval requirement via direct API calls
+      const updateStatus = role === "manager" ? "pending_approval" : (data.status ?? "stored");
+
       const { data: row, error } = await context.supabase
         .from("grain_batches")
         .update({
@@ -418,7 +476,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
           purchase_price_per_kg: data.purchase_price_per_kg ?? null,
           total_purchase_value,
           intake_conditions,
-          status: data.status ?? "stored",
+          status: updateStatus,
           notes: data.notes ?? null,
           updated_by: context.userId,
           supplier_id: data.supplier_id ?? null,
@@ -426,7 +484,9 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
           unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
           currency: data.currency ?? "PKR",
         })
-        .eq("id", data.id).select("*").single();
+        .eq("id", data.id)
+        .select("*")
+        .single();
       if (error) throw error;
       await logActivity({
         actorId: context.userId,
@@ -434,7 +494,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         action: "batch.updated",
         targetType: "grain_batch",
         targetId: data.id,
-        meta: { batchId: (row as { batch_id?: string }).batch_id, status: data.status ?? "stored" },
+        meta: { batchId: (row as { batch_id?: string }).batch_id, status: updateStatus },
       });
       return row;
     }
@@ -452,7 +512,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       if (capacity != null && currentOccupancy + data.quantity_kg > capacity) {
         const free = Math.max(0, capacity - currentOccupancy);
         throw new Error(
-          `Silo capacity exceeded: only ${free.toLocaleString()}kg free (capacity ${capacity.toLocaleString()}kg, already holding ${currentOccupancy.toLocaleString()}kg), tried to add ${data.quantity_kg.toLocaleString()}kg.`
+          `Silo capacity exceeded: only ${free.toLocaleString()}kg free (capacity ${capacity.toLocaleString()}kg, already holding ${currentOccupancy.toLocaleString()}kg), tried to add ${data.quantity_kg.toLocaleString()}kg.`,
         );
       }
     }
@@ -462,7 +522,10 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
     // listAvailableTechnicians in batch-qc.functions.ts), but re-validate
     // server-side against a race.
     const { data: technician, error: techErr } = await context.supabase
-      .from("profiles").select("id, admin_id").eq("id", data.assignedTechnicianId as string).maybeSingle();
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", data.assignedTechnicianId as string)
+      .maybeSingle();
     if (techErr) throw techErr;
     if (!technician || (technician as { admin_id?: string | null }).admin_id !== tenantAdminId) {
       throw new Error("Technician must be a member of your team");
@@ -476,8 +539,15 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       throw new Error("This technician already has a batch in progress");
     }
 
-    const batchId = data.batch_id ?? `${data.grain_type.slice(0,3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+    const batchId =
+      data.batch_id ??
+      `${data.grain_type.slice(0, 3).toUpperCase()}-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const qrPayload = `GH-${batchId}-${Date.now()}`;
+
+    // Manager batches need admin approval before grain is added to silo
+    // Admin batches go directly to pending_qc
+    const initialStatus = role === "manager" ? "pending_approval" : "pending_qc";
+
     const { data: row, error } = await context.supabase
       .from("grain_batches")
       .insert({
@@ -501,7 +571,7 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         purchase_price_per_kg: data.purchase_price_per_kg ?? null,
         total_purchase_value,
         intake_conditions,
-        status: "pending_qc",
+        status: initialStatus,
         assigned_technician_id: data.assignedTechnicianId,
         notes: data.notes ?? null,
         created_by: context.userId,
@@ -510,14 +580,22 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         unit_cost: data.unit_cost ?? data.purchase_price_per_kg ?? null,
         currency: data.currency ?? "PKR",
       } as never)
-      .select("*").single();
+      .select("*")
+      .single();
     if (error) throw error;
 
-    // Occupancy is NOT added here anymore — a Manager-created intake sits at
-    // `pending_qc` and must clear the full QC pipeline before an Admin's
-    // final approval (adminReviewBatch, batch-qc.functions.ts) actually adds
-    // its quantity to silo stock. Adding it at creation would let stock count
-    // grow from batches nobody has approved yet.
+    // Update silo stock ONLY for admin batches (manager batches wait for approval)
+    // Admin batches: grain is added to silo immediately
+    // Manager batches: grain is NOT added until admin approves
+    if (role === "admin") {
+      await context.supabase
+        .from("silos")
+        .update({
+          current_occupancy_kg: (silo.current_occupancy_kg ?? 0) + data.quantity_kg,
+          updated_by: context.userId,
+        })
+        .eq("id", data.silo_id);
+    }
 
     await logActivity({
       actorId: context.userId,
@@ -525,7 +603,12 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       action: "batch.created",
       targetType: "grain_batch",
       targetId: (row as { id: string }).id,
-      meta: { batchId, grainType: data.grain_type, quantityKg: data.quantity_kg, siloId: data.silo_id },
+      meta: {
+        batchId,
+        grainType: data.grain_type,
+        quantityKg: data.quantity_kg,
+        siloId: data.silo_id,
+      },
     });
     await logActivity({
       actorId: context.userId,
@@ -545,7 +628,10 @@ export const deleteGrainBatch = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     // free up silo if this was the current batch
     const { data: batch } = await context.supabase
-      .from("grain_batches").select("silo_id, quantity_kg, dispatched_quantity_kg, status").eq("id", data.id).single();
+      .from("grain_batches")
+      .select("silo_id, quantity_kg, dispatched_quantity_kg, status")
+      .eq("id", data.id)
+      .single();
     const { error } = await context.supabase.from("grain_batches").delete().eq("id", data.id);
     if (error) throw error;
     // Only a batch that reached "stored" ever added its quantity to silo
@@ -554,9 +640,20 @@ export const deleteGrainBatch = createServerFn({ method: "POST" })
     // qc_passed/admin_rejected) never did, so deleting it must not
     // decrement occupancy that was never added.
     if (batch?.silo_id && (batch as { status?: string }).status === "stored") {
-      const { data: silo } = await context.supabase.from("silos").select("id, current_batch_id, current_occupancy_kg").eq("id", batch.silo_id).single();
-      const remaining = Math.max(0, (silo?.current_occupancy_kg ?? 0) - Number(batch.quantity_kg ?? 0));
-      const patch: { current_occupancy_kg: number; updated_by: string; current_batch_id?: string | null } = { current_occupancy_kg: remaining, updated_by: context.userId };
+      const { data: silo } = await context.supabase
+        .from("silos")
+        .select("id, current_batch_id, current_occupancy_kg")
+        .eq("id", batch.silo_id)
+        .single();
+      const remaining = Math.max(
+        0,
+        (silo?.current_occupancy_kg ?? 0) - Number(batch.quantity_kg ?? 0),
+      );
+      const patch: {
+        current_occupancy_kg: number;
+        updated_by: string;
+        current_batch_id?: string | null;
+      } = { current_occupancy_kg: remaining, updated_by: context.userId };
       if (silo?.current_batch_id === data.id) patch.current_batch_id = null;
       await context.supabase.from("silos").update(patch).eq("id", batch.silo_id);
     }
@@ -566,11 +663,14 @@ export const deleteGrainBatch = createServerFn({ method: "POST" })
 const dispatchInput = z.object({
   id: z.string().uuid(),
   buyer_id: z.string().uuid().optional().nullable(),
-  new_buyer: z.object({
-    name: z.string().min(1),
-    contact_phone: z.string().optional().nullable(),
-    contact_email: z.string().optional().nullable(),
-  }).optional().nullable(),
+  new_buyer: z
+    .object({
+      name: z.string().min(1),
+      contact_phone: z.string().optional().nullable(),
+      contact_email: z.string().optional().nullable(),
+    })
+    .optional()
+    .nullable(),
   sell_price_per_kg: z.number().positive(),
   dispatched_quantity_kg: z.number().positive(),
   vehicle_number: z.string().optional().nullable(),
@@ -593,7 +693,11 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let buyerId = data.buyer_id ?? null;
     if (!buyerId && data.new_buyer?.name) {
-      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "max_buyers",
+        sb: context.supabase,
+        userId: context.userId,
+      });
       // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
       const { data: prof } = await context.supabase
         .from("profiles")
@@ -601,29 +705,38 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
         .eq("id", context.userId)
         .maybeSingle();
       const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
-      const { data: b, error: bErr } = await context.supabase.from("buyers").insert({
-        admin_id: tenantAdminId,
-        name: data.new_buyer.name,
-        contact_name: data.new_buyer.name,
-        contact_phone: data.new_buyer.contact_phone ?? null,
-        contact_email: data.new_buyer.contact_email ?? null,
-        buyer_type: "retailer",
-        status: "active",
-      }).select("id").single();
+      const { data: b, error: bErr } = await context.supabase
+        .from("buyers")
+        .insert({
+          admin_id: tenantAdminId,
+          name: data.new_buyer.name,
+          contact_name: data.new_buyer.name,
+          contact_phone: data.new_buyer.contact_phone ?? null,
+          contact_email: data.new_buyer.contact_email ?? null,
+          buyer_type: "retailer",
+          status: "active",
+        })
+        .select("id")
+        .single();
       if (bErr) throw bErr;
       buyerId = b.id;
     }
     if (!buyerId) throw new Error("Buyer required");
 
     const { data: batch, error: getErr } = await context.supabase
-      .from("grain_batches").select("id, quantity_kg, dispatched_quantity_kg, purchase_price_per_kg, silo_id").eq("id", data.id).single();
+      .from("grain_batches")
+      .select("id, quantity_kg, dispatched_quantity_kg, purchase_price_per_kg, silo_id")
+      .eq("id", data.id)
+      .single();
     if (getErr) throw getErr;
 
     const alreadyDispatched = Number(batch.dispatched_quantity_kg ?? 0);
     const newDispatched = alreadyDispatched + data.dispatched_quantity_kg;
     const isFull = newDispatched >= Number(batch.quantity_kg);
     const revenue = Number((data.sell_price_per_kg * data.dispatched_quantity_kg).toFixed(2));
-    const cost = batch.purchase_price_per_kg ? Number((Number(batch.purchase_price_per_kg) * data.dispatched_quantity_kg).toFixed(2)) : 0;
+    const cost = batch.purchase_price_per_kg
+      ? Number((Number(batch.purchase_price_per_kg) * data.dispatched_quantity_kg).toFixed(2))
+      : 0;
     const profit = Number((revenue - cost).toFixed(2));
 
     const dispatch_details = {
@@ -637,23 +750,37 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
       dispatched_at: new Date().toISOString(),
     };
 
-    const { data: row, error } = await context.supabase.from("grain_batches").update({
-      buyer_id: buyerId,
-      sell_price_per_kg: data.sell_price_per_kg,
-      dispatched_quantity_kg: newDispatched,
-      revenue,
-      profit,
-      status: isFull ? "dispatched" : "processing",
-      actual_dispatch_date: new Date().toISOString(),
-      dispatch_details,
-      updated_by: context.userId,
-    }).eq("id", data.id).select("*").single();
+    const { data: row, error } = await context.supabase
+      .from("grain_batches")
+      .update({
+        buyer_id: buyerId,
+        sell_price_per_kg: data.sell_price_per_kg,
+        dispatched_quantity_kg: newDispatched,
+        revenue,
+        profit,
+        status: isFull ? "dispatched" : "processing",
+        actual_dispatch_date: new Date().toISOString(),
+        dispatch_details,
+        updated_by: context.userId,
+      })
+      .eq("id", data.id)
+      .select("*")
+      .single();
     if (error) throw error;
 
     if (isFull && batch.silo_id) {
-      const { data: silo } = await context.supabase.from("silos").select("id, current_batch_id, current_occupancy_kg").eq("id", batch.silo_id).single();
+      const { data: silo } = await context.supabase
+        .from("silos")
+        .select("id, current_batch_id, current_occupancy_kg")
+        .eq("id", batch.silo_id)
+        .single();
       const remaining = Math.max(0, (silo?.current_occupancy_kg ?? 0) - Number(batch.quantity_kg));
-      const patch: { current_occupancy_kg: number; batch_dispatched_date: string; updated_by: string; current_batch_id?: string | null } = {
+      const patch: {
+        current_occupancy_kg: number;
+        batch_dispatched_date: string;
+        updated_by: string;
+        current_batch_id?: string | null;
+      } = {
         current_occupancy_kg: remaining,
         batch_dispatched_date: new Date().toISOString(),
         updated_by: context.userId,
@@ -663,7 +790,10 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
     }
 
     const { data: prof } = await context.supabase
-      .from("profiles").select("admin_id").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     await logActivity({
       actorId: context.userId,
       tenantAdminId: prof?.admin_id ?? context.userId,
@@ -687,10 +817,17 @@ export async function fetchDispatchTotals(
   // grain_dispatches is the live table (written by createDispatchFromSilo in
   // dispatches.functions.ts) — its revenue column is `total_amount`, not
   // `revenue` (that was the now-dead `dispatches` table's naming).
-  const { data, error } = await supabase.from("grain_dispatches").select("admin_id, total_amount, profit").limit(10000);
+  const { data, error } = await supabase
+    .from("grain_dispatches")
+    .select("admin_id, total_amount, profit")
+    .limit(10000);
   if (error) throw error;
   const map = new Map<string, { admin_id: string; revenue: number; profit: number }>();
-  for (const d of (data ?? []) as Array<{ admin_id: string; total_amount: number | null; profit: number | null }>) {
+  for (const d of (data ?? []) as Array<{
+    admin_id: string;
+    total_amount: number | null;
+    profit: number | null;
+  }>) {
     const key = d.admin_id ?? "unknown";
     const cur = map.get(key) ?? { admin_id: key, revenue: 0, profit: 0 };
     cur.revenue += Number(d.total_amount ?? 0);
@@ -716,7 +853,10 @@ export const logSpoilageEvent = createServerFn({ method: "POST" })
   .validator((d: unknown) => parseOrThrow(spoilageInput, d))
   .handler(async ({ data, context }) => {
     const { data: batch, error: getErr } = await context.supabase
-      .from("grain_batches").select("spoilage_events, spoilage_label, risk_score").eq("id", data.id).single();
+      .from("grain_batches")
+      .select("spoilage_events, spoilage_label, risk_score")
+      .eq("id", data.id)
+      .single();
     if (getErr) throw getErr;
     const events = Array.isArray(batch.spoilage_events) ? batch.spoilage_events : [];
     const event = {
@@ -734,16 +874,26 @@ export const logSpoilageEvent = createServerFn({ method: "POST" })
       logged_at: new Date().toISOString(),
     };
     const newEvents = [...events, event];
-    const label = data.severity === "critical" ? "Spoiled" : data.severity === "high" ? "Risky" : batch.spoilage_label ?? "Safe";
+    const label =
+      data.severity === "critical"
+        ? "Spoiled"
+        : data.severity === "high"
+          ? "Risky"
+          : (batch.spoilage_label ?? "Safe");
     const riskBump = { low: 5, medium: 20, high: 45, critical: 80 }[data.severity];
     const newRisk = Math.min(100, Number(batch.risk_score ?? 0) + riskBump);
-    const { data: row, error } = await context.supabase.from("grain_batches").update({
-      spoilage_events: newEvents,
-      spoilage_label: label,
-      risk_score: newRisk,
-      last_risk_assessment: new Date().toISOString(),
-      updated_by: context.userId,
-    }).eq("id", data.id).select("*").single();
+    const { data: row, error } = await context.supabase
+      .from("grain_batches")
+      .update({
+        spoilage_events: newEvents,
+        spoilage_label: label,
+        risk_score: newRisk,
+        last_risk_assessment: new Date().toISOString(),
+        updated_by: context.userId,
+      })
+      .eq("id", data.id)
+      .select("*")
+      .single();
     if (error) throw error;
     return row;
   });
@@ -753,14 +903,25 @@ export const listSensorDevices = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("sensor_devices")
-      .select("*, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)")
+      .select(
+        "*, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)",
+      )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
     return data ?? [];
   });
 
-const sensorTypeEnum = z.enum(["co2", "humidity", "light", "moisture", "ph", "pressure", "temperature", "voc"]);
+const sensorTypeEnum = z.enum([
+  "co2",
+  "humidity",
+  "light",
+  "moisture",
+  "ph",
+  "pressure",
+  "temperature",
+  "voc",
+]);
 const sensorInput = z.object({
   id: z.string().uuid().optional(),
   device_id: z.string().min(1).max(80).optional(),
@@ -788,7 +949,11 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
   .validator((d: unknown) => parseOrThrow(sensorInput, d))
   .handler(async ({ data, context }) => {
     if (!data.id) {
-      await assertPlanAllows({ feature: "max_sensors", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "max_sensors",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     const base = {
       device_name: data.device_name,
@@ -811,7 +976,12 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
       updated_by: context.userId,
     };
     if (data.id) {
-      const { data: row, error } = await context.supabase.from("sensor_devices").update(base).eq("id", data.id).select("*").single();
+      const { data: row, error } = await context.supabase
+        .from("sensor_devices")
+        .update(base)
+        .eq("id", data.id)
+        .select("*")
+        .single();
       if (error) throw error;
       return row;
     }
@@ -823,12 +993,16 @@ export const upsertSensorDevice = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
-    const { data: row, error } = await context.supabase.from("sensor_devices").insert({
-      ...base,
-      device_id: deviceId,
-      admin_id: tenantAdminId,
-      created_by: context.userId,
-    }).select("*").single();
+    const { data: row, error } = await context.supabase
+      .from("sensor_devices")
+      .insert({
+        ...base,
+        device_id: deviceId,
+        admin_id: tenantAdminId,
+        created_by: context.userId,
+      })
+      .select("*")
+      .single();
     if (error) throw error;
     return row;
   });
@@ -844,20 +1018,29 @@ export const deleteSensorDevice = createServerFn({ method: "POST" })
 
 // Latest reading per device (used to power live tiles)
 type LatestReading = {
-  id: string; device_id: string; reading_timestamp: string;
-  temperature_value: number | null; humidity_value: number | null;
-  co2_value: number | null; voc_value: number | null;
-  moisture_value: number | null; pressure_value: number | null;
-  ml_risk_class: string | null; ml_risk_score: number | null;
+  id: string;
+  device_id: string;
+  reading_timestamp: string;
+  temperature_value: number | null;
+  humidity_value: number | null;
+  co2_value: number | null;
+  voc_value: number | null;
+  moisture_value: number | null;
+  pressure_value: number | null;
+  ml_risk_class: string | null;
+  ml_risk_score: number | null;
   anomaly_detected: boolean | null;
-  battery_level: number | null; signal_strength: number | null;
+  battery_level: number | null;
+  signal_strength: number | null;
 };
 export const listLatestSensorReadings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<LatestReading[]> => {
     const { data, error } = await context.supabase
       .from("sensor_readings")
-      .select("id, device_id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, pressure_value, ml_risk_class, ml_risk_score, anomaly_detected, battery_level, signal_strength")
+      .select(
+        "id, device_id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, pressure_value, ml_risk_class, ml_risk_score, anomaly_detected, battery_level, signal_strength",
+      )
       .order("reading_timestamp", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -870,11 +1053,17 @@ export const listLatestSensorReadings = createServerFn({ method: "GET" })
 // Recent readings for a single device (history)
 export const listDeviceReadings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ device_id: z.string().uuid(), limit: z.number().int().max(500).default(50) }).parse(d))
+  .validator((d: unknown) =>
+    z
+      .object({ device_id: z.string().uuid(), limit: z.number().int().max(500).default(50) })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("sensor_readings")
-      .select("id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, ml_risk_class, ml_risk_score, anomaly_detected")
+      .select(
+        "id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, ml_risk_class, ml_risk_score, anomaly_detected",
+      )
       .eq("device_id", data.device_id)
       .order("reading_timestamp", { ascending: false })
       .limit(data.limit);
@@ -917,7 +1106,11 @@ export const upsertActuator = createServerFn({ method: "POST" })
   .validator((d: unknown) => parseOrThrow(actuatorInput, d))
   .handler(async ({ data, context }) => {
     if (!data.id) {
-      await assertPlanAllows({ feature: "max_actuators", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "max_actuators",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     // admin_id is intentionally excluded from this shared base — it must
     // never be rewritten on update (RLS requires it stay
@@ -985,14 +1178,21 @@ export const controlActuator = createServerFn({ method: "POST" })
   .validator((d: unknown) => parseOrThrow(controlInput, d))
   .handler(async ({ data, context }) => {
     const now = new Date().toISOString();
-    const patch: Database["public"]["Tables"]["actuators"]["Update"] = { updated_by: context.userId };
+    const patch: Database["public"]["Tables"]["actuators"]["Update"] = {
+      updated_by: context.userId,
+    };
     if (data.action === "turn_on") {
       patch.is_on = true;
       patch.status = "active";
       patch.control_mode = "manual";
       patch.human_requested_fan = true;
       if (typeof data.value === "number") patch.power_level = data.value;
-      patch.current_operation = { action: "turn_on", value: data.value ?? null, at: now, by: context.userId };
+      patch.current_operation = {
+        action: "turn_on",
+        value: data.value ?? null,
+        at: now,
+        by: context.userId,
+      };
     } else if (data.action === "turn_off") {
       patch.is_on = false;
       patch.control_mode = "manual";
@@ -1003,7 +1203,12 @@ export const controlActuator = createServerFn({ method: "POST" })
       patch.power_level = data.value ?? 0;
       patch.target_fan_speed = data.value ?? 0;
       patch.control_mode = "manual";
-      patch.current_operation = { action: "set_value", value: data.value ?? 0, at: now, by: context.userId };
+      patch.current_operation = {
+        action: "set_value",
+        value: data.value ?? 0,
+        at: now,
+        by: context.userId,
+      };
     } else if (data.action === "auto") {
       patch.control_mode = "auto";
       patch.human_requested_fan = false;
@@ -1051,7 +1256,9 @@ export const listGrainAlerts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("grain_alerts")
-      .select("*, silos(id, silo_id, name), warehouses(id, name, warehouse_id), grain_batches(id, batch_id, grain_type)")
+      .select(
+        "*, silos(id, silo_id, name), warehouses(id, name, warehouse_id), grain_batches(id, batch_id, grain_type)",
+      )
       .order("triggered_at", { ascending: false, nullsFirst: false })
       .limit(500);
     if (error) throw error;
@@ -1218,13 +1425,19 @@ const buyerInput = z.object({
   contact_phone: z.string().max(50).optional().nullable(),
   contact_designation: z.string().max(120).optional().nullable(),
   company_name: z.string().max(200).optional().nullable(),
-  buyer_type: z.enum(["local_mill", "exporter", "wholesaler", "retailer", "government"]).optional().nullable(),
+  buyer_type: z
+    .enum(["local_mill", "exporter", "wholesaler", "retailer", "government"])
+    .optional()
+    .nullable(),
   status: z.enum(["active", "paused", "inactive"]).default("active"),
   address: z.string().max(500).optional().nullable(),
   city: z.string().max(120).optional().nullable(),
   state: z.string().max(120).optional().nullable(),
   country: z.string().max(120).optional().nullable(),
-  preferred_grain_types: z.array(z.enum(["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"])).optional().nullable(),
+  preferred_grain_types: z
+    .array(z.enum(["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"]))
+    .optional()
+    .nullable(),
   preferred_payment_terms: z.string().max(120).optional().nullable(),
   rating: z.number().min(0).max(5).optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
@@ -1236,7 +1449,11 @@ export const upsertBuyer = createServerFn({ method: "POST" })
   .validator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
     if (!data.id) {
-      await assertPlanAllows({ feature: "max_buyers", sb: context.supabase, userId: context.userId });
+      await assertPlanAllows({
+        feature: "max_buyers",
+        sb: context.supabase,
+        userId: context.userId,
+      });
     }
     // admin_id is intentionally excluded from this shared payload — it must
     // never be rewritten on update (RLS requires it stay
@@ -1305,29 +1522,57 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     // tenant passed 1000 rows in any of these tables, since `.count` reflects
     // the true total but the filtered rows were capped by `.limit(1000)`.
     const [
-      warehouses, silos, buyers,
-      batchesTotal, batchesActive,
-      sensorsTotal, sensorsOnline,
-      actuatorsTotal, actuatorsActive,
-      alertsTotal, alertsOpen, alertsCritical,
+      warehouses,
+      silos,
+      buyers,
+      batchesTotal,
+      batchesActive,
+      sensorsTotal,
+      sensorsOnline,
+      actuatorsTotal,
+      actuatorsActive,
+      alertsTotal,
+      alertsOpen,
+      alertsCritical,
     ] = await Promise.all([
       context.supabase.from("warehouses").select("id", { count: "exact", head: true }),
       context.supabase.from("silos").select("id", { count: "exact", head: true }),
       context.supabase.from("buyers").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
-      context.supabase.from("grain_batches").select("id", { count: "exact", head: true })
-        .in("status", ["stored", "processing", "pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never),
+      context.supabase
+        .from("grain_batches")
+        .select("id", { count: "exact", head: true })
+        .in("status", [
+          "stored",
+          "processing",
+          "pending_qc",
+          "qc_submitted",
+          "qc_failed",
+          "qc_passed",
+        ] as never),
       context.supabase.from("sensor_devices").select("id", { count: "exact", head: true }),
-      context.supabase.from("sensor_devices").select("id", { count: "exact", head: true }).eq("status", "active"),
+      context.supabase
+        .from("sensor_devices")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active"),
       context.supabase.from("actuators").select("id", { count: "exact", head: true }),
-      context.supabase.from("actuators").select("id", { count: "exact", head: true }).eq("status", "active"),
+      context.supabase
+        .from("actuators")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active"),
       context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }),
       // grain_alerts.status is the `pending|acknowledged|resolved|escalated` enum —
       // "open" means anything not yet resolved. Severity lives in `priority`
       // (`low|medium|high|critical`); `alert_type` is the notification channel
       // (SMS/email/in-app/...), never "critical"/"high", so that check always matched zero rows.
-      context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }).neq("status", "resolved"),
-      context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }).in("priority", ["critical", "high"]),
+      context.supabase
+        .from("grain_alerts")
+        .select("id", { count: "exact", head: true })
+        .neq("status", "resolved"),
+      context.supabase
+        .from("grain_alerts")
+        .select("id", { count: "exact", head: true })
+        .in("priority", ["critical", "high"]),
     ]);
     return {
       warehouses: warehouses.count ?? 0,
@@ -1356,17 +1601,21 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 export const getSensorHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
-    z.object({
-      device_uuid: z.string().uuid(),
-      hours: z.number().int().positive().default(6),
-      limit: z.number().int().max(1000).default(500),
-    }).parse(d)
+    z
+      .object({
+        device_uuid: z.string().uuid(),
+        hours: z.number().int().positive().default(6),
+        limit: z.number().int().max(1000).default(500),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const cutoff = new Date(Date.now() - data.hours * 60 * 60 * 1000).toISOString();
     const { data: rows, error } = await context.supabase
       .from("sensor_readings")
-      .select("id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, dew_point, fan_state, lid_state, ml_risk_score, ml_risk_class, pressure_value, light_value, pest_presence_score")
+      .select(
+        "id, reading_timestamp, temperature_value, humidity_value, co2_value, voc_value, moisture_value, dew_point, fan_state, lid_state, ml_risk_score, ml_risk_class, pressure_value, light_value, pest_presence_score",
+      )
       .eq("device_id", data.device_uuid)
       .gte("reading_timestamp", cutoff)
       .order("reading_timestamp", { ascending: true })
@@ -1378,14 +1627,17 @@ export const getSensorHistory = createServerFn({ method: "POST" })
 export const exportSensorCSV = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
-    z.object({
-      device_id: z.string().uuid().optional(),
-    }).parse(d)
+    z
+      .object({
+        device_id: z.string().uuid().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("sensor_readings")
-      .select(`
+      .select(
+        `
         reading_timestamp,
         silo_id,
         batch_id,
@@ -1402,7 +1654,8 @@ export const exportSensorCSV = createServerFn({ method: "POST" })
         ml_risk_class,
         silos:silo_id(silo_id),
         grain_batches:batch_id(batch_id)
-      `)
+      `,
+      )
       .order("reading_timestamp", { ascending: true })
       .limit(1000);
 
@@ -1413,31 +1666,32 @@ export const exportSensorCSV = createServerFn({ method: "POST" })
     const { data: readings, error } = await query;
     if (error) throw error;
 
-    const csvHeader = 'timestamp,silo_id,batch_id,T_core,RH_core,T_amb,RH_amb,Grain_Moisture,fan_state,fan_duty,VOC_index,VOC_relative,dew_point_core,rainfall_last_hour,spoilage_label\n';
+    const csvHeader =
+      "timestamp,silo_id,batch_id,T_core,RH_core,T_amb,RH_amb,Grain_Moisture,fan_state,fan_duty,VOC_index,VOC_relative,dew_point_core,rainfall_last_hour,spoilage_label\n";
 
     const csvRows = (readings ?? []).map((r: any) => {
-      const siloId = r.silos?.silo_id ?? r.silo_id ?? '';
-      const batchId = r.grain_batches?.batch_id ?? r.batch_id ?? '';
+      const siloId = r.silos?.silo_id ?? r.silo_id ?? "";
+      const batchId = r.grain_batches?.batch_id ?? r.batch_id ?? "";
       return [
         r.reading_timestamp,
         siloId,
         batchId,
-        r.temperature_value ?? '',
-        r.humidity_value ?? '',
-        r.ambient_temperature ?? '',
-        r.ambient_humidity ?? '',
-        r.moisture_value ?? '',
+        r.temperature_value ?? "",
+        r.humidity_value ?? "",
+        r.ambient_temperature ?? "",
+        r.ambient_humidity ?? "",
+        r.moisture_value ?? "",
         r.fan_state ?? 0,
         r.fan_duty_cycle ?? 0,
-        r.voc_value ?? '',
-        r.voc_relative ?? '',
-        r.dew_point ?? '',
+        r.voc_value ?? "",
+        r.voc_relative ?? "",
+        r.dew_point ?? "",
         0, // rainfall_last_hour fallback
-        r.ml_risk_class ?? 'unknown'
-      ].join(',');
+        r.ml_risk_class ?? "unknown",
+      ].join(",");
     });
 
-    return { csv: csvHeader + csvRows.join('\n') };
+    return { csv: csvHeader + csvRows.join("\n") };
   });
 
 // ── Multi-region warehouse view ───────────────────────────────────────────
@@ -1451,7 +1705,9 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
     // Load warehouses for this tenant (RLS enforces admin_id scoping).
     const { data: warehouses, error: whErr } = await sb
       .from("warehouses")
-      .select("id, warehouse_id, name, status, location, total_capacity_kg, total_silos, manager_id, technician_ids, created_at, notes")
+      .select(
+        "id, warehouse_id, name, status, location, total_capacity_kg, total_silos, manager_id, technician_ids, created_at, notes",
+      )
       .order("name", { ascending: true })
       .limit(500);
     if (whErr) throw whErr;
@@ -1484,17 +1740,19 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
     };
 
     return (warehouses as any[]).map((w) => ({
-      id:               w.id as string,
-      warehouse_id:     w.warehouse_id as string,
-      name:             w.name as string,
-      status:           (w.status ?? "active") as string,
-      location:         (w.location ?? {}) as { description?: string | null; address?: string | null },
+      id: w.id as string,
+      warehouse_id: w.warehouse_id as string,
+      name: w.name as string,
+      status: (w.status ?? "active") as string,
+      location: (w.location ?? {}) as { description?: string | null; address?: string | null },
       total_capacity_kg: (w.total_capacity_kg ?? 0) as number,
-      total_silos:      (w.total_silos ?? 0) as number,
-      notes:            (w.notes ?? null) as string | null,
-      manager_id:       (w.manager_id ?? null) as string | null,
-      manager_name:     resolve(w.manager_id),
-      technician_ids:   ((w.technician_ids ?? []) as string[]),
-      technician_names: ((w.technician_ids ?? []) as string[]).map(resolve).filter(Boolean) as string[],
+      total_silos: (w.total_silos ?? 0) as number,
+      notes: (w.notes ?? null) as string | null,
+      manager_id: (w.manager_id ?? null) as string | null,
+      manager_name: resolve(w.manager_id),
+      technician_ids: (w.technician_ids ?? []) as string[],
+      technician_names: ((w.technician_ids ?? []) as string[])
+        .map(resolve)
+        .filter(Boolean) as string[],
     }));
   });

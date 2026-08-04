@@ -8,14 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
 import { setUserRole } from "@/lib/platform.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
 import { saveImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { UserCog, ShieldCheck } from "lucide-react";
 import { AdminFilterBar } from "@/components/app/admin/AdminFilterBar";
-
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterField } from "@/components/app/admin/AdminFilterBar";
@@ -48,30 +47,24 @@ interface ChangeRoleDialogProps {
   isPending: boolean;
 }
 
-function ChangeRoleDialog({ user, open, onOpenChange, onConfirm, isPending }: ChangeRoleDialogProps) {
+function ChangeRoleSheet({ user, open, onOpenChange, onConfirm, isPending }: ChangeRoleDialogProps) {
   const [newRole, setNewRole] = useState(user?.role ?? "pending");
-
-  // Sync local state when user changes or dialog opens
-  useEffect(() => {
-    if (open && user) setNewRole(user.role);
-  }, [open, user]);
+  useEffect(() => { if (open && user) setNewRole(user.role); }, [open, user]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Change role</DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-sm">
+        <SheetHeader>
+          <SheetTitle>Change role</SheetTitle>
+          <SheetDescription>
             <span className="font-medium text-slate-700">{user?.name ?? user?.email ?? "This user"}</span>
             &apos;s role will be updated immediately.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-2 space-y-1.5">
+          </SheetDescription>
+        </SheetHeader>
+        <div className="py-6 space-y-1.5">
           <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">New role</label>
           <Select value={newRole} onValueChange={setNewRole}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {ASSIGNABLE_ROLES.map((r) => (
                 <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
@@ -79,7 +72,7 @@ function ChangeRoleDialog({ user, open, onOpenChange, onConfirm, isPending }: Ch
             </SelectContent>
           </Select>
         </div>
-        <DialogFooter>
+        <SheetFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             disabled={!user || newRole === user.role || isPending}
@@ -87,9 +80,9 @@ function ChangeRoleDialog({ user, open, onOpenChange, onConfirm, isPending }: Ch
           >
             {isPending ? "Saving…" : "Save role"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -331,7 +324,7 @@ function UsersPage() {
         )}
       </AdminDataCard >
 
-      <ChangeRoleDialog
+      <ChangeRoleSheet
         user={roleTarget}
         open={!!roleTarget}
         onOpenChange={(v) => !v && setRoleTarget(null)}

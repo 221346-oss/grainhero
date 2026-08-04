@@ -1,15 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
+import { sendExpiryReminder } from "@/lib/platform-no-admin.functions";
 import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
-import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp } from "lucide-react";
+import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/business")({
   component: PlatformBusinessPage,
@@ -78,8 +80,22 @@ function Tile({ label, value, sub, accent }: {
 // ── Main page ────────────────────────────────────────────────────────────────
 function PlatformBusinessPage() {
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
-  const [planFilter, setPlanFilter] = React.useState<string | null>(null); // null = nothing selected
+  const notifyFn  = useServerFn(sendExpiryReminder);
+  const qc        = useQueryClient();
+  const [planFilter, setPlanFilter] = React.useState<string | null>(null);
   const [revenueView, setRevenueView] = React.useState<"monthly" | "yearly">("monthly");
+  // Track which adminIds have been notified this session to avoid double-sends
+  const [notified, setNotified] = React.useState<Set<string>>(new Set());
+
+  const notifyMut = useMutation({
+    mutationFn: (adminId: string) => notifyFn({ data: { adminId } }),
+    onSuccess: (_data, adminId) => {
+      toast.success("Renewal reminder sent");
+      setNotified((prev) => new Set([...prev, adminId]));
+      qc.invalidateQueries({ queryKey: ["platform-revenue"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to send reminder"),
+  });
 
   const revenueQ = useQuery({
     queryKey: ["platform-revenue"],
@@ -120,7 +136,8 @@ function PlatformBusinessPage() {
   const donutData = planSeries
     .map((p) => ({
       name: planLabel(p.plan),
-      value: kpis?.mrr ? Math.round((p.mrr / kpis.mrr) * (kpis.activeCount || 1)) : 0,
+      // Use actual subscriber count from adminSubs, not MRR ratio
+      value: adminSubs.filter((a) => a.plan?.toLowerCase() === p.plan.toLowerCase()).length,
       color: planColor(p.plan),
     }))
     .filter((d) => d.value > 0);
@@ -152,7 +169,7 @@ function PlatformBusinessPage() {
   const planExport = ALL_PLANS.map((planId) => {
     const live  = planSeries.find((p) => p.plan.toLowerCase() === planId);
     const mrr   = live?.mrr ?? 0;
-    const subs  = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * (kpis.activeCount || 1)) : 0;
+    const subs  = adminSubs.filter((a) => a.plan?.toLowerCase() === planId).length;
     const share = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * 100) : 0;
     return { Plan: planLabel(planId), Subscribers: subs, "MRR (PKR)": mrr > 0 ? fmt(mrr) : "0", "Share %": `${share}%` };
   });
@@ -290,7 +307,7 @@ function PlatformBusinessPage() {
               <HardDrive className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Hardware / IoT Revenue</span>
               <span title="Revenue from silo hardware orders, tracked separately from subscription MRR"
-                className="text-slate-400 hover:text-slate-600 cursor-help">
+                className="text-slate-400 hover:text-slate-600 cursor-default">
                 <Info className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -509,7 +526,7 @@ function PlatformBusinessPage() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Plan Breakdown</span>
             <span title="Click a plan row to filter and show its subscribers below"
-              className="text-slate-400 hover:text-slate-600 cursor-help">
+              className="text-slate-400 hover:text-slate-600 cursor-default">
               <Info className="w-3.5 h-3.5" />
             </span>
           </div>
@@ -528,7 +545,8 @@ function PlatformBusinessPage() {
             {ALL_PLANS.map((planId) => {
               const live   = planSeries.find((p) => p.plan.toLowerCase() === planId);
               const mrr    = live?.mrr ?? 0;
-              const subs   = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * (kpis.activeCount || 1)) : 0;
+              // Count actual subscribers from adminSubs instead of estimating from MRR ratio
+              const subs   = adminSubs.filter((a) => a.plan?.toLowerCase() === planId).length;
               const share  = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * 100) : 0;
               const col    = planColor(planId);
               const lbl    = planLabel(planId);
@@ -652,14 +670,16 @@ function PlatformBusinessPage() {
       )}
 
       {/* ── Expiring soon ───────────────────────────────────────────── */}
-      {expiring.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-white overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-amber-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
-              Expiring within 7 days · {expiring.length}
-            </span>
+      <div className="rounded-lg border border-amber-200 bg-white overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-amber-100 flex items-center justify-between">
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">
+            Expiring within 7 days
+            {expiring.length > 0 && ` · ${expiring.length}`}
+          </span>
+          {expiring.length > 0 && (
             <button
-              onClick={() => exportToCSV(expiring.map((s) => ({
+              onClick={() => exportToCSV(expiring.map((s: any) => ({
+                Admin: s.admin_name ?? s.admin_id ?? "—",
                 Plan: s.plan_name ?? "—",
                 Expires: s.end_date ? new Date(s.end_date).toLocaleDateString() : "—",
               })), "expiring-subscriptions")}
@@ -667,27 +687,63 @@ function PlatformBusinessPage() {
             >
               <Download className="w-3 h-3" /> CSV
             </button>
-          </div>
+          )}
+        </div>
+        {expiring.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-6">
+            No subscriptions expiring in the next 7 days.
+          </p>
+        ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <th className="text-left px-5 py-2.5 font-semibold">Plan</th>
-                <th className="text-right px-5 py-2.5 font-semibold">Expires</th>
+                <th className="text-left px-5 py-2.5 font-semibold">Tenant</th>
+                <th className="text-left px-3 py-2.5 font-semibold">Plan</th>
+                <th className="text-right px-3 py-2.5 font-semibold">Expires</th>
+                <th className="text-right px-5 py-2.5 font-semibold">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {expiring.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50/50">
-                  <td className="px-5 py-3 text-[#404F44]">{s.plan_name ?? "—"}</td>
-                  <td className="px-5 py-3 text-right font-medium text-amber-700">
-                    {s.end_date ? new Date(s.end_date).toLocaleDateString() : "—"}
-                  </td>
-                </tr>
-              ))}
+              {(expiring as any[]).map((s) => {
+                const days = s.end_date
+                  ? Math.ceil((new Date(s.end_date).getTime() - Date.now()) / 86_400_000)
+                  : null;
+                const alreadyNotified = notified.has(s.admin_id);
+                return (
+                  <tr key={s.id} className="hover:bg-amber-50/30">
+                    <td className="px-5 py-3 text-[#404F44] font-medium truncate max-w-[160px]">
+                      {s.admin_name ?? s.admin_id?.slice(0, 8) ?? "—"}
+                    </td>
+                    <td className="px-3 py-3 text-slate-600">{s.plan_name ?? "—"}</td>
+                    <td className="px-3 py-3 text-right">
+                      <div className="font-medium text-amber-700">
+                        {s.end_date ? new Date(s.end_date).toLocaleDateString() : "—"}
+                      </div>
+                      {days !== null && (
+                        <div className="text-[10px] text-amber-500">{days} day{days !== 1 ? "s" : ""} left</div>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <button
+                        onClick={() => notifyMut.mutate(s.admin_id)}
+                        disabled={notifyMut.isPending || alreadyNotified || !s.admin_id}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-40 ${
+                          alreadyNotified
+                            ? "bg-emerald-100 text-emerald-700 cursor-default"
+                            : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                        }`}
+                      >
+                        <Bell className="w-3 h-3" />
+                        {alreadyNotified ? "Sent" : "Notify"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
     </AdminPageShell>
   );
 }

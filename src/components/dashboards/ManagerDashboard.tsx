@@ -28,6 +28,7 @@ export function ManagerDashboard({ name }: { name?: string }) {
             onRange={setRange}
             kpis={data?.kpis}
             fillSpark={data?.fillSpark}
+            silos={data?.silos}
           />
           <ManagerBento
             silos={(data?.silos ?? []) as never}

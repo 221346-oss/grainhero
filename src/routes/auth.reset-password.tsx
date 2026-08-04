@@ -53,7 +53,7 @@ function ResetPasswordPage() {
       setMsg({ type: 'error', text: error.message })
     } else {
       setMsg({ type: 'success', text: 'Password updated! Redirecting…' })
-      setTimeout(() => navigate({ to: '/auth' }), 900)
+      setTimeout(() => navigate({ to: '/auth/login' }), 900)
     }
   }
 

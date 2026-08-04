@@ -21,7 +21,7 @@ async function resolveRole(
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
-  const roles = (data ?? []).map((r) => r.role as string);
+  const roles = ((data as { role: string }[] | null) ?? []).map((r) => r.role);
   const order = ["super_admin", "admin", "manager", "technician", "buyer", "pending"];
   return order.find((r) => roles.includes(r)) ?? "admin";
 }
@@ -65,7 +65,7 @@ export const createTicket = createServerFn({ method: "POST" })
     const role = await resolveRole(context.supabase as never, context.userId);
     if (role === "super_admin") throw new Error("Super admins cannot create tickets.");
 
-    const { data: ticket, error } = await context.supabase
+    const { data: ticket, error } = await (context.supabase as any)
       .from("field_tickets")
       .insert({
         admin_id: context.userId,
@@ -131,7 +131,7 @@ export const createTicket = createServerFn({ method: "POST" })
     if (notificationRows.length > 0) {
       // Use security-definer RPC so no service role key is needed
       for (const n of notificationRows) {
-        const { error: rpcErr } = await context.supabase.rpc("insert_notification", {
+        const { error: rpcErr } = await (context.supabase as any).rpc("insert_notification", {
           p_user_id: n.user_id,
           p_admin_id: n.admin_id,
           p_title: n.title,
@@ -167,7 +167,7 @@ export const listTickets = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const role = await resolveRole(context.supabase as never, context.userId);
 
-    let q = context.supabase
+    let q = (context.supabase as any)
       .from("field_tickets")
       .select("*")
       .order("created_at", { ascending: false });
@@ -230,7 +230,7 @@ export const closeTicket = createServerFn({ method: "POST" })
     };
 
     // RLS is disabled on field_tickets — server function enforces access rules
-    let q = context.supabase
+    let q = (context.supabase as any)
       .from("field_tickets")
       .update(patch)
       .eq("id", data.id)
@@ -254,7 +254,7 @@ export const getTicketById = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => parseOrThrow(getTicketByIdInput, d))
   .handler(async ({ data, context }) => {
-    const { data: ticket, error } = await context.supabase
+    const { data: ticket, error } = await (context.supabase as any)
       .from("field_tickets")
       .select("*")
       .eq("id", data.id)
@@ -289,7 +289,7 @@ export const resolveTicket = createServerFn({ method: "POST" })
     const role = await resolveRole(context.supabase as never, context.userId);
     if (role !== "super_admin") throw new Error("Only super admins can resolve tickets.");
 
-    const { data: ticket, error } = await context.supabase
+    const { data: ticket, error } = await (context.supabase as any)
       .from("field_tickets")
       .update({
         status: "resolved",
@@ -307,7 +307,7 @@ export const resolveTicket = createServerFn({ method: "POST" })
     // Notify the admin who raised this ticket via security-definer RPC
     // (works without service role key)
     const t = ticket as { admin_id: string; title: string };
-    const { error: rpcErr } = await context.supabase.rpc("insert_notification", {
+    const { error: rpcErr } = await (context.supabase as any).rpc("insert_notification", {
       p_user_id: t.admin_id,
       p_admin_id: context.userId,
       p_title: `Ticket resolved: ${t.title}`,
@@ -341,7 +341,7 @@ export const deleteTicket = createServerFn({ method: "POST" })
     if (role !== "super_admin") throw new Error("Only super admins can delete tickets.");
 
     // Use RPC to bypass any remaining RLS restrictions
-    const { error } = await context.supabase.rpc("delete_field_ticket", {
+    const { error } = await (context.supabase as any).rpc("delete_field_ticket", {
       p_ticket_id: data.id,
       p_user_id: context.userId,
     });
