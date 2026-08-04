@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
 import { SubscriptionSection } from "@/components/business/SubscriptionSection";
