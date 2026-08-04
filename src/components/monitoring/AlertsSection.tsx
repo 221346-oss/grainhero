@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 'use client';
 
 import { Loader2, AlertTriangle, AlertCircle, Bell, Activity } from "lucide-react";
