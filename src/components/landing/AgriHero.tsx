@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import heroLoop from '@/assets/silo-flight-v2.mp4.asset.json'
+import heroPoster from '@/assets/landing/hero-poster.jpg'
 
 export function AgriHero() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -24,6 +25,7 @@ export function AgriHero() {
         loop
         playsInline
         preload="auto"
+        poster={heroPoster}
       >
         <source src={heroLoop.url} type="video/mp4" />
       </video>
