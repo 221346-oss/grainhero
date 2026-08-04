@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   component: GrainOperationsWorkspace,
 });
 
-const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const ALL_TABS: { key: Tab; label: string; icon: (props: { className?: string }) => JSX.Element | null }[] = [
   { key: "batches",    label: "Grain Batches", icon: Package   },
   { key: "silos",      label: "Silos",         icon: Warehouse },
   { key: "warehouses", label: "Warehouses",    icon: Building2 },

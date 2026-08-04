@@ -19,7 +19,7 @@ type Tab = "revenue" | "subscription" | "insurance";
 
 // Insurance tab hidden from UI for now — code retained for future use
 // when a bank partnership is confirmed.
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const TABS: { key: Tab; label: string; icon: (props: { className?: string }) => JSX.Element | null }[] = [
   { key: "revenue",      label: "Revenue",      icon: Wallet },
   { key: "subscription", label: "Subscription", icon: CreditCard },
   // { key: "insurance", label: "Insurance", icon: Shield },
