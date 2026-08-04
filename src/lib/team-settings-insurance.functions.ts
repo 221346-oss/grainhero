@@ -1,7 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
+import { randomInt } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { assertPlanAllows } from "@/lib/plan-gate";
+
+// Excludes visually ambiguous characters (0/O, 1/I/L).
+const INVITE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const INVITE_CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function generateInvitationCode(length = 8): string {
+  let out = "";
+  for (let i = 0; i < length; i++)
+    out += INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)];
+  return out;
+}
 
 async function roleFlags(supabase: any, userId: string) {
   const r = await getEffectiveRole(supabase, userId);
@@ -122,32 +134,30 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       console.log("[inviteTeamMember] Auth user created successfully, uid:", uid);
     }
 
-    // 2) Generate an invite/magic link (does not send email; we send via Resend).
-    let inviteLink: string | null = null;
-    try {
-      const linkRes = await supabaseAdmin.auth.admin.generateLink({
-        type: "invite",
-        email,
-        options: { data: { name: data.name ?? "", invited_role: data.role, admin_id } },
-      });
-      if (!linkRes.error) inviteLink = linkRes.data.properties?.action_link ?? null;
-    } catch (e) {
-      console.warn("[inviteTeamMember] generateLink failed (non-fatal)", e);
-    }
+    // 2) Generate a one-time invitation code. Replaces the old Supabase magic-link
+    //    invite, which the Flutter technician app can't open (no deep-link handling
+    //    set up) — a code works identically for the web (manager) and app (technician)
+    //    acceptance flows via /api/public/v1/auth/validate-invitation + accept-invite.
+    const invitationCode = generateInvitationCode();
+    const invitationExpires = new Date(Date.now() + INVITE_CODE_TTL_MS).toISOString();
+    const acceptUrl = `https://grainheroo.lovable.app/auth/accept-invite?email=${encodeURIComponent(email)}`;
 
     // 3) Send the invitation email via Resend (already configured in this project).
     try {
       const { sendEmailViaResend } = await import("@/lib/resend.server");
-      const cta = inviteLink
-        ? `<p><a href="${inviteLink}" style="display:inline-block;background:#059669;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Accept invitation</a></p>`
-        : `<p>Sign in at <a href="https://grainheroo.lovable.app/auth">grainheroo.lovable.app/auth</a> using this email to accept.</p>`;
+      const cta =
+        data.role === "technician"
+          ? `<p>Open the GrainHero app and enter this code to finish setting up your account.</p>`
+          : `<p>Enter this code at <a href="${acceptUrl}">${acceptUrl}</a> to finish setting up your account.</p>`;
       await sendEmailViaResend({
         to: email,
         subject: `You've been invited to GrainHero as ${data.role}`,
         html: `<div style="font-family:Inter,Arial,sans-serif;color:#0f172a;max-width:520px;margin:auto">
           <h2 style="color:#065f46">You're invited to GrainHero</h2>
           <p>Hi ${data.name ?? "there"}, you've been added to a GrainHero tenant as <strong>${data.role}</strong>.</p>
+          <p style="font-size:28px;font-weight:700;letter-spacing:6px;background:#f1f5f9;padding:14px 20px;border-radius:8px;display:inline-block;font-family:monospace">${invitationCode}</p>
           ${cta}
+          <p style="color:#64748b;font-size:12px">This code expires in 7 days.</p>
           <p style="color:#64748b;font-size:12px;margin-top:24px">If you didn't expect this, you can ignore this email.</p>
         </div>`,
       });
@@ -164,6 +174,8 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
           admin_id,
           invited_by: context.userId,
           invitation_role: data.role,
+          invitation_token: invitationCode,
+          invitation_expires: invitationExpires,
         },
         { onConflict: "id" },
       );
