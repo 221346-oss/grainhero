@@ -37,20 +37,11 @@ export function AgriHero() {
       {/* Copy */}
       <div className="relative z-10 flex min-h-[92svh] items-center justify-center px-5 text-center sm:min-h-[100svh] sm:px-8">
         <div className="max-w-4xl pb-16 sm:pb-20">
-          <motion.span
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-block rounded-full border border-[#C7D9C1]/30 bg-[#C7D9C1]/15 px-4 py-1.5 text-[0.625rem] font-bold uppercase tracking-[0.28em] text-[#A8E6A1] backdrop-blur-md"
-          >
-            Smart storage solutions
-          </motion.span>
-
           <motion.h1
             initial={{ opacity: 0, y: 26, filter: 'blur(8px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             transition={{ delay: 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-5 text-[2.5rem] font-black leading-[0.92] tracking-tight text-[#FAFAF7] sm:text-6xl lg:text-7xl"
+            className="text-[2.75rem] font-black leading-[0.92] tracking-tight text-[#FAFAF7] sm:text-6xl lg:text-7xl"
           >
             The Future of
             <br />
