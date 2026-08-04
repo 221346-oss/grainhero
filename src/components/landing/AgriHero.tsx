@@ -35,7 +35,7 @@ export function AgriHero() {
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#FAFAF7] to-transparent dark:from-background" />
 
       {/* Copy */}
-      <div className="relative z-10 flex min-h-[92svh] items-center justify-center px-5 text-center sm:min-h-[100svh] sm:px-8">
+      <div className="relative z-10 mx-auto flex min-h-[92svh] max-w-7xl items-center px-5 text-left sm:min-h-[100svh] sm:px-8 lg:px-12">
         <div className="max-w-4xl pb-16 sm:pb-20">
           <motion.h1
             initial={{ opacity: 0, y: 26, filter: 'blur(8px)' }}
@@ -54,11 +54,11 @@ export function AgriHero() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35, duration: 0.8 }}
-            className="mt-10 flex justify-center"
+            className="mt-10 flex justify-start"
           >
             <Link
               to="/contact"
-              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#2FA84F] px-7 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:bg-[#FAFAF7] hover:text-[#111512]"
+              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#FAFAF7] px-7 py-3.5 text-sm font-bold text-[#111512] transition-all duration-300 hover:bg-[#2FA84F] hover:text-white"
             >
               Let&apos;s talk
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
