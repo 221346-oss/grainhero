@@ -44,7 +44,7 @@ function BusinessWorkspace() {
   const { data: policies } = useQuery({ queryKey: ["insurance-policies"], queryFn: () => fetchPolicies() });
   const { data: claims } = useQuery({ queryKey: ["insurance-claims"], queryFn: () => fetchClaims() });
 
-  const totals = revenue?.totals ?? { invoiced: 0, paid: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
+  const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
   const sub = mySub?.subscription;
   const policyList = (policies ?? []) as any[];
   const claimList = (claims ?? []) as any[];
@@ -61,11 +61,10 @@ function BusinessWorkspace() {
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Collected",    value: money(totals.paid),        up: true  },
-    { label: "Outstanding",  value: money(totals.outstanding), up: false },
-    // Coverage and Open Claims hidden until Insurance is re-enabled
-    // { label: "Coverage",   value: money(totalCoverage),      up: true  },
-    // { label: "Open Claims", value: openClaims,               up: openClaims === 0 },
+    { label: "Collected", value: money(totals.collected), up: true },
+    { label: "Outstanding", value: money(totals.outstanding), up: false },
+    { label: "Coverage", value: money(totalCoverage), up: true },
+    { label: "Open Claims", value: openClaims, up: openClaims === 0 },
   ];
 
   return (
