@@ -41,13 +41,13 @@ function NewHomePage() {
       <section id="hero" aria-label="Hero section" className="landing-section">
         <AgriHero />
       </section>
-      <section id="problem" aria-label="The problem" className="landing-section">
+      <section aria-label="The problem" className="landing-section">
         <ProblemMarquee />
       </section>
-      <section id="how-it-works" aria-label="How it works" className="landing-section">
+      <section aria-label="How it works" className="landing-section">
         <SimpleSteps />
       </section>
-      <section id="hardware" aria-label="Hardware and sensors" className="landing-section">
+      <section aria-label="Hardware and sensors" className="landing-section">
         <HardwareSection />
       </section>
       <section aria-label="Brand film" className="landing-section">
