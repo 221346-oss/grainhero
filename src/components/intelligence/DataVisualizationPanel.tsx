@@ -698,30 +698,31 @@ export function DataVisualizationPanel() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <HairlineGrid>
         {/* VOC & Risk Index Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+        <NeonPanel
+          title={
+            <span className="flex items-center gap-2">
               <Gauge className="h-4 w-4 text-purple-500" />
               VOC Index & Spilage Risk Index
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-64">
+            </span>
+          }
+        >
+          <div className="h-64">
             {history.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={history} margin={{ left: -15, right: 10, top: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="time" minTickGap={40} fontSize={10} stroke="#94a3b8" />
-                  <YAxis yAxisId="voc" fontSize={10} stroke="#94a3b8" />
-                  <YAxis yAxisId="risk" orientation="right" domain={[0, 100]} fontSize={10} stroke="#94a3b8" />
-                  <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }} />
+                  <CartesianGrid {...neonGrid} />
+                  <XAxis dataKey="time" minTickGap={40} {...neonAxis} />
+                  <YAxis yAxisId="voc" {...neonAxis} />
+                  <YAxis yAxisId="risk" orientation="right" domain={[0, 100]} {...neonAxis} />
+                  <Tooltip {...neonTooltipStyle} />
                   <Legend />
                   <Line
                     yAxisId="voc"
                     type="monotone"
                     dataKey="tvoc"
-                    stroke="#a855f7"
+                    stroke={NEON.brand2}
                     name="TVOC Index (ppb)"
                     dot={false}
                     strokeWidth={2}
@@ -730,7 +731,7 @@ export function DataVisualizationPanel() {
                     yAxisId="risk"
                     type="monotone"
                     dataKey="riskIndex"
-                    stroke="#f59e0b"
+                    stroke={NEON.warning}
                     name="Risk Index"
                     dot={false}
                     strokeWidth={2}
@@ -738,42 +739,39 @@ export function DataVisualizationPanel() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                Waiting for history telemetry data...
-              </div>
+              <ChartEmpty label="Waiting for history telemetry data..." height={256} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </NeonPanel>
 
         {/* Fan Activity & PWM */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+        <NeonPanel
+          title={
+            <span className="flex items-center gap-2">
               <Fan className="h-4 w-4 text-sky-500" />
               Aeration Fan PWM Speed & Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-64">
+            </span>
+          }
+        >
+          <div className="h-64">
             {history.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsBarChart data={history} margin={{ left: -15, right: 10, top: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="time" minTickGap={40} fontSize={10} stroke="#94a3b8" />
-                  <YAxis fontSize={10} stroke="#94a3b8" />
-                  <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }} />
+                  <CartesianGrid {...neonGrid} />
+                  <XAxis dataKey="time" minTickGap={40} {...neonAxis} />
+                  <YAxis {...neonAxis} />
+                  <Tooltip {...neonTooltipStyle} />
                   <Legend />
-                  <Bar dataKey="pwm" fill="#6366f1" name="Fan Speed (PWM %)" opacity={0.8} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="fanOn" fill="#10b981" name="Aeration Fan State" opacity={0.6} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="pwm" name="Fan Speed (PWM %)" radius={0} {...neonFill(NEON.brand)} />
+                  <Bar dataKey="fanOn" name="Aeration Fan State" radius={0} {...neonFill(NEON.success)} />
                 </RechartsBarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                Waiting for fan status stream...
-              </div>
+              <ChartEmpty label="Waiting for fan status stream..." height={256} />
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </NeonPanel>
+      </HairlineGrid>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Sensor Health Radar */}
