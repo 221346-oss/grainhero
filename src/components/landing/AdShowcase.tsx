@@ -19,23 +19,18 @@ export function AdShowcase() {
   }
 
   return (
-    <section className="bg-[#111512] px-5 py-20 sm:px-8 sm:py-28">
+    <section className="bg-[#111512] px-5 py-14 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="mb-10 flex flex-wrap items-end justify-between gap-4"
+          className="mb-6 flex flex-wrap items-center justify-between gap-4"
         >
-          <div>
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#A8E6A1]">
-              The film
-            </span>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-[#FAFAF7] sm:text-5xl">
-              Sixty seconds. Whole story.
-            </h2>
-          </div>
+          <h2 className="text-2xl font-black tracking-tight text-[#FAFAF7] sm:text-3xl">
+            Sixty seconds. Whole story.
+          </h2>
           <button
             onClick={() => {
               const v = ref.current
@@ -43,10 +38,10 @@ export function AdShowcase() {
               v.muted = !muted
               setMuted(!muted)
             }}
-            className="inline-flex items-center gap-2 rounded-full border border-[#FAFAF7]/30 px-5 py-2.5 text-sm font-semibold text-[#FAFAF7] transition-colors hover:bg-[#FAFAF7] hover:text-[#111512]"
+            aria-label={muted ? 'Unmute film' : 'Mute film'}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#FAFAF7]/30 text-[#FAFAF7] transition-colors hover:bg-[#FAFAF7] hover:text-[#111512]"
           >
             {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            {muted ? 'Unmute' : 'Mute'}
           </button>
         </motion.div>
 
@@ -55,7 +50,7 @@ export function AdShowcase() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="group relative aspect-video overflow-hidden rounded-3xl border border-[#A8E6A1]/20 bg-black shadow-2xl"
+          className="group relative aspect-video overflow-hidden rounded-2xl border border-[#A8E6A1]/20 bg-black shadow-2xl"
         >
           <video
             ref={ref}
@@ -72,8 +67,8 @@ export function AdShowcase() {
               aria-label="Play with sound"
               className="absolute inset-0 flex items-center justify-center bg-[#111512]/35 transition-colors hover:bg-[#111512]/20"
             >
-              <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2FA84F] transition-transform duration-300 group-hover:scale-110">
-                <Play className="ml-1 h-8 w-8 fill-white text-white" />
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#2FA84F] transition-transform duration-300 group-hover:scale-110">
+                <Play className="ml-0.5 h-6 w-6 fill-white text-white" />
               </span>
             </button>
           )}
