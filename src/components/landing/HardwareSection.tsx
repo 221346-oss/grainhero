@@ -22,8 +22,8 @@ export function HardwareSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span className="gh-eyebrow text-[#2FA84F]">Hardware first</span>
           <h2 className="mt-5 text-3xl font-black leading-[1.02] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl">
+          <h2 className="text-[1.75rem] font-black leading-[1.02] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl">
             Start with the silo.{' '}
             <span className="text-[#2FA84F]">Software comes with it.</span>
           </h2>
