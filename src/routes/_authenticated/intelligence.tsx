@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/intelligence")({
 
 type Tab = "predictions" | "analytics" | "ml-models" | "reports";
 
-const TABS: { key: Tab; label: string; icon: (props: { className?: string }) => JSX.Element | null }[] = [
+const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "predictions", label: "AI Predictions", icon: Brain },
   { key: "analytics",   label: "Analytics",      icon: BarChart3 },
   { key: "ml-models",   label: "ML Models",      icon: Cpu },
