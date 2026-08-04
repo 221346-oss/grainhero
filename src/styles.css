@@ -215,6 +215,10 @@
   .dark [class*="bg-[#111512]"]  { background-color: oklch(0.17 0.015 150) !important; }
   .dark [class*="bg-[#404F44]"]  { background-color: oklch(0.30 0.015 150) !important; }
 
+  /* Opt-out: elements that must keep their bone/white surface in dark mode */
+  .dark .gh-keep-light { background-color: #FAFAF7 !important; color: #111512 !important; }
+  .dark .gh-keep-light:hover { background-color: #2FA84F !important; color: #FAFAF7 !important; }
+
   /* Landing text colors */
   .dark [class*="text-[#252d26]"] { color: oklch(0.93 0.02 130) !important; }
   .dark [class*="text-[#404F44]"] { color: oklch(0.75 0.02 130) !important; }

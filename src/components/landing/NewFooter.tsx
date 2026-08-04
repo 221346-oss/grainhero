@@ -6,9 +6,9 @@ export function NewFooter() {
     <footer className="bg-[#111512] text-[#FAFAF7] pt-16 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-12 mb-12">
           {/* Brand Column */}
-          <div className="space-y-4">
+          <div className="col-span-2 space-y-4 lg:col-span-1">
             <div className="flex items-center gap-2">
               <Wheat className="w-8 h-8 text-[#2FA84F]" />
               <span className="text-xl font-bold text-[#FAFAF7]">GrainHero</span>

@@ -31,7 +31,7 @@ export function HardwareSection() {
           </p>
         </motion.div>
 
-        <div className="gh-stagger mt-14 grid gap-x-12 gap-y-8 sm:grid-cols-2">
+        <div className="gh-stagger mt-14 grid grid-cols-2 gap-x-5 gap-y-6 sm:gap-x-12 sm:gap-y-8">
           {specs.map(([title, body], i) => (
             <motion.div
               key={title}
@@ -42,8 +42,10 @@ export function HardwareSection() {
               className="group relative border-t border-[#111512]/12 pt-5 dark:border-border"
             >
               <span className="absolute -top-px left-0 h-px w-0 bg-[#2FA84F] transition-all duration-500 group-hover:w-full" />
-              <h3 className="text-base font-black text-[#111512] dark:text-foreground">{title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-[#4A554C] dark:text-muted-foreground">
+              <h3 className="text-sm font-black text-[#111512] dark:text-foreground sm:text-base">
+                {title}
+              </h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-[#4A554C] dark:text-muted-foreground sm:text-sm">
                 {body}
               </p>
             </motion.div>

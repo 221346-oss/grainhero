@@ -58,7 +58,7 @@ export function AgriHero() {
           >
             <Link
               to="/contact"
-              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#FAFAF7] px-7 py-3.5 text-sm font-bold text-[#111512] transition-all duration-300 hover:bg-[#2FA84F] hover:text-white"
+              className="gh-keep-light group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#FAFAF7] px-7 py-3.5 text-sm font-bold text-[#111512] transition-all duration-300 hover:bg-[#2FA84F] hover:text-white"
             >
               Let&apos;s talk
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
