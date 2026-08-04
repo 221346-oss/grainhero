@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import heroLoop from '@/assets/silo-flight-v2.mp4.asset.json'
+import heroLoop from '@/assets/silo-ai-loop.mp4.asset.json'
 import heroPoster from '@/assets/landing/hero-poster.jpg'
 
 export function AgriHero() {
