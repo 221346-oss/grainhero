@@ -30,6 +30,28 @@ export const getMySubscription = createServerFn({ method: "GET" })
       .limit(1);
     const sub = subs?.[0] ?? null;
 
+    // Merge plan_thresholds limits into the subscription row so usePlanLimits
+    // always reflects super admin's latest values even when max_* cols are null.
+    let mergedSub = sub;
+    if (sub?.plan_name) {
+      const { data: threshold } = await context.supabase
+        .from("plan_thresholds")
+        .select("max_silos, max_warehouses, max_users, max_batches, max_sensors, max_actuators")
+        .eq("plan_id", sub.plan_name)
+        .maybeSingle();
+      if (threshold) {
+        mergedSub = {
+          ...sub,
+          max_silos:       sub.max_silos       ?? threshold.max_silos,
+          max_warehouses:  sub.max_warehouses   ?? threshold.max_warehouses,
+          max_users:       sub.max_users        ?? threshold.max_users,
+          max_batches:     sub.max_batches      ?? threshold.max_batches,
+          max_sensors:     sub.max_sensors      ?? threshold.max_sensors,
+          max_actuators:   sub.max_actuators    ?? threshold.max_actuators,
+        };
+      }
+    }
+
     // Live usage (tenant-scoped via RLS-safe counts on admin_id)
     const [batches, warehouses, silos, sensors, team] = await Promise.all([
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }).eq("admin_id", adminId).is("deleted_at", null),
@@ -48,7 +70,7 @@ export const getMySubscription = createServerFn({ method: "GET" })
 
     return {
       role: r,
-      subscription: sub,
+      subscription: mergedSub,
       usage: {
         batches: batches.count ?? 0,
         warehouses: warehouses.count ?? 0,

@@ -1,11 +1,13 @@
 import { SettingsSkeleton, FormSkeleton } from "@/components/app/skeletons";
 import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Save, Loader2, Check, Camera, Trash2, Plus, X } from "lucide-react";
+import { Save, Loader2, Check, Camera, Trash2, Plus, X, Pencil } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +23,7 @@ import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { initialsOf } from "@/hooks/useMyProfile";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
-import { getPlatformSettings, updatePlatformSettings, type PlatformConfig } from "@/lib/platform-settings.functions";
+import { getPlatformSettings, updatePlatformSettings, type PlatformConfig, type IotPricingItem } from "@/lib/platform-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
 
@@ -424,6 +426,9 @@ function PlatformSettingsSection() {
         </CardContent>
       </Card>
 
+      {/* ── IoT / Hardware Pricing ─────────────────────────────── */}
+      <IotPricingCard cfg={cfg} setCfg={setCfg} />
+
       <div className="flex justify-end">
         <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
           {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -431,5 +436,163 @@ function PlatformSettingsSection() {
         </Button>
       </div>
     </div>
+  );
+}
+
+// ── IoT / Hardware Pricing card ──────────────────────────────────────────────
+const fmtPKR = (n: number) =>
+  new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 }).format(n);
+
+const emptyItem = (): IotPricingItem => ({
+  id: `sku_${Date.now()}`,
+  name: "",
+  description: "",
+  price_pkr: 0,
+  unit: "per silo",
+});
+
+function IotPricingCard({
+  cfg,
+  setCfg,
+}: {
+  cfg: PlatformConfig;
+  setCfg: React.Dispatch<React.SetStateAction<PlatformConfig | null>>;
+}) {
+  const items = cfg.iot_pricing ?? [];
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [draft, setDraft] = useState<IotPricingItem | null>(null);
+  const isNew = draft ? !items.some((i) => i.id === draft.id) : false;
+
+  function openAdd() {
+    setDraft(emptyItem());
+    setSheetOpen(true);
+  }
+
+  function openEdit(item: IotPricingItem) {
+    setDraft({ ...item });
+    setSheetOpen(true);
+  }
+
+  function closeSheet() {
+    setSheetOpen(false);
+    setDraft(null);
+  }
+
+  function commitEdit() {
+    if (!draft) return;
+    setCfg((prev) => {
+      if (!prev) return prev;
+      const exists = prev.iot_pricing.some((i) => i.id === draft.id);
+      const updated = exists
+        ? prev.iot_pricing.map((i) => (i.id === draft.id ? draft : i))
+        : [...prev.iot_pricing, draft];
+      return { ...prev, iot_pricing: updated };
+    });
+    closeSheet();
+  }
+
+  function removeItem(id: string) {
+    setCfg((prev) =>
+      prev ? { ...prev, iot_pricing: prev.iot_pricing.filter((i) => i.id !== id) } : prev,
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>IoT &amp; Hardware Pricing</CardTitle>
+          <CardDescription>
+            Silo hardware SKUs shown to admins when they request a new silo. Prices in PKR.
+            Changes take effect immediately after saving.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {items.length === 0 && (
+            <p className="text-sm text-muted-foreground">No pricing items yet.</p>
+          )}
+
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between rounded-lg border border-slate-200 p-3 gap-3"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-slate-800">{item.name}</span>
+                  <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                    {item.unit}
+                  </span>
+                </div>
+                {item.description && (
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">{item.description}</p>
+                )}
+              </div>
+              <div className="text-sm font-bold text-slate-700 tabular-nums shrink-0">
+                PKR {fmtPKR(item.price_pkr)}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(item)} aria-label="Edit">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => removeItem(item.id)} aria-label="Remove">
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" size="sm" onClick={openAdd} className="w-full mt-1">
+            <Plus className="h-4 w-4 mr-1" /> Add pricing item
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* ── Edit / Add Sheet ─────────────────────────────────────── */}
+      <Sheet open={sheetOpen} onOpenChange={(o) => { if (!o) closeSheet(); }}>
+        <SheetContent className="sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>{isNew ? "Add pricing item" : "Edit pricing item"}</SheetTitle>
+            <SheetDescription>
+              {isNew ? "New SKU shown to admins on the Request Silo page." : "Update this SKU. Changes apply after saving settings."}
+            </SheetDescription>
+          </SheetHeader>
+          {draft && (
+            <div className="mt-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Name</Label>
+                <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="e.g. Standard Silo Kit" autoFocus />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Unit label</Label>
+                <Input value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} placeholder="e.g. per silo" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Description</Label>
+                <Input value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="Short description shown to admin" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Price (PKR)</Label>
+                <Input type="number" min={0} value={draft.price_pkr || ""} onChange={(e) => setDraft({ ...draft, price_pkr: Number(e.target.value) })} placeholder="2300000" />
+                {draft.price_pkr > 0 && (
+                  <p className="text-[10px] text-muted-foreground">= PKR {fmtPKR(draft.price_pkr)}</p>
+                )}
+              </div>
+            </div>
+          )}
+          <SheetFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={closeSheet}>Cancel</Button>
+            <Button
+              type="button"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              disabled={!draft?.name.trim() || !draft?.price_pkr}
+              onClick={commitEdit}
+            >
+              <Check className="h-3.5 w-3.5 mr-1" /> {isNew ? "Add item" : "Save item"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

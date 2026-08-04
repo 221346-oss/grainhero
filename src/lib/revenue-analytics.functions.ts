@@ -118,10 +118,17 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
       planSeries,
       growth,
       adminSubs,
-      expiring: expiring.slice(0, 20).map((s: any) => ({
-        id: s.id, admin_id: s.admin_id, plan_name: s.plan_name,
-        end_date: s.end_date, status: s.status,
-      })),
+      expiring: expiring.slice(0, 20).map((s: any) => {
+        const prof = profiles.find((p: any) => p.id === s.admin_id);
+        return {
+          id: s.id,
+          admin_id: s.admin_id,
+          admin_name: prof?.name ?? prof?.email ?? null,
+          plan_name: s.plan_name,
+          end_date: s.end_date,
+          status: s.status,
+        };
+      }),
       recentInvoices: invoices.slice(0, 20).map((i: any) => ({
         id: i.id, admin_id: i.admin_id, amount: i.amount, currency: i.currency,
         status: i.status, billing_date: i.billing_date, invoice_number: i.invoice_number,

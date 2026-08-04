@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -42,11 +43,10 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
 });
 
 const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "batches", label: "Grain Batches", icon: Package },
-  { key: "silos", label: "Silos", icon: Warehouse },
-  { key: "batches", label: "Grain Batches", icon: Package },
-  { key: "warehouses", label: "Warehouses", icon: Building2 },
-  { key: "buyers", label: "Buyers", icon: Users },
+  { key: "batches",    label: "Grain Batches", icon: Package   },
+  { key: "silos",      label: "Silos",         icon: Warehouse },
+  { key: "warehouses", label: "Warehouses",    icon: Building2 },
+  { key: "buyers",     label: "Buyers",        icon: Users     },
 ];
 
 function GrainOperationsWorkspace() {
