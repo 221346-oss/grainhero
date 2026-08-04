@@ -4,6 +4,7 @@ import { InfoDot } from "@/components/ui/InfoDot";
 import { RangeChip, type RangeKey } from "./RangeChip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { NEON, NeonPatternDefs, neonFill } from "@/components/charts/neon";
 import { Eye, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -54,10 +55,10 @@ function SiloCapacityChart({
 
   // Create data for semi-circle donut chart with 4-level color categorization
   const getCapacityColor = (percentage: number) => {
-    if (percentage >= 90) return '#dc2626'; // Red - Overflow/Critical (90%+)
-    if (percentage >= 70) return '#f59e0b'; // Amber - Fully filled (70-89%)
-    if (percentage >= 40) return '#3b82f6'; // Blue - Half filled (40-69%)
-    return '#10b981'; // Green - Stable/Less filled (0-39%)
+    if (percentage >= 90) return NEON.critical; // Overflow/Critical (90%+)
+    if (percentage >= 70) return NEON.warning; // Fully filled (70-89%)
+    if (percentage >= 40) return NEON.info; // Half filled (40-69%)
+    return NEON.success; // Stable/Less filled (0-39%)
   };
 
   const getCapacityLevel = (percentage: number) => {
@@ -69,7 +70,7 @@ function SiloCapacityChart({
 
   const chartData = [
     { name: 'Used', value: fillPct, color: getCapacityColor(fillPct) },
-    { name: 'Available', value: 100 - fillPct, color: '#f1f5f9' }
+    { name: 'Available', value: 100 - fillPct, color: NEON.neutral }
   ];
   
   return (
@@ -96,6 +97,7 @@ function SiloCapacityChart({
       <div className="flex-1 flex items-center justify-center py-4">
         <div className="relative">
           <div className="relative h-40 w-80">
+            <NeonPatternDefs colors={[getCapacityColor(fillPct), NEON.neutral]} />
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -110,7 +112,7 @@ function SiloCapacityChart({
                   dataKey="value"
                 >
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} {...neonFill(entry.color)} />
                   ))}
                 </Pie>
               </PieChart>

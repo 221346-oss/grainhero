@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
-import { Loader2, Plus, MessageSquare } from "lucide-react";
+import { Loader2, Plus, MessageSquare, AlertTriangle } from "lucide-react";
 import { type ReactNode, useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
