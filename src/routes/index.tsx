@@ -38,25 +38,25 @@ function NewHomePage() {
   return (
     <main className="landing-type min-h-screen bg-[#FAFAF7] text-[#4A554C] landing-bg dark:text-foreground">
       <NewGlassNav />
-      <section id="hero" aria-label="Hero section">
+      <section id="hero" aria-label="Hero section" className="landing-section">
         <AgriHero />
       </section>
-      <section id="problem" aria-label="The problem">
+      <section aria-label="The problem" className="landing-section">
         <ProblemMarquee />
       </section>
-      <section id="how-it-works" aria-label="How it works">
+      <section aria-label="How it works" className="landing-section">
         <SimpleSteps />
       </section>
-      <section id="hardware" aria-label="Hardware and 3D silo">
+      <section aria-label="Hardware and sensors" className="landing-section">
         <HardwareSection />
       </section>
-      <section aria-label="Brand film">
+      <section aria-label="Brand film" className="landing-section">
         <AdShowcase />
       </section>
-      <section aria-label="Statistics">
+      <section aria-label="Statistics" className="landing-section">
         <StatsSection />
       </section>
-      <section aria-label="Partners">
+      <section aria-label="Partners" className="landing-section">
         <PartnersStrip />
       </section>
       <HorizontalFAQ />
