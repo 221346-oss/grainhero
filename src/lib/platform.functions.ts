@@ -334,7 +334,11 @@ export const setUserRole = createServerFn({ method: "POST" })
     if (data.role !== "pending") {
       const { error: insErr } = await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: data.userId, role: data.role as Exclude<typeof data.role, "pending">, granted_by: context.userId });
+        .insert({
+          user_id: data.userId,
+          role: data.role as "admin" | "buyer" | "manager" | "super_admin" | "technician",
+          granted_by: context.userId,
+        });
       if (insErr) throw insErr;
     }
 

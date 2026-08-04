@@ -21,7 +21,8 @@ export type TextShimmerProps = {
   /** Peak (bright) color of the sweep. Defaults to var(--foreground). */
   peakColor?: string;
   children: ReactNode | string;
-} & Record<string, unknown>;
+  className?: string;
+};
 
 export default function TextShimmer({
   as = "span",
@@ -34,7 +35,11 @@ export default function TextShimmer({
   ...props
 }: TextShimmerProps) {
   const dynamicSpread = Math.min(Math.max(spread, 5), 55);
-  const Component = as as ComponentType<{ className?: string; style?: CSSProperties; children?: ReactNode }>;
+  const Component = as as unknown as ComponentType<{
+    className?: string;
+    style?: CSSProperties;
+    children?: ReactNode;
+  }>;
 
   return (
     <Component
