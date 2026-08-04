@@ -6,8 +6,9 @@ import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from '@/lib/theme
 
 const navLinks = [
   { to: '/', label: 'Home' },
-  { to: '/', hash: 'features', label: 'Features' },
-  { to: '/', hash: 'pricing', label: 'Pricing' },
+  { to: '/', hash: 'how-it-works', label: 'How it works' },
+  { to: '/', hash: 'hardware', label: 'Hardware' },
+  { to: '/marketplace', label: 'Shop' },
   { to: '/about', label: 'About' },
   { to: '/team', label: 'Team' },
   { to: '/blog', label: 'Blog' },

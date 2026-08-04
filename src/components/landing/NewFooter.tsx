@@ -68,8 +68,8 @@ export function NewFooter() {
                 </Link>
               </li>
               <li>
-                <Link to="/" hash="pricing" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
-                  Pricing
+                <Link to="/marketplace" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                  Shop hardware
                 </Link>
               </li>
               <li>
