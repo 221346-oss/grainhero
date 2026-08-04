@@ -1,99 +1,47 @@
-## Goal
+# Silo Fly-Through Film + Landing Page Redesign
 
-Turn this intern branch into a **clean Supabase-aligned PR** that only adds the AI/ML integration hooks the current TanStack + Supabase app actually needs. Everything else (legacy Mongo backend, HF `.pkl` binaries, old Next.js frontend, `.env`, analysis dumps) gets relocated so it can never accidentally merge into main.
+Two deliverables: a new 24-second looping hero film (drone-style cave-exploration flight into a silo), and a full redesign of the landing page in the GrainHero theme with pricing removed.
 
-Current `src/` on this branch already matches main and does **not** import anything from `legacy-backend/`, `huggingface_deployment/`, or `frontend_code/` — verified with `rg`. So the deletions are safe.
+## Part 1 — The 24s silo fly-through loop
 
----
+A single continuous shot, no cuts, built to loop seamlessly (last frame matches first).
 
-## What stays (real integration surface)
+Flight path:
+1. **0-4s — Approach.** Low sun over a wheat field, camera races toward a silo cluster at speed, climbing.
+2. **4-6s — Entry.** Camera pitches over the roof and drops through the top hatch. Light collapses to the interior beam of the hatch opening.
+3. **6-18s — Interior sweep.** Camera descends past the grain column and passes the real hardware, each named on-screen as it flies by:
+   - Headspace: SHT45 ambient temp/humidity node, BME680 gas + pressure node, AJ-SR04M ultrasonic level sensor pinging the grain surface
+   - Wall column: DS18B20 waterproof temperature probes at top / middle / bottom of the grain mass
+   - Grain mass: SCD41 CO2 sensor reading ppm rising in a hot spot
+   - Floor: perforated aeration floor — air passing up through the holes while grain stays put
+   - Exterior wall: industrial aeration fan spinning, SG90 servo vent opening
+   - Control box: ESP32-S3 controller, OLED live readout, RGB status LED going green -> amber, buzzer
+4. **18-22s — Exit.** Camera whips up through the vent and back out into open sky.
+5. **22-24s — Loop close.** Wide field re-frame that matches frame 0 exactly.
 
-- `src/lib/ai-inference.functions.ts` — HF remote call + local Python fallback (kept as-is per your answer).
-- `src/lib/ml-pipeline.functions.ts` — cascade wrapper.
-- `src/lib/ml-csv-logger.server.ts` — training-loop logger.
-- `src/ml/smartbin_predict.py` + `src/ml/*_model_metadata.json` — reference for the HF Space + local fallback.
-- `src/routes/api/public/cron/sync-firebase.ts` and `src/routes/api/firebase/live-sensors.ts` — already call `GRAINHERO_ML_API_URL`.
+Labels are names + live-looking readings only (e.g. `DS18B20 · 24.3°C`, `SCD41 · 1,240 ppm`, `SHT45 · 68% RH`). No prices, no part counts. Two short problem/solution lines carry the meaning: spoilage starts invisibly inside the grain -> GrainHero sees it before it spreads.
 
-## What goes
+Production: hybrid. AI-generated photoreal plates for the approach, hatch entry, interior descent and exit; Remotion composites the sensor pins, labels, readouts, LED/fan motion and the loop seam on top. Rendered at 1920x1080, 30fps, 720 frames, muted, to `src/assets/` as a CDN asset so the hero can use it.
 
-Delete from repo (also add to `.gitignore` so nobody re-adds them):
+## Part 2 — Landing page redesign
 
-1. `legacy-backend/` — full Mongo/Express rewrite, ~388 MB. Superseded by Supabase.
-2. `huggingface_deployment/` — ~383 MB of `.pkl` binaries + Python service. Belongs in the HF Space repo, not this app repo.
-3. `frontend_code/` — old Next.js UI, ~3.2 MB. Main is the source of truth.
-4. `.env` — even if it only has Google Maps keys today, secrets don't belong in git. `.env.example` gets scrubbed too.
-5. `retrain_pipeline.ps1` — points at `legacy-backend/ml/`; move a Supabase-aware version into `docs/ml/` (see below).
-6. `Migration_Handover_Context.md` — moves to `docs/`.
+Full redesign: every section gets a new layout. Process:
+1. Capture the current page.
+2. Lock the brand theme — the existing GrainHero palette (deep bark `#252d26`, leaf `#2FAC0C`, lime `#8FE04B`, bone `#EDE9D4`) and current type scale become hard constraints.
+3. Generate three rendered design directions that vary only in composition, density, hierarchy and motion register.
+4. You pick one; I build it exactly — same alignment, section count and density as the chosen prototype.
 
-## What moves (kept, but out of app tree)
+Content changes regardless of direction:
+- **Pricing block removed** from the landing page entirely. Plans stay reachable via Get Started and `/checkout`.
+- **Pricing link removed from the nav.** Nav becomes Home / Features / Hardware / About / Contact + Get Started.
+- **Resequenced and merged** into a shorter, denser page: hero film -> problem -> how it works -> hardware + stats folded into one section -> brand film -> partners -> FAQ + contact CTA tightened together.
+- Consistent tokens across all sections instead of the current mix of hardcoded hex values.
 
-Per your answer "Move to /docs and keep":
+## Technical notes
 
-- `_ANALYSIS/**` → `docs/analysis/`
-- `Migration_Handover_Context.md` → `docs/`
-- `FIRMWARE/` → `docs/firmware/` (reference only; not deployed)
-- `DATASETS/` → `docs/datasets/` (README + download instructions only; the large CSVs stay out via `.gitignore` — we keep the small README/instructions files)
-- `retrain_pipeline.ps1` → `docs/ml/retrain_pipeline.ps1` with a note that it targets the HF Space repo, not this app.
-
-## New docs for the intern (this is the "how to make ML work in prod" you asked for)
-
-New file: `**docs/ml/HUGGINGFACE_DEPLOYMENT.md**` covering:
-
-1. Where the HF Space source lives (the old `huggingface_deployment/` folder — instruct intern to push it to a dedicated HF Space repo, not this one).
-2. Files it needs: `app.py`, `predict.py`, `Dockerfile`, `requirements.txt`, all `*_ensemble_model.pkl` + `*_label_encoder.pkl` + `*_model_metadata.json`.
-3. HF Space setup: Docker SDK, hardware tier, HTTPS endpoint URL format `https://<user>-<space>.hf.space`.
-4. Auth: HF Space read/write token, how to add it as `HUGGINGFACE_ACCESS_TOKEN` and expose `GRAINHERO_ML_API_URL` via `**add_secret**` in Lovable (not `.env`).
-5. Request contract: exact JSON body `sync-firebase.ts` and `ai-inference.functions.ts` send (temperature, humidity, moisture, storage_days, grain_type, histories…), and the response shape the app expects (`risk_class`, `risk_score`, `confidence`, `primary_risk_factors`, `trustworthy`).
-6. **How the local Python fallback works** and the caveat: `child_process.spawn` does **not** run on the Cloudflare Worker runtime the live app deploys to. Two options for making the fallback real in prod (Phase-2 work, not this PR):
-  - a) Keep the fallback purely for `bun run dev` on a full Node host.
-  - b) Wrap `smartbin_predict.py` in a second HF Space (or a small container on Fly/Render) and treat it as "Box 2" via a second HTTP env var (e.g. `GRAINHERO_ML_FALLBACK_URL`).
-7. Retraining loop: run `docs/ml/retrain_pipeline.ps1` locally, drop refreshed `.pkl`s into the HF Space repo, HF rebuilds Docker — nothing to change in this app.
-8. Graceful "ML unavailable" behavior in the app until HF is deployed: `runMLInference` returns `null`, callers must fall back to the threshold heuristic already present.
-
-New file: `**docs/ml/README.md**` — one-page index pointing intern at the deployment guide, the retrain script, and where `GRAINHERO_ML_API_URL` is read.
-
-## Graceful degradation while HF is not deployed
-
-Since you answered "Not deployed yet", also:
-
-- Confirm every call site handles `runMLInference` returning `null` (both `sync-firebase.ts` and `ml-pipeline.functions.ts` already do — verify, no change if fine).
-- Do **not** add the `GRAINHERO_ML_API_URL` secret yet; document the exact `add_secret` step the intern runs once the HF Space URL exists.
-
-## `.gitignore` additions
-
-```
-.env
-.env.local
-legacy-backend/
-huggingface_deployment/
-frontend_code/
-*.pkl
-DATASETS/training-real/*.csv
-DATASETS/training-synthetic/*.csv
-```
-
-## Verification before opening the PR
-
-1. `rg -n "legacy-backend|huggingface_deployment|frontend_code" src supabase` → must return zero hits (currently only stale comment strings in `firebase-sync.functions.ts` and `live-sensors.ts` — rewrite those comments).
-2. `bun run build` — must succeed.
-3. `du -sh .` — repo should drop from ~775 MB of legacy dirs to a normal size.
-4. Git diff summary against `main` should show: deletions of the four legacy trees, new `docs/**`, updated `.gitignore`, and no `src/` code changes beyond comment cleanups.
-
-## Out of scope for this PR (call out to intern in the doc)
-
-- Actually deploying the HF Space.
-- Replacing the Python fallback with a hosted service.
-- Any Supabase schema / RLS changes.
-- Any UI work.
-
-## Deliverable
-
-One clean commit set on `intern` branch that, when diffed against `main`, contains only:
-
-- Deletions of `legacy-backend/`, `huggingface_deployment/`, `frontend_code/`, `.env`, `retrain_pipeline.ps1` (old location).
-- Moves into `docs/` (analysis, firmware, datasets README, handover, retrain script).
-- New `docs/ml/HUGGINGFACE_DEPLOYMENT.md` and `docs/ml/README.md`.
-- Updated `.gitignore`.
-- Comment-only cleanup in the two `firebase*` files that mention `frontend_code`.
-
-Ready to execute on approval.
+- Remotion project under `remotion/`, scenes in `remotion/src/scenes/`, all motion frame-based via `useCurrentFrame()` + `interpolate()`/`spring()`.
+- AI plates generated to `remotion/public/plates/`, referenced with `staticFile()`.
+- Final MP4 uploaded via `lovable-assets`; `src/assets/hero-loop.mp4.asset.json` is replaced with the new pointer so `AgriHero` picks it up with no code change.
+- Landing colors move to semantic tokens in `src/styles.css` (`@theme`) rather than inline hex.
+- `PricingShowcase` and its `pricing-data` import are deleted from `src/routes/index.tsx`; `/checkout` and marketplace pricing are untouched.
+- No changes to auth, dashboards, or any backend logic.
