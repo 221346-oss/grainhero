@@ -309,6 +309,32 @@ html { scroll-behavior: smooth; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Engineered reveals: a mask wipes upward while the block settles. */
+@keyframes gh-wipe-up {
+  from {
+    opacity: 0;
+    transform: translateY(44px) scale(0.985);
+    clip-path: inset(14% 0 0 0 round 1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    clip-path: inset(0 0 0 0 round 0);
+  }
+}
+@keyframes gh-wipe-left {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@keyframes gh-rise {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes gh-parallax {
+  from { transform: translateY(6%); }
+  to { transform: translateY(-6%); }
+}
+
 .landing-section {
   position: relative;
   overflow: clip;
@@ -316,10 +342,63 @@ html { scroll-behavior: smooth; }
 
 @supports (animation-timeline: view()) {
   .landing-section:not(#hero) {
-    animation: landing-section-enter both;
+    animation: gh-wipe-up both;
     animation-timeline: view();
-    animation-range: entry 5% cover 24%;
+    animation-range: entry 2% cover 22%;
   }
+
+  /* Per-item stagger driven purely by scroll position. */
+  .gh-stagger > * {
+    animation: gh-rise both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+
+  .gh-wipe-left {
+    animation: gh-wipe-left both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 34%;
+  }
+
+  .gh-parallax {
+    animation: gh-parallax linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+}
+
+/* Grain-paper texture for the bone-coloured sections. */
+.gh-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(47, 168, 79, 0.07), transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(199, 217, 193, 0.35), transparent 46%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+.dark .gh-grain::before { opacity: 0.18; mix-blend-mode: screen; }
+.gh-grain > * { position: relative; z-index: 1; }
+
+/* Section eyebrow rule */
+.gh-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+.gh-eyebrow::before {
+  content: "";
+  width: 2rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
 }
 
 @media (max-width: 639px) {
@@ -331,6 +410,9 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .landing-section { animation: none !important; }
+  .gh-stagger > *,
+  .gh-wipe-left,
+  .gh-parallax { animation: none !important; }
 }
 
 /* Hidden scrollbar utility (sidebar, popovers) */

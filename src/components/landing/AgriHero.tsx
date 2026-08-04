@@ -16,10 +16,10 @@ export function AgriHero() {
   }, [])
 
   return (
-    <div className="relative min-h-[92svh] w-full overflow-hidden bg-[#111512] sm:min-h-[94svh]">
+    <div className="relative min-h-[92svh] w-full overflow-hidden bg-[#111512] sm:min-h-[100svh]">
       <video
         ref={videoRef}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full scale-105 object-cover"
         autoPlay
         muted
         loop
@@ -30,53 +30,63 @@ export function AgriHero() {
         <source src={heroLoop.url} type="video/mp4" />
       </video>
 
-      {/* Cinematic grade */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#111512]/72 via-[#111512]/18 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#111512]/45 via-transparent to-[#111512]/60" />
+      {/* Cinematic grade — dark top for nav, bone bottom to hand off to the next section */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#111512]/70 via-[#111512]/25 to-[#111512]/85" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#FAFAF7] to-transparent dark:from-background" />
 
       {/* Copy */}
-      <div className="relative z-10 flex min-h-[92svh] items-end sm:min-h-[94svh] sm:items-center">
-        <div className="container mx-auto px-5 pb-12 sm:px-8 sm:pb-0 lg:px-12">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+      <div className="relative z-10 flex min-h-[92svh] items-center justify-center px-5 text-center sm:min-h-[100svh] sm:px-8">
+        <div className="max-w-4xl pb-16 sm:pb-20">
+          <motion.span
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-2xl text-[2.25rem] font-black leading-[1] tracking-tight text-[#A8E6A1] sm:text-5xl lg:text-6xl"
+            transition={{ duration: 0.6 }}
+            className="inline-block rounded-full border border-[#C7D9C1]/30 bg-[#C7D9C1]/15 px-4 py-1.5 text-[0.625rem] font-bold uppercase tracking-[0.28em] text-[#A8E6A1] backdrop-blur-md"
+          >
+            Smart storage solutions
+          </motion.span>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 26, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            transition={{ delay: 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-5 text-[2.5rem] font-black leading-[0.92] tracking-tight text-[#FAFAF7] sm:text-6xl lg:text-7xl"
           >
             The Future of
             <br />
-            Grain Storage
+            <span className="bg-gradient-to-r from-[#A8E6A1] to-[#2FA84F] bg-clip-text text-transparent">
+              Grain Storage
+            </span>
           </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.8 }}
-            className="mt-4 max-w-md text-base font-medium text-[#FAFAF7] sm:text-xl"
-          >
-            Turning Sensor Data Into Saved Harvests
-          </motion.p>
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45, duration: 0.8 }}
-            className="mt-7 flex flex-col gap-3 min-[420px]:flex-row"
+            transition={{ delay: 0.35, duration: 0.8 }}
+            className="mt-8 flex flex-col items-center justify-center gap-5 sm:flex-row sm:gap-8"
           >
+            <p className="max-w-xs text-sm font-medium leading-relaxed text-[#FAFAF7]/80 sm:text-left sm:text-base">
+              Sensors in the silo. Spoilage flagged before it starts.
+            </p>
             <Link
               to="/marketplace"
-              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#2FA84F] px-6 py-3 text-sm font-bold text-white transition-all hover:scale-105 hover:bg-[#A8E6A1] hover:text-[#111512]"
+              className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#2FA84F] px-7 py-3.5 text-sm font-bold text-white transition-all duration-300 hover:bg-[#FAFAF7] hover:text-[#111512]"
             >
-              Explore Smart Silos
-              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              Explore smart silos
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
-            <a
-              href="#how-it-works"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-[#FAFAF7]/60 px-6 py-3 text-sm font-semibold text-[#FAFAF7] transition-all hover:scale-105 hover:bg-[#FAFAF7] hover:text-[#111512]"
-            >
-              See How It Works
-            </a>
           </motion.div>
         </div>
       </div>
+
+      {/* Scroll hint */}
+      <a
+        href="#problem"
+        aria-label="Scroll to next section"
+        className="absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 sm:block"
+      >
+        <span className="block h-14 w-px bg-gradient-to-b from-[#2FA84F] to-transparent" />
+      </a>
     </div>
   )
 }
