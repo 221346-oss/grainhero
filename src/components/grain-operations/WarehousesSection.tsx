@@ -18,6 +18,7 @@ import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse } fro
 import { parsePlanLimitError } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
 import { MultiRegionWarehousesView } from "@/components/grain-operations/MultiRegionWarehousesView";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
