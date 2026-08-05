@@ -17,6 +17,15 @@ import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { AdminDetailPanel, DetailField } from "@/components/app/admin/AdminDetailPanel";
 
 export const Route = createFileRoute("/_authenticated/activity-logs")({
+  head: () => ({
+    meta: [
+      { title: "Activity Logs — Grain Hero" },
+      { name: "description", content: "Activity Logs workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Activity Logs — Grain Hero" },
+      { property: "og:description", content: "Activity Logs workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ActivityLogsPage,
 });
 

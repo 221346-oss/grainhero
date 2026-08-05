@@ -14,6 +14,15 @@ import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/maintenance")({
+  head: () => ({
+    meta: [
+      { title: "Maintenance — Grain Hero" },
+      { name: "description", content: "Maintenance workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Maintenance — Grain Hero" },
+      { property: "og:description", content: "Maintenance workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MaintenancePage,
 });
 

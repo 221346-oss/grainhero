@@ -28,6 +28,15 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/actuators")({
+  head: () => ({
+    meta: [
+      { title: "Actuators — Grain Hero" },
+      { name: "description", content: "Actuators workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Actuators — Grain Hero" },
+      { property: "og:description", content: "Actuators workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ActuatorsPage,
 });
 

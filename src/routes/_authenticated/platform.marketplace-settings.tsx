@@ -18,6 +18,15 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/platform/marketplace-settings")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Marketplace Settings — Grain Hero" },
+      { name: "description", content: "Platform · Marketplace Settings workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Marketplace Settings — Grain Hero" },
+      { property: "og:description", content: "Platform · Marketplace Settings workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MarketplaceSettingsPage,
 });
 

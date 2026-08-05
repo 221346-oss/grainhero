@@ -12,6 +12,15 @@ import { getOrderAuditTimeline } from "@/lib/order-audit-timeline.functions";
 import { ArrowLeft, Truck, ShoppingCart, ScrollText } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/orders/$orderId/audit")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Orders · OrderId · Audit — Grain Hero" },
+      { name: "description", content: "Platform · Orders · OrderId · Audit workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Orders · OrderId · Audit — Grain Hero" },
+      { property: "og:description", content: "Platform · Orders · OrderId · Audit workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: OrderAuditPage,
 });
 

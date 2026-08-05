@@ -12,6 +12,15 @@ import { TaxRulesSkeleton } from "@/components/app/skeletons";
 import { listTaxRules, upsertTaxRule, archiveTaxRule } from "@/lib/tax.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/finance/tax-rules")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Finance · Tax Rules — Grain Hero" },
+      { name: "description", content: "Platform · Finance · Tax Rules workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Finance · Tax Rules — Grain Hero" },
+      { property: "og:description", content: "Platform · Finance · Tax Rules workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: TaxRulesPage,
 });
 

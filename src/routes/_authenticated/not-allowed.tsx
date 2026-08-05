@@ -3,6 +3,15 @@ import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/not-allowed")({
+  head: () => ({
+    meta: [
+      { title: "Not Allowed — Grain Hero" },
+      { name: "description", content: "Not Allowed workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Not Allowed — Grain Hero" },
+      { property: "og:description", content: "Not Allowed workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: NotAllowedPage,
 });
 

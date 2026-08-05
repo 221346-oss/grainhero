@@ -37,6 +37,15 @@ const DEFAULTS: S = {
 };
 
 export const Route = createFileRoute("/_authenticated/platform/commerce-mobile")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Commerce Mobile — Grain Hero" },
+      { name: "description", content: "Platform · Commerce Mobile workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Commerce Mobile — Grain Hero" },
+      { property: "og:description", content: "Platform · Commerce Mobile workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: CommerceMobilePage,
 });
 

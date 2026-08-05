@@ -15,6 +15,15 @@ import {
 } from "@/lib/payouts.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/finance/payouts")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Finance · Payouts — Grain Hero" },
+      { name: "description", content: "Platform · Finance · Payouts workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Finance · Payouts — Grain Hero" },
+      { property: "og:description", content: "Platform · Finance · Payouts workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PayoutsPage,
 });
 

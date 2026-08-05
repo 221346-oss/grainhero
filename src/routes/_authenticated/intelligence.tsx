@@ -14,6 +14,15 @@ import { getReportsData } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
+  head: () => ({
+    meta: [
+      { title: "Intelligence — Grain Hero" },
+      { name: "description", content: "Intelligence workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Intelligence — Grain Hero" },
+      { property: "og:description", content: "Intelligence workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: IntelligenceWorkspace,
 });
 

@@ -9,6 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { listReviewsForModeration, moderateReview } from "@/lib/reviews.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/reviews")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Reviews — Grain Hero" },
+      { name: "description", content: "Platform · Reviews workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Reviews — Grain Hero" },
+      { property: "og:description", content: "Platform · Reviews workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ReviewModerationPage,
 });
 

@@ -11,7 +11,16 @@ import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
-export const Route = createFileRoute("/_authenticated/platform/tenants")({ component: TenantsPage });
+export const Route = createFileRoute("/_authenticated/platform/tenants")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Tenants — Grain Hero" },
+      { name: "description", content: "Platform · Tenants workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Tenants — Grain Hero" },
+      { property: "og:description", content: "Platform · Tenants workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }), component: TenantsPage });
 
 type Tenant = {
   id: string; name: string | null; email: string | null;
