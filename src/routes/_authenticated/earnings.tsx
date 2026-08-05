@@ -14,6 +14,15 @@ import { listPayouts, getMyPayoutAccount, upsertPayoutAccount } from "@/lib/payo
 import { Wallet, Clock, CheckCircle2, TrendingDown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/earnings")({
+  head: () => ({
+    meta: [
+      { title: "Earnings — Grain Hero" },
+      { name: "description", content: "Earnings workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Earnings — Grain Hero" },
+      { property: "og:description", content: "Earnings workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: EarningsPage,
 });
 

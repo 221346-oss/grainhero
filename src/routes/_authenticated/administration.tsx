@@ -15,6 +15,15 @@ import { getSecurityOverview } from "@/lib/operations2.functions";
 import { listFieldIncidents } from "@/lib/field-incidents.functions";
 
 export const Route = createFileRoute("/_authenticated/administration")({
+  head: () => ({
+    meta: [
+      { title: "Administration — Grain Hero" },
+      { name: "description", content: "Administration workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Administration — Grain Hero" },
+      { property: "og:description", content: "Administration workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdministrationWorkspace,
 });
 

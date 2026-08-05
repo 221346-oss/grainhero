@@ -26,6 +26,15 @@ import { getMySubscription } from "@/lib/billing.functions";
 import { AlertTriangle, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
+  head: () => ({
+    meta: [
+      { title: "Workspace — Grain Hero" },
+      { name: "description", content: "Workspace workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Workspace — Grain Hero" },
+      { property: "og:description", content: "Workspace workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   ssr: false,
   // Full app-chrome skeleton while the auth check runs on first paint.
   pendingComponent: AppShellSkeleton,

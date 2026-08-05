@@ -32,6 +32,15 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/sensors")({
+  head: () => ({
+    meta: [
+      { title: "Sensors — Grain Hero" },
+      { name: "description", content: "Sensors workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Sensors — Grain Hero" },
+      { property: "og:description", content: "Sensors workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SensorsPage,
 });
 

@@ -17,6 +17,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/platform/mobile-settings")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Mobile Settings — Grain Hero" },
+      { name: "description", content: "Platform · Mobile Settings workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Mobile Settings — Grain Hero" },
+      { property: "og:description", content: "Platform · Mobile Settings workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MobileSettingsPage,
 });
 

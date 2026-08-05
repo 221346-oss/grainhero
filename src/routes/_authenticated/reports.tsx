@@ -11,6 +11,15 @@ import { getReportsData } from "@/lib/monitoring.functions";
 import { ReportsSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/reports")({
+  head: () => ({
+    meta: [
+      { title: "Reports — Grain Hero" },
+      { name: "description", content: "Reports workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Reports — Grain Hero" },
+      { property: "og:description", content: "Reports workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ReportsPage,
 });
 

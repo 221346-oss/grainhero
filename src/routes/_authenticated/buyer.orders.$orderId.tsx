@@ -18,6 +18,15 @@ import { BuyerDisputeCard } from "@/components/app/marketplace/BuyerDisputeCard"
 const search = z.object({ checkout: z.enum(["success", "cancel"]).optional() });
 
 export const Route = createFileRoute("/_authenticated/buyer/orders/$orderId")({
+  head: () => ({
+    meta: [
+      { title: "Buyer · Orders · OrderId — Grain Hero" },
+      { name: "description", content: "Buyer · Orders · OrderId workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Buyer · Orders · OrderId — Grain Hero" },
+      { property: "og:description", content: "Buyer · Orders · OrderId workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   validateSearch: (s) => search.parse(s),
   component: OrderDetail,
 });

@@ -58,7 +58,14 @@ export const Route = createFileRoute("/checkout/")({
     meta: [
       { title: "Checkout — GrainHero" },
       { name: "description", content: "Choose your plan and start monitoring your grain." },
+      { property: 'og:title', content: "Checkout — GrainHero" },
+      { property: 'og:description', content: "Choose your plan and start monitoring your grain." },
+      { property: 'og:url', content: 'https://grainhero.app/checkout' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/checkout' }],
   }),
   component: CheckoutPage,
 });

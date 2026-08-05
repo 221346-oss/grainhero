@@ -19,6 +19,15 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/plans")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Plans — Grain Hero" },
+      { name: "description", content: "Platform · Plans workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Plans — Grain Hero" },
+      { property: "og:description", content: "Platform · Plans workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformPlansPage,
 });
 

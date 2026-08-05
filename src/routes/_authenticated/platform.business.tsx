@@ -18,6 +18,15 @@ import {
 import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/business")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Business — Grain Hero" },
+      { name: "description", content: "Platform · Business workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Business — Grain Hero" },
+      { property: "og:description", content: "Platform · Business workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformBusinessPage,
 });
 

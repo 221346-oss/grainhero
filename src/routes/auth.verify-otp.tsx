@@ -19,7 +19,13 @@ const search = z.object({
 export const Route = createFileRoute("/auth/verify-otp")({
   validateSearch: (s) => search.parse(s),
   head: () => ({
-    meta: [{ title: "Enter your code — GrainHero" }],
+    meta: [
+      { title: "Enter your code — GrainHero" },
+      { name: "description", content: "Enter the verification code sent to your email to finish signing in." },
+      { property: "og:title", content: "Enter your code — GrainHero" },
+      { property: "og:description", content: "Enter the verification code sent to your email to finish signing in." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
   }),
   component: VerifyOtpPage,
 });

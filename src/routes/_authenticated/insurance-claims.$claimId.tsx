@@ -7,6 +7,15 @@ import { ArrowLeft, Clock, FileText, ShieldCheck, ShieldAlert, ShieldX, Coins, M
 import { getClaimTimeline } from "@/lib/insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/insurance-claims/$claimId")({
+  head: () => ({
+    meta: [
+      { title: "Insurance Claims · ClaimId — Grain Hero" },
+      { name: "description", content: "Insurance Claims · ClaimId workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Insurance Claims · ClaimId — Grain Hero" },
+      { property: "og:description", content: "Insurance Claims · ClaimId workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ClaimTimelinePage,
 });
 

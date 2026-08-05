@@ -10,6 +10,15 @@ import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 import { CommandConsoleSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/server-monitoring")({
+  head: () => ({
+    meta: [
+      { title: "Server Monitoring — Grain Hero" },
+      { name: "description", content: "Server Monitoring workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Server Monitoring — Grain Hero" },
+      { property: "og:description", content: "Server Monitoring workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ServerMonitoringPage,
 });
 

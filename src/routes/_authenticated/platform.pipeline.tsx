@@ -21,6 +21,15 @@ const STAGES: { id: string; label: string; color: string }[] = [
 ];
 
 export const Route = createFileRoute("/_authenticated/platform/pipeline")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Pipeline — Grain Hero" },
+      { name: "description", content: "Platform · Pipeline workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Pipeline — Grain Hero" },
+      { property: "og:description", content: "Platform · Pipeline workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PipelinePage,
 });
 

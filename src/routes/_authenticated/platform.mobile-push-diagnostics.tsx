@@ -12,6 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/platform/mobile-push-diagnostics")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Mobile Push Diagnostics — Grain Hero" },
+      { name: "description", content: "Platform · Mobile Push Diagnostics workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Mobile Push Diagnostics — Grain Hero" },
+      { property: "og:description", content: "Platform · Mobile Push Diagnostics workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PushDiagnosticsPage,
 });
 

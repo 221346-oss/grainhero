@@ -25,6 +25,15 @@ import {
 } from "@/components/charts/neon";
 
 export const Route = createFileRoute("/_authenticated/platform/insurance")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Insurance — Grain Hero" },
+      { name: "description", content: "Platform · Insurance workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Insurance — Grain Hero" },
+      { property: "og:description", content: "Platform · Insurance workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformInsurancePage,
 });
 

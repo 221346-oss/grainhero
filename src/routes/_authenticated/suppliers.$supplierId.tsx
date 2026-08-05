@@ -7,6 +7,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getSupplierDetail } from "@/lib/suppliers.functions";
 
 export const Route = createFileRoute("/_authenticated/suppliers/$supplierId")({
+  head: () => ({
+    meta: [
+      { title: "Suppliers · SupplierId — Grain Hero" },
+      { name: "description", content: "Suppliers · SupplierId workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Suppliers · SupplierId — Grain Hero" },
+      { property: "og:description", content: "Suppliers · SupplierId workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SupplierDetail,
 });
 

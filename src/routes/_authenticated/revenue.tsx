@@ -13,6 +13,15 @@ import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/revenue")({
+  head: () => ({
+    meta: [
+      { title: "Revenue — Grain Hero" },
+      { name: "description", content: "Revenue workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Revenue — Grain Hero" },
+      { property: "og:description", content: "Revenue workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: RevenuePage,
 });
 

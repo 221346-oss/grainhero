@@ -18,6 +18,15 @@ import { geocodeCity, getWeatherBundle } from "@/lib/openweather.functions";
 import { useFirebaseAllSensors } from "@/hooks/use-firebase-sensor";
 
 export const Route = createFileRoute("/_authenticated/environmental")({
+  head: () => ({
+    meta: [
+      { title: "Environmental — Grain Hero" },
+      { name: "description", content: "Environmental workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Environmental — Grain Hero" },
+      { property: "og:description", content: "Environmental workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: EnvironmentalPage,
 });
 

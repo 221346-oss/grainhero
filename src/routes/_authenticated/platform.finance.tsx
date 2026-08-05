@@ -14,6 +14,15 @@ import {
 import { DollarSign, TrendingUp, Wallet, RefreshCcw, Package, Receipt, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/finance")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Finance — Grain Hero" },
+      { name: "description", content: "Platform · Finance workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Finance — Grain Hero" },
+      { property: "og:description", content: "Platform · Finance workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: FinanceCommandPage,
 });
 

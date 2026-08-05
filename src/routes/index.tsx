@@ -27,7 +27,44 @@ export const Route = createFileRoute('/')({
           'AI-powered grain storage management platform with real-time monitoring and predictive analytics.',
       },
       { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: 'https://grainhero.app/' },
       { name: 'twitter:card', content: 'summary_large_image' },
+    ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/' }],
+    scripts: [
+      {
+        type: 'application/ld+json',
+        children: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Organization',
+              '@id': 'https://grainhero.app/#organization',
+              name: 'GrainHero',
+              url: 'https://grainhero.app/',
+              description:
+                'GrainHero builds AI-powered grain storage monitoring with IoT sensors, spoilage prediction and real-time analytics.',
+            },
+            {
+              '@type': 'WebSite',
+              '@id': 'https://grainhero.app/#website',
+              name: 'GrainHero',
+              url: 'https://grainhero.app/',
+              publisher: { '@id': 'https://grainhero.app/#organization' },
+            },
+            {
+              '@type': 'SoftwareApplication',
+              name: 'GrainHero',
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web',
+              url: 'https://grainhero.app/',
+              description:
+                'Grain storage management platform with IoT sensor monitoring, AI spoilage prediction, alerts and predictive analytics for warehouses and silos.',
+              provider: { '@id': 'https://grainhero.app/#organization' },
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: NewHomePage,

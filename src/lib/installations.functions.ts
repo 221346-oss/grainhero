@@ -184,7 +184,7 @@ function escapeHtml(s: string) {
 }
 
 function absUrl(path: string) {
-  const base = process.env.PUBLIC_APP_URL ?? "https://grainheroo.lovable.app";
+  const base = process.env.PUBLIC_APP_URL ?? process.env.APP_ORIGIN ?? "https://grainhero.app";
   return `${base.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
 

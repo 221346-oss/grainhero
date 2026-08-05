@@ -79,6 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "google-site-verification", content: "og1XJSqxAJUzS9x1ieEDdGqTSapaSTD-fvwRFynKu6A" },
       { title: "GrainHero — AI-Powered Grain Storage Management" },
       {
         name: "description",

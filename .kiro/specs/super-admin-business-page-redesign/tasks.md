@@ -6,7 +6,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
 
 ## Tasks
 
-- [ ] 1. Set up core types and database schema extensions
+- [-] 1. Set up core types and database schema extensions
   - Create TypeScript interfaces for RevenueAnalytics, HardwareOrders, PinnedTickets, ExportData
   - Define AnalyticsCardProps, DataTableProps, ExportButtonGroupProps interfaces
   - Create SQL migration file for pinned tickets schema (pinned_by, pinned_at columns)
@@ -14,7 +14,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
   - _Requirements: 14.1, 14.2, 14.3, 14.4_
 
 - [ ] 2. Implement server functions for pinned tickets
-  - [ ] 2.1 Create pinTicket server function
+  - [~] 2.1 Create pinTicket server function
     - Implement POST endpoint with UUID validation
     - Add super_admin role verification
     - Update field_tickets table with pinned_by and pinned_at
@@ -29,7 +29,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 28: Pin Operation Timestamp Storage**
     - **Validates: Requirements 12.3**
   
-  - [ ] 2.4 Create unpinTicket server function
+  - [~] 2.4 Create unpinTicket server function
     - Implement POST endpoint with UUID validation
     - Add super_admin role verification
     - Clear pinned_by and pinned_at fields to NULL
@@ -40,18 +40,18 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 29: Unpin Operation Field Clearing**
     - **Validates: Requirements 13.1, 13.2, 13.3**
   
-  - [ ] 2.6 Create listPinnedTickets server function
+  - [~] 2.6 Create listPinnedTickets server function
     - Implement GET endpoint with super_admin verification
     - Query field_tickets WHERE pinned_by IS NOT NULL
     - Order by pinned_at DESC, limit 5
     - Return enriched ticket data with admin info
     - _Requirements: 11.2, 11.4, 15.4_
 
-- [ ] 3. Checkpoint - Ensure server functions work
+- [~] 3. Checkpoint - Ensure server functions work
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 4. Build reusable UI components
-  - [ ] 4.1 Create AnalyticsCard component
+  - [~] 4.1 Create AnalyticsCard component
     - Implement card shell with title, value, subtitle slots
     - Add optional trend indicator with up/down arrow and color coding
     - Support variant prop for default/success/warning/danger styling
@@ -63,7 +63,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 4: Trend Indicator Color Coding**
     - **Validates: Requirements 2.1, 2.2, 2.5, 2.6**
   
-  - [ ] 4.3 Create ExportButtonGroup component
+  - [~] 4.3 Create ExportButtonGroup component
     - Implement three buttons: CSV, PDF, HTML
     - Add loading states for each export type
     - Handle disabled state when no data
@@ -75,7 +75,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - Test disabled state behavior
     - _Requirements: 5.7, 6.7, 7.7_
   
-  - [ ] 4.5 Create DataTable component with column definitions
+  - [~] 4.5 Create DataTable component with column definitions
     - Implement generic table with ColumnDef interface
     - Render header row with column labels
     - Render data rows with custom cell renderers
@@ -90,7 +90,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - _Requirements: 5.1, 6.1, 7.1_
 
 - [ ] 5. Implement export engine utilities
-  - [ ] 5.1 Create CSV export generator
+  - [~] 5.1 Create CSV export generator
     - Implement function to convert table data to CSV string
     - Add RFC 4180 compliant escaping for commas, quotes, newlines
     - Prepend UTF-8 BOM for Excel compatibility
@@ -104,7 +104,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 16: Export Filename Format**
     - **Validates: Requirements 8.2, 8.3, 8.4**
   
-  - [ ] 5.3 Create PDF export generator
+  - [~] 5.3 Create PDF export generator
     - Implement function using pdf-lib to generate PDF documents
     - Add header section with title and export date
     - Render table with alternating row colors
@@ -118,7 +118,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 19: PDF Multi-Page Support**
     - **Validates: Requirements 9.3, 9.4, 9.5**
   
-  - [ ] 5.5 Create HTML export generator
+  - [~] 5.5 Create HTML export generator
     - Implement function to generate self-contained HTML document
     - Add inline CSS for table styling
     - Include header with title and export date
@@ -133,11 +133,11 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 23: Filename Path Traversal Prevention**
     - **Validates: Requirements 10.2, 10.4, 10.5, 10.6**
 
-- [ ] 6. Checkpoint - Ensure export utilities work
+- [~] 6. Checkpoint - Ensure export utilities work
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. Build chart visualization components
-  - [ ] 7.1 Create RevenueChart component
+  - [~] 7.1 Create RevenueChart component
     - Implement line chart using Recharts LineChart component
     - Map revenueSeries data to XAxis (month) and YAxis (revenue)
     - Format Y-axis with PKR currency and comma separators
@@ -150,7 +150,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 1: Currency Formatting Consistency**
     - **Validates: Requirements 4.5**
   
-  - [ ] 7.3 Create PlanDistributionChart component
+  - [~] 7.3 Create PlanDistributionChart component
     - Implement bar chart using Recharts BarChart component
     - Map planSeries data to bars with plan names
     - Calculate percentage for each plan's MRR contribution
@@ -164,7 +164,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - _Requirements: 4.2, 4.3_
 
 - [ ] 8. Implement pinned tickets section
-  - [ ] 8.1 Create PinnedTicketsSection component
+  - [~] 8.1 Create PinnedTicketsSection component
     - Query listPinnedTickets using TanStack Query with 30s refetch
     - Render ticket cards in horizontal grid layout
     - Display ticket title, priority badge, reporter name, created date
@@ -180,7 +180,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 26: Priority Badge Color Mapping**
     - **Validates: Requirements 11.3, 11.4, 11.5, 11.6, 11.7**
   
-  - [ ] 8.3 Implement pin/unpin mutations with optimistic updates
+  - [~] 8.3 Implement pin/unpin mutations with optimistic updates
     - Create useMutation hooks for pinTicket and unpinTicket
     - Implement optimistic updates to show immediate UI changes
     - Invalidate queries on success to refetch pinned tickets
@@ -195,7 +195,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - _Requirements: 12.1, 12.5, 12.7, 13.1, 13.5, 13.7_
 
 - [ ] 9. Build data table implementations for business metrics
-  - [ ] 9.1 Create PlanBreakdownTable component
+  - [~] 9.1 Create PlanBreakdownTable component
     - Define columns: Plan name, Subscribers, MRR, Share percentage
     - Calculate subscriber count using formula: round((plan.mrr / total.mrr) * activeCount)
     - Render progress bar for share percentage using div with dynamic width
@@ -211,7 +211,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 7: Plan Name Capitalization**
     - **Validates: Requirements 5.2, 5.3, 5.5**
   
-  - [ ] 9.3 Create ExpiringSubscriptionsTable component
+  - [~] 9.3 Create ExpiringSubscriptionsTable component
     - Define columns: Plan name, Expires date
     - Conditionally render only if expiring.length > 0
     - Sort expiring subscriptions by end_date ascending
@@ -225,7 +225,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 9: Date Formatting Consistency**
     - **Validates: Requirements 6.4, 6.5**
   
-  - [ ] 9.5 Create HardwareOrdersTable component
+  - [~] 9.5 Create HardwareOrdersTable component
     - Define columns: Order ID, Admin, Quantity, Total, Status
     - Filter orders to exclude 'cancelled' and 'pending_payment' statuses
     - Format hardware_total with PKR currency
@@ -242,11 +242,11 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 13: Table Row Limiting**
     - **Validates: Requirements 7.2, 7.4, 7.5, 7.6**
 
-- [ ] 10. Checkpoint - Ensure table components work
+- [~] 10. Checkpoint - Ensure table components work
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 11. Implement main page component
-  - [ ] 11.1 Create PlatformBusinessPage route component
+  - [~] 11.1 Create PlatformBusinessPage route component
     - Set up TanStack Query hooks for revenue, orders, pinnedTickets
     - Configure refetchInterval: 60s for revenue, 30s for tickets
     - Handle loading states with skeleton components
@@ -263,7 +263,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - Test auto-retry after 10s
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   
-  - [ ] 11.3 Build KPI cards section
+  - [~] 11.3 Build KPI cards section
     - Render 4-column grid on large screens (grid-cols-4)
     - Use 2-column grid on medium screens (md:grid-cols-2)
     - Use 1-column grid on small screens
@@ -280,20 +280,20 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - **Property 3: Percentage Format Consistency**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4**
   
-  - [ ] 11.5 Build charts section
+  - [~] 11.5 Build charts section
     - Render 2-column grid for charts (grid-cols-1 lg:grid-cols-2)
     - Add RevenueChart with revenueSeries data
     - Add PlanDistributionChart with planSeries data
     - Apply consistent card styling and spacing
     - _Requirements: 4.1, 4.2, 4.7_
   
-  - [ ] 11.6 Integrate PinnedTicketsSection
+  - [~] 11.6 Integrate PinnedTicketsSection
     - Render above data tables
     - Pass tickets data and pin/unpin handlers
     - Handle empty state and loading states
     - _Requirements: 11.1, 11.2_
   
-  - [ ] 11.7 Integrate data tables
+  - [~] 11.7 Integrate data tables
     - Render PlanBreakdownTable with planSeries data
     - Conditionally render ExpiringSubscriptionsTable if expiring.length > 0
     - Render HardwareOrdersTable with orders data
@@ -302,7 +302,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - _Requirements: 5.1, 6.1, 6.2, 7.1_
 
 - [ ] 12. Implement export handlers and error handling
-  - [ ] 12.1 Wire export button handlers to export engine
+  - [~] 12.1 Wire export button handlers to export engine
     - Create handleExportCSV function per table
     - Create handleExportPDF function per table
     - Create handleExportHTML function per table
@@ -317,25 +317,25 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - Test error toast on export failure
     - _Requirements: 8.1, 8.7, 9.1, 9.8, 10.1, 10.8_
   
-  - [ ] 12.3 Implement rate limiting for exports
+  - [~] 12.3 Implement rate limiting for exports
     - Add client-side rate limit tracking (5 exports per minute)
     - Show error toast when limit exceeded
     - Reset counters after 60 seconds
     - Log rate limit violations
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
   
-  - [ ] 12.4 Add error handling and recovery
+  - [~] 12.4 Add error handling and recovery
     - Implement error boundary for page component
     - Add retry logic for failed mutations
     - Show contextual empty state messages
     - Log errors to console
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7_
 
-- [ ] 13. Checkpoint - Ensure full page integration works
+- [~] 13. Checkpoint - Ensure full page integration works
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 14. Apply styling and responsive design
-  - [ ] 14.1 Implement responsive grid layouts
+  - [~] 14.1 Implement responsive grid layouts
     - Apply responsive breakpoints to KPI cards grid
     - Make charts stack vertically on mobile
     - Make tables horizontally scrollable on small screens
@@ -348,7 +348,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - Verify grid column counts change correctly
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5_
   
-  - [ ] 14.3 Apply color palette and typography
+  - [~] 14.3 Apply color palette and typography
     - Use slate colors for text and borders
     - Use emerald for positive metrics, red for warnings
     - Apply amber scheme to expiring subscriptions section
@@ -356,7 +356,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - Apply consistent padding (p-6) and gaps (gap-5)
     - _Requirements: 1.1, 1.4, 1.5, 1.6, 6.6_
   
-  - [ ] 14.4 Add accessibility features
+  - [~] 14.4 Add accessibility features
     - Add ARIA labels to all interactive elements
     - Use semantic HTML (header, section, table)
     - Ensure focus indicators are visible
@@ -372,19 +372,19 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7_
 
 - [ ] 15. Implement performance optimizations
-  - [ ] 15.1 Add lazy loading for charts
+  - [~] 15.1 Add lazy loading for charts
     - Use React.lazy to defer chart component loading
     - Implement Suspense boundary with loading fallback
     - Defer pdf-lib import until export triggered
     - _Requirements: 16.3, 16.6_
   
-  - [ ] 15.2 Add memoization for expensive calculations
+  - [~] 15.2 Add memoization for expensive calculations
     - Memoize chart data transformations using useMemo
     - Memoize subscriber count calculations
     - Memoize export data preparation
     - _Requirements: 16.4_
   
-  - [ ] 15.3 Optimize TanStack Query configuration
+  - [~] 15.3 Optimize TanStack Query configuration
     - Set staleTime to reduce refetch frequency
     - Use query prefetching for predictable navigation
     - Implement background refetching
@@ -399,7 +399,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - _Requirements: 16.1, 16.2, 8.6, 9.7, 10.7_
 
 - [ ] 16. Add role-based access control verification
-  - [ ] 16.1 Implement super_admin guard on page route
+  - [~] 16.1 Implement super_admin guard on page route
     - Use existing resolveRole function
     - Redirect non-super-admins to dashboard
     - Show 403 error for direct access attempts
@@ -413,7 +413,7 @@ This plan transforms the existing `/platform/business` page into a modern analyt
     - Test pin/unpin require super_admin
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6_
 
-- [ ] 17. Final checkpoint - End-to-end testing
+- [~] 17. Final checkpoint - End-to-end testing
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
