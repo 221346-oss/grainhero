@@ -13,7 +13,7 @@ export const Route = createFileRoute('/team')({
         content: 'Meet the founders and team behind GrainHero\'s innovative grain storage solutions.',
       },
       { property: 'og:title', content: "Our Team — GrainHero" },
-      { property: 'og:description', content: "Meet the founders and team behind GrainHero\\" },
+      { property: 'og:description', content: "Meet the founders and team behind GrainHero's innovative grain storage solutions." },
       { property: 'og:url', content: 'https://grainhero.app/team' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
