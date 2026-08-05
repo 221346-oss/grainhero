@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, ShieldCheck, RefreshCw } from "lucide-react";
@@ -19,7 +19,13 @@ const search = z.object({
 export const Route = createFileRoute("/auth/verify-otp")({
   validateSearch: (s) => search.parse(s),
   head: () => ({
-    meta: [{ title: "Enter your code — GrainHero" }],
+    meta: [
+      { title: "Enter your code — GrainHero" },
+      { name: "description", content: "Enter the verification code sent to your email to finish signing in." },
+      { property: "og:title", content: "Enter your code — GrainHero" },
+      { property: "og:description", content: "Enter the verification code sent to your email to finish signing in." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
   }),
   component: VerifyOtpPage,
 });
@@ -67,6 +73,25 @@ function VerifyOtpPage() {
     }
   };
 
+  // Auto-redirect if already signed in or session is active within validity period
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [navigate]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     verify(otp.join(""));
@@ -91,7 +116,20 @@ function VerifyOtpPage() {
     setLoading(false);
 
     if (error) {
-      setMsg({ type: "error", text: error.message });
+      // Check if session was actually established despite error, or if token already used
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user) {
+        navigate({ to: "/dashboard", replace: true });
+        return;
+      }
+
+      const isExpiredOrInvalid = error.message.toLowerCase().includes("expired") || error.message.toLowerCase().includes("invalid");
+      setMsg({
+        type: "error",
+        text: isExpiredOrInvalid
+          ? "This code has expired or is invalid. Please click 'Resend code' to get a fresh code."
+          : error.message,
+      });
       return;
     }
 
@@ -155,8 +193,7 @@ function VerifyOtpPage() {
             We sent a 6-digit code to <span className="font-medium text-slate-900">{email}</span>
           </p>
           <p className="text-xs text-muted-foreground">
-            Check spam if not in inbox — sender is{" "}
-            <span className="font-medium">noreply@mail.app.supabase.io</span>
+            If you don't see the email, please check your spam or junk folder.
           </p>
         </div>
 

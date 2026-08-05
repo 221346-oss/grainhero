@@ -66,7 +66,7 @@ export function SecuritySection() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-white/40">User access, privilege overview and recent security events.</p>
+      <p className="text-sm text-muted-foreground">User access, privilege overview and recent security events.</p>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Total users</div><div className="text-2xl font-bold">{totalUsers}</div></div><Users className="h-6 w-6 text-slate-500" /></CardContent></Card>

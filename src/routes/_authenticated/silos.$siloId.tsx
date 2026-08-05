@@ -23,6 +23,15 @@ import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 const RENAME_ROLES = ["super_admin", "admin", "manager"];
 
 export const Route = createFileRoute("/_authenticated/silos/$siloId")({
+  head: () => ({
+    meta: [
+      { title: "Silos · SiloId — Grain Hero" },
+      { name: "description", content: "Silos · SiloId workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Silos · SiloId — Grain Hero" },
+      { property: "og:description", content: "Silos · SiloId workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SiloDetailPage,
 });
 

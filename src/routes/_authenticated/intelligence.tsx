@@ -2,24 +2,33 @@ import { createFileRoute } from "@tanstack/react-router";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { PredictionsSection } from "@/components/intelligence/PredictionsSection";
 import { AnalyticsSection } from "@/components/intelligence/AnalyticsSection";
 import { MLModelsSection } from "@/components/intelligence/MLModelsSection";
 import { ReportsSection } from "@/components/intelligence/ReportsSection";
 import { Brain, BarChart3, Cpu, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
-import { getBatchPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
+import { getSiloPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
 import { getReportsData } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
+  head: () => ({
+    meta: [
+      { title: "Intelligence — Grain Hero" },
+      { name: "description", content: "Intelligence workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Intelligence — Grain Hero" },
+      { property: "og:description", content: "Intelligence workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: IntelligenceWorkspace,
 });
 
 type Tab = "predictions" | "analytics" | "ml-models" | "reports";
 
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "predictions", label: "AI Predictions", icon: Brain },
   { key: "analytics",   label: "Analytics",      icon: BarChart3 },
   { key: "ml-models",   label: "ML Models",      icon: Cpu },
@@ -36,7 +45,7 @@ function IntelligenceWorkspace() {
   const allowedAnalytics = ["super_admin", "admin", "manager"].includes(role);
   const allowedModels = ["super_admin", "admin"].includes(role);
 
-  const fetchPredictions = useServerFn(getBatchPredictions);
+  const fetchPredictions = useServerFn(getSiloPredictions);
   const fetchOverview = useServerFn(getAnalyticsOverview);
   const fetchModels = useServerFn(getMLModels);
   const fetchReports = useServerFn(getReportsData);
@@ -134,7 +143,7 @@ function IntelligenceWorkspace() {
                         style={{ width: count > 0 ? `${Math.max(pct, 3)}%` : "0%" }}
                       />
                     </div>
-                    <span className="w-10 text-right text-sm font-semibold text-white tabular-nums shrink-0">
+                    <span className="w-10 text-right text-sm font-semibold text-foreground tabular-nums shrink-0">
                       {count}
                     </span>
                   </button>
@@ -151,7 +160,7 @@ function IntelligenceWorkspace() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
-            <div className="space-y-0 divide-y divide-white/8 flex-1">
+            <div className="space-y-0 divide-y divide-border flex-1">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-4">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
@@ -159,7 +168,7 @@ function IntelligenceWorkspace() {
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-white font-black text-base font-mono">{s.value}</span>
+                    <span className="text-foreground font-black text-base font-mono">{s.value}</span>
                     {s.up
                       ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                       : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />

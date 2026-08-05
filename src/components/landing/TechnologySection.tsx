@@ -36,7 +36,7 @@ const techFeatures = [
 
 export function TechnologySection() {
   return (
-    <section id="technology" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#252d26] relative overflow-hidden">
+    <section id="technology" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#111512] relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div
@@ -59,15 +59,15 @@ export function TechnologySection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-8 sm:mb-12"
         >
-          <div className="inline-block bg-[#2FAC0C]/10 px-4 py-2 rounded-full mb-3">
-            <span className="text-[#2FAC0C] text-sm font-semibold uppercase tracking-wider">
+          <div className="inline-block bg-[#2FA84F]/10 px-4 py-2 rounded-full mb-3">
+            <span className="text-[#2FA84F] text-sm font-semibold uppercase tracking-wider">
               Cutting-Edge Technology
             </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#EDE9D4] mb-4">
-            Powered by Advanced <span className="text-[#2FAC0C]">IoT & AI</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#FAFAF7] mb-4">
+            Powered by Advanced <span className="text-[#2FA84F]">IoT & AI</span>
           </h2>
-          <p className="text-lg sm:text-xl text-[#EDE9D4]/70 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-[#FAFAF7]/70 max-w-3xl mx-auto">
             Enterprise-grade technology designed specifically for grain storage management
           </p>
         </motion.div>
@@ -81,13 +81,13 @@ export function TechnologySection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-[#252d26]/50 backdrop-blur-sm border border-[#2FAC0C]/20 rounded-2xl p-6 hover:border-[#2FAC0C]/50 transition-all duration-300 hover:transform hover:-translate-y-2 hover:scale-105 group"
+              className="bg-[#111512]/50 backdrop-blur-sm border border-[#2FA84F]/20 rounded-2xl p-6 hover:border-[#2FA84F]/50 transition-all duration-300 hover:transform hover:-translate-y-2 hover:scale-105 group"
             >
-              <div className="bg-[#2FAC0C]/10 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[#2FAC0C]/20 transition-colors">
-                <feature.icon className="w-7 h-7 text-[#2FAC0C]" />
+              <div className="bg-[#2FA84F]/10 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[#2FA84F]/20 transition-colors">
+                <feature.icon className="w-7 h-7 text-[#2FA84F]" />
               </div>
-              <h3 className="text-xl font-bold text-[#EDE9D4] mb-2">{feature.title}</h3>
-              <p className="text-[#EDE9D4]/70 text-sm leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl font-bold text-[#FAFAF7] mb-2">{feature.title}</h3>
+              <p className="text-[#FAFAF7]/70 text-sm leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </div>

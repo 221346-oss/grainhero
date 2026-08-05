@@ -5,12 +5,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WelcomeBanner } from "./WelcomeBanner";
 import { KpiSummary } from "./KpiSummary";
 import { InsightsStrip } from "./InsightsStrip";
-import { AdminSilosCard, RecentBatchesCard } from "./DashboardBlocks";
+import { AdminSilosCard, RecentBatchesCard, SupportTicketsCard } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
 export function AdminDashboard({ name }: { name?: string }) {
   const [range, setRange] = useState<RangeKey>("mtd");
+  const [ticketPanelOpen, setTicketPanelOpen] = useState(false);
 
   const fn = useServerFn(getDashboardExtras);
   const { data: extras } = useQuery({
@@ -41,9 +42,14 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
-          <div className="grid gap-3 lg:grid-cols-2">
-            <AdminSilosCard />
-            <RecentBatchesCard />
+          <div className="grid gap-3 lg:grid-cols-3">
+            <AdminSilosCard range={range} />
+            <RecentBatchesCard range={range} />
+            <SupportTicketsCard
+              onViewAll={() => setTicketPanelOpen(true)}
+              ticketPanelOpen={ticketPanelOpen}
+              onTicketPanelClose={() => setTicketPanelOpen(false)}
+            />
           </div>
         </div>
       </div>

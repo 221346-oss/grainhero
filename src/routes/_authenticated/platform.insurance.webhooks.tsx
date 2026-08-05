@@ -17,6 +17,15 @@ import {
 } from "@/lib/insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/insurance/webhooks")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Insurance · Webhooks — Grain Hero" },
+      { name: "description", content: "Platform · Insurance · Webhooks workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Insurance · Webhooks — Grain Hero" },
+      { property: "og:description", content: "Platform · Insurance · Webhooks workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: WebhookMonitor,
 });
 

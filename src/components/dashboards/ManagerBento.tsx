@@ -1,27 +1,34 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
-import { AlertTriangle, ClipboardCheck, Truck, ToggleRight, Package, Container } from "lucide-react";
-import type { ReactNode } from "react";
+import { Loader2, Plus, MessageSquare, AlertTriangle } from "lucide-react";
+import { type ReactNode, useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listOpenFieldIncidents } from "@/lib/field-settings.functions";
+import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
+import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { attachTicketForUser } from "@/lib/ticketMessages";
+import { useTicketUnread } from "@/hooks/useTicketUnread";
 
-type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; to: string; search?: { tab: string } };
+type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; action?: ReactNode; to?: string; search?: { tab: string } };
 
 function BentoCard({
-  title, icon: Icon, count, to, search, tooltip, rows, empty,
+  title, count, to, search, tooltip, rows, empty, headerAction,
 }: {
   title: string;
-  icon: React.ComponentType<{ className?: string }>;
   count?: number;
   to: string;
   search?: { tab: string };
   tooltip: string;
   rows: Row[];
   empty: string;
+  headerAction?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card/60 flex flex-col min-h-0">
-      <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl">
+    <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+      <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
         <div className="flex items-center gap-2 min-w-0">
-          <Icon className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
           <h3 className="text-xs font-semibold truncate">{title}</h3>
           <InfoDot text={tooltip} />
           {typeof count === "number" && (
@@ -30,30 +37,39 @@ function BentoCard({
             </span>
           )}
         </div>
-        <Link to={to} search={search as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
-          View all
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          {headerAction}
+          <Link to={to} search={search as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+            View all
+          </Link>
+        </div>
       </header>
-      <div className="max-h-[260px] overflow-auto">
+      <div className="flex-1 overflow-y-auto">
         {rows.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-3 py-6 text-center">{empty}</p>
+          <div className="flex items-center justify-center h-full">
+            <p className="text-xs text-muted-foreground text-center">{empty}</p>
+          </div>
         ) : (
           <ul className="divide-y">
             {rows.map((r) => (
-              <li key={r.id}>
-                <Link
-                  to={r.to}
-                  search={r.search as never}
-                  className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
-                >
+              <li key={r.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
+                {r.to ? (
+                  <Link to={r.to} search={r.search as never} className="flex-1 min-w-0 flex flex-col">
+                    <div className="text-xs font-medium truncate">{r.primary}</div>
+                    {r.secondary && (
+                      <div className="text-[10px] text-muted-foreground truncate">{r.secondary}</div>
+                    )}
+                  </Link>
+                ) : (
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium truncate">{r.primary}</div>
                     {r.secondary && (
                       <div className="text-[10px] text-muted-foreground truncate">{r.secondary}</div>
                     )}
                   </div>
-                  {r.badge}
-                </Link>
+                )}
+                {r.badge}
+                {r.action}
               </li>
             ))}
           </ul>
@@ -74,6 +90,16 @@ function PriorityPill({ p }: { p?: string | null }) {
   return <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${map[key] ?? map.medium}`}>{key}</span>;
 }
 
+function UnreadBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  const displayCount = count > 99 ? "99+" : count.toString();
+  return (
+    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border border-white dark:border-slate-900">
+      {displayCount}
+    </span>
+  );
+}
+
 export function ManagerBento({
   silos, alerts, qcQueue, dispatchQueue, actuators, orders,
 }: {
@@ -84,6 +110,16 @@ export function ManagerBento({
   actuators: Array<{ id: string; name: string; actuator_type: string; is_on: boolean | null; silo_id: string | null }>;
   orders: Array<{ id: string; order_number: string; status: string; total_amount: number | null; created_at: string }>;
 }) {
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
+  const [currentUserId, setCurrentUserId] = useState("");
+
+  // Get current user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? ""));
+  }, []);
+
   const siloRows: Row[] = silos.map((s) => {
     const pct = s.capacity_kg ? Math.round((Number(s.current_occupancy_kg ?? 0) / s.capacity_kg) * 100) : 0;
     return {
@@ -147,24 +183,126 @@ export function ManagerBento({
     to: "/orders",
   }));
 
+  const listTicketsFn = useServerFn(listOpenFieldIncidents);
+  const { data: openTickets, isLoading: ticketsLoading } = useQuery({
+    queryKey: ["open-field-tickets"],
+    queryFn: () => listTicketsFn(),
+    refetchInterval: 30_000,
+  });
+  const incList = (openTickets ?? []) as Array<{ id: string; category: string; severity: string; status: string; created_at: string; notes?: string | null; assigned_to?: string | null; reporter_user_id?: string }>;
+
+  // Attach unread tracking for all incidents
+  useEffect(() => {
+    if (!currentUserId) return;
+    incList.forEach((inc) => attachTicketForUser(inc.id, currentUserId));
+  }, [incList, currentUserId]);
+
+  // Get unread counts for incidents
+  const { unreadFor, markRead } = useTicketUnread(currentUserId);
+
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      <BentoCard title="Silos" icon={Container} count={silos.length} to="/grain-operations" search={{ tab: "silos" }}
+      <BentoCard title="Silos" count={silos.length} to="/grain-operations" search={{ tab: "silos" }}
         tooltip="Silo utilisation, sorted by fill. Click any silo for full detail."
         rows={siloRows} empty="No silos yet — provision from install orders." />
-      <BentoCard title="Alert triage" icon={AlertTriangle} count={alerts.length} to="/grain-alerts"
+      <BentoCard title="Alert triage" count={alerts.length} to="/grain-alerts"
         tooltip="Open alerts awaiting acknowledgement or escalation."
         rows={alertRows} empty="All clear — no open alerts." />
-      <BentoCard title="QC queue" icon={ClipboardCheck} count={qcQueue.length} to="/grain-operations" search={{ tab: "batches" }}
+      <BentoCard title="QC queue" count={qcQueue.length} to="/grain-operations" search={{ tab: "batches" }}
         tooltip="Batches currently in intake / processing / treatment awaiting QC sign-off."
         rows={qcRows} empty="No batches pending QC." />
-      <BentoCard title="Dispatch queue" icon={Truck} count={dispatchQueue.length} to="/grain-operations" search={{ tab: "silos" }}
+      {/* ── Mobile Field Reports – self-fetching, scrollable ── */}
+      {/* This is the older mobile-sync field_incidents system (field-settings.functions.ts),
+          not the new auto-routing Field Incidents feature (Administration tab, grain_alerts). */}
+      <div className="rounded-xl border bg-card/60 flex flex-col min-h-0">
+        <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <h3 className="text-xs font-semibold truncate">Mobile Field Reports</h3>
+            <InfoDot text="Reports from the mobile app — click Discuss to open the thread. Separate from Administration → Field Incidents." />
+            {incList.length > 0 && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                {incList.length}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              id="manager-new-ticket-btn"
+              onClick={() => setTicketDialogOpen(true)}
+              className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+              title="Report a new mobile field report"
+            >
+              <Plus className="h-3 w-3" /> New Ticket
+            </button>
+            <Link to="/platform/field-incidents" search={{} as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+              View all
+            </Link>
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto">
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : incList.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-3 py-6 text-center">No open mobile field reports.</p>
+          ) : (
+            <ul className="divide-y">
+              {incList.map((inc) => {
+                const unreadCount = unreadFor(inc.id);
+                return (
+                  <li key={inc.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium truncate">{inc.category}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {new Date(inc.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveDiscussionTicket({
+                          id: inc.id,
+                          category: inc.category,
+                          severity: inc.severity,
+                          status: inc.status,
+                          notes: inc.notes,
+                          created_at: inc.created_at,
+                        });
+                        setDiscussionOpen(true);
+                        markRead(inc.id);
+                      }}
+                      className="relative flex items-center justify-center p-2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
+                      title={unreadCount > 0 ? `${unreadCount} unread message${unreadCount > 1 ? 's' : ''}` : "Open discussion thread"}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      <UnreadBadge count={unreadCount} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+      <ReportTicketDialog
+        open={ticketDialogOpen}
+        onOpenChange={setTicketDialogOpen}
+        silos={silos}
+      />
+      <TicketDiscussionDialog
+        open={discussionOpen}
+        onOpenChange={setDiscussionOpen}
+        incident={activeDiscussionTicket}
+        currentUserId={currentUserId}
+      />
+      <BentoCard title="Dispatch queue" count={dispatchQueue.length} to="/grain-operations" search={{ tab: "silos" }}
         tooltip="Batches ready to be dispatched to buyers."
         rows={dispatchRows} empty="Nothing ready to ship." />
-      <BentoCard title="Actuators" icon={ToggleRight} count={actuators.length} to="/actuators"
+      <BentoCard title="Actuators" count={actuators.length} to="/actuators"
         tooltip="Latest actuator state. Click through to toggle from the Actuators page."
         rows={actRows} empty="No actuators registered." />
-      <BentoCard title="Buyer orders" icon={Package} count={orders.length} to="/orders"
+      <BentoCard title="Buyer orders" count={orders.length} to="/orders"
         tooltip="Open buyer orders — pending or confirmed. Fulfil from the orders page."
         rows={orderRows} empty="No open buyer orders." />
     </div>

@@ -5,11 +5,11 @@ import { GrainBatchesSkeleton } from "@/components/app/skeletons";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Loader2, QrCode,
-  Truck, AlertTriangle, User, Calendar, Wheat,
+  Truck, AlertTriangle, User, Calendar, Wheat, FlaskConical, ShieldCheck, Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,17 +22,28 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RowActions } from "@/components/app/RowActions";
 import { StatusBadge } from "@/components/app/DataListPage";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
   logSpoilageEvent, listSilos,
 } from "@/lib/operations.functions";
 import { listSuppliers } from "@/lib/suppliers.functions";
+import { getMyRole } from "@/lib/roles.functions";
+import { listAvailableTechnicians } from "@/lib/batch-qc.functions";
+import { BatchQCDialog, type QCMode } from "./BatchQCDialog";
 import { cn } from "@/lib/utils";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 const GRAIN_TYPES = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
 const STATUSES = ["stored","dispatched","sold","damaged","expired","on_hold","processing"] as const;
+// QC-pipeline statuses aren't offered in the free-form "Status" editor (that
+// would bypass the role-gated QC functions) but users still need to filter
+// the list by them, so the top filter bar gets its own, wider list.
+const QC_STATUSES = ["pending_qc","qc_submitted","qc_failed","qc_passed","admin_rejected","pending_approval"] as const;
+const FILTER_STATUSES = [...STATUSES, ...QC_STATUSES] as const;
 type GrainType = typeof GRAIN_TYPES[number];
-type Status = typeof STATUSES[number];
+type Status = typeof STATUSES[number] | typeof QC_STATUSES[number];
 
 type Batch = {
   id: string;
@@ -63,12 +74,24 @@ type Batch = {
   dispatch_details: Record<string, unknown> | null;
   spoilage_events: Array<Record<string, unknown>> | null;
   notes: string | null;
+  assigned_technician_id: string | null;
   silos?: { id: string; silo_id: string; name: string; capacity_kg: number; warehouse_id: string } | null;
   warehouses?: { id: string; name: string; warehouse_id: string } | null;
   buyers?: { id: string; name: string; company_name: string | null; contact_phone: string | null } | null;
 };
 
 type Silo = { id: string; silo_id: string; name: string; capacity_kg: number; current_occupancy_kg: number | null; warehouse_id: string | null; warehouses?: { name: string } | null };
+
+const batchExportColumns: ExportColumn<Batch>[] = [
+  { header: "Batch ID", value: (b) => b.batch_id },
+  { header: "Grain type", value: (b) => b.grain_type },
+  { header: "Supplier", value: (b) => b.farmer_name ?? "" },
+  { header: "Silo", value: (b) => b.silos?.name ?? "" },
+  { header: "Intake (kg)", value: (b) => b.quantity_kg },
+  { header: "Remaining (kg)", value: (b) => Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)) },
+  { header: "Intake date", value: (b) => b.intake_date ? new Date(b.intake_date).toLocaleDateString() : "" },
+  { header: "Status", value: (b) => b.status },
+];
 
 type Form = {
   id?: string;
@@ -90,6 +113,7 @@ type Form = {
   intake_humidity: string;
   status: Status;
   notes: string;
+  assignedTechnicianId: string;
 };
 
 const emptyForm: Form = {
@@ -98,7 +122,7 @@ const emptyForm: Form = {
   supplier_id: "", source_kind: "external",
   farmer_name: "", farmer_contact: "", source_location: "",
   purchase_price_per_kg: "", intake_temperature: "", intake_humidity: "",
-  status: "stored", notes: "",
+  status: "stored", notes: "", assignedTechnicianId: "",
 };
 
 type FormErrors = Partial<Record<keyof Form, string>>;
@@ -194,9 +218,11 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
   const spoilageFn = useServerFn(logSpoilageEvent);
+  const roleFn = useServerFn(getMyRole);
+  const listTechFn = useServerFn(listAvailableTechnicians);
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as Promise<Batch[]> });
+  const { data, isLoading } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listFn() as unknown as Promise<Batch[]> });
   const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSiloFn() as Promise<Silo[]> });
   const silos = silosData ?? [];
   const suppliersQ = useQuery({
@@ -207,9 +233,15 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const suppliers: any[] = (suppliersQ.data?.suppliers ?? []) as any[];
 
+  const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
+  const myRole = me?.role ?? "pending";
+  const canCreate = ["admin", "manager"].includes(myRole);
+  const [myId, setMyId] = useState<string | null>(null);
+  useEffect(() => { supabase.auth.getUser().then(({ data: u }) => setMyId(u.user?.id ?? null)); }, []);
+
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(
-    initialStatus && (STATUSES as readonly string[]).includes(initialStatus) ? initialStatus : "all",
+    initialStatus && (FILTER_STATUSES as readonly string[]).includes(initialStatus) ? initialStatus : "all",
   );
   const [grainFilter, setGrainFilter] = useState("all");
   const [selected, setSelected] = useState<Batch | null>(null);
@@ -220,6 +252,21 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
   const [spoilage, setSpoilage] = useState<Spoilage>(emptySpoilage);
+  const [qcBatch, setQcBatch] = useState<Batch | null>(null);
+  const [qcMode, setQcMode] = useState<QCMode | null>(null);
+  const [qcOpen, setQcOpen] = useState(false);
+
+  const techniciansQ = useQuery({
+    queryKey: ["available-technicians"],
+    queryFn: () => listTechFn() as Promise<Array<{ id: string; name: string | null; email: string | null }>>,
+    enabled: canCreate && editOpen && !form.id,
+  });
+
+  function openQC(b: Batch, mode: QCMode) {
+    setQcBatch(b);
+    setQcMode(mode);
+    setQcOpen(true);
+  }
 
   const formErrors = useMemo(() => validateBatchForm(form), [form]);
   const hasFormErrors = Object.keys(formErrors).length > 0;
@@ -276,8 +323,9 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       purchase_price_per_kg: f.purchase_price_per_kg ? Number(f.purchase_price_per_kg) : null,
       intake_temperature: f.intake_temperature ? Number(f.intake_temperature) : null,
       intake_humidity: f.intake_humidity ? Number(f.intake_humidity) : null,
-      status: f.status,
+      status: f.id ? f.status : undefined,
       notes: f.notes.trim() || null,
+      assignedTechnicianId: f.id ? undefined : (f.assignedTechnicianId || null),
     }}),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSuccess: (row: any) => {
@@ -363,6 +411,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       intake_humidity: b.intake_conditions?.humidity != null ? String(b.intake_conditions.humidity) : "",
       status: b.status,
       notes: b.notes ?? "",
+      assignedTechnicianId: b.assigned_technician_id ?? "",
     });
     setEditOpen(true);
   }
@@ -402,10 +451,18 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           <SelectTrigger className="w-full sm:w-40 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map(s => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
+            {FILTER_STATUSES.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New batch</Button>
+        <ExportMenu
+          filename="grain-batches"
+          title="Grain Batches"
+          rows={rows}
+          columns={batchExportColumns}
+        />
+        {canCreate && (
+          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New batch</Button>
+        )}
       </div>
 
       {rows.length === 0 ? (
@@ -414,9 +471,9 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
             <p className="text-sm mb-4">No batches yet.</p>
             {availableSilos.length === 0 ? (
               <Link to="/grain-operations" search={{ tab: "silos" }} className="text-sm text-primary hover:text-primary/80 underline underline-offset-4">Create a silo first →</Link>
-            ) : (
+            ) : canCreate ? (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add batch</Button>
-            )}
+            ) : null}
           </CardContent>
         </Card>
        ) : (
@@ -455,6 +512,18 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                       <TableCell className="text-right">
                         <RowActions
                           actions={[
+                            ...(myRole === "technician" && b.assigned_technician_id === myId && ["pending_qc", "qc_failed"].includes(b.status)
+                              ? [{ label: b.status === "qc_failed" ? "Resubmit QC" : "Submit QC", icon: FlaskConical, onClick: () => openQC(b, "submit" as QCMode) }]
+                              : []),
+                            ...(["manager", "admin"].includes(myRole) && b.status === "qc_submitted"
+                              ? [{ label: "Review QC", icon: FlaskConical, onClick: () => openQC(b, "review" as QCMode) }]
+                              : []),
+                            ...(myRole === "admin" && b.status === "qc_passed"
+                              ? [{ label: "Final review", icon: ShieldCheck, onClick: () => openQC(b, "admin" as QCMode) }]
+                              : []),
+                            ...(myRole === "admin" && b.status === "admin_rejected"
+                              ? [{ label: "Resolve rejection", icon: Undo2, onClick: () => openQC(b, "resolve" as QCMode) }]
+                              : []),
                             { label: "View", icon: Eye, onClick: () => { setSelected(b); setViewOpen(true); } },
                             { label: "Edit", icon: Edit2, onClick: () => openEdit(b) },
                             { label: "QR code", icon: QrCode, onClick: () => { setSelected(b); setQrOpen(true); } },
@@ -483,6 +552,11 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
             <DialogTitle>{form.id ? "Edit batch" : "New grain batch"}</DialogTitle>
             <DialogDescription>
               {form.id ? "Update batch details." : "Batch ID and QR code are generated automatically on intake."}
+              {!form.id && myRole === "manager" && (
+                <span className="block mt-2 text-amber-600 dark:text-amber-400 font-medium">
+                  ⚠️ Batch will be submitted for admin approval before stock is committed.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <form id="batch-form" className="grid gap-4 py-2" onSubmit={(e) => {
@@ -495,6 +569,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
               return;
             }
             if (!form.silo_id) { toast.error("Pick a silo"); return; }
+            if (!form.id && !form.assignedTechnicianId) { toast.error("Assign a technician for QC"); return; }
             if (!form.grain_type) { toast.error("Pick a grain type"); return; }
             if (!form.quantity_kg || Number(form.quantity_kg) <= 0) { toast.error("Enter a quantity"); return; }
             if (!form.purchase_price_per_kg || Number(form.purchase_price_per_kg) <= 0) {
@@ -557,6 +632,23 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   <p className="text-xs text-rose-600 mt-1">Create a silo first.</p>
                 )}
               </div>
+              {!form.id && (
+                <div className="sm:col-span-2">
+                  <Label>Assign technician <span className="text-red-500">*</span></Label>
+                  <Select value={form.assignedTechnicianId} onValueChange={(v) => setForm({ ...form, assignedTechnicianId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Pick a technician for QC" /></SelectTrigger>
+                    <SelectContent>
+                      {(techniciansQ.data ?? []).map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name ?? t.email}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {techniciansQ.data?.length === 0 && !techniciansQ.isLoading && (
+                    <p className="text-xs text-rose-600 mt-1">No technician is free right now — everyone already has a batch in progress.</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">The batch starts in "Pending QC" — this technician inputs the QC values.</p>
+                </div>
+              )}
               <div>
                 <Label>Moisture %</Label>
                 <Input
@@ -688,7 +780,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button form="batch-form" type="submit" disabled={saveMut.isPending || !form.grain_type || !form.quantity_kg || !form.silo_id || hasFormErrors}>
+            <Button form="batch-form" type="submit" disabled={saveMut.isPending || !form.grain_type || !form.quantity_kg || !form.silo_id || (!form.id && !form.assignedTechnicianId) || hasFormErrors}>
               {saveMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : form.id ? "Save changes" : "Create batch"}
             </Button>
           </DialogFooter>
@@ -841,6 +933,8 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BatchQCDialog batch={qcBatch} mode={qcMode} open={qcOpen} onOpenChange={setQcOpen} />
     </div>
   );
 }

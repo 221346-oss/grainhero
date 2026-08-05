@@ -16,6 +16,15 @@ import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 
 export const Route = createFileRoute("/_authenticated/incidents")({
+  head: () => ({
+    meta: [
+      { title: "Incidents — Grain Hero" },
+      { name: "description", content: "Incidents workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Incidents — Grain Hero" },
+      { property: "og:description", content: "Incidents workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: IncidentsPage,
 });
 
@@ -136,7 +145,7 @@ function PlatformIncidentsView() {
   const fn = useServerFn(getPlatformIncidentsOverview);
   const { data, isLoading, error } = useQuery({
     queryKey: ["platform-incidents"],
-    queryFn: () => fn(),
+    queryFn: () => fn({ data: { scope: "all" } }),
     refetchInterval: 60_000,
   });
   const totals = data?.totals ?? { total: 0, open: 0, resolved: 0, acknowledged: 0 };

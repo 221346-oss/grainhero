@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import type { PlanFeature } from "@/lib/plan-gate";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 interface StateProps {
   title: string;
   description?: string;
@@ -70,8 +72,18 @@ export function ErrorState({ title, description, action, className }: StateProps
 export function InlineLoader({ label = "Loading..." }: { label?: string }) {
   return (
     <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-      <Loader2 className="h-4 w-4 animate-spin" />
+      <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
       {label}
+    </div>
+  );
+}
+
+export function SkeletonBlockLoader({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="p-4 space-y-3">
+      {Array(rows).fill(null).map((_, i) => (
+        <Skeleton key={i} className="h-10 w-full rounded-md" />
+      ))}
     </div>
   );
 }

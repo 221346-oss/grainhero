@@ -12,7 +12,13 @@ export const Route = createFileRoute('/privacy')({
         name: 'description',
         content: 'GrainHero Privacy Policy. Learn how we collect, use, and protect your personal information.',
       },
+      { property: 'og:title', content: "Privacy Policy — GrainHero" },
+      { property: 'og:description', content: "GrainHero Privacy Policy. Learn how we collect, use, and protect your personal information." },
+      { property: 'og:url', content: 'https://grainhero.app/privacy' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/privacy' }],
   }),
   component: PrivacyPolicyPage,
 })

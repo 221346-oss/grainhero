@@ -5,6 +5,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/buyer/orders")({
+  head: () => ({
+    meta: [
+      { title: "Buyer · Orders — Grain Hero" },
+      { name: "description", content: "Buyer · Orders workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Buyer · Orders — Grain Hero" },
+      { property: "og:description", content: "Buyer · Orders workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MyOrders,
 });
 

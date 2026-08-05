@@ -19,6 +19,15 @@ import {
 } from "@/lib/insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/insurance-policies/$policyId/documents")({
+  head: () => ({
+    meta: [
+      { title: "Insurance Policies · PolicyId · Documents — Grain Hero" },
+      { name: "description", content: "Insurance Policies · PolicyId · Documents workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Insurance Policies · PolicyId · Documents — Grain Hero" },
+      { property: "og:description", content: "Insurance Policies · PolicyId · Documents workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PolicyDocumentsPage,
 });
 

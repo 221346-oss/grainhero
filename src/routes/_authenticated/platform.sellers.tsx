@@ -7,6 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { listSellerRankings } from "@/lib/reputation.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/sellers")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Sellers — Grain Hero" },
+      { name: "description", content: "Platform · Sellers workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Sellers — Grain Hero" },
+      { property: "og:description", content: "Platform · Sellers workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformSellersPage,
 });
 

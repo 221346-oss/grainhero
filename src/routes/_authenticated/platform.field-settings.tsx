@@ -13,6 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/platform/field-settings")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Field Settings — Grain Hero" },
+      { name: "description", content: "Platform · Field Settings workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Field Settings — Grain Hero" },
+      { property: "og:description", content: "Platform · Field Settings workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: FieldSettingsPage,
 });
 

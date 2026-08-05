@@ -20,11 +20,22 @@ import {
 } from "@/components/ui/dialog";
 import {
   QrCode, MapPin, Clock, Search, Eye, Download, Truck, Thermometer,
-  AlertTriangle, Calendar,
+  AlertTriangle, Calendar, ClipboardList,
 } from "lucide-react";
 import { listGrainBatches } from "@/lib/operations.functions";
+import { getMyRole } from "@/lib/roles.functions";
+import { getBatchTraceability } from "@/lib/traceability.functions";
 
 export const Route = createFileRoute("/_authenticated/traceability")({
+  head: () => ({
+    meta: [
+      { title: "Traceability — Grain Hero" },
+      { name: "description", content: "Traceability workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Traceability — Grain Hero" },
+      { property: "og:description", content: "Traceability workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: TraceabilityPage,
 });
 
@@ -368,7 +379,63 @@ function TimelineBody({ batch }: { batch: Batch }) {
           )}
         </CardContent>
       </Card>
+
+      <AuditTrailCard batchId={batch.id} />
     </div>
+  );
+}
+
+/** Real activity_logs audit trail — manager/admin only (see traceability.functions.ts). */
+function AuditTrailCard({ batchId }: { batchId: string }) {
+  const fetchRole = useServerFn(getMyRole);
+  const fetchTrail = useServerFn(getBatchTraceability);
+  const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
+  const canView = me?.role === "admin" || me?.role === "manager";
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["batch-traceability", batchId],
+    queryFn: () => fetchTrail({ data: { batchId } }),
+    enabled: canView,
+  });
+  const events = data?.timeline ?? [];
+
+  if (!canView) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <ClipboardList className="h-4 w-4" /> Audit trail
+        </CardTitle>
+        <CardDescription>Every logged action on this batch — creation, QC steps, approvals, dispatch, and any related field incidents.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <p className="text-sm text-slate-500">Loading…</p>
+        ) : events.length === 0 ? (
+          <p className="text-sm text-slate-500">No logged events yet for this batch.</p>
+        ) : (
+          <div className="space-y-2">
+            {events.map((e: any) => (
+              <div key={`${e.kind}-${e.id}`} className="flex items-start gap-3 text-sm border-l-2 border-slate-200 pl-3 py-1">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-slate-800">{e.action.replace(/[._]/g, " ")}</span>
+                    {e.kind === "field_incident" && (
+                      <Badge variant="outline" className="text-[10px]">field incident</Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500">{e.description}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {e.actorName}{e.actorRole ? ` (${e.actorRole})` : ""} · {new Date(e.at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

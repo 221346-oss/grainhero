@@ -62,6 +62,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
+import { NEON, NeonPatternDefs, neonFill, neonGrid, neonAxis, neonTooltipStyle, neonAnim, ChartEmpty, HairlineGrid, NeonPanel, StatusBadge as NeonStatusBadge } from "@/components/charts/neon";
 import { useFirebaseSensor } from "@/hooks/use-firebase-sensor";
 import {
   listSensorDevices,
@@ -329,14 +330,15 @@ export function DataVisualizationPanel() {
 
   return (
     <div className="space-y-6">
+      <NeonPatternDefs />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-white flex items-center gap-2">
+          <h2 className="text-xl font-black text-foreground flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-emerald-500" />
             IoT Data Visualization
           </h2>
-          <p className="text-sm text-white/40 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Real-time charts and live telemetry stream from remote device nodes
           </p>
         </div>
@@ -650,48 +652,36 @@ export function DataVisualizationPanel() {
           ) : history.length > 1 ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={history} margin={{ left: -10, right: 10, top: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="humGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="time" minTickGap={45} fontSize={11} stroke="#94a3b8" />
-                <YAxis yAxisId="left" fontSize={11} stroke="#94a3b8" label={{ value: "°C", position: "insideTopLeft", offset: -5 }} />
-                <YAxis yAxisId="right" orientation="right" fontSize={11} stroke="#94a3b8" label={{ value: "%", position: "insideTopRight", offset: -5 }} />
-                <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }} />
+                <CartesianGrid {...neonGrid} />
+                <XAxis dataKey="time" minTickGap={45} {...neonAxis} />
+                <YAxis yAxisId="left" {...neonAxis} label={{ value: "°C", position: "insideTopLeft", offset: -5 }} />
+                <YAxis yAxisId="right" orientation="right" {...neonAxis} label={{ value: "%", position: "insideTopRight", offset: -5 }} />
+                <Tooltip {...neonTooltipStyle} />
                 <Legend />
                 <Area
                   yAxisId="left"
                   type="monotone"
                   dataKey="temperature"
-                  stroke="#ef4444"
-                  fill="url(#tempGrad)"
                   name="Temperature (°C)"
-                  strokeWidth={2}
                   dot={false}
+                  {...neonFill(NEON.red)}
+                  {...neonAnim}
                 />
                 <Area
                   yAxisId="right"
                   type="monotone"
                   dataKey="humidity"
-                  stroke="#3b82f6"
-                  fill="url(#humGrad)"
                   name="Humidity (%)"
-                  strokeWidth={2}
                   dot={false}
+                  {...neonFill(NEON.info)}
+                  {...neonAnim}
                 />
                 {history.some((h) => h.dewPoint !== null) && (
                   <Line
                     yAxisId="left"
                     type="monotone"
                     dataKey="dewPoint"
-                    stroke="#06b6d4"
+                    stroke={NEON.brand2}
                     strokeDasharray="5 5"
                     name="Dew Point (°C)"
                     dot={false}
@@ -701,38 +691,36 @@ export function DataVisualizationPanel() {
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-400">
-              <Activity className="h-6 w-6 mr-2 animate-pulse" />
-              Waiting for sensor readings to accumulate...
-            </div>
+            <ChartEmpty label="Waiting for sensor readings to accumulate..." height={320} />
           )}
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <HairlineGrid>
         {/* VOC & Risk Index Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+        <NeonPanel
+          title={
+            <span className="flex items-center gap-2">
               <Gauge className="h-4 w-4 text-purple-500" />
               VOC Index & Spilage Risk Index
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-64">
+            </span>
+          }
+        >
+          <div className="h-64">
             {history.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={history} margin={{ left: -15, right: 10, top: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="time" minTickGap={40} fontSize={10} stroke="#94a3b8" />
-                  <YAxis yAxisId="voc" fontSize={10} stroke="#94a3b8" />
-                  <YAxis yAxisId="risk" orientation="right" domain={[0, 100]} fontSize={10} stroke="#94a3b8" />
-                  <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }} />
+                  <CartesianGrid {...neonGrid} />
+                  <XAxis dataKey="time" minTickGap={40} {...neonAxis} />
+                  <YAxis yAxisId="voc" {...neonAxis} />
+                  <YAxis yAxisId="risk" orientation="right" domain={[0, 100]} {...neonAxis} />
+                  <Tooltip {...neonTooltipStyle} />
                   <Legend />
                   <Line
                     yAxisId="voc"
                     type="monotone"
                     dataKey="tvoc"
-                    stroke="#a855f7"
+                    stroke={NEON.brand2}
                     name="TVOC Index (ppb)"
                     dot={false}
                     strokeWidth={2}
@@ -741,7 +729,7 @@ export function DataVisualizationPanel() {
                     yAxisId="risk"
                     type="monotone"
                     dataKey="riskIndex"
-                    stroke="#f59e0b"
+                    stroke={NEON.warning}
                     name="Risk Index"
                     dot={false}
                     strokeWidth={2}
@@ -749,42 +737,39 @@ export function DataVisualizationPanel() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                Waiting for history telemetry data...
-              </div>
+              <ChartEmpty label="Waiting for history telemetry data..." height={256} />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </NeonPanel>
 
         {/* Fan Activity & PWM */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+        <NeonPanel
+          title={
+            <span className="flex items-center gap-2">
               <Fan className="h-4 w-4 text-sky-500" />
               Aeration Fan PWM Speed & Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-64">
+            </span>
+          }
+        >
+          <div className="h-64">
             {history.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsBarChart data={history} margin={{ left: -15, right: 10, top: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="time" minTickGap={40} fontSize={10} stroke="#94a3b8" />
-                  <YAxis fontSize={10} stroke="#94a3b8" />
-                  <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }} />
+                  <CartesianGrid {...neonGrid} />
+                  <XAxis dataKey="time" minTickGap={40} {...neonAxis} />
+                  <YAxis {...neonAxis} />
+                  <Tooltip {...neonTooltipStyle} />
                   <Legend />
-                  <Bar dataKey="pwm" fill="#6366f1" name="Fan Speed (PWM %)" opacity={0.8} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="fanOn" fill="#10b981" name="Aeration Fan State" opacity={0.6} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="pwm" name="Fan Speed (PWM %)" radius={0} {...neonFill(NEON.brand)} />
+                  <Bar dataKey="fanOn" name="Aeration Fan State" radius={0} {...neonFill(NEON.success)} />
                 </RechartsBarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                Waiting for fan status stream...
-              </div>
+              <ChartEmpty label="Waiting for fan status stream..." height={256} />
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </NeonPanel>
+      </HairlineGrid>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Sensor Health Radar */}
@@ -802,34 +787,26 @@ export function DataVisualizationPanel() {
             {radarData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="metric" fontSize={11} stroke="#64748b" />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} fontSize={9} />
+                  <PolarGrid stroke="var(--border)" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} />
                   <Radar
                     name="Core Readings"
                     dataKey="value"
-                    stroke="#4f46e5"
-                    fill="#4f46e5"
-                    fillOpacity={0.25}
-                    strokeWidth={2}
+                    {...neonFill(NEON.brand)}
                   />
                   <Radar
                     name="Safe Threshold"
                     dataKey="safe"
-                    stroke="#10b981"
-                    fill="#10b981"
-                    fillOpacity={0.08}
                     strokeDasharray="4 4"
-                    strokeWidth={1.5}
+                    {...neonFill(NEON.success)}
                   />
                   <Legend />
-                  <Tooltip />
+                  <Tooltip {...neonTooltipStyle} />
                 </RadarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                Waiting for device indicators...
-              </div>
+              <ChartEmpty label="Waiting for device indicators..." height={280} />
             )}
           </CardContent>
         </Card>
@@ -971,61 +948,57 @@ export function DataVisualizationPanel() {
                 Most recent {Math.min(20, history.length)} telemetry datapoints loaded from database
               </CardDescription>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="text-xs uppercase text-slate-500 border-b border-slate-100 font-bold">
-                    <th className="py-3 px-4">Timestamp</th>
-                    <th className="py-3 px-4">Temp (°C)</th>
-                    <th className="py-3 px-4">Hum (%)</th>
-                    <th className="py-3 px-4">VOC Index</th>
-                    <th className="py-3 px-4">Dew Pt</th>
-                    <th className="py-3 px-4">Risk Index</th>
-                    <th className="py-3 px-4">Fan State</th>
-                    <th className="py-3 px-4">Fan PWM</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history
-                    .slice()
-                    .reverse()
-                    .slice(0, 20)
-                    .map((row, idx) => (
-                      <tr key={idx} className="border-b border-slate-100/50 hover:bg-slate-50/50 transition-colors">
-                        <td className="py-3 px-4 text-xs font-mono text-slate-500">{row.fullTime}</td>
-                        <td className="py-3 px-4 font-bold text-slate-800">{row.temperature.toFixed(1)}°C</td>
-                        <td className="py-3 px-4 text-slate-700">{row.humidity.toFixed(1)}%</td>
-                        <td className="py-3 px-4 text-slate-700">{row.tvoc} ppb</td>
-                        <td className="py-3 px-4 text-slate-700">
-                          {row.dewPoint !== null ? `${row.dewPoint.toFixed(1)}°C` : "—"}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`font-bold ${riskColor(row.riskIndex)}`}>
-                            {row.riskIndex}/100
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          {row.fanOn === 1 ? (
-                            <span className="text-emerald-600 font-bold flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> ON
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">OFF</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-slate-600">{row.pwm}%</td>
-                      </tr>
-                    ))}
-                  {history.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="py-8 text-center text-slate-400">
-                        <RefreshCw className="h-4 w-4 inline mr-2 animate-spin" />
-                        No active IoT history records available.
-                      </td>
+            <CardContent>
+              <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Timestamp</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Temp (°C)</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Hum (%)</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">VOC Index</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Dew Pt</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Risk Index</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Fan State</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Fan PWM</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {history
+                      .slice()
+                      .reverse()
+                      .slice(0, 20)
+                      .map((row, idx) => (
+                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 text-muted-foreground tabular-nums">{row.fullTime}</td>
+                          <td className="px-3 py-2 font-medium text-foreground tabular-nums">{row.temperature.toFixed(1)}°C</td>
+                          <td className="px-3 py-2 tabular-nums">{row.humidity.toFixed(1)}%</td>
+                          <td className="px-3 py-2 tabular-nums">{row.tvoc} ppb</td>
+                          <td className="px-3 py-2 tabular-nums">
+                            {row.dewPoint !== null ? `${row.dewPoint.toFixed(1)}°C` : "—"}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`font-medium tabular-nums ${riskColor(row.riskIndex)}`}>
+                              {row.riskIndex}/100
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <NeonStatusBadge status={row.fanOn === 1 ? "active" : "closed"} label={row.fanOn === 1 ? "ON" : "OFF"} />
+                          </td>
+                          <td className="px-3 py-2 tabular-nums">{row.pwm}%</td>
+                        </tr>
+                      ))}
+                    {history.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                          <RefreshCw className="h-4 w-4 inline mr-2 animate-spin" />
+                          No active IoT history records available.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

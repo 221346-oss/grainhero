@@ -49,6 +49,13 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const range = (data?.range ?? "30d") as Range;
     const { startISO, priorStartISO, priorEndISO } = rangeToWindow(range);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+    const now0 = new Date();
+    const twelveMoAgo = new Date(now0.getFullYear(), now0.getMonth() - 11, 1).toISOString();
+    // Everything below used to run as one Promise.all followed by two more
+    // sequential `await`s (fetchDispatchTotals, then the revenue-sparkline
+    // query) — two extra full network round-trips on every dashboard load,
+    // even though neither depends on anything the first batch returns.
+    // Folding them into the same Promise.all removes that waterfall.
     const [
       batchesRes,
       alertsRes,
@@ -65,6 +72,8 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       curAlertsCount,
       prevAlertsCount,
       siloAlertsRes,
+      dispatchTotals,
+      revRowsRes,
     ] = await Promise.all([
       context.supabase
         .from("grain_batches")
@@ -147,6 +156,12 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .not("silo_id", "is", null)
         .neq("status", "resolved")
         .limit(200),
+      fetchDispatchTotals(context.supabase),
+      context.supabase
+        .from("grain_batches")
+        .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
+        .eq("status", "dispatched")
+        .gte("created_at", twelveMoAgo),
     ]);
 
     const batches = batchesRes.data ?? [];
@@ -158,7 +173,6 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     // (dispatchFromSilo in operations.functions.ts, writing to the `dispatches` table).
     // Merging both here so this dashboard tile doesn't silently drop to zero — replace with
     // a dispatches-only query once legacy batch-level dispatch data is fully migrated.
-    const dispatchTotals = await fetchDispatchTotals(context.supabase);
     const revenue = legacyRevenue + dispatchTotals.reduce((s, d) => s + d.revenue, 0);
 
     const installRows = installRes.data ?? [];
@@ -171,19 +185,15 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const sub = subRes.data?.[0] ?? null;
 
     const allBatches = allBatchesRes.data ?? [];
-    // NOTE: the batch status enum has drifted from what this dashboard
-    // originally assumed — "qc_pending"/"quality_check"/"qc"/"ready_to_ship"/
-    // "dispatch_pending" were never real values (see grain_batches.status /
-    // public.batch_status), so those filters always matched zero rows. Fixed
-    // to use the real, currently-populated values below. There is no true
-    // "awaiting technician QC" status in the data model today — every batch
-    // is written as "stored" at creation, with a silo already assigned — so
-    // "on_hold" (a manual flag) is the closest real signal for "needs
-    // review," not a genuine pre-storage QC gate. See the dashboard's
-    // insights strip / "why stuck" widget for the fuller explanation.
+    // A real intake -> QC -> stored pipeline now exists (see batch-qc.functions.ts
+    // and the pending_qc/qc_submitted/qc_failed/qc_passed/admin_rejected
+    // batch_status values) — pendingQC/rejectedQC below use those directly
+    // instead of the old "on_hold"/"rejected" approximations (which never
+    // matched a genuine QC gate). "readyToShip" still has no real signal in
+    // the data model — left as-is.
     const insights = {
-      pendingQC: allBatches.filter((b) => String(b.status) === "on_hold").length,
-      rejectedQC: allBatches.filter((b) => String(b.status) === "rejected").length,
+      pendingQC: allBatches.filter((b) => ["pending_qc", "qc_submitted", "qc_failed"].includes(String(b.status))).length,
+      rejectedQC: allBatches.filter((b) => String(b.status) === "admin_rejected").length,
       atRisk: allBatches.filter((b) => Number(b.risk_score ?? 0) >= 70).length,
       readyToShip: allBatches.filter((b) => String(b.status) === "ready").length,
       actuatorsOn: (actuatorsRes.data ?? []).filter((a) => a.is_on).length,
@@ -205,8 +215,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       stored: sumKg((b) => String(b.status) === "stored" && Number(b.risk_score ?? 0) < 70),
     };
 
-    // 12-month revenue sparkline from dispatched batches
-    const now = new Date();
+    // 12-month revenue sparkline from dispatched batches (revRowsRes fetched
+    // above, in parallel with everything else)
+    const now = now0;
     const buckets: { key: string; label: string; total: number }[] = [];
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -216,12 +227,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         total: 0,
       });
     }
-    const twelveMoAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1).toISOString();
-    const { data: revRows } = await context.supabase
-      .from("grain_batches")
-      .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
-      .eq("status", "dispatched")
-      .gte("created_at", twelveMoAgo);
+    const revRows = revRowsRes.data;
     for (const r of revRows ?? []) {
       const d = new Date(r.created_at as string);
       const k = `${d.getFullYear()}-${d.getMonth()}`;

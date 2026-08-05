@@ -6,10 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FinanceCommandSkeleton } from "@/components/app/skeletons";
 import { getPlatformFinanceSummary } from "@/lib/finance-ledger.functions";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  NEON, NeonPatternDefs, neonGrid, neonAxis, neonTooltipStyle, NeonLegend,
+  HairlineGrid, NeonPanel, ChartEmpty,
+} from "@/components/charts/neon";
 import { DollarSign, TrendingUp, Wallet, RefreshCcw, Package, Receipt, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/finance")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Finance — Grain Hero" },
+      { name: "description", content: "Platform · Finance workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Finance — Grain Hero" },
+      { property: "og:description", content: "Platform · Finance workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: FinanceCommandPage,
 });
 
@@ -37,6 +50,7 @@ function FinanceCommandPage() {
   ];
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <NeonPatternDefs />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Finance command center</h1>
@@ -63,29 +77,34 @@ function FinanceCommandPage() {
         ))}
       </div>
 
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Daily flow ({days}d)</CardTitle></CardHeader>
-        <CardContent>
+      <HairlineGrid cols="grid-cols-1">
+        <NeonPanel title="Daily flow" subtitle={`Last ${days} days`}>
           {trend.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-10 text-center">No ledger activity in this range yet.</div>
+            <ChartEmpty label="No ledger activity in this range yet" height={300} />
           ) : (
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trend}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="day" fontSize={11} />
-                  <YAxis fontSize={11} />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="gmv" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="fees" stroke="hsl(142 76% 36%)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="refunds" stroke="hsl(0 84% 60%)" strokeWidth={2} dot={false} />
+                  <CartesianGrid {...neonGrid} />
+                  <XAxis dataKey="day" {...neonAxis} />
+                  <YAxis {...neonAxis} />
+                  <Tooltip {...neonTooltipStyle} />
+                  <Line type="monotone" dataKey="gmv" name="GMV" stroke={NEON.brand} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="fees" name="Fees" stroke={NEON.brand2} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="refunds" name="Refunds" stroke={NEON.critical} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           )}
-        </CardContent>
-      </Card>
+          <NeonLegend
+            items={[
+              { label: "GMV", color: NEON.brand },
+              { label: "Fees", color: NEON.brand2 },
+              { label: "Refunds", color: NEON.critical },
+            ]}
+          />
+        </NeonPanel>
+      </HairlineGrid>
     </div>
   );
 }

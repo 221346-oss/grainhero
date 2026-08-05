@@ -174,7 +174,7 @@ export async function dispatchNotification(
   const shouldEmail =
     (forceEmail(category, severity) || channelAllowed("email", category, prefs)) && !!profile?.email;
   const shouldSms = channelAllowed("sms", category, prefs) && !!profile?.phone_e164;
-  const appOrigin = process.env.APP_ORIGIN ?? "https://grainheroo.lovable.app";
+  const appOrigin = process.env.APP_ORIGIN ?? "https://grainhero.app";
 
   // Email
   if (shouldEmail) {

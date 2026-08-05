@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ThemeTestRouteImport } from './routes/theme-test'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -27,13 +26,18 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
+import { Route as SolutionsSiloMonitoringSystemRouteImport } from './routes/solutions.silo-monitoring-system'
+import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
+import { Route as SolutionsGrainManagementSoftwareRouteImport } from './routes/solutions.grain-management-software'
 import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
+import { Route as GuidesGrainStorageRouteImport } from './routes/guides.grain-storage'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AuthAcceptInviteRouteImport } from './routes/auth.accept-invite'
 import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
 import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
@@ -52,7 +56,6 @@ import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
 import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
-import { Route as AuthenticatedMlModelsRouteImport } from './routes/_authenticated/ml-models'
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
 import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
 import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
@@ -66,7 +69,6 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
 import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAiPredictionsRouteImport } from './routes/_authenticated/ai-predictions'
 import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
@@ -89,6 +91,7 @@ import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
 import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
 import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMonitoringRouteImport } from './routes/_authenticated/platform.monitoring'
 import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
 import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
 import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
@@ -101,7 +104,9 @@ import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './ro
 import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
 import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
 import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
+import { Route as AuthenticatedPlatformKeyMetricsRouteImport } from './routes/_authenticated/platform.key-metrics'
 import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
+import { Route as AuthenticatedPlatformIntelligenceRouteImport } from './routes/_authenticated/platform.intelligence'
 import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
 import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
@@ -112,6 +117,7 @@ import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_aut
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
 import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
+import { Route as AuthenticatedPlatformBusinessRouteImport } from './routes/_authenticated/platform.business'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
 import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
@@ -134,6 +140,7 @@ import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/
 import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
 import { Route as ApiPublicCronApplyScheduledPlanChangesRouteImport } from './routes/api/public/cron/apply-scheduled-plan-changes'
 import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
+import { Route as AuthenticatedPlatformTenantsAdminIdRouteImport } from './routes/_authenticated/platform.tenants.$adminId'
 import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
 import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
 import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
@@ -174,6 +181,8 @@ import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/publ
 import { Route as ApiPublicV1CommerceCheckoutRouteImport } from './routes/api/public/v1/commerce/checkout'
 import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
 import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
+import { Route as ApiPublicV1AuthValidateInvitationRouteImport } from './routes/api/public/v1/auth/validate-invitation'
+import { Route as ApiPublicV1AuthAcceptInviteRouteImport } from './routes/api/public/v1/auth/accept-invite'
 import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
 import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
 import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
@@ -182,11 +191,6 @@ import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './r
 import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
 import { Route as ApiPublicV1CommerceOrdersOrderIdRouteImport } from './routes/api/public/v1/commerce/orders.$orderId'
 
-const ThemeTestRoute = ThemeTestRouteImport.update({
-  id: '/theme-test',
-  path: '/theme-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -271,10 +275,33 @@ const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CheckoutRoute,
 } as any)
+const SolutionsSiloMonitoringSystemRoute =
+  SolutionsSiloMonitoringSystemRouteImport.update({
+    id: '/solutions/silo-monitoring-system',
+    path: '/solutions/silo-monitoring-system',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SolutionsGrainStorageMonitoringRoute =
+  SolutionsGrainStorageMonitoringRouteImport.update({
+    id: '/solutions/grain-storage-monitoring',
+    path: '/solutions/grain-storage-monitoring',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SolutionsGrainManagementSoftwareRoute =
+  SolutionsGrainManagementSoftwareRouteImport.update({
+    id: '/solutions/grain-management-software',
+    path: '/solutions/grain-management-software',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => MarketplaceRoute,
+} as any)
+const GuidesGrainStorageRoute = GuidesGrainStorageRouteImport.update({
+  id: '/guides/grain-storage',
+  path: '/guides/grain-storage',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
@@ -304,6 +331,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthAcceptInviteRoute = AuthAcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedTraceabilityRoute =
@@ -403,11 +435,6 @@ const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
   path: '/monitoring',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedMlModelsRoute = AuthenticatedMlModelsRouteImport.update({
-  id: '/ml-models',
-  path: '/ml-models',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedMaintenanceRoute =
   AuthenticatedMaintenanceRouteImport.update({
     id: '/maintenance',
@@ -478,12 +505,6 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAiPredictionsRoute =
-  AuthenticatedAiPredictionsRouteImport.update({
-    id: '/ai-predictions',
-    path: '/ai-predictions',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdministrationRoute =
   AuthenticatedAdministrationRouteImport.update({
     id: '/administration',
@@ -612,6 +633,12 @@ const AuthenticatedPlatformOrdersRoute =
     path: '/platform/orders',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformMonitoringRoute =
+  AuthenticatedPlatformMonitoringRouteImport.update({
+    id: '/platform/monitoring',
+    path: '/platform/monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformMobileSyncMonitorRoute =
   AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
     id: '/platform/mobile-sync-monitor',
@@ -684,10 +711,22 @@ const AuthenticatedPlatformLaunchReadinessRoute =
     path: '/platform/launch-readiness',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformKeyMetricsRoute =
+  AuthenticatedPlatformKeyMetricsRouteImport.update({
+    id: '/platform/key-metrics',
+    path: '/platform/key-metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformInvoiceFailuresRoute =
   AuthenticatedPlatformInvoiceFailuresRouteImport.update({
     id: '/platform/invoice-failures',
     path: '/platform/invoice-failures',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformIntelligenceRoute =
+  AuthenticatedPlatformIntelligenceRouteImport.update({
+    id: '/platform/intelligence',
+    path: '/platform/intelligence',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformInsuranceRoute =
@@ -748,6 +787,12 @@ const AuthenticatedPlatformCommerceMobileRoute =
   AuthenticatedPlatformCommerceMobileRouteImport.update({
     id: '/platform/commerce-mobile',
     path: '/platform/commerce-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformBusinessRoute =
+  AuthenticatedPlatformBusinessRouteImport.update({
+    id: '/platform/business',
+    path: '/platform/business',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformAuditLogsRoute =
@@ -877,6 +922,12 @@ const AuthenticatedTechnicianInstallsInstallIdRoute =
     id: '/$installId',
     path: '/$installId',
     getParentRoute: () => AuthenticatedTechnicianInstallsRoute,
+  } as any)
+const AuthenticatedPlatformTenantsAdminIdRoute =
+  AuthenticatedPlatformTenantsAdminIdRouteImport.update({
+    id: '/$adminId',
+    path: '/$adminId',
+    getParentRoute: () => AuthenticatedPlatformTenantsRoute,
   } as any)
 const AuthenticatedPlatformOrdersOrderIdRoute =
   AuthenticatedPlatformOrdersOrderIdRouteImport.update({
@@ -1111,6 +1162,18 @@ const ApiPublicV1CommerceAddressesRoute =
     path: '/api/public/v1/commerce/addresses',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1AuthValidateInvitationRoute =
+  ApiPublicV1AuthValidateInvitationRouteImport.update({
+    id: '/api/public/v1/auth/validate-invitation',
+    path: '/api/public/v1/auth/validate-invitation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthAcceptInviteRoute =
+  ApiPublicV1AuthAcceptInviteRouteImport.update({
+    id: '/api/public/v1/auth/accept-invite',
+    path: '/api/public/v1/auth/accept-invite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ActionsReplayRoute =
   ApiPublicV1ActionsReplayRouteImport.update({
     id: '/api/public/v1/actions/replay',
@@ -1169,11 +1232,9 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
-  '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/attention': typeof AuthenticatedAttentionRoute
   '/business': typeof AuthenticatedBusinessRoute
@@ -1187,7 +1248,6 @@ export interface FileRoutesByFullPath {
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/ml-models': typeof AuthenticatedMlModelsRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -1206,19 +1266,25 @@ export interface FileRoutesByFullPath {
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
+  '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/guides/grain-storage': typeof GuidesGrainStorageRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-management-software': typeof SolutionsGrainManagementSoftwareRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/business': typeof AuthenticatedPlatformBusinessRoute
   '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -1229,7 +1295,9 @@ export interface FileRoutesByFullPath {
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/platform/intelligence': typeof AuthenticatedPlatformIntelligenceRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/key-metrics': typeof AuthenticatedPlatformKeyMetricsRoute
   '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -1242,6 +1310,7 @@ export interface FileRoutesByFullPath {
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/platform/monitoring': typeof AuthenticatedPlatformMonitoringRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1250,7 +1319,7 @@ export interface FileRoutesByFullPath {
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
-  '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
@@ -1272,6 +1341,7 @@ export interface FileRoutesByFullPath {
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/platform/tenants/$adminId': typeof AuthenticatedPlatformTenantsAdminIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1296,6 +1366,8 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/auth/accept-invite': typeof ApiPublicV1AuthAcceptInviteRoute
+  '/api/public/v1/auth/validate-invitation': typeof ApiPublicV1AuthValidateInvitationRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
@@ -1340,11 +1412,9 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/theme-test': typeof ThemeTestRoute
   '/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
-  '/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/attention': typeof AuthenticatedAttentionRoute
   '/business': typeof AuthenticatedBusinessRoute
@@ -1358,7 +1428,6 @@ export interface FileRoutesByTo {
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/ml-models': typeof AuthenticatedMlModelsRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -1377,19 +1446,25 @@ export interface FileRoutesByTo {
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
+  '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/guides/grain-storage': typeof GuidesGrainStorageRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-management-software': typeof SolutionsGrainManagementSoftwareRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout': typeof CheckoutIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/platform/business': typeof AuthenticatedPlatformBusinessRoute
   '/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -1400,7 +1475,9 @@ export interface FileRoutesByTo {
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/platform/intelligence': typeof AuthenticatedPlatformIntelligenceRoute
   '/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/platform/key-metrics': typeof AuthenticatedPlatformKeyMetricsRoute
   '/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -1413,6 +1490,7 @@ export interface FileRoutesByTo {
   '/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/platform/monitoring': typeof AuthenticatedPlatformMonitoringRoute
   '/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1421,7 +1499,7 @@ export interface FileRoutesByTo {
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
-  '/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
@@ -1443,6 +1521,7 @@ export interface FileRoutesByTo {
   '/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/platform/tenants/$adminId': typeof AuthenticatedPlatformTenantsAdminIdRoute
   '/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1467,6 +1546,8 @@ export interface FileRoutesByTo {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/auth/accept-invite': typeof ApiPublicV1AuthAcceptInviteRoute
+  '/api/public/v1/auth/validate-invitation': typeof ApiPublicV1AuthValidateInvitationRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
@@ -1515,11 +1596,9 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/theme-test': typeof ThemeTestRoute
   '/_authenticated/activity-logs': typeof AuthenticatedActivityLogsRoute
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRoute
-  '/_authenticated/ai-predictions': typeof AuthenticatedAiPredictionsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/attention': typeof AuthenticatedAttentionRoute
   '/_authenticated/business': typeof AuthenticatedBusinessRoute
@@ -1533,7 +1612,6 @@ export interface FileRoutesById {
   '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
   '/_authenticated/listings': typeof AuthenticatedListingsRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/_authenticated/ml-models': typeof AuthenticatedMlModelsRoute
   '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -1552,19 +1630,25 @@ export interface FileRoutesById {
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
+  '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/guides/grain-storage': typeof GuidesGrainStorageRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-management-software': typeof SolutionsGrainManagementSoftwareRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
   '/_authenticated/buyer/orders': typeof AuthenticatedBuyerOrdersRouteWithChildren
   '/_authenticated/insurance-claims/$claimId': typeof AuthenticatedInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/audit-logs': typeof AuthenticatedPlatformAuditLogsRoute
+  '/_authenticated/platform/business': typeof AuthenticatedPlatformBusinessRoute
   '/_authenticated/platform/commerce-mobile': typeof AuthenticatedPlatformCommerceMobileRoute
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -1575,7 +1659,9 @@ export interface FileRoutesById {
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
   '/_authenticated/platform/health': typeof AuthenticatedPlatformHealthRoute
   '/_authenticated/platform/insurance': typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  '/_authenticated/platform/intelligence': typeof AuthenticatedPlatformIntelligenceRoute
   '/_authenticated/platform/invoice-failures': typeof AuthenticatedPlatformInvoiceFailuresRoute
+  '/_authenticated/platform/key-metrics': typeof AuthenticatedPlatformKeyMetricsRoute
   '/_authenticated/platform/launch-readiness': typeof AuthenticatedPlatformLaunchReadinessRoute
   '/_authenticated/platform/leads': typeof AuthenticatedPlatformLeadsRoute
   '/_authenticated/platform/logs': typeof AuthenticatedPlatformLogsRoute
@@ -1588,6 +1674,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/mobile-push-diagnostics': typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   '/_authenticated/platform/mobile-settings': typeof AuthenticatedPlatformMobileSettingsRoute
   '/_authenticated/platform/mobile-sync-monitor': typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  '/_authenticated/platform/monitoring': typeof AuthenticatedPlatformMonitoringRoute
   '/_authenticated/platform/orders': typeof AuthenticatedPlatformOrdersRouteWithChildren
   '/_authenticated/platform/pipeline': typeof AuthenticatedPlatformPipelineRoute
   '/_authenticated/platform/plans': typeof AuthenticatedPlatformPlansRoute
@@ -1596,7 +1683,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
   '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
-  '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRoute
+  '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/_authenticated/silos/$siloId': typeof AuthenticatedSilosSiloIdRoute
@@ -1618,6 +1705,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/logistics/command-center': typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   '/_authenticated/platform/logistics/fleet': typeof AuthenticatedPlatformLogisticsFleetRoute
   '/_authenticated/platform/orders/$orderId': typeof AuthenticatedPlatformOrdersOrderIdRouteWithChildren
+  '/_authenticated/platform/tenants/$adminId': typeof AuthenticatedPlatformTenantsAdminIdRoute
   '/_authenticated/technician/installs/$installId': typeof AuthenticatedTechnicianInstallsInstallIdRoute
   '/api/public/cron/apply-scheduled-plan-changes': typeof ApiPublicCronApplyScheduledPlanChangesRoute
   '/api/public/cron/delivery-delay-scan': typeof ApiPublicCronDeliveryDelayScanRoute
@@ -1642,6 +1730,8 @@ export interface FileRoutesById {
   '/api/public/v1/actions/confirm-delivery': typeof ApiPublicV1ActionsConfirmDeliveryRoute
   '/api/public/v1/actions/install-step': typeof ApiPublicV1ActionsInstallStepRoute
   '/api/public/v1/actions/replay': typeof ApiPublicV1ActionsReplayRoute
+  '/api/public/v1/auth/accept-invite': typeof ApiPublicV1AuthAcceptInviteRoute
+  '/api/public/v1/auth/validate-invitation': typeof ApiPublicV1AuthValidateInvitationRoute
   '/api/public/v1/commerce/addresses': typeof ApiPublicV1CommerceAddressesRoute
   '/api/public/v1/commerce/cart': typeof ApiPublicV1CommerceCartRoute
   '/api/public/v1/commerce/checkout': typeof ApiPublicV1CommerceCheckoutRoute
@@ -1690,11 +1780,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
-    | '/theme-test'
     | '/activity-logs'
     | '/actuators'
     | '/administration'
-    | '/ai-predictions'
     | '/analytics'
     | '/attention'
     | '/business'
@@ -1708,7 +1796,6 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/listings'
     | '/maintenance'
-    | '/ml-models'
     | '/monitoring'
     | '/not-allowed'
     | '/notifications'
@@ -1727,19 +1814,25 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team-management'
     | '/traceability'
+    | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/guides/grain-storage'
     | '/marketplace/$slug'
+    | '/solutions/grain-management-software'
+    | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout/'
     | '/marketplace/'
     | '/admins/$adminId'
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/business'
     | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
@@ -1750,7 +1843,9 @@ export interface FileRouteTypes {
     | '/platform/financials'
     | '/platform/health'
     | '/platform/insurance'
+    | '/platform/intelligence'
     | '/platform/invoice-failures'
+    | '/platform/key-metrics'
     | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
@@ -1763,6 +1858,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
     | '/platform/mobile-sync-monitor'
+    | '/platform/monitoring'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1793,6 +1889,7 @@ export interface FileRouteTypes {
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
+    | '/platform/tenants/$adminId'
     | '/technician/installs/$installId'
     | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
@@ -1817,6 +1914,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/auth/accept-invite'
+    | '/api/public/v1/auth/validate-invitation'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/checkout'
@@ -1861,11 +1960,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
-    | '/theme-test'
     | '/activity-logs'
     | '/actuators'
     | '/administration'
-    | '/ai-predictions'
     | '/analytics'
     | '/attention'
     | '/business'
@@ -1879,7 +1976,6 @@ export interface FileRouteTypes {
     | '/intelligence'
     | '/listings'
     | '/maintenance'
-    | '/ml-models'
     | '/monitoring'
     | '/not-allowed'
     | '/notifications'
@@ -1898,19 +1994,25 @@ export interface FileRouteTypes {
     | '/suppliers'
     | '/team-management'
     | '/traceability'
+    | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/guides/grain-storage'
     | '/marketplace/$slug'
+    | '/solutions/grain-management-software'
+    | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout'
     | '/marketplace'
     | '/admins/$adminId'
     | '/buyer/orders'
     | '/insurance-claims/$claimId'
     | '/platform/audit-logs'
+    | '/platform/business'
     | '/platform/commerce-mobile'
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
@@ -1921,7 +2023,9 @@ export interface FileRouteTypes {
     | '/platform/financials'
     | '/platform/health'
     | '/platform/insurance'
+    | '/platform/intelligence'
     | '/platform/invoice-failures'
+    | '/platform/key-metrics'
     | '/platform/launch-readiness'
     | '/platform/leads'
     | '/platform/logs'
@@ -1934,6 +2038,7 @@ export interface FileRouteTypes {
     | '/platform/mobile-push-diagnostics'
     | '/platform/mobile-settings'
     | '/platform/mobile-sync-monitor'
+    | '/platform/monitoring'
     | '/platform/orders'
     | '/platform/pipeline'
     | '/platform/plans'
@@ -1964,6 +2069,7 @@ export interface FileRouteTypes {
     | '/platform/logistics/command-center'
     | '/platform/logistics/fleet'
     | '/platform/orders/$orderId'
+    | '/platform/tenants/$adminId'
     | '/technician/installs/$installId'
     | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
@@ -1988,6 +2094,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/auth/accept-invite'
+    | '/api/public/v1/auth/validate-invitation'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/checkout'
@@ -2035,11 +2143,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/team'
     | '/terms'
-    | '/theme-test'
     | '/_authenticated/activity-logs'
     | '/_authenticated/actuators'
     | '/_authenticated/administration'
-    | '/_authenticated/ai-predictions'
     | '/_authenticated/analytics'
     | '/_authenticated/attention'
     | '/_authenticated/business'
@@ -2053,7 +2159,6 @@ export interface FileRouteTypes {
     | '/_authenticated/intelligence'
     | '/_authenticated/listings'
     | '/_authenticated/maintenance'
-    | '/_authenticated/ml-models'
     | '/_authenticated/monitoring'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
@@ -2072,19 +2177,25 @@ export interface FileRouteTypes {
     | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
     | '/_authenticated/traceability'
+    | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/guides/grain-storage'
     | '/marketplace/$slug'
+    | '/solutions/grain-management-software'
+    | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout/'
     | '/marketplace/'
     | '/_authenticated/admins/$adminId'
     | '/_authenticated/buyer/orders'
     | '/_authenticated/insurance-claims/$claimId'
     | '/_authenticated/platform/audit-logs'
+    | '/_authenticated/platform/business'
     | '/_authenticated/platform/commerce-mobile'
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
@@ -2095,7 +2206,9 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/financials'
     | '/_authenticated/platform/health'
     | '/_authenticated/platform/insurance'
+    | '/_authenticated/platform/intelligence'
     | '/_authenticated/platform/invoice-failures'
+    | '/_authenticated/platform/key-metrics'
     | '/_authenticated/platform/launch-readiness'
     | '/_authenticated/platform/leads'
     | '/_authenticated/platform/logs'
@@ -2108,6 +2221,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/mobile-push-diagnostics'
     | '/_authenticated/platform/mobile-settings'
     | '/_authenticated/platform/mobile-sync-monitor'
+    | '/_authenticated/platform/monitoring'
     | '/_authenticated/platform/orders'
     | '/_authenticated/platform/pipeline'
     | '/_authenticated/platform/plans'
@@ -2138,6 +2252,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/logistics/command-center'
     | '/_authenticated/platform/logistics/fleet'
     | '/_authenticated/platform/orders/$orderId'
+    | '/_authenticated/platform/tenants/$adminId'
     | '/_authenticated/technician/installs/$installId'
     | '/api/public/cron/apply-scheduled-plan-changes'
     | '/api/public/cron/delivery-delay-scan'
@@ -2162,6 +2277,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/actions/confirm-delivery'
     | '/api/public/v1/actions/install-step'
     | '/api/public/v1/actions/replay'
+    | '/api/public/v1/auth/accept-invite'
+    | '/api/public/v1/auth/validate-invitation'
     | '/api/public/v1/commerce/addresses'
     | '/api/public/v1/commerce/cart'
     | '/api/public/v1/commerce/checkout'
@@ -2210,7 +2327,10 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
-  ThemeTestRoute: typeof ThemeTestRoute
+  GuidesGrainStorageRoute: typeof GuidesGrainStorageRoute
+  SolutionsGrainManagementSoftwareRoute: typeof SolutionsGrainManagementSoftwareRoute
+  SolutionsGrainStorageMonitoringRoute: typeof SolutionsGrainStorageMonitoringRoute
+  SolutionsSiloMonitoringSystemRoute: typeof SolutionsSiloMonitoringSystemRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -2235,6 +2355,8 @@ export interface RootRouteChildren {
   ApiPublicV1ActionsConfirmDeliveryRoute: typeof ApiPublicV1ActionsConfirmDeliveryRoute
   ApiPublicV1ActionsInstallStepRoute: typeof ApiPublicV1ActionsInstallStepRoute
   ApiPublicV1ActionsReplayRoute: typeof ApiPublicV1ActionsReplayRoute
+  ApiPublicV1AuthAcceptInviteRoute: typeof ApiPublicV1AuthAcceptInviteRoute
+  ApiPublicV1AuthValidateInvitationRoute: typeof ApiPublicV1AuthValidateInvitationRoute
   ApiPublicV1CommerceAddressesRoute: typeof ApiPublicV1CommerceAddressesRoute
   ApiPublicV1CommerceCartRoute: typeof ApiPublicV1CommerceCartRoute
   ApiPublicV1CommerceCheckoutRoute: typeof ApiPublicV1CommerceCheckoutRoute
@@ -2268,13 +2390,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/theme-test': {
-      id: '/theme-test'
-      path: '/theme-test'
-      fullPath: '/theme-test'
-      preLoaderRoute: typeof ThemeTestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -2394,12 +2509,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof CheckoutRoute
     }
+    '/solutions/silo-monitoring-system': {
+      id: '/solutions/silo-monitoring-system'
+      path: '/solutions/silo-monitoring-system'
+      fullPath: '/solutions/silo-monitoring-system'
+      preLoaderRoute: typeof SolutionsSiloMonitoringSystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions/grain-storage-monitoring': {
+      id: '/solutions/grain-storage-monitoring'
+      path: '/solutions/grain-storage-monitoring'
+      fullPath: '/solutions/grain-storage-monitoring'
+      preLoaderRoute: typeof SolutionsGrainStorageMonitoringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions/grain-management-software': {
+      id: '/solutions/grain-management-software'
+      path: '/solutions/grain-management-software'
+      fullPath: '/solutions/grain-management-software'
+      preLoaderRoute: typeof SolutionsGrainManagementSoftwareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/$slug': {
       id: '/marketplace/$slug'
       path: '/$slug'
       fullPath: '/marketplace/$slug'
       preLoaderRoute: typeof MarketplaceSlugRouteImport
       parentRoute: typeof MarketplaceRoute
+    }
+    '/guides/grain-storage': {
+      id: '/guides/grain-storage'
+      path: '/guides/grain-storage'
+      fullPath: '/guides/grain-storage'
+      preLoaderRoute: typeof GuidesGrainStorageRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/checkout/success': {
       id: '/checkout/success'
@@ -2441,6 +2584,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/auth/forgot-password'
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/accept-invite': {
+      id: '/auth/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/auth/accept-invite'
+      preLoaderRoute: typeof AuthAcceptInviteRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_authenticated/traceability': {
@@ -2569,13 +2719,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/ml-models': {
-      id: '/_authenticated/ml-models'
-      path: '/ml-models'
-      fullPath: '/ml-models'
-      preLoaderRoute: typeof AuthenticatedMlModelsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/maintenance': {
       id: '/_authenticated/maintenance'
       path: '/maintenance'
@@ -2665,13 +2808,6 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ai-predictions': {
-      id: '/_authenticated/ai-predictions'
-      path: '/ai-predictions'
-      fullPath: '/ai-predictions'
-      preLoaderRoute: typeof AuthenticatedAiPredictionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/administration': {
@@ -2828,6 +2964,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/monitoring': {
+      id: '/_authenticated/platform/monitoring'
+      path: '/platform/monitoring'
+      fullPath: '/platform/monitoring'
+      preLoaderRoute: typeof AuthenticatedPlatformMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/mobile-sync-monitor': {
       id: '/_authenticated/platform/mobile-sync-monitor'
       path: '/platform/mobile-sync-monitor'
@@ -2912,11 +3055,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformLaunchReadinessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/key-metrics': {
+      id: '/_authenticated/platform/key-metrics'
+      path: '/platform/key-metrics'
+      fullPath: '/platform/key-metrics'
+      preLoaderRoute: typeof AuthenticatedPlatformKeyMetricsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/invoice-failures': {
       id: '/_authenticated/platform/invoice-failures'
       path: '/platform/invoice-failures'
       fullPath: '/platform/invoice-failures'
       preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/intelligence': {
+      id: '/_authenticated/platform/intelligence'
+      path: '/platform/intelligence'
+      fullPath: '/platform/intelligence'
+      preLoaderRoute: typeof AuthenticatedPlatformIntelligenceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/insurance': {
@@ -2987,6 +3144,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/commerce-mobile'
       fullPath: '/platform/commerce-mobile'
       preLoaderRoute: typeof AuthenticatedPlatformCommerceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/business': {
+      id: '/_authenticated/platform/business'
+      path: '/platform/business'
+      fullPath: '/platform/business'
+      preLoaderRoute: typeof AuthenticatedPlatformBusinessRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/audit-logs': {
@@ -3142,6 +3306,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/technician/installs/$installId'
       preLoaderRoute: typeof AuthenticatedTechnicianInstallsInstallIdRouteImport
       parentRoute: typeof AuthenticatedTechnicianInstallsRoute
+    }
+    '/_authenticated/platform/tenants/$adminId': {
+      id: '/_authenticated/platform/tenants/$adminId'
+      path: '/$adminId'
+      fullPath: '/platform/tenants/$adminId'
+      preLoaderRoute: typeof AuthenticatedPlatformTenantsAdminIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformTenantsRoute
     }
     '/_authenticated/platform/orders/$orderId': {
       id: '/_authenticated/platform/orders/$orderId'
@@ -3423,6 +3594,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1CommerceAddressesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/auth/validate-invitation': {
+      id: '/api/public/v1/auth/validate-invitation'
+      path: '/api/public/v1/auth/validate-invitation'
+      fullPath: '/api/public/v1/auth/validate-invitation'
+      preLoaderRoute: typeof ApiPublicV1AuthValidateInvitationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/accept-invite': {
+      id: '/api/public/v1/auth/accept-invite'
+      path: '/api/public/v1/auth/accept-invite'
+      fullPath: '/api/public/v1/auth/accept-invite'
+      preLoaderRoute: typeof ApiPublicV1AuthAcceptInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/actions/replay': {
       id: '/api/public/v1/actions/replay'
       path: '/api/public/v1/actions/replay'
@@ -3590,6 +3775,21 @@ const AuthenticatedPlatformOrdersRouteWithChildren =
     AuthenticatedPlatformOrdersRouteChildren,
   )
 
+interface AuthenticatedPlatformTenantsRouteChildren {
+  AuthenticatedPlatformTenantsAdminIdRoute: typeof AuthenticatedPlatformTenantsAdminIdRoute
+}
+
+const AuthenticatedPlatformTenantsRouteChildren: AuthenticatedPlatformTenantsRouteChildren =
+  {
+    AuthenticatedPlatformTenantsAdminIdRoute:
+      AuthenticatedPlatformTenantsAdminIdRoute,
+  }
+
+const AuthenticatedPlatformTenantsRouteWithChildren =
+  AuthenticatedPlatformTenantsRoute._addFileChildren(
+    AuthenticatedPlatformTenantsRouteChildren,
+  )
+
 interface AuthenticatedTechnicianInstallsRouteChildren {
   AuthenticatedTechnicianInstallsInstallIdRoute: typeof AuthenticatedTechnicianInstallsInstallIdRoute
 }
@@ -3609,7 +3809,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedActivityLogsRoute: typeof AuthenticatedActivityLogsRoute
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedAdministrationRoute: typeof AuthenticatedAdministrationRoute
-  AuthenticatedAiPredictionsRoute: typeof AuthenticatedAiPredictionsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedAttentionRoute: typeof AuthenticatedAttentionRoute
   AuthenticatedBusinessRoute: typeof AuthenticatedBusinessRoute
@@ -3623,7 +3822,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
   AuthenticatedListingsRoute: typeof AuthenticatedListingsRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
-  AuthenticatedMlModelsRoute: typeof AuthenticatedMlModelsRoute
   AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -3646,6 +3844,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
   AuthenticatedPlatformAuditLogsRoute: typeof AuthenticatedPlatformAuditLogsRoute
+  AuthenticatedPlatformBusinessRoute: typeof AuthenticatedPlatformBusinessRoute
   AuthenticatedPlatformCommerceMobileRoute: typeof AuthenticatedPlatformCommerceMobileRoute
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
@@ -3656,7 +3855,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
   AuthenticatedPlatformHealthRoute: typeof AuthenticatedPlatformHealthRoute
   AuthenticatedPlatformInsuranceRoute: typeof AuthenticatedPlatformInsuranceRouteWithChildren
+  AuthenticatedPlatformIntelligenceRoute: typeof AuthenticatedPlatformIntelligenceRoute
   AuthenticatedPlatformInvoiceFailuresRoute: typeof AuthenticatedPlatformInvoiceFailuresRoute
+  AuthenticatedPlatformKeyMetricsRoute: typeof AuthenticatedPlatformKeyMetricsRoute
   AuthenticatedPlatformLaunchReadinessRoute: typeof AuthenticatedPlatformLaunchReadinessRoute
   AuthenticatedPlatformLeadsRoute: typeof AuthenticatedPlatformLeadsRoute
   AuthenticatedPlatformLogsRoute: typeof AuthenticatedPlatformLogsRoute
@@ -3669,6 +3870,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformMobilePushDiagnosticsRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRoute
   AuthenticatedPlatformMobileSettingsRoute: typeof AuthenticatedPlatformMobileSettingsRoute
   AuthenticatedPlatformMobileSyncMonitorRoute: typeof AuthenticatedPlatformMobileSyncMonitorRoute
+  AuthenticatedPlatformMonitoringRoute: typeof AuthenticatedPlatformMonitoringRoute
   AuthenticatedPlatformOrdersRoute: typeof AuthenticatedPlatformOrdersRouteWithChildren
   AuthenticatedPlatformPipelineRoute: typeof AuthenticatedPlatformPipelineRoute
   AuthenticatedPlatformPlansRoute: typeof AuthenticatedPlatformPlansRoute
@@ -3677,7 +3879,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
-  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRoute
+  AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRouteWithChildren
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedSilosSiloIdRoute: typeof AuthenticatedSilosSiloIdRoute
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
@@ -3692,7 +3894,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActivityLogsRoute: AuthenticatedActivityLogsRoute,
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedAdministrationRoute: AuthenticatedAdministrationRoute,
-  AuthenticatedAiPredictionsRoute: AuthenticatedAiPredictionsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedAttentionRoute: AuthenticatedAttentionRoute,
   AuthenticatedBusinessRoute: AuthenticatedBusinessRoute,
@@ -3706,7 +3907,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
   AuthenticatedListingsRoute: AuthenticatedListingsRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
-  AuthenticatedMlModelsRoute: AuthenticatedMlModelsRoute,
   AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
@@ -3730,6 +3930,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsuranceClaimsClaimIdRoute:
     AuthenticatedInsuranceClaimsClaimIdRoute,
   AuthenticatedPlatformAuditLogsRoute: AuthenticatedPlatformAuditLogsRoute,
+  AuthenticatedPlatformBusinessRoute: AuthenticatedPlatformBusinessRoute,
   AuthenticatedPlatformCommerceMobileRoute:
     AuthenticatedPlatformCommerceMobileRoute,
   AuthenticatedPlatformDashboardBuilderRoute:
@@ -3747,8 +3948,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformHealthRoute: AuthenticatedPlatformHealthRoute,
   AuthenticatedPlatformInsuranceRoute:
     AuthenticatedPlatformInsuranceRouteWithChildren,
+  AuthenticatedPlatformIntelligenceRoute:
+    AuthenticatedPlatformIntelligenceRoute,
   AuthenticatedPlatformInvoiceFailuresRoute:
     AuthenticatedPlatformInvoiceFailuresRoute,
+  AuthenticatedPlatformKeyMetricsRoute: AuthenticatedPlatformKeyMetricsRoute,
   AuthenticatedPlatformLaunchReadinessRoute:
     AuthenticatedPlatformLaunchReadinessRoute,
   AuthenticatedPlatformLeadsRoute: AuthenticatedPlatformLeadsRoute,
@@ -3769,6 +3973,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPlatformMobileSettingsRoute,
   AuthenticatedPlatformMobileSyncMonitorRoute:
     AuthenticatedPlatformMobileSyncMonitorRoute,
+  AuthenticatedPlatformMonitoringRoute: AuthenticatedPlatformMonitoringRoute,
   AuthenticatedPlatformOrdersRoute:
     AuthenticatedPlatformOrdersRouteWithChildren,
   AuthenticatedPlatformPipelineRoute: AuthenticatedPlatformPipelineRoute,
@@ -3778,7 +3983,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
-  AuthenticatedPlatformTenantsRoute: AuthenticatedPlatformTenantsRoute,
+  AuthenticatedPlatformTenantsRoute:
+    AuthenticatedPlatformTenantsRouteWithChildren,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,
   AuthenticatedSilosSiloIdRoute: AuthenticatedSilosSiloIdRoute,
   AuthenticatedTechnicianInstallsRoute:
@@ -3798,6 +4004,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface AuthRouteChildren {
+  AuthAcceptInviteRoute: typeof AuthAcceptInviteRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
@@ -3806,6 +4013,7 @@ interface AuthRouteChildren {
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthAcceptInviteRoute: AuthAcceptInviteRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
@@ -3876,7 +4084,10 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
-  ThemeTestRoute: ThemeTestRoute,
+  GuidesGrainStorageRoute: GuidesGrainStorageRoute,
+  SolutionsGrainManagementSoftwareRoute: SolutionsGrainManagementSoftwareRoute,
+  SolutionsGrainStorageMonitoringRoute: SolutionsGrainStorageMonitoringRoute,
+  SolutionsSiloMonitoringSystemRoute: SolutionsSiloMonitoringSystemRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
@@ -3904,6 +4115,9 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ActionsConfirmDeliveryRoute,
   ApiPublicV1ActionsInstallStepRoute: ApiPublicV1ActionsInstallStepRoute,
   ApiPublicV1ActionsReplayRoute: ApiPublicV1ActionsReplayRoute,
+  ApiPublicV1AuthAcceptInviteRoute: ApiPublicV1AuthAcceptInviteRoute,
+  ApiPublicV1AuthValidateInvitationRoute:
+    ApiPublicV1AuthValidateInvitationRoute,
   ApiPublicV1CommerceAddressesRoute: ApiPublicV1CommerceAddressesRoute,
   ApiPublicV1CommerceCartRoute: ApiPublicV1CommerceCartRoute,
   ApiPublicV1CommerceCheckoutRoute: ApiPublicV1CommerceCheckoutRoute,
@@ -3940,13 +4154,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -8,6 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getMarketplaceHealth } from "@/lib/marketplace-health.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/marketplace-health")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Marketplace Health — Grain Hero" },
+      { name: "description", content: "Platform · Marketplace Health workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Marketplace Health — Grain Hero" },
+      { property: "og:description", content: "Platform · Marketplace Health workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MarketplaceHealthPage,
 });
 

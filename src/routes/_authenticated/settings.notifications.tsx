@@ -20,6 +20,15 @@ import {
 } from "@/lib/notification-prefs.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/notifications")({
+  head: () => ({
+    meta: [
+      { title: "Settings · Notifications — Grain Hero" },
+      { name: "description", content: "Settings · Notifications workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Settings · Notifications — Grain Hero" },
+      { property: "og:description", content: "Settings · Notifications workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: NotificationSettingsPage,
 });
 

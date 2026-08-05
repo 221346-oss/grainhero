@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import pricingData from "@/lib/pricing-data";
+import { requireAppOrigin } from "@/lib/app-url";
 
 const checkoutInput = z.object({
   planId: z.enum(["basic", "intermediate", "pro"]),
@@ -36,7 +37,7 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     if (!plan) throw new Error("Unknown plan");
 
     const currency = String(plan.currency ?? "usd").toLowerCase();
-    const origin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
+    const origin = requireAppOrigin();
     const customerEmail = data.customer.email.trim().toLowerCase();
     const customerName = data.customer.name.trim();
     const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
@@ -305,7 +306,7 @@ export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
     if (error) throw error;
     const orderId = (order as { id: string }).id;
 
-    const origin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
+    const origin = requireAppOrigin();
     const currency = String(plan.currency ?? "PKR").toLowerCase();
     const params = stripeForm({
       mode: "payment",
@@ -434,16 +435,26 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
     }
 
     const stripeCustomerId = String(first.stripe_customer_id ?? "");
-    if (stripeCustomerId) {
-      await supabaseAdmin.from("profiles").update({ stripe_customer_id: stripeCustomerId, admin_id: context.userId } as never).eq("id", context.userId);
-    } else {
-      await supabaseAdmin.from("profiles").update({ admin_id: context.userId } as never).eq("id", context.userId);
-    }
+    const stripeSubscriptionId = String(first.stripe_subscription_id ?? "");
+    const planId = String(first.plan_id ?? "basic");
+    // Set subscription_plan on the profile immediately — this is the field
+    // plan-gate.ts reads for every feature/limit check. Don't wait on the
+    // Stripe webhook (customer.subscription.created) to do it: locally, and
+    // in any environment where the webhook can't reach us yet, that event
+    // may never arrive, leaving the account stuck on the default "starter"
+    // gate even though the `subscriptions` row below says the paid plan.
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
+        admin_id: context.userId,
+        subscription_plan: planId,
+        has_access: "full",
+      } as never)
+      .eq("id", context.userId);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", context.userId);
     await supabaseAdmin.from("user_roles").insert({ user_id: context.userId, role: "admin" } as never);
 
-    const stripeSubscriptionId = String(first.stripe_subscription_id ?? "");
-    const planId = String(first.plan_id ?? "basic");
     const planNameMap: Record<string, string> = {
       basic: "Grain Starter",
       intermediate: "Grain Professional",
@@ -492,7 +503,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
     // Use stripe_subscription_id as conflict key when available,
     // otherwise fall back to admin_id so we still upsert a single row.
     if (stripeSubscriptionId) {
-      await supabaseAdmin.from("subscriptions").upsert(
+      const { error: subUpsertError } = await supabaseAdmin.from("subscriptions").upsert(
         {
           admin_id: context.userId,
           plan_name: (planNameMap[planId] ?? "Custom") as never,
@@ -516,6 +527,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
         } as never,
         { onConflict: "stripe_subscription_id" },
       );
+      if (subUpsertError) console.error("[claim] subscriptions upsert failed:", subUpsertError.message);
     } else {
       // Webhook hasn't fired yet — upsert by admin_id so the success page
       // sees subscriptionActive = true immediately.
@@ -526,7 +538,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
         .maybeSingle();
 
       if (existingSub) {
-        await supabaseAdmin.from("subscriptions").update({
+        const { error: subUpdateError } = await supabaseAdmin.from("subscriptions").update({
           plan_name: (planNameMap[planId] ?? "Custom") as never,
           status: "active" as never,
           auto_renew: true,
@@ -541,8 +553,9 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
           max_storage_gb: limits.storage,
           max_batches: limits.batches,
         } as never).eq("admin_id", context.userId);
+        if (subUpdateError) console.error("[claim] subscriptions update failed:", subUpdateError.message);
       } else {
-        await supabaseAdmin.from("subscriptions").insert({
+        const { error: subInsertError } = await supabaseAdmin.from("subscriptions").insert({
           admin_id: context.userId,
           plan_name: (planNameMap[planId] ?? "Custom") as never,
           plan_description: `Stripe subscription (${planId})`,
@@ -560,6 +573,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
           max_storage_gb: limits.storage,
           max_batches: limits.batches,
         } as never);
+        if (subInsertError) console.error("[claim] subscriptions insert failed:", subInsertError.message);
       }
     }
 
@@ -581,7 +595,7 @@ export const createStripeBillingPortalSession = createServerFn({ method: "POST" 
       .maybeSingle();
     const customerId = (profile as { stripe_customer_id?: string } | null)?.stripe_customer_id;
     if (!customerId) throw new Error("No Stripe customer on file");
-    const origin = process.env.APP_ORIGIN || "https://grainheroo.lovable.app";
+    const origin = requireAppOrigin();
     const session = await stripeFetch(
       "/billing_portal/sessions",
       stripeForm({ customer: customerId, return_url: `${origin}/subscription` }),

@@ -48,7 +48,7 @@ const benefits = [
 
 export function BenefitsSection() {
   return (
-    <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#EDE9D4]">
+    <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -58,10 +58,10 @@ export function BenefitsSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-8 sm:mb-12"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#252d26] mb-4">
-            Why Farmers Trust <span className="text-[#2FAC0C]">GrainHero</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#111512] mb-4">
+            Why Farmers Trust <span className="text-[#2FA84F]">GrainHero</span>
           </h2>
-          <p className="text-lg sm:text-xl text-[#404F44] max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-[#4A554C] max-w-3xl mx-auto">
             Join thousands of grain operators who have transformed their storage operations with intelligent monitoring
           </p>
         </motion.div>
@@ -75,18 +75,18 @@ export function BenefitsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#2FAC0C]/10 hover:border-[#2FAC0C]/30 hover:scale-105 group"
+              className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#2FA84F]/10 hover:border-[#2FA84F]/30 hover:scale-105 group"
             >
               {/* Icon Only */}
               <div className="flex items-start mb-4">
-                <div className="bg-[#2FAC0C]/10 p-3 rounded-xl group-hover:bg-[#2FAC0C]/20 transition-colors">
-                  <benefit.icon className="w-6 h-6 text-[#2FAC0C]" />
+                <div className="bg-[#2FA84F]/10 p-3 rounded-xl group-hover:bg-[#2FA84F]/20 transition-colors">
+                  <benefit.icon className="w-6 h-6 text-[#2FA84F]" />
                 </div>
               </div>
 
               {/* Content */}
-              <h3 className="text-xl font-bold text-[#252d26] mb-2">{benefit.title}</h3>
-              <p className="text-[#404F44] text-sm leading-relaxed">{benefit.description}</p>
+              <h3 className="text-xl font-bold text-[#111512] mb-2">{benefit.title}</h3>
+              <p className="text-[#4A554C] text-sm leading-relaxed">{benefit.description}</p>
             </motion.div>
           ))}
         </div>
@@ -103,7 +103,7 @@ export function BenefitsSection() {
             onClick={() => {
               window.location.href = '/checkout'
             }}
-            className="bg-[#2FAC0C] text-white font-bold px-10 py-4 rounded-full hover:bg-[#2FAC0C]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+            className="bg-[#2FA84F] text-white font-bold px-10 py-4 rounded-full hover:bg-[#2FA84F]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
           >
             View Plans & Pricing
           </button>

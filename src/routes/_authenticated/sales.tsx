@@ -21,6 +21,15 @@ import { OrdersSkeleton } from "@/components/app/skeletons";
 import { ShipmentPanel } from "@/components/app/marketplace/ShipmentPanel";
 
 export const Route = createFileRoute("/_authenticated/sales")({
+  head: () => ({
+    meta: [
+      { title: "Sales — Grain Hero" },
+      { name: "description", content: "Sales workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Sales — Grain Hero" },
+      { property: "og:description", content: "Sales workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SalesPage,
   pendingComponent: OrdersSkeleton,
 });

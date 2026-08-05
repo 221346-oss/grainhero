@@ -81,7 +81,7 @@ export function TeamSection() {
             }`}
           >
             <span className="block mb-1 sm:mb-2">The People Behind</span>
-            <span className="block text-[#2FAC0C]">GRAINHERO</span>
+            <span className="block text-[#2FA84F]">GRAINHERO</span>
           </h2>
         </div>
 
@@ -109,7 +109,7 @@ export function TeamSection() {
                 key={i}
                 onClick={() => setActiveSlide(i)}
                 className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  i === activeSlide ? 'bg-[#00a63e] scale-125' : 'bg-gray-300'
+                  i === activeSlide ? 'bg-[#2FA84F] scale-125' : 'bg-gray-300'
                 }`}
                 aria-label={`View founder ${i + 1}`}
               />
@@ -178,19 +178,19 @@ function FounderCard({ founder }: { founder: { name: string; role: string; bount
       style={{ overflow: 'visible' }}
     >
       {/* Push pins */}
-      <div className="absolute -top-2 left-4 w-4 h-4 bg-gradient-to-br from-[#00a63e] to-[#029238] rounded-full shadow-lg border border-green-700" />
-      <div className="absolute -top-2 right-4 w-4 h-4 bg-gradient-to-br from-[#00a63e] to-[#029238] rounded-full shadow-lg border border-green-700" />
+      <div className="absolute -top-2 left-4 w-4 h-4 bg-gradient-to-br from-[#2FA84F] to-[#24803C] rounded-full shadow-lg border border-green-700" />
+      <div className="absolute -top-2 right-4 w-4 h-4 bg-gradient-to-br from-[#2FA84F] to-[#24803C] rounded-full shadow-lg border border-green-700" />
 
       <div className="p-5 sm:p-6 text-center relative z-10">
         {/* Header */}
         <div className="mb-3 sm:mb-4">
           <h3
-            className="text-xl sm:text-3xl font-black text-[#00a63e] mb-2"
+            className="text-xl sm:text-3xl font-black text-[#2FA84F] mb-2"
             style={{ fontFamily: 'serif', letterSpacing: '0.08em' }}
           >
             FOUNDER
           </h3>
-          <div className="w-full h-0.5 bg-[#00a63e]" />
+          <div className="w-full h-0.5 bg-[#2FA84F]" />
         </div>
 
         {/* Photo */}
@@ -213,11 +213,11 @@ function FounderCard({ founder }: { founder: { name: string; role: string; bount
         {/* Details */}
         <div className="text-left space-y-1.5 sm:space-y-2" style={{ fontFamily: 'serif' }}>
           <div className="font-black text-base sm:text-lg text-black">{founder.name}</div>
-          <div className="font-bold text-[#00a63e] text-sm sm:text-base">{founder.role}</div>
+          <div className="font-bold text-[#2FA84F] text-sm sm:text-base">{founder.role}</div>
           <div className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider">
             {founder.bounty}
           </div>
-          <div className="text-xs sm:text-sm text-gray-700 leading-relaxed bg-gray-50/50 p-2.5 sm:p-3 border-l-2 border-[#00a63e]">
+          <div className="text-xs sm:text-sm text-gray-700 leading-relaxed bg-gray-50/50 p-2.5 sm:p-3 border-l-2 border-[#2FA84F]">
             {founder.description}
           </div>
         </div>

@@ -56,7 +56,14 @@ export const Route = createFileRoute("/auth/signup")({
     meta: [
       { title: "Create your account — GrainHero" },
       { name: "description", content: "Start monitoring your grain in minutes." },
+      { property: 'og:title', content: "Create your account — GrainHero" },
+      { property: 'og:description', content: "Start monitoring your grain in minutes." },
+      { property: 'og:url', content: 'https://grainhero.app/auth/signup' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/auth/signup' }],
   }),
   component: SignupPage,
 });
@@ -80,7 +87,23 @@ function SignupPage() {
 
   useEffect(() => {
     setDraftPlan(loadCheckoutDraft());
-  }, []);
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        navigate({ to: redirect ?? "/dashboard", replace: true });
+      }
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        navigate({ to: redirect ?? "/dashboard", replace: true });
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [navigate, redirect]);
 
   const orderPlanId = useMemo(() => {
     if (summaryQuery.data?.planName) {
@@ -311,6 +334,7 @@ function SignupPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

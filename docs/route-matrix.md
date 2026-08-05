@@ -20,7 +20,6 @@ Scope: `platform` (all tenants), `tenant` (rows where `admin_id = tenant_admin`)
 | `/privacy`, `/terms`, `/cookies` | *.tsx | P | — | — | Legal |
 | `/checkout`, `/checkout/success` | `checkout*.tsx` | A | self | — | Stripe flow |
 | `/auth/*` | `auth.*.tsx` | P | — | — | Login/signup/reset |
-| `/theme-test` | `theme-test.tsx` | P | — | — | Dev only |
 
 ## Authenticated — All roles
 | Route | Roles | Scope | Plan gate |

@@ -20,7 +20,14 @@ export const Route = createFileRoute("/auth/login")({
     meta: [
       { title: "Sign in — GrainHero" },
       { name: "description", content: "Sign in to your GrainHero account." },
+      { property: 'og:title', content: "Sign in — GrainHero" },
+      { property: 'og:description', content: "Sign in to your GrainHero account." },
+      { property: 'og:url', content: 'https://grainhero.app/auth/login' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/auth/login' }],
   }),
   component: LoginPage,
 });
@@ -40,13 +47,23 @@ function LoginPage() {
           : null,
   );
 
-  // If already signed in, go straight to dashboard
+  // If already signed in or active session exists, go straight to dashboard
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         navigate({ to: redirect ?? "/dashboard", replace: true });
       }
     });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        navigate({ to: redirect ?? "/dashboard", replace: true });
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, [navigate, redirect]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -129,12 +146,25 @@ function LoginPage() {
           </Link>
         </p>
         <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors inline-flex items-center gap-1">
+          <Link
+            to="/"
+            className="hover:text-foreground transition-colors inline-flex items-center gap-1"
+          >
             ← Go to home
           </Link>
           <span>·</span>
-          <Link to="/auth/forgot-password" className="hover:text-[#00a63e] hover:underline transition-colors">
+          <Link
+            to="/auth/forgot-password"
+            className="hover:text-[#00a63e] hover:underline transition-colors"
+          >
             Forgot password?
+          </Link>
+          <span>·</span>
+          <Link
+            to="/auth/accept-invite"
+            className="hover:text-[#00a63e] hover:underline transition-colors"
+          >
+            Have an invite code?
           </Link>
         </div>
       </div>

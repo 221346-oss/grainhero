@@ -23,6 +23,15 @@ import { placeOrder } from "@/lib/buyer-orders.functions";
 import { GrainBatchesSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/listings")({
+  head: () => ({
+    meta: [
+      { title: "Listings — Grain Hero" },
+      { name: "description", content: "Listings workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Listings — Grain Hero" },
+      { property: "og:description", content: "Listings workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ListingsPage,
   pendingComponent: GrainBatchesSkeleton,
 });

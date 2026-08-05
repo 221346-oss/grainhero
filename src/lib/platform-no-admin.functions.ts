@@ -512,3 +512,126 @@ export const submitPlatformQuery = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ── Tenant detail — super admin drill-down for a single tenant ──────────────
+export const getTenantDetail = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { adminId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: isSuper } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "super_admin",
+    });
+    if (!isSuper) throw new Error("Forbidden");
+
+    const [profileRes, subRes, silosRes, warehousesRes, batchesRes, teamRes] = await Promise.all([
+      context.supabase
+        .from("profiles")
+        .select("id, name, email, business_type, created_at, blocked, subscription_plan, admin_id")
+        .eq("id", data.adminId)
+        .maybeSingle(),
+      context.supabase
+        .from("subscriptions")
+        .select("id, plan_name, status, start_date, end_date, max_silos, max_warehouses, max_users, max_batches, price")
+        .eq("admin_id", data.adminId)
+        .in("status", ["active", "trial"])
+        .maybeSingle(),
+      context.supabase
+        .from("silos")
+        .select("id, name, status, capacity_kg, current_occupancy_kg")
+        .eq("admin_id", data.adminId)
+        .is("deleted_at", null)
+        .limit(100),
+      context.supabase
+        .from("warehouses")
+        .select("id, name, status")
+        .eq("admin_id", data.adminId)
+        .is("deleted_at", null)
+        .limit(50),
+      context.supabase
+        .from("grain_batches")
+        .select("id, status, grain_type, quantity_kg, created_at")
+        .eq("admin_id", data.adminId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(10),
+      context.supabase
+        .from("profiles")
+        .select("id, name, email, blocked")
+        .eq("admin_id", data.adminId)
+        .limit(50),
+    ]);
+
+    const profile = profileRes.data;
+    const sub     = subRes.data;
+    const silos   = silosRes.data ?? [];
+    const warehouses = warehousesRes.data ?? [];
+    const recentBatches = batchesRes.data ?? [];
+    const team    = teamRes.data ?? [];
+
+    // Activity logs — last 10 events for this tenant
+    const { data: logs } = await context.supabase
+      .from("activity_logs")
+      .select("id, action, description, category, severity, created_at")
+      .eq("admin_id", data.adminId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const totalKg = silos.reduce((s: number, silo: any) => s + Number(silo.current_occupancy_kg ?? 0), 0);
+    const capacityKg = silos.reduce((s: number, silo: any) => s + Number(silo.capacity_kg ?? 0), 0);
+
+    return {
+      profile,
+      subscription: sub,
+      usage: {
+        silos: silos.length,
+        warehouses: warehouses.length,
+        team: team.length + 1, // +1 for admin
+        batches: recentBatches.length,
+        totalKg: Math.round(totalKg),
+        capacityKg: Math.round(capacityKg),
+      },
+      silos,
+      warehouses,
+      team,
+      recentBatches,
+      activityLogs: logs ?? [],
+    };
+  });
+
+// ── Send renewal reminder to a specific tenant ─────────────────────────────
+export const sendExpiryReminder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { adminId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: isSuper } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId, _role: "super_admin",
+    });
+    if (!isSuper) throw new Error("Forbidden");
+
+    // Get the subscription end date for the message
+    const { data: sub } = await context.supabase
+      .from("subscriptions")
+      .select("plan_name, end_date")
+      .eq("admin_id", data.adminId)
+      .in("status", ["active", "trial"])
+      .maybeSingle();
+
+    const endDate = sub?.end_date ? new Date(sub.end_date).toLocaleDateString() : "soon";
+    const planName = sub?.plan_name ?? "your plan";
+
+    // Insert notification directly using the insert_notification RPC
+    const { error } = await (context.supabase as any).rpc("insert_notification", {
+      p_user_id: data.adminId,
+      p_admin_id: data.adminId,
+      p_title: `Your ${planName} subscription expires ${endDate}`,
+      p_message: "Renew your subscription to keep access to all your silos, batches, and team members. Contact GrainHero support or upgrade from the subscription page.",
+      p_category: "plan",
+      p_type: "warning",
+      p_action_url: "/subscription",
+      p_entity_type: "subscription",
+      p_entity_id: null,
+      p_metadata: { sent_by: "super_admin", reminder: true },
+    });
+    if (error) throw error;
+    return { ok: true };
+  });

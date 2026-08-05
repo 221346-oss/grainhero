@@ -57,7 +57,10 @@ export const autoConfirmUserEmail = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 1. Locate user by email
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    const {
+      data: { users },
+      error: listError,
+    } = await supabaseAdmin.auth.admin.listUsers();
     if (listError) throw new Error(`Failed to check user details: ${listError.message}`);
 
     const user = users.find((u) => u.email?.toLowerCase() === email);
@@ -69,11 +72,24 @@ export const autoConfirmUserEmail = createServerFn({ method: "POST" })
     });
     if (confirmError) throw new Error(`Failed to activate user account: ${confirmError.message}`);
 
-    // 3. Assign admin role
+    // 3. Assign admin role — but never for an invited user. Invited manager/technician
+    //    accounts already have their real role + admin_id set by inviteTeamMember at
+    //    invite-issue time; this path is only for genuine self-serve checkout signups.
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("invited_by")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (existingProfile?.invited_by) {
+      return { success: true, userId: user.id };
+    }
     try {
       await supabaseAdmin.from("user_roles").delete().eq("user_id", user.id);
       await supabaseAdmin.from("user_roles").insert({ user_id: user.id, role: "admin" } as never);
-      await supabaseAdmin.from("profiles").update({ admin_id: user.id } as never).eq("id", user.id);
+      await supabaseAdmin
+        .from("profiles")
+        .update({ admin_id: user.id } as never)
+        .eq("id", user.id);
     } catch (roleError) {
       console.warn("[autoConfirmUserEmail] role assignment failed:", (roleError as Error).message);
     }

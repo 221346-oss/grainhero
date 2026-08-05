@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
 import { SubscriptionSection } from "@/components/business/SubscriptionSection";
@@ -12,15 +12,26 @@ import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
 import { listPolicies, listClaims } from "@/lib/team-settings-insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/business")({
+  head: () => ({
+    meta: [
+      { title: "Business — Grain Hero" },
+      { name: "description", content: "Business workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Business — Grain Hero" },
+      { property: "og:description", content: "Business workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: BusinessWorkspace,
 });
 
 type Tab = "revenue" | "subscription" | "insurance";
 
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+// Insurance tab hidden from UI for now — code retained for future use
+// when a bank partnership is confirmed.
+const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "revenue",      label: "Revenue",      icon: Wallet },
   { key: "subscription", label: "Subscription", icon: CreditCard },
-  { key: "insurance",    label: "Insurance",    icon: Shield },
+  // { key: "insurance", label: "Insurance", icon: Shield },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
@@ -42,7 +53,7 @@ function BusinessWorkspace() {
   const { data: policies } = useQuery({ queryKey: ["insurance-policies"], queryFn: () => fetchPolicies() });
   const { data: claims } = useQuery({ queryKey: ["insurance-claims"], queryFn: () => fetchClaims() });
 
-  const totals = revenue?.totals ?? { invoiced: 0, paid: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
+  const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
   const sub = mySub?.subscription;
   const policyList = (policies ?? []) as any[];
   const claimList = (claims ?? []) as any[];
@@ -53,13 +64,13 @@ function BusinessWorkspace() {
   const counts = {
     revenue: totals.countInvoices ?? 0,
     subscription: sub ? 1 : 0,
-    insurance: policyList.length,
-  };
+    insurance: policyList.length, // tab hidden until bank partnership confirmed
+  } satisfies Record<Tab, number>;
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Collected", value: money(totals.paid), up: true },
+    { label: "Collected", value: money(totals.collected), up: true },
     { label: "Outstanding", value: money(totals.outstanding), up: false },
     { label: "Coverage", value: money(totalCoverage), up: true },
     { label: "Open Claims", value: openClaims, up: openClaims === 0 },
@@ -132,7 +143,7 @@ function BusinessWorkspace() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
-            <div className="space-y-0 divide-y divide-white/8 flex-1">
+            <div className="space-y-0 divide-y divide-border flex-1">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
@@ -140,7 +151,7 @@ function BusinessWorkspace() {
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-white font-black text-sm font-mono">{s.value}</span>
+                    <span className="text-foreground font-black text-sm font-mono">{s.value}</span>
                     {s.up
                       ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                       : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
@@ -193,7 +204,8 @@ function BusinessWorkspace() {
           <div className="p-4 md:p-6">
             {activeTab === "revenue" && <RevenueSection />}
             {activeTab === "subscription" && <SubscriptionSection />}
-            {activeTab === "insurance" && <InsuranceSection />}
+            {/* Insurance hidden until bank partnership confirmed */}
+            {/* {activeTab === "insurance" && <InsuranceSection />} */}
           </div>
         </div>
 

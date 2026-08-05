@@ -7,17 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileDown, TrendingUp, TrendingDown, DollarSign, Wallet, Shield, LineChart as LineIcon } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, BarChart, Bar } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts";
+import {
+  NEON, NeonPatternDefs, neonFill, neonGrid, neonAxis, neonTooltipStyle,
+  NeonLegend, HairlineGrid, NeonPanel, ChartEmpty, seriesColor,
+} from "@/components/charts/neon";
 import { getFinancialSummary, generateFinancialPdf } from "@/lib/financials.functions";
 import { toast } from "sonner";
 import { FinancialsSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/platform/financials")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Financials — Grain Hero" },
+      { name: "description", content: "Platform · Financials workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Financials — Grain Hero" },
+      { property: "og:description", content: "Platform · Financials workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: FinancialsPage,
 });
 
 const money = (n: number) => `PKR ${Math.round(Number(n ?? 0)).toLocaleString()}`;
-const COLORS = ["hsl(var(--primary))", "hsl(262 83% 58%)", "hsl(340 82% 60%)", "hsl(24 95% 55%)"];
+const COLORS = [NEON.brand, NEON.brand2, NEON.accent, NEON.amber];
 
 function FinancialsPage() {
   const fn = useServerFn(getFinancialSummary);
@@ -45,6 +58,7 @@ function FinancialsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+      <NeonPatternDefs />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Financial dashboard</h1>
@@ -90,11 +104,10 @@ function FinancialsPage() {
         <KpiCard icon={<LineIcon className="h-4 w-4" />} label="Net profit %" value={`${kpis.netProfitPct}%`} accent={kpis.netProfitPct >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <HairlineGrid cols="grid-cols-1 lg:grid-cols-3">
         {/* P&L Summary */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3"><CardTitle className="text-base">P&L summary</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
+        <NeonPanel title="P&L summary">
+          <div className="space-y-2 text-sm">
             <PnlRow label="Total sales" value={money(pnl.sales)} />
             <PnlRow label="Cost of goods sold" value={`- ${money(pnl.cogs)}`} negative />
             <div className="border-t border-border pt-2"><PnlRow label="Gross profit" value={money(pnl.grossProfit)} bold accent="text-primary" /></div>
@@ -102,82 +115,70 @@ function FinancialsPage() {
             <PnlRow label="Other income" value={money(pnl.otherIncome)} />
             <div className="border-t border-border pt-2"><PnlRow label="Net profit" value={money(pnl.netProfit)} bold accent={pnl.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} /></div>
             <PnlRow label="Net profit %" value={`${pnl.netProfitPct}%`} bold />
-          </CardContent>
-        </Card>
+          </div>
+        </NeonPanel>
 
         {/* Revenue mix donut */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3"><CardTitle className="text-base">Revenue mix</CardTitle></CardHeader>
-          <CardContent>
+        <NeonPanel title="Revenue mix">
+          {mix.length === 0 ? (
+            <ChartEmpty label="No revenue mix data yet" height={240} />
+          ) : (
             <div className="h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={mix} innerRadius={55} outerRadius={90} dataKey="value" nameKey="name" paddingAngle={2}>
-                    {mix.map((_, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} />))}
+                  <Pie data={mix} innerRadius={50} outerRadius={80} dataKey="value" nameKey="name" paddingAngle={2}>
+                    {mix.map((_, i) => (<Cell key={i} {...neonFill(COLORS[i % COLORS.length])} />))}
                   </Pie>
-                  <Tooltip
-                    formatter={(v: any, name: any) => [money(Number(v)), String(name)]}
-                    contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))", fontSize: 12, padding: "6px 10px" }}
-                    itemStyle={{ color: "hsl(var(--foreground))" }}
-                    labelStyle={{ color: "hsl(var(--muted-foreground))" }}
-                  />
+                  <Tooltip {...neonTooltipStyle} formatter={(v: any, name: any) => [money(Number(v)), String(name)]} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <ul className="mt-3 space-y-1.5">
-              {mix.map((m, i) => (
-                <li key={m.name} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: COLORS[i % COLORS.length] }} /><span className="text-muted-foreground">{m.name}</span></span>
-                  <span className="font-semibold text-foreground">{money(m.value)}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+          )}
+          <NeonLegend items={mix.map((m, i) => ({ label: m.name, color: COLORS[i % COLORS.length], value: money(m.value) }))} />
+        </NeonPanel>
 
         {/* MRR trend */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3"><CardTitle className="text-base">MRR trend (12 mo)</CardTitle></CardHeader>
-          <CardContent>
+        <NeonPanel title="MRR trend" subtitle="Last 12 months">
+          {trend.length === 0 ? (
+            <ChartEmpty label="No MRR trend data yet" height={280} />
+          ) : (
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trend}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                  <Tooltip formatter={(v: any) => money(Number(v))} contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="mrr" name="MRR" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                  <CartesianGrid {...neonGrid} />
+                  <XAxis dataKey="month" {...neonAxis} />
+                  <YAxis {...neonAxis} />
+                  <Tooltip {...neonTooltipStyle} formatter={(v: any) => money(Number(v))} />
+                  <Line type="monotone" dataKey="mrr" name="MRR" stroke={NEON.brand} strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </NeonPanel>
+      </HairlineGrid>
 
       {/* Plan split */}
-      <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Revenue by plan</CardTitle></CardHeader>
-        <CardContent>
+      <HairlineGrid cols="grid-cols-1">
+        <NeonPanel title="Revenue by plan">
           {planSplit.length === 0 ? (
-            <div className="h-[160px] flex flex-col items-center justify-center text-center text-sm text-muted-foreground">
-              No active paid subscriptions yet — plan breakdown will appear here once tenants subscribe.
-            </div>
+            <ChartEmpty label="No active paid subscriptions yet — plan breakdown will appear here once tenants subscribe." height={160} />
           ) : (
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={planSplit} layout="vertical" margin={{ left: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                <YAxis type="category" dataKey="plan" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} width={100} />
-                <Tooltip formatter={(v: any) => money(Number(v))} contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))", fontSize: 12 }} />
-                <Bar dataKey="mrr" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
+                <CartesianGrid {...neonGrid} />
+                <XAxis type="number" {...neonAxis} />
+                <YAxis type="category" dataKey="plan" {...neonAxis} width={100} />
+                <Tooltip {...neonTooltipStyle} formatter={(v: any) => money(Number(v))} />
+                <Bar dataKey="mrr" radius={0}>
+                  {planSplit.map((_, i) => (<Cell key={i} {...neonFill(seriesColor(i))} />))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
           )}
-        </CardContent>
-      </Card>
+        </NeonPanel>
+      </HairlineGrid>
     </div>
   );
 }

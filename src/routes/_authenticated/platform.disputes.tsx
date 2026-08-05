@@ -7,7 +7,7 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,15 @@ import { getMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { initiateRefund } from "@/lib/refunds.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/disputes")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Disputes — Grain Hero" },
+      { name: "description", content: "Platform · Disputes workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Disputes — Grain Hero" },
+      { property: "og:description", content: "Platform · Disputes workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformDisputesPage,
 });
 
@@ -120,11 +129,11 @@ function DisputeDialog({ id, onClose }: { id: string; onClose: () => void }) {
 
   const d = data?.dispute;
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>Dispute #{id.slice(0,8)}</DialogTitle></DialogHeader>
-        {!d ? <div className="text-sm text-muted-foreground">Loading…</div> : (
-          <div className="space-y-3 text-sm">
+    <Sheet open onOpenChange={(v) => !v && onClose()}>
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader><SheetTitle>Dispute #{id.slice(0,8)}</SheetTitle></SheetHeader>
+        {!d ? <div className="text-sm text-muted-foreground mt-4">Loading…</div> : (
+          <div className="space-y-3 text-sm mt-4">
             <div><b>Category:</b> {d.category}</div>
             <div className="rounded border p-2 bg-muted/40 whitespace-pre-wrap">{d.description}</div>
             {attachments.length > 0 && (
@@ -177,13 +186,13 @@ function DisputeDialog({ id, onClose }: { id: string; onClose: () => void }) {
             </div>
           </div>
         )}
-        <DialogFooter>
+        <SheetFooter className="mt-6">
           <Button variant="outline" onClick={onClose}>Close</Button>
           <Button disabled={!rezKey || resolveMut.isPending} onClick={() => resolveMut.mutate()}>
             {resolveMut.isPending ? "Working…" : "Resolve"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

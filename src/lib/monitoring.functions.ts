@@ -92,14 +92,36 @@ export const getIncidents = createServerFn({ method: "GET" })
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
 
+    // Fetch both system alerts (high/critical priority) AND field incidents
+    // (source = field_incident, priority = medium) in one query so the
+    // Incidents tab is never empty when there are field incidents reported.
     const { data: alerts } = await context.supabase
       .from("grain_alerts")
-      .select("id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at")
-      .in("priority", ["critical", "high"])
+      .select("id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source, recipient_id")
+      .or("priority.in.(critical,high),source.eq.field_incident")
       .order("triggered_at", { ascending: false })
       .limit(200);
 
     const list = (alerts ?? []) as any[];
+    if (list.length > 0) {
+      // Include recipient_id in name lookup for field incidents
+      const ids = Array.from(new Set(
+        list.flatMap((x) => [x.created_by, x.assigned_to, x.recipient_id]).filter(Boolean)
+      ));
+      if (ids.length > 0) {
+        const { data: profs } = await context.supabase.from("profiles").select("id, name, email").in("id", ids as string[]);
+        const nameOf = new Map((profs ?? []).map((p) => [p.id, p.name ?? p.email ?? p.id]));
+        for (const x of list) {
+          x.reportedByName = x.created_by   ? (nameOf.get(x.created_by)   ?? null) : null;
+          x.assignedToName = x.assigned_to  ? (nameOf.get(x.assigned_to)  ?? null) : null;
+          x.recipientName  = x.recipient_id ? (nameOf.get(x.recipient_id) ?? null) : null;
+          // Convenience flag so UI can distinguish field incidents from system alerts
+          x.isFieldIncident = x.source === "field_incident";
+          x.isMine    = x.created_by   === context.userId;
+          x.isForMe   = x.recipient_id === context.userId;
+        }
+      }
+    }
     const totals = {
       total: list.length,
       open: list.filter((x) => x.status !== "resolved").length,
@@ -139,21 +161,32 @@ export type PlatformIncidentsOverview = {
 
 export const getPlatformIncidentsOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PlatformIncidentsOverview> => {
+  .inputValidator((d: { scope?: "all" | "environmental" } | undefined) =>
+    z.object({ scope: z.enum(["all", "environmental"]).default("all") }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }): Promise<PlatformIncidentsOverview> => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin"]);
 
-    const { data: alerts, error } = await context.supabase
+    let q = context.supabase
       .from("grain_alerts")
-      .select("id, priority, status, admin_id, triggered_at, acknowledged_at, resolved_at")
+      .select("id, priority, status, admin_id, batch_id, triggered_at, acknowledged_at, resolved_at")
       .order("triggered_at", { ascending: false })
       .limit(2000);
+    // Super-admin's platform view only cares about environment-level status
+    // alerts (sensor down, threshold breach) — batch-linked alerts
+    // ("seeds spoiled" etc.) are an admin-level concern, not shown here.
+    if (data.scope === "environmental") q = q.is("batch_id", null);
+    const { data: alerts, error } = await q;
     if (error) throw error;
     const list = (alerts ?? []) as any[];
 
+    // grain_alerts.status is pending|acknowledged|resolved|escalated — "open"
+    // means anything not yet resolved. Neither "open" nor "active" is ever a
+    // real value, so this previously always counted zero open incidents.
     const totals = {
       total: list.length,
-      open: list.filter((x) => x.status === "open" || x.status === "active").length,
+      open: list.filter((x) => x.status !== "resolved").length,
       resolved: list.filter((x) => x.status === "resolved").length,
       acknowledged: list.filter((x) => x.acknowledged_at && !x.resolved_at).length,
     };
@@ -168,7 +201,7 @@ export const getPlatformIncidentsOverview = createServerFn({ method: "GET" })
       const key = a.admin_id ?? "unknown";
       const b = byTenant.get(key) ?? { total: 0, open: 0, critical: 0, lastTriggeredAt: null };
       b.total += 1;
-      if (a.status === "open" || a.status === "active") b.open += 1;
+      if (a.status !== "resolved") b.open += 1;
       if (a.priority === "critical") b.critical += 1;
       if (a.triggered_at && (!b.lastTriggeredAt || a.triggered_at > b.lastTriggeredAt)) b.lastTriggeredAt = a.triggered_at;
       byTenant.set(key, b);
@@ -209,6 +242,96 @@ export const acknowledgeIncident = createServerFn({ method: "POST" })
       patch.status = "resolved";
     }
     const { error } = await context.supabase.from("grain_alerts").update(patch).eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+const reportInput = z.object({
+  title: z.string().trim().min(3).max(200),
+  message: z.string().trim().min(3).max(1000),
+  priority: z.enum(["high", "critical"]).default("high"),
+  siloId: z.string().uuid().optional().nullable(),
+});
+
+/** Technician-only: report a field incident from their panel. */
+export const reportIncident = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => reportInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const r = await role(context.supabase, context.userId);
+    requireAny(r, ["technician"]);
+
+    const { data: profile } = await context.supabase
+      .from("profiles").select("admin_id").eq("id", context.userId).maybeSingle();
+    const tenantAdminId = (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
+
+    const { data: row, error } = await context.supabase
+      .from("grain_alerts")
+      .insert({
+        alert_id: `INC-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        admin_id: tenantAdminId,
+        silo_id: data.siloId ?? null,
+        title: data.title,
+        message: data.message,
+        priority: data.priority,
+        source: "manual",
+        status: "pending",
+        created_by: context.userId,
+        triggered_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { id: (row as { id: string }).id };
+  });
+
+const assignInput = z.object({ id: z.string().uuid(), technicianId: z.string().uuid().nullable() });
+
+/** Manager (or admin): assign which technician handles a reported incident. */
+export const assignIncident = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => assignInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const r = await role(context.supabase, context.userId);
+    requireAny(r, ["manager", "admin"]);
+
+    const { error } = await context.supabase
+      .from("grain_alerts")
+      .update({ assigned_to: data.technicianId, status: data.technicianId ? "acknowledged" : "pending" })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+const escalateInput = z.object({ id: z.string().uuid(), reason: z.string().trim().max(500).optional().nullable() });
+
+/**
+ * Manager (or admin): manual escalation to Super Admin. Incidents also
+ * auto-escalate after 30 minutes unresolved via the
+ * /api/public/hooks/alerts-escalation cron — this is the same transition,
+ * just triggered on demand instead of waiting.
+ */
+export const escalateIncident = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => escalateInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const r = await role(context.supabase, context.userId);
+    requireAny(r, ["manager", "admin"]);
+
+    const { data: current } = await context.supabase
+      .from("grain_alerts").select("escalation_level, escalation_history").eq("id", data.id).maybeSingle();
+    const c = current as { escalation_level?: number | null; escalation_history?: unknown[] | null } | null;
+    const history = Array.isArray(c?.escalation_history) ? c.escalation_history : [];
+    history.push({ at: new Date().toISOString(), by: context.userId, reason: data.reason ?? null, manual: true });
+
+    const { error } = await context.supabase
+      .from("grain_alerts")
+      .update({
+        status: "escalated",
+        escalation_level: Math.min(3, (c?.escalation_level ?? 0) + 1),
+        escalation_history: history as never,
+      })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
