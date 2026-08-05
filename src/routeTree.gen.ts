@@ -26,6 +26,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
+import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
 import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
@@ -271,6 +272,12 @@ const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CheckoutRoute,
 } as any)
+const SolutionsGrainStorageMonitoringRoute =
+  SolutionsGrainStorageMonitoringRouteImport.update({
+    id: '/solutions/grain-storage-monitoring',
+    path: '/solutions/grain-storage-monitoring',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -1247,6 +1254,7 @@ export interface FileRoutesByFullPath {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1423,6 +1431,7 @@ export interface FileRoutesByTo {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
   '/checkout': typeof CheckoutIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1603,6 +1612,7 @@ export interface FileRoutesById {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1783,6 +1793,7 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/marketplace/$slug'
+    | '/solutions/grain-storage-monitoring'
     | '/checkout/'
     | '/marketplace/'
     | '/admins/$adminId'
@@ -1959,6 +1970,7 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/marketplace/$slug'
+    | '/solutions/grain-storage-monitoring'
     | '/checkout'
     | '/marketplace'
     | '/admins/$adminId'
@@ -2138,6 +2150,7 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/checkout/success'
     | '/marketplace/$slug'
+    | '/solutions/grain-storage-monitoring'
     | '/checkout/'
     | '/marketplace/'
     | '/_authenticated/admins/$adminId'
@@ -2276,6 +2289,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  SolutionsGrainStorageMonitoringRoute: typeof SolutionsGrainStorageMonitoringRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -2453,6 +2467,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/checkout/'
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/solutions/grain-storage-monitoring': {
+      id: '/solutions/grain-storage-monitoring'
+      path: '/solutions/grain-storage-monitoring'
+      fullPath: '/solutions/grain-storage-monitoring'
+      preLoaderRoute: typeof SolutionsGrainStorageMonitoringRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/marketplace/$slug': {
       id: '/marketplace/$slug'
@@ -4001,6 +4022,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  SolutionsGrainStorageMonitoringRoute: SolutionsGrainStorageMonitoringRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
