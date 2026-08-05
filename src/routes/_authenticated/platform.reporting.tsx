@@ -14,7 +14,7 @@ import { listTickets, deleteTicket, type TicketRow } from "@/lib/tickets.functio
 import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
+import { Star, TrendingUp, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
@@ -123,7 +123,6 @@ function PlatformReportingPage() {
       <Tabs defaultValue={activeTab}>
         <TabsList>
           <TabsTrigger value="hardware">Hardware ({details?.hardwareOrders?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="alerts">Sensor alerts ({details?.hardwareAlerts?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="bugs">Bug reports ({(details?.bugReports?.length ?? 0) + bugTickets.length})</TabsTrigger>
           <TabsTrigger value="queries">Manager queries ({details?.managerQueries?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="feedback">Customer Feedback ({feedback.feedback.length})</TabsTrigger>
@@ -172,44 +171,6 @@ function PlatformReportingPage() {
                 </tbody>
               </table>
             )}
-          </AdminDataCard>
-        </TabsContent>
-
-        <TabsContent value="alerts" className="mt-4">
-          <AdminDataCard title="Hardware & sensor alerts" description="Device-related alerts across tenants">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium">Alert</th>
-                  <th className="text-left px-2 py-2 font-medium">Priority</th>
-                  <th className="text-right px-4 py-2 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {(details?.hardwareAlerts ?? []).map((a: Record<string, unknown>) => (
-                  <tr key={String(a.id)} className="hover:bg-slate-50">
-                    <td className="px-4 py-2">
-                      <p className="font-medium text-slate-900">{String(a.alert_type ?? "Alert")}</p>
-                      <p className="text-[11px] text-slate-500 truncate max-w-md">{String(a.message ?? "")}</p>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Badge
-                        variant="outline"
-                        className={a.priority === "critical" ? "border-red-300 text-red-700" : "border-amber-300 text-amber-700"}
-                      >
-                        {String(a.priority ?? "—")}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-2 text-right text-slate-500 whitespace-nowrap">
-                      {a.created_at ? new Date(String(a.created_at)).toLocaleDateString() : "—"}
-                    </td>
-                  </tr>
-                ))}
-                {!details?.hardwareAlerts?.length && (
-                  <tr><td colSpan={3} className="text-center text-slate-400 py-8">No hardware alerts</td></tr>
-                )}
-              </tbody>
-            </table>
           </AdminDataCard>
         </TabsContent>
 

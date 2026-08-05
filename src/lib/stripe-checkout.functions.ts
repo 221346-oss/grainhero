@@ -403,12 +403,11 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       .is("admin_id", null)
       .ilike("customer_email", email);
 
-    // Promote any still-pending orders to `new` so Platform → Orders shows
-    // them right away (fallback for when the Stripe webhook isn't reachable),
-    // and notify every super admin so they don't miss the sign-up.
+    // Promote only orders that have a Stripe session (i.e. actual payments),
+    // NOT draft silo requests (status=new, no stripe_session_id).
     try {
       const pendingIds = orders
-        .filter((o) => String(o.status ?? "") === "pending_payment")
+        .filter((o) => String(o.status ?? "") === "pending_payment" && o.stripe_session_id)
         .map((o) => String(o.id ?? ""))
         .filter(Boolean);
       if (pendingIds.length > 0) {
@@ -600,5 +599,177 @@ export const createStripeBillingPortalSession = createServerFn({ method: "POST" 
       "/billing_portal/sessions",
       stripeForm({ customer: customerId, return_url: `${origin}/subscription` }),
     );
+    return { url: session.url as string };
+  });
+
+// ── Draft silo request (no Stripe — super-admin approval required first) ─────
+
+const siloDraftInput = z.object({
+  address:  z.string().trim().min(3).max(300),
+  city:     z.string().trim().max(120).optional().nullable(),
+  country:  z.string().trim().min(1).max(120),
+  phone:    z.string().trim().min(4).max(40),
+  notes:    z.string().trim().max(1000).optional().nullable(),
+});
+
+/**
+ * Creates a hardware order with status "new" — no Stripe session, no payment.
+ * The super-admin reviews it on /platform/silo-requests and approves it.
+ * Once approved, the admin sees a "Proceed to payment" CTA on /orders that
+ * calls createSiloAddonCheckoutSession with the existing orderId.
+ */
+export const createSiloDraftRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => siloDraftInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: profileRow } = await context.supabase
+      .from("profiles")
+      .select("id, email, name, subscription_plan")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const profile = profileRow as {
+      id?: string; email?: string | null; name?: string | null; subscription_plan?: string | null;
+    } | null;
+
+    const planId   = profile?.subscription_plan ?? "basic";
+    const planMeta = pricingData.find((p: { id: string }) => p.id === planId) ?? pricingData[0];
+    const email    = (profile?.email ?? "").trim().toLowerCase();
+    const name     = (profile?.name ?? "").trim() || email;
+    const iotUnit  = Number(planMeta.iotCharge ?? 7000);
+
+    const { data: order, error } = await context.supabase
+      .from("hardware_orders" as never)
+      .insert({
+        admin_id:           context.userId,
+        customer_name:      name,
+        customer_email:     email,
+        plan_id:            planMeta.id,
+        plan_name:          planMeta.name,
+        hardware_quantity:  1,
+        hardware_unit_price: iotUnit,
+        hardware_total:     iotUnit,
+        currency:           "PKR",
+        install_address:    data.address,
+        install_city:       data.city ?? null,
+        install_country:    data.country,
+        contact_phone:      data.phone,
+        notes:              data.notes || null,
+        status:             "new",          // awaiting super-admin approval
+      } as never)
+      .select("id")
+      .single();
+    if (error) throw error;
+    const orderId = (order as { id: string }).id;
+
+    // Notify every super-admin so they don't miss it.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { emitToSuperAdmins } = await import("@/lib/notify");
+      await emitToSuperAdmins(supabaseAdmin, {
+        category:   "install",
+        severity:   "info",
+        title:      "New silo request awaiting approval",
+        body:       `${name} (${email}) submitted a silo install request for ${data.city ?? data.country}.`,
+        link:       "/platform/silo-requests",
+        entityType: "hardware_order",
+        entityId:   orderId,
+      });
+    } catch (e) {
+      console.warn("[siloDraft] notify super-admins failed:", (e as Error).message);
+    }
+
+    return { orderId };
+  });
+
+// ── Pay an already-approved silo order ───────────────────────────────────────
+
+const approvedOrderPayInput = z.object({ orderId: z.string().uuid() });
+
+/**
+ * Creates a Stripe one-time checkout session for an existing hardware order
+ * that was previously approved by the super-admin (status === "approved").
+ * Unlike createSiloAddonCheckoutSession this does NOT insert a new order row;
+ * it just attaches a Stripe session to the existing one and returns the URL.
+ */
+export const payApprovedSiloOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => approvedOrderPayInput.parse(d))
+  .handler(async ({ data, context }) => {
+    // Fetch the order — must belong to the current user and be approved.
+    const { data: orderRow, error: fetchErr } = await context.supabase
+      .from("hardware_orders" as never)
+      .select("*")
+      .eq("id", data.orderId)
+      .eq("admin_id", context.userId)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+    const order = orderRow as Record<string, unknown> | null;
+    if (!order) throw new Error("Order not found");
+    // Only accept 'approved' (first payment attempt) or 'pending_payment' (retry).
+    // 'new' = draft silo request awaiting super-admin review — must NOT be paid directly.
+    const payableStatuses = new Set(["approved", "pending_payment"]);
+    if (!payableStatuses.has(String(order.status))) {
+      if (String(order.status) === "new") {
+        throw new Error("Your silo request is still awaiting approval. You can only pay after a super-admin approves it.");
+      }
+      throw new Error(`Cannot pay for an order with status "${order.status}".`);
+    }
+
+    // Get or create Stripe customer.
+    const { data: profileRow } = await context.supabase
+      .from("profiles")
+      .select("id, email, name, stripe_customer_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const profile = profileRow as {
+      id?: string; email?: string | null; name?: string | null; stripe_customer_id?: string | null;
+    } | null;
+    const email = (profile?.email ?? String(order.customer_email ?? "")).trim().toLowerCase();
+    const name  = (profile?.name  ?? String(order.customer_name  ?? "")).trim() || email;
+
+    const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
+
+    let customerId = profile?.stripe_customer_id ?? (order.stripe_customer_id as string | null) ?? null;
+    if (!customerId && email) {
+      const created = await stripeFetch(
+        "/customers",
+        stripeForm({ email, name, "metadata[user_id]": context.userId }),
+      );
+      customerId = created.id as string;
+      // Use context.supabase — user owns their own profile row
+      await context.supabase
+        .from("profiles")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", context.userId);
+    }
+
+    const iotUnit   = Number(order.hardware_total ?? order.hardware_unit_price ?? 7000);
+    const currency  = String(order.currency ?? "PKR").toLowerCase();
+    const origin    = requireAppOrigin();
+
+    const params = stripeForm({
+      mode:                     "payment",
+      customer:                 customerId ?? undefined,
+      client_reference_id:      data.orderId,
+      success_url:              `${origin}/orders?silo_payment=success`,
+      cancel_url:               `${origin}/orders?silo_payment=cancelled`,
+      "metadata[user_id]":      context.userId,
+      "metadata[hardware_order_id]": data.orderId,
+      "metadata[addon]":        "true",
+      "line_items[0][quantity]":                               "1",
+      "line_items[0][price_data][currency]":                   currency,
+      "line_items[0][price_data][product_data][name]":         "Additional silo / IoT sensor",
+      "line_items[0][price_data][product_data][description]":  "One-time hardware + install fee for one additional silo.",
+      "line_items[0][price_data][unit_amount]":                String(Math.round(iotUnit * 100)),
+    });
+
+    const session = await stripeFetch("/checkout/sessions", params) as { url: string; id: string };
+
+    // Stash session id and advance to pending_payment — use context.supabase (user owns this order).
+    await context.supabase
+      .from("hardware_orders" as never)
+      .update({ stripe_session_id: session.id, status: "pending_payment" } as never)
+      .eq("id", data.orderId);
+
     return { url: session.url as string };
   });

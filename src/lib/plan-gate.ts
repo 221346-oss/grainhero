@@ -119,10 +119,15 @@ export async function getTenantUsage(
       .or(`admin_id.eq.${tenantAdminId},id.eq.${tenantAdminId}`);
     return count ?? 0;
   }
-  const { count } = await sb
+  let query = sb
     .from(table as "warehouses")
     .select("id", { count: "exact", head: true })
     .eq("admin_id", tenantAdminId);
+  // Exclude soft-deleted silos so they don't count toward the plan limit
+  if (feature === "max_silos") {
+    query = (query as any).is("deleted_at", null);
+  }
+  const { count } = await query;
   return count ?? 0;
 }
 
@@ -228,7 +233,8 @@ export function usePlanGate(feature: PlanFeature, currentUsage?: number) {
   return useQuery({
     queryKey: ["plan-gate", feature, currentUsage],
     queryFn: () => getPlanGate({ data: { feature, currentUsage } }),
-    staleTime: 60_000,
+    staleTime: 10_000,   // reduced from 60s — gate data must be fresh after requests
+    refetchOnWindowFocus: true,
   });
 }
 
