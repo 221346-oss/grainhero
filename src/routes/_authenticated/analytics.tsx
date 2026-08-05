@@ -15,6 +15,15 @@ import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 import { PageHeader } from "@/components/dashboards/_shared";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
+  head: () => ({
+    meta: [
+      { title: "Analytics — Grain Hero" },
+      { name: "description", content: "Analytics workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Analytics — Grain Hero" },
+      { property: "og:description", content: "Analytics workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AnalyticsPage,
 });
 

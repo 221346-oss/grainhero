@@ -12,6 +12,15 @@ import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
 import { listPolicies, listClaims } from "@/lib/team-settings-insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/business")({
+  head: () => ({
+    meta: [
+      { title: "Business — Grain Hero" },
+      { name: "description", content: "Business workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Business — Grain Hero" },
+      { property: "og:description", content: "Business workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: BusinessWorkspace,
 });
 

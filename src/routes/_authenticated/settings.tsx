@@ -25,7 +25,16 @@ import { initialsOf } from "@/hooks/useMyProfile";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { getPlatformSettings, updatePlatformSettings, type PlatformConfig, type IotPricingItem } from "@/lib/platform-settings.functions";
 
-export const Route = createFileRoute("/_authenticated/settings")({ component: SettingsPage });
+export const Route = createFileRoute("/_authenticated/settings")({
+  head: () => ({
+    meta: [
+      { title: "Settings — Grain Hero" },
+      { name: "description", content: "Settings workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Settings — Grain Hero" },
+      { property: "og:description", content: "Settings workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }), component: SettingsPage });
 
 type Prefs = { email_alerts?: boolean; sms_alerts?: boolean; push_notifications?: boolean; weekly_reports?: boolean; expiry_email_alerts?: boolean; expiry_push_alerts?: boolean };
 

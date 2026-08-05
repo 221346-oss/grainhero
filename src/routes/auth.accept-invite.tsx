@@ -14,7 +14,13 @@ const search = z.object({
 export const Route = createFileRoute("/auth/accept-invite")({
   validateSearch: (s) => search.parse(s),
   head: () => ({
-    meta: [{ title: "Accept your invitation — GrainHero" }],
+    meta: [
+      { title: "Accept your invitation — GrainHero" },
+      { name: "description", content: "Accept your GrainHero team invitation and set up your account." },
+      { property: "og:title", content: "Accept your invitation — GrainHero" },
+      { property: "og:description", content: "Accept your GrainHero team invitation and set up your account." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
   }),
   component: AcceptInvitePage,
 });

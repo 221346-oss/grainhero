@@ -17,6 +17,15 @@ import {
 } from "@/components/charts/neon";
 
 export const Route = createFileRoute("/_authenticated/platform/monitoring")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Monitoring — Grain Hero" },
+      { name: "description", content: "Platform · Monitoring workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Monitoring — Grain Hero" },
+      { property: "og:description", content: "Platform · Monitoring workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformMonitoringPage,
 });
 

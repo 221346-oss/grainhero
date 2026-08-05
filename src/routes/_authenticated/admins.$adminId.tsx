@@ -20,6 +20,15 @@ import { startImpersonation } from "@/lib/impersonation.functions";
 import { AdminProfileSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/admins/$adminId")({
+  head: () => ({
+    meta: [
+      { title: "Admins · AdminId — Grain Hero" },
+      { name: "description", content: "Admins · AdminId workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Admins · AdminId — Grain Hero" },
+      { property: "og:description", content: "Admins · AdminId workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdminProfilePage,
 });
 

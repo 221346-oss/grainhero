@@ -11,6 +11,15 @@ import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functio
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/security-center")({
+  head: () => ({
+    meta: [
+      { title: "Security Center — Grain Hero" },
+      { name: "description", content: "Security Center workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Security Center — Grain Hero" },
+      { property: "og:description", content: "Security Center workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SecurityCenterPage,
 });
 

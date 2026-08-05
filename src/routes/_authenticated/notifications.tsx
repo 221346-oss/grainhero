@@ -21,6 +21,15 @@ import { Switch } from "@/components/ui/switch";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
+  head: () => ({
+    meta: [
+      { title: "Notifications — Grain Hero" },
+      { name: "description", content: "Notifications workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Notifications — Grain Hero" },
+      { property: "og:description", content: "Notifications workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: NotificationsPage,
 });
 

@@ -9,7 +9,15 @@ import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
 import { getAuthRedirectOrigin } from "@/lib/app-url";
 
 export const Route = createFileRoute("/auth/forgot-password")({
-  head: () => ({ meta: [{ title: "Reset password — GrainHero" }] }),
+  head: () => ({
+    meta: [
+      { title: "Reset password — GrainHero" },
+      { name: "description", content: "Request a password reset link for your GrainHero account." },
+      { property: "og:title", content: "Reset password — GrainHero" },
+      { property: "og:description", content: "Request a password reset link for your GrainHero account." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ForgotPage,
 });
 

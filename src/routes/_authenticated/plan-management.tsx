@@ -30,6 +30,15 @@ import { Progress } from "@/components/ui/progress";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 export const Route = createFileRoute("/_authenticated/plan-management")({
+  head: () => ({
+    meta: [
+      { title: "Plan Management — Grain Hero" },
+      { name: "description", content: "Plan Management workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Plan Management — Grain Hero" },
+      { property: "og:description", content: "Plan Management workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlanManagementPage,
 });
 

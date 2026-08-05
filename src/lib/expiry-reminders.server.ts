@@ -45,7 +45,7 @@ export async function runExpiryReminders() {
             <h2>Your GrainHero ${s.plan_name ?? "plan"} expires in ${threshold} day${threshold === 1 ? "" : "s"}</h2>
             <p>Hi ${profile.name ?? "there"},</p>
             <p>Your subscription ends on <b>${new Date(s.end_date).toLocaleDateString()}</b>. Renew or manage your plan to avoid interruption.</p>
-            <p><a href="https://grainheroo.lovable.app/subscription" style="background:#059669;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Manage subscription</a></p>
+            <p><a href="${(process.env.PUBLIC_APP_URL ?? "https://grainhero.app").replace(/\/$/, "")}/subscription" style="background:#059669;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Manage subscription</a></p>
             <p style="color:#64748b;font-size:12px;margin-top:24px;">You can disable expiry alerts in Settings → Notifications.</p>
           </div>`;
         const res = await fetch(RESEND_URL, {

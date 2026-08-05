@@ -20,7 +20,16 @@ import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
-export const Route = createFileRoute("/_authenticated/platform/users")({ component: UsersPage });
+export const Route = createFileRoute("/_authenticated/platform/users")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Users — Grain Hero" },
+      { name: "description", content: "Platform · Users workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Users — Grain Hero" },
+      { property: "og:description", content: "Platform · Users workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }), component: UsersPage });
 
 type Row = { id: string; name: string | null; email: string | null; business_type: string | null; blocked: boolean | null; email_verified: boolean | null; created_at: string | null; last_login: string | null; role: string; admin_id: string | null };
 

@@ -18,6 +18,15 @@ import {
 import React from "react";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
+  head: () => ({
+    meta: [
+      { title: "Platform — Grain Hero" },
+      { name: "description", content: "Platform workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform — Grain Hero" },
+      { property: "og:description", content: "Platform workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformOverviewPage,
 });
 

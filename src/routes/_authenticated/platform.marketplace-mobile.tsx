@@ -16,6 +16,15 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/platform/marketplace-mobile")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Marketplace Mobile — Grain Hero" },
+      { name: "description", content: "Platform · Marketplace Mobile workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Marketplace Mobile — Grain Hero" },
+      { property: "og:description", content: "Platform · Marketplace Mobile workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MarketplaceMobilePage,
 });
 

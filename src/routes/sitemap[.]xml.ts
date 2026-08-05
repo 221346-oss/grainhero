@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const BASE_URL = "https://frfgmbgzildtfchtmchr.lovable.app";
+const BASE_URL = "https://grainhero.app";
 
 interface SitemapEntry {
   path: string;
@@ -23,6 +23,32 @@ export const Route = createFileRoute("/sitemap.xml")({
       GET: async () => {
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
+          {
+            path: "/solutions/grain-storage-monitoring",
+            changefreq: "monthly",
+            priority: "0.9",
+          },
+          {
+            path: "/solutions/silo-monitoring-system",
+            changefreq: "monthly",
+            priority: "0.9",
+          },
+          {
+            path: "/solutions/grain-management-software",
+            changefreq: "monthly",
+            priority: "0.9",
+          },
+          { path: "/guides/grain-storage", changefreq: "monthly", priority: "0.9" },
+          { path: "/about", changefreq: "monthly", priority: "0.7" },
+          { path: "/team", changefreq: "monthly", priority: "0.6" },
+          { path: "/contact", changefreq: "monthly", priority: "0.7" },
+          { path: "/blog", changefreq: "weekly", priority: "0.7" },
+          { path: "/docs", changefreq: "monthly", priority: "0.6" },
+          { path: "/help", changefreq: "monthly", priority: "0.6" },
+          { path: "/marketplace", changefreq: "daily", priority: "0.8" },
+          { path: "/privacy", changefreq: "yearly", priority: "0.3" },
+          { path: "/terms", changefreq: "yearly", priority: "0.3" },
+          { path: "/cookies", changefreq: "yearly", priority: "0.3" },
         ];
 
         const urls = entries.map((entry) =>

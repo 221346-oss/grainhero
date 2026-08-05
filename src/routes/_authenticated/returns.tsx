@@ -15,6 +15,15 @@ import { toast } from "sonner";
 import { PackageX } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/returns")({
+  head: () => ({
+    meta: [
+      { title: "Returns — Grain Hero" },
+      { name: "description", content: "Returns workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Returns — Grain Hero" },
+      { property: "og:description", content: "Returns workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: ReturnsPage,
 });
 

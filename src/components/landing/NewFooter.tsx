@@ -60,31 +60,31 @@ export function NewFooter() {
 
           {/* Product Column */}
           <div>
-            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Product</h3>
+            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Solutions</h3>
             <ul className="space-y-3">
+              <li>
+                <Link to="/solutions/grain-storage-monitoring" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Grain storage monitoring
+                </Link>
+              </li>
+              <li>
+                <Link to="/solutions/silo-monitoring-system" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Silo monitoring system
+                </Link>
+              </li>
+              <li>
+                <Link to="/solutions/grain-management-software" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Grain management software
+                </Link>
+              </li>
               <li>
                 <Link to="/" hash="features" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Features
                 </Link>
               </li>
               <li>
-                <Link to="/marketplace" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
-                  Shop hardware
-                </Link>
-              </li>
-              <li>
                 <Link to="/" hash="how-it-works" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   How It Works
-                </Link>
-              </li>
-              <li>
-                <Link to="/" hash="technology" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
-                  Technology
-                </Link>
-              </li>
-              <li>
-                <Link to="/" hash="faq" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
-                  FAQ
                 </Link>
               </li>
             </ul>
@@ -106,7 +106,12 @@ export function NewFooter() {
               </li>
               <li>
                 <Link to="/blog" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
-                  Blog
+                  Resources
+                </Link>
+              </li>
+              <li>
+                <Link to="/guides/grain-storage" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Grain storage guide
                 </Link>
               </li>
                <li>

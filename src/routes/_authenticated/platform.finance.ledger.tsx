@@ -8,6 +8,15 @@ import { LedgerSkeleton } from "@/components/app/skeletons";
 import { listLedgerEntries } from "@/lib/finance-ledger.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/finance/ledger")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Finance · Ledger — Grain Hero" },
+      { name: "description", content: "Platform · Finance · Ledger workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Finance · Ledger — Grain Hero" },
+      { property: "og:description", content: "Platform · Finance · Ledger workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: LedgerPage,
 });
 

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://frfgmbgzildtfchtmchr.lovable.app/sitemap.xml
+Sitemap: https://grainhero.app/sitemap.xml

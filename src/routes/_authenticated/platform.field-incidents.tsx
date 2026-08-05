@@ -14,6 +14,15 @@ import { MessageSquare } from "lucide-react";
 import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
 
 export const Route = createFileRoute("/_authenticated/platform/field-incidents")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Field Incidents — Grain Hero" },
+      { name: "description", content: "Platform · Field Incidents workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Field Incidents — Grain Hero" },
+      { property: "og:description", content: "Platform · Field Incidents workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: FieldIncidentsPage,
 });
 

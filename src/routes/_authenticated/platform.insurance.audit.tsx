@@ -14,6 +14,15 @@ import { toast } from "sonner";
 import { listInsuranceAudit, exportInsuranceAuditCsv } from "@/lib/insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/insurance/audit")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Insurance · Audit — Grain Hero" },
+      { name: "description", content: "Platform · Insurance · Audit workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Insurance · Audit — Grain Hero" },
+      { property: "og:description", content: "Platform · Insurance · Audit workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: InsuranceAuditPage,
 });
 

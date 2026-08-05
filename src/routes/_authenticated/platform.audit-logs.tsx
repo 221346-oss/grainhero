@@ -20,6 +20,15 @@ const getAudit = createServerFn({ method: "GET" })
   });
 
 export const Route = createFileRoute("/_authenticated/platform/audit-logs")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Audit Logs — Grain Hero" },
+      { name: "description", content: "Platform · Audit Logs workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Audit Logs — Grain Hero" },
+      { property: "og:description", content: "Platform · Audit Logs workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AuditLogsPage,
 });
 

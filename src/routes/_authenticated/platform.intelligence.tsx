@@ -9,6 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { getPlatformIntelligenceOverview } from "@/lib/platform-intelligence.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/intelligence")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Intelligence — Grain Hero" },
+      { name: "description", content: "Platform · Intelligence workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Intelligence — Grain Hero" },
+      { property: "og:description", content: "Platform · Intelligence workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformIntelligencePage,
 });
 
