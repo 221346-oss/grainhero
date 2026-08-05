@@ -1,13 +1,15 @@
 // components/ui/alert-card.tsx
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type HTMLMotionProps } from "framer-motion";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 // Define the props for the AlertCard component
-interface AlertCardProps extends React.HTMLAttributes<HTMLDivElement> {
+// Extends motion's div props (not React.HTMLAttributes) so the {...props}
+// spread onto motion.div doesn't clash on drag/animation handler signatures.
+interface AlertCardProps extends Omit<HTMLMotionProps<"div">, "ref"> {
   icon?: React.ReactNode;
   title: string;
   description: string;
@@ -38,7 +40,7 @@ const AlertCard = React.forwardRef<HTMLDivElement, AlertCardProps>(
         y: 0,
         scale: 1,
         transition: {
-          type: "spring",
+          type: "spring" as const,
           stiffness: 400,
           damping: 25,
           staggerChildren: 0.1,
