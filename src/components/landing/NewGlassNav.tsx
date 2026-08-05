@@ -8,9 +8,15 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/', hash: 'how-it-works', label: 'How it works' },
   { to: '/about', label: 'About' },
-  { to: '/team', label: 'Team' },
-  { to: '/blog', label: 'Blog' },
+  { to: '/blog', label: 'Resources' },
   { to: '/contact', label: 'Contact' },
+]
+
+const solutionLinks = [
+  { to: '/solutions/grain-storage-monitoring', label: 'Grain storage monitoring' },
+  { to: '/solutions/silo-monitoring-system', label: 'Silo monitoring system' },
+  { to: '/solutions/grain-management-software', label: 'Grain management software' },
+  { to: '/guides/grain-storage', label: 'Grain storage guide' },
 ]
 
 export function NewGlassNav() {
@@ -96,6 +102,27 @@ export function NewGlassNav() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+              <div className="relative group">
+                <button
+                  type="button"
+                  className="text-[#FAFAF7]/90 hover:text-[#FAFAF7] font-medium transition-colors text-sm tracking-wide cursor-pointer"
+                >
+                  Solutions
+                </button>
+                <div className="invisible absolute left-1/2 top-full z-50 w-64 -translate-x-1/2 pt-4 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                  <div className="rounded-xl border border-white/10 bg-[#111512] p-2 shadow-2xl">
+                    {solutionLinks.map((s) => (
+                      <Link
+                        key={s.to}
+                        to={s.to}
+                        className="block rounded-lg px-3 py-2 text-sm text-[#FAFAF7]/80 transition-colors hover:bg-[#2FA84F]/15 hover:text-[#FAFAF7]"
+                      >
+                        {s.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
               {navLinks.map((link) => (
                 <Link
                   key={`${link.to}-${link.hash || ''}`}
@@ -193,6 +220,24 @@ export function NewGlassNav() {
                   </Link>
                 </motion.div>
               ))}
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45 }}
+                className="flex flex-col items-center gap-3 pt-2"
+              >
+                {solutionLinks.map((s) => (
+                  <Link
+                    key={s.to}
+                    to={s.to}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-[#FAFAF7]/70 text-base hover:text-[#2FA84F] transition-colors"
+                  >
+                    {s.label}
+                  </Link>
+                ))}
+              </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
