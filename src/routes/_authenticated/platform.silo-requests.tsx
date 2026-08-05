@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/platform/silo-requests")({
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, { badge: string; label: string }> = {
-  pending_payment: { badge: "bg-slate-100 text-slate-600 border-slate-200",      label: "Pending payment" },
+  pending_payment: { badge: "bg-muted text-muted-foreground border-border",      label: "Pending payment" },
   paid:            { badge: "bg-blue-100 text-blue-800 border-blue-200",          label: "Paid"            },
   new:             { badge: "bg-amber-100 text-amber-800 border-amber-200",       label: "New"             },
   approved:        { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Approved"        },
@@ -40,7 +40,7 @@ const STATUS_CFG: Record<string, { badge: string; label: string }> = {
   installed:       { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Installed"       },
   live:            { badge: "bg-emerald-600 text-white border-emerald-600",        label: "Live"            },
   cancelled:       { badge: "bg-red-100 text-red-700 border-red-200",             label: "Cancelled"       },
-  refunded:        { badge: "bg-slate-200 text-slate-600 border-slate-300",       label: "Refunded"        },
+  refunded:        { badge: "bg-muted text-muted-foreground border-border",       label: "Refunded"        },
 };
 
 // Pending review = only orders that haven't been approved/rejected yet.
@@ -83,6 +83,7 @@ function SiloRequestsPage() {
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["platform-orders"],
     queryFn:  () => fetchFn(),
+    staleTime: 30_000,
     refetchInterval: 60_000,
   });
 
@@ -216,69 +217,76 @@ function SiloRequestsPage() {
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-[13px] text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn("w-3 h-3", isFetching && "animate-spin")} />
           Refresh
         </button>
       }
     >
-      {/* Summary tiles ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Summary tiles — neon hairline gap-px grid ─────────────────────── */}
+      <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
         {TAB_CFG.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={cn(
-              "relative rounded-lg border bg-white overflow-hidden text-left transition-all hover:shadow-sm",
-              tab === t.key ? "border-2 shadow-sm" : "border-slate-200",
-            )}
-            style={tab === t.key ? { borderColor: t.color } : undefined}
+            className={`bg-background p-4 text-left transition-colors hover:bg-muted/40 focus:outline-none ${tab === t.key ? "bg-muted/60" : ""}`}
           >
-            <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg" style={{ background: t.color }} />
-            <div className="pl-5 pr-4 py-4">
-              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">{t.label}</p>
-              <p className="text-3xl font-bold text-slate-900 tabular-nums leading-none">{counts[t.key]}</p>
-            </div>
+            <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1">{t.label}</p>
+            <p className={`text-2xl font-medium tabular-nums leading-none ${
+              t.key === "pending" && counts.pending > 0 ? "text-warning" :
+              t.key === "rejected" ? "text-severity-critical" :
+              t.key === "approved" ? "text-success" :
+              "text-foreground"
+            }`}>{counts[t.key]}</p>
+            {tab === t.key && <span className="mt-1.5 inline-block w-4 h-px bg-foreground/40" />}
           </button>
         ))}
       </div>
 
       {/* Search ─────────────────────────────────────────────────────── */}
       <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, plan, city…"
-          className="pl-8 h-8 text-xs"
+          className="pl-8 h-8 text-[13px] bg-transparent"
         />
       </div>
 
       {/* Request list ───────────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="space-y-2">
-          {[0, 1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg bg-slate-100 animate-pulse" />)}
+        <div className="grid gap-px bg-border rounded-md overflow-hidden">
+          {[0,1,2,3].map((i) => (
+            <div key={i} className="bg-background px-4 py-4 flex items-center gap-4">
+              <div className="flex-1 space-y-2">
+                <div className="animate-pulse rounded bg-muted h-[13px] w-32" />
+                <div className="animate-pulse rounded bg-muted h-[11px] w-24" />
+              </div>
+              <div className="animate-pulse rounded bg-muted h-5 w-16" />
+            </div>
+          ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white py-16 text-center">
-          <Package className="mx-auto h-8 w-8 text-slate-300 mb-3" />
-          <p className="text-sm text-slate-400">
+        <div className="border border-border rounded-md bg-background py-16 text-center">
+          <Package className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
+          <p className="text-[13px] text-muted-foreground">
             {tab === "pending" ? "No pending silo requests" : "No requests match your filters"}
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b border-slate-100 px-5 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/80">
+        <div className="border border-border rounded-md overflow-hidden bg-background">
+          <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b border-border px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
             <span>Requester</span><span>Plan</span><span>Qty</span>
             <span>Location</span><span>Status</span><span />
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-border">
             {filtered.map((order) => (
               <RequestRow key={order.id} order={order} tabColor={tabColor} onOpen={() => openSheet(order)} />
             ))}
           </div>
-          <div className="px-5 py-2 border-t border-slate-100 text-xs text-slate-400">
+          <div className="px-4 py-2 border-t border-border text-[12px] text-muted-foreground">
             {filtered.length} request{filtered.length !== 1 ? "s" : ""}
           </div>
         </div>
@@ -306,49 +314,49 @@ function SiloRequestsPage() {
               {/* Request details */}
               <div className="space-y-4 text-sm flex-1">
                 <DetailRow icon={<User className="h-4 w-4" />} label="Requester">
-                  <p className="font-medium text-slate-900">{selected.buyer?.name ?? selected.customer_name ?? "—"}</p>
-                  <p className="text-xs text-slate-500">{selected.buyer?.email ?? selected.customer_email ?? ""}</p>
+                  <p className="font-medium text-foreground">{selected.buyer?.name ?? selected.customer_name ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground">{selected.buyer?.email ?? selected.customer_email ?? ""}</p>
                 </DetailRow>
 
                 {selected.business_name && (
                   <DetailRow icon={<Building2 className="h-4 w-4" />} label="Business">
-                    <p className="font-medium text-slate-900">{selected.business_name}</p>
+                    <p className="font-medium text-foreground">{selected.business_name}</p>
                   </DetailRow>
                 )}
 
                 <DetailRow icon={<Package className="h-4 w-4" />} label="Plan / hardware">
-                  <p className="font-medium text-slate-900">{selected.plan_name ?? selected.plan_id ?? "—"}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-medium text-foreground">{selected.plan_name ?? selected.plan_id ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground">
                     {selected.hardware_quantity ?? 1} silo unit{(selected.hardware_quantity ?? 1) !== 1 ? "s" : ""}
                     {" · "}PKR {fmt(Number(selected.hardware_total ?? 0))}
                   </p>
                 </DetailRow>
 
                 <DetailRow icon={<MapPin className="h-4 w-4" />} label="Install location">
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-foreground">
                     {[selected.install_address, selected.install_city, selected.install_country].filter(Boolean).join(", ") || "—"}
                   </p>
                 </DetailRow>
 
                 {selected.contact_phone && (
                   <DetailRow icon={<Phone className="h-4 w-4" />} label="Contact phone">
-                    <p className="font-medium text-slate-900">{selected.contact_phone}</p>
+                    <p className="font-medium text-foreground">{selected.contact_phone}</p>
                   </DetailRow>
                 )}
 
                 {selected.preferred_install_date && (
                   <DetailRow icon={<Clock className="h-4 w-4" />} label="Preferred install date">
-                    <p className="font-medium text-slate-900">{new Date(selected.preferred_install_date).toLocaleDateString()}</p>
+                    <p className="font-medium text-foreground">{new Date(selected.preferred_install_date).toLocaleDateString()}</p>
                   </DetailRow>
                 )}
 
                 <DetailRow icon={<Clock className="h-4 w-4" />} label="Requested on">
-                  <p className="font-medium text-slate-900">{new Date(selected.created_at).toLocaleString()}</p>
+                  <p className="font-medium text-foreground">{new Date(selected.created_at).toLocaleString()}</p>
                 </DetailRow>
 
                 {selected.notes && (
                   <DetailRow icon={<MessageSquare className="h-4 w-4" />} label="Notes from tenant">
-                    <p className="text-slate-700 whitespace-pre-wrap">{selected.notes}</p>
+                    <p className="text-foreground whitespace-pre-wrap">{selected.notes}</p>
                   </DetailRow>
                 )}
 
@@ -363,7 +371,7 @@ function SiloRequestsPage() {
               {PENDING_STATUSES.has(selected.status) && selected.admin_id && (
                 <div className="mt-5">
                   {siloInfoQuery.isLoading ? (
-                    <div className="h-14 rounded-lg bg-slate-100 animate-pulse" />
+                    <div className="h-14 rounded-lg bg-muted animate-pulse" />
                   ) : siloInfo ? (
                     <PlanLimitBar info={siloInfo} />
                   ) : null}
@@ -372,7 +380,7 @@ function SiloRequestsPage() {
 
               {/* ── Inline approve / reject / upgrade panels (pending only) ── */}
               {PENDING_STATUSES.has(selected.status) && (
-                <div className="mt-4 border-t border-slate-100 pt-5 space-y-3">
+                <div className="mt-4 border-t border-border pt-5 space-y-3">
 
                   {/* Default action buttons */}
                   {mode === "view" && (
@@ -422,8 +430,8 @@ function SiloRequestsPage() {
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
                       <p className="text-sm font-semibold text-emerald-900">Approving request</p>
                       <div>
-                        <Label htmlFor="approve-notes" className="text-xs font-medium text-slate-700">
-                          Notes for the tenant <span className="text-slate-400">(optional)</span>
+                        <Label htmlFor="approve-notes" className="text-xs font-medium text-foreground">
+                          Notes for the tenant <span className="text-muted-foreground">(optional)</span>
                         </Label>
                         <Textarea
                           id="approve-notes"
@@ -447,7 +455,7 @@ function SiloRequestsPage() {
                     <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 space-y-3">
                       <p className="text-sm font-semibold text-red-900">Rejecting request</p>
                       <div>
-                        <Label htmlFor="reject-reason" className="text-xs font-medium text-slate-700">
+                        <Label htmlFor="reject-reason" className="text-xs font-medium text-foreground">
                           Reason <span className="text-red-500">*</span>
                         </Label>
                         <Textarea
@@ -472,7 +480,7 @@ function SiloRequestsPage() {
                     <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 space-y-3">
                       <p className="text-sm font-semibold text-amber-900">Send plan upgrade request to tenant</p>
                       <div>
-                        <Label htmlFor="upgrade-note" className="text-xs font-medium text-slate-700">
+                        <Label htmlFor="upgrade-note" className="text-xs font-medium text-foreground">
                           Message to tenant
                         </Label>
                         <Textarea
@@ -515,39 +523,44 @@ function PlanLimitBar({ info }: {
 
   return (
     <div className={cn(
-      "rounded-lg border p-3 space-y-2",
-      overLimit ? "border-red-200 bg-red-50/60" : atLimit ? "border-amber-200 bg-amber-50/60" : "border-slate-200 bg-slate-50/60",
+      "rounded-md border p-3 space-y-2",
+      overLimit ? "border-severity-critical/30 bg-severity-critical/5" :
+      atLimit   ? "border-warning/30 bg-warning/5" :
+                  "border-border bg-muted/30",
     )}>
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+        <div className="flex items-center gap-1.5 text-[12px] font-medium text-foreground">
           <TrendingUp className="h-3.5 w-3.5" />
           Plan usage — {info.planName}
         </div>
         {overLimit ? (
-          <span className="flex items-center gap-1 text-[11px] font-bold text-red-600">
+          <span className="flex items-center gap-1 text-[11px] font-medium text-severity-critical">
             <AlertTriangle className="h-3 w-3" /> Over limit
           </span>
         ) : atLimit ? (
-          <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600">
+          <span className="flex items-center gap-1 text-[11px] font-medium text-warning">
             <AlertTriangle className="h-3 w-3" /> At limit
           </span>
         ) : null}
       </div>
       <div className="flex items-center gap-3">
         {!info.unlimited && (
-          <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+          <div className="flex-1 h-1.5 rounded-none bg-muted overflow-hidden">
             <div
-              className={cn("h-full rounded-full transition-all", overLimit || atLimit ? "bg-red-500" : "bg-emerald-500")}
-              style={{ width: `${pct}%` }}
+              className="h-full transition-all"
+              style={{
+                width: `${pct}%`,
+                background: overLimit || atLimit ? "hsl(var(--severity-critical))" : "hsl(var(--success))",
+              }}
             />
           </div>
         )}
-        <span className="text-xs font-medium text-slate-700 tabular-nums shrink-0">
-          {info.unlimited ? "Unlimited silos" : `${info.used} / ${info.limit} silos used`}
+        <span className="text-[12px] font-medium text-foreground tabular-nums shrink-0">
+          {info.unlimited ? "Unlimited silos" : `${info.used} / ${info.limit} silos`}
         </span>
       </div>
       {(overLimit || atLimit) && (
-        <p className="text-[11px] text-amber-700">
+        <p className="text-[11px] text-muted-foreground">
           Approving this request would exceed {info.tenantName}'s plan limit.
           Use <strong>Request plan upgrade</strong> below to ask them to upgrade first.
         </p>
@@ -566,15 +579,15 @@ function RequestRow({ order, tabColor, onOpen }: { order: any; tabColor: string;
     <button
       type="button"
       onClick={onOpen}
-      className="w-full grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-2 md:gap-0 items-center px-5 py-4 hover:bg-slate-50/70 transition-colors text-left"
+      className="w-full grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-2 md:gap-0 items-center px-5 py-4 hover:bg-muted/30/70 transition-colors text-left"
     >
       <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-800 truncate">{order.buyer?.name ?? order.customer_name ?? "—"}</p>
-        <p className="text-[11px] text-slate-400 truncate">{order.buyer?.email ?? order.customer_email ?? ""}</p>
+        <p className="text-sm font-medium text-foreground truncate">{order.buyer?.name ?? order.customer_name ?? "—"}</p>
+        <p className="text-[11px] text-muted-foreground truncate">{order.buyer?.email ?? order.customer_email ?? ""}</p>
       </div>
-      <div className="text-sm text-slate-600 truncate">{order.plan_name ?? order.plan_id ?? "—"}</div>
-      <div className="text-sm text-slate-600">{order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}</div>
-      <div className="text-xs text-slate-500 flex items-center gap-1">
+      <div className="text-sm text-muted-foreground truncate">{order.plan_name ?? order.plan_id ?? "—"}</div>
+      <div className="text-sm text-muted-foreground">{order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}</div>
+      <div className="text-xs text-muted-foreground flex items-center gap-1">
         <MapPin className="w-3 h-3 shrink-0" />
         <span className="truncate">{[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}</span>
       </div>
@@ -582,7 +595,7 @@ function RequestRow({ order, tabColor, onOpen }: { order: any; tabColor: string;
         <Badge variant="outline" className={cn("capitalize text-xs", cfg.badge)}>{cfg.label}</Badge>
         {isPending && <p className="text-[10px] text-amber-500 font-medium mt-1">● Awaiting review</p>}
       </div>
-      <div className="text-xs text-slate-400 text-right md:pl-4 shrink-0">
+      <div className="text-xs text-muted-foreground text-right md:pl-4 shrink-0">
         {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
       </div>
     </button>
@@ -593,9 +606,9 @@ function RequestRow({ order, tabColor, onOpen }: { order: any; tabColor: string;
 function DetailRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-0.5 text-slate-400 shrink-0">{icon}</div>
+      <div className="mt-0.5 text-muted-foreground shrink-0">{icon}</div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">{label}</p>
         {children}
       </div>
     </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 const STAGES: { id: string; label: string; color: string }[] = [
   { id: "appointmentscheduled", label: "Trial Started", color: "bg-blue-100 text-blue-700 border-blue-200" },
@@ -49,6 +50,8 @@ function PipelinePage() {
   const wonDeals = dealsByStage.get("closedwon")?.length ?? 0;
   const wonValue = (dealsByStage.get("closedwon") ?? []).reduce((sum, d) => sum + (Number(d.properties?.amount) || 0), 0);
 
+  if (isLoading) return <KpiChartHubSkeleton />;
+
   return (
     <AdminPageShell title="Sales pipeline" subtitle="HubSpot deals across the sales funnel">
       <AdminSummaryTiles
@@ -61,13 +64,10 @@ function PipelinePage() {
         ]}
       />
 
-      {isLoading && (
-        <div className="text-center py-8 text-sm text-slate-500">Loading pipeline…</div>
-      )}
       {error && (
         <Card><CardContent className="p-4 text-sm text-red-600">{(error as Error).message}</CardContent></Card>
       )}
-      {!isLoading && !error && (
+      {!error && (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {STAGES.map((s) => {
             const list = dealsByStage.get(s.id) ?? [];

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { reportFieldIncident, listFieldIncidents, closeFieldIncident } from "@/lib/field-incidents.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
+import { getMyRole } from "@/lib/roles.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +17,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 
 const emptyForm = { title: "", description: "", recipientId: "" };
 
+const ROUTING_COPY: Record<string, string> = {
+  manager: "Auto-routed to your Admin.",
+  admin: "Auto-routed to the Super Admin.",
+};
+
 function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const qc = useQueryClient();
   const listMembersFn = useServerFn(listTeamMembers);
+  const roleFn = useServerFn(getMyRole);
   const reportFn = useServerFn(reportFieldIncident);
   const [form, setForm] = useState(emptyForm);
   const [myId, setMyId] = useState<string | null>(null);
@@ -27,12 +34,21 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
     supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null));
   }, []);
 
-  const membersQ = useQuery({ queryKey: ["team-members"], queryFn: () => listMembersFn() as Promise<any[]>, enabled: open });
-  const recipients = (membersQ.data ?? []).filter((m: any) => m.id !== myId && m.role !== "pending" && m.role !== "super_admin");
+  const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn(), enabled: open });
+  const myRole = roleQ.data?.role ?? null;
+  const isTechnician = myRole === "technician";
+
+  const membersQ = useQuery({ queryKey: ["team-members"], queryFn: () => listMembersFn() as Promise<any[]>, enabled: open && isTechnician });
+  // Technician picks exactly one Manager — the auto-routing rule for this creator role.
+  const recipients = (membersQ.data ?? []).filter((m: any) => m.id !== myId && m.role === "manager");
 
   const mutation = useMutation({
     mutationFn: () =>
-      reportFn({ data: { title: form.title.trim(), description: form.description.trim(), recipientId: form.recipientId } }),
+      reportFn({ data: {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        recipientId: isTechnician ? form.recipientId : null,
+      } }),
     onSuccess: () => {
       toast.success("Incident reported");
       qc.invalidateQueries({ queryKey: ["field-incidents"] });
@@ -42,29 +58,37 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
     onError: (e: Error) => toast.error(e.message || "Could not report incident"),
   });
 
+  const canSubmit = form.title.trim().length >= 3 && form.description.trim().length >= 3
+    && (!isTechnician || !!form.recipientId) && !!myRole;
+
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setForm(emptyForm); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Report a field incident</DialogTitle>
-          <DialogDescription>Send it to a specific teammate — everyone in your tenant can still see it.</DialogDescription>
+          <DialogDescription>Only you and the recipient can see this — it isn&apos;t broadcast to the rest of your team.</DialogDescription>
         </DialogHeader>
         <form className="grid gap-3 py-1" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
           <div className="grid gap-1.5">
             <Label>Title</Label>
             <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required minLength={3} />
           </div>
-          <div className="grid gap-1.5">
-            <Label>Send to</Label>
-            <Select value={form.recipientId} onValueChange={(v) => setForm((f) => ({ ...f, recipientId: v }))}>
-              <SelectTrigger><SelectValue placeholder="Pick a teammate" /></SelectTrigger>
-              <SelectContent>
-                {recipients.map((m: any) => (
-                  <SelectItem key={m.id} value={m.id}>{m.name ?? m.email} · {m.role}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isTechnician ? (
+            <div className="grid gap-1.5">
+              <Label>Send to (manager)</Label>
+              <Select value={form.recipientId} onValueChange={(v) => setForm((f) => ({ ...f, recipientId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Pick a manager" /></SelectTrigger>
+                <SelectContent>
+                  {recipients.map((m: any) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name ?? m.email}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">Not acknowledged in 30 minutes? It&apos;s auto-reassigned to your Admin.</p>
+            </div>
+          ) : myRole ? (
+            <p className="text-xs text-muted-foreground rounded-md bg-muted/40 px-3 py-2">{ROUTING_COPY[myRole] ?? "Auto-routed."}</p>
+          ) : null}
           <div className="grid gap-1.5">
             <Label>What happened?</Label>
             <Textarea rows={4} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} required minLength={3} />
@@ -73,7 +97,7 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button
               type="submit"
-              disabled={mutation.isPending || form.title.trim().length < 3 || form.description.trim().length < 3 || !form.recipientId}
+              disabled={mutation.isPending || !canSubmit}
               className="gap-2"
             >
               {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />}
@@ -104,7 +128,7 @@ export function FieldIncidentsSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">Report something to a specific teammate — visible to your whole team.</p>
+        <p className="text-xs text-muted-foreground">Auto-routed up your chain of command — private between you and the recipient.</p>
         <Button size="sm" className="gap-1.5" onClick={() => setDlgOpen(true)}>
           <Flag className="w-3.5 h-3.5" /> Report incident
         </Button>
@@ -130,6 +154,7 @@ export function FieldIncidentsSection() {
                     <Badge className={i.status === "closed" ? "bg-emerald-500/20 text-emerald-600" : "bg-amber-500/20 text-amber-600"}>
                       {i.status === "closed" ? "closed" : "open"}
                     </Badge>
+                    {i.wasReassigned && <Badge variant="outline" className="text-[10px]">reassigned</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{i.message}</p>
                   <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3">

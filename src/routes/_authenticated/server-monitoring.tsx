@@ -7,6 +7,7 @@ import { Server, Wifi, WifiOff, Battery, Signal } from "lucide-react";
 import { getDeviceHealth } from "@/lib/operations2.functions";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { CommandConsoleSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/server-monitoring")({
   component: ServerMonitoringPage,
@@ -22,7 +23,9 @@ function fmtGap(s: number | null) {
 
 function ServerMonitoringPage() {
   const fn = useServerFn(getDeviceHealth);
-  const { data } = useQuery({ queryKey: ["device-health"], queryFn: () => fn(), refetchInterval: 15_000 });
+  const { data, isLoading } = useQuery({ queryKey: ["device-health"], queryFn: () => fn(), refetchInterval: 15_000 });
+
+  if (isLoading) return <CommandConsoleSkeleton />;
   const { isSuperAdmin } = useIsSuperAdmin();
   const devices = data?.devices ?? [];
   const totals = data?.totals ?? { total: 0, online: 0, offline: 0, lowBattery: 0, weakSignal: 0 };

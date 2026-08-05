@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 // Hidden section imports — retained for when tabs are re-enabled
 // import { SensorsSection } from "@/components/monitoring/SensorsSection";
@@ -12,30 +12,40 @@ import { motion } from "framer-motion";
 // import { DeviceHealthSection } from "@/components/monitoring/DeviceHealthSection";
 // import { MaintenanceSection } from "@/components/monitoring/MaintenanceSection";
 import { IncidentsSection } from "@/components/monitoring/IncidentsSection";
-import { AlertOctagon, TrendingUp, TrendingDown } from "lucide-react";
-// Hidden icon imports — retained for when tabs are re-enabled
-// import { Cpu, Zap, AlertTriangle, Wind, Server, Wrench } from "lucide-react";
+import {
+  Cpu,
+  Zap,
+  AlertTriangle,
+  Wind,
+  Server,
+  Wrench,
+  AlertOctagon,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
+import { listSensorDevices, listActuators, listGrainAlerts } from "@/lib/operations.functions";
+import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.functions";
 import { getIncidents } from "@/lib/monitoring.functions";
-// Hidden data imports — retained for when tabs are re-enabled
-// import { listSensorDevices, listActuators, listGrainAlerts } from "@/lib/operations.functions";
-// import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.functions";
+import { getMyRole } from "@/lib/roles.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
   component: MonitoringWorkspace,
 });
 
-type Tab = "sensors" | "actuators" | "alerts" | "environmental" | "health" | "maintenance" | "incidents";
+type Tab =
+  "sensors" | "actuators" | "alerts" | "environmental" | "health" | "maintenance" | "incidents";
 
 // Only Incidents is shown for now. Other tabs hidden until IoT sensors are
 // fully defined and integrated. Code retained for future use.
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  // { key: "sensors",       label: "Sensors",       icon: Cpu },
-  // { key: "actuators",     label: "Actuators",     icon: Zap },
-  // { key: "alerts",        label: "Alerts",        icon: AlertTriangle },
-  // { key: "environmental", label: "Environmental", icon: Wind },
-  // { key: "health",        label: "Device Health", icon: Server },
-  // { key: "maintenance",   label: "Maintenance",   icon: Wrench },
-  { key: "incidents",     label: "Incidents",     icon: AlertOctagon },
+  { key: "sensors", label: "Sensors", icon: Cpu },
+  { key: "actuators", label: "Actuators", icon: Zap },
+  { key: "alerts", label: "Alerts", icon: AlertTriangle },
+  { key: "environmental", label: "Environmental", icon: Wind },
+  { key: "health", label: "Device Health", icon: Server },
+  { key: "maintenance", label: "Maintenance", icon: Wrench },
+  { key: "incidents", label: "Incidents", icon: AlertOctagon },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
@@ -44,31 +54,61 @@ function MonitoringWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("incidents");
 
   const getIncidentsFn = useServerFn(getIncidents);
-  // Hidden server functions — retained for when tabs are re-enabled
-  // const listSensorsFn = useServerFn(listSensorDevices);
-  // const listActuatorsFn = useServerFn(listActuators);
-  // const listAlertsFn = useServerFn(listGrainAlerts);
-  // const getMaintenanceFn = useServerFn(getMaintenanceOverview);
-  // const getHealthFn = useServerFn(getDeviceHealth);
+  const getMaintenanceFn = useServerFn(getMaintenanceOverview);
+  const getHealthFn = useServerFn(getDeviceHealth);
+  const roleFn = useServerFn(getMyRole);
+  const listSensorsFn = useServerFn(listSensorDevices);
+  const listActuatorsFn = useServerFn(listActuators);
+  const listAlertsFn = useServerFn(listGrainAlerts);
 
-  const { data: incidents } = useQuery({ queryKey: ["incidents"], queryFn: () => getIncidentsFn() });
-  // Hidden queries — retained for when tabs are re-enabled
-  // const { data: sensors }     = useQuery({ queryKey: ["sensor-devices"],       queryFn: () => listSensorsFn() });
-  // const { data: actuators }   = useQuery({ queryKey: ["actuators"],             queryFn: () => listActuatorsFn() });
-  // const { data: alerts }      = useQuery({ queryKey: ["grain-alerts"],          queryFn: () => listAlertsFn() });
-  // const { data: maintenance } = useQuery({ queryKey: ["maintenance-overview"],  queryFn: () => getMaintenanceFn() });
-  // const { data: health }      = useQuery({ queryKey: ["device-health"],         queryFn: () => getHealthFn(), refetchInterval: 15_000 });
+  const { data: sensors } = useQuery({
+    queryKey: ["sensor-devices"],
+    queryFn: () => listSensorsFn(),
+  });
+  const { data: actuators } = useQuery({
+    queryKey: ["actuators"],
+    queryFn: () => listActuatorsFn(),
+  });
+  const { data: alerts } = useQuery({ queryKey: ["grain-alerts"], queryFn: () => listAlertsFn() });
+  const { data: incidents } = useQuery({
+    queryKey: ["incidents"],
+    queryFn: () => getIncidentsFn(),
+  });
+  const { data: maintenance } = useQuery({
+    queryKey: ["maintenance-overview"],
+    queryFn: () => getMaintenanceFn(),
+  });
+  const { data: health } = useQuery({
+    queryKey: ["device-health"],
+    queryFn: () => getHealthFn(),
+    refetchInterval: 15_000,
+  });
+  const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
+
+  const userRole = roleData?.role ?? "pending";
+
+  if (!roleData) return <KpiChartHubSkeleton />;
+
+  // Filter tabs based on role - manager only sees Incidents tab
+  const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;
+
+  // Set default tab based on role
+  useEffect(() => {
+    if (userRole === "manager" && activeTab !== "incidents") {
+      setActiveTab("incidents");
+    }
+  }, [userRole, activeTab]);
 
   const counts = {
-    // Hidden tabs — counts retained for when they are re-enabled
-    // sensors: Array.isArray(sensors) ? sensors.length : 0,
-    // actuators: Array.isArray(actuators) ? actuators.length : 0,
-    // alerts: Array.isArray(alerts) ? alerts.filter((a: any) => a.status === "pending").length : 0,
-    // environmental: 0,
-    // health: health?.totals?.total ?? 0,
-    // maintenance: Array.isArray(maintenance?.devices)
-    //   ? maintenance.devices.filter((d: any) => d.next_maintenance_date || d.calibration_due_date).length
-    //   : 0,
+    sensors: Array.isArray(sensors) ? sensors.length : 0,
+    actuators: Array.isArray(actuators) ? actuators.length : 0,
+    alerts: Array.isArray(alerts) ? alerts.filter((a: any) => a.status === "pending").length : 0,
+    environmental: 0,
+    health: health?.totals?.total ?? 0,
+    maintenance: Array.isArray(maintenance?.devices)
+      ? maintenance.devices.filter((d: any) => d.next_maintenance_date || d.calibration_due_date)
+          .length
+      : 0,
     incidents: Array.isArray(incidents) ? incidents.length : 0,
   };
 
@@ -88,13 +128,11 @@ function MonitoringWorkspace() {
       className="min-h-screen bg-background p-4 md:p-8"
       style={{
         fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        backgroundImage:
-          "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
         backgroundSize: "28px 28px",
       }}
     >
       <div className="max-w-7xl mx-auto space-y-8">
-
         {/* Header */}
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
@@ -107,14 +145,13 @@ function MonitoringWorkspace() {
 
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
           {/* Bar Chart Panel */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
               Monitoring Overview
             </p>
             <div className="space-y-4">
-              {TABS.map((tab, i) => {
+              {visibleTabs.map((tab, i) => {
                 const count = counts[tab.key];
                 const pct = Math.max((count / maxCount) * 100, count > 0 ? 4 : 0);
                 return (
@@ -158,11 +195,14 @@ function MonitoringWorkspace() {
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-base font-mono">{s.value}</span>
-                    {s.up
-                      ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                      : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                    }
+                    <span className="text-foreground font-black text-base font-mono">
+                      {s.value}
+                    </span>
+                    {s.up ? (
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+                    )}
                   </div>
                 </div>
               ))}
@@ -172,11 +212,10 @@ function MonitoringWorkspace() {
 
         {/* Tabbed Sections */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-
           {/* Tab Bar — variable-font hover nav */}
           <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
-              {TABS.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const isActive = activeTab === tab.key;
                 return (
                   <button
@@ -186,10 +225,17 @@ function MonitoringWorkspace() {
                       isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <VariableFontText text={tab.label} base={isActive ? 850 : 350} hover={850} staggerMs={30} />
+                    <VariableFontText
+                      text={tab.label}
+                      base={isActive ? 850 : 350}
+                      hover={850}
+                      staggerMs={30}
+                    />
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${
-                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"
+                        isActive
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground/60"
                       }`}
                     >
                       {counts[tab.key]}
@@ -219,7 +265,6 @@ function MonitoringWorkspace() {
             {/* {activeTab === "maintenance"   && <MaintenanceSection />}   */}
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -94,6 +94,7 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/security-center": CommandConsoleSkeleton,
   // Platform (super-admin)
   "/platform": SuperAdminDashSkeleton,
+  "/platform/business": KpiChartHubSkeleton,
   "/platform/pipeline": KpiChartHubSkeleton,
   "/platform/health": CommandConsoleSkeleton,
   "/platform/financials": FinancialsSkeleton,

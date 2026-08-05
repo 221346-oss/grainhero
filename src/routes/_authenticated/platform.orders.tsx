@@ -41,7 +41,7 @@ const STATUSES = [
 type OrderStatus = typeof STATUSES[number];
 
 const STATUS_CFG: Record<string, { badge: string; label: string }> = {
-  pending_payment: { badge: "bg-slate-100 text-slate-600 border-slate-200",      label: "Pending payment" },
+  pending_payment: { badge: "bg-muted text-muted-foreground border-border",      label: "Pending payment" },
   paid:            { badge: "bg-blue-100 text-blue-800 border-blue-200",          label: "Paid"            },
   packing:         { badge: "bg-amber-100 text-amber-800 border-amber-200",       label: "Packing"         },
   shipped:         { badge: "bg-indigo-100 text-indigo-800 border-indigo-200",    label: "Shipped"         },
@@ -49,7 +49,7 @@ const STATUS_CFG: Record<string, { badge: string; label: string }> = {
   installing:      { badge: "bg-cyan-100 text-cyan-800 border-cyan-200",          label: "Installing"      },
   completed:       { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Completed"       },
   cancelled:       { badge: "bg-red-100 text-red-700 border-red-200",             label: "Cancelled"       },
-  refunded:        { badge: "bg-slate-200 text-slate-600 border-slate-300",       label: "Refunded"        },
+  refunded:        { badge: "bg-muted text-muted-foreground border-border",       label: "Refunded"        },
   // legacy aliases kept for display
   new:             { badge: "bg-amber-100 text-amber-800 border-amber-200",       label: "New"             },
   approved:        { badge: "bg-blue-100 text-blue-800 border-blue-200",          label: "Approved"        },
@@ -121,14 +121,14 @@ function ExportRow({ rows, label, filename }: { rows: any[]; label: string; file
       <button
         disabled={data.length === 0}
         onClick={() => exportToCSV(data, filename)}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"
       >
         <Download className="w-3 h-3" /> CSV
       </button>
       <button
         disabled={data.length === 0 || busy}
         onClick={async () => { setBusy(true); await exportToPDF(data, label, filename).catch(console.error); setBusy(false); }}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"
       >
         <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
       </button>
@@ -138,29 +138,25 @@ function ExportRow({ rows, label, filename }: { rows: any[]; label: string; file
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
 function Sk({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded bg-slate-100 ${className}`} />;
+  return <div className={`animate-pulse rounded bg-muted ${className}`} />;
 }
 function OrdersSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
         {[0,1,2,3].map((i) => (
-          <div key={i} className="rounded-xl border border-slate-200 bg-white px-5 py-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <Sk className="h-8 w-8 rounded-lg" />
-              <Sk className="h-3.5 w-12 rounded" />
-            </div>
-            <Sk className="h-7 w-32" />
-            <Sk className="h-2 w-full rounded-full" />
-            <Sk className="h-3 w-20" />
+          <div key={i} className="bg-background p-4 space-y-2">
+            <Sk className="h-[10px] w-20" />
+            <Sk className="h-7 w-12" />
+            <Sk className="h-[10px] w-16" />
           </div>
         ))}
       </div>
-      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+      <div className="border border-border rounded-md overflow-hidden bg-background">
         {[0,1,2,3,4].map((i) => (
-          <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-slate-50">
-            <Sk className="h-3.5 w-24" /><Sk className="h-3.5 w-32" /><Sk className="h-3.5 w-20" />
-            <Sk className="h-5 w-20 rounded-full ml-auto" />
+          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-border last:border-0">
+            <Sk className="h-[13px] w-24" /><Sk className="h-[13px] w-32" /><Sk className="h-[13px] w-20" />
+            <Sk className="h-5 w-20 rounded ml-auto" />
           </div>
         ))}
       </div>
@@ -168,14 +164,13 @@ function OrdersSkeleton() {
   );
 }
 
-// ── KPI strip component ──────────────────────────────────────────────────────
+// ── KPI strip — neon hairline gap-px grid ───────────────────────────────────
 function KpiStrip({
-  kpis, activeFilter, onFilter, tabColor, allOrders, planTab,
+  kpis, activeFilter, onFilter, allOrders, planTab,
 }: {
   kpis: { total: number; completed: any[]; pending: any[]; cancelled: any[]; count: number };
   activeFilter: string;
   onFilter: (s: string) => void;
-  tabColor: string;
   allOrders: any[];
   planTab: string;
 }) {
@@ -195,137 +190,75 @@ function KpiStrip({
   const totalActive    = kpis.count - kpis.cancelled.length;
   const completePct    = totalActive > 0 ? Math.round((completedCount / totalActive) * 100) : 0;
   const pendingPct     = totalActive > 0 ? Math.round((kpis.pending.length / totalActive) * 100) : 0;
-  const cancelPct      = kpis.count > 0  ? Math.round((kpis.cancelled.length / kpis.count) * 100)   : 0;
+  const cancelPct      = kpis.count > 0  ? Math.round((kpis.cancelled.length / kpis.count) * 100) : 0;
 
-  const completedRev   = kpis.completed.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0);
-  const pendingRev     = kpis.pending.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0);
-  const cancelledRev   = kpis.cancelled.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0);
+  const completedRev = kpis.completed.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0);
+  const pendingRev   = kpis.pending.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0);
+  const cancelledRev = kpis.cancelled.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0);
 
   const isPendingActive  = ACTIVE_STATUSES.has(activeFilter);
   const isCompleteActive = DONE_STATUSES.has(activeFilter);
   const isCancelActive   = CANCEL_STATUSES.has(activeFilter);
 
+  const cells = [
+    {
+      label: "Total revenue",
+      value: `PKR ${fmt(kpis.total)}`,
+      sub: `${kpis.count} orders${trendPct !== null ? ` · ${trendUp ? "+" : ""}${trendPct}% WoW` : ""}`,
+      subClass: trendPct !== null ? (trendUp ? "text-success" : "text-severity-critical") : "text-muted-foreground",
+      barPct: completePct,
+      barColor: "hsl(var(--success))",
+      active: false,
+      onClick: () => onFilter("all"),
+    },
+    {
+      label: "Completed",
+      value: String(completedCount),
+      sub: `PKR ${fmt(completedRev)} · ${completePct}% of active`,
+      subClass: "text-success",
+      barPct: completePct,
+      barColor: "hsl(var(--success))",
+      active: isCompleteActive,
+      onClick: () => onFilter(isCompleteActive ? "all" : "completed"),
+    },
+    {
+      label: "In progress",
+      value: String(kpis.pending.length),
+      sub: `PKR ${fmt(pendingRev)} · ${pendingPct}% of active${kpis.pending.length > 0 ? " · needs attention" : ""}`,
+      subClass: kpis.pending.length > 0 ? "text-warning" : "text-muted-foreground",
+      barPct: pendingPct,
+      barColor: "hsl(var(--warning))",
+      active: isPendingActive,
+      onClick: () => onFilter(isPendingActive ? "all" : "installing"),
+    },
+    {
+      label: "Cancelled",
+      value: String(kpis.cancelled.length),
+      sub: kpis.cancelled.length > 0 ? `PKR ${fmt(cancelledRev)} lost · ${cancelPct}%` : "No cancellations",
+      subClass: kpis.cancelled.length > 0 ? "text-severity-critical" : "text-success",
+      barPct: cancelPct,
+      barColor: "hsl(var(--severity-critical))",
+      active: isCancelActive,
+      onClick: () => onFilter(isCancelActive ? "all" : "cancelled"),
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-
-      {/* ── Total Revenue ─────────────────────────────────────── */}
-      <div className="relative rounded-lg border border-slate-200 bg-white overflow-hidden">
-        {/* Left accent bar */}
-        <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg" style={{ background: tabColor }} />
-        <div className="pl-5 pr-4 py-4">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2">Total revenue</p>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[13px] font-medium text-slate-400">PKR</span>
-            <span className="text-[28px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">{fmt(kpis.total)}</span>
+    <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
+      {cells.map((c) => (
+        <button
+          key={c.label}
+          onClick={c.onClick}
+          className={`bg-background p-4 text-left transition-colors hover:bg-muted/40 focus:outline-none ${c.active ? "bg-muted/60" : ""}`}
+        >
+          <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1">{c.label}</p>
+          <p className="text-2xl font-medium tabular-nums leading-none text-foreground">{c.value}</p>
+          <p className={`text-[11px] mt-1 truncate ${c.subClass}`}>{c.sub}</p>
+          <div className="mt-2.5 h-[2px] bg-muted overflow-hidden rounded-none">
+            <div className="h-full transition-all duration-500" style={{ width: `${c.barPct}%`, background: c.barColor }} />
           </div>
-          <p className="text-xs text-slate-400 mt-1">{kpis.count} orders total</p>
-          {/* Trend */}
-          {trendPct !== null && (
-            <p className={`text-xs font-semibold mt-2 ${trendUp ? "text-emerald-600" : "text-red-500"}`}>
-              {trendUp ? "▲" : "▼"} {trendUp ? "+" : ""}{trendPct}% vs last week
-            </p>
-          )}
-          {/* Progress bar */}
-          <div className="mt-3">
-            <div className="h-[3px] rounded-full bg-slate-100 overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${completePct}%`, background: tabColor }} />
-            </div>
-            <p className="text-[10px] text-slate-400 mt-1">{completePct}% of orders completed</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Completed ─────────────────────────────────────────── */}
-      <button
-        onClick={() => onFilter(isCompleteActive ? "all" : "completed")}
-        className={`relative rounded-lg border bg-white overflow-hidden text-left transition-all hover:border-emerald-300 ${
-          isCompleteActive ? "border-emerald-400 bg-emerald-50/60" : "border-slate-200"
-        }`}
-      >
-        <div className={`absolute left-0 top-0 h-full w-1 rounded-l-lg transition-colors ${isCompleteActive ? "bg-emerald-500" : "bg-emerald-300"}`} />
-        <div className="pl-5 pr-4 py-4">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2">Completed</p>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[28px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">{completedCount}</span>
-            <span className="text-sm text-slate-400">orders</span>
-          </div>
-          <p className="text-xs text-emerald-600 font-semibold mt-1">PKR {fmt(completedRev)}</p>
-          <p className="text-[10px] text-slate-400 mt-1">{completePct}% of active</p>
-          <div className="mt-3">
-            <div className="h-[3px] rounded-full bg-emerald-100 overflow-hidden">
-              <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${completePct}%` }} />
-            </div>
-          </div>
-        </div>
-      </button>
-
-      {/* ── In progress ───────────────────────────────────────── */}
-      <button
-        onClick={() => onFilter(isPendingActive ? "all" : "installing")}
-        className={`relative rounded-lg border bg-white overflow-hidden text-left transition-all hover:border-amber-300 ${
-          isPendingActive ? "border-amber-400 bg-amber-50/60" : "border-slate-200"
-        }`}
-      >
-        <div className={`absolute left-0 top-0 h-full w-1 rounded-l-lg transition-colors ${isPendingActive ? "bg-amber-500" : "bg-amber-300"}`} />
-        <div className="pl-5 pr-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">In progress</p>
-            {kpis.pending.length > 0 && (
-              <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wide">
-                ● needs attention
-              </span>
-            )}
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[28px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">{kpis.pending.length}</span>
-            <span className="text-sm text-slate-400">orders</span>
-          </div>
-          <p className="text-xs text-amber-600 font-semibold mt-1">PKR {fmt(pendingRev)}</p>
-          <p className="text-[10px] text-slate-400 mt-1">{pendingPct}% of active orders</p>
-          <div className="mt-3">
-            <div className="h-[3px] rounded-full bg-amber-100 overflow-hidden">
-              <div className="h-full rounded-full bg-amber-400 transition-all duration-500" style={{ width: `${pendingPct}%` }} />
-            </div>
-          </div>
-        </div>
-      </button>
-
-      {/* ── Cancelled ─────────────────────────────────────────── */}
-      <button
-        onClick={() => onFilter(isCancelActive ? "all" : "cancelled")}
-        className={`relative rounded-lg border bg-white overflow-hidden text-left transition-all ${
-          isCancelActive
-            ? "border-red-300 bg-red-50/60"
-            : kpis.cancelled.length > 0
-              ? "border-slate-200 hover:border-red-200"
-              : "border-slate-200 hover:border-slate-300"
-        }`}
-      >
-        <div className={`absolute left-0 top-0 h-full w-1 rounded-l-lg transition-colors ${
-          isCancelActive ? "bg-red-500" : kpis.cancelled.length > 0 ? "bg-red-300" : "bg-slate-200"
-        }`} />
-        <div className="pl-5 pr-4 py-4">
-          <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2">Cancelled</p>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[28px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">{kpis.cancelled.length}</span>
-            <span className="text-sm text-slate-400">orders</span>
-          </div>
-          {kpis.cancelled.length > 0 ? (
-            <>
-              <p className="text-xs text-red-500 font-semibold mt-1">PKR {fmt(cancelledRev)} lost</p>
-              <p className="text-[10px] text-slate-400 mt-1">{cancelPct}% of all orders</p>
-            </>
-          ) : (
-            <p className="text-xs text-emerald-600 font-medium mt-1">No cancellations</p>
-          )}
-          <div className="mt-3">
-            <div className="h-[3px] rounded-full bg-slate-100 overflow-hidden">
-              <div className="h-full rounded-full bg-red-400 transition-all duration-500" style={{ width: `${cancelPct}%` }} />
-            </div>
-          </div>
-        </div>
-      </button>
-
+        </button>
+      ))}
     </div>
   );
 }
@@ -346,6 +279,7 @@ function PlatformOrdersPage() {
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["platform-orders"],
     queryFn:  () => fetchFn(),
+    staleTime: 30_000,
     refetchInterval: 60_000,
   });
 
@@ -410,7 +344,7 @@ function PlatformOrdersPage() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/30 disabled:opacity-50"
           >
             <RefreshCw className={`w-3 h-3 ${isFetching ? "animate-spin" : ""}`} /> Refresh
           </button>
@@ -418,7 +352,7 @@ function PlatformOrdersPage() {
       }
     >
       {/* ── Plan tabs ──────────────────────────────────────────────── */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit flex-wrap">
+      <div className="flex gap-1 bg-muted p-1 rounded-lg w-fit flex-wrap">
         {PLAN_TABS.map((t) => {
           const active = planTab === t.key;
           return (
@@ -446,7 +380,7 @@ function PlatformOrdersPage() {
 
       {/* ── KPI cards — clickable, color-coded, with trend + progress ── */}
       {!isLoading && (
-        <KpiStrip kpis={kpis} activeFilter={statusFilter} onFilter={setStatus} tabColor={tabColor} allOrders={allOrders} planTab={planTab} />
+        <KpiStrip kpis={kpis} activeFilter={statusFilter} onFilter={setStatus} allOrders={allOrders} planTab={planTab} />
       )}
 
       {/* ── Filters + per-tab export ───────────────────────────────── */}
@@ -454,7 +388,7 @@ function PlatformOrdersPage() {
         <div className="flex gap-2 flex-1 flex-wrap">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -478,7 +412,7 @@ function PlatformOrdersPage() {
         {/* Per-plan export */}
         {planTab !== "all" && (
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-500">Export {PLAN_TABS.find((t) => t.key === planTab)?.label}:</span>
+            <span className="text-xs text-muted-foreground">Export {PLAN_TABS.find((t) => t.key === planTab)?.label}:</span>
             <ExportRow
               rows={filtered}
               label={`${PLAN_TABS.find((t) => t.key === planTab)?.label} Orders — GrainHero`}
@@ -491,13 +425,13 @@ function PlatformOrdersPage() {
       {/* ── Table ─────────────────────────────────────────────────── */}
       {isLoading ? <OrdersSkeleton /> : (
         filtered.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-white py-12 text-center text-sm text-slate-400">
+          <div className="rounded-lg border border-border bg-background py-12 text-center text-sm text-muted-foreground">
             No orders match your filters
           </div>
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="rounded-lg border border-border bg-background overflow-hidden">
             {/* Column headers */}
-            <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-slate-100 px-5 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/80">
+            <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30/80">
               <span>Order</span>
               <span>Buyer</span>
               <span>Location</span>
@@ -506,7 +440,7 @@ function PlatformOrdersPage() {
               <span>Placed</span>
               <span />
             </div>
-            <div className="divide-y divide-slate-50">
+            <div className="divide-y divide-border">
               {filtered.map((o) => (
                 <OrderRow
                   key={o.id as string}
@@ -519,9 +453,9 @@ function PlatformOrdersPage() {
                 />
               ))}
             </div>
-            <div className="px-5 py-2.5 border-t border-slate-100 text-xs text-slate-400 flex items-center justify-between">
+            <div className="px-5 py-2.5 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
               <span>{filtered.length} order{filtered.length !== 1 ? "s" : ""}</span>
-              <span className="font-medium text-slate-600">
+              <span className="font-medium text-muted-foreground">
                 PKR {fmt(filtered.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0))}
               </span>
             </div>
@@ -575,31 +509,31 @@ function OrderRow({
 
   return (
     <>
-      <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 items-center px-5 py-3 hover:bg-slate-50/60 transition-colors">
+      <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 items-center px-5 py-3 hover:bg-muted/30/60 transition-colors">
         {/* Order */}
         <div>
-          <div className="text-sm font-medium text-slate-800">
+          <div className="text-sm font-medium text-foreground">
             {order.plan_name ?? order.plan_id ?? "—"}
           </div>
-          <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+          <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
             {String(order.id ?? "").slice(0, 8)} · {order.hardware_quantity ?? 0} unit{Number(order.hardware_quantity) !== 1 ? "s" : ""}
           </div>
         </div>
 
         {/* Buyer */}
         <div>
-          <div className="text-sm text-slate-700 truncate max-w-[160px]">{order.buyer?.name ?? order.customer_name ?? "—"}</div>
-          <div className="text-[11px] text-slate-400 truncate max-w-[160px]">{order.buyer?.email ?? order.customer_email ?? "—"}</div>
+          <div className="text-sm text-foreground truncate max-w-[160px]">{order.buyer?.name ?? order.customer_name ?? "—"}</div>
+          <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">{order.buyer?.email ?? order.customer_email ?? "—"}</div>
         </div>
 
         {/* Location */}
-        <div className="text-xs text-slate-500 flex items-center gap-1">
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
           <MapPin className="w-3 h-3 shrink-0" />
           <span className="truncate">{[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}</span>
         </div>
 
         {/* Total */}
-        <div className="text-sm font-semibold text-slate-800 tabular-nums">
+        <div className="text-sm font-semibold text-foreground tabular-nums">
           PKR {fmt(Number(order.hardware_total ?? 0))}
         </div>
 
@@ -612,7 +546,7 @@ function OrderRow({
         </div>
 
         {/* Placed */}
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-muted-foreground">
           {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
         </div>
 
@@ -634,11 +568,11 @@ function OrderRow({
               <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "installed" })}>
-              Mark installed
+            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "installing" })}>
+              Mark installing
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "live" })}>
-              Mark live
+            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "completed" })}>
+              Mark completed
             </DropdownMenuItem>
             {order.status !== "cancelled" && (
               <>
@@ -667,7 +601,7 @@ function OrderRow({
           </SheetHeader>
 
           {/* Read-only info block */}
-          <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3 text-xs space-y-1.5 text-slate-600">
+          <div className="mt-4 rounded-lg bg-muted/30 border border-border p-3 text-xs space-y-1.5 text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="font-semibold w-20">Buyer</span>
               <span>{order.buyer?.name ?? order.customer_name ?? "—"} · {order.buyer?.email ?? order.customer_email ?? "—"}</span>

@@ -148,8 +148,9 @@ export async function computePlanGate(
     .eq("plan_id", planId)
     .maybeSingle();
   if (!plan) {
-    // Unknown plan → deny writes, but never block reads (caller decides).
-    return { allowed: false, limit: 0, used: currentUsage, planId, isSuper, tenantAdminId };
+    // Unknown / unconfigured plan → allow by default rather than silently blocking.
+    // A missing plan_thresholds row means the feature hasn't been capped yet.
+    return { allowed: true, limit: -1, used: currentUsage, planId, isSuper, tenantAdminId };
   }
   if (isNumeric(feature)) {
     const limit = Number((plan as unknown as Record<string, number>)[feature] ?? 0);

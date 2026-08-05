@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
   Sunrise, Sunset, CloudRain, Snowflake, CloudLightning, Activity,
 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
+import { NEON, NeonPatternDefs, neonFill, neonGrid, neonAxis, neonTooltipStyle, ChartEmpty, HairlineGrid, NeonPanel } from "@/components/charts/neon";
 import { geocodeCity, getWeatherBundle } from "@/lib/openweather.functions";
 import { useFirebaseAllSensors } from "@/hooks/use-firebase-sensor";
 
@@ -87,6 +89,11 @@ function EnvironmentalPage() {
 
   useEffect(() => { if (!coords) geo.mutate(cityQuery); /* eslint-disable-next-line */ }, []);
 
+  // Show skeleton while initial geocoding + weather fetches resolve
+  const isInitialLoading = geo.isPending || (!!coords && weather.isFetching && !weather.data);
+  
+  if (isInitialLoading) return <KpiChartHubSkeleton />;
+
   const useMyLocation = () => {
     if (!navigator.geolocation) return toast.error("Geolocation not available");
     navigator.geolocation.getCurrentPosition(
@@ -102,6 +109,7 @@ function EnvironmentalPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+      <NeonPatternDefs />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Environmental Data</h1>
@@ -197,37 +205,46 @@ function EnvironmentalPage() {
         </CardHeader>
         <CardContent>
           {forecastSeries.length > 0 ? (
-            <div className="space-y-6">
-              <ForecastChart title="Temperature & Feels-like">
-                <LineChart data={forecastSeries}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} tick={{ fontSize: 10 }} />
-                  <YAxis /><Tooltip />
-                  <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} name="Temp (°C)" />
-                  <Line type="monotone" dataKey="feels" stroke="#fb923c" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Feels (°C)" />
-                </LineChart>
-              </ForecastChart>
-              <ForecastChart title="Precipitation">
-                <AreaChart data={forecastSeries}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} tick={{ fontSize: 10 }} />
-                  <YAxis /><Tooltip />
-                  <Area type="monotone" dataKey="rain" stroke="#3b82f6" fill="#93c5fd" fillOpacity={0.4} name="Rain mm/3h" />
-                  <Area type="monotone" dataKey="snow" stroke="#6366f1" fill="#a5b4fc" fillOpacity={0.3} name="Snow mm/3h" />
-                </AreaChart>
-              </ForecastChart>
-              <ForecastChart title="Humidity & Wind">
-                <LineChart data={forecastSeries}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} tick={{ fontSize: 10 }} />
-                  <YAxis yAxisId="left" /><YAxis yAxisId="right" orientation="right" /><Tooltip />
-                  <Line yAxisId="left" type="monotone" dataKey="humidity" stroke="#059669" strokeWidth={2} dot={false} name="Humidity %" />
-                  <Line yAxisId="right" type="monotone" dataKey="wind" stroke="#0ea5e9" strokeWidth={2} dot={false} name="Wind m/s" />
-                </LineChart>
-              </ForecastChart>
-            </div>
+            <HairlineGrid cols="grid-cols-1" className="!bg-transparent !border-0">
+              <NeonPanel title="Temperature & Feels-like" className="border border-border rounded-md">
+                <ForecastChart>
+                  <LineChart data={forecastSeries}>
+                    <CartesianGrid {...neonGrid} />
+                    <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} {...neonAxis} />
+                    <YAxis {...neonAxis} />
+                    <Tooltip {...neonTooltipStyle} />
+                    <Line type="monotone" dataKey="temp" stroke={NEON.brand} strokeWidth={2} dot={false} name="Temp (°C)" />
+                    <Line type="monotone" dataKey="feels" stroke={NEON.amber} strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Feels (°C)" />
+                  </LineChart>
+                </ForecastChart>
+              </NeonPanel>
+              <NeonPanel title="Precipitation" className="border border-border rounded-md">
+                <ForecastChart>
+                  <AreaChart data={forecastSeries}>
+                    <CartesianGrid {...neonGrid} />
+                    <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} {...neonAxis} />
+                    <YAxis {...neonAxis} />
+                    <Tooltip {...neonTooltipStyle} />
+                    <Area type="monotone" dataKey="rain" name="Rain mm/3h" {...neonFill(NEON.info)} />
+                    <Area type="monotone" dataKey="snow" name="Snow mm/3h" {...neonFill(NEON.brand2)} />
+                  </AreaChart>
+                </ForecastChart>
+              </NeonPanel>
+              <NeonPanel title="Humidity & Wind" className="border border-border rounded-md">
+                <ForecastChart>
+                  <LineChart data={forecastSeries}>
+                    <CartesianGrid {...neonGrid} />
+                    <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} {...neonAxis} />
+                    <YAxis yAxisId="left" {...neonAxis} /><YAxis yAxisId="right" orientation="right" {...neonAxis} />
+                    <Tooltip {...neonTooltipStyle} />
+                    <Line yAxisId="left" type="monotone" dataKey="humidity" stroke={NEON.brand} strokeWidth={2} dot={false} name="Humidity %" />
+                    <Line yAxisId="right" type="monotone" dataKey="wind" stroke={NEON.info} strokeWidth={2} dot={false} name="Wind m/s" />
+                  </LineChart>
+                </ForecastChart>
+              </NeonPanel>
+            </HairlineGrid>
           ) : (
-            <p className="text-sm text-muted-foreground py-8 text-center">{weather.isFetching ? "Loading forecast…" : "Search for a city to see forecast."}</p>
+            <ChartEmpty label={weather.isFetching ? "Loading forecast…" : "Search for a city to see forecast."} height={200} />
           )}
         </CardContent>
       </Card>
@@ -284,11 +301,8 @@ function TileStat({ label, value, tone }: { label: string; value: string; tone: 
     </div>
   );
 }
-function ForecastChart({ title, children }: { title: string; children: React.ReactElement }) {
+function ForecastChart({ children }: { children: React.ReactElement }) {
   return (
-    <div>
-      <h4 className="text-sm font-medium mb-2">{title}</h4>
-      <div style={{ height: 220 }}><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>
-    </div>
+    <div style={{ height: 220 }}><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>
   );
 }

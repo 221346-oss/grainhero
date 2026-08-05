@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { reportFieldIncident } from "@/lib/field-settings.functions";
+import { reportMobileFieldIncident } from "@/lib/field-settings.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -39,7 +39,7 @@ interface Props {
 
 export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvalidate = [] }: Props) {
   const qc = useQueryClient();
-  const reportFn = useServerFn(reportFieldIncident);
+  const reportFn = useServerFn(reportMobileFieldIncident);
   const getRoleFn = useServerFn(getMyRole);
 
   const { data: roleData } = useQuery({

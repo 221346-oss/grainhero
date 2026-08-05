@@ -9,6 +9,7 @@
  * @website: https://emerald-ui.com
  */
 // @keyframes shimmer is registered in src/styles.css
+import type { ComponentType, CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type TextShimmerProps = {
@@ -19,8 +20,9 @@ export type TextShimmerProps = {
   baseColor?: string;
   /** Peak (bright) color of the sweep. Defaults to var(--foreground). */
   peakColor?: string;
-  children: React.ReactNode | string;
-} & React.HTMLAttributes<HTMLElement>;
+  children: ReactNode | string;
+  className?: string;
+};
 
 export default function TextShimmer({
   as = "span",
@@ -33,7 +35,11 @@ export default function TextShimmer({
   ...props
 }: TextShimmerProps) {
   const dynamicSpread = Math.min(Math.max(spread, 5), 55);
-  const Component = as as React.ElementType;
+  const Component = as as unknown as ComponentType<{
+    className?: string;
+    style?: CSSProperties;
+    children?: ReactNode;
+  }>;
 
   return (
     <Component

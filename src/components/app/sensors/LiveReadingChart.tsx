@@ -1,7 +1,16 @@
 import { useEffect, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import {
+  NeonPatternDefs,
+  ChartEmpty,
+  neonGrid,
+  neonAxis,
+  neonTooltipStyle,
+  neonPatternId,
+  NEON,
+} from "@/components/charts/neon";
 import { Badge } from "@/components/ui/badge";
 import { Radio, WifiOff } from "lucide-react";
 import { getSiloReadings } from "@/lib/telemetry.functions";
@@ -72,20 +81,36 @@ export function LiveReadingChart({
           <Badge variant="outline" className="gap-1 text-emerald-600"><Radio className="h-3 w-3" /> Live</Badge>
         )}
       </div>
+      <NeonPatternDefs />
       <div className="h-48">
         {isLoading && points.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Loading…</div>
+          <ChartEmpty label="Loading…" height={192} />
         ) : points.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No readings in the selected window.</div>
+          <ChartEmpty label="No readings in the selected window" height={192} />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={points}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} minTickGap={30} fontSize={11} />
-              <YAxis fontSize={11} />
-              <Tooltip labelFormatter={(t) => new Date(t as string).toLocaleString()} />
-              <Line type="monotone" dataKey="v" dot={false} strokeWidth={2} stroke="hsl(var(--primary))" isAnimationActive={false} />
-            </LineChart>
+            <AreaChart data={points} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
+              <CartesianGrid {...neonGrid} />
+              <XAxis
+                {...neonAxis}
+                dataKey="t"
+                tickFormatter={(t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                minTickGap={30}
+              />
+              <YAxis {...neonAxis} width={44} />
+              <Tooltip {...neonTooltipStyle} labelFormatter={(t) => new Date(t as string).toLocaleString()} />
+              <Area
+                type="monotone"
+                dataKey="v"
+                dot={false}
+                strokeWidth={1.5}
+                stroke={NEON.brand}
+                fill={`url(#${neonPatternId(NEON.brand)})`}
+                fillOpacity={1}
+                isAnimationActive={false}
+                activeDot={{ r: 3, stroke: NEON.brand, strokeWidth: 1.5 }}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>

@@ -51,6 +51,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-high: var(--severity-high);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-low: var(--severity-low);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -87,6 +94,15 @@
   --chart-3: oklch(0.7 0.25 300);
   --chart-4: oklch(0.75 0.18 90);
   --chart-5: oklch(0.65 0.22 25);
+
+  /* Neon analytics kit — semantic series tokens */
+  --success: oklch(0.62 0.17 152);
+  --warning: oklch(0.72 0.16 75);
+  --info: oklch(0.62 0.14 235);
+  --severity-critical: oklch(0.58 0.22 25);
+  --severity-high: oklch(0.68 0.18 55);
+  --severity-medium: oklch(0.75 0.15 85);
+  --severity-low: oklch(0.62 0.17 152);
 
   /* Electric Fusion palette */
   --fusion-lime: #DCF095;
@@ -132,6 +148,15 @@
   --chart-3: #C674F2;
   --chart-4: oklch(0.75 0.18 90);
   --chart-5: oklch(0.65 0.22 25);
+
+  /* Neon analytics kit — semantic series tokens (dark) */
+  --success: oklch(0.80 0.20 150);
+  --warning: oklch(0.82 0.17 82);
+  --info: oklch(0.75 0.15 235);
+  --severity-critical: oklch(0.70 0.22 22);
+  --severity-high: oklch(0.78 0.19 55);
+  --severity-medium: oklch(0.85 0.17 88);
+  --severity-low: oklch(0.80 0.20 150);
 
   --sidebar: oklch(0.17 0.02 150);
   --sidebar-foreground: oklch(0.92 0.02 130);
@@ -184,11 +209,15 @@
   .dark .auth-bg      { background: oklch(0.20 0.015 150) !important; }
 
   /* ── Landing page section overrides ─────────────────────────────────────
-     Sections use bg-[#EDE9D4] or bg-[#252d26] as hardcoded Tailwind classes.
+     Sections use bg-[#FAFAF7] or bg-[#111512] as hardcoded Tailwind classes.
      We target them via the CSS custom selector. */
-  .dark [class*="bg-[#EDE9D4]"]  { background-color: oklch(0.20 0.015 150) !important; }
-  .dark [class*="bg-[#252d26]"]  { background-color: oklch(0.17 0.015 150) !important; }
+  .dark [class*="bg-[#FAFAF7]"]  { background-color: oklch(0.20 0.015 150) !important; }
+  .dark [class*="bg-[#111512]"]  { background-color: oklch(0.17 0.015 150) !important; }
   .dark [class*="bg-[#404F44]"]  { background-color: oklch(0.30 0.015 150) !important; }
+
+  /* Opt-out: elements that must keep their bone/white surface in dark mode */
+  .dark .gh-keep-light { background-color: #FAFAF7 !important; color: #111512 !important; }
+  .dark .gh-keep-light:hover { background-color: #2FA84F !important; color: #FAFAF7 !important; }
 
   /* Landing text colors */
   .dark [class*="text-[#252d26]"] { color: oklch(0.93 0.02 130) !important; }
@@ -277,6 +306,118 @@
 .rope-sway { animation: ropeSlackSway 12s ease-in-out infinite; }
 
 html { scroll-behavior: smooth; }
+
+/* Landing sections use a restrained reveal so transitions read as one story. */
+@keyframes landing-section-enter {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Engineered reveals: a mask wipes upward while the block settles. */
+@keyframes gh-wipe-up {
+  from {
+    opacity: 0;
+    transform: translateY(44px) scale(0.985);
+    clip-path: inset(14% 0 0 0 round 1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    clip-path: inset(0 0 0 0 round 0);
+  }
+}
+@keyframes gh-wipe-left {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@keyframes gh-rise {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes gh-parallax {
+  from { transform: translateY(6%); }
+  to { transform: translateY(-6%); }
+}
+
+.landing-section {
+  position: relative;
+  overflow: clip;
+}
+
+@supports (animation-timeline: view()) {
+  .landing-section:not(#hero) {
+    animation: gh-wipe-up both;
+    animation-timeline: view();
+    animation-range: entry 2% cover 22%;
+  }
+
+  /* Per-item stagger driven purely by scroll position. */
+  .gh-stagger > * {
+    animation: gh-rise both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+
+  .gh-wipe-left {
+    animation: gh-wipe-left both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 34%;
+  }
+
+  .gh-parallax {
+    animation: gh-parallax linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+}
+
+/* Grain-paper texture for the bone-coloured sections. */
+.gh-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(47, 168, 79, 0.07), transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(199, 217, 193, 0.35), transparent 46%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+.dark .gh-grain::before { opacity: 0.18; mix-blend-mode: screen; }
+.gh-grain > * { position: relative; z-index: 1; }
+
+/* Section eyebrow rule */
+.gh-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+.gh-eyebrow::before {
+  content: "";
+  width: 2rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+@media (max-width: 639px) {
+  .landing-section:not(#hero) {
+    scroll-margin-top: 4.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .landing-section { animation: none !important; }
+  .gh-stagger > *,
+  .gh-wipe-left,
+  .gh-parallax { animation: none !important; }
+}
 
 /* Hidden scrollbar utility (sidebar, popovers) */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
@@ -388,3 +529,16 @@ button:hover > .vfh .vfh-letter {
 .dark .app-scope .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
 .dark .app-scope .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
 .dark .app-scope .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border) !important; }
+
+/* ── Landing typography: Clean Agritech (Outfit / Figtree) ───────────── */
+.landing-type {
+  font-family: "Figtree", ui-sans-serif, system-ui, sans-serif;
+}
+.landing-type h1,
+.landing-type h2,
+.landing-type h3,
+.landing-type .font-black,
+.landing-type .font-extrabold {
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}

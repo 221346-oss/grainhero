@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Wallet } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/revenue")({
   component: RevenuePage,
@@ -33,9 +34,11 @@ function RevenuePage() {
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["revenue"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({ queryKey: ["revenue"], queryFn: () => fn() });
 
   const [q, setQ] = useState("");
+
+  if (isLoading) return <KpiChartHubSkeleton />;
 
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
