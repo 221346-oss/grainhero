@@ -7,6 +7,9 @@ GrainHero combines in-silo hardware (edge controller, multi-depth probes, LoRa +
 ## Pages
 
 - [Home](/): Product overview, hardware and how the system works.
+- [Grain storage monitoring](/solutions/grain-storage-monitoring): What continuous temperature and moisture monitoring measures, safe thresholds, alerting and spoilage prediction.
+- [Silo monitoring system](/solutions/silo-monitoring-system): Hardware layers, probe cable and sensor placement by silo size, LoRa connectivity, offline buffering and installation.
+- [Grain management software](/solutions/grain-management-software): Batch traceability, silo inventory, role-based access and export-ready condition reporting.
 - [About](/about): Mission and company background.
 - [Team](/team): The people building GrainHero.
 - [Marketplace](/marketplace): Verified, sensor-monitored grain listings.
@@ -16,7 +19,8 @@ GrainHero combines in-silo hardware (edge controller, multi-depth probes, LoRa +
 
 - [Documentation](/docs): Platform documentation, API references and integration guides.
 - [Help](/help): Support articles and tutorials.
-- [Blog](/blog): News and insights on grain storage technology.
+- [Grain storage guide](/guides/grain-storage): Safe moisture and temperature by grain type, how storage fails, aeration timing and a storage-season checklist.
+- [Resources](/blog): Index of guides and explainers on grain storage technology.
 
 ## Optional
 
