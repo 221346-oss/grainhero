@@ -12,7 +12,13 @@ export const Route = createFileRoute('/help')({
         name: 'description',
         content: 'Get help and support for GrainHero. Find answers, tutorials, and contact our support team.',
       },
+      { property: 'og:title', content: "Help Center — GrainHero" },
+      { property: 'og:description', content: "Get help and support for GrainHero. Find answers, tutorials, and contact our support team." },
+      { property: 'og:url', content: 'https://grainhero.app/help' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/help' }],
   }),
   component: HelpCenterPage,
 })

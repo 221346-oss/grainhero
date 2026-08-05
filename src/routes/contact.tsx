@@ -14,7 +14,13 @@ export const Route = createFileRoute('/contact')({
         name: 'description',
         content: 'Get in touch with GrainHero. We\'re here to help with any questions about our grain storage monitoring platform.',
       },
+      { property: 'og:title', content: "Contact Us — GrainHero" },
+      { property: 'og:description', content: "Get in touch with GrainHero. We\\" },
+      { property: 'og:url', content: 'https://grainhero.app/contact' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/contact' }],
   }),
   component: ContactPage,
 })

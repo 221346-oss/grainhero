@@ -12,7 +12,13 @@ export const Route = createFileRoute('/cookies')({
         name: 'description',
         content: 'GrainHero Cookie Policy. Read about how we use cookies and manage your preferences.',
       },
+      { property: 'og:title', content: "Cookie Policy — GrainHero" },
+      { property: 'og:description', content: "GrainHero Cookie Policy. Read about how we use cookies and manage your preferences." },
+      { property: 'og:url', content: 'https://grainhero.app/cookies' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/cookies' }],
   }),
   component: CookiePolicyPage,
 })

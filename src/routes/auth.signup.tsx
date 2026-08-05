@@ -56,7 +56,14 @@ export const Route = createFileRoute("/auth/signup")({
     meta: [
       { title: "Create your account — GrainHero" },
       { name: "description", content: "Start monitoring your grain in minutes." },
+      { property: 'og:title', content: "Create your account — GrainHero" },
+      { property: 'og:description', content: "Start monitoring your grain in minutes." },
+      { property: 'og:url', content: 'https://grainhero.app/auth/signup' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/auth/signup' }],
   }),
   component: SignupPage,
 });
