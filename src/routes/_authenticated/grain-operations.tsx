@@ -44,7 +44,6 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
 const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "batches", label: "Grain Batches", icon: Package },
   { key: "silos", label: "Silos", icon: Warehouse },
-  { key: "batches", label: "Grain Batches", icon: Package },
   { key: "warehouses", label: "Warehouses", icon: Building2 },
   { key: "buyers", label: "Buyers", icon: Users },
 ];

@@ -10,11 +10,42 @@ import { TicketDiscussionDialog, type TicketItem } from "@/components/app/Ticket
 import { supabase } from "@/integrations/supabase/client";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
+import { ManagerTeamStrip } from "./ManagerTeamStrip";
 
-type Row = { id: string; primary: ReactNode; secondary?: ReactNode; badge?: ReactNode; action?: ReactNode; to?: string; search?: { tab: string } };
+function formatRelativeTime(iso: string) {
+  const now = new Date();
+  const then = new Date(iso);
+  const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
+  
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return then.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+type Row = {
+  id: string;
+  primary: ReactNode;
+  secondary?: ReactNode;
+  badge?: ReactNode;
+  action?: ReactNode;
+  to?: string;
+  search?: { tab: string };
+};
 
 function BentoCard({
-  title, count, to, search, tooltip, rows, empty, headerAction,
+  title,
+  count,
+  to,
+  search,
+  tooltip,
+  rows,
+  empty,
+  headerAction,
 }: {
   title: string;
   count?: number;
@@ -39,7 +70,11 @@ function BentoCard({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {headerAction}
-          <Link to={to} search={search as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+          <Link
+            to={to}
+            search={search as never}
+            className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+          >
             View all
           </Link>
         </div>
@@ -52,19 +87,30 @@ function BentoCard({
         ) : (
           <ul className="divide-y">
             {rows.map((r) => (
-              <li key={r.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
+              <li
+                key={r.id}
+                className="flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
+              >
                 {r.to ? (
-                  <Link to={r.to} search={r.search as never} className="flex-1 min-w-0 flex flex-col">
+                  <Link
+                    to={r.to}
+                    search={r.search as never}
+                    className="flex-1 min-w-0 flex flex-col"
+                  >
                     <div className="text-xs font-medium truncate">{r.primary}</div>
                     {r.secondary && (
-                      <div className="text-[10px] text-muted-foreground truncate">{r.secondary}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {r.secondary}
+                      </div>
                     )}
                   </Link>
                 ) : (
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium truncate">{r.primary}</div>
                     {r.secondary && (
-                      <div className="text-[10px] text-muted-foreground truncate">{r.secondary}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {r.secondary}
+                      </div>
                     )}
                   </div>
                 )}
@@ -87,7 +133,13 @@ function PriorityPill({ p }: { p?: string | null }) {
     low: "bg-slate-500/10 text-slate-600",
   };
   const key = String(p ?? "medium").toLowerCase();
-  return <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${map[key] ?? map.medium}`}>{key}</span>;
+  return (
+    <span
+      className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${map[key] ?? map.medium}`}
+    >
+      {key}
+    </span>
+  );
 }
 
 function UnreadBadge({ count }: { count: number }) {
@@ -101,14 +153,68 @@ function UnreadBadge({ count }: { count: number }) {
 }
 
 export function ManagerBento({
-  silos, alerts, qcQueue, dispatchQueue, actuators, orders,
+  silos,
+  alerts,
+  qcQueue,
+  dispatchQueue,
+  actuators,
+  buyers,
+  spoiledBatches,
+  technicians,
 }: {
-  silos: Array<{ id: string; name: string; silo_id: string; capacity_kg: number; current_occupancy_kg: number | null; status: string | null }>;
-  alerts: Array<{ id: string; title: string; priority: string | null; alert_type: string | null; triggered_at: string | null }>;
-  qcQueue: Array<{ id: string; batch_id: string; grain_type: string; quantity_kg: number; risk_score: number | null }>;
+  silos: Array<{
+    id: string;
+    name: string;
+    silo_id: string;
+    capacity_kg: number;
+    current_occupancy_kg: number | null;
+    status: string | null;
+  }>;
+  alerts: Array<{
+    id: string;
+    title: string;
+    priority: string | null;
+    alert_type: string | null;
+    triggered_at: string | null;
+  }>;
+  qcQueue: Array<{
+    id: string;
+    batch_id: string;
+    grain_type: string;
+    quantity_kg: number;
+    risk_score: number | null;
+  }>;
   dispatchQueue: Array<{ id: string; batch_id: string; grain_type: string; quantity_kg: number }>;
-  actuators: Array<{ id: string; name: string; actuator_type: string; is_on: boolean | null; silo_id: string | null }>;
-  orders: Array<{ id: string; order_number: string; status: string; total_amount: number | null; created_at: string }>;
+  actuators: Array<{
+    id: string;
+    name: string;
+    actuator_type: string;
+    is_on: boolean | null;
+    silo_id: string | null;
+  }>;
+  buyers: Array<{
+    id: string;
+    name: string;
+    company_name?: string | null;
+    status?: string | null;
+    contact_name?: string | null;
+    created_at?: string | null;
+  }>;
+  spoiledBatches: Array<{
+    id: string;
+    batch_id: string;
+    grain_type: string;
+    quantity_kg: number;
+    status: string;
+    created_at: string;
+  }>;
+  technicians: Array<{
+    id: string;
+    name: string | null;
+    email: string | null;
+    department: string | null;
+    shift_pattern: string | null;
+  }>;
 }) {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
@@ -121,7 +227,9 @@ export function ManagerBento({
   }, []);
 
   const siloRows: Row[] = silos.map((s) => {
-    const pct = s.capacity_kg ? Math.round((Number(s.current_occupancy_kg ?? 0) / s.capacity_kg) * 100) : 0;
+    const pct = s.capacity_kg
+      ? Math.round((Number(s.current_occupancy_kg ?? 0) / s.capacity_kg) * 100)
+      : 0;
     return {
       id: s.id,
       primary: s.name,
@@ -129,7 +237,10 @@ export function ManagerBento({
       badge: (
         <div className="w-16">
           <div className="h-1.5 rounded-full bg-emerald-500/10 overflow-hidden">
-            <div className={`h-full ${pct > 85 ? "bg-red-500" : pct > 60 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${Math.min(100, pct)}%` }} />
+            <div
+              className={`h-full ${pct > 85 ? "bg-red-500" : pct > 60 ? "bg-amber-500" : "bg-emerald-500"}`}
+              style={{ width: `${Math.min(100, pct)}%` }}
+            />
           </div>
         </div>
       ),
@@ -137,21 +248,54 @@ export function ManagerBento({
     };
   });
 
-  const alertRows: Row[] = alerts.map((a) => ({
-    id: a.id,
-    primary: a.title,
-    secondary: a.alert_type ?? "alert",
-    badge: <PriorityPill p={a.priority} />,
-    to: "/grain-alerts",
+  // Combine regular alerts and spoiled batches for the alert triage card
+  const combinedAlerts = [
+    ...alerts.map((a) => ({
+      id: a.id,
+      primary: a.title,
+      secondary: a.alert_type ?? "alert",
+      badge: <PriorityPill p={a.priority} />,
+      to: "/grain-alerts" as const,
+      type: "alert" as const,
+    })),
+    ...spoiledBatches.map((b) => ({
+      id: b.id,
+      primary: `Spoiled: ${b.batch_id}`,
+      secondary: `${b.grain_type} · ${Number(b.quantity_kg).toLocaleString()} kg`,
+      badge: (
+        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600">
+          {b.status}
+        </span>
+      ),
+      to: "/grain-operations" as const,
+      search: { tab: "batches" as const, status: "damaged" as const },
+      type: "spoilage" as const,
+    })),
+  ];
+
+  const alertRows: Row[] = combinedAlerts.map((item) => ({
+    id: item.id,
+    primary: item.primary,
+    secondary: item.secondary,
+    badge: item.badge,
+    to: item.to,
+    search: "search" in item ? item.search : undefined,
   }));
 
   const qcRows: Row[] = qcQueue.map((b) => ({
     id: b.id,
     primary: b.batch_id,
     secondary: `${b.grain_type} · ${Number(b.quantity_kg).toLocaleString()} kg`,
-    badge: (b.risk_score ?? 0) >= 70
-      ? <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600">risk</span>
-      : <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">ok</span>,
+    badge:
+      (b.risk_score ?? 0) >= 70 ? (
+        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600">
+          risk
+        </span>
+      ) : (
+        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+          ok
+        </span>
+      ),
     to: "/grain-operations",
     search: { tab: "batches" },
   }));
@@ -169,18 +313,24 @@ export function ManagerBento({
     primary: a.name,
     secondary: a.actuator_type,
     badge: (
-      <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${a.is_on ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-slate-500/10 text-slate-600"}`}>
+      <span
+        className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${a.is_on ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-slate-500/10 text-slate-600"}`}
+      >
         {a.is_on ? "on" : "off"}
       </span>
     ),
     to: "/actuators",
   }));
 
-  const orderRows: Row[] = orders.map((o) => ({
-    id: o.id,
-    primary: o.order_number,
-    secondary: `${o.status} · Rs. ${Number(o.total_amount ?? 0).toLocaleString()}`,
-    to: "/orders",
+  const buyerRows: Row[] = buyers.map((b) => ({
+    id: b.id,
+    primary: b.name,
+    secondary: `${b.company_name ?? b.contact_name ?? "No details"} · ${b.status ?? "—"}`,
+    badge: b.created_at ? (
+      <span className="text-[9px] text-muted-foreground">{formatRelativeTime(b.created_at)}</span>
+    ) : undefined,
+    to: "/grain-operations",
+    search: { tab: "buyers" },
   }));
 
   const listTicketsFn = useServerFn(listOpenFieldIncidents);
@@ -189,7 +339,16 @@ export function ManagerBento({
     queryFn: () => listTicketsFn(),
     refetchInterval: 30_000,
   });
-  const incList = (openTickets ?? []) as Array<{ id: string; category: string; severity: string; status: string; created_at: string; notes?: string | null; assigned_to?: string | null; reporter_user_id?: string }>;
+  const incList = (openTickets ?? []) as Array<{
+    id: string;
+    category: string;
+    severity: string;
+    status: string;
+    created_at: string;
+    notes?: string | null;
+    assigned_to?: string | null;
+    reporter_user_id?: string;
+  }>;
 
   // Attach unread tracking for all incidents
   useEffect(() => {
@@ -201,89 +360,161 @@ export function ManagerBento({
   const { unreadFor, markRead } = useTicketUnread(currentUserId);
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      <BentoCard title="Silos" count={silos.length} to="/grain-operations" search={{ tab: "silos" }}
-        tooltip="Silo utilisation, sorted by fill. Click any silo for full detail."
-        rows={siloRows} empty="No silos yet — provision from install orders." />
-      <BentoCard title="Alert triage" count={alerts.length} to="/grain-alerts"
-        tooltip="Open alerts awaiting acknowledgement or escalation."
-        rows={alertRows} empty="All clear — no open alerts." />
-      <BentoCard title="QC queue" count={qcQueue.length} to="/grain-operations" search={{ tab: "batches" }}
-        tooltip="Batches currently in intake / processing / treatment awaiting QC sign-off."
-        rows={qcRows} empty="No batches pending QC." />
-      {/* ── Open Field Incidents – Fixed size for 2 entries, scrollable ── */}
-      <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
-        <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-xs font-semibold truncate">Open field incidents</h3>
-            <InfoDot text="Active field incidents — click the message icon to open discussion." />
-            {incList.length > 0 && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-                {incList.length}
-              </span>
+    <div className="space-y-4">
+      {/* ── Top Row: Key Metrics ── */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <BentoCard
+          title="Silos"
+          count={silos.length}
+          to="/grain-operations"
+          search={{ tab: "silos" }}
+          tooltip="Silo utilisation, sorted by fill. Click any silo for full detail."
+          rows={siloRows}
+          empty="No silos yet — provision from install orders."
+        />
+        <BentoCard
+          title="Alert triage"
+          count={combinedAlerts.length}
+          to="/grain-alerts"
+          tooltip="Open alerts and spoiled/damaged batches requiring attention."
+          rows={alertRows}
+          empty="All clear — no open alerts or spoilage."
+        />
+        <BentoCard
+          title="QC queue"
+          count={qcQueue.length}
+          to="/grain-operations"
+          search={{ tab: "batches" }}
+          tooltip="Batches currently in intake / processing / treatment awaiting QC sign-off."
+          rows={qcRows}
+          empty="No batches pending QC."
+        />
+      </div>
+
+      {/* ── Middle Row: Operations & Incidents ── */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <BentoCard
+          title="Dispatch queue"
+          count={dispatchQueue.length}
+          to="/grain-operations"
+          search={{ tab: "silos" }}
+          tooltip="Batches ready to be dispatched to buyers."
+          rows={dispatchRows}
+          empty="Nothing ready to ship."
+        />
+        <BentoCard
+          title="Buyer orders"
+          count={buyers.length}
+          to="/grain-operations"
+          search={{ tab: "buyers" }}
+          tooltip="All buyers created by your team. Shows creation timestamp and status."
+          rows={buyerRows}
+          empty="No buyers created yet."
+        />
+        <BentoCard
+          title="Actuators"
+          count={actuators.length}
+          to="/actuators"
+          tooltip="Latest actuator state. Click through to toggle from the Actuators page."
+          rows={actRows}
+          empty="No actuators registered."
+        />
+      </div>
+
+      {/* ── Bottom Row: Field Incidents & Team on Shift ── */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Open Field Incidents */}
+        <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+          <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="text-xs font-semibold truncate">Open field incidents</h3>
+              <InfoDot text="Active field incidents — click the message icon to open discussion." />
+              {incList.length > 0 && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                  {incList.length}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                id="manager-new-ticket-btn"
+                onClick={() => setTicketDialogOpen(true)}
+                className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                title="Report a new field incident ticket"
+              >
+                <Plus className="h-3 w-3" /> New Ticket
+              </button>
+              <Link
+                to="/platform/field-incidents"
+                search={{} as never}
+                className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+              >
+                View all
+              </Link>
+            </div>
+          </header>
+          <div className="flex-1 overflow-y-auto">
+            {ticketsLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : incList.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-xs text-muted-foreground text-center">
+                  No open field incidents.
+                </p>
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {incList.map((inc) => {
+                  const unreadCount = unreadFor(inc.id);
+                  return (
+                    <li
+                      key={inc.id}
+                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium truncate">{inc.category}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">
+                          {new Date(inc.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setActiveDiscussionTicket({
+                            id: inc.id,
+                            category: inc.category,
+                            severity: inc.severity,
+                            status: inc.status,
+                            notes: inc.notes,
+                            created_at: inc.created_at,
+                          });
+                          setDiscussionOpen(true);
+                          markRead(inc.id);
+                        }}
+                        className="relative flex items-center justify-center p-2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
+                        title={
+                          unreadCount > 0
+                            ? `${unreadCount} unread message${unreadCount > 1 ? "s" : ""}`
+                            : "Open discussion thread"
+                        }
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <UnreadBadge count={unreadCount} />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              id="manager-new-ticket-btn"
-              onClick={() => setTicketDialogOpen(true)}
-              className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
-              title="Report a new field incident ticket"
-            >
-              <Plus className="h-3 w-3" /> New Ticket
-            </button>
-            <Link to="/platform/field-incidents" search={{} as never} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
-              View all
-            </Link>
-          </div>
-        </header>
-        <div className="flex-1 overflow-y-auto">
-          {ticketsLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : incList.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-xs text-muted-foreground text-center">No open field incidents.</p>
-            </div>
-          ) : (
-            <ul className="divide-y">
-              {incList.map((inc) => {
-                const unreadCount = unreadFor(inc.id);
-                return (
-                  <li key={inc.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium truncate">{inc.category}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">
-                        {new Date(inc.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setActiveDiscussionTicket({
-                          id: inc.id,
-                          category: inc.category,
-                          severity: inc.severity,
-                          status: inc.status,
-                          notes: inc.notes,
-                          created_at: inc.created_at,
-                        });
-                        setDiscussionOpen(true);
-                        markRead(inc.id);
-                      }}
-                      className="relative flex items-center justify-center p-2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
-                      title={unreadCount > 0 ? `${unreadCount} unread message${unreadCount > 1 ? 's' : ''}` : "Open discussion thread"}
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      <UnreadBadge count={unreadCount} />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
         </div>
+
+        {/* Team on Shift */}
+        <ManagerTeamStrip technicians={technicians} />
       </div>
+
+      {/* ── Dialogs ── */}
       <ReportTicketDialog
         open={ticketDialogOpen}
         onOpenChange={setTicketDialogOpen}
@@ -295,15 +526,6 @@ export function ManagerBento({
         incident={activeDiscussionTicket}
         currentUserId={currentUserId}
       />
-      <BentoCard title="Dispatch queue" count={dispatchQueue.length} to="/grain-operations" search={{ tab: "silos" }}
-        tooltip="Batches ready to be dispatched to buyers."
-        rows={dispatchRows} empty="Nothing ready to ship." />
-      <BentoCard title="Actuators" count={actuators.length} to="/actuators"
-        tooltip="Latest actuator state. Click through to toggle from the Actuators page."
-        rows={actRows} empty="No actuators registered." />
-      <BentoCard title="Buyer orders" count={orders.length} to="/orders"
-        tooltip="Open buyer orders — pending or confirmed. Fulfil from the orders page."
-        rows={orderRows} empty="No open buyer orders." />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
 import { requireRole } from "@/lib/rbac.server";
-import { logActivity } from "@/lib/activity";
+import { logActivity, logManagerAction } from "@/lib/activity";
 
 // Roles allowed to rename a silo/warehouse — same allow-list used for team
 // invite/manage (see inviteTeamMember/updateTeamMember in
@@ -348,7 +348,7 @@ export const listGrainBatches = createServerFn({ method: "GET" })
     });
   });
 
-const grainTypes = ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"] as const;
+const grainTypes = ["Wheat", "Rice", "Maize", "Barley", "Sorghum"] as const;
 const batchStatuses = [
   "stored",
   "dispatched",
@@ -494,7 +494,13 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         action: "batch.updated",
         targetType: "grain_batch",
         targetId: data.id,
-        meta: { batchId: (row as { batch_id?: string }).batch_id, status: updateStatus },
+        severity: role === "manager" ? "warning" : "info",
+        meta: {
+          batchId: (row as { batch_id?: string }).batch_id,
+          status: updateStatus,
+          updatedBy: role,
+          previousStatus: data.status,
+        },
       });
       return row;
     }
@@ -603,11 +609,14 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       action: "batch.created",
       targetType: "grain_batch",
       targetId: (row as { id: string }).id,
+      severity: role === "manager" ? "warning" : "info",
       meta: {
         batchId,
         grainType: data.grain_type,
         quantityKg: data.quantity_kg,
         siloId: data.silo_id,
+        createdBy: role,
+        requiresApproval: role === "manager",
       },
     });
     await logActivity({
@@ -1435,7 +1444,7 @@ const buyerInput = z.object({
   state: z.string().max(120).optional().nullable(),
   country: z.string().max(120).optional().nullable(),
   preferred_grain_types: z
-    .array(z.enum(["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"]))
+    .array(z.enum(["Wheat", "Rice", "Maize", "Barley", "Sorghum"]))
     .optional()
     .nullable(),
   preferred_payment_terms: z.string().max(120).optional().nullable(),
