@@ -33,6 +33,15 @@ const TAB_KEYS: Tab[] = ["batches", "silos", "warehouses", "buyers"];
 type GrainOpsSearch = { tab: Tab; status?: string };
 
 export const Route = createFileRoute("/_authenticated/grain-operations")({
+  head: () => ({
+    meta: [
+      { title: "Grain Operations — Grain Hero" },
+      { name: "description", content: "Grain Operations workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Grain Operations — Grain Hero" },
+      { property: "og:description", content: "Grain Operations workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): GrainOpsSearch => ({
     tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "silos",
     // Optional deep-link filter for the Batches tab (e.g. the global search

@@ -17,6 +17,15 @@ import {
 } from "@/components/charts/neon";
 
 export const Route = createFileRoute("/_authenticated/platform/sla-alerts")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Sla Alerts — Grain Hero" },
+      { name: "description", content: "Platform · Sla Alerts workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Sla Alerts — Grain Hero" },
+      { property: "og:description", content: "Platform · Sla Alerts workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SlaAlertsPage,
 });
 

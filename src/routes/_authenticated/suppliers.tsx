@@ -18,6 +18,15 @@ import { listSuppliers, upsertSupplier, deleteSupplier } from "@/lib/suppliers.f
 type SupplierRow = Record<string, any>;
 
 export const Route = createFileRoute("/_authenticated/suppliers")({
+  head: () => ({
+    meta: [
+      { title: "Suppliers — Grain Hero" },
+      { name: "description", content: "Suppliers workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Suppliers — Grain Hero" },
+      { property: "og:description", content: "Suppliers workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SuppliersPage,
 });
 

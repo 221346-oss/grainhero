@@ -20,7 +20,14 @@ export const Route = createFileRoute("/auth/login")({
     meta: [
       { title: "Sign in — GrainHero" },
       { name: "description", content: "Sign in to your GrainHero account." },
+      { property: 'og:title', content: "Sign in — GrainHero" },
+      { property: 'og:description', content: "Sign in to your GrainHero account." },
+      { property: 'og:url', content: 'https://grainhero.app/auth/login' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/auth/login' }],
   }),
   component: LoginPage,
 });

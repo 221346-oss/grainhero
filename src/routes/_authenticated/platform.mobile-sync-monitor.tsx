@@ -12,6 +12,15 @@ import { useState } from "react";
 const ENDPOINTS: SyncEndpoint[] = ["field-tasks", "field-incidents", "marketplace", "buyer-summary"];
 
 export const Route = createFileRoute("/_authenticated/platform/mobile-sync-monitor")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Mobile Sync Monitor — Grain Hero" },
+      { name: "description", content: "Platform · Mobile Sync Monitor workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Mobile Sync Monitor — Grain Hero" },
+      { property: "og:description", content: "Platform · Mobile Sync Monitor workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MobileSyncMonitorPage,
 });
 

@@ -6,6 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { getTenantDetail } from "@/lib/platform-no-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/tenants/$adminId")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Tenants · AdminId — Grain Hero" },
+      { name: "description", content: "Platform · Tenants · AdminId workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Tenants · AdminId — Grain Hero" },
+      { property: "og:description", content: "Platform · Tenants · AdminId workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: TenantDetailSheet,
 });
 

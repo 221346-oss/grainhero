@@ -17,6 +17,15 @@ import { toast } from "sonner";
 import { FinancialsSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/platform/financials")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Financials — Grain Hero" },
+      { name: "description", content: "Platform · Financials workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Financials — Grain Hero" },
+      { property: "og:description", content: "Platform · Financials workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: FinancialsPage,
 });
 

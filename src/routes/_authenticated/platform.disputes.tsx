@@ -17,6 +17,15 @@ import { getMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { initiateRefund } from "@/lib/refunds.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/disputes")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Disputes — Grain Hero" },
+      { name: "description", content: "Platform · Disputes workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Disputes — Grain Hero" },
+      { property: "og:description", content: "Platform · Disputes workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformDisputesPage,
 });
 

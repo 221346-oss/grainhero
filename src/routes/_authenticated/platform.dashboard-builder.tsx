@@ -17,6 +17,15 @@ import { listWidgetsForMe, saveWidget, deleteWidget } from "@/lib/dashboard-buil
 import { MetricWidget } from "@/components/app/analytics/MetricWidget";
 
 export const Route = createFileRoute("/_authenticated/platform/dashboard-builder")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Dashboard Builder — Grain Hero" },
+      { name: "description", content: "Platform · Dashboard Builder workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Dashboard Builder — Grain Hero" },
+      { property: "og:description", content: "Platform · Dashboard Builder workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: DashboardBuilderPage,
 });
 

@@ -12,7 +12,13 @@ export const Route = createFileRoute('/blog')({
         name: 'description',
         content: 'Stay updated with the latest news, tips, and insights about grain storage technology and agriculture.',
       },
+      { property: 'og:title', content: "Blog — GrainHero" },
+      { property: 'og:description', content: "Stay updated with the latest news, tips, and insights about grain storage technology and agriculture." },
+      { property: 'og:url', content: 'https://grainhero.app/blog' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/blog' }],
   }),
   component: BlogPage,
 })

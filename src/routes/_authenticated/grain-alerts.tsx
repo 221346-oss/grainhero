@@ -26,6 +26,15 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/grain-alerts")({
+  head: () => ({
+    meta: [
+      { title: "Grain Alerts — Grain Hero" },
+      { name: "description", content: "Grain Alerts workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Grain Alerts — Grain Hero" },
+      { property: "og:description", content: "Grain Alerts workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): { priority?: string } => ({
     priority: (search.priority as string) ?? "all",
   }),

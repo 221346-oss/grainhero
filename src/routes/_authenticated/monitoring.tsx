@@ -29,6 +29,15 @@ import { getIncidents } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
+  head: () => ({
+    meta: [
+      { title: "Monitoring — Grain Hero" },
+      { name: "description", content: "Monitoring workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Monitoring — Grain Hero" },
+      { property: "og:description", content: "Monitoring workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MonitoringWorkspace,
 });
 

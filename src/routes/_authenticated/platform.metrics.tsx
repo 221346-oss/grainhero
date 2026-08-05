@@ -25,6 +25,15 @@ import {
 import { listRefreshLog, refreshWarehouse } from "@/lib/analytics-refresh.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/metrics")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Metrics — Grain Hero" },
+      { name: "description", content: "Platform · Metrics workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Metrics — Grain Hero" },
+      { property: "og:description", content: "Platform · Metrics workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MetricRegistryPage,
 });
 

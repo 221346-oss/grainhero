@@ -27,6 +27,15 @@ import { getMyRole } from "@/lib/roles.functions";
 import { getBatchTraceability } from "@/lib/traceability.functions";
 
 export const Route = createFileRoute("/_authenticated/traceability")({
+  head: () => ({
+    meta: [
+      { title: "Traceability — Grain Hero" },
+      { name: "description", content: "Traceability workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Traceability — Grain Hero" },
+      { property: "og:description", content: "Traceability workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: TraceabilityPage,
 });
 
