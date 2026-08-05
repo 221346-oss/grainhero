@@ -26,6 +26,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
+import { Route as SolutionsSiloMonitoringSystemRouteImport } from './routes/solutions.silo-monitoring-system'
 import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
 import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
@@ -272,6 +273,12 @@ const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CheckoutRoute,
 } as any)
+const SolutionsSiloMonitoringSystemRoute =
+  SolutionsSiloMonitoringSystemRouteImport.update({
+    id: '/solutions/silo-monitoring-system',
+    path: '/solutions/silo-monitoring-system',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SolutionsGrainStorageMonitoringRoute =
   SolutionsGrainStorageMonitoringRouteImport.update({
     id: '/solutions/grain-storage-monitoring',
@@ -1255,6 +1262,7 @@ export interface FileRoutesByFullPath {
   '/checkout/success': typeof CheckoutSuccessRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1432,6 +1440,7 @@ export interface FileRoutesByTo {
   '/checkout/success': typeof CheckoutSuccessRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout': typeof CheckoutIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1613,6 +1622,7 @@ export interface FileRoutesById {
   '/checkout/success': typeof CheckoutSuccessRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
   '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1794,6 +1804,7 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/marketplace/$slug'
     | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout/'
     | '/marketplace/'
     | '/admins/$adminId'
@@ -1971,6 +1982,7 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/marketplace/$slug'
     | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout'
     | '/marketplace'
     | '/admins/$adminId'
@@ -2151,6 +2163,7 @@ export interface FileRouteTypes {
     | '/checkout/success'
     | '/marketplace/$slug'
     | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout/'
     | '/marketplace/'
     | '/_authenticated/admins/$adminId'
@@ -2290,6 +2303,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   SolutionsGrainStorageMonitoringRoute: typeof SolutionsGrainStorageMonitoringRoute
+  SolutionsSiloMonitoringSystemRoute: typeof SolutionsSiloMonitoringSystemRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -2467,6 +2481,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/checkout/'
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof CheckoutRoute
+    }
+    '/solutions/silo-monitoring-system': {
+      id: '/solutions/silo-monitoring-system'
+      path: '/solutions/silo-monitoring-system'
+      fullPath: '/solutions/silo-monitoring-system'
+      preLoaderRoute: typeof SolutionsSiloMonitoringSystemRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/solutions/grain-storage-monitoring': {
       id: '/solutions/grain-storage-monitoring'
@@ -4023,6 +4044,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   SolutionsGrainStorageMonitoringRoute: SolutionsGrainStorageMonitoringRoute,
+  SolutionsSiloMonitoringSystemRoute: SolutionsSiloMonitoringSystemRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
