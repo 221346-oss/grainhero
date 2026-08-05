@@ -1,4 +1,5 @@
 #include <Adafruit_Sensor.h>
+#include <Adafruit_BME680.h>
 #include <ArduinoJson.h>
 #include <DHT.h>
 #include <ESP32Servo.h>
@@ -25,7 +26,7 @@
 #define AUTH_TOKEN "GrainHero_Secret_2026"
 #define FIXED_DEVICE_ID "004B12387760"
 #define FW_VERSION "1.0.0"
-#define OTA_API_URL "https://your-domain.com/api/public/v1/firmware/latest"
+#define OTA_API_URL "http://10.10.60.54:8000/grainhero_updated_ino.ino.bin"
 #define BACKEND_BASE_URL "http://192.168.100.229:5000/api/iot"
 #define FIREBASE_HOST "smart-silo-8ce12-default-rtdb.firebaseio.com"
 #define FIREBASE_AUTH "9VmddGd8EjIYCfCwoI6Kl6RnSOEaCIDfC62gmDXg"
@@ -58,7 +59,7 @@
 #define SERIAL_TEL_INTERVAL 2000UL
 #define FIREBASE_INTERVAL 5000UL
 #define CONTROL_INTERVAL 2000UL
-#define OTA_INTERVAL 3600000UL
+#define OTA_INTERVAL 30000UL
 #define SERVO_COOLDOWN 1000UL
 #define LID_DELAY_MS 1500UL
 #define HUMAN_OVERRIDE_TO 600000UL // 10 min

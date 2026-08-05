@@ -40,7 +40,7 @@ FEATURE_NAMES: Tuple[str, ...] = (
 )
 N_FEATURES = len(FEATURE_NAMES)
 
-SUPPORTED_GRAINS = ("rice", "wheat", "maize", "sorghum", "barley")
+SUPPORTED_GRAINS = ("rice", "wheat")
 
 
 class _GrainModel:

@@ -6,11 +6,11 @@ httpx>=0.27.0                 # async Supabase calls from inference server
 supabase>=2.5.0               # Supabase Python client (storage + DB)
 
 # ── Online learning (background task inside Process 1) ────────────────────────
-river>=0.21.0                 # incremental/online learning, never blocks request path
+# river>=0.21.0                 # incremental/online learning, never blocks request path
 
 # ── Shared utilities ──────────────────────────────────────────────────────────
 numpy>=1.26.0
-pandas>=2.2.0
+# pandas>=2.2.0
 # joblib>=1.4.0
 # scipy>=1.13.0
 
