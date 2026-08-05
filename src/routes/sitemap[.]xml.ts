@@ -23,6 +23,22 @@ export const Route = createFileRoute("/sitemap.xml")({
       GET: async () => {
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
+          {
+            path: "/solutions/grain-storage-monitoring",
+            changefreq: "monthly",
+            priority: "0.9",
+          },
+          {
+            path: "/solutions/silo-monitoring-system",
+            changefreq: "monthly",
+            priority: "0.9",
+          },
+          {
+            path: "/solutions/grain-management-software",
+            changefreq: "monthly",
+            priority: "0.9",
+          },
+          { path: "/guides/grain-storage", changefreq: "monthly", priority: "0.9" },
           { path: "/about", changefreq: "monthly", priority: "0.7" },
           { path: "/team", changefreq: "monthly", priority: "0.6" },
           { path: "/contact", changefreq: "monthly", priority: "0.7" },

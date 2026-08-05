@@ -26,7 +26,11 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
+import { Route as SolutionsSiloMonitoringSystemRouteImport } from './routes/solutions.silo-monitoring-system'
+import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
+import { Route as SolutionsGrainManagementSoftwareRouteImport } from './routes/solutions.grain-management-software'
 import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
+import { Route as GuidesGrainStorageRouteImport } from './routes/guides.grain-storage'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
@@ -271,10 +275,33 @@ const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CheckoutRoute,
 } as any)
+const SolutionsSiloMonitoringSystemRoute =
+  SolutionsSiloMonitoringSystemRouteImport.update({
+    id: '/solutions/silo-monitoring-system',
+    path: '/solutions/silo-monitoring-system',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SolutionsGrainStorageMonitoringRoute =
+  SolutionsGrainStorageMonitoringRouteImport.update({
+    id: '/solutions/grain-storage-monitoring',
+    path: '/solutions/grain-storage-monitoring',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SolutionsGrainManagementSoftwareRoute =
+  SolutionsGrainManagementSoftwareRouteImport.update({
+    id: '/solutions/grain-management-software',
+    path: '/solutions/grain-management-software',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => MarketplaceRoute,
+} as any)
+const GuidesGrainStorageRoute = GuidesGrainStorageRouteImport.update({
+  id: '/guides/grain-storage',
+  path: '/guides/grain-storage',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   id: '/success',
@@ -1246,7 +1273,11 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/guides/grain-storage': typeof GuidesGrainStorageRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-management-software': typeof SolutionsGrainManagementSoftwareRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1422,7 +1453,11 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/guides/grain-storage': typeof GuidesGrainStorageRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-management-software': typeof SolutionsGrainManagementSoftwareRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout': typeof CheckoutIndexRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1602,7 +1637,11 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/checkout/success': typeof CheckoutSuccessRoute
+  '/guides/grain-storage': typeof GuidesGrainStorageRoute
   '/marketplace/$slug': typeof MarketplaceSlugRoute
+  '/solutions/grain-management-software': typeof SolutionsGrainManagementSoftwareRoute
+  '/solutions/grain-storage-monitoring': typeof SolutionsGrainStorageMonitoringRoute
+  '/solutions/silo-monitoring-system': typeof SolutionsSiloMonitoringSystemRoute
   '/checkout/': typeof CheckoutIndexRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/admins/$adminId': typeof AuthenticatedAdminsAdminIdRoute
@@ -1782,7 +1821,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/guides/grain-storage'
     | '/marketplace/$slug'
+    | '/solutions/grain-management-software'
+    | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout/'
     | '/marketplace/'
     | '/admins/$adminId'
@@ -1958,7 +2001,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/guides/grain-storage'
     | '/marketplace/$slug'
+    | '/solutions/grain-management-software'
+    | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout'
     | '/marketplace'
     | '/admins/$adminId'
@@ -2137,7 +2184,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-otp'
     | '/checkout/success'
+    | '/guides/grain-storage'
     | '/marketplace/$slug'
+    | '/solutions/grain-management-software'
+    | '/solutions/grain-storage-monitoring'
+    | '/solutions/silo-monitoring-system'
     | '/checkout/'
     | '/marketplace/'
     | '/_authenticated/admins/$adminId'
@@ -2276,6 +2327,10 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  GuidesGrainStorageRoute: typeof GuidesGrainStorageRoute
+  SolutionsGrainManagementSoftwareRoute: typeof SolutionsGrainManagementSoftwareRoute
+  SolutionsGrainStorageMonitoringRoute: typeof SolutionsGrainStorageMonitoringRoute
+  SolutionsSiloMonitoringSystemRoute: typeof SolutionsSiloMonitoringSystemRoute
   ApiFirebaseLiveSensorsRoute: typeof ApiFirebaseLiveSensorsRoute
   ApiPublicActuatorAckRoute: typeof ApiPublicActuatorAckRoute
   ApiPublicTelemetryRoute: typeof ApiPublicTelemetryRoute
@@ -2454,12 +2509,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof CheckoutRoute
     }
+    '/solutions/silo-monitoring-system': {
+      id: '/solutions/silo-monitoring-system'
+      path: '/solutions/silo-monitoring-system'
+      fullPath: '/solutions/silo-monitoring-system'
+      preLoaderRoute: typeof SolutionsSiloMonitoringSystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions/grain-storage-monitoring': {
+      id: '/solutions/grain-storage-monitoring'
+      path: '/solutions/grain-storage-monitoring'
+      fullPath: '/solutions/grain-storage-monitoring'
+      preLoaderRoute: typeof SolutionsGrainStorageMonitoringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions/grain-management-software': {
+      id: '/solutions/grain-management-software'
+      path: '/solutions/grain-management-software'
+      fullPath: '/solutions/grain-management-software'
+      preLoaderRoute: typeof SolutionsGrainManagementSoftwareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/$slug': {
       id: '/marketplace/$slug'
       path: '/$slug'
       fullPath: '/marketplace/$slug'
       preLoaderRoute: typeof MarketplaceSlugRouteImport
       parentRoute: typeof MarketplaceRoute
+    }
+    '/guides/grain-storage': {
+      id: '/guides/grain-storage'
+      path: '/guides/grain-storage'
+      fullPath: '/guides/grain-storage'
+      preLoaderRoute: typeof GuidesGrainStorageRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/checkout/success': {
       id: '/checkout/success'
@@ -4001,6 +4084,10 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  GuidesGrainStorageRoute: GuidesGrainStorageRoute,
+  SolutionsGrainManagementSoftwareRoute: SolutionsGrainManagementSoftwareRoute,
+  SolutionsGrainStorageMonitoringRoute: SolutionsGrainStorageMonitoringRoute,
+  SolutionsSiloMonitoringSystemRoute: SolutionsSiloMonitoringSystemRoute,
   ApiFirebaseLiveSensorsRoute: ApiFirebaseLiveSensorsRoute,
   ApiPublicActuatorAckRoute: ApiPublicActuatorAckRoute,
   ApiPublicTelemetryRoute: ApiPublicTelemetryRoute,
@@ -4067,13 +4154,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
