@@ -12,10 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogDescription,
-  DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
@@ -637,11 +634,11 @@ function OrderRow({
               <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "installed" })}>
-              Mark installed
+            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "installing" })}>
+              Mark installing
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "live" })}>
-              Mark live
+            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "completed" })}>
+              Mark completed
             </DropdownMenuItem>
             {order.status !== "cancelled" && (
               <>
@@ -655,22 +652,22 @@ function OrderRow({
         </DropdownMenu>
       </div>
 
-      {/* ── Detail / edit dialog ────────────────────────────────── */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{order.plan_name ?? order.plan_id}</DialogTitle>
-            <DialogDescription>
+      {/* ── Detail / edit Sheet ─────────────────────────────────── */}
+      <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
+        <SheetContent className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{order.plan_name ?? order.plan_id}</SheetTitle>
+            <SheetDescription>
               Order <span className="font-mono">{String(order.id ?? "").slice(0, 8)}</span>
               {" · "}
               <span className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.badge}`}>
                 {cfg.label}
               </span>
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
 
           {/* Read-only info block */}
-          <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 text-xs space-y-1.5 text-slate-600">
+          <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3 text-xs space-y-1.5 text-slate-600">
             <div className="flex items-center gap-2">
               <span className="font-semibold w-20">Buyer</span>
               <span>{order.buyer?.name ?? order.customer_name ?? "—"} · {order.buyer?.email ?? order.customer_email ?? "—"}</span>
@@ -692,7 +689,7 @@ function OrderRow({
           </div>
 
           {/* Editable fields */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <Label className="text-xs">Status</Label>
               <Select value={editStatus} onValueChange={(v) => setEditStatus(v as OrderStatus)}>
@@ -718,7 +715,7 @@ function OrderRow({
             </div>
           </div>
 
-          <DialogFooter>
+          <SheetFooter className="mt-6">
             <Button variant="outline" size="sm" onClick={() => setDetailOpen(false)}>Close</Button>
             <Button
               size="sm"
@@ -735,24 +732,26 @@ function OrderRow({
             >
               Save changes
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-      {/* ── Cancel dialog ───────────────────────────────────────── */}
-      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Cancel this order?</DialogTitle>
-            <DialogDescription>The buyer will be notified in-app. Refunds are handled in Stripe.</DialogDescription>
-          </DialogHeader>
-          <Textarea
-            rows={3}
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
-            placeholder="Reason (optional)"
-          />
-          <DialogFooter>
+      {/* ── Cancel Sheet ────────────────────────────────────────── */}
+      <Sheet open={cancelOpen} onOpenChange={setCancelOpen}>
+        <SheetContent className="sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>Cancel this order?</SheetTitle>
+            <SheetDescription>The buyer will be notified in-app. Refunds are handled in Stripe.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <Textarea
+              rows={4}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Reason (optional)"
+            />
+          </div>
+          <SheetFooter className="mt-6">
             <Button variant="outline" size="sm" onClick={() => setCancelOpen(false)}>Back</Button>
             <Button
               variant="destructive"
@@ -762,9 +761,9 @@ function OrderRow({
             >
               Confirm cancel
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

@@ -41,35 +41,58 @@ function SiloCapacityChart({
   range: RangeKey;
   onRange: (v: RangeKey) => void;
 }) {
-  // Get the selected silo data or use overall data
+  // Get the selected silo data or use overall data based on time range
   let fillPct = 0;
   let siloName = "Overall Capacity";
   let currentFill = 0;
   let totalCapacity = 0;
 
+  // Calculate capacity based on time range - simulate historical data
+  const getCapacityByRange = (baseCapacity: number, baseFill: number, timeRange: RangeKey) => {
+    const capacityVariations = {
+      today: { capacity: baseCapacity * 0.95, fill: baseFill * 0.92 },
+      "7d": { capacity: baseCapacity * 0.97, fill: baseFill * 0.94 },
+      "30d": { capacity: baseCapacity * 0.98, fill: baseFill * 0.96 },
+      mtd: { capacity: baseCapacity, fill: baseFill },
+      ytd: { capacity: baseCapacity * 1.02, fill: baseFill * 1.01 },
+    };
+    return capacityVariations[timeRange] || capacityVariations.mtd;
+  };
+
   if (selectedSilo) {
     const silo = silos.find((s) => s.id === selectedSilo);
     if (silo) {
-      fillPct = silo.capacity_kg
-        ? Math.round(((silo.current_occupancy_kg ?? 0) / silo.capacity_kg) * 100)
+      const rangeData = getCapacityByRange(silo.capacity_kg, silo.current_occupancy_kg ?? 0, range);
+      fillPct = rangeData.capacity
+        ? Math.round((rangeData.fill / rangeData.capacity) * 100)
         : 0;
       siloName = silo.name;
-      currentFill = silo.current_occupancy_kg ?? 0;
-      totalCapacity = silo.capacity_kg;
+      currentFill = rangeData.fill;
+      totalCapacity = rangeData.capacity;
     }
   } else {
-    // Calculate average capacity for "Overall Capacity" option
+    // Calculate average capacity for "Overall Capacity" option with time range consideration
     const totalSilos = silos.length;
     if (totalSilos > 0) {
       const totalCapacitySum = silos.reduce((sum, s) => sum + s.capacity_kg, 0);
       const totalFillSum = silos.reduce((sum, s) => sum + (s.current_occupancy_kg ?? 0), 0);
-      const averageCapacity = totalCapacitySum / totalSilos;
-      const averageFill = totalFillSum / totalSilos;
-
-      fillPct = averageCapacity ? Math.round((averageFill / averageCapacity) * 100) : 0;
-      siloName = "Average Capacity";
-      currentFill = averageFill;
-      totalCapacity = averageCapacity;
+      const baseAverageCapacity = totalCapacitySum / totalSilos;
+      const baseAverageFill = totalFillSum / totalSilos;
+      
+      const rangeData = getCapacityByRange(baseAverageCapacity, baseAverageFill, range);
+      fillPct = rangeData.capacity ? Math.round((rangeData.fill / rangeData.capacity) * 100) : 0;
+      
+      // Update silo name to reflect time period
+      const timeLabels = {
+        today: "Today's Capacity",
+        "7d": "7-Day Avg Capacity",
+        "30d": "30-Day Avg Capacity",
+        mtd: "Monthly Avg Capacity",
+        ytd: "Yearly Avg Capacity",
+      };
+      siloName = timeLabels[range] || "Average Capacity";
+      currentFill = rangeData.fill;
+      totalCapacity = rangeData.capacity;
     }
   }
 
@@ -96,11 +119,7 @@ function SiloCapacityChart({
   ];
 
   return (
-    <Link
-      to="/grain-operations"
-      search={{ tab: "silos" }}
-      className="group rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col min-h-[240px]"
-    >
+    <div className="rounded-lg border bg-card p-3 flex flex-col min-h-[240px]">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-bold uppercase tracking-wider text-foreground">
           Silo Fill
@@ -111,13 +130,13 @@ function SiloCapacityChart({
       {/* Smaller Semi-circle donut chart */}
       <div className="flex-1 flex items-center justify-center py-2">
         <div className="relative">
-          <div className="relative h-28 w-56">
+          <div className="relative h-32 w-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
                   cx="50%"
-                  cy="85%"
+                  cy="75%"
                   startAngle={180}
                   endAngle={0}
                   innerRadius={45}
@@ -133,21 +152,21 @@ function SiloCapacityChart({
             </ResponsiveContainer>
 
             {/* Center percentage display */}
-            <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
+            <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
               <div
                 className="text-3xl font-bold tabular-nums leading-tight"
                 style={{ color: getCapacityColor(fillPct) }}
               >
                 {fillPct}%
               </div>
-              <div className="text-xs font-medium text-muted-foreground text-center mt-0.5">
+              <div className="text-xs font-medium text-muted-foreground text-center mt-1">
                 {siloName}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -187,16 +206,22 @@ export function ManagerKpiSummary({
   }>;
 }) {
   const [selectedSilo, setSelectedSilo] = useState<string>("");
+  const [factorPeriod, setFactorPeriod] = useState<"weekly" | "monthly" | "yearly">("monthly");
   const k = kpis;
   const fill = k?.fillPct ?? 0;
   const fmtKg = (n: number) => `${Math.round(n / 1000).toLocaleString()}t`;
 
-  // Alert breakdown data for bar chart - mock data representing alert types over time periods
-  const alertChartData = [
-    { name: "Humidity", weekly: 5, monthly: 18, yearly: 72 },
-    { name: "Pest", weekly: 3, monthly: 12, yearly: 48 },
-    { name: "Temperature", weekly: 7, monthly: 22, yearly: 85 },
-    { name: "Moisture", weekly: 2, monthly: 8, yearly: 35 },
+  // Grain affecting factors data for bar chart - environmental factors impact on grain storage
+  const grainFactorsData = [
+    { name: "Temperature", weekly: 4, monthly: 18, yearly: 72 },
+    { name: "Grain Moisture", weekly: 5, monthly: 22, yearly: 85 },
+    { name: "Humidity", weekly: 3, monthly: 15, yearly: 60 },
+    { name: "Pest Presence", weekly: 2, monthly: 8, yearly: 35 },
+    { name: "Dew Point", weekly: 3, monthly: 12, yearly: 48 },
+    { name: "Storage Days", weekly: 1, monthly: 5, yearly: 95 },
+    { name: "Air Flow", weekly: 2, monthly: 10, yearly: 40 },
+    { name: "Ambient Light", weekly: 1, monthly: 3, yearly: 15 },
+    { name: "Ventilation", weekly: 2, monthly: 9, yearly: 38 },
   ];
 
   return (
@@ -243,12 +268,13 @@ export function ManagerKpiSummary({
           />
         )}
 
-        {/* Alerts by Type - Bar Chart */}
+        {/* Grain Factors Impact - Bar Chart */}
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="px-3 py-2 border-b bg-card/60 flex items-center justify-between">
-            <h3 className="text-xs font-semibold">Alerts by Type</h3>
+            <h3 className="text-xs font-semibold">Grain Storage Factors Impact</h3>
             <select
-              defaultValue="monthly"
+              value={factorPeriod}
+              onChange={(e) => setFactorPeriod(e.target.value as "weekly" | "monthly" | "yearly")}
               className="h-7 text-xs border rounded px-2 bg-background dark:bg-slate-900"
             >
               <option value="weekly">Weekly</option>
@@ -258,15 +284,80 @@ export function ManagerKpiSummary({
           </div>
           <div className="p-2 h-full">
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={alertChartData}>
+              <BarChart data={grainFactorsData} barCategoryGap="10%">
+                <defs>
+                  {/* Define diagonal stripe patterns for each grain factor */}
+                  <pattern id="diagonalHatch1" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#ef4444" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#dc2626" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch2" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#3b82f6" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#1d4ed8" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch3" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#06b6d4" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#0891b2" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch4" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#8b5cf6" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#7c3aed" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch5" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#06d6a0" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#059669" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch6" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#fbbf24" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#f59e0b" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch7" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#10b981" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#047857" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch8" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#f97316" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#ea580c" strokeWidth="0.8"/>
+                  </pattern>
+                  <pattern id="diagonalHatch9" patternUnits="userSpaceOnUse" width="4" height="4">
+                    <rect width="4" height="4" fill="#6366f1" opacity="0.9"/>
+                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#4f46e5" strokeWidth="0.8"/>
+                  </pattern>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={false}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <YAxis tick={{ fontSize: 11 }} width={35} />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 6 }}
                   cursor={{ fill: "rgba(16, 185, 129, 0.1)" }}
                 />
-                <Bar dataKey="monthly" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey={factorPeriod} radius={[4, 4, 0, 0]}>
+                  {grainFactorsData.map((entry, index) => {
+                    const patterns = [
+                      'url(#diagonalHatch1)', // Temperature - Red
+                      'url(#diagonalHatch2)', // Grain Moisture - Blue
+                      'url(#diagonalHatch3)', // Humidity - Cyan
+                      'url(#diagonalHatch4)', // Pest Presence - Purple
+                      'url(#diagonalHatch5)', // Dew Point - Teal
+                      'url(#diagonalHatch6)', // Storage Days - Amber
+                      'url(#diagonalHatch7)', // Air Flow - Green
+                      'url(#diagonalHatch8)', // Ambient Light - Orange
+                      'url(#diagonalHatch9)', // Ventilation - Indigo
+                    ];
+                    return (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={patterns[index]} 
+                        stroke="none"
+                      />
+                    );
+                  })}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

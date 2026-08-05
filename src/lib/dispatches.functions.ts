@@ -57,6 +57,7 @@ async function computeFifoAllocation(sb: Row, siloId: string, grainType: string,
 const createInput = z.object({
   siloId: z.string().uuid(),
   buyerId: z.string().uuid().nullable().optional(),
+  invoiceId: z.string().uuid().nullable().optional(),
   newBuyer: z
     .object({
       name: z.string().min(1).max(200),
@@ -127,6 +128,23 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     if (sErr || !silo) throw new Error("Silo not found");
     const adminId = (silo as Row).admin_id as string;
 
+    // If this dispatch is fulfilling a Step-1 invoice/quote, pull the buyer off
+    // it and make sure it's a real, unlinked, same-tenant invoice.
+    let invoiceBuyerId: string | null = null;
+    if (data.invoiceId) {
+      const { data: inv, error: invErr } = await sb
+        .from("buyer_invoices")
+        .select("id, admin_id, buyer_id, dispatch_id")
+        .eq("id", data.invoiceId)
+        .maybeSingle();
+      if (invErr) throw invErr;
+      if (!inv) throw new Error("Invoice not found");
+      const invoiceRow = inv as Row;
+      if (invoiceRow.admin_id !== adminId) throw new Error("Invoice belongs to a different tenant");
+      if (invoiceRow.dispatch_id) throw new Error("Invoice is already linked to a dispatch");
+      invoiceBuyerId = invoiceRow.buyer_id as string | null;
+    }
+
     // Preview-only FIFO simulation, purely for the cost/profit estimate shown
     // to whoever is creating the request — the real allocation is redone at
     // approval time against then-current stock.
@@ -135,7 +153,7 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     const totalAmount = Number((data.pricePerKg * data.qtyKg).toFixed(2));
     const profit = totalCostVal != null ? Number((totalAmount - totalCostVal).toFixed(2)) : null;
 
-    let buyerId = data.buyerId ?? null;
+    let buyerId = data.buyerId ?? invoiceBuyerId ?? null;
     if (!buyerId && data.newBuyer?.name) {
       const { data: nb, error: nErr } = await sb
         .from("buyers")
@@ -189,6 +207,14 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
       .single();
     if (dErr) throw dErr;
     const dispatchId = (disp as Row).id as string;
+
+    if (data.invoiceId) {
+      const { error: linkErr } = await sb
+        .from("buyer_invoices")
+        .update({ dispatch_id: dispatchId } as never)
+        .eq("id", data.invoiceId);
+      if (linkErr) throw linkErr;
+    }
 
     await logActivity({
       actorId: context.userId,

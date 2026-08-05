@@ -258,7 +258,7 @@ function AllOpenTicketsSection() {
       <header className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <Ticket className="h-4 w-4 text-amber-600" />
-          <h2 className="text-sm font-semibold">All open tickets</h2>
+          <h2 className="text-sm font-semibold">Mobile Field Reports</h2>
           {tickets.length > 0 && (
             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600">
               {tickets.length}
@@ -281,7 +281,7 @@ function AllOpenTicketsSection() {
           </div>
         ) : tickets.length === 0 ? (
           <div className="py-8 text-center">
-            <p className="text-xs text-muted-foreground">No open tickets right now. 🎉</p>
+            <p className="text-xs text-muted-foreground">No open mobile field reports right now. 🎉</p>
             <button
               onClick={() => setReportOpen(true)}
               className="mt-3 text-[11px] font-semibold text-amber-600 hover:underline"
@@ -393,7 +393,9 @@ export function TechnicianDashboard({ name }: { name?: string }) {
       />
       <CustomWidgetsBand />
 
-      {/* All open tickets — visible to every technician */}
+      {/* Mobile Field Reports — visible to every technician. Older mobile-sync
+          field_incidents system (field-settings.functions.ts) — not the newer
+          auto-routing Field Incidents feature under Administration. */}
       <AllOpenTicketsSection />
 
       {/* Assigned field incidents — action items for this technician */}

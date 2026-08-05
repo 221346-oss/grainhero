@@ -4,12 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { SensorsSection } from "@/components/monitoring/SensorsSection";
-import { ActuatorsSection } from "@/components/monitoring/ActuatorsSection";
-import { AlertsSection } from "@/components/monitoring/AlertsSection";
-import { EnvironmentalSection } from "@/components/monitoring/EnvironmentalSection";
-import { DeviceHealthSection } from "@/components/monitoring/DeviceHealthSection";
-import { MaintenanceSection } from "@/components/monitoring/MaintenanceSection";
+// Hidden section imports — retained for when tabs are re-enabled
+// import { SensorsSection } from "@/components/monitoring/SensorsSection";
+// import { ActuatorsSection } from "@/components/monitoring/ActuatorsSection";
+// import { AlertsSection } from "@/components/monitoring/AlertsSection";
+// import { EnvironmentalSection } from "@/components/monitoring/EnvironmentalSection";
+// import { DeviceHealthSection } from "@/components/monitoring/DeviceHealthSection";
+// import { MaintenanceSection } from "@/components/monitoring/MaintenanceSection";
 import { IncidentsSection } from "@/components/monitoring/IncidentsSection";
 import {
   Cpu,
@@ -34,6 +35,8 @@ export const Route = createFileRoute("/_authenticated/monitoring")({
 type Tab =
   "sensors" | "actuators" | "alerts" | "environmental" | "health" | "maintenance" | "incidents";
 
+// Only Incidents is shown for now. Other tabs hidden until IoT sensors are
+// fully defined and integrated. Code retained for future use.
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "sensors", label: "Sensors", icon: Cpu },
   { key: "actuators", label: "Actuators", icon: Zap },
@@ -47,15 +50,15 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function MonitoringWorkspace() {
-  const [activeTab, setActiveTab] = useState<Tab>("sensors");
+  const [activeTab, setActiveTab] = useState<Tab>("incidents");
 
-  const listSensorsFn = useServerFn(listSensorDevices);
-  const listActuatorsFn = useServerFn(listActuators);
-  const listAlertsFn = useServerFn(listGrainAlerts);
   const getIncidentsFn = useServerFn(getIncidents);
   const getMaintenanceFn = useServerFn(getMaintenanceOverview);
   const getHealthFn = useServerFn(getDeviceHealth);
   const roleFn = useServerFn(getMyRole);
+  const listSensorsFn = useServerFn(listSensorDevices);
+  const listActuatorsFn = useServerFn(listActuators);
+  const listAlertsFn = useServerFn(listGrainAlerts);
 
   const { data: sensors } = useQuery({
     queryKey: ["sensor-devices"],
@@ -109,9 +112,12 @@ function MonitoringWorkspace() {
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Online Devices", value: health?.totals?.online ?? 0, up: true },
-    { label: "Active Alerts", value: counts.alerts.toString(), up: false },
-    { label: "Low Battery", value: health?.totals?.lowBattery ?? 0, up: false },
+    { label: "Open Incidents", value: Array.isArray(incidents) ? incidents.filter((i: any) => i.status !== "resolved").length : 0, up: false },
+    { label: "Total Incidents", value: Array.isArray(incidents) ? incidents.length : 0, up: true },
+    // Hidden until sensors are defined:
+    // { label: "Online Devices", value: health?.totals?.online ?? 0, up: true },
+    // { label: "Active Alerts",  value: counts.alerts ?? 0,          up: false },
+    // { label: "Low Battery",    value: health?.totals?.lowBattery ?? 0, up: false },
   ];
 
   return (
@@ -246,13 +252,14 @@ function MonitoringWorkspace() {
 
           {/* Tab Content */}
           <div className="p-4 md:p-6">
-            {activeTab === "sensors" && <SensorsSection />}
-            {activeTab === "actuators" && <ActuatorsSection />}
-            {activeTab === "alerts" && <AlertsSection />}
-            {activeTab === "environmental" && <EnvironmentalSection />}
-            {activeTab === "health" && <DeviceHealthSection />}
-            {activeTab === "maintenance" && <MaintenanceSection />}
             {activeTab === "incidents" && <IncidentsSection />}
+            {/* Hidden until IoT sensors are defined — code retained */}
+            {/* {activeTab === "sensors"       && <SensorsSection />}       */}
+            {/* {activeTab === "actuators"     && <ActuatorsSection />}     */}
+            {/* {activeTab === "alerts"        && <AlertsSection />}        */}
+            {/* {activeTab === "environmental" && <EnvironmentalSection />} */}
+            {/* {activeTab === "health"        && <DeviceHealthSection />}  */}
+            {/* {activeTab === "maintenance"   && <MaintenanceSection />}   */}
           </div>
         </div>
       </div>

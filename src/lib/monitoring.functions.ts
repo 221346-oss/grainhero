@@ -92,22 +92,33 @@ export const getIncidents = createServerFn({ method: "GET" })
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
 
+    // Fetch both system alerts (high/critical priority) AND field incidents
+    // (source = field_incident, priority = medium) in one query so the
+    // Incidents tab is never empty when there are field incidents reported.
     const { data: alerts } = await context.supabase
       .from("grain_alerts")
-      .select("id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source")
-      .in("priority", ["critical", "high"])
+      .select("id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source, recipient_id")
+      .or("priority.in.(critical,high),source.eq.field_incident")
       .order("triggered_at", { ascending: false })
       .limit(200);
 
     const list = (alerts ?? []) as any[];
     if (list.length > 0) {
-      const ids = Array.from(new Set(list.flatMap((x) => [x.created_by, x.assigned_to]).filter(Boolean)));
+      // Include recipient_id in name lookup for field incidents
+      const ids = Array.from(new Set(
+        list.flatMap((x) => [x.created_by, x.assigned_to, x.recipient_id]).filter(Boolean)
+      ));
       if (ids.length > 0) {
         const { data: profs } = await context.supabase.from("profiles").select("id, name, email").in("id", ids as string[]);
         const nameOf = new Map((profs ?? []).map((p) => [p.id, p.name ?? p.email ?? p.id]));
         for (const x of list) {
-          x.reportedByName = x.created_by ? (nameOf.get(x.created_by) ?? null) : null;
-          x.assignedToName = x.assigned_to ? (nameOf.get(x.assigned_to) ?? null) : null;
+          x.reportedByName = x.created_by   ? (nameOf.get(x.created_by)   ?? null) : null;
+          x.assignedToName = x.assigned_to  ? (nameOf.get(x.assigned_to)  ?? null) : null;
+          x.recipientName  = x.recipient_id ? (nameOf.get(x.recipient_id) ?? null) : null;
+          // Convenience flag so UI can distinguish field incidents from system alerts
+          x.isFieldIncident = x.source === "field_incident";
+          x.isMine    = x.created_by   === context.userId;
+          x.isForMe   = x.recipient_id === context.userId;
         }
       }
     }

@@ -19,14 +19,83 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   throw new Error(msg);
 }
 
+export const listWarehousesByCity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Get user role first
+    const { data: roleData } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    const userRole = roleData?.role;
+    
+    // For now, since warehouse_id doesn't exist in profiles, 
+    // managers and technicians will see all warehouses
+    // TODO: Add warehouse_id field to profiles table
+    let query = context.supabase
+      .from("warehouses")
+      .select("*, silos:silos(id, silo_id, name, capacity_kg, current_occupancy_kg, status)")
+      .order("created_at", { ascending: false });
+
+    const { data: warehouses, error } = await query;
+    if (error) throw error;
+
+    // Group warehouses by city (extracted from address)
+    const warehousesByCity: Record<string, any[]> = {};
+    
+    (warehouses ?? []).forEach((warehouse) => {
+      // Extract city from address - assume format like "Street, City, State"
+      let city = "Unknown City";
+      if (warehouse.address) {
+        const addressParts = warehouse.address.split(',');
+        if (addressParts.length >= 2) {
+          city = addressParts[1].trim();
+        } else {
+          city = addressParts[0].trim();
+        }
+      }
+      
+      if (!warehousesByCity[city]) {
+        warehousesByCity[city] = [];
+      }
+      
+      warehousesByCity[city].push({
+        ...warehouse,
+        city,
+        siloCount: warehouse.silos?.length || 0,
+        totalCapacity: warehouse.silos?.reduce((sum: number, silo: any) => 
+          sum + (silo.capacity_kg || 0), 0) || 0,
+        currentOccupancy: warehouse.silos?.reduce((sum: number, silo: any) => 
+          sum + (silo.current_occupancy_kg || 0), 0) || 0,
+      });
+    });
+
+    return { byCity: warehousesByCity, userRole };
+  });
+
 export const listWarehouses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    // Get user role first
+    const { data: roleData } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    const userRole = roleData?.role;
+    let query = context.supabase
       .from("warehouses")
       .select("*, silos:silos(id)")
       .order("created_at", { ascending: false })
       .limit(500);
+
+    // For now, show all warehouses (warehouse_id assignment to be implemented)
+    // TODO: Add warehouse_id field to profiles table for proper filtering
+
+    const { data, error } = await query;
     if (error) throw error;
     return data ?? [];
   });

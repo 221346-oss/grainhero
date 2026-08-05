@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
 import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
@@ -61,19 +62,12 @@ function GrainOperationsWorkspace() {
   });
   const userRole = roleData?.role ?? "pending";
 
-  // Filter tabs based on role - manager doesn't see warehouses
-  const TABS = userRole === "manager" ? ALL_TABS.filter((t) => t.key !== "warehouses") : ALL_TABS;
+  // Filter tabs based on role - managers can view warehouses but cannot create them
+  const TABS = ALL_TABS;
 
   useEffect(() => {
     setActiveTabState(tab);
   }, [tab]);
-
-  // If current tab is warehouses and user is manager, redirect to batches
-  useEffect(() => {
-    if (userRole === "manager" && activeTab === "warehouses") {
-      setActiveTab("batches");
-    }
-  }, [userRole, activeTab]);
 
   function setActiveTab(next: Tab) {
     setActiveTabState(next);

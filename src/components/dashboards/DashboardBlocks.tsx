@@ -480,7 +480,13 @@ function fmtShort(iso: string) {
   });
 }
 
-export function OpenFieldIncidentsCard({
+/**
+ * Support ticket queue (field_tickets via tickets.functions.ts) — despite its
+ * old name, this has nothing to do with the mobile field_incidents system or
+ * the newer auto-routing Field Incidents feature (Administration tab,
+ * grain_alerts). Renamed from `OpenFieldIncidentsCard` to stop the confusion.
+ */
+export function SupportTicketsCard({
   onViewAll,
   ticketPanelOpen,
   onTicketPanelClose,
@@ -540,7 +546,7 @@ export function OpenFieldIncidentsCard({
         {/* Header — no icon, just text + count + actions */}
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 shrink-0">
           <CardTitle className="text-sm flex items-center gap-2">
-            Open field incidents
+            Support Tickets
             <Badge
               variant="outline"
               className="h-5 px-1.5 text-[10px] font-mono tabular-nums"
@@ -572,7 +578,7 @@ export function OpenFieldIncidentsCard({
             <p className="text-xs text-muted-foreground px-3 py-4 text-center">Loading…</p>
           ) : tickets.length === 0 ? (
             <p className="text-xs text-muted-foreground px-3 py-6 text-center">
-              No open incidents
+              No open tickets
             </p>
           ) : (
             <ul className="divide-y divide-border/40 overflow-y-auto"
@@ -634,7 +640,7 @@ export function OpenFieldIncidentsCard({
         <DialogContent className="w-full max-w-lg p-0 overflow-hidden">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-200">
             <DialogTitle className="text-sm font-bold text-slate-900">
-              New incident ticket
+              New support ticket
             </DialogTitle>
           </DialogHeader>
           <div className="px-5 py-4">
