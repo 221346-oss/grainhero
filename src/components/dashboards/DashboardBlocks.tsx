@@ -45,7 +45,7 @@ function priorityDot(p: string) {
         : "bg-slate-400";
 }
 
-function CardHeaderLink({
+export function CardHeaderLink({
   to,
   search,
   title,
