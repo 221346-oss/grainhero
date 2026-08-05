@@ -13,7 +13,7 @@ export const Route = createFileRoute('/about')({
         content: 'Learn about GrainHero\'s mission to revolutionize grain storage with AI-powered technology.',
       },
       { property: 'og:title', content: "About Us — GrainHero" },
-      { property: 'og:description', content: "Learn about GrainHero\\" },
+      { property: 'og:description', content: "Learn about GrainHero's mission to revolutionize grain storage with AI-powered technology." },
       { property: 'og:url', content: 'https://grainhero.app/about' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
