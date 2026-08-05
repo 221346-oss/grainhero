@@ -22,7 +22,7 @@ const input = z.object({ batchId: z.string().uuid() });
 
 export const getBatchTraceability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => input.parse(d))
+  .validator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
     const role = await getEffectiveRole(context.supabase, context.userId);
     if (!["admin", "manager"].includes(role)) throw new Error("Forbidden");

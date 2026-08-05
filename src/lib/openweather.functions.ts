@@ -16,7 +16,7 @@ async function fetchJson(url: string) {
 }
 
 export const geocodeCity = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ city: z.string().min(1).max(120) }).parse(d))
+  .validator((d: unknown) => z.object({ city: z.string().min(1).max(120) }).parse(d))
   .handler(async ({ data }) => {
     const url = `${base}/geo/1.0/direct?q=${encodeURIComponent(data.city)}&limit=1&appid=${key()}`;
     const j = (await fetchJson(url)) as Array<{ lat: number; lon: number; name: string; country: string }>;
@@ -26,7 +26,7 @@ export const geocodeCity = createServerFn({ method: "POST" })
   });
 
 export const getWeatherBundle = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ lat: z.number(), lon: z.number() }).parse(d))
+  .validator((d: unknown) => z.object({ lat: z.number(), lon: z.number() }).parse(d))
   .handler(async ({ data }) => {
     const k = key();
     const q = `lat=${data.lat}&lon=${data.lon}&appid=${k}`;

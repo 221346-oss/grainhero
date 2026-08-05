@@ -6,7 +6,7 @@ import { z } from "zod";
 // Uses Lovable AI Gateway (google/gemini-3-flash-preview by default).
 export const getSpoilageInsight = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ siloId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {

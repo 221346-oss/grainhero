@@ -60,7 +60,7 @@ const createTicketInput = z.object({
 
 export const createTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(createTicketInput, d))
+  .validator((d: unknown) => parseOrThrow(createTicketInput, d))
   .handler(async ({ data, context }) => {
     const role = await resolveRole(context.supabase as never, context.userId);
     if (role === "super_admin") throw new Error("Super admins cannot create tickets.");
@@ -163,7 +163,7 @@ const listTicketsInput = z.object({
 
 export const listTickets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(listTicketsInput, d))
+  .validator((d: unknown) => parseOrThrow(listTicketsInput, d))
   .handler(async ({ data, context }) => {
     const role = await resolveRole(context.supabase as never, context.userId);
 
@@ -219,7 +219,7 @@ const closeTicketInput = z.object({ id: z.string().uuid() });
 
 export const closeTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(closeTicketInput, d))
+  .validator((d: unknown) => parseOrThrow(closeTicketInput, d))
   .handler(async ({ data, context }) => {
     const role = await resolveRole(context.supabase as never, context.userId);
 
@@ -252,7 +252,7 @@ const getTicketByIdInput = z.object({ id: z.string().uuid() });
 
 export const getTicketById = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(getTicketByIdInput, d))
+  .validator((d: unknown) => parseOrThrow(getTicketByIdInput, d))
   .handler(async ({ data, context }) => {
     const { data: ticket, error } = await context.supabase
       .from("field_tickets")
@@ -284,7 +284,7 @@ const resolveTicketInput = z.object({
 
 export const resolveTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(resolveTicketInput, d))
+  .validator((d: unknown) => parseOrThrow(resolveTicketInput, d))
   .handler(async ({ data, context }) => {
     const role = await resolveRole(context.supabase as never, context.userId);
     if (role !== "super_admin") throw new Error("Only super admins can resolve tickets.");
@@ -335,7 +335,7 @@ const deleteTicketInput = z.object({ id: z.string().uuid() });
 
 export const deleteTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(deleteTicketInput, d))
+  .validator((d: unknown) => parseOrThrow(deleteTicketInput, d))
   .handler(async ({ data, context }) => {
     const role = await resolveRole(context.supabase as never, context.userId);
     if (role !== "super_admin") throw new Error("Only super admins can delete tickets.");

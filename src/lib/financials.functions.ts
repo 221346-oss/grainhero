@@ -16,7 +16,7 @@ async function assertSuperAdmin(ctx: { supabase: any; userId: string }) {
 
 export const getFinancialSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => AssumptionSchema.parse(d) ?? {})
+  .validator((d: unknown) => AssumptionSchema.parse(d) ?? {})
   .handler(async ({ context, data }) => {
     await assertSuperAdmin(context);
     const supabaseAdmin = context.supabase;
@@ -150,7 +150,7 @@ export const getFinancialSummary = createServerFn({ method: "GET" })
 
 export const generateFinancialPdf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { type: "pnl" | "revenue" | "mrr"; iotCostPct?: number; opexPct?: number }) => d)
+  .validator((d: { type: "pnl" | "revenue" | "mrr"; iotCostPct?: number; opexPct?: number }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const supabaseAdmin = context.supabase;

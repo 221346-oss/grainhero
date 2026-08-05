@@ -39,7 +39,7 @@ const configSchema = z.object({
 
 export const updatePlatformSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => configSchema.parse(data))
+  .validator((data) => configSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) {

@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS retrain_log (
 CREATE TABLE IF NOT EXISTS ml_model_metadata (
     grain_type          TEXT    PRIMARY KEY,
     best_params         JSONB,  -- full Optuna best_params dict
+    best_window_size    INTEGER DEFAULT 10,  -- optimal rolling window W from nightly Optuna run
     last_nightly_run    TIMESTAMPTZ,
     last_fast_run       TIMESTAMPTZ,
     active_model_version TEXT,  -- mirrors model_versions.version for quick lookup

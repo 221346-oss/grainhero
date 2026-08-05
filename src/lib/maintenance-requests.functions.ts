@@ -23,7 +23,7 @@ const createInput = z.object({
 /** Admin-only: request maintenance on a device or silo sensor. */
 export const createMaintenanceRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => createInput.parse(d))
+  .validator((d) => createInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["admin"]);
 
@@ -94,7 +94,7 @@ const updateInput = z.object({
 /** Super_admin-only: assign a technician, change status, add resolution notes. */
 export const updateMaintenanceRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => updateInput.parse(d))
+  .validator((d) => updateInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
 

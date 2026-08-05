@@ -188,7 +188,7 @@ const initiateSchema = changeSchema.extend({
 
 export const previewPlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => changeSchema.parse(d))
+  .validator((d: unknown) => changeSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const [plans, profile] = await Promise.all([
@@ -278,7 +278,7 @@ export const previewPlanChange = createServerFn({ method: "POST" })
 
 export const initiatePlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => initiateSchema.parse(d))
+  .validator((d: unknown) => initiateSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { checkRateLimit } = await import("@/lib/rate-limit");
@@ -505,7 +505,7 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
 
 export const cancelScheduledPlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { error } = await context.supabase

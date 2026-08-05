@@ -255,20 +255,24 @@ class SHAPValues(BaseModel):
 
 class PredictionRequest(BaseModel):
     grain_type:     str   = Field("rice",  description="rice | wheat | maize | sorghum | barley")
-    Temperature:    float = Field(..., ge=0,   le=60)
-    Humidity:       float = Field(..., ge=0,   le=100)
-    Storage_Days:   int   = Field(..., ge=0,   le=730)
+    Temperature:    Optional[float] = Field(None, ge=0,   le=60)
+    Humidity:       Optional[float] = Field(None, ge=0,   le=100)
+    Storage_Days:   Optional[int]   = Field(None, ge=0,   le=730)
     Airflow:        float = Field(0.0, ge=0.0, le=1.0)
     Dew_Point:      float = Field(0.0, ge=-20, le=50)
     Ambient_Light:  float = Field(0.0, ge=0.0, le=100)
     Pest_Presence:  Optional[float] = Field(None, ge=0.0, le=100.0,
                         description="0–100% pest presence. Omit to use VOC proxy.")
-    Grain_Moisture: float = Field(..., ge=0,   le=50)
+    Grain_Moisture: Optional[float] = Field(None, ge=0,   le=50)
     Rainfall:       float = Field(0.0, ge=0.0)
     latitude:       Optional[float] = Field(None, description="Used to auto-fetch rainfall if omitted")
     longitude:      Optional[float] = Field(None, description="Used to auto-fetch rainfall if omitted")
     tvoc_ppb:       Optional[float] = Field(None,
                         description="Raw TVOC in ppb (used if Pest_Presence omitted)")
+
+    # Rolling window support
+    window:   Optional[List[Dict[str, Any]]] = Field(None, description="Optional array of W reading dicts")
+    features: Optional[List[float]]          = Field(None, description="Optional flat vector of 9*W floats")
 
     # Optional history arrays for spoilage trend
     temperature_history: List[float] = Field(default_factory=list)
@@ -314,15 +318,102 @@ def _pest_proxy(req: PredictionRequest) -> float:
     return min(100.0, (tvoc / 1000.0) * 50.0)
 
 
-def _build_feature_array(req: PredictionRequest) -> np.ndarray:
+def _fetch_recent_readings_from_supabase(grain: str, limit: int) -> List[List[float]]:
+    """Query Supabase for latest limit readings for grain, return chronologically."""
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    service_key  = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not supabase_url or not service_key or limit <= 0:
+        return []
+    try:
+        url = f"{supabase_url.rstrip('/')}/rest/v1/live_sensor_readings"
+        headers = {"apikey": service_key, "Authorization": f"Bearer {service_key}"}
+        params = {
+            "grain_type": f"eq.{grain}",
+            "order": "created_at.desc",
+            "limit": str(limit),
+            "select": "temperature,humidity,storage_days,airflow,dew_point,ambient_light,pest_presence,grain_moisture,rainfall",
+        }
+        resp = requests.get(url, headers=headers, params=params, timeout=2.0)
+        if resp.status_code == 200:
+            rows = resp.json()
+            rows.reverse()  # oldest to newest
+            readings = []
+            for r in rows:
+                pest = float(r.get("pest_presence") or 0.0)
+                pest_scaled = (pest / 100.0) if pest > 1.0 else pest
+                readings.append([
+                    float(r.get("temperature") or 0.0),
+                    float(r.get("humidity") or 0.0),
+                    float(r.get("storage_days") or 0.0),
+                    float(r.get("airflow") or 0.0),
+                    float(r.get("dew_point") or 0.0),
+                    float(r.get("ambient_light") or 0.0),
+                    pest_scaled,
+                    float(r.get("grain_moisture") or 0.0),
+                    float(r.get("rainfall") or 0.0),
+                ])
+            return readings
+    except Exception as exc:
+        logger.warning("Supabase historical readings query failed for '%s': %s", grain, exc)
+    return []
+
+
+def _build_feature_array(req: PredictionRequest, grain: str, target_w: int) -> np.ndarray:
+    """Build a (1, 9 * target_w) float32 feature array using flat vector, window, or Supabase history."""
+    from window_utils import pad_or_truncate_window
+
+    target_dim = 9 * target_w
+
+    # Case A: Explicit flat features vector provided
+    if req.features and len(req.features) > 0:
+        raw_feats = [float(x) for x in req.features]
+        if len(raw_feats) < target_dim:
+            raw_feats = raw_feats + [0.0] * (target_dim - len(raw_feats))
+        elif len(raw_feats) > target_dim:
+            raw_feats = raw_feats[:target_dim]
+        return np.array([raw_feats], dtype=np.float32)
+
+    # Case B: Window of reading objects provided
+    if req.window and len(req.window) > 0:
+        readings = []
+        for r in req.window:
+            p_val = float(r.get("Pest_Presence") or r.get("pest_presence") or 0.0)
+            p_scaled = (p_val / 100.0) if p_val > 1.0 else p_val
+            readings.append([
+                float(r.get("Temperature") or r.get("temperature") or 0.0),
+                float(r.get("Humidity") or r.get("humidity") or 0.0),
+                float(r.get("Storage_Days") or r.get("storage_days") or 0.0),
+                float(r.get("Airflow") or r.get("airflow") or 0.0),
+                float(r.get("Dew_Point") or r.get("dew_point") or 0.0),
+                float(r.get("Ambient_Light") or r.get("ambient_light") or 0.0),
+                p_scaled,
+                float(r.get("Grain_Moisture") or r.get("grain_moisture") or 0.0),
+                float(r.get("Rainfall") or r.get("rainfall") or 0.0),
+            ])
+        padded = pad_or_truncate_window(readings, W=target_w)
+        flat = np.array(padded, dtype=np.float32).flatten()
+        return np.array([flat], dtype=np.float32)
+
+    # Case C: Single reading (ESP32 / single JSON call)
+    history = _fetch_recent_readings_from_supabase(grain, limit=max(0, target_w - 1))
+
+    temp = req.Temperature if req.Temperature is not None else 25.0
+    hum  = req.Humidity if req.Humidity is not None else 60.0
+    days = float(req.Storage_Days if req.Storage_Days is not None else 10)
+    mc   = req.Grain_Moisture if req.Grain_Moisture is not None else 13.0
     pest_percent = _pest_proxy(req)
-    # Model was trained on 0.0-1.0 float, so we scale the percentage back down internally
     pest_scaled = pest_percent / 100.0
-    return np.array([[
-        req.Temperature, req.Humidity, float(req.Storage_Days),
-        req.Airflow, req.Dew_Point, req.Ambient_Light,
-        pest_scaled, req.Grain_Moisture, req.Rainfall,
-    ]], dtype=np.float32)
+
+    current_reading = [
+        temp, hum, days, req.Airflow, req.Dew_Point,
+        req.Ambient_Light, pest_scaled, mc, req.Rainfall,
+    ]
+
+    combined = history + [current_reading]
+    padded = pad_or_truncate_window(combined, W=target_w)
+    flat = np.array(padded, dtype=np.float32).flatten()
+
+    return np.array([flat], dtype=np.float32)
 
 
 def _compute_shap(grain: str, X: np.ndarray, pred_label: str, class_labels: List[str]) -> Optional[SHAPValues]:
@@ -338,9 +429,20 @@ def _compute_shap(grain: str, X: np.ndarray, pred_label: str, class_labels: List
         else:
             shap_row = np.array(raw_shap)[0]
 
+        n_feats = len(shap_row)
+        W = max(1, n_feats // len(FEATURE_NAMES))
+        feat_names = []
+        if W == 1:
+            feat_names = list(FEATURE_NAMES)
+        else:
+            for t in range(W):
+                t_label = f"t-{W - 1 - t}" if (W - 1 - t) > 0 else "current"
+                for fname in FEATURE_NAMES:
+                    feat_names.append(f"{fname}_{t_label}")
+
         feature_importance = {
-            FEATURE_NAMES[i]: round(float(shap_row[i]), 6)
-            for i in range(len(FEATURE_NAMES))
+            feat_names[i]: round(float(shap_row[i]), 6)
+            for i in range(min(len(feat_names), n_feats))
         }
         base_val = float(
             explainer.expected_value[class_labels.index(pred_label)]
@@ -354,11 +456,7 @@ def _compute_shap(grain: str, X: np.ndarray, pred_label: str, class_labels: List
         )
     except Exception as exc:
         logger.warning("SHAP computation failed for '%s': %s", grain, exc)
-        return SHAPValues(
-            feature_importance={f: 0.0 for f in FEATURE_NAMES},
-            base_value=0.0,
-            predicted_class=pred_label,
-        )
+        return None
 
 
 def _compute_ensemble_breakdown(grain: str, X: np.ndarray, class_labels: List[str]) -> Optional[List[dict]]:
@@ -398,7 +496,6 @@ def _fetch_rainfall(lat: float, lon: float) -> float:
         resp = requests.get(url, timeout=3)
         if resp.status_code == 200:
             data = resp.json()
-            # OpenWeather returns rain in mm for the last 1h
             if "rain" in data and "1h" in data["rain"]:
                 return float(data["rain"]["1h"])
     except Exception as exc:
@@ -413,16 +510,6 @@ def _run_inference(req: PredictionRequest) -> PredictionResponse:
     if req.Rainfall == 0.0 and req.latitude is not None and req.longitude is not None:
         req.Rainfall = _fetch_rainfall(req.latitude, req.longitude)
 
-    # Critical sensor fault check
-    faults = [k for k, v in {
-        "Temperature":    req.Temperature,
-        "Humidity":       req.Humidity,
-        "Grain_Moisture": req.Grain_Moisture,
-        "Storage_Days":   req.Storage_Days,
-    }.items() if v is None]
-    if faults:
-        raise HTTPException(status_code=422, detail=f"Critical sensor(s) offline: {faults}")
-
     # ── ONNX inference (fast, GIL-releasing) ──────────────────────────────────
     onnx_model = registry.get(grain)
     if onnx_model is None:
@@ -431,7 +518,8 @@ def _run_inference(req: PredictionRequest) -> PredictionResponse:
             detail=f"Model for '{grain}' is not loaded yet. Check startup logs.",
         )
 
-    X            = _build_feature_array(req)
+    target_w     = onnx_model.window_size
+    X            = _build_feature_array(req, grain, target_w)
     onnx_result  = onnx_model.predict(X)
 
     prediction   = onnx_result["prediction"]
@@ -447,16 +535,22 @@ def _run_inference(req: PredictionRequest) -> PredictionResponse:
     breakdown = _compute_ensemble_breakdown(grain, X.astype(np.float64), class_labels)
 
     pest = _pest_proxy(req)
+    temp = req.Temperature if req.Temperature is not None else 25.0
+    hum  = req.Humidity if req.Humidity is not None else 60.0
+    days = float(req.Storage_Days if req.Storage_Days is not None else 10)
+    mc   = req.Grain_Moisture if req.Grain_Moisture is not None else 13.0
+
     features_used = {
-        "Temperature":    req.Temperature,
-        "Humidity":       req.Humidity,
-        "Storage_Days":   float(req.Storage_Days),
+        "Temperature":    temp,
+        "Humidity":       hum,
+        "Storage_Days":   days,
         "Airflow":        req.Airflow,
         "Dew_Point":      req.Dew_Point,
         "Ambient_Light":  req.Ambient_Light,
         "Pest_Presence":  pest,
-        "Grain_Moisture": req.Grain_Moisture,
+        "Grain_Moisture": mc,
         "Rainfall":       req.Rainfall,
+        "window_size":    float(target_w),
     }
 
     return PredictionResponse(
@@ -564,17 +658,20 @@ async def predict_batch(req: BatchPredictionRequest, background_tasks: Backgroun
 
 @app.get("/model-info/{grain}", summary="Model metadata")
 def model_info(grain: str):
-    """Return model version, hash, and class labels for a grain."""
+    """Return model version, window size W, input dimension, hash, and class labels for a grain."""
     if grain.lower() not in SUPPORTED_GRAINS:
         raise HTTPException(status_code=404, detail=f"Grain '{grain}' not supported.")
     m = registry.get(grain.lower())
     if m is None:
         raise HTTPException(status_code=404, detail=f"Model for '{grain}' not loaded yet.")
     return {
-        "grain":   grain.lower(),
-        "version": m.version,
-        "hash":    m.file_hash,
-        "classes": m.class_labels,
+        "grain":         grain.lower(),
+        "version":       m.version,
+        "hash":          m.file_hash,
+        "classes":       m.class_labels,
+        "window_size":   m.window_size,
+        "input_dim":     m.input_dim,
+        "feature_names": FEATURE_NAMES,
     }
 
 

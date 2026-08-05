@@ -26,7 +26,7 @@ export const getMarketplaceMobileSettings = createServerFn({ method: "GET" })
 
 export const updateMarketplaceMobileSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => schema.parse(v))
+  .validator((v) => schema.parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
@@ -46,7 +46,7 @@ export const updateMarketplaceMobileSettings = createServerFn({ method: "POST" }
 
 export const listSettingsAudit = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({ settings_key: z.string().min(1), limit: z.number().int().positive().max(200).optional() }).parse(v))
+  .validator((v) => z.object({ settings_key: z.string().min(1), limit: z.number().int().positive().max(200).optional() }).parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");

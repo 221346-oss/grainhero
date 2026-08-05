@@ -101,30 +101,32 @@ def _fetch_training_data(grain: str, client: httpx.Client) -> Optional[pd.DataFr
     return df
 
 
-def _fetch_best_params(grain: str, client: httpx.Client) -> dict:
-    """Retrieve best_params from last nightly run, or fall back to defaults."""
+def _fetch_best_params(grain: str, client: httpx.Client) -> Tuple[dict, int]:
+    """Retrieve best_params and best_window_size from last nightly run, or fall back to defaults."""
     resp = client.get(
         f"{SUPABASE_URL}/rest/v1/ml_model_metadata",
-        params={"grain_type": f"eq.{grain}", "select": "best_params"},
+        params={"grain_type": f"eq.{grain}", "select": "best_params,best_window_size"},
     )
     if resp.status_code == 200:
         rows = resp.json()
-        if rows and rows[0].get("best_params"):
-            logger.info("Using saved best_params from nightly run for '%s'", grain)
-            return rows[0]["best_params"]
-    logger.info("No saved params for '%s' — using defaults.", grain)
-    return DEFAULT_PARAMS
+        if rows:
+            params = rows[0].get("best_params") or DEFAULT_PARAMS
+            w = int(rows[0].get("best_window_size") or 10)
+            logger.info("Using saved params and window_size W=%d from nightly run for '%s'", w, grain)
+            return params, w
+    logger.info("No saved params for '%s' — using defaults (W=10).", grain)
+    return DEFAULT_PARAMS, 10
 
 
 # ── Training ──────────────────────────────────────────────────────────────────
-def _train(df: pd.DataFrame, params: dict, grain: str) -> Tuple[bytes, float, None]:
+def _train(df: pd.DataFrame, params: dict, grain: str, W: int = 10) -> Tuple[bytes, float, None]:
     """
-    Train the XGBoost + RandomForest + LightGBM soft-voting ensemble,
+    Train the XGBoost + RandomForest + LightGBM soft-voting ensemble on W-windowed inputs,
     export to ONNX, return (onnx_bytes, val_accuracy, None).
     None for best_params because fast_retrain never runs Optuna.
     """
     from sklearn.ensemble import VotingClassifier, RandomForestClassifier, HistGradientBoostingClassifier
-    from sklearn.model_selection import train_test_split
+    from sklearn.model_selection import TimeSeriesSplit
     from sklearn.preprocessing import LabelEncoder
     from xgboost import XGBClassifier
     from skl2onnx import convert_sklearn
@@ -133,6 +135,8 @@ def _train(df: pd.DataFrame, params: dict, grain: str) -> Tuple[bytes, float, No
     from onnxmltools.convert.xgboost.operator_converters.XGBoost import convert_xgboost
     from skl2onnx.common.shape_calculator import calculate_linear_classifier_output_shapes
 
+    from window_utils import build_windows
+
     # Register custom converters
     update_registered_converter(
         XGBClassifier, "XGBoostXGBClassifier",
@@ -140,18 +144,26 @@ def _train(df: pd.DataFrame, params: dict, grain: str) -> Tuple[bytes, float, No
         options={"nocl": [True, False], "zipmap": [True, False, "columns"]},
     )
 
-    # Prepare data
-    df = df.dropna(subset=FEATURE_NAMES + [LABEL_COLUMN])
-    X = df[FEATURE_NAMES].values.astype(np.float32)
-    le = LabelEncoder()
-    y = le.fit_transform(df[LABEL_COLUMN].astype(str))
+    # Build sliding windows of size W
+    X_windowed, y_raw = build_windows(df, W=W, feature_cols=FEATURE_NAMES, label_col=LABEL_COLUMN)
 
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    if len(X_windowed) < 10:
+        raise ValueError(f"Not enough windowed rows for '{grain}' with W={W} (got {len(X_windowed)})")
+
+    le = LabelEncoder()
+    y = le.fit_transform(y_raw.astype(str))
+
+    # TimeSeriesSplit to strictly preserve time order and prevent data leakage
+    n_splits = min(5, max(2, len(X_windowed) // 10))
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+    train_idx, val_idx = list(tscv.split(X_windowed))[-1]
+
+    X_train, X_val = X_windowed[train_idx], X_windowed[val_idx]
+    y_train, y_val = y[train_idx], y[val_idx]
 
     p = params
     xgb_p = p.get("xgb", DEFAULT_PARAMS["xgb"])
     rf_p  = p.get("rf",  DEFAULT_PARAMS["rf"])
-    # HistGradientBoosting doesn't use the exact same params, map loosely or use defaults
     lgb_p = p.get("lgb", {})
     hist_lr = lgb_p.get("learning_rate", 0.1)
     hist_iter = lgb_p.get("n_estimators", 150)
@@ -168,10 +180,10 @@ def _train(df: pd.DataFrame, params: dict, grain: str) -> Tuple[bytes, float, No
     ensemble.fit(X_train, y_train)
 
     val_acc = float(np.mean(ensemble.predict(X_val) == y_val))
-    logger.info("Val accuracy for '%s': %.4f", grain, val_acc)
+    logger.info("Val accuracy for '%s' (W=%d, input_dim=%d): %.4f", grain, W, X_windowed.shape[1], val_acc)
 
-    # Export to ONNX
-    initial_type = [("float_input", FloatTensorType([None, len(FEATURE_NAMES)]))]
+    # Export to ONNX with input shape (None, 9 * W)
+    initial_type = [("float_input", FloatTensorType([None, X_windowed.shape[1]]))]
     onnx_model = convert_sklearn(ensemble, initial_types=initial_type, target_opset=12)
     onnx_bytes = onnx_model.SerializeToString()
 
@@ -190,11 +202,11 @@ def main(grain: str) -> None:
         client.close()
         sys.exit(1)
 
-    params = _fetch_best_params(grain, client)
+    params, best_w = _fetch_best_params(grain, client)
     client.close()
 
     def train_fn():
-        return _train(df, params, grain)
+        return _train(df, params, grain, W=best_w)
 
     success = safety_loop.run(
         grain=grain,

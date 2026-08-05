@@ -17,7 +17,7 @@ async function getMyStripeSubscription(supabase: any, userId: string) {
 
 export const changeMyPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ planId: z.enum(["basic", "intermediate", "pro"]) }).parse(d))
+  .validator((d) => z.object({ planId: z.enum(["basic", "intermediate", "pro"]) }).parse(d))
   .handler(async ({ data, context }) => {
     const sub = await getMyStripeSubscription(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

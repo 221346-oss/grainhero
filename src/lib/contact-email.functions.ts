@@ -16,7 +16,7 @@ type ContactFormInput = z.infer<typeof contactFormSchema>
  * Send contact form email using Resend API
  */
 export const sendContactEmail = createServerFn({ method: 'POST' })
-  .inputValidator((data: unknown) => contactFormSchema.parse(data))
+  .validator((data: unknown) => contactFormSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       const resendApiKey = process.env.RESEND_API_KEY

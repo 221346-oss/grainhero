@@ -176,9 +176,12 @@ class HotSwapPoller:
                 providers=["CPUExecutionProvider"],
             )
 
-            # Quick smoke-test: run a zero-vector through the model
-            input_name = session.get_inputs()[0].name
-            dummy = np.zeros((1, 9), dtype=np.float32)
+            # Quick smoke-test: run a zero-vector matching model input width
+            inp = session.get_inputs()[0]
+            input_name = inp.name
+            shape = inp.shape
+            input_dim = int(shape[1]) if (len(shape) > 1 and shape[1] is not None) else 9
+            dummy = np.zeros((1, input_dim), dtype=np.float32)
             session.run(None, {input_name: dummy})
 
             # Verify hash integrity

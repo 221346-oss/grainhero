@@ -217,6 +217,9 @@ def _update_metadata(
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     if trigger == "nightly_retrain" and best_params:
+        # Extract best_window_size if present
+        if "best_window_size" in best_params:
+            update["best_window_size"] = int(best_params["best_window_size"])
         update["best_params"] = best_params
         update["last_nightly_run"] = datetime.now(timezone.utc).isoformat()
     else:
@@ -237,7 +240,12 @@ def _run_sanity_check(onnx_bytes: bytes, grain: str) -> Tuple[float, List[dict]]
     import onnxruntime as ort
 
     session = ort.InferenceSession(onnx_bytes, providers=["CPUExecutionProvider"])
-    input_name = session.get_inputs()[0].name
+    inp = session.get_inputs()[0]
+    input_name = inp.name
+    shape = inp.shape
+    input_dim = int(shape[1]) if (len(shape) > 1 and shape[1] is not None) else 9
+    W = max(1, input_dim // 9)
+
     output_names = [o.name for o in session.get_outputs()]
 
     cases = SANITY_CASES.get(grain, [])
@@ -247,7 +255,9 @@ def _run_sanity_check(onnx_bytes: bytes, grain: str) -> Tuple[float, List[dict]]
 
     results, passed = [], 0
     for features, expected in cases:
-        X = np.array([features], dtype=np.float32)
+        # Tile single reading W times to form a valid (1, 9*W) input vector
+        tiled_features = np.tile(features, W)
+        X = np.array([tiled_features], dtype=np.float32)
         outs = session.run(output_names, {input_name: X})
         raw_label = outs[0][0]
         predicted = str(raw_label) if not isinstance(raw_label, (int, np.integer)) else \

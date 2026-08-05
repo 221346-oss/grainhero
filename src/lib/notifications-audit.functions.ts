@@ -23,7 +23,7 @@ const listNotifInput = z.object({
 
 export const listNotifications = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(listNotifInput, d))
+  .validator((d: unknown) => parseOrThrow(listNotifInput, d))
   .handler(async ({ data, context }) => {
     const limit = data.limit ?? 50;
     let q = context.supabase
@@ -55,7 +55,7 @@ export const listNotifications = createServerFn({ method: "POST" })
 
 export const markNotificationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
+  .validator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("notifications")
@@ -80,7 +80,7 @@ export const markAllNotificationsRead = createServerFn({ method: "POST" })
 
 export const deleteNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
+  .validator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("notifications")
@@ -111,7 +111,7 @@ const listLogsInput = z.object({
 
 export const listActivityLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(listLogsInput, d))
+  .validator((d: unknown) => parseOrThrow(listLogsInput, d))
   .handler(async ({ data, context }) => {
     const page = data.page ?? 1;
     const limit = data.limit ?? 20;
@@ -192,7 +192,7 @@ const createLogInput = z.object({
 
 export const createActivityLog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(createLogInput, d))
+  .validator((d: unknown) => parseOrThrow(createLogInput, d))
   .handler(async ({ data, context }) => {
     const { data: prof } = await context.supabase
       .from("profiles")

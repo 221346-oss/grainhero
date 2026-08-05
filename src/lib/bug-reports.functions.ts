@@ -12,7 +12,7 @@ const submitInput = z.object({
 /** Authenticated: insert a bug report from the reporting user's own session. */
 export const submitBugReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => submitInput.parse(d))
+  .validator((d) => submitInput.parse(d))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
       .from("profiles")

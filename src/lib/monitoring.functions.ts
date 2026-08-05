@@ -150,7 +150,7 @@ export type PlatformIncidentsOverview = {
 
 export const getPlatformIncidentsOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { scope?: "all" | "environmental" } | undefined) =>
+  .validator((d: { scope?: "all" | "environmental" } | undefined) =>
     z.object({ scope: z.enum(["all", "environmental"]).default("all") }).parse(d ?? {}),
   )
   .handler(async ({ data, context }): Promise<PlatformIncidentsOverview> => {
@@ -219,7 +219,7 @@ const ackInput = z.object({ id: z.string().uuid(), resolve: z.boolean().optional
 
 export const acknowledgeIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => ackInput.parse(d))
+  .validator((d) => ackInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
@@ -245,7 +245,7 @@ const reportInput = z.object({
 /** Technician-only: report a field incident from their panel. */
 export const reportIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => reportInput.parse(d))
+  .validator((d) => reportInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["technician"]);
@@ -279,7 +279,7 @@ const assignInput = z.object({ id: z.string().uuid(), technicianId: z.string().u
 /** Manager (or admin): assign which technician handles a reported incident. */
 export const assignIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => assignInput.parse(d))
+  .validator((d) => assignInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["manager", "admin"]);
@@ -302,7 +302,7 @@ const escalateInput = z.object({ id: z.string().uuid(), reason: z.string().trim(
  */
 export const escalateIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => escalateInput.parse(d))
+  .validator((d) => escalateInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["manager", "admin"]);

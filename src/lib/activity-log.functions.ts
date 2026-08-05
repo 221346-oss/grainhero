@@ -89,7 +89,7 @@ export async function logActivity(params: LogActivityParams) {
  */
 export const listActivityLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({
+  .validator(z.object({
     page: z.number().default(1),
     limit: z.number().default(50),
     category: z.string().optional(),
@@ -147,7 +147,7 @@ export const listActivityLogs = createServerFn({ method: "POST" })
  */
 export const getActivityLogsSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({
+  .validator(z.object({
     days: z.number().default(7),
   }).optional())
   .handler(async ({ data, context }) => {

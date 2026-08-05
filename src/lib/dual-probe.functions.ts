@@ -16,7 +16,7 @@ export type ProbeType = "ambient" | "core";
 
 export const submitDualProbeReading = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         siloId: z.string().uuid(),
@@ -29,7 +29,7 @@ export const submitDualProbeReading = createServerFn({ method: "POST" })
 
 export const getDualProbeComparison = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ siloId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ siloId: z.string().uuid() }).parse(d))
   .handler(async () => ({
     ambient: null as null | { temperature: number; humidity: number },
     core: null as null | { temperature: number; humidity: number },

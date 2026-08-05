@@ -51,7 +51,7 @@ export const getSyncMonitorOverview = createServerFn({ method: "GET" })
 
 export const listSyncRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({ endpoint: z.enum(ENDPOINTS).optional(), limit: z.number().int().positive().max(200).optional() }).parse(v))
+  .validator((v) => z.object({ endpoint: z.enum(ENDPOINTS).optional(), limit: z.number().int().positive().max(200).optional() }).parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
@@ -65,7 +65,7 @@ export const listSyncRuns = createServerFn({ method: "GET" })
 
 export const runSyncManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
+  .validator((v) => z.object({
     endpoint: z.enum(ENDPOINTS),
     idempotency_key: z.string().min(8).max(64).optional(),
   }).parse(v))

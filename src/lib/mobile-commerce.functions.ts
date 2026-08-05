@@ -27,7 +27,7 @@ async function getCommerceRow(supabase: SupabaseClient) {
 
 export const createMobilePaymentIntent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
+  .validator((v) => z.object({
     order_id: z.string().uuid(),
   }).parse(v))
   .handler(async ({ data, context }) => {
@@ -90,7 +90,7 @@ export const createMobilePaymentIntent = createServerFn({ method: "POST" })
 
 export const confirmMobileOrderPaid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
+  .validator((v) => z.object({
     order_id: z.string().uuid(),
     payment_intent_id: z.string().min(1),
   }).parse(v))

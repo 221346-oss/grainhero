@@ -16,7 +16,7 @@ function escapeHtml(s: string) {
  * client-side verifyOtp().
  */
 export const sendOtpEmail = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ email: z.string().trim().email().max(200) }).parse(d))
+  .validator((d) => z.object({ email: z.string().trim().email().max(200) }).parse(d))
   .handler(async ({ data }) => {
     const email = data.email.trim().toLowerCase();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -51,7 +51,7 @@ export const sendOtpEmail = createServerFn({ method: "POST" })
  * Automatically updates user's email confirmation status and promotes them to admin role.
  */
 export const autoConfirmUserEmail = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ email: z.string().trim().email() }).parse(d))
+  .validator((d) => z.object({ email: z.string().trim().email() }).parse(d))
   .handler(async ({ data }) => {
     const email = data.email.trim().toLowerCase();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

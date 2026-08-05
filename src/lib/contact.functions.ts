@@ -16,7 +16,7 @@ type ContactFormInput = z.infer<typeof contactFormInput>
  * This function sends an email notification when someone submits the contact form
  */
 export const sendContactEmail = createServerFn({ method: 'POST' })
-  .inputValidator((d: unknown) => contactFormInput.parse(d))
+  .validator((d: unknown) => contactFormInput.parse(d))
   .handler(async ({ data }) => {
     try {
       // Create professional email template

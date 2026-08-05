@@ -122,7 +122,7 @@ export const getLatestFirebaseReadings = createServerFn({ method: "GET" })
 // GH2 callers use this server function instead of the GH1 REST endpoint.
 export const getDeviceLiveTelemetry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => {
+  .validator((d: unknown) => {
     if (typeof d !== "object" || d === null || typeof (d as { device_id?: unknown }).device_id !== "string") {
       throw new Error("device_id required");
     }

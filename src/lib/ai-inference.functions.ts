@@ -30,6 +30,9 @@ export type MLInferenceInput = {
   voc: number | null;
   co2?: number | null;
   storage_days: number;
+  // Optional rolling time-series window inputs
+  window?: Array<Record<string, number>>;
+  features?: number[];
   // Optional enriched fields used by the HuggingFace API
   dew_point?: number;
   airflow?: number;
@@ -100,15 +103,17 @@ async function callHuggingFaceAPI(data: MLInferenceInput): Promise<SpoilagePredi
 
   const payload = {
     grain_type: data.grain_type.toLowerCase(),
-    temperature: data.temperature,
-    humidity: data.humidity,
-    storage_days: data.storage_days,
-    grain_moisture: data.moisture,
-    airflow: data.airflow ?? 0,
-    dew_point: data.dew_point ?? 15,
-    ambient_light: 0,
-    pest_presence: data.voc == null ? 0 : Math.min(1, Math.max(0, data.voc / 1000)),
-    rainfall: 0,
+    Temperature: data.temperature,
+    Humidity: data.humidity,
+    Storage_Days: data.storage_days,
+    Grain_Moisture: data.moisture,
+    Airflow: data.airflow ?? 0,
+    Dew_Point: data.dew_point ?? 15,
+    Ambient_Light: 0,
+    Pest_Presence: data.voc == null ? 0 : Math.min(1, Math.max(0, data.voc / 1000)),
+    Rainfall: 0,
+    window: data.window,
+    features: data.features,
     temperature_history: data.temperature_history ?? [],
     humidity_history: data.humidity_history ?? [],
     moisture_history: data.moisture_history ?? [],

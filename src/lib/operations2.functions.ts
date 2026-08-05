@@ -122,7 +122,7 @@ const maintInput = z.object({ id: z.string().uuid(), kind: z.enum(["device", "ac
 
 export const markMaintenanceDone = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => maintInput.parse(d))
+  .validator((d) => maintInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     req(r, ["super_admin", "admin", "manager", "technician"]);

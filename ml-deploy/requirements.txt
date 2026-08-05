@@ -24,3 +24,8 @@ numpy>=1.26.0
 # imbalanced-learn>=0.12.0
 # shap>=0.45.0                  # still used in retrain evaluation
 
+# ── RAG Pipeline (rag/ directory) ─────────────────────────────────────────────
+pymupdf>=1.24.0               # PDF parsing (fitz) — used by rag_ingest.py
+sentence-transformers>=3.0.0  # HuggingFace local embeddings (private/on-premise mode)
+# Note: openai package not pinned here — use OPENAI_API_KEY + httpx (already listed above)
+#       If you prefer the official SDK: pip install openai>=1.35.0

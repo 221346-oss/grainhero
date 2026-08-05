@@ -27,7 +27,7 @@ export const getMyNotificationPrefs = createServerFn({ method: "GET" })
 
 export const updateMyNotificationPrefs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
+  .validator((d) =>
     z
       .object({
         email_enabled: z.boolean().optional(),
@@ -60,7 +60,7 @@ export const updateMyNotificationPrefs = createServerFn({ method: "POST" })
 
 export const sendTestNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ channel: z.enum(CHANNELS) }).parse(d))
+  .validator((d) => z.object({ channel: z.enum(CHANNELS) }).parse(d))
   .handler(async ({ data, context }) => {
     const rl = checkRateLimit(`notif-test:${context.userId}`, { limit: 3, windowMs: 60_000 });
     if (!rl.ok) throw new Error("Please wait a minute before sending another test");

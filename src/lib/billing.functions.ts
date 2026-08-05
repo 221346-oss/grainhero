@@ -64,7 +64,7 @@ const cancelInput = z.object({ reason: z.string().max(500).optional() });
 
 export const cancelMySubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => cancelInput.parse(d))
+  .validator((d) => cancelInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     if (!["super_admin", "admin"].includes(r)) throw new Error("Forbidden");
@@ -153,7 +153,7 @@ const markPaidInput = z.object({ id: z.string().uuid(), amount: z.number().nonne
 
 export const markInvoicePaid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => markPaidInput.parse(d))
+  .validator((d) => markPaidInput.parse(d))
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     if (!["super_admin", "admin", "manager"].includes(r)) throw new Error("Forbidden");

@@ -27,7 +27,7 @@ export const getFieldSettings = createServerFn({ method: "GET" })
 
 export const updateFieldSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => schema.parse(v))
+  .validator((v) => schema.parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
@@ -57,7 +57,7 @@ export const listFieldIncidents = createServerFn({ method: "GET" })
 
 export const assignFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
+  .validator((v) => z.object({
     id: z.string().uuid(),
     assigned_to: z.string().uuid(),
   }).parse(v))
@@ -115,7 +115,7 @@ export const getMyAssignedIncidents = createServerFn({ method: "GET" })
 
 export const resolveFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
+  .validator((v) => z.object({
     id: z.string().uuid(),
     status: z.enum(["open","investigating","resolved","dismissed"]),
     resolution_notes: z.string().max(2000).optional(),
@@ -136,7 +136,7 @@ export const resolveFieldIncident = createServerFn({ method: "POST" })
 // ─── Report a new ticket (manager or technician) ──────────────────────────────
 export const reportFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
+  .validator((v) => z.object({
     title: z.string().min(1).max(200).optional(),
     category: z.string().min(1).max(100).optional(),
     severity: z.enum(["low", "medium", "high", "critical"]),
@@ -216,7 +216,7 @@ export const listOpenFieldIncidents = createServerFn({ method: "GET" })
 // ─── List Comments / Discussion for an Incident Ticket ────────────────────────
 export const listIncidentComments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({ incident_id: z.string().uuid() }).parse(v))
+  .validator((v) => z.object({ incident_id: z.string().uuid() }).parse(v))
   .handler(async ({ data, context }) => {
     const { data: comments, error } = await (context.supabase
       .from("field_incident_comments" as any) as any)
@@ -242,7 +242,7 @@ export const listIncidentComments = createServerFn({ method: "GET" })
 // ─── Add Comment / Discussion Message to an Incident Ticket ─────────────────
 export const addIncidentComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
+  .validator((v) => z.object({
     incident_id: z.string().uuid(),
     message: z.string().min(1).max(2000),
   }).parse(v))

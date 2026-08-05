@@ -8,7 +8,7 @@ async function isSuperAdmin(ctx: { supabase: any; userId: string }) {
 
 export const getInstallation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string }) => d)
+  .validator((d: { orderId: string }) => d)
   .handler(async ({ data, context }) => {
     const supa = context.supabase;
     const [{ data: order }, { data: install }, { data: devices }, { data: events }, { data: settings }] = await Promise.all([
@@ -31,7 +31,7 @@ export const getInstallation = createServerFn({ method: "GET" })
 
 export const upsertInstallation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
+  .validator((d: {
     orderId: string;
     patch: {
       city?: string; warehouse_id?: string | null; silo_id?: string | null; scheduled_visit_at?: string | null;
@@ -59,7 +59,7 @@ export const upsertInstallation = createServerFn({ method: "POST" })
 
 export const upsertDevices = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; devices: { serial: string; model?: string; status?: string }[] }) => d)
+  .validator((d: { orderId: string; devices: { serial: string; model?: string; status?: string }[] }) => d)
   .handler(async ({ data, context }) => {
     if (!(await isSuperAdmin(context))) throw new Error("Forbidden: super_admin only");
     const supabaseAdmin = context.supabase;
@@ -75,7 +75,7 @@ export const upsertDevices = createServerFn({ method: "POST" })
 
 export const addVisitEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; note: string; photo_url?: string }) => d)
+  .validator((d: { orderId: string; note: string; photo_url?: string }) => d)
   .handler(async ({ data, context }) => {
     if (!(await isSuperAdmin(context))) throw new Error("Forbidden: super_admin only");
     const supabaseAdmin = context.supabase;
@@ -90,7 +90,7 @@ export type InstallStage = "paid" | "assigned" | "en_route" | "onsite" | "instal
 
 export const advanceInstallStage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; next: "en_route" | "onsite" | "installed" | "completed" | "blocked"; note?: string }) => d)
+  .validator((d: { orderId: string; next: "en_route" | "onsite" | "installed" | "completed" | "blocked"; note?: string }) => d)
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("advance_install_stage", {
       _order_id: data.orderId,

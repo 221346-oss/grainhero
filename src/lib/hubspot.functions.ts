@@ -29,7 +29,7 @@ async function logSync(params: {
 /** Create a HubSpot contact + trial deal and store IDs on the user's profile. */
 export const syncSignupToHubspot = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: {
+  .validator((input: {
     email: string;
     firstName?: string;
     lastName?: string;
@@ -69,7 +69,7 @@ export const syncSignupToHubspot = createServerFn({ method: "POST" })
 /** Move the current user's HubSpot deal to a stage. Idempotent. */
 export const advanceMyDealStage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { stage: string }) => input)
+  .validator((input: { stage: string }) => input)
   .handler(async ({ data, context }) => {
     if (!process.env.HUBSPOT_API_KEY || !process.env.LOVABLE_API_KEY) return { skipped: true };
     const { data: profile } = await context.supabase
@@ -145,7 +145,7 @@ export const adminListHubspotContacts = createServerFn({ method: "GET" })
 /** Super-admin: manually move a deal to a stage from the pipeline UI. */
 export const adminUpdateDealStage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: { dealId: string; stage: string }) => i)
+  .validator((i: { dealId: string; stage: string }) => i)
   .handler(async ({ context, data }) => {
     const { data: roles } = await context.supabase
       .from("user_roles").select("role").eq("user_id", context.userId);
