@@ -1,5 +1,6 @@
 import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
 
 const faqs = [
   { q: 'How does the AI predict spoilage?', a: 'It flags the pattern that comes before spoilage, 24–48 hours early.' },
@@ -14,6 +15,7 @@ export function HorizontalFAQ() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
   const x = useTransform(scrollYProgress, [0, 1], ['2%', '-68%'])
   const bar = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
+  const reduceMotion = useReducedMotion()
 
   return (
     <section id="faq" ref={ref} className="relative h-[240vh] bg-[#111512]">
@@ -44,6 +46,18 @@ export function HorizontalFAQ() {
         <div className="mx-auto mt-10 h-1 w-full max-w-7xl overflow-hidden rounded-full bg-[#FAFAF7]/10 px-5">
           <motion.div style={{ width: bar }} className="h-full rounded-full bg-[#A8E6A1]" />
         </div>
+
+        <p className="mx-auto mt-4 flex w-full max-w-7xl items-center gap-1.5 px-5 text-xs text-[#FAFAF7]/60 sm:px-8">
+          <motion.span
+            aria-hidden="true"
+            className="inline-flex text-[#A8E6A1]"
+            animate={reduceMotion ? undefined : { y: [0, 3, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </motion.span>
+          Swipe down for more
+        </p>
       </div>
     </section>
   )
