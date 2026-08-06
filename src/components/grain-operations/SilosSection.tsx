@@ -496,7 +496,6 @@ export function SilosSection() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Edit Dialog */}
       <Dialog
