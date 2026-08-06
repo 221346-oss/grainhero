@@ -22,6 +22,7 @@ import { SiloStatusPie, type StatusSlice } from "@/components/grain-operations/S
 import { type FlowGroup } from "@/components/grain-operations/SiloFlowDiagram";
 import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 type Tab = "batches" | "silos" | "warehouses" | "buyers";
 
@@ -70,6 +71,10 @@ function GrainOperationsWorkspace() {
     queryFn: () => roleFn(),
   });
   const userRole = roleData?.role ?? "pending";
+
+  // Show skeleton until role + initial data is ready
+  const isLoading = !roleData;
+  if (isLoading) return <KpiChartHubSkeleton />;
 
   // Filter tabs based on role - manager doesn't see warehouses
   const TABS = userRole === "manager" ? ALL_TABS.filter((t) => t.key !== "warehouses") : ALL_TABS;

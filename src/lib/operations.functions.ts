@@ -226,9 +226,37 @@ export const upsertSilo = createServerFn({ method: "POST" })
       if (error) throw error;
       return row;
     }
-    // Insert: auto-generate silo_id and name if not provided
+    // Insert: auto-generate silo_id and a unique name within the same warehouse region.
     const siloId = data.silo_id ?? `SILO-${Date.now().toString().slice(-8)}`;
-    const name = data.name ?? `Silo ${siloId.slice(-4)}`;
+
+    // If no name supplied, generate one like "Silo A", "Silo B", …, "Silo Z",
+    // "Silo AA", "Silo AB", … ensuring uniqueness within this warehouse.
+    let name = data.name ?? "";
+    if (!name) {
+      const { data: existingSilos } = await context.supabase
+        .from("silos")
+        .select("name")
+        .eq("warehouse_id", data.warehouse_id)
+        .is("deleted_at" as never, null);
+
+      const used = new Set(
+        (existingSilos ?? []).map((s: { name: string }) => s.name.toLowerCase()),
+      );
+
+      const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let idx = 0;
+      while (true) {
+        let suffix = "";
+        let tmp = idx;
+        do {
+          suffix = ALPHA[tmp % 26] + suffix;
+          tmp = Math.floor(tmp / 26) - 1;
+        } while (tmp >= 0);
+        const candidate = `Silo ${suffix}`;
+        if (!used.has(candidate.toLowerCase())) { name = candidate; break; }
+        idx++;
+      }
+    }
     // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
     const { data: prof } = await context.supabase
       .from("profiles")

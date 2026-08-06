@@ -15,6 +15,7 @@ import {
   EyeOff,
   ChevronRight,
   CreditCard,
+  Inbox,
 } from "lucide-react";
 // QrCode import retained — used by Traceability nav item when re-enabled
 // import { QrCode } from "lucide-react";
@@ -56,13 +57,14 @@ const workspaceNav: NavItem[] = [
   // { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
 ];
 
-// Group 3 — super-admin-only platform entries.
+// Group 3 — super-admin-only platform entries (6 items).
 const utilityNav: NavItem[] = [
-  { name: "platform-plans",      label: "Plans",          to: "/platform/plans",      icon: CreditCard, roles: ["super_admin"], marqueeItems: ["Edit limits", "Active/inactive", "Popular badge", "Change requests"] },
-  { name: "platform-business",   label: "Business",       to: "/platform/business",   icon: Briefcase,  roles: ["super_admin"], marqueeItems: ["Revenue", "Subscriptions", "Hardware"] },
-  { name: "platform-monitoring", label: "Monitoring",     to: "/platform/monitoring", icon: Activity,   roles: ["super_admin"], marqueeItems: ["Incidents", "Environmental", "Maintenance"] },
-  { name: "platform-orders",     label: "Install Orders", to: "/platform/orders",     icon: Package,    roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
-  { name: "platform",            label: "Platform",       to: "/platform",            icon: Building2,  roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Pipeline", "Leads", "System Health", "Audit Logs"] },
+  { name: "platform-plans",         label: "Plans",          to: "/platform/plans",         icon: CreditCard, roles: ["super_admin"], marqueeItems: ["Edit limits", "Active/inactive", "Popular badge", "Change requests"] },
+  { name: "platform-business",      label: "Business",       to: "/platform/business",      icon: Briefcase,  roles: ["super_admin"], marqueeItems: ["Revenue", "Subscriptions", "Hardware"] },
+  { name: "platform-monitoring",    label: "Monitoring",     to: "/platform/monitoring",    icon: Activity,   roles: ["super_admin"], marqueeItems: ["Incidents", "Environmental", "Maintenance"] },
+  { name: "platform-silo-requests", label: "Silo Requests",  to: "/platform/silo-requests", icon: Inbox,      roles: ["super_admin"], marqueeItems: ["Pending review", "Approved", "Rejected", "All requests"] },
+  { name: "platform-orders",        label: "Install Orders", to: "/platform/orders",        icon: Package,    roles: ["super_admin"], marqueeItems: ["Pending", "Completed", "Revenue"] },
+  { name: "platform",               label: "Platform",       to: "/platform",               icon: Building2,  roles: ["super_admin"], marqueeItems: ["Overview", "Tenants", "Users", "Pipeline", "Leads", "System Health", "Audit Logs"] },
 ];
 
 // Bottom nav — intentionally empty; Settings is accessible via the profile
@@ -75,9 +77,17 @@ function Section({ items, role, currentPath, collapsed }: { label?: string; item
   return (
     <div className={cn(collapsed && "flex flex-col items-center gap-0.5")}>
       {visible.map((item) => {
+        // /platform is the overview hub — only highlight it for the exact path
+        // or sub-paths that don't have their own dedicated sidebar entry.
+        const platformSubPaths = [
+          "/platform/plans", "/platform/business", "/platform/monitoring",
+          "/platform/silo-requests", "/platform/orders",
+        ];
         const active = item.to === "/platform"
-          ? currentPath === "/platform" || currentPath.startsWith("/platform/")
-          : currentPath === item.to;
+          ? currentPath === "/platform" ||
+            (currentPath.startsWith("/platform/") &&
+              !platformSubPaths.some((p) => currentPath === p || currentPath.startsWith(p + "/")))
+          : currentPath === item.to || (item.to !== "/platform" && currentPath.startsWith(item.to + "/"));
         return (
           <FlowingNavItem
             key={item.name}

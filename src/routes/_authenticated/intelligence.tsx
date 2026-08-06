@@ -12,6 +12,7 @@ import { Brain, BarChart3, Cpu, FileBarChart, TrendingUp, TrendingDown } from "l
 import { getSiloPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
 import { getReportsData } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
   head: () => ({
@@ -44,6 +45,8 @@ function IntelligenceWorkspace() {
   const isSuperAdmin = role === "super_admin";
   const allowedAnalytics = ["super_admin", "admin", "manager"].includes(role);
   const allowedModels = ["super_admin", "admin"].includes(role);
+
+  if (roleQ.isLoading) return <KpiChartHubSkeleton />;
 
   const fetchPredictions = useServerFn(getSiloPredictions);
   const fetchOverview = useServerFn(getAnalyticsOverview);

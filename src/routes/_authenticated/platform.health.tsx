@@ -6,6 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { CommandConsoleSkeleton } from "@/components/app/skeletons";
 
 const getHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -63,6 +64,8 @@ function PlatformHealthPage() {
   const fetchH = useServerFn(getHealth);
   const { data, isLoading } = useQuery({ queryKey: ["platform-health"], queryFn: () => fetchH(), refetchInterval: 30_000 });
 
+  if (isLoading) return <CommandConsoleSkeleton />;
+
   const m = data?.metrics;
   const services = data?.services;
   const events = data?.recentEvents ?? [];
@@ -90,7 +93,7 @@ function PlatformHealthPage() {
         tiles={[
           { key: "e7", label: "Errors 7 days", value: m?.errors7d ?? "—" },
           { key: "e30", label: "Errors 30 days", value: m?.errors30d ?? "—" },
-          { key: "sp", label: "Status", value: isLoading ? "Loading" : "Live" },
+          { key: "sp", label: "Status", value: "Live" },
         ]}
       />
 
