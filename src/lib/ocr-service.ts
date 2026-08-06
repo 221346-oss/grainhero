@@ -74,19 +74,33 @@ function parseDate(text: string): string | null {
  * treat this as a best-effort auto-fill and let the admin still submit
  * a partially-filled form if OCR misses a field.
  */
+/**
+ * Runs OCR on a receipt image and extracts structured payment details.
+ * Tesseract.js is loaded lazily at runtime — it is a large WASM bundle and
+ * only needed when the user actually uploads a receipt image. The dynamic
+ * import keeps it out of the initial bundle so Vite never tries to resolve
+ * it at build time for environments where it isn't installed.
+ *
+ * If tesseract.js is not available (package not installed), the function
+ * returns empty/null fields and a confidence of 0 instead of crashing.
+ */
 export async function extractPaymentDetails(imageFile: File): Promise<ExtractedPaymentDetails> {
-  // Skip OCR processing in development/build if tesseract.js causes issues
-  if (typeof window === "undefined") {
-    console.warn("OCR not available in server-side context");
-    return {
-      paymentId: null,
-      amount: null,
-      date: null,
-      rawText: "",
-      confidence: 0,
-    };
+  let createWorker: ((lang: string) => Promise<any>) | null = null;
+  try {
+    // Dynamic import keeps tesseract.js out of the Vite static analysis pass.
+    // Use Function constructor to prevent Vite from statically resolving the specifier.
+    const mod = await (new Function('s', 'return import(s)'))("tesseract.js") as any;
+    createWorker = mod.createWorker ?? mod.default?.createWorker ?? null;
+  } catch {
+    // tesseract.js not installed — return empty result gracefully
+    return { paymentId: null, amount: null, date: null, rawText: "", confidence: 0 };
   }
 
+  if (!createWorker) {
+    return { paymentId: null, amount: null, date: null, rawText: "", confidence: 0 };
+  }
+
+  const worker = await createWorker("eng");
   try {
     // Dynamic import with better error handling
     const tesseract = await import("tesseract.js");
@@ -115,5 +129,7 @@ export async function extractPaymentDetails(imageFile: File): Promise<ExtractedP
       rawText: "",
       confidence: 0,
     };
+  } finally {
+    await worker.terminate().catch(() => {});
   }
 }

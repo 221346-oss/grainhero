@@ -22,6 +22,7 @@ import { SiloStatusPie, type StatusSlice } from "@/components/grain-operations/S
 import { type FlowGroup } from "@/components/grain-operations/SiloFlowDiagram";
 import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 type Tab = "batches" | "silos" | "warehouses" | "buyers";
 

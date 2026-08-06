@@ -2,10 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
-import { createSiloAddonCheckoutSession } from "@/lib/stripe-checkout.functions";
+import { payApprovedSiloOrder, createSiloDraftRequest } from "@/lib/stripe-checkout.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
 import { usePlanGate } from "@/lib/plan-gate";
-import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -43,7 +42,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { OrdersSkeleton } from "@/components/app/skeletons";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { HardwareOrderThread } from "@/components/app/orders/HardwareOrderThread";
@@ -52,21 +51,61 @@ import { getMyRole } from "@/lib/roles.functions";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({ meta: [{ title: "My install orders — GrainHero" }] }),
+  // Accept any query params so Stripe redirect URLs with ?payment=success don't throw
+  validateSearch: (s: Record<string, unknown>) => s,
   component: MyOrdersPage,
 });
 
+// ── Status display ────────────────────────────────────────────────────────────
 const STATUS_STYLE: Record<string, string> = {
   pending_payment: "bg-slate-200 text-slate-700",
-  new: "bg-amber-100 text-amber-800",
-  approved: "bg-blue-100 text-blue-800",
-  tech_assigned: "bg-indigo-100 text-indigo-800",
-  installed: "bg-emerald-100 text-emerald-800",
-  live: "bg-emerald-600 text-white",
-  cancelled: "bg-red-100 text-red-700",
+  new:             "bg-amber-100 text-amber-800",
+  approved:        "bg-emerald-100 text-emerald-800",
+  tech_assigned:   "bg-indigo-100 text-indigo-800",
+  installed:       "bg-emerald-100 text-emerald-800",
+  live:            "bg-emerald-600 text-white",
+  cancelled:       "bg-red-100 text-red-700",
 };
 
-const emptyAddonForm = { address: "", city: "", country: "", phone: "", notes: "" };
+const STATUS_LABEL: Record<string, string> = {
+  pending_payment: "Payment pending — waiting for approval",
+  new:             "Awaiting approval",
+  approved:        "Approved — payment required",
+  paid:            "Paid — installation in progress",
+  tech_assigned:   "Tech assigned",
+  packing:         "Packing",
+  shipped:         "Shipped",
+  in_transit:      "In transit",
+  installing:      "Installing",
+  installed:       "Installed — sign-off required",
+  completed:       "Completed",
+  live:            "Live",
+  cancelled:       "Cancelled",
+};
 
+// Pre-payment / pre-install statuses — no install pipeline active yet.
+// "pending_payment" is borderline: show tracker if the order has an install row,
+// otherwise show badge. Resolved by the simple status check below.
+const DRAFT_STATUSES = new Set(["new", "approved", "cancelled"]);
+
+// ── Pakistani phone validation ────────────────────────────────────────────────
+function formatPakPhone(raw: string): string {
+  const d = raw.replace(/\D/g, "");
+  if (d.startsWith("92") && d.length === 12) return `+${d}`;
+  if (d.startsWith("0") && d.length === 11) return `+92${d.slice(1)}`;
+  if (d.length === 10) return `+92${d}`;
+  return raw;
+}
+function validatePakPhone(val: string): string | null {
+  if (!val.trim()) return "Phone number is required";
+  const f = formatPakPhone(val.trim());
+  if (/^\+92\d{10}$/.test(f)) return null;
+  return "Enter a valid Pakistani number: +92XXXXXXXXXX";
+}
+
+const emptyDraftForm = { address: "", city: "", country: "", phone: "", notes: "" };
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
   const settingsFn = useServerFn(getPlatformSettings);
@@ -85,35 +124,41 @@ function MyOrdersPage() {
     queryFn: () => settingsFn(),
     staleTime: 5 * 60_000,
   });
-  const iotPricing = platformSettings?.iot_pricing ?? [];
-  const selectedSku = iotPricing.find((s) => s.id === selectedSkuId) ?? iotPricing[0] ?? null;
 
-  const fmtPKR = (n: number) =>
-    new Intl.NumberFormat("en-PK", { maximumFractionDigits: 0 }).format(n);
+  // ── Handle URL params on mount (Stripe return + auto-open request sheet) ─
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get("silo_payment");
+    const autoRequest   = params.get("request");
 
-  function handleRequestSilo() {
-    // Requesting one more silo must stay within the plan limit — if it
-    // wouldn't, send them to upgrade instead of into the payment flow.
-    if (siloGate.data && !siloGate.data.allowed) {
-      navigate({ to: "/plan-management" });
-      return;
+    // Auto-open request sheet when navigating here with ?request=1
+    if (autoRequest === "1") {
+      window.history.replaceState({}, "", window.location.pathname);
+      if (siloGate.data && !siloGate.data.allowed) {
+        setLimitOpen(true);
+      } else {
+        setDraftForm(emptyDraftForm);
+        setPhoneError(null);
+        setRequestOpen(true);
+      }
     }
-    setAddonForm(emptyAddonForm);
-    setAddonOpen(true);
-  }
-  const addonMut = useMutation({
-    mutationFn: () =>
-      addonFn({
-        data: {
-          install: {
-            address: addonForm.address.trim(),
-            city: addonForm.city.trim() || null,
-            country: addonForm.country.trim(),
-            phone: addonForm.phone.trim(),
-            notes: addonForm.notes.trim() || null,
-          },
-        },
-      }),
+
+    if (paymentStatus === "success") {
+      window.history.replaceState({}, "", window.location.pathname);
+      // Stripe webhook will update the order status. Just refetch and notify.
+      toast.success("🎉 Payment received! Your silo install order is now active.");
+      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+      qc.invalidateQueries({ queryKey: ["plan-gate"] });
+    } else if (paymentStatus === "cancelled") {
+      window.history.replaceState({}, "", window.location.pathname);
+      toast.info("Payment cancelled — your request is still saved. You can pay later.");
+    }
+  }, [siloGate.data]);
+
+  // ── Pay an approved order ────────────────────────────────────────────────
+  const payMut = useMutation({
+    mutationFn: (orderId: string) => payFn({ data: { orderId } }),
     onSuccess: (res) => {
       if (!res?.url) {
         toast.error("Could not submit request");
@@ -131,24 +176,42 @@ function MyOrdersPage() {
       setConfirmationOpen(false);
     },
   });
-  const advanceFn = useServerFn(advanceInstallStage);
+
+  // ── Admin sign-off after install ─────────────────────────────────────────
   const completeMut = useMutation({
     mutationFn: (orderId: string) => advanceFn({ data: { orderId, next: "completed" } }),
     onSuccess: () => {
-      toast.success("Admin sign-off recorded. Silos & warehouse are ready.");
+      toast.success("Sign-off recorded. Silos & warehouse will appear in your Silos page shortly.");
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       qc.invalidateQueries({ queryKey: ["installation"] });
-      qc.invalidateQueries({ queryKey: ["silos"] });
-      qc.invalidateQueries({ queryKey: ["warehouses"] });
+      // Delay so the DB trigger (hardware_order_provision_silo) has time to commit
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ["silos"] });
+        qc.invalidateQueries({ queryKey: ["warehouses"] });
+        qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+        qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+      }, 1500);
     },
     onError: (e: Error) => toast.error(e.message ?? "Could not complete install"),
   });
+
   const { data, isLoading } = useQuery({
     queryKey: ["my-hardware-orders"],
-    queryFn: () => fetchFn(),
+    queryFn:  () => fetchFn(),
+    staleTime: 0,          // always refetch — orders change after approval
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
-  const orders = data?.orders ?? [];
-  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+  const orders      = data?.orders ?? [];
+  const hasApproved = orders.some((o) => o.status === "approved");
+  // Auto-poll every 8s while any approved order is waiting for payment confirmation
+  useQuery({
+    queryKey: ["my-hardware-orders"],
+    queryFn:  () => fetchFn(),
+    staleTime: 0,
+    refetchInterval: hasApproved ? 8_000 : false,
+    enabled: hasApproved,
+  });
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
@@ -158,6 +221,8 @@ function MyOrdersPage() {
       >
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>
+
+      {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My install orders</h1>
@@ -165,17 +230,53 @@ function MyOrdersPage() {
             Track the technician install for each subscription you purchased.
           </p>
         </div>
-        <Button onClick={handleRequestSilo} disabled={siloGate.isLoading} className="gap-2">
+        <Button
+          onClick={() => {
+            if (siloGate.data && !siloGate.data.allowed) {
+              setLimitOpen(true);
+              return;
+            }
+            setDraftForm(emptyDraftForm);
+            setPhoneError(null);
+            setRequestOpen(true);
+          }}
+          disabled={siloGate.isLoading}
+          className="gap-2"
+        >
           <PlusCircle className="h-4 w-4" /> Request new silo
         </Button>
       </div>
 
+      {/* Approved-but-unpaid top banner */}
+      {orders.some((o) => o.status === "approved") && (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-emerald-900">Your silo request has been approved!</p>
+            <p className="text-xs text-emerald-700 mt-0.5">
+              Click <strong>Pay now</strong> on the order card below to complete payment and schedule your installation.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Order list */}
       {isLoading ? (
         <OrdersSkeleton />
       ) : orders.length === 0 ? (
         <Card>
-          <CardContent className="p-10 text-center text-slate-500 text-sm">
-            No install orders yet. Pick a plan on the pricing page to get started.
+          <CardContent className="p-10 text-center text-slate-500 text-sm space-y-3">
+            <p>No install orders yet.</p>
+            <p className="text-xs text-slate-400">
+              If you recently submitted a silo request, it may take a moment to appear.
+            </p>
+            <button
+              type="button"
+              onClick={() => qc.invalidateQueries({ queryKey: ["my-hardware-orders"] })}
+              className="text-xs text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
+            >
+              Refresh orders
+            </button>
           </CardContent>
         </Card>
       ) : (
@@ -255,6 +356,7 @@ function MyOrdersPage() {
           ))}
         </div>
       )}
+
       <InstallationDrawer
         orderId={openOrderId}
         open={!!openOrderId}
@@ -271,48 +373,49 @@ function MyOrdersPage() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Request a new silo</DialogTitle>
+            <DialogTitle>Silo limit reached</DialogTitle>
             <DialogDescription>
-              Select a hardware package below, fill in your install details, and we'll dispatch a technician.
+              Your current plan (<strong>{siloGate.data?.planId ?? "starter"}</strong>) allows up to{" "}
+              <strong>{typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}</strong> silos
+              and you are already using{" "}
+              <strong>{typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}</strong> of them.
             </DialogDescription>
           </DialogHeader>
+          <p className="text-sm text-slate-600 px-1">
+            To request additional silos you need to upgrade your plan. Visit the plan management page to
+            request a higher tier.
+          </p>
+          <DialogFooter className="mt-2 flex gap-2">
+            <Button variant="outline" onClick={() => setLimitOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              onClick={() => { setLimitOpen(false); navigate({ to: "/plan-management" }); }}
+            >
+              Upgrade plan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Request silo sheet ───────────────────────────────────── */}
+      <Sheet open={requestOpen} onOpenChange={(v) => { setRequestOpen(v); if (!v) { setDraftForm(emptyDraftForm); setPhoneError(null); } }}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Request a new silo</SheetTitle>
+            <SheetDescription>
+              Fill in your install details. Our team will review and approve — you'll be notified once it's ready for payment.
+            </SheetDescription>
+          </SheetHeader>
           <form
-            className="grid gap-3 py-1"
-            onSubmit={(e) => { e.preventDefault(); addonMut.mutate(); }}
+            className="mt-6 grid gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const err = validatePakPhone(draftForm.phone);
+              setPhoneError(err);
+              if (err) return;
+              draftMut.mutate();
+            }}
           >
-            {/* IoT pricing picker — only shown when super admin has set pricing */}
-            {iotPricing.length > 0 && (
-              <div className="grid gap-1.5">
-                <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Select hardware package</Label>
-                <div className="grid gap-2">
-                  {iotPricing.map((sku) => (
-                    <button
-                      key={sku.id}
-                      type="button"
-                      onClick={() => setSelectedSkuId(sku.id)}
-                      className={`w-full text-left rounded-lg border p-3 transition-colors ${
-                        (selectedSkuId || iotPricing[0]?.id) === sku.id
-                          ? "border-emerald-400 bg-emerald-50/60 ring-1 ring-emerald-400/40"
-                          : "border-slate-200 hover:border-slate-300 bg-white"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-800">{sku.name}</p>
-                          {sku.description && (
-                            <p className="text-xs text-slate-500 mt-0.5 truncate">{sku.description}</p>
-                          )}
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="text-sm font-bold text-slate-800">PKR {fmtPKR(sku.price_pkr)}</p>
-                          <p className="text-[10px] text-slate-400">{sku.unit}</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
             <div className="grid gap-1.5">
               <Label htmlFor="addon-address">Install address *</Label>
               <Input
@@ -350,26 +453,30 @@ function MyOrdersPage() {
                 value={addonForm.phone}
                 onChange={(e) => setAddonForm((f) => ({ ...f, phone: e.target.value }))}
                 required
+                className={phoneError ? "border-red-400" : ""}
               />
+              {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
+              <p className="text-[11px] text-slate-400">e.g. +923001234567 or 03001234567</p>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="addon-notes">Notes (optional)</Label>
-              <Textarea
-                id="addon-notes"
-                rows={2}
-                value={addonForm.notes}
-                onChange={(e) => setAddonForm((f) => ({ ...f, notes: e.target.value }))}
-              />
+              <Label htmlFor="s-notes">Notes (optional)</Label>
+              <Textarea id="s-notes" rows={3} value={draftForm.notes} onChange={(e) => setDraftForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Preferred install time, access instructions…" />
             </div>
-            <DialogFooter className="mt-2">
-              <Button type="button" variant="outline" onClick={() => setAddonOpen(false)}>
-                Cancel
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
+              <p className="font-semibold text-slate-700">What happens next</p>
+              <ol className="list-decimal pl-4 space-y-0.5">
+                <li>Our team reviews your request (usually within 24 h).</li>
+                <li>You'll get a notification once approved.</li>
+                <li>Click <strong>Pay now</strong> on this page to complete payment.</li>
+              </ol>
+            </div>
+            <div className="flex justify-end gap-3 pt-1">
+              <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={draftMut.isPending || siloGate.isLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                {draftMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                {draftMut.isPending ? "Submitting…" : "Submit request"}
               </Button>
-              <Button type="submit" className="gap-2">
-                <PlusCircle className="h-4 w-4" />
-                Request silo
-              </Button>
-            </DialogFooter>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
@@ -409,12 +516,8 @@ function MyOrdersPage() {
   );
 }
 
-function CardActions({
-  order,
-  onTrack,
-  onComplete,
-  completing,
-}: {
+// ── Install-stage actions (track + sign-off) ──────────────────────────────────
+function CardActions({ order, onTrack, onComplete, completing }: {
   order: Record<string, unknown>;
   onTrack: () => void;
   onComplete: () => void;
@@ -426,11 +529,16 @@ function CardActions({
     ((order as any).visit_events ?? []) as any,
   );
   const canComplete = derived.stage === "installed" && !derived.blocked;
+
+  // Count how many device serials are attached (provisioned by trigger per serial)
+  const deviceCount = (order.hardware_quantity as number) ?? 0;
+
   return (
     <div className="flex items-center gap-2">
       <Button size="sm" variant="outline" onClick={onTrack}>
         <Truck className="h-3.5 w-3.5 mr-1.5" /> Track installation
       </Button>
+
       {canComplete && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -459,17 +567,34 @@ function CardActions({
                 </ul>
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <div className="space-y-2 px-1 pb-1 text-xs text-slate-600">
+              <p>GrainHero will automatically:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Provision a warehouse for this install (if none exists yet).</li>
+                <li>Create one silo per device serial the technician recorded ({deviceCount} ordered).</li>
+                <li>Move the order to <strong>Completed</strong> — this cannot be reversed.</li>
+              </ul>
+              <p className="text-amber-700 bg-amber-50 rounded p-2 border border-amber-200">
+                Silos don't appear instantly — if they're missing after a minute, open
+                <strong> Track installation</strong> and confirm the technician saved device serials.
+                Each serial provisions one silo.
+              </p>
+            </div>
             <AlertDialogFooter>
               <AlertDialogCancel>Not yet</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-emerald-600 hover:bg-emerald-700"
-                onClick={onComplete}
-              >
+              <AlertDialogAction className="bg-emerald-600 hover:bg-emerald-700" onClick={onComplete}>
                 Yes, sign off
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {/* If installed but no sign-off yet and stage not yet reached — hint */}
+      {derived.stage !== "installed" && derived.stage !== "completed" && !derived.blocked && (
+        <span className="text-xs text-slate-400">
+          Sign-off available once technician marks installed
+        </span>
       )}
     </div>
   );

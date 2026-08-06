@@ -54,6 +54,7 @@ import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authe
 import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
 import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSiloRequestRouteImport } from './routes/_authenticated/silo-request'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
@@ -65,14 +66,13 @@ import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-passw
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
-import { Route as SolutionsSiloMonitoringSystemRouteImport } from './routes/solutions.silo-monitoring-system'
-import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
-import { Route as SolutionsGrainManagementSoftwareRouteImport } from './routes/solutions.grain-management-software'
-import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
-import { Route as GuidesGrainStorageRouteImport } from './routes/guides.grain-storage'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
+import { Route as GuidesGrainStorageRouteImport } from './routes/guides.grain-storage'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
+import { Route as SolutionsGrainManagementSoftwareRouteImport } from './routes/solutions.grain-management-software'
+import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
+import { Route as SolutionsSiloMonitoringSystemRouteImport } from './routes/solutions.silo-monitoring-system'
 import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
 import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
@@ -112,6 +112,7 @@ import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
 import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
 import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
+import { Route as AuthenticatedPlatformSiloRequestsRouteImport } from './routes/_authenticated/platform.silo-requests'
 import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
@@ -221,9 +222,9 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CookiesRoute = CookiesRouteImport.update({
@@ -266,53 +267,16 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => MarketplaceRoute,
-} as any)
-const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => CheckoutRoute,
-} as any)
-const SolutionsSiloMonitoringSystemRoute =
-  SolutionsSiloMonitoringSystemRouteImport.update({
-    id: '/solutions/silo-monitoring-system',
-    path: '/solutions/silo-monitoring-system',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedActivityLogsRoute =
+  AuthenticatedActivityLogsRouteImport.update({
+    id: '/activity-logs',
+    path: '/activity-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const SolutionsGrainStorageMonitoringRoute =
-  SolutionsGrainStorageMonitoringRouteImport.update({
-    id: '/solutions/grain-storage-monitoring',
-    path: '/solutions/grain-storage-monitoring',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const SolutionsGrainManagementSoftwareRoute =
-  SolutionsGrainManagementSoftwareRouteImport.update({
-    id: '/solutions/grain-management-software',
-    path: '/solutions/grain-management-software',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => MarketplaceRoute,
-} as any)
-const GuidesGrainStorageRoute = GuidesGrainStorageRouteImport.update({
-  id: '/guides/grain-storage',
-  path: '/guides/grain-storage',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
-  id: '/success',
-  path: '/success',
-  getParentRoute: () => CheckoutRoute,
-} as any)
-const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
-  id: '/verify-otp',
-  path: '/verify-otp',
-  getParentRoute: () => AuthRoute,
+const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
+  id: '/actuators',
+  path: '/actuators',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdministrationRoute =
   AuthenticatedAdministrationRouteImport.update({
@@ -464,6 +428,12 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSiloRequestRoute =
+  AuthenticatedSiloRequestRouteImport.update({
+    id: '/silo-request',
+    path: '/silo-request',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSubscriptionRoute =
   AuthenticatedSubscriptionRouteImport.update({
     id: '/subscription',
@@ -527,6 +497,11 @@ const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
   path: '/success',
   getParentRoute: () => CheckoutRoute,
 } as any)
+const GuidesGrainStorageRoute = GuidesGrainStorageRouteImport.update({
+  id: '/guides/grain-storage',
+  path: '/guides/grain-storage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -537,6 +512,24 @@ const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => MarketplaceRoute,
 } as any)
+const SolutionsGrainManagementSoftwareRoute =
+  SolutionsGrainManagementSoftwareRouteImport.update({
+    id: '/solutions/grain-management-software',
+    path: '/solutions/grain-management-software',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SolutionsGrainStorageMonitoringRoute =
+  SolutionsGrainStorageMonitoringRouteImport.update({
+    id: '/solutions/grain-storage-monitoring',
+    path: '/solutions/grain-storage-monitoring',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SolutionsSiloMonitoringSystemRoute =
+  SolutionsSiloMonitoringSystemRouteImport.update({
+    id: '/solutions/silo-monitoring-system',
+    path: '/solutions/silo-monitoring-system',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminsAdminIdRoute =
   AuthenticatedAdminsAdminIdRouteImport.update({
     id: '/admins/$adminId',
@@ -675,10 +668,10 @@ const AuthenticatedPlatformMarketplaceHealthRoute =
     path: '/platform/marketplace-health',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformMarketplaceMobileRoute =
-  AuthenticatedPlatformMarketplaceMobileRouteImport.update({
-    id: '/platform/marketplace-mobile',
-    path: '/platform/marketplace-mobile',
+const AuthenticatedPlatformLogsRoute =
+  AuthenticatedPlatformLogsRouteImport.update({
+    id: '/platform/logs',
+    path: '/platform/logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformMarketplaceSettingsRoute =
@@ -769,6 +762,12 @@ const AuthenticatedPlatformSellersRoute =
   AuthenticatedPlatformSellersRouteImport.update({
     id: '/platform/sellers',
     path: '/platform/sellers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformSiloRequestsRoute =
+  AuthenticatedPlatformSiloRequestsRouteImport.update({
+    id: '/platform/silo-requests',
+    path: '/platform/silo-requests',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformSlaAlertsRoute =
@@ -1277,6 +1276,7 @@ export interface FileRoutesByFullPath {
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/silo-request': typeof AuthenticatedSiloRequestRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
@@ -1333,6 +1333,7 @@ export interface FileRoutesByFullPath {
   '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/silo-requests': typeof AuthenticatedPlatformSiloRequestsRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
@@ -1457,6 +1458,7 @@ export interface FileRoutesByTo {
   '/sensors': typeof AuthenticatedSensorsRoute
   '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/silo-request': typeof AuthenticatedSiloRequestRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
@@ -1513,6 +1515,7 @@ export interface FileRoutesByTo {
   '/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/platform/silo-requests': typeof AuthenticatedPlatformSiloRequestsRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
@@ -1641,6 +1644,7 @@ export interface FileRoutesById {
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
   '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/_authenticated/silo-request': typeof AuthenticatedSiloRequestRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
@@ -1697,6 +1701,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/reporting': typeof AuthenticatedPlatformReportingRoute
   '/_authenticated/platform/reviews': typeof AuthenticatedPlatformReviewsRoute
   '/_authenticated/platform/sellers': typeof AuthenticatedPlatformSellersRoute
+  '/_authenticated/platform/silo-requests': typeof AuthenticatedPlatformSiloRequestsRoute
   '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
@@ -1825,6 +1830,7 @@ export interface FileRouteTypes {
     | '/sensors'
     | '/server-monitoring'
     | '/settings'
+    | '/silo-request'
     | '/subscription'
     | '/suppliers'
     | '/team-management'
@@ -1881,6 +1887,7 @@ export interface FileRouteTypes {
     | '/platform/reporting'
     | '/platform/reviews'
     | '/platform/sellers'
+    | '/platform/silo-requests'
     | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
@@ -2005,6 +2012,7 @@ export interface FileRouteTypes {
     | '/sensors'
     | '/server-monitoring'
     | '/settings'
+    | '/silo-request'
     | '/subscription'
     | '/suppliers'
     | '/team-management'
@@ -2061,6 +2069,7 @@ export interface FileRouteTypes {
     | '/platform/reporting'
     | '/platform/reviews'
     | '/platform/sellers'
+    | '/platform/silo-requests'
     | '/platform/sla-alerts'
     | '/platform/tenants'
     | '/platform/users'
@@ -2188,6 +2197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sensors'
     | '/_authenticated/server-monitoring'
     | '/_authenticated/settings'
+    | '/_authenticated/silo-request'
     | '/_authenticated/subscription'
     | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
@@ -2244,6 +2254,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/reporting'
     | '/_authenticated/platform/reviews'
     | '/_authenticated/platform/sellers'
+    | '/_authenticated/platform/silo-requests'
     | '/_authenticated/platform/sla-alerts'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
@@ -2433,11 +2444,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -2503,47 +2514,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/solutions/silo-monitoring-system': {
-      id: '/solutions/silo-monitoring-system'
-      path: '/solutions/silo-monitoring-system'
-      fullPath: '/solutions/silo-monitoring-system'
-      preLoaderRoute: typeof SolutionsSiloMonitoringSystemRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/solutions/grain-storage-monitoring': {
-      id: '/solutions/grain-storage-monitoring'
-      path: '/solutions/grain-storage-monitoring'
-      fullPath: '/solutions/grain-storage-monitoring'
-      preLoaderRoute: typeof SolutionsGrainStorageMonitoringRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/solutions/grain-management-software': {
-      id: '/solutions/grain-management-software'
-      path: '/solutions/grain-management-software'
-      fullPath: '/solutions/grain-management-software'
-      preLoaderRoute: typeof SolutionsGrainManagementSoftwareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/marketplace/$slug': {
-      id: '/marketplace/$slug'
-      path: '/$slug'
-      fullPath: '/marketplace/$slug'
-      preLoaderRoute: typeof MarketplaceSlugRouteImport
-      parentRoute: typeof MarketplaceRoute
-    }
-    '/guides/grain-storage': {
-      id: '/guides/grain-storage'
-      path: '/guides/grain-storage'
-      fullPath: '/guides/grain-storage'
-      preLoaderRoute: typeof GuidesGrainStorageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkout/success': {
-      id: '/checkout/success'
-      path: '/success'
-      fullPath: '/checkout/success'
-      preLoaderRoute: typeof CheckoutSuccessRouteImport
-      parentRoute: typeof CheckoutRoute
+    '/_authenticated/activity-logs': {
+      id: '/_authenticated/activity-logs'
+      path: '/activity-logs'
+      fullPath: '/activity-logs'
+      preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/actuators': {
       id: '/_authenticated/actuators'
@@ -2685,11 +2668,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/plans': {
-      id: '/_authenticated/plans'
-      path: '/plans'
-      fullPath: '/plans'
-      preLoaderRoute: typeof AuthenticatedPlansRouteImport
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports': {
@@ -2746,6 +2736,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/silo-request': {
+      id: '/_authenticated/silo-request'
+      path: '/silo-request'
+      fullPath: '/silo-request'
+      preLoaderRoute: typeof AuthenticatedSiloRequestRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/subscription': {
@@ -2832,6 +2829,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutSuccessRouteImport
       parentRoute: typeof CheckoutRoute
     }
+    '/guides/grain-storage': {
+      id: '/guides/grain-storage'
+      path: '/guides/grain-storage'
+      fullPath: '/guides/grain-storage'
+      preLoaderRoute: typeof GuidesGrainStorageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace/': {
       id: '/marketplace/'
       path: '/'
@@ -2845,6 +2849,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/marketplace/$slug'
       preLoaderRoute: typeof MarketplaceSlugRouteImport
       parentRoute: typeof MarketplaceRoute
+    }
+    '/solutions/grain-management-software': {
+      id: '/solutions/grain-management-software'
+      path: '/solutions/grain-management-software'
+      fullPath: '/solutions/grain-management-software'
+      preLoaderRoute: typeof SolutionsGrainManagementSoftwareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions/grain-storage-monitoring': {
+      id: '/solutions/grain-storage-monitoring'
+      path: '/solutions/grain-storage-monitoring'
+      fullPath: '/solutions/grain-storage-monitoring'
+      preLoaderRoute: typeof SolutionsGrainStorageMonitoringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions/silo-monitoring-system': {
+      id: '/solutions/silo-monitoring-system'
+      path: '/solutions/silo-monitoring-system'
+      fullPath: '/solutions/silo-monitoring-system'
+      preLoaderRoute: typeof SolutionsSiloMonitoringSystemRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admins/$adminId': {
       id: '/_authenticated/admins/$adminId'
@@ -3007,11 +3032,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformMarketplaceHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/marketplace-mobile': {
-      id: '/_authenticated/platform/marketplace-mobile'
-      path: '/platform/marketplace-mobile'
-      fullPath: '/platform/marketplace-mobile'
-      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceMobileRouteImport
+    '/_authenticated/platform/logs': {
+      id: '/_authenticated/platform/logs'
+      path: '/platform/logs'
+      fullPath: '/platform/logs'
+      preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/marketplace-settings': {
@@ -3117,6 +3142,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/sellers'
       fullPath: '/platform/sellers'
       preLoaderRoute: typeof AuthenticatedPlatformSellersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/silo-requests': {
+      id: '/_authenticated/platform/silo-requests'
+      path: '/platform/silo-requests'
+      fullPath: '/platform/silo-requests'
+      preLoaderRoute: typeof AuthenticatedPlatformSiloRequestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/sla-alerts': {
@@ -3851,6 +3883,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
   AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
+  AuthenticatedSiloRequestRoute: typeof AuthenticatedSiloRequestRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRouteWithChildren
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
@@ -3893,6 +3926,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformReportingRoute: typeof AuthenticatedPlatformReportingRoute
   AuthenticatedPlatformReviewsRoute: typeof AuthenticatedPlatformReviewsRoute
   AuthenticatedPlatformSellersRoute: typeof AuthenticatedPlatformSellersRoute
+  AuthenticatedPlatformSiloRequestsRoute: typeof AuthenticatedPlatformSiloRequestsRoute
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRouteWithChildren
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
@@ -3936,6 +3970,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
   AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
+  AuthenticatedSiloRequestRoute: AuthenticatedSiloRequestRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRouteWithChildren,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
@@ -3997,6 +4032,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformReportingRoute: AuthenticatedPlatformReportingRoute,
   AuthenticatedPlatformReviewsRoute: AuthenticatedPlatformReviewsRoute,
   AuthenticatedPlatformSellersRoute: AuthenticatedPlatformSellersRoute,
+  AuthenticatedPlatformSiloRequestsRoute:
+    AuthenticatedPlatformSiloRequestsRoute,
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
   AuthenticatedPlatformTenantsRoute:
     AuthenticatedPlatformTenantsRouteWithChildren,

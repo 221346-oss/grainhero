@@ -9,6 +9,7 @@ import { getSecurityOverview } from "@/lib/operations2.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
 import { toast } from "sonner";
+import { CommandConsoleSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/security-center")({
   head: () => ({
@@ -69,6 +70,8 @@ function SecurityCenterPage() {
   if (!roleQ.isLoading && !allowed) {
     return <div className="p-8 max-w-lg mx-auto"><Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>Security Center is available to admins and super admins.</CardDescription></CardHeader></Card></div>;
   }
+
+  if (roleQ.isLoading) return <CommandConsoleSkeleton />;
 
   // Calculate stats from allUsers data
   const totalUsers = allUsers.length;

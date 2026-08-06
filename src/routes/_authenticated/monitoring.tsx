@@ -27,6 +27,7 @@ import { listSensorDevices, listActuators, listGrainAlerts } from "@/lib/operati
 import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.functions";
 import { getIncidents } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
   head: () => ({
@@ -94,6 +95,8 @@ function MonitoringWorkspace() {
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
 
   const userRole = roleData?.role ?? "pending";
+
+  if (!roleData) return <KpiChartHubSkeleton />;
 
   // Filter tabs based on role - manager only sees Incidents tab
   const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;

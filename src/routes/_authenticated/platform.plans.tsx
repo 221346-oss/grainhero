@@ -63,12 +63,12 @@ const LIMITS = [
 
 // ── Skeleton Components ──────────────────────────────────────────────────────
 function SkeletonPulse({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded bg-slate-100 ${className}`} />;
+  return <div className={`animate-pulse rounded bg-muted ${className}`} />;
 }
 
 function PlanCardSkeleton() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+    <div className="rounded-xl border border-border bg-background p-3 space-y-2">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <SkeletonPulse className="h-4 w-24" />
@@ -95,7 +95,7 @@ function PlanCardSkeleton() {
 
 function RequestsTableSkeleton() {
   return (
-    <div className="divide-y divide-slate-50">
+    <div className="divide-y divide-border">
       {[1, 2, 3].map((i) => (
         <div key={i} className="px-5 py-3.5 flex items-center gap-4">
           <SkeletonPulse className="h-4 w-20" />
@@ -118,7 +118,7 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
   const price = Math.round(plan.price_cents / 100);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden flex flex-col">
+    <div className="rounded-xl border border-border bg-background overflow-hidden flex flex-col">
       {/* Coloured top stripe */}
       <div className="h-0.5 w-full" style={{ background: t.accent }} />
 
@@ -127,14 +127,14 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
         <div className="flex items-start justify-between mb-0.5">
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-xs font-bold text-[#252d26]">{plan.name}</span>
+              <span className="text-xs font-bold text-foreground">{plan.name}</span>
               {plan.is_popular && (
                 <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
                   <Star className="w-2 h-2" /> Popular
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-slate-400">{t.tagline}</p>
+            <p className="text-[10px] text-muted-foreground">{t.tagline}</p>
           </div>
           {plan.is_active ? (
             <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
@@ -142,7 +142,7 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
               <CheckCircle className="w-2.5 h-2.5" /> Active
             </span>
           ) : (
-            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
               <XCircle className="w-2.5 h-2.5" /> Inactive
             </span>
           )}
@@ -150,10 +150,10 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
 
         {/* Price */}
         <div className="mt-1.5 mb-2">
-          <span className="text-lg font-bold text-[#252d26] tabular-nums">
+          <span className="text-lg font-bold text-foreground tabular-nums">
             PKR {fmt(price)}
           </span>
-          <span className="text-[10px] text-slate-400 ml-1">/ month</span>
+          <span className="text-[10px] text-muted-foreground ml-1">/ month</span>
         </div>
 
         {/* Feature limit meters */}
@@ -164,13 +164,13 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
             return (
               <div key={key}>
                 <div className="flex items-center justify-between mb-0.5">
-                  <span className="flex items-center gap-1 text-[10px] text-[#404F44]">
-                    <Icon className="w-2.5 h-2.5 text-slate-400" />
+                  <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Icon className="w-2.5 h-2.5 text-muted-foreground" />
                     {label}
                   </span>
-                  <span className="text-[10px] font-semibold text-[#252d26] tabular-nums">{val}</span>
+                  <span className="text-[10px] font-semibold text-foreground tabular-nums">{val}</span>
                 </div>
-                <div className="h-0.5 rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-0.5 rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${pct}%`, background: t.accent }}
@@ -248,22 +248,22 @@ function EditDrawer({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-foreground/30 z-40 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={onClose}
       />
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-background shadow-2xl z-50 flex flex-col transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Drawer header */}
         <div className="h-1.5 w-full" style={{ background: t.accent }} />
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-[#252d26]">Edit — {plan.name}</h2>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">{plan.plan_id}</p>
+            <h2 className="text-sm font-semibold text-foreground">Edit — {plan.name}</h2>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">{plan.plan_id}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -273,7 +273,7 @@ function EditDrawer({
 
           {/* Price */}
           <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-2">
               Price (PKR / month)
             </label>
             <div className="flex items-center gap-3">
@@ -285,7 +285,7 @@ function EditDrawer({
                 className="h-9 text-sm"
               />
               {newPrice !== origPrice && (
-                <div className={`flex items-center gap-1 text-xs font-semibold whitespace-nowrap ${newPrice > origPrice ? "text-[#2FAC0C]" : "text-red-500"}`}>
+                <div className={`flex items-center gap-1 text-xs font-semibold whitespace-nowrap ${newPrice > origPrice ? "text-success" : "text-red-500"}`}>
                   {newPrice > origPrice ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                   was {fmt(origPrice)}
                 </div>
@@ -295,7 +295,7 @@ function EditDrawer({
 
           {/* Feature limits */}
           <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-3">
               Feature Limits
             </label>
             <div className="space-y-3">
@@ -305,15 +305,15 @@ function EditDrawer({
                 const diff = cur - orig;
                 const pct  = Math.min(100, Math.round((cur / max) * 100));
                 return (
-                  <div key={key} className="rounded-lg border border-slate-100 p-3 space-y-2"
+                  <div key={key} className="rounded-lg border border-border p-3 space-y-2"
                     style={diff !== 0 ? { borderColor: diff > 0 ? "#bbf7d0" : "#fecaca", background: diff > 0 ? "rgba(47,172,12,0.03)" : "rgba(239,68,68,0.03)" } : {}}>
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2 text-xs font-medium text-[#404F44]">
-                        <Icon className="w-3.5 h-3.5 text-slate-400" /> {label}
+                      <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <Icon className="w-3.5 h-3.5 text-muted-foreground" /> {label}
                       </span>
                       <div className="flex items-center gap-2">
                         {diff !== 0 && (
-                          <span className={`text-[10px] font-bold ${diff > 0 ? "text-[#2FAC0C]" : "text-red-500"}`}>
+                          <span className={`text-[10px] font-bold ${diff > 0 ? "text-success" : "text-red-500"}`}>
                             {diff > 0 ? `+${diff}` : diff}
                           </span>
                         )}
@@ -326,7 +326,7 @@ function EditDrawer({
                         />
                       </div>
                     </div>
-                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-300"
                         style={{ width: `${pct}%`, background: diff > 0 ? G : diff < 0 ? "#ef4444" : t.accent }} />
                     </div>
@@ -338,7 +338,7 @@ function EditDrawer({
 
           {/* Toggles */}
           <div>
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-3">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-3">
               Settings
             </label>
             <div className="space-y-2">
@@ -346,10 +346,10 @@ function EditDrawer({
                 { k: "is_active",  label: "Plan is active",    sub: "Visible and purchasable by tenants" },
                 { k: "is_popular", label: "Mark as popular",   sub: "Highlights this plan on the pricing page" },
               ] as const).map(({ k, label, sub }) => (
-                <div key={k} className="flex items-center justify-between rounded-lg border border-slate-100 px-4 py-3">
+                <div key={k} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
                   <div>
-                    <p className="text-xs font-medium text-[#252d26]">{label}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>
+                    <p className="text-xs font-medium text-foreground">{label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>
                   </div>
                   <Switch checked={!!form[k]} onCheckedChange={(v) => set(k, v)} />
                 </div>
@@ -359,7 +359,7 @@ function EditDrawer({
         </div>
 
         {/* Sticky footer */}
-        <div className="px-6 py-4 border-t border-slate-100 space-y-3">
+        <div className="px-6 py-4 border-t border-border space-y-3">
           {changedCount > 0 && (
             <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
               <Bell className="w-3.5 h-3.5 text-amber-600 mt-0.5 shrink-0" />
@@ -370,7 +370,7 @@ function EditDrawer({
           )}
           <div className="flex gap-3">
             <button onClick={onClose}
-              className="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+              className="flex-1 py-2 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted/30 transition-colors">
               Cancel
             </button>
             <button
@@ -400,7 +400,7 @@ function PlatformPlansPage() {
   const savePlan      = useServerFn(updatePlanThreshold);
   const decide        = useServerFn(decidePlanChangeRequest);
 
-  const plansQ = useQuery({ queryKey: ["plan-thresholds"], queryFn: () => fetchPlans() });
+  const plansQ = useQuery({ queryKey: ["plan-thresholds"], queryFn: () => fetchPlans(), staleTime: 60_000 });
   const reqQ   = useQuery({
     queryKey: ["plan-change-requests", statusFilter],
     queryFn:  () => fetchRequests({ data: { status: statusFilter } }),
@@ -413,12 +413,16 @@ function PlatformPlansPage() {
 
   const saveMut = useMutation({
     mutationFn: (v: any) => savePlan({ data: v }),
-    onSuccess: () => {
-      toast.success("Plan updated — affected tenants have been notified");
+    onSuccess: (_data, vars) => {
+      const planName = plans.find((p) => p.plan_id === vars.plan_id)?.name ?? vars.plan_id;
+      toast.success(`"${planName}" plan saved`, {
+        description: "Limits updated instantly across all tenants on this plan. You'll see a confirmation in your notification bell.",
+        duration: 6000,
+      });
       qc.invalidateQueries({ queryKey: ["plan-thresholds"] });
       setEditPlanId(null);
     },
-    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+    onError: (e: any) => toast.error("Failed to save plan", { description: e?.message ?? "Unknown error" }),
   });
 
   const decideMut = useMutation({
@@ -473,81 +477,46 @@ function PlatformPlansPage() {
     },
   ];
 
+  // neon tone per pillar
+  const PILLAR_TONE: Record<string, string> = {
+    plans: "text-muted-foreground",
+    active: "text-success",
+    pending: pendingReqs > 0 ? "text-warning" : "text-muted-foreground",
+    auto_applied: "text-info",
+  };
+
   const StatStrip = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-      {plansQ.isLoading
-        ? [1,2,3,4].map((i) => (
-            <div key={i} className="rounded-xl border border-slate-200 bg-white px-4 py-4 space-y-2">
-              <SkeletonPulse className="h-6 w-8" />
-              <SkeletonPulse className="h-2.5 w-16" />
-            </div>
-          ))
-        : PILLARS.map((p) => {
-            const isActive = activeView === p.key;
-            return (
-              <button
-                key={p.key}
-                onClick={() => setActiveView(p.key)}
-                className="group relative rounded-xl border text-left transition-all duration-200 overflow-hidden focus:outline-none"
-                style={{
-                  borderColor: isActive ? p.accent + "60" : "#e2e8f0",
-                  background: isActive ? p.bg : "#fff",
-                  boxShadow: isActive
-                    ? `0 3px 12px 0 ${p.accent}20, 0 1px 3px 0 ${p.accent}10`
-                    : "0 1px 2px 0 rgba(0,0,0,0.03)",
-                  transform: isActive ? "translateY(-1px)" : undefined,
-                }}
-              >
-                {/* Gradient left bar */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl transition-all duration-200"
-                  style={{ background: isActive ? p.grad : "#e2e8f0" }}
-                />
-
-                <div className="px-3.5 pt-3 pb-2.5 pl-4">
-                  {/* Big number — top */}
-                  <div
-                    className="text-2xl font-bold tabular-nums leading-none mb-0.5 transition-colors duration-200"
-                    style={{ color: isActive ? p.accent : "#1e293b" }}
-                  >
-                    {p.value}
-                  </div>
-
-                  {/* Subtle divider */}
-                  <div
-                    className="h-px my-2 transition-colors duration-200"
-                    style={{ background: isActive ? p.accent + "25" : "#f1f5f9" }}
-                  />
-
-                  {/* Label — bottom */}
-                  <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 transition-colors duration-200 group-hover:text-slate-600 leading-tight">
-                    {p.label}
-                  </div>
-
-                  {/* Active indicator dot */}
-                  {isActive && (
-                    <div
-                      className="mt-1.5 inline-flex items-center gap-0.5 text-[9px] font-bold"
-                      style={{ color: p.accent }}
-                    >
-                      <span
-                        className="inline-block w-1 h-1 rounded-full"
-                        style={{ background: p.accent }}
-                      />
-                      Active
-                    </div>
-                  )}
-                </div>
-
-                {/* Bottom gradient fill on hover */}
-                <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-xl"
-                  style={{ background: `linear-gradient(180deg, transparent 45%, ${p.accent}06 100%)` }}
-                />
-              </button>
-            );
-          })}
-    </div>
+    plansQ.isLoading ? (
+      <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
+        {[1,2,3,4].map((i) => (
+          <div key={i} className="bg-background p-4 space-y-2">
+            <SkeletonPulse className="h-[10px] w-16" />
+            <SkeletonPulse className="h-6 w-10" />
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
+        {PILLARS.map((p) => {
+          const isActive = activeView === p.key;
+          return (
+            <button
+              key={p.key}
+              onClick={() => setActiveView(p.key)}
+              className={`bg-background p-4 text-left transition-colors hover:bg-muted/40 focus:outline-none ${isActive ? "bg-muted/60" : ""}`}
+            >
+              <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1">{p.label}</p>
+              <p className={`text-2xl font-medium tabular-nums leading-none ${PILLAR_TONE[p.key] ?? "text-foreground"}`}>
+                {p.value}
+              </p>
+              {isActive && (
+                <span className="mt-1.5 inline-block w-4 h-px bg-foreground/40" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    )
   );
 
   return (
@@ -560,7 +529,7 @@ function PlatformPlansPage() {
       {/* ── Plan cards — shown when activeView is plans or active ─── */}
       {(activeView === "plans" || activeView === "active") && (
       <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+        <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
           {activeView === "active" ? "Active Plan Tiers" : "Plan Tiers"} — click "Edit plan" to configure limits
         </p>
         {plansQ.isLoading ? (
@@ -573,7 +542,7 @@ function PlatformPlansPage() {
               <PlanCard key={p.plan_id} plan={p} onEdit={() => setEditPlanId(p.plan_id)} />
             ))}
             {plans.length === 0 && (
-              <div className="col-span-3 rounded-2xl border border-dashed border-slate-200 p-12 text-center text-sm text-slate-400">
+              <div className="col-span-3 rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
                 No plans configured yet.
               </div>
             )}
@@ -584,10 +553,10 @@ function PlatformPlansPage() {
 
       {/* ── Change requests — shown when activeView is pending/auto_applied/plans ── */}
       {(activeView === "pending" || activeView === "auto_applied" || activeView === "plans") && (
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+      <div className="rounded-xl border border-border bg-background overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Plan Change Requests
             </span>
             {pendingCount > 0 && (
@@ -618,7 +587,7 @@ function PlatformPlansPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[10px] text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                <tr className="text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border">
                   <th className="text-left px-5 py-2.5 font-semibold">Tenant</th>
                   <th className="text-left px-4 py-2.5 font-semibold">Change</th>
                   <th className="text-left px-4 py-2.5 font-semibold">Direction</th>
@@ -626,16 +595,16 @@ function PlatformPlansPage() {
                   <th className="text-right px-5 py-2.5 font-semibold">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-border">
                 {requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-5 py-3.5 font-mono text-[11px] text-slate-500">
+                  <tr key={r.id} className="hover:bg-muted/30/50 transition-colors">
+                    <td className="px-5 py-3.5 font-mono text-[11px] text-muted-foreground">
                       {r.tenant_admin_id.slice(0, 8)}…
                     </td>
-                    <td className="px-4 py-3.5 text-[#404F44]">
-                      <span className="text-slate-400">{r.current_plan ?? "—"}</span>
+                    <td className="px-4 py-3.5 text-muted-foreground">
+                      <span className="text-muted-foreground">{r.current_plan ?? "—"}</span>
                       {" → "}
-                      <span className="font-semibold text-[#252d26]">{r.requested_plan}</span>
+                      <span className="font-semibold text-foreground">{r.requested_plan}</span>
                     </td>
                     <td className="px-4 py-3.5">
                       <span
@@ -648,7 +617,7 @@ function PlatformPlansPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                         {r.status}
                       </span>
                     </td>
@@ -661,7 +630,7 @@ function PlatformPlansPage() {
                               if (!reason?.trim()) return;
                               decideMut.mutate({ id: r.id, approve: false, reason: reason.trim() });
                             }}
-                            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border text-muted-foreground hover:bg-muted/30 transition-colors"
                           >
                             Reject
                           </button>
@@ -674,14 +643,14 @@ function PlatformPlansPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-300">—</span>
+                        <span className="text-xs text-muted-foreground/60">—</span>
                       )}
                     </td>
                   </tr>
                 ))}
                 {requests.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-center text-slate-400 py-10 text-sm">
+                    <td colSpan={5} className="text-center text-muted-foreground py-10 text-sm">
                       No {statusFilter === "pending" ? "pending " : ""}requests
                     </td>
                   </tr>

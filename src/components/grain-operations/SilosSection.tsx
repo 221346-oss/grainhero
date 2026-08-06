@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { Warehouse, Search, Edit2, Trash2, Loader2, ShoppingCart } from "lucide-react";
+import { Warehouse, Search, Edit2, Trash2, Loader2, ShoppingCart, ChevronDown, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,7 +81,12 @@ type Silo = {
   current_batch?: { id: string; batch_id: string; grain_type: string } | null;
 };
 
-type Warehouse = { id: string; name: string; warehouse_id: string };
+type Warehouse = {
+  id: string;
+  name: string;
+  warehouse_id: string;
+  location?: { description?: string | null; address?: string | null } | null;
+};
 
 type FormState = {
   id?: string;
@@ -132,6 +137,7 @@ export function SilosSection() {
   const isAdmin = me?.role === "admin" || me?.role === "super_admin";
   const isManager = me?.role === "manager";
   const [sellSilo, setSellSilo] = useState<Silo | null>(null);
+  const [limitOpen, setLimitOpen] = useState(false);
   // Admin/manager can never create a silo directly anymore — this only
   // decides where "Request Silo" sends them: the existing hardware-order
   // request flow (still within plan headroom) or the plan upgrade page
@@ -141,12 +147,28 @@ export function SilosSection() {
   const siloGate = usePlanGate("max_silos");
 
   function handleRequestSilo() {
-    if (siloGate.data && !siloGate.data.allowed) {
-      navigate({ to: "/plan-management" });
+    // Super admin has no tenant subscription — send them to the platform
+    // silo-requests page where they manage all pending silo orders.
+    if (me?.role === "super_admin") {
+      navigate({ to: "/platform/silo-requests" });
       return;
     }
-    navigate({ to: "/orders" });
+    if (siloGate.data && !siloGate.data.allowed) {
+      // Show an informative dialog instead of silently redirecting
+      setLimitOpen(true);
+      return;
+    }
+    navigate({ to: "/orders", search: { request: "1" } });
   }
+
+  // Tracks which warehouse groups are expanded — all open by default
+  const [expandedWarehouses, setExpandedWarehouses] = useState<Set<string>>(() => new Set());
+  const toggleWarehouse = (id: string) =>
+    setExpandedWarehouses((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -165,6 +187,60 @@ export function SilosSection() {
       return s.name?.toLowerCase().includes(t) || s.silo_id?.toLowerCase().includes(t);
     });
   }, [data, q, statusFilter]);
+
+  // ── Two-level hierarchy: Region → Warehouse → Silos ─────────────────────
+  // Region = city. Try location.description, then parse from address, then warehouse name.
+  function extractRegion(wh: Warehouse | undefined): string {
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    if (!wh) return "Unassigned Region";
+    const desc = (wh.location?.description ?? "").trim();
+    if (desc) return desc;
+    const addr = (wh.location?.address ?? "").trim();
+    if (addr) {
+      const parts = addr.split(",").map((s) => s.trim()).filter(Boolean);
+      const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+      if (city) return cap(city);
+    }
+    if (wh.name) {
+      const city = wh.name.split(/[—\-–]/)[0].trim();
+      if (city) return cap(city);
+    }
+    return "Unassigned Region";
+  }
+
+  const regionGroups = useMemo(() => {
+    const whMap = new Map<string, Warehouse>();
+    for (const w of warehouses) whMap.set(w.id, w);
+
+    const byWarehouse = new Map<string, { warehouse: Warehouse | null; silos: Silo[] }>();
+    for (const s of rows) {
+      const whId = s.warehouse_id ?? "unassigned";
+      if (!byWarehouse.has(whId)) {
+        byWarehouse.set(whId, { warehouse: whMap.get(whId) ?? null, silos: [] });
+      }
+      byWarehouse.get(whId)!.silos.push(s);
+    }
+
+    const byRegion = new Map<string, Array<{ warehouse: Warehouse | null; warehouseId: string; silos: Silo[] }>>();
+    for (const [whId, entry] of byWarehouse.entries()) {
+      const region = extractRegion(entry.warehouse ?? undefined);
+      if (!byRegion.has(region)) byRegion.set(region, []);
+      byRegion.get(region)!.push({ warehouse: entry.warehouse, warehouseId: whId, silos: entry.silos });
+    }
+
+    return [...byRegion.entries()]
+      .sort(([a], [b]) => {
+        if (a === "Unassigned Region") return 1;
+        if (b === "Unassigned Region") return -1;
+        return a.localeCompare(b);
+      })
+      .map(([region, whs]) => ({
+        region,
+        warehouses: whs.sort((a, b) =>
+          (a.warehouse?.name ?? "").localeCompare(b.warehouse?.name ?? ""),
+        ),
+      }));
+  }, [rows, warehouses]);
 
   const saveMutation = useMutation({
     mutationFn: (fs: FormState) =>
@@ -227,36 +303,198 @@ export function SilosSection() {
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search silo name…"
-            className="pl-9 h-9"
-          />
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search silo name…" className="pl-9 h-9" />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-40 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
+              <SelectItem value="error">Error</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+            </SelectContent>
+          </Select>
+          {siloGate.data && !siloGate.data.allowed && me?.role !== "super_admin" ? (
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/plan-management" })}
+              className="gap-2 h-9 whitespace-nowrap border-emerald-400 text-emerald-700 hover:bg-emerald-50"
+            >
+              <ShoppingCart className="w-4 h-4" /> Upgrade Plan
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={handleRequestSilo}
+              disabled={siloGate.isLoading}
+              className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
+              title="Silo provisioning is handled by Super Admin — this requests a new one."
+            >
+              <ShoppingCart className="w-4 h-4" /> Request Silo
+            </Button>
+          )}
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-40 h-9">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
-          </SelectContent>
-        </Select>
-        {!isManager && (
-          <Button
-            variant="outline"
-            onClick={handleRequestSilo}
-            disabled={siloGate.isLoading}
-            className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
-            title="Silo provisioning is handled by Super Admin — this requests a new one."
-          >
-            <ShoppingCart className="w-4 h-4" /> Request Silo
-          </Button>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground">
+            <p className="text-sm">No silos yet.</p>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+            {/* ── Column headers ─────────────────────────────────── */}
+            <div className="grid grid-cols-[32px_2.5fr_1.2fr_1fr_1fr_80px] gap-0 bg-slate-50 border-b border-slate-200 px-0">
+              <div />
+              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Warehouse / Silo</div>
+              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Physical Region</div>
+              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">Capacity</div>
+              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Status</div>
+              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-center">Actions</div>
+            </div>
+
+            {/* ── Rows ───────────────────────────────────────────── */}
+            <div className="max-h-[60vh] overflow-y-auto divide-y divide-slate-100">
+              {regionGroups.map(({ region, warehouses: regionWhs }) =>
+                regionWhs.map(({ warehouse, warehouseId, silos }) => {
+                  const isOpen = !expandedWarehouses.has(warehouseId);
+                  const whName = warehouse?.name ?? "Unknown Warehouse";
+                  const whAddr = warehouse?.location?.address ?? region;
+                  const totalCap = silos.reduce((s, silo) => s + (silo.capacity_kg ?? 0), 0);
+                  const allActive = silos.length > 0 && silos.every((s) => s.status === "active");
+
+                  return (
+                    <div key={warehouseId}>
+                      {/* ── Warehouse parent row ─────────────────── */}
+                      <button
+                        type="button"
+                        onClick={() => toggleWarehouse(warehouseId)}
+                        className="w-full grid grid-cols-[32px_2.5fr_1.2fr_1fr_1fr_80px] gap-0 items-center hover:bg-emerald-50/40 transition-colors text-left group"
+                      >
+                        {/* Caret */}
+                        <div className="flex items-center justify-center h-full py-2.5">
+                          <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`} />
+                        </div>
+                        {/* Name */}
+                        <div className="px-3 py-2.5 flex items-center gap-2 min-w-0">
+                          <div className="h-6 w-6 rounded-md bg-emerald-100 border border-emerald-200 grid place-items-center shrink-0">
+                            <Warehouse className="h-3 w-3 text-emerald-700" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[12px] font-semibold text-slate-900 truncate">{whName}</p>
+                            <p className="text-[10px] font-mono text-slate-400 truncate">{warehouse?.warehouse_id ?? warehouseId.slice(0, 8)}</p>
+                          </div>
+                          <span className="ml-1 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0 rounded-full font-medium shrink-0">{silos.length} silo{silos.length !== 1 ? "s" : ""}</span>
+                        </div>
+                        {/* Region */}
+                        <div className="px-3 py-2.5">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-slate-600">
+                            <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
+                            <span className="truncate">{whAddr || region}</span>
+                          </span>
+                        </div>
+                        {/* Capacity */}
+                        <div className="px-3 py-2.5 text-right">
+                          <span className="text-[11px] font-semibold text-slate-700 tabular-nums">{totalCap.toLocaleString()} kg</span>
+                        </div>
+                        {/* Status */}
+                        <div className="px-3 py-2.5">
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${allActive ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500 border border-slate-200"}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${allActive ? "bg-emerald-500" : "bg-slate-400"}`} />
+                            {allActive ? "All active" : `${silos.filter((s) => s.status === "active").length}/${silos.length} active`}
+                          </span>
+                        </div>
+                        {/* Actions — empty for warehouse row */}
+                        <div className="px-3 py-2.5" />
+                      </button>
+
+                      {/* ── Silo child rows (indented) ─────────────── */}
+                      {isOpen && silos.map((s) => (
+                        <div
+                          key={s.id}
+                          className="grid grid-cols-[32px_2.5fr_1.2fr_1fr_1fr_80px] gap-0 items-center bg-slate-50/50 hover:bg-slate-50 transition-colors border-t border-slate-100/60"
+                        >
+                          {/* Indent indicator */}
+                          <div className="flex items-center justify-center py-2">
+                            <div className="w-px h-full border-l border-slate-200 mx-auto" />
+                          </div>
+                          {/* Silo name */}
+                          <div className="px-3 py-2 flex items-center gap-2 pl-6 min-w-0">
+                            <div className="h-5 w-5 rounded bg-slate-100 border border-slate-200 grid place-items-center shrink-0">
+                              <svg className="h-2.5 w-2.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+                              </svg>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-medium text-slate-800 truncate">{s.name}</p>
+                              <p className="text-[10px] font-mono text-slate-400 truncate">{s.silo_id}</p>
+                            </div>
+                          </div>
+                          {/* Physical location */}
+                          <div className="px-3 py-2">
+                            <span className="text-[11px] text-slate-500 truncate block">
+                              {s.location?.description ?? whAddr ?? "—"}
+                            </span>
+                          </div>
+                          {/* Capacity */}
+                          <div className="px-3 py-2 text-right">
+                            <span className="text-[11px] text-slate-600 tabular-nums">{(s.capacity_kg ?? 0).toLocaleString()} kg</span>
+                            {(s.current_occupancy_kg ?? 0) > 0 && (
+                              <div className="mt-0.5 h-1 rounded-full bg-slate-200 overflow-hidden">
+                                <div
+                                  className="h-full bg-emerald-400 rounded-full"
+                                  style={{ width: `${Math.min(100, ((s.current_occupancy_kg ?? 0) / (s.capacity_kg ?? 1)) * 100)}%` }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                          {/* Status */}
+                          <div className="px-3 py-2">
+                            <StatusBadge value={s.status} />
+                          </div>
+                          {/* Actions */}
+                          <div className="px-2 py-2 flex items-center justify-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => { setSelected(s); setViewOpen(true); }}
+                              className="h-6 w-6 grid place-items-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+                            >
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openEdit(s)}
+                              className="h-6 w-6 grid place-items-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteId(s.id)}
+                              className="h-6 w-6 grid place-items-center rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {isOpen && silos.length === 0 && (
+                        <div className="pl-12 pr-3 py-2 bg-slate-50/50 border-t border-slate-100/60 text-[11px] text-slate-400 italic">
+                          No silos in this warehouse yet.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         )}
       </div>
 
@@ -488,6 +726,33 @@ export function SilosSection() {
         siloId={sellSilo?.id ?? null}
         siloName={sellSilo?.name}
       />
+
+      {/* Plan limit dialog — shown when admin tries to request a silo beyond their plan cap */}
+      <Dialog open={limitOpen} onOpenChange={setLimitOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Silo limit reached</DialogTitle>
+            <DialogDescription>
+              Your current plan allows up to{" "}
+              <strong>{typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}</strong> silos
+              and you are already using{" "}
+              <strong>{typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}</strong> of them.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-slate-600 px-1">
+            To add more silos, upgrade to a higher plan. Visit the plan management page to request an upgrade.
+          </p>
+          <DialogFooter className="mt-2 flex gap-2">
+            <Button variant="outline" onClick={() => setLimitOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => { setLimitOpen(false); navigate({ to: "/plan-management" }); }}
+            >
+              Upgrade plan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
