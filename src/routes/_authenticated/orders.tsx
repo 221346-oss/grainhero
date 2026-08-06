@@ -397,10 +397,10 @@ function MyOrdersPage() {
       />
 
       <Dialog
-        open={addonOpen}
+        open={limitOpen}
         onOpenChange={(o) => {
-          setAddonOpen(o);
-          if (!o) setDraftForm(emptyAddonForm);
+          setLimitOpen(o);
+          if (!o) setDraftForm(emptyDraftForm);
         }}
       >
         <DialogContent className="max-w-md">
