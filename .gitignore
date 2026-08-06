@@ -37,3 +37,12 @@ dist-ssr
 .env.*.local
 .env.example
 
+
+# Build info
+*.tsbuildinfo
+
+# Secrets — never commit service accounts or credential files
+*service-account*.json
+*firebase-adminsdk*.json
+*.pem
+*.key
