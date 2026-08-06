@@ -52,21 +52,22 @@ export function ActivityLogsSection() {
   const [entityFilter, setEntityFilter] = useState("");
   const [actorRole, setActorRole] = useState("all");
   const [selected, setSelected] = useState<Log | null>(null);
+  const [showManagerOnly, setShowManagerOnly] = useState(false);
 
   const fetchLogs = useServerFn(listActivityLogs);
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["activity-logs", page, search, category, severity, from, to, entityFilter, actorRole],
+    queryKey: ["activity-logs", page, search, category, severity, from, to, entityFilter, actorRole, showManagerOnly],
     queryFn: () =>
       fetchLogs({
         data: {
           page, limit: 20,
           search: search || null,
           category: category === "all" ? null : category,
-          severity: severity === "all" ? null : severity,
+          severity: showManagerOnly ? "warning" : (severity === "all" ? null : severity),
           from: from || null,
           to: to || null,
           entity_ref: entityFilter || null,
-          actor_role: actorRole === "all" ? null : actorRole,
+          actor_role: showManagerOnly ? "manager" : (actorRole === "all" ? null : actorRole),
         },
       }),
   });
@@ -77,6 +78,7 @@ export function ActivityLogsSection() {
   const callerRole = data?.caller_role ?? "admin";
   const isSuper = callerRole === "super_admin";
   const total = Object.values(catCounts).reduce((s, n) => s + n, 0);
+  const managerActions = logs.filter((l) => l.user_role === "manager").length;
 
   const applySearch = () => { setPage(1); setSearch(searchInput); };
 
@@ -108,6 +110,7 @@ export function ActivityLogsSection() {
 
   const tiles = [
     { key: "all", label: "All events", value: total },
+    { key: "managers", label: "Manager Actions", value: managerActions, isSpecial: true },
     { key: "batch", label: "Batch", value: catCounts.batch ?? 0 },
     { key: "spoilage", label: "Spoilage", value: catCounts.spoilage ?? 0 },
     { key: "buyer", label: "Buyer", value: catCounts.buyer ?? 0 },
@@ -130,9 +133,22 @@ export function ActivityLogsSection() {
 
       <AdminSummaryTiles
         tiles={tiles}
-        active={category === "all" ? "all" : category}
-        onSelect={(k) => { setCategory(k); setPage(1); }}
-        columns={5}
+        active={showManagerOnly ? "managers" : category === "all" ? "all" : category}
+        onSelect={(k) => {
+          if (k === "managers") {
+            setShowManagerOnly(!showManagerOnly);
+            setPage(1);
+          } else if (k === "all") {
+            setShowManagerOnly(false);
+            setCategory("all");
+            setPage(1);
+          } else {
+            setShowManagerOnly(false);
+            setCategory(k);
+            setPage(1);
+          }
+        }}
+        columns={6}
       />
 
       <AdminFilterBar onSubmit={applySearch}>
@@ -149,7 +165,7 @@ export function ActivityLogsSection() {
           </Select>
         </AdminFilterField>
         <AdminFilterField label="Severity" width="w-36">
-          <Select value={severity} onValueChange={(v) => { setSeverity(v); setPage(1); }}>
+          <Select value={showManagerOnly ? "warning" : severity} onValueChange={(v) => { setSeverity(v); setPage(1); }} disabled={showManagerOnly}>
             <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All severity</SelectItem>
@@ -159,18 +175,18 @@ export function ActivityLogsSection() {
             </SelectContent>
           </Select>
         </AdminFilterField>
-        {isSuper && (
-          <AdminFilterField label="Actor role" width="w-40">
-            <Select value={actorRole} onValueChange={(v) => { setActorRole(v); setPage(1); }}>
-              <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="super_admin">Super admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </AdminFilterField>
-        )}
+        <AdminFilterField label="Actor role" width="w-40">
+          <Select value={showManagerOnly ? "manager" : actorRole} onValueChange={(v) => { setActorRole(v); setPage(1); }} disabled={showManagerOnly}>
+            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              <SelectItem value="manager">Manager</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="technician">Technician</SelectItem>
+              {isSuper && <SelectItem value="super_admin">Super Admin</SelectItem>}
+            </SelectContent>
+          </Select>
+        </AdminFilterField>
         <AdminFilterField label="From">
           <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
         </AdminFilterField>

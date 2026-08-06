@@ -61,8 +61,10 @@ export function SecuritySection() {
   const pendingCount = allUsers.filter((u: any) => u.role === "pending").length;
   const blockedCount = allUsers.filter((u: any) => u.blocked).length;
   const recentIncidents = data?.totals?.recentIncidents ?? 0;
+  const managerActions = data?.totals?.managerActions ?? 0;
 
   const logs = data?.logs ?? [];
+  const managerActionLogs = data?.managerActionLogs ?? [];
 
   return (
     <div className="space-y-6">
@@ -73,11 +75,11 @@ export function SecuritySection() {
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Admins</div><div className="text-2xl font-bold text-emerald-600">{adminsCount}</div></div><ShieldCheck className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Pending</div><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></div><AlertTriangle className="h-6 w-6 text-amber-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Blocked</div><div className="text-2xl font-bold text-red-600">{blockedCount}</div></div><UserX className="h-6 w-6 text-red-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Incidents</div><div className="text-2xl font-bold">{recentIncidents}</div></div><ShieldAlert className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Manager Actions</div><div className="text-2xl font-bold text-orange-600">{managerActions}</div></div><ShieldAlert className="h-6 w-6 text-orange-600" /></CardContent></Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
           <CardHeader><CardTitle>User access</CardTitle><CardDescription>Roles and blocked accounts - manage user access</CardDescription></CardHeader>
           <CardContent className="p-0">
             <div className="divide-y max-h-[500px] overflow-y-auto">
@@ -120,6 +122,29 @@ export function SecuritySection() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader><CardTitle>Manager actions</CardTitle><CardDescription>Recent manager activity requiring oversight</CardDescription></CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y max-h-[500px] overflow-y-auto">
+              {managerActionLogs.map((l: any) => (
+                <div key={l.id} className="p-3 text-sm hover:bg-orange-50/50 cursor-pointer transition">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge className="bg-orange-100 text-orange-800 text-[10px] uppercase">Action</Badge>
+                    <span className="font-medium text-slate-700">{l.action?.replace(/_/g, " ")}</span>
+                  </div>
+                  {l.metadata && typeof l.metadata === "object" && (l.metadata as Record<string, any>).batchId && (
+                    <div className="text-xs text-slate-600 mt-1">Batch: <span className="font-mono font-medium">{(l.metadata as Record<string, any>).batchId}</span></div>
+                  )}
+                  <div className="text-[10px] text-slate-400 mt-1">{l.created_at ? new Date(l.created_at).toLocaleString() : ""}</div>
+                </div>
+              ))}
+              {managerActionLogs.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No manager actions.</div>}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-1">
         <Card>
           <CardHeader><CardTitle>Security events</CardTitle><CardDescription>Recent warnings and errors from the audit log</CardDescription></CardHeader>
           <CardContent className="p-0">

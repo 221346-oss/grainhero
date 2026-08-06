@@ -222,9 +222,9 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CookiesRoute = CookiesRouteImport.update({
@@ -668,10 +668,10 @@ const AuthenticatedPlatformMarketplaceHealthRoute =
     path: '/platform/marketplace-health',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformMarketplaceMobileRoute =
-  AuthenticatedPlatformMarketplaceMobileRouteImport.update({
-    id: '/platform/marketplace-mobile',
-    path: '/platform/marketplace-mobile',
+const AuthenticatedPlatformLogsRoute =
+  AuthenticatedPlatformLogsRouteImport.update({
+    id: '/platform/logs',
+    path: '/platform/logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformMarketplaceSettingsRoute =
@@ -2444,11 +2444,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -2668,11 +2668,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/plans': {
-      id: '/_authenticated/plans'
-      path: '/plans'
-      fullPath: '/plans'
-      preLoaderRoute: typeof AuthenticatedPlansRouteImport
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reports': {
@@ -3025,11 +3032,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformMarketplaceHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/marketplace-mobile': {
-      id: '/_authenticated/platform/marketplace-mobile'
-      path: '/platform/marketplace-mobile'
-      fullPath: '/platform/marketplace-mobile'
-      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceMobileRouteImport
+    '/_authenticated/platform/logs': {
+      id: '/_authenticated/platform/logs'
+      path: '/platform/logs'
+      fullPath: '/platform/logs'
+      preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/marketplace-settings': {

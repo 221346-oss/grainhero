@@ -7,20 +7,39 @@ import { advanceInstallStage } from "@/lib/installations.functions";
 import { usePlanGate } from "@/lib/plan-gate";
 import { toast } from "sonner";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  MapPin, Phone, Wrench, Calendar, ArrowLeft, Truck,
-  CheckCircle2, PlusCircle, Loader2, Clock, CreditCard,
-  XCircle, ArrowUpCircle,
+  MapPin,
+  Phone,
+  Wrench,
+  Calendar,
+  ArrowLeft,
+  Truck,
+  CheckCircle2,
+  PlusCircle,
+  Loader2,
 } from "lucide-react";
 import { OrdersSkeleton } from "@/components/app/skeletons";
 import { useState, useEffect, useRef } from "react";
@@ -28,6 +47,7 @@ import { Button } from "@/components/ui/button";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { HardwareOrderThread } from "@/components/app/orders/HardwareOrderThread";
 import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
+import { getMyRole } from "@/lib/roles.functions";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({ meta: [{ title: "My install orders — GrainHero" }] }),
@@ -87,41 +107,22 @@ const emptyDraftForm = { address: "", city: "", country: "", phone: "", notes: "
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 function MyOrdersPage() {
-  const payFn     = useServerFn(payApprovedSiloOrder);
-  const draftFn   = useServerFn(createSiloDraftRequest);
-  const advanceFn = useServerFn(advanceInstallStage);
-  const fetchFn   = useServerFn(listMyHardwareOrders);
-  const qc        = useQueryClient();
-  const navigate  = useNavigate();
-  const siloGate  = usePlanGate("max_silos");
+  const fetchFn = useServerFn(listMyHardwareOrders);
+  const settingsFn = useServerFn(getPlatformSettings);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const siloGate = usePlanGate("max_silos");
+  const addonFn = useServerFn(createSiloAddonCheckoutSession);
+  const [addonOpen, setAddonOpen] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [addonForm, setAddonForm] = useState(emptyAddonForm);
+  const [selectedSkuId, setSelectedSkuId] = useState<string>("");
 
-  const [limitOpen, setLimitOpen]         = useState(false);
-  const [requestOpen, setRequestOpen]     = useState(false);   // silo request sheet
-  const [draftForm, setDraftForm]         = useState(emptyDraftForm);
-  const [phoneError, setPhoneError]       = useState<string | null>(null);
-  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
-  const [openOrderId, setOpenOrderId]     = useState<string | null>(null);
-
-  // ── Submit silo request draft ─────────────────────────────────────────────
-  const draftMut = useMutation({
-    mutationFn: () => draftFn({
-      data: {
-        address: draftForm.address.trim(),
-        city:    draftForm.city.trim() || null,
-        country: draftForm.country.trim(),
-        phone:   formatPakPhone(draftForm.phone.trim()),
-        notes:   draftForm.notes.trim() || null,
-      },
-    }),
-    onSuccess: () => {
-      toast.success("Request submitted — you'll be notified once it's approved.");
-      setRequestOpen(false);
-      setDraftForm(emptyDraftForm);
-      setPhoneError(null);
-      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
-      qc.invalidateQueries({ queryKey: ["plan-gate"] });
-    },
-    onError: (e: Error) => toast.error(e.message || "Could not submit request"),
+  // Load IoT pricing set by super admin
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platform-settings-public"],
+    queryFn: () => settingsFn(),
+    staleTime: 5 * 60_000,
   });
 
   // ── Handle URL params on mount (Stripe return + auto-open request sheet) ─
@@ -160,17 +161,19 @@ function MyOrdersPage() {
     mutationFn: (orderId: string) => payFn({ data: { orderId } }),
     onSuccess: (res) => {
       if (!res?.url) {
-        toast.error("Checkout URL was not returned — please try again or contact support.");
+        toast.error("Could not submit request");
         return;
       }
-      // Hard navigate to Stripe checkout
-      window.location.href = res.url;
+      // Close confirmation dialog and show success message
+      setConfirmationOpen(false);
+      setAddonOpen(false);
+      toast.success("Silo request submitted successfully");
+      // Optionally refresh orders list
+      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
     },
     onError: (e: Error) => {
-      const msg = e.message || "Could not start checkout";
-      // Surface the full error so we can diagnose RLS / Stripe issues
-      toast.error(`Payment error: ${msg}`);
-      console.error("[payApprovedSiloOrder]", msg);
+      toast.error(e.message || "Could not submit request");
+      setConfirmationOpen(false);
     },
   });
 
@@ -212,7 +215,10 @@ function MyOrdersPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
         <ArrowLeft className="h-4 w-4" /> Dashboard
       </Link>
 
@@ -220,7 +226,9 @@ function MyOrdersPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My install orders</h1>
-          <p className="text-sm text-slate-500">Track the technician install for each subscription you purchased.</p>
+          <p className="text-sm text-slate-500">
+            Track the technician install for each subscription you purchased.
+          </p>
         </div>
         <Button
           onClick={() => {
@@ -273,147 +281,79 @@ function MyOrdersPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {orders.map((o) => {
-            // Draft = pre-payment statuses only. "installed"/"live"/"paid" are active installs.
-            const isDraft = DRAFT_STATUSES.has(String(o.status));
-            return (
-              <Card key={o.id as string}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div>
-                      <CardTitle className="text-base">
-                        {o.plan_name ?? o.plan_id} · {o.hardware_quantity} sensor{Number(o.hardware_quantity) === 1 ? "" : "s"}
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        Placed {new Date(o.created_at as string).toLocaleString()}
-                      </CardDescription>
-                    </div>
-                    {/* Draft orders show a simple badge; active installs show the stage tracker */}
-                    {isDraft ? (
-                      <Badge className={STATUS_STYLE[o.status as string] ?? "bg-slate-100 text-slate-600"}>
-                        {STATUS_LABEL[o.status as string] ?? String(o.status)}
-                      </Badge>
-                    ) : (
-                      <InstallStageTracker
-                        variant="row"
-                        {...deriveStage(o as any, (o as any).installation ?? null, ((o as any).visit_events ?? []) as any)}
-                      />
+          {orders.map((o) => (
+            <Card key={o.id as string}>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <CardTitle className="text-base">
+                      {o.plan_name ?? o.plan_id} · {o.hardware_quantity} sensor
+                      {Number(o.hardware_quantity) === 1 ? "" : "s"}
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Placed {new Date(o.created_at as string).toLocaleString()}
+                    </CardDescription>
+                  </div>
+                  <InstallStageTracker
+                    variant="row"
+                    {...deriveStage(
+                      o as any,
+                      (o as any).installation ?? null,
+                      ((o as any).visit_events ?? []) as any,
                     )}
-                  </div>
-                </CardHeader>
-
-                <CardContent className="grid gap-3 md:grid-cols-2 text-sm text-slate-700">
-                  {/* Install location */}
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
-                    <div>
-                      <div>{o.install_address}</div>
-                      <div className="text-xs text-slate-500">{o.install_city}, {o.install_country}</div>
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="grid gap-3 md:grid-cols-2 text-sm text-slate-700">
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
+                  <div>
+                    <div>{o.install_address}</div>
+                    <div className="text-xs text-slate-500">
+                      {o.install_city}, {o.install_country}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-slate-400" /> {o.contact_phone ?? "—"}
-                  </div>
-
-                  {/* Status-specific inline banners */}
-                  {o.status === "new" && (
-                    <div className="md:col-span-2 flex items-center gap-2 text-sm text-amber-700 bg-amber-50 rounded-md px-3 py-2 border border-amber-200">
-                      <Clock className="h-4 w-4 shrink-0" />
-                      Your request is under review. You'll be notified once it's approved.
-                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-slate-400" /> {o.contact_phone ?? "—"}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4 text-slate-400" />
+                  {o.technician_name ? (
+                    <span>
+                      {o.technician_name}
+                      {o.technician_phone ? ` · ${o.technician_phone}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-slate-500">Technician not yet assigned</span>
                   )}
-
-                  {o.status === "cancelled" && (
-                    <div className="md:col-span-2 rounded-md border border-red-200 bg-red-50 px-3 py-3 space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-red-700 font-medium">
-                        <XCircle className="h-4 w-4 shrink-0" />
-                        Request not approved
-                      </div>
-                      {(o.cancel_reason || o.cancelled_reason) && (
-                        <p className="text-xs text-red-600 pl-6">
-                          {String(o.cancel_reason ?? o.cancelled_reason)}
-                        </p>
-                      )}
-                      <div className="pl-6">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-emerald-400 text-emerald-700 hover:bg-emerald-50 gap-1.5 h-7 text-xs"
-                          onClick={() => navigate({ to: "/plan-management" })}
-                        >
-                          <ArrowUpCircle className="h-3.5 w-3.5" /> Upgrade your plan
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {o.status === "approved" && (
-                    <div className="md:col-span-2 flex items-center justify-between gap-3 bg-emerald-50 rounded-md px-3 py-2 border border-emerald-200">
-                      <div className="flex items-center gap-2 text-sm text-emerald-800">
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        {"Approved — complete payment to schedule your install."}
-                      </div>
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shrink-0"
-                        disabled={payMut.isPending && payingOrderId === o.id}
-                        onClick={() => {
-                          setPayingOrderId(o.id as string);
-                          payMut.mutate(o.id as string);
-                        }}
-                      >
-                        {payMut.isPending && payingOrderId === o.id
-                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          : <CreditCard className="h-3.5 w-3.5" />}
-                        Pay now
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Technician + schedule — only once the install pipeline is active */}
-                  {!isDraft && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-slate-400" />
-                        {o.technician_name
-                          ? <span>{o.technician_name}{o.technician_phone ? ` · ${o.technician_phone}` : ""}</span>
-                          : <span className="text-slate-500">Technician not yet assigned</span>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-400" />
-                        {o.scheduled_install_date
-                          ? new Date(o.scheduled_install_date as string).toLocaleString()
-                          : o.preferred_install_date
-                            ? `Preferred: ${o.preferred_install_date}`
-                            : "Awaiting schedule"}
-                      </div>
-                    </>
-                  )}
-
-                  <div className="md:col-span-2 text-xs text-slate-500 border-t border-slate-100 pt-2">
-                    Rs. {Number(o.hardware_total ?? 0).toLocaleString()} in hardware · order id: {o.id}
-                  </div>
-
-                  {/* Track / sign-off — only for active installs */}
-                  {!isDraft && (
-                    <>
-                      <div className="md:col-span-2 flex justify-end">
-                        <CardActions
-                          order={o}
-                          onTrack={() => setOpenOrderId(o.id as string)}
-                          onComplete={() => completeMut.mutate(o.id as string)}
-                          completing={completeMut.isPending && completeMut.variables === o.id}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <HardwareOrderThread orderId={o.id as string} as="admin" />
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-slate-400" />
+                  {o.scheduled_install_date
+                    ? new Date(o.scheduled_install_date as string).toLocaleString()
+                    : o.preferred_install_date
+                      ? `Preferred: ${o.preferred_install_date}`
+                      : "Awaiting schedule"}
+                </div>
+                <div className="md:col-span-2 text-xs text-slate-500 border-t border-slate-100 pt-2">
+                  Rs. {Number(o.hardware_total ?? 0).toLocaleString()} in hardware · order id:{" "}
+                  {o.id}
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <CardActions
+                    order={o}
+                    onTrack={() => setOpenOrderId(o.id as string)}
+                    onComplete={() => completeMut.mutate(o.id as string)}
+                    completing={completeMut.isPending && completeMut.variables === o.id}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <HardwareOrderThread orderId={o.id as string} as="admin" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
 
@@ -424,9 +364,14 @@ function MyOrdersPage() {
         canEdit={false}
       />
 
-      {/* ── Plan limit dialog ──────────────────────────────────────── */}
-      <Dialog open={limitOpen} onOpenChange={setLimitOpen}>
-        <DialogContent className="max-w-sm">
+      <Dialog
+        open={addonOpen}
+        onOpenChange={(o) => {
+          setAddonOpen(o);
+          if (!o) setAddonForm(emptyAddonForm);
+        }}
+      >
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Silo limit reached</DialogTitle>
             <DialogDescription>
@@ -472,28 +417,41 @@ function MyOrdersPage() {
             }}
           >
             <div className="grid gap-1.5">
-              <Label htmlFor="s-address">Install address *</Label>
-              <Input id="s-address" value={draftForm.address} onChange={(e) => setDraftForm((f) => ({ ...f, address: e.target.value }))} placeholder="123 Farm Road, Block A" required />
+              <Label htmlFor="addon-address">Install address *</Label>
+              <Input
+                id="addon-address"
+                value={addonForm.address}
+                onChange={(e) => setAddonForm((f) => ({ ...f, address: e.target.value }))}
+                required
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label htmlFor="s-city">City</Label>
-                <Input id="s-city" value={draftForm.city} onChange={(e) => setDraftForm((f) => ({ ...f, city: e.target.value }))} placeholder="Lahore" />
+                <Label htmlFor="addon-city">City *</Label>
+                <Input
+                  id="addon-city"
+                  value={addonForm.city}
+                  onChange={(e) => setAddonForm((f) => ({ ...f, city: e.target.value }))}
+                  required
+                />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="s-country">Country *</Label>
-                <Input id="s-country" value={draftForm.country} onChange={(e) => setDraftForm((f) => ({ ...f, country: e.target.value }))} placeholder="Pakistan" required />
+                <Label htmlFor="addon-country">Country *</Label>
+                <Input
+                  id="addon-country"
+                  value={addonForm.country}
+                  onChange={(e) => setAddonForm((f) => ({ ...f, country: e.target.value }))}
+                  required
+                />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="s-phone">Contact phone *</Label>
+              <Label htmlFor="addon-phone">Contact phone *</Label>
               <Input
-                id="s-phone"
-                value={draftForm.phone}
-                onChange={(e) => { setDraftForm((f) => ({ ...f, phone: e.target.value })); if (phoneError) setPhoneError(validatePakPhone(e.target.value)); }}
-                onBlur={(e) => { const f = formatPakPhone(e.target.value); setDraftForm((d) => ({ ...d, phone: f })); setPhoneError(validatePakPhone(f)); }}
-                placeholder="+92 300 0000000"
-                maxLength={13}
+                id="addon-phone"
+                type="tel"
+                value={addonForm.phone}
+                onChange={(e) => setAddonForm((f) => ({ ...f, phone: e.target.value }))}
                 required
                 className={phoneError ? "border-red-400" : ""}
               />
@@ -520,9 +478,40 @@ function MyOrdersPage() {
               </Button>
             </div>
           </form>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Request Submitted</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your silo request has been sent to the admin for approval. Once approved, you will be
+              notified to proceed with payment. Please wait for admin confirmation before
+              continuing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmationOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                addonMut.mutate();
+              }}
+              disabled={addonMut.isPending}
+            >
+              {addonMut.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                "OK"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -535,9 +524,9 @@ function CardActions({ order, onTrack, onComplete, completing }: {
   completing: boolean;
 }) {
   const derived = deriveStage(
-    order,
-    (order.installation as Record<string, unknown>) ?? null,
-    ((order.visit_events as Array<Record<string, unknown>>) ?? []),
+    order as any,
+    (order as any).installation ?? null,
+    ((order as any).visit_events ?? []) as any,
   );
   const canComplete = derived.stage === "installed" && !derived.blocked;
 
@@ -553,7 +542,11 @@ function CardActions({ order, onTrack, onComplete, completing }: {
       {canComplete && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={completing}>
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={completing}
+            >
               <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
               {completing ? "Signing off…" : "Sign off & complete"}
             </Button>
@@ -562,7 +555,16 @@ function CardActions({ order, onTrack, onComplete, completing }: {
             <AlertDialogHeader>
               <AlertDialogTitle>Admin sign-off required</AlertDialogTitle>
               <AlertDialogDescription>
-                Confirm every sensor is physically installed and working at your site.
+                By signing off, you confirm every sensor is physically installed and working at your
+                site. GrainHero will automatically:
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
+                  <li>Provision a warehouse for this install (if none exists).</li>
+                  <li>Create one silo per installed device serial.</li>
+                  <li>
+                    Record your Admin sign-off and move the order to <strong>Completed</strong> —
+                    this step cannot be reversed.
+                  </li>
+                </ul>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-2 px-1 pb-1 text-xs text-slate-600">

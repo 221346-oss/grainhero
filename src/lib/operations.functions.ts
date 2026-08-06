@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
 import { requireRole } from "@/lib/rbac.server";
-import { logActivity } from "@/lib/activity";
+import { logActivity, logManagerAction } from "@/lib/activity";
 
 // Roles allowed to rename a silo/warehouse — same allow-list used for team
 // invite/manage (see inviteTeamMember/updateTeamMember in
@@ -19,14 +19,83 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   throw new Error(msg);
 }
 
+export const listWarehousesByCity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Get user role first
+    const { data: roleData } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    const userRole = roleData?.role;
+    
+    // For now, since warehouse_id doesn't exist in profiles, 
+    // managers and technicians will see all warehouses
+    // TODO: Add warehouse_id field to profiles table
+    let query = context.supabase
+      .from("warehouses")
+      .select("*, silos:silos(id, silo_id, name, capacity_kg, current_occupancy_kg, status)")
+      .order("created_at", { ascending: false });
+
+    const { data: warehouses, error } = await query;
+    if (error) throw error;
+
+    // Group warehouses by city (extracted from address)
+    const warehousesByCity: Record<string, any[]> = {};
+    
+    (warehouses ?? []).forEach((warehouse) => {
+      // Extract city from address - assume format like "Street, City, State"
+      let city = "Unknown City";
+      if (warehouse.address) {
+        const addressParts = warehouse.address.split(',');
+        if (addressParts.length >= 2) {
+          city = addressParts[1].trim();
+        } else {
+          city = addressParts[0].trim();
+        }
+      }
+      
+      if (!warehousesByCity[city]) {
+        warehousesByCity[city] = [];
+      }
+      
+      warehousesByCity[city].push({
+        ...warehouse,
+        city,
+        siloCount: warehouse.silos?.length || 0,
+        totalCapacity: warehouse.silos?.reduce((sum: number, silo: any) => 
+          sum + (silo.capacity_kg || 0), 0) || 0,
+        currentOccupancy: warehouse.silos?.reduce((sum: number, silo: any) => 
+          sum + (silo.current_occupancy_kg || 0), 0) || 0,
+      });
+    });
+
+    return { byCity: warehousesByCity, userRole };
+  });
+
 export const listWarehouses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    // Get user role first
+    const { data: roleData } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+
+    const userRole = roleData?.role;
+    let query = context.supabase
       .from("warehouses")
       .select("*, silos:silos(id)")
       .order("created_at", { ascending: false })
       .limit(500);
+
+    // For now, show all warehouses (warehouse_id assignment to be implemented)
+    // TODO: Add warehouse_id field to profiles table for proper filtering
+
+    const { data, error } = await query;
     if (error) throw error;
     return data ?? [];
   });
@@ -376,7 +445,7 @@ export const listGrainBatches = createServerFn({ method: "GET" })
     });
   });
 
-const grainTypes = ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"] as const;
+const grainTypes = ["Wheat", "Rice", "Maize", "Barley", "Sorghum"] as const;
 const batchStatuses = [
   "stored",
   "dispatched",
@@ -522,7 +591,13 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         action: "batch.updated",
         targetType: "grain_batch",
         targetId: data.id,
-        meta: { batchId: (row as { batch_id?: string }).batch_id, status: updateStatus },
+        severity: role === "manager" ? "warning" : "info",
+        meta: {
+          batchId: (row as { batch_id?: string }).batch_id,
+          status: updateStatus,
+          updatedBy: role,
+          previousStatus: data.status,
+        },
       });
       return row;
     }
@@ -631,11 +706,14 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       action: "batch.created",
       targetType: "grain_batch",
       targetId: (row as { id: string }).id,
+      severity: role === "manager" ? "warning" : "info",
       meta: {
         batchId,
         grainType: data.grain_type,
         quantityKg: data.quantity_kg,
         siloId: data.silo_id,
+        createdBy: role,
+        requiresApproval: role === "manager",
       },
     });
     await logActivity({
@@ -1463,7 +1541,7 @@ const buyerInput = z.object({
   state: z.string().max(120).optional().nullable(),
   country: z.string().max(120).optional().nullable(),
   preferred_grain_types: z
-    .array(z.enum(["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"]))
+    .array(z.enum(["Wheat", "Rice", "Maize", "Barley", "Sorghum"]))
     .optional()
     .nullable(),
   preferred_payment_terms: z.string().max(120).optional().nullable(),

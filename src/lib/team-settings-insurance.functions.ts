@@ -367,9 +367,11 @@ async function tenantAdminId(supabase: any, userId: string): Promise<string> {
 export const listPolicies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const admin_id = await tenantAdminId(context.supabase, context.userId);
     const { data, error } = await context.supabase
       .from("insurance_policies")
       .select("*")
+      .eq("admin_id", admin_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsurancePolicyRow[];
@@ -433,9 +435,11 @@ export const deletePolicy = createServerFn({ method: "POST" })
 export const listClaims = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const admin_id = await tenantAdminId(context.supabase, context.userId);
     const { data, error } = await context.supabase
       .from("insurance_claims")
       .select("*")
+      .eq("admin_id", admin_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsuranceClaimRow[];

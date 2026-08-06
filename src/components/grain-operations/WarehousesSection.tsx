@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Edit2, Trash2, Eye, Loader2, LayoutList, MapPin } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Eye, Loader2, LayoutList, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { InlineRename } from "@/components/app/InlineRename";
-import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse } from "@/lib/operations.functions";
+import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse, listWarehousesByCity } from "@/lib/operations.functions";
 import { parsePlanLimitError } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
 import { MultiRegionWarehousesView } from "@/components/grain-operations/MultiRegionWarehousesView";
@@ -73,6 +73,7 @@ const emptyForm: FormState = {
 
 export function WarehousesSection() {
   const list = useServerFn(listWarehouses);
+  const listByCity = useServerFn(listWarehousesByCity);
   const upsert = useServerFn(upsertWarehouse);
   const del = useServerFn(deleteWarehouse);
   const rename = useServerFn(renameWarehouse);
@@ -83,8 +84,17 @@ export function WarehousesSection() {
     queryKey: ["warehouses"],
     queryFn: () => list() as Promise<Warehouse[]>,
   });
+
+  const { data: warehousesByCity } = useQuery({
+    queryKey: ["warehouses-by-city"],
+    queryFn: () => listByCity(),
+  });
+
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const canRename = RENAME_ROLES.includes(me?.role ?? "");
+  const isManager = me?.role === "manager";
+  const isTechnician = me?.role === "technician";
+  const canCreateWarehouse = !isManager && !isTechnician; // Only admins can create warehouses
 
   const [viewMode, setViewMode] = useState<"list" | "region">("list");
   const [q, setQ] = useState("");
@@ -127,6 +137,7 @@ export function WarehousesSection() {
     onSuccess: () => {
       toast.success(form.id ? "Warehouse updated" : "Warehouse created");
       qc.invalidateQueries({ queryKey: ["warehouses"] });
+      qc.invalidateQueries({ queryKey: ["warehouses-by-city"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setEditOpen(false);
       setForm(emptyForm);
@@ -139,6 +150,7 @@ export function WarehousesSection() {
     onSuccess: () => {
       toast.success("Warehouse renamed");
       qc.invalidateQueries({ queryKey: ["warehouses"] });
+      qc.invalidateQueries({ queryKey: ["warehouses-by-city"] });
       qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
     },
     onError: (e: Error) => toast.error(e.message || "Rename failed"),
@@ -149,6 +161,7 @@ export function WarehousesSection() {
     onSuccess: () => {
       toast.success("Warehouse deleted");
       qc.invalidateQueries({ queryKey: ["warehouses"] });
+      qc.invalidateQueries({ queryKey: ["warehouses-by-city"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setDeleteId(null);
     },
@@ -171,6 +184,284 @@ export function WarehousesSection() {
       notes: w.notes ?? "",
     });
     setEditOpen(true);
+  }
+
+  // Manager/Technician view - show warehouses grouped by cities
+  if (isManager || isTechnician) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">My Warehouses</h2>
+            <p className="text-sm text-muted-foreground">
+              {isManager ? "Warehouses you manage" : "Your assigned warehouse"}
+            </p>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading warehouses...
+          </div>
+        ) : !warehousesByCity?.byCity || Object.keys(warehousesByCity.byCity).length === 0 ? (
+          <div className="py-8 text-center text-muted-foreground">
+            <Building2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p className="text-sm">No warehouses assigned to you.</p>
+            <p className="text-xs mt-1">Contact your administrator to get warehouse access.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(warehousesByCity.byCity).map(([city, warehouses]) => (
+              <div key={city} className="space-y-3">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <h3 className="font-medium text-foreground">{city}</h3>
+                  <span className="text-xs text-muted-foreground">
+                    {warehouses.length} warehouse{warehouses.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {warehouses.map((warehouse: any) => (
+                    <div
+                      key={warehouse.id}
+                      className="border rounded-lg p-4 hover:shadow-sm transition-shadow bg-card"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium text-sm">{warehouse.name}</h4>
+                          <p className="text-xs text-muted-foreground">{warehouse.warehouse_id}</p>
+                        </div>
+                        <StatusBadge value={warehouse.status} />
+                      </div>
+                      
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Silos:</span>
+                          <span className="font-medium">{warehouse.siloCount}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Capacity:</span>
+                          <span className="font-medium">
+                            {Math.round((warehouse.totalCapacity || 0) / 1000).toLocaleString()}t
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Current Fill:</span>
+                          <span className="font-medium">
+                            {warehouse.totalCapacity 
+                              ? `${Math.round(((warehouse.currentOccupancy || 0) / warehouse.totalCapacity) * 100)}%`
+                              : "0%"
+                            }
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelected(warehouse);
+                            setViewOpen(true);
+                          }}
+                          className="flex-1"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View
+                        </Button>
+                        {!isTechnician && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEdit(warehouse)}
+                            className="flex-1"
+                          >
+                            <Edit2 className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {renderManagerDialogs()}
+      </div>
+    );
+  }
+
+  // Helper function for manager/technician dialogs
+  function renderManagerDialogs() {
+    return (
+      <>
+        {/* View Dialog */}
+        <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+          <DialogContent className="max-w-md">
+            {selected && (
+              <>
+                <DialogHeader>
+                  <DialogTitle>
+                    <InlineRename
+                      value={selected.name}
+                      canRename={canRename && !isTechnician}
+                      onSave={async (next) => {
+                        await renameMutation.mutateAsync({ id: selected.id, name: next });
+                        setSelected((prev) => (prev ? { ...prev, name: next } : prev));
+                      }}
+                    />
+                  </DialogTitle>
+                  <DialogDescription>{selected.warehouse_id}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2 text-sm py-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <StatusBadge value={selected.status} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Capacity:</span>
+                    <span>{(selected.total_capacity_kg ?? 0).toLocaleString()} kg</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Silos:</span>
+                    <span>{selected.silos?.length ?? 0}</span>
+                  </div>
+                  {selected.location?.description && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Location:</span>
+                      <span>{selected.location.description}</span>
+                    </div>
+                  )}
+                  {selected.location?.address && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Address:</span>
+                      <span>{selected.location.address}</span>
+                    </div>
+                  )}
+                  {selected.notes && (
+                    <div className="space-y-1">
+                      <span className="text-muted-foreground">Notes:</span>
+                      <div className="text-sm whitespace-pre-wrap bg-muted/30 p-2 rounded">
+                        {selected.notes}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  {!isTechnician && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setViewOpen(false);
+                        openEdit(selected);
+                      }}
+                      className="gap-1"
+                    >
+                      <Edit2 className="w-4 h-4" /> Edit
+                    </Button>
+                  )}
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog - Limited for managers */}
+        <Dialog
+          open={editOpen}
+          onOpenChange={(o) => {
+            setEditOpen(o);
+            if (!o) setForm(emptyForm);
+          }}
+        >
+          <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Warehouse</DialogTitle>
+              <DialogDescription>Update warehouse details (limited access).</DialogDescription>
+            </DialogHeader>
+            <form
+              id="warehouse-form"
+              className="grid gap-4 py-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveMutation.mutate(form);
+              }}
+            >
+              <div>
+                <Label>Name</Label>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Warehouse name"
+                  disabled={true} // Managers cannot change name
+                />
+              </div>
+              <div>
+                <Label>Address</Label>
+                <Input
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  placeholder="City, State, Country"
+                />
+              </div>
+              <div>
+                <Label>Location Description</Label>
+                <Input
+                  value={form.location_description}
+                  onChange={(e) => setForm({ ...form, location_description: e.target.value })}
+                  placeholder="e.g. Industrial Zone A"
+                />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) => setForm({ ...form, status: v as FormState["status"] })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="offline">Offline</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Notes</Label>
+                <Textarea
+                  rows={3}
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
+              </div>
+            </form>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                form="warehouse-form"
+                type="submit"
+                disabled={saveMutation.isPending || !form.name}
+              >
+                {saveMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
   }
 
   return (
@@ -217,7 +508,9 @@ export function WarehousesSection() {
             </button>
           </div>
 
-          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New warehouse</Button>
+          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap" disabled={!canCreateWarehouse}>
+            <Plus className="w-4 h-4" /> New warehouse
+          </Button>
         </div>
 
         {/* ── Region view ───────────────────────────────────────── */}

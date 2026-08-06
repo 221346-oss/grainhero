@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,12 +10,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { InlineRename } from "@/components/app/InlineRename";
-import { listSilos, upsertSilo, deleteSilo, listWarehouses, renameSilo, listGrainBatches } from "@/lib/operations.functions";
+import {
+  listSilos,
+  upsertSilo,
+  deleteSilo,
+  listWarehouses,
+  renameSilo,
+  listGrainBatches,
+} from "@/lib/operations.functions";
 import { parsePlanLimitError, usePlanGate } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
 import { SiloOperationsCard, type BatchRow } from "./SiloOperationsCard";
@@ -23,7 +52,8 @@ import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
-  if (limit) return `Your plan allows up to ${limit.limit} silos (${limit.used} in use). Upgrade to add more.`;
+  if (limit)
+    return `Your plan allows up to ${limit.limit} silos (${limit.used} in use). Upgrade to add more.`;
   return e.message || "Save failed";
 }
 
@@ -64,7 +94,7 @@ type FormState = {
   warehouse_id: string;
   capacity_kg: string;
   location_description: string;
-  status: "active" | "offline" | "error" | "maintenance";
+  status: "active" | "offline" | "maintenance";
   notes: string;
 };
 
@@ -88,14 +118,24 @@ export function SilosSection() {
   const qc = useQueryClient();
 
   const navigate = useNavigate();
-  const { data, isLoading } = useQuery({ queryKey: ["silos"], queryFn: () => list() as Promise<Silo[]> });
-  const { data: warehousesData } = useQuery({ queryKey: ["warehouses"], queryFn: () => listWh() as Promise<Warehouse[]> });
+  const { data, isLoading } = useQuery({
+    queryKey: ["silos"],
+    queryFn: () => list() as Promise<Silo[]>,
+  });
+  const { data: warehousesData } = useQuery({
+    queryKey: ["warehouses"],
+    queryFn: () => listWh() as Promise<Warehouse[]>,
+  });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
-  const { data: batchesData } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listBatchesFn() as Promise<BatchRow[]> });
+  const { data: batchesData } = useQuery({
+    queryKey: ["grain-batches"],
+    queryFn: () => listBatchesFn() as Promise<BatchRow[]>,
+  });
   const warehouses = warehousesData ?? [];
   const batches = batchesData ?? [];
   const canRename = RENAME_ROLES.includes(me?.role ?? "");
   const isAdmin = me?.role === "admin" || me?.role === "super_admin";
+  const isManager = me?.role === "manager";
   const [sellSilo, setSellSilo] = useState<Silo | null>(null);
   const [limitOpen, setLimitOpen] = useState(false);
   // Admin/manager can never create a silo directly anymore — this only
@@ -456,63 +496,146 @@ export function SilosSection() {
             </div>
           </div>
         )}
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground">
+          <p className="text-sm">No silos yet.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {rows.map((s) => (
+            <SiloOperationsCard
+              key={s.id}
+              silo={s}
+              batches={batches}
+              isAdmin={isAdmin}
+              onView={(silo) => {
+                setSelected(silo as Silo);
+                setViewOpen(true);
+              }}
+              onEdit={(silo) => openEdit(silo as Silo)}
+              onDelete={(id) => setDeleteId(id)}
+              onSell={(silo) => setSellSilo(silo as Silo)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setForm(emptyForm); }}>
+      <Dialog
+        open={editOpen}
+        onOpenChange={(o) => {
+          setEditOpen(o);
+          if (!o) setForm(emptyForm);
+        }}
+      >
         <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit silo</DialogTitle>
             <DialogDescription>Update silo details.</DialogDescription>
           </DialogHeader>
-          <form id="silo-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
+          <form
+            id="silo-form"
+            className="grid gap-4 py-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveMutation.mutate(form);
+            }}
+          >
             <div>
               <Label>Name</Label>
               {form.id && !canRename ? (
-                <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">{form.name || "—"}</div>
+                <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">
+                  {form.name || "—"}
+                </div>
               ) : (
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Auto-generated if left blank" />
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Auto-generated if left blank"
+                />
               )}
             </div>
             <div>
               <Label>Warehouse *</Label>
-              <Select value={form.warehouse_id} onValueChange={(v) => setForm({ ...form, warehouse_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select warehouse" /></SelectTrigger>
+              <Select
+                value={form.warehouse_id}
+                onValueChange={(v) => setForm({ ...form, warehouse_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select warehouse" />
+                </SelectTrigger>
                 <SelectContent>
-                  {warehouses.map(w => (
-                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                  {warehouses.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Capacity (kg) *</Label>
-              <Input type="number" min={1} required value={form.capacity_kg} onChange={(e) => setForm({ ...form, capacity_kg: e.target.value })} />
+              <Input
+                type="number"
+                min={1}
+                required
+                value={form.capacity_kg}
+                onChange={(e) => setForm({ ...form, capacity_kg: e.target.value })}
+              />
             </div>
             <div>
               <Label>Location</Label>
-              <Input value={form.location_description} onChange={(e) => setForm({ ...form, location_description: e.target.value })} placeholder="e.g. Building A, Zone 1" />
+              <Input
+                value={form.location_description}
+                onChange={(e) => setForm({ ...form, location_description: e.target.value })}
+                placeholder="e.g. Building A, Zone 1"
+              />
             </div>
             <div>
               <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as FormState["status"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.status}
+                onValueChange={(v) => setForm({ ...form, status: v as FormState["status"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="offline">Offline</SelectItem>
-                  <SelectItem value="error">Error</SelectItem>
                   <SelectItem value="maintenance">Maintenance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Notes</Label>
-              <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              <Textarea
+                rows={2}
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              />
             </div>
           </form>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button form="silo-form" type="submit" disabled={saveMutation.isPending || !form.warehouse_id || !form.capacity_kg}>
-              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save changes"}
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              form="silo-form"
+              type="submit"
+              disabled={saveMutation.isPending || !form.warehouse_id || !form.capacity_kg}
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Save changes"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -539,14 +662,36 @@ export function SilosSection() {
               <div className="space-y-2 text-sm py-2">
                 <Row label="Warehouse">{selected.warehouses?.name ?? "—"}</Row>
                 <Row label="Capacity">{(selected.capacity_kg ?? 0).toLocaleString()} kg</Row>
-                <Row label="Current">{(selected.current_occupancy_kg ?? 0).toLocaleString()} kg</Row>
-                <Row label="Status"><StatusBadge value={selected.status} /></Row>
-                {selected.location?.description && <Row label="Location">{selected.location.description}</Row>}
-                {selected.current_batch && <Row label="Current Batch">{selected.current_batch.grain_type}</Row>}
-                {selected.notes && <Row label="Notes"><span className="whitespace-pre-wrap">{selected.notes}</span></Row>}
+                <Row label="Current">
+                  {(selected.current_occupancy_kg ?? 0).toLocaleString()} kg
+                </Row>
+                <Row label="Status">
+                  <StatusBadge value={selected.status} />
+                </Row>
+                {selected.location?.description && (
+                  <Row label="Location">{selected.location.description}</Row>
+                )}
+                {selected.current_batch && (
+                  <Row label="Current Batch">{selected.current_batch.grain_type}</Row>
+                )}
+                {selected.notes && (
+                  <Row label="Notes">
+                    <span className="whitespace-pre-wrap">{selected.notes}</span>
+                  </Row>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => { setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setViewOpen(false);
+                    openEdit(selected);
+                  }}
+                  className="gap-1"
+                >
+                  <Edit2 className="w-4 h-4" /> Edit
+                </Button>
               </DialogFooter>
             </>
           )}
@@ -564,7 +709,10 @@ export function SilosSection() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-rose-600 hover:bg-rose-700">
+            <AlertDialogAction
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
               {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>

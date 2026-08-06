@@ -52,11 +52,11 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   component: GrainOperationsWorkspace,
 });
 
-const ALL_TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
-  { key: "batches",    label: "Grain Batches", icon: Package   },
-  { key: "silos",      label: "Silos",         icon: Warehouse },
-  { key: "warehouses", label: "Warehouses",    icon: Building2 },
-  { key: "buyers",     label: "Buyers",        icon: Users     },
+const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+  { key: "batches", label: "Grain Batches", icon: Package },
+  { key: "silos", label: "Silos", icon: Warehouse },
+  { key: "warehouses", label: "Warehouses", icon: Building2 },
+  { key: "buyers", label: "Buyers", icon: Users },
 ];
 
 function GrainOperationsWorkspace() {
@@ -72,23 +72,12 @@ function GrainOperationsWorkspace() {
   });
   const userRole = roleData?.role ?? "pending";
 
-  // Show skeleton until role + initial data is ready
-  const isLoading = !roleData;
-  if (isLoading) return <KpiChartHubSkeleton />;
-
-  // Filter tabs based on role - manager doesn't see warehouses
-  const TABS = userRole === "manager" ? ALL_TABS.filter((t) => t.key !== "warehouses") : ALL_TABS;
+  // Filter tabs based on role - managers can view warehouses but cannot create them
+  const TABS = ALL_TABS;
 
   useEffect(() => {
     setActiveTabState(tab);
   }, [tab]);
-
-  // If current tab is warehouses and user is manager, redirect to batches
-  useEffect(() => {
-    if (userRole === "manager" && activeTab === "warehouses") {
-      setActiveTab("batches");
-    }
-  }, [userRole, activeTab]);
 
   function setActiveTab(next: Tab) {
     setActiveTabState(next);

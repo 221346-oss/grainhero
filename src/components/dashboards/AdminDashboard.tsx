@@ -42,7 +42,7 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="grid gap-3 lg:grid-cols-2">
             <AdminSilosCard range={range} />
             <RecentBatchesCard range={range} />
             <SupportTicketsCard
