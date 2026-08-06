@@ -9163,7 +9163,7 @@ export type Database = {
         | "government"
       device_status: "active" | "offline" | "error" | "maintenance"
       dispute_status: "open" | "under_review" | "resolved" | "rejected"
-      grain_type: "Wheat" | "Rice" | "Maize" | "Barley" | "Sorghum"
+      grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
       notification_cat:
