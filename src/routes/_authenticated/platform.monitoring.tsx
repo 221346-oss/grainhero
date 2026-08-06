@@ -32,8 +32,8 @@ export const Route = createFileRoute("/_authenticated/platform/monitoring")({
 
 const MAINT_STATUSES = ["requested", "acknowledged", "in_progress", "completed", "cancelled"] as const;
 
-function Sk({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded bg-muted ${className}`} />;
+function Sk({ className, style }: { className: string; style?: React.CSSProperties }) {
+  return <div className={`animate-pulse rounded bg-muted ${className}`} style={style} />;
 }
 
 // ── Donut widget — no icons, just number + label ──────────────────────────────
