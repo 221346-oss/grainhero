@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
 import { payApprovedSiloOrder, createSiloDraftRequest } from "@/lib/stripe-checkout.functions";
+import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
 import { usePlanGate } from "@/lib/plan-gate";
 import { toast } from "sonner";
@@ -25,6 +26,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -109,14 +117,38 @@ const emptyDraftForm = { address: "", city: "", country: "", phone: "", notes: "
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
   const settingsFn = useServerFn(getPlatformSettings);
+  const payFn = useServerFn(payApprovedSiloOrder);
+  const advanceFn = useServerFn(advanceInstallStage);
+  const draftFn = useServerFn(createSiloDraftRequest);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const siloGate = usePlanGate("max_silos");
-  const addonFn = useServerFn(createSiloAddonCheckoutSession);
-  const [addonOpen, setAddonOpen] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [addonForm, setAddonForm] = useState(emptyAddonForm);
-  const [selectedSkuId, setSelectedSkuId] = useState<string>("");
+  const [limitOpen, setLimitOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [draftForm, setDraftForm] = useState(emptyDraftForm);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+
+  const draftMut = useMutation({
+    mutationFn: () =>
+      draftFn({
+        data: {
+          address: draftForm.address,
+          city: draftForm.city || null,
+          country: draftForm.country,
+          phone: formatPakPhone(draftForm.phone),
+          notes: draftForm.notes || null,
+        },
+      }),
+    onSuccess: () => {
+      setRequestOpen(false);
+      setDraftForm(emptyDraftForm);
+      toast.success("Silo request submitted — awaiting approval");
+      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not submit request"),
+  });
 
   // Load IoT pricing set by super admin
   const { data: platformSettings } = useQuery({
@@ -166,7 +198,7 @@ function MyOrdersPage() {
       }
       // Close confirmation dialog and show success message
       setConfirmationOpen(false);
-      setAddonOpen(false);
+      
       toast.success("Silo request submitted successfully");
       // Optionally refresh orders list
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
@@ -365,10 +397,10 @@ function MyOrdersPage() {
       />
 
       <Dialog
-        open={addonOpen}
+        open={limitOpen}
         onOpenChange={(o) => {
-          setAddonOpen(o);
-          if (!o) setAddonForm(emptyAddonForm);
+          setLimitOpen(o);
+          if (!o) setDraftForm(emptyDraftForm);
         }}
       >
         <DialogContent className="max-w-md">
@@ -420,8 +452,8 @@ function MyOrdersPage() {
               <Label htmlFor="addon-address">Install address *</Label>
               <Input
                 id="addon-address"
-                value={addonForm.address}
-                onChange={(e) => setAddonForm((f) => ({ ...f, address: e.target.value }))}
+                value={draftForm.address}
+                onChange={(e) => setDraftForm((f) => ({ ...f, address: e.target.value }))}
                 required
               />
             </div>
@@ -430,8 +462,8 @@ function MyOrdersPage() {
                 <Label htmlFor="addon-city">City *</Label>
                 <Input
                   id="addon-city"
-                  value={addonForm.city}
-                  onChange={(e) => setAddonForm((f) => ({ ...f, city: e.target.value }))}
+                  value={draftForm.city}
+                  onChange={(e) => setDraftForm((f) => ({ ...f, city: e.target.value }))}
                   required
                 />
               </div>
@@ -439,8 +471,8 @@ function MyOrdersPage() {
                 <Label htmlFor="addon-country">Country *</Label>
                 <Input
                   id="addon-country"
-                  value={addonForm.country}
-                  onChange={(e) => setAddonForm((f) => ({ ...f, country: e.target.value }))}
+                  value={draftForm.country}
+                  onChange={(e) => setDraftForm((f) => ({ ...f, country: e.target.value }))}
                   required
                 />
               </div>
@@ -450,8 +482,8 @@ function MyOrdersPage() {
               <Input
                 id="addon-phone"
                 type="tel"
-                value={addonForm.phone}
-                onChange={(e) => setAddonForm((f) => ({ ...f, phone: e.target.value }))}
+                value={draftForm.phone}
+                onChange={(e) => setDraftForm((f) => ({ ...f, phone: e.target.value }))}
                 required
                 className={phoneError ? "border-red-400" : ""}
               />
@@ -478,8 +510,8 @@ function MyOrdersPage() {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
@@ -496,11 +528,11 @@ function MyOrdersPage() {
             <AlertDialogCancel onClick={() => setConfirmationOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                addonMut.mutate();
+                draftMut.mutate();
               }}
-              disabled={addonMut.isPending}
+              disabled={draftMut.isPending}
             >
-              {addonMut.isPending ? (
+              {draftMut.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Submitting...

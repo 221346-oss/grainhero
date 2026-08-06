@@ -114,9 +114,22 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
       // Source 1 — profiles with subscription_plan match AND no admin_id (i.e., the tenant admin themselves)
       const { data: profileRows } = await context.supabase
         .from("profiles")
-        .select("id, user_roles(role)")
-        .eq("subscription_plan", plan_id)
+        .select("id")
+        .eq("subscription_plan", plan_id as never)
         .is("admin_id", null);
+
+      const profileIds = (profileRows ?? []).map((r: { id: string }) => r.id);
+      const { data: roleRows } = profileIds.length
+        ? await context.supabase
+            .from("user_roles")
+            .select("user_id, role")
+            .in("user_id", profileIds)
+        : { data: [] as Array<{ user_id: string; role: string }> };
+
+      const rolesByUser = new Map<string, string[]>();
+      for (const rr of (roleRows ?? []) as Array<{ user_id: string; role: string }>) {
+        rolesByUser.set(rr.user_id, [...(rolesByUser.get(rr.user_id) ?? []), rr.role]);
+      }
 
       // Source 2 — subscriptions.plan_name match (active/trial rows)
       const { data: subRows } = await context.supabase
@@ -126,16 +139,15 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
         .in("status", ["active", "trial"]);
 
       // Union and deduplicate — only keep actual tenant admins (not managers/technicians)
-      const fromProfiles = (profileRows ?? [])
-        .filter((r: { user_roles?: Array<{ role: string }> }) => {
-          const roles = (r.user_roles ?? []).map((ur: { role: string }) => ur.role);
+      const fromProfiles = profileIds
+        .filter((id) => {
+          const roles = rolesByUser.get(id) ?? [];
           // Include if they have admin role, or if no roles (legacy seed data), but never if manager/technician only
           const hasManagerOrTech = roles.some((rr) => rr === "manager" || rr === "technician");
           const hasAdmin = roles.some((rr) => rr === "admin" || rr === "super_admin");
           if (hasManagerOrTech && !hasAdmin) return false;
           return true;
-        })
-        .map((r: { id: string }) => r.id);
+        });
 
       const fromSubs = (subRows ?? [])
         .map((r: { admin_id: string | null }) => r.admin_id)

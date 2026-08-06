@@ -496,35 +496,6 @@ export function SilosSection() {
             </div>
           </div>
         )}
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8 text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
-        </div>
-      ) : rows.length === 0 ? (
-        <div className="py-8 text-center text-muted-foreground">
-          <p className="text-sm">No silos yet.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {rows.map((s) => (
-            <SiloOperationsCard
-              key={s.id}
-              silo={s}
-              batches={batches}
-              isAdmin={isAdmin}
-              onView={(silo) => {
-                setSelected(silo as Silo);
-                setViewOpen(true);
-              }}
-              onEdit={(silo) => openEdit(silo as Silo)}
-              onDelete={(id) => setDeleteId(id)}
-              onSell={(silo) => setSellSilo(silo as Silo)}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Edit Dialog */}
       <Dialog

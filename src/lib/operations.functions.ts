@@ -48,8 +48,12 @@ export const listWarehousesByCity = createServerFn({ method: "GET" })
     (warehouses ?? []).forEach((warehouse) => {
       // Extract city from address - assume format like "Street, City, State"
       let city = "Unknown City";
-      if (warehouse.address) {
-        const addressParts = warehouse.address.split(',');
+      const loc = warehouse.location as { address?: string; city?: string } | null;
+      const address = typeof loc?.address === "string" ? loc.address : undefined;
+      if (typeof loc?.city === "string" && loc.city.trim()) {
+        city = loc.city.trim();
+      } else if (address) {
+        const addressParts = address.split(',');
         if (addressParts.length >= 2) {
           city = addressParts[1].trim();
         } else {
