@@ -190,8 +190,8 @@ function PlatformBusinessPage() {
 
   // ── Loading — skeleton that mirrors actual page layout ──────────────────
   // ── Inline skeleton helper ────────────────────────────────────────────────
-  const BSk = ({ className }: { className: string }) => (
-    <div className={`animate-pulse rounded bg-muted ${className}`} />
+  const BSk = ({ className, style }: { className: string; style?: React.CSSProperties }) => (
+    <div className={`animate-pulse rounded bg-muted ${className}`} style={style} />
   );
 
   function BusinessSkeleton() {
