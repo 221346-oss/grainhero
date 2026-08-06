@@ -233,12 +233,15 @@ export function ManagerKpiSummary({
         </div>
         <div className="flex items-center gap-2">
           {silos && silos.length > 0 && (
-            <Select value={selectedSilo} onValueChange={setSelectedSilo}>
+            <Select
+              value={selectedSilo || "__all__"}
+              onValueChange={(v) => setSelectedSilo(v === "__all__" ? "" : v)}
+            >
               <SelectTrigger className="w-48 h-8 text-xs">
                 <SelectValue placeholder="Select silo to analyze..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="__all__">
                   <span className="font-medium">Average Capacity</span>
                 </SelectItem>
                 {silos.map((silo) => {
