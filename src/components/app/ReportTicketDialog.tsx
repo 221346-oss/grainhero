@@ -205,12 +205,15 @@ export function ReportTicketDialog({ open, onOpenChange, silos = [], extraInvali
               <Label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Affected Silo <span className="text-muted-foreground font-normal">(optional)</span>
               </Label>
-              <Select value={siloId} onValueChange={setSiloId}>
+              <Select
+                value={siloId || "__none__"}
+                onValueChange={(v) => setSiloId(v === "__none__" ? "" : v)}
+              >
                 <SelectTrigger id="ticket-silo" className="text-xs h-8">
                   <SelectValue placeholder="None" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="" className="text-xs">None</SelectItem>
+                  <SelectItem value="__none__" className="text-xs">None</SelectItem>
                   {silos.map((s) => (
                     <SelectItem key={s.id} value={s.id} className="text-xs">
                       {s.name} ({s.silo_id})
