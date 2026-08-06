@@ -145,6 +145,9 @@ export function DispatchDialog({
               <div>
                 <Label className="text-xs">Price / kg ({currency})</Label>
                 <Input className="h-9" type="number" min="0" step="0.01" value={price} onChange={(e) => { setPrice(e.target.value); setBasis("manual"); }} placeholder="e.g. 120" />
+                {priceNum > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">≈ {currency} {pricePerKgToPerMan(priceNum).toFixed(2)} / man</p>
+                )}
               </div>
               <div>
                 <Label className="text-xs">Expected date</Label>

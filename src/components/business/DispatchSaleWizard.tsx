@@ -97,11 +97,23 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const detailsValid = !!siloId && !!grainType && qtyNum > 0 && priceNum > 0 && (!!buyerId || !!newBuyer.trim());
 
   const invoiceMut = useMutation({
-    mutationFn: () => createInvoiceFn({ data: {
-      buyerId: buyerId || null,
-      newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
-      grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency, notes: notes || null,
-    } }),
+    mutationFn: () => {
+      // Validated here (not via a disabled button) so a missing/invalid field
+      // always produces a clear toast instead of the button silently doing
+      // nothing — same pattern as the silo-card DispatchDialog's mutationFn.
+      if (!siloId) throw new Error("Pick a silo first");
+      if (batches.length === 0) throw new Error("This silo has no available stock to invoice");
+      if (!grainType) throw new Error("Pick a grain type");
+      if (!(qtyNum > 0)) throw new Error("Enter a valid quantity greater than 0");
+      if (qtyNum > available) throw new Error(`Only ${available.toLocaleString()} kg of ${grainType} available in this silo`);
+      if (!(priceNum > 0)) throw new Error("Enter a valid price greater than 0");
+      if (!buyerId && !newBuyer.trim()) throw new Error("Pick a buyer or enter a new buyer name");
+      return createInvoiceFn({ data: {
+        buyerId: buyerId || null,
+        newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
+        grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency, notes: notes || null,
+      } });
+    },
     onSuccess: (r) => {
       setInvoiceId(r.id); setInvoiceNumber(r.invoiceNumber);
       if (r.buyerId) setBuyerId(r.buyerId);
@@ -336,7 +348,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
           {step === "details" && (<>
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button variant="outline" disabled={!detailsValid} onClick={() => setStep("dispatch")}>Skip invoice → Dispatch</Button>
-            <Button disabled={!detailsValid || invoiceMut.isPending} onClick={() => invoiceMut.mutate()} className="gap-1.5">
+            <Button disabled={invoiceMut.isPending} onClick={() => invoiceMut.mutate()} className="gap-1.5">
               {invoiceMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Generate invoice
             </Button>
           </>)}

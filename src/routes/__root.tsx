@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeInit } from "@/components/app/ThemeInit";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -142,6 +143,8 @@ function RootComponent() {
       <ThemeInit />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      {/* App-wide toast host — every toast.success/error() call in the app renders through this one instance. */}
+      <Toaster richColors closeButton position="top-right" />
     </QueryClientProvider>
   );
 }

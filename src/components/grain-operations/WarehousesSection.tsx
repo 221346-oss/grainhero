@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { InlineRename } from "@/components/app/InlineRename";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { listWarehouses, upsertWarehouse, deleteWarehouse, renameWarehouse } from "@/lib/operations.functions";
 import { parsePlanLimitError } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
@@ -215,6 +217,13 @@ export function WarehousesSection() {
               <MapPin className="w-3.5 h-3.5" /> By Region
             </button>
           </div>
+
+          <ExportMenu
+            filename="warehouses"
+            title="Warehouses"
+            rows={rows}
+            columns={warehouseExportColumns}
+          />
 
           <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New warehouse</Button>
         </div>
