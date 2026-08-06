@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
 import { payApprovedSiloOrder, createSiloDraftRequest } from "@/lib/stripe-checkout.functions";
+import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
 import { usePlanGate } from "@/lib/plan-gate";
 import { toast } from "sonner";
@@ -25,6 +26,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -109,14 +117,38 @@ const emptyDraftForm = { address: "", city: "", country: "", phone: "", notes: "
 function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
   const settingsFn = useServerFn(getPlatformSettings);
+  const payFn = useServerFn(payApprovedSiloOrder);
+  const advanceFn = useServerFn(advanceInstallStage);
+  const draftFn = useServerFn(createSiloDraftRequest);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const siloGate = usePlanGate("max_silos");
-  const addonFn = useServerFn(createSiloAddonCheckoutSession);
-  const [addonOpen, setAddonOpen] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [addonForm, setAddonForm] = useState(emptyAddonForm);
-  const [selectedSkuId, setSelectedSkuId] = useState<string>("");
+  const [limitOpen, setLimitOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [draftForm, setDraftForm] = useState(emptyDraftForm);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+
+  const draftMut = useMutation({
+    mutationFn: () =>
+      draftFn({
+        data: {
+          address: draftForm.address,
+          city: draftForm.city || null,
+          country: draftForm.country,
+          phone: formatPakPhone(draftForm.phone),
+          notes: draftForm.notes || null,
+        },
+      }),
+    onSuccess: () => {
+      setRequestOpen(false);
+      setDraftForm(emptyDraftForm);
+      toast.success("Silo request submitted — awaiting approval");
+      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not submit request"),
+  });
 
   // Load IoT pricing set by super admin
   const { data: platformSettings } = useQuery({
