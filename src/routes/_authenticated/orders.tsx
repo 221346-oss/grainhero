@@ -198,7 +198,7 @@ function MyOrdersPage() {
       }
       // Close confirmation dialog and show success message
       setConfirmationOpen(false);
-      setAddonOpen(false);
+      
       toast.success("Silo request submitted successfully");
       // Optionally refresh orders list
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
@@ -400,7 +400,7 @@ function MyOrdersPage() {
         open={addonOpen}
         onOpenChange={(o) => {
           setAddonOpen(o);
-          if (!o) setAddonForm(emptyAddonForm);
+          if (!o) setDraftForm(emptyAddonForm);
         }}
       >
         <DialogContent className="max-w-md">
@@ -452,8 +452,8 @@ function MyOrdersPage() {
               <Label htmlFor="addon-address">Install address *</Label>
               <Input
                 id="addon-address"
-                value={addonForm.address}
-                onChange={(e) => setAddonForm((f) => ({ ...f, address: e.target.value }))}
+                value={draftForm.address}
+                onChange={(e) => setDraftForm((f) => ({ ...f, address: e.target.value }))}
                 required
               />
             </div>
@@ -462,8 +462,8 @@ function MyOrdersPage() {
                 <Label htmlFor="addon-city">City *</Label>
                 <Input
                   id="addon-city"
-                  value={addonForm.city}
-                  onChange={(e) => setAddonForm((f) => ({ ...f, city: e.target.value }))}
+                  value={draftForm.city}
+                  onChange={(e) => setDraftForm((f) => ({ ...f, city: e.target.value }))}
                   required
                 />
               </div>
@@ -471,8 +471,8 @@ function MyOrdersPage() {
                 <Label htmlFor="addon-country">Country *</Label>
                 <Input
                   id="addon-country"
-                  value={addonForm.country}
-                  onChange={(e) => setAddonForm((f) => ({ ...f, country: e.target.value }))}
+                  value={draftForm.country}
+                  onChange={(e) => setDraftForm((f) => ({ ...f, country: e.target.value }))}
                   required
                 />
               </div>
@@ -482,8 +482,8 @@ function MyOrdersPage() {
               <Input
                 id="addon-phone"
                 type="tel"
-                value={addonForm.phone}
-                onChange={(e) => setAddonForm((f) => ({ ...f, phone: e.target.value }))}
+                value={draftForm.phone}
+                onChange={(e) => setDraftForm((f) => ({ ...f, phone: e.target.value }))}
                 required
                 className={phoneError ? "border-red-400" : ""}
               />
@@ -528,11 +528,11 @@ function MyOrdersPage() {
             <AlertDialogCancel onClick={() => setConfirmationOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                addonMut.mutate();
+                draftMut.mutate();
               }}
-              disabled={addonMut.isPending}
+              disabled={draftMut.isPending}
             >
-              {addonMut.isPending ? (
+              {draftMut.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Submitting...
