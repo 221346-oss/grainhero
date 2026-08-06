@@ -22,15 +22,19 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
         .select("id,admin_id,amount,currency,status,billing_date,invoice_number,created_at")
         .order("billing_date", { ascending: false })
         .limit(500)
-        .then((r) => r)
-        .catch(() => ({ data: [] as any[], error: null })),
+        .then(
+          (r) => r,
+          () => ({ data: [] as any[], error: null }),
+        ),
       sa.from("profiles").select("id, subscription_plan, created_at, admin_id, name, email"),
       // hardware_orders — filter using PostgREST array syntax (not raw SQL)
       sa.from("hardware_orders")
         .select("id, admin_id, plan_name, hardware_total, currency, status, created_at")
         .not("status", "in", '("pending_payment","cancelled","refunded")')
-        .then((r) => r)
-        .catch(() => ({ data: [] as any[], error: null })),
+        .then(
+          (r) => r,
+          () => ({ data: [] as any[], error: null }),
+        ),
     ]);
 
     const subscriptions = subsRes.data ?? [];
