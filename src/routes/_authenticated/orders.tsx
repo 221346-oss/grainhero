@@ -478,8 +478,8 @@ function MyOrdersPage() {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
