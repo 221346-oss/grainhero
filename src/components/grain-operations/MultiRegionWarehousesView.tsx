@@ -11,12 +11,12 @@
  */
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { listWarehousesWithTeam } from "@/lib/operations.functions";
 import { Badge } from "@/components/ui/badge";
 import {
   MapPin, Warehouse, Users, User, Wrench,
-  Database, AlertCircle, Loader2,
+  Database, AlertCircle, Loader2, ChevronDown,
 } from "lucide-react";
 
 type WarehouseRow = {
@@ -162,6 +162,7 @@ function WarehouseCard({ w }: { w: WarehouseRow }) {
 
 // ── Region group ─────────────────────────────────────────────────────────────
 function RegionGroup({ region, warehouses }: { region: string; warehouses: WarehouseRow[] }) {
+  const [expanded, setExpanded] = useState(false);
   const activeCount = warehouses.filter((w) => w.status === "active").length;
   const totalSilos  = warehouses.reduce((s, w) => s + w.total_silos, 0);
   const totalCap    = warehouses.reduce((s, w) => s + w.total_capacity_kg, 0);
@@ -171,66 +172,76 @@ function RegionGroup({ region, warehouses }: { region: string; warehouses: Wareh
   const technicians = [...new Set(warehouses.flatMap((w) => w.technician_names))];
 
   return (
-    <div className="space-y-3">
-      {/* Region header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-[#2FAC0C]" />
-          <h3 className="text-sm font-semibold text-slate-800">{region}</h3>
-          <span className="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
-            {warehouses.length} warehouse{warehouses.length !== 1 ? "s" : ""}
+    <div className="space-y-0 border border-slate-200 rounded-lg overflow-hidden">
+      {/* Region header - clickable to expand */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-slate-200"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <MapPin className="w-4 h-4 text-[#2FAC0C] shrink-0" />
+          <h3 className="text-sm font-semibold text-slate-800 truncate">{region}</h3>
+          <span className="text-[11px] font-semibold bg-white text-slate-600 px-2 py-0.5 rounded border border-slate-200 shrink-0">
+            {warehouses.length} wh
           </span>
         </div>
-        {/* Region summary chips */}
-        <div className="flex flex-wrap gap-2 text-[10px]">
+
+        {/* Summary chips - always visible */}
+        <div className="flex flex-wrap gap-2 text-[10px] shrink-0">
           <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {activeCount} active
           </span>
-          <span className="text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-full font-medium">
             {totalSilos} silos
           </span>
-          <span className="text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-full font-medium">
             {totalCap.toLocaleString()} kg
           </span>
         </div>
-      </div>
+      </button>
 
-      {/* Regional team summary bar */}
-      {(managers.length > 0 || technicians.length > 0) && (
-        <div className="flex flex-wrap gap-3 px-1 pb-1 text-xs">
-          {managers.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <User className="w-3 h-3 text-slate-400" />
-              <span className="text-slate-500 font-medium">Managers:</span>
-              <div className="flex flex-wrap gap-1">
-                {managers.map((m, i) => (
-                  <span key={i} className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
-                    {m}
-                  </span>
-                ))}
-              </div>
+      {/* Expanded content */}
+      {expanded && (
+        <div className="px-4 py-3 space-y-3 bg-white">
+          {/* Regional team summary bar */}
+          {(managers.length > 0 || technicians.length > 0) && (
+            <div className="flex flex-wrap gap-3 text-xs pb-2 border-b border-slate-100">
+              {managers.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <User className="w-3 h-3 text-slate-400" />
+                  <span className="text-slate-500 font-medium">Managers:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {managers.map((m, i) => (
+                      <span key={i} className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {technicians.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Wrench className="w-3 h-3 text-slate-400" />
+                  <span className="text-slate-500 font-medium">Techs:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {technicians.map((t, i) => (
+                      <span key={i} className="bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          {technicians.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <Wrench className="w-3 h-3 text-slate-400" />
-              <span className="text-slate-500 font-medium">Technicians:</span>
-              <div className="flex flex-wrap gap-1">
-                {technicians.map((t, i) => (
-                  <span key={i} className="bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+
+          {/* Warehouse cards grid */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {warehouses.map((w) => <WarehouseCard key={w.id} w={w} />)}
+          </div>
         </div>
       )}
-
-      {/* Warehouse cards grid */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {warehouses.map((w) => <WarehouseCard key={w.id} w={w} />)}
-      </div>
     </div>
   );
 }
