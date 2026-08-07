@@ -90,33 +90,32 @@ function WarehouseCard({ w }: { w: WarehouseRow }) {
         </div>
       )}
 
-      {/* Capacity + silos */}
-      <div className="flex items-center gap-4 text-xs text-slate-500">
+      {/* Capacity + silos summary */}
+      <div className="flex items-center gap-4 text-xs text-slate-500 border-b border-slate-100 pb-2">
         <span className="flex items-center gap-1">
           <Database className="w-3 h-3 text-slate-400" />
           {w.total_silos} silo{w.total_silos !== 1 ? "s" : ""}
         </span>
-        <span>{w.total_capacity_kg.toLocaleString()} kg capacity</span>
+        <span>{w.total_capacity_kg.toLocaleString()} kg total</span>
       </div>
 
-      {/* Silos list for this warehouse */}
-      {w.silos && w.silos.length > 0 && (
-        <div className="border-t border-slate-100 pt-2 space-y-1">
-          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Silos in this warehouse</div>
-          <div className="space-y-1">
-            {w.silos.map((silo) => (
-              <div key={silo.id} className="flex items-center justify-between bg-slate-50 rounded p-1.5 text-[11px]">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${
-                    silo.status === "active" ? "bg-emerald-500" : "bg-slate-300"
-                  }`} />
-                  <span className="text-slate-700 truncate font-medium">{silo.name}</span>
-                </div>
-                <span className="text-slate-500 shrink-0">{silo.capacity_kg.toLocaleString()} kg</span>
+      {/* Silos grid - same row layout */}
+      {w.silos && w.silos.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+          {w.silos.map((silo) => (
+            <div key={silo.id} className="flex items-center justify-between bg-slate-50 rounded border border-slate-100 p-2 text-[11px]">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${
+                  silo.status === "active" ? "bg-emerald-500" : "bg-slate-300"
+                }`} />
+                <span className="text-slate-700 truncate font-medium">{silo.name}</span>
               </div>
-            ))}
-          </div>
+              <span className="text-slate-500 shrink-0 ml-1">{(silo.capacity_kg / 1000).toFixed(0)}t</span>
+            </div>
+          ))}
         </div>
+      ) : (
+        <div className="text-xs text-slate-400 italic py-1">No silos in this warehouse yet</div>
       )}
 
       {/* Team assignments */}
