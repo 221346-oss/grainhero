@@ -482,11 +482,11 @@ export function WarehousesSection() {
             </SelectContent>
           </Select>
 
-          {/* View-mode toggle */}
-          <div className="flex rounded-md border border-slate-200 overflow-hidden h-9 shrink-0">
+          {/* View-mode toggle with info badge */}
+          <div className="flex rounded-md border border-slate-200 overflow-hidden h-9 shrink-0" title="Switch between list and regional views">
             <button
               onClick={() => setViewMode("list")}
-              title="List view"
+              title="List view — traditional grid layout"
               className={`px-3 flex items-center gap-1.5 text-xs font-medium transition-colors ${
                 viewMode === "list"
                   ? "bg-[#2FAC0C] text-white"
@@ -497,7 +497,7 @@ export function WarehousesSection() {
             </button>
             <button
               onClick={() => setViewMode("region")}
-              title="By region"
+              title="By region — group warehouses by location (recommended for multiple locations)"
               className={`px-3 flex items-center gap-1.5 text-xs font-medium border-l border-slate-200 transition-colors ${
                 viewMode === "region"
                   ? "bg-[#2FAC0C] text-white"
