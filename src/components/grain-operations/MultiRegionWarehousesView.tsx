@@ -27,6 +27,7 @@ type WarehouseRow = {
   location: { description?: string | null; address?: string | null };
   total_capacity_kg: number;
   total_silos: number;
+  silos: Array<{ id: string; warehouse_id: string; name: string; silo_id: string; capacity_kg: number; status: string }>;
   notes: string | null;
   manager_id: string | null;
   manager_name: string | null;
@@ -35,16 +36,20 @@ type WarehouseRow = {
 };
 
 // ── Extract a region label from location fields ──────────────────────────────
-// Tries location.description first, then city/first word of address.
+// Tries location.description first, then full address for better grouping.
+// This ensures warehouses at the same location are grouped together.
 function extractRegion(loc: WarehouseRow["location"] | null): string {
   if (!loc) return "Unassigned Region";
+  
+  // Prefer location.description if set (for custom grouping)
   const desc = (loc.description ?? "").trim();
   if (desc) return desc;
+  
+  // Otherwise use full address - this groups same-location warehouses together
   const addr = (loc.address ?? "").trim();
-  if (!addr) return "Unassigned Region";
-  // Use the first comma-delimited segment (city or area name)
-  const first = addr.split(",")[0].trim();
-  return first || "Unassigned Region";
+  if (addr) return addr;
+  
+  return "Unassigned Region";
 }
 
 // ── Status colour map ────────────────────────────────────────────────────────
@@ -93,6 +98,26 @@ function WarehouseCard({ w }: { w: WarehouseRow }) {
         </span>
         <span>{w.total_capacity_kg.toLocaleString()} kg capacity</span>
       </div>
+
+      {/* Silos list for this warehouse */}
+      {w.silos && w.silos.length > 0 && (
+        <div className="border-t border-slate-100 pt-2 space-y-1">
+          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Silos in this warehouse</div>
+          <div className="space-y-1">
+            {w.silos.map((silo) => (
+              <div key={silo.id} className="flex items-center justify-between bg-slate-50 rounded p-1.5 text-[11px]">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${
+                    silo.status === "active" ? "bg-emerald-500" : "bg-slate-300"
+                  }`} />
+                  <span className="text-slate-700 truncate font-medium">{silo.name}</span>
+                </div>
+                <span className="text-slate-500 shrink-0">{silo.capacity_kg.toLocaleString()} kg</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Team assignments */}
       <div className="border-t border-slate-100 pt-3 space-y-2">

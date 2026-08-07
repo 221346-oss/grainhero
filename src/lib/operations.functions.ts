@@ -1826,7 +1826,9 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
 
     // Collect all unique profile IDs we need to resolve names for.
     const profileIds = new Set<string>();
+    const warehouseIds = new Set<string>();
     for (const w of warehouses) {
+      warehouseIds.add(w.id);
       if (w.manager_id) profileIds.add(w.manager_id);
       for (const tid of (w.technician_ids ?? []) as string[]) profileIds.add(tid);
     }
@@ -1843,6 +1845,21 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
       }
     }
 
+    // Batch-fetch silos for all warehouses
+    const { data: silos } = await sb
+      .from("silos")
+      .select("id, warehouse_id, name, silo_id, capacity_kg, status")
+      .in("warehouse_id", [...warehouseIds])
+      .order("name", { ascending: true });
+    
+    const silosByWarehouse = new Map<string, any[]>();
+    for (const silo of silos ?? []) {
+      if (!silosByWarehouse.has(silo.warehouse_id)) {
+        silosByWarehouse.set(silo.warehouse_id, []);
+      }
+      silosByWarehouse.get(silo.warehouse_id)!.push(silo);
+    }
+
     const resolve = (id: string | null | undefined) => {
       if (!id) return null;
       const p = profileMap.get(id);
@@ -1857,6 +1874,7 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
       location: (w.location ?? {}) as { description?: string | null; address?: string | null },
       total_capacity_kg: (w.total_capacity_kg ?? 0) as number,
       total_silos: (w.total_silos ?? 0) as number,
+      silos: (silosByWarehouse.get(w.id) ?? []) as any[],
       notes: (w.notes ?? null) as string | null,
       manager_id: (w.manager_id ?? null) as string | null,
       manager_name: resolve(w.manager_id),
