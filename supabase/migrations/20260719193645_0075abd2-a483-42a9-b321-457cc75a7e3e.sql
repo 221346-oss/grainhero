@@ -178,7 +178,7 @@ BEGIN
 
   -- log event
   INSERT INTO public.hardware_order_visit_events(order_id, event_type, note, created_by)
-    VALUES (_order_id, _next, _note, _uid);
+    VALUES (_order_id, _next, COALESCE(_note, 'Advanced to ' || _next || ' by SuperAdmin'), _uid);
 
   RETURN jsonb_build_object('ok', true, 'stage', _next);
 END $$;

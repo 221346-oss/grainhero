@@ -4,9 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
-import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
-import { CommandConsoleSkeleton } from "@/components/app/skeletons";
+import { HairlineGrid, NeonPanel, NEON } from "@/components/charts/neon";
+import { CheckCircle2, AlertCircle, Activity, Users, AlertTriangle } from "lucide-react";
 
 const getHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -50,69 +49,178 @@ export const Route = createFileRoute("/_authenticated/platform/health")({
   component: PlatformHealthPage,
 });
 
-function StatusPill({ label, status }: { label: string; status: string }) {
-  const ok = status === "healthy";
-  return (
-    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${ok ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <span className={`text-xs font-bold ${ok ? "text-emerald-700" : "text-red-700"}`}>{status.toUpperCase()}</span>
-    </div>
-  );
-}
-
 function PlatformHealthPage() {
   const fetchH = useServerFn(getHealth);
   const { data, isLoading } = useQuery({ queryKey: ["platform-health"], queryFn: () => fetchH(), refetchInterval: 30_000 });
-
-  if (isLoading) return <CommandConsoleSkeleton />;
 
   const m = data?.metrics;
   const services = data?.services;
   const events = data?.recentEvents ?? [];
 
+  const allHealthy = services?.api === "healthy" && services?.database === "healthy" && services?.realtime === "healthy";
+
   return (
     <AdminPageShell title="System health" subtitle="Real-time status monitoring and error rates">
-      <div className="grid gap-3 md:grid-cols-3">
-        <StatusPill label="API" status={services?.api ?? "…"} />
-        <StatusPill label="Database" status={services?.database ?? "…"} />
-        <StatusPill label="Realtime" status={services?.realtime ?? "…"} />
-      </div>
-
-      <AdminSummaryTiles
-        columns={4}
-        tiles={[
-          { key: "up", label: "Uptime", value: m ? `${m.uptimePct}%` : "—" },
-          { key: "act", label: "Active (30d)", value: m?.activeUsers ?? "—" },
-          { key: "tot", label: "Total users", value: m?.totalUsers ?? "—" },
-          { key: "err", label: "Errors 24h", value: m?.errorsToday ?? "—" },
-        ]}
-      />
-
-      <AdminSummaryTiles
-        columns={3}
-        tiles={[
-          { key: "e7", label: "Errors 7 days", value: m?.errors7d ?? "—" },
-          { key: "e30", label: "Errors 30 days", value: m?.errors30d ?? "—" },
-          { key: "sp", label: "Status", value: "Live" },
-        ]}
-      />
-
-      <AdminDataCard title="Recent incidents" description={`${events.length} events`}>
-        {events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
-            <p className="text-sm">No incidents recorded</p>
-          </div>
-        ) : (
-          <ul className="">
-            {events.map((e) => (
-              <li key={e.id} className="px-4 py-3 flex items-center justify-between hover:bg-slate-50">
-                <span className="text-sm font-medium text-slate-800">{e.event}</span>
-                <span className="text-xs text-slate-500">{new Date(e.created_at).toLocaleString()}</span>
-              </li>
+      {isLoading ? (
+        <div className="space-y-3">
+          {/* Services skeleton */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-3">
+            {[0,1,2].map((i) => (
+              <div key={i} className="bg-background p-4 space-y-2">
+                <div className="animate-pulse rounded bg-muted h-3 w-16" />
+                <div className="animate-pulse rounded bg-muted h-5 w-20" />
+              </div>
             ))}
-          </ul>
-        )}
-      </AdminDataCard>
+          </div>
+          {/* Metrics skeleton */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
+            {[0,1,2,3].map((i) => (
+              <div key={i} className="bg-background p-3 space-y-2">
+                <div className="animate-pulse rounded bg-muted h-3 w-24" />
+                <div className="animate-pulse rounded bg-muted h-6 w-12" />
+              </div>
+            ))}
+          </div>
+          {/* Events skeleton */}
+          <div className="rounded-md border border-border bg-background overflow-hidden">
+            <div className="px-4 py-3 border-b border-border">
+              <div className="animate-pulse rounded bg-muted h-3 w-32" />
+            </div>
+            {[0,1,2,3].map((i) => (
+              <div key={i} className="px-4 py-3 flex items-center justify-between border-b border-border last:border-0">
+                <div className="animate-pulse rounded bg-muted h-3 w-48" />
+                <div className="animate-pulse rounded bg-muted h-3 w-24" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Service status - HairlineGrid */}
+          <HairlineGrid cols="grid-cols-3">
+            <NeonPanel className="text-center">
+              <div className="flex flex-col items-center gap-2">
+                {services?.api === "healthy" ? (
+                  <CheckCircle2 className="w-5 h-5" style={{ color: NEON.success }} />
+                ) : (
+                  <AlertCircle className="w-5 h-5" style={{ color: NEON.critical }} />
+                )}
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">API</span>
+                <span className={`text-sm font-bold uppercase ${services?.api === "healthy" ? "text-success" : "text-severity-critical"}`}>
+                  {services?.api ?? "Unknown"}
+                </span>
+              </div>
+            </NeonPanel>
+            <NeonPanel className="text-center">
+              <div className="flex flex-col items-center gap-2">
+                {services?.database === "healthy" ? (
+                  <CheckCircle2 className="w-5 h-5" style={{ color: NEON.success }} />
+                ) : (
+                  <AlertCircle className="w-5 h-5" style={{ color: NEON.critical }} />
+                )}
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Database</span>
+                <span className={`text-sm font-bold uppercase ${services?.database === "healthy" ? "text-success" : "text-severity-critical"}`}>
+                  {services?.database ?? "Unknown"}
+                </span>
+              </div>
+            </NeonPanel>
+            <NeonPanel className="text-center">
+              <div className="flex flex-col items-center gap-2">
+                {services?.realtime === "healthy" ? (
+                  <CheckCircle2 className="w-5 h-5" style={{ color: NEON.success }} />
+                ) : (
+                  <AlertCircle className="w-5 h-5" style={{ color: NEON.critical }} />
+                )}
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Realtime</span>
+                <span className={`text-sm font-bold uppercase ${services?.realtime === "healthy" ? "text-success" : "text-severity-critical"}`}>
+                  {services?.realtime ?? "Unknown"}
+                </span>
+              </div>
+            </NeonPanel>
+          </HairlineGrid>
+
+          {/* System metrics - compact hairline grid */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Activity className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Uptime</span>
+              </div>
+              <span className="text-xl font-bold tabular-nums" style={{ color: NEON.success }}>
+                {m?.uptimePct ?? 0}%
+              </span>
+            </div>
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Users className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Active 30d</span>
+              </div>
+              <span className="text-xl font-bold tabular-nums text-foreground">{m?.activeUsers ?? 0}</span>
+            </div>
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Users className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Total Users</span>
+              </div>
+              <span className="text-xl font-bold tabular-nums text-foreground">{m?.totalUsers ?? 0}</span>
+            </div>
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <AlertTriangle className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Errors 24h</span>
+              </div>
+              <span className={`text-xl font-bold tabular-nums ${(m?.errorsToday ?? 0) > 0 ? "text-warning" : "text-foreground"}`}>
+                {m?.errorsToday ?? 0}
+              </span>
+            </div>
+          </div>
+
+          {/* Error breakdown */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-3">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Errors 7d</span>
+              <span className={`text-lg font-bold tabular-nums ${(m?.errors7d ?? 0) > 0 ? "text-warning" : "text-foreground"}`}>
+                {m?.errors7d ?? 0}
+              </span>
+            </div>
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Errors 30d</span>
+              <span className={`text-lg font-bold tabular-nums ${(m?.errors30d ?? 0) > 0 ? "text-warning" : "text-foreground"}`}>
+                {m?.errors30d ?? 0}
+              </span>
+            </div>
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Status</span>
+              <span className={`text-lg font-bold ${allHealthy ? "text-success" : "text-severity-critical"}`}>
+                {allHealthy ? "Live" : "Issues"}
+              </span>
+            </div>
+          </div>
+
+          {/* Recent incidents */}
+          <NeonPanel title="Recent Incidents" subtitle={`${events.length} events in last 30 days`}>
+            {events.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <CheckCircle2 className="w-8 h-8 mb-2" style={{ color: NEON.success }} />
+                <p className="text-sm">No incidents recorded</p>
+              </div>
+            ) : (
+              <div className="border border-border rounded-md overflow-hidden">
+                <div className="divide-y divide-border">
+                  {events.map((e) => (
+                    <div key={e.id} className="px-4 py-3 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                      <span className="text-sm font-medium text-foreground">{e.event}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {new Date(e.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </NeonPanel>
+        </>
+      )}
     </AdminPageShell>
   );
 }

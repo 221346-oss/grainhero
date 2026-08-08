@@ -608,7 +608,7 @@ const siloDraftInput = z.object({
   address:  z.string().trim().min(3).max(300),
   city:     z.string().trim().max(120).optional().nullable(),
   country:  z.string().trim().min(1).max(120),
-  phone:    z.string().trim().min(4).max(40),
+  phone:    z.string().trim().regex(/^\+92\d{10}$/, "Phone must be in format +92XXXXXXXXXX (11 digits total)"),
   notes:    z.string().trim().max(1000).optional().nullable(),
 });
 
@@ -745,7 +745,10 @@ export const payApprovedSiloOrder = createServerFn({ method: "POST" })
 
     const iotUnit   = Number(order.hardware_total ?? order.hardware_unit_price ?? 7000);
     const currency  = String(order.currency ?? "PKR").toLowerCase();
-    const origin    = requireAppOrigin();
+    // TEMP FIX: Hardcode localhost:8081 for development
+    const origin    = process.env.NODE_ENV === "development" 
+      ? "http://localhost:8081" 
+      : requireAppOrigin();
 
     const params = stripeForm({
       mode:                     "payment",
