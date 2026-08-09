@@ -20,8 +20,8 @@ import {
   type IncidentRow,
 } from "@/components/app/incidents/IncidentShared";
 
-export const Route = createFileRoute("/_authenticated/platform/field-incidents")({
-  head: () => ({ meta: [{ title: "Platform · Field Incidents — Grain Hero" }, { name: "robots", content: "noindex, nofollow" }] }),
+export const Route = createFileRoute("/_authenticated/manager/field-incidents")({
+  head: () => ({ meta: [{ title: "Manager · Field Incidents — Grain Hero" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: FieldIncidentsPage,
 });
 
@@ -76,13 +76,16 @@ function FieldIncidentsPage() {
 
   return (
     <AdminPageShell title="Field incidents" subtitle="Active incidents requiring your attention — open or under investigation.">
-      <IncidentTabNav counts={{ 
-        all: allRows.length,
-        active: activeRows.length, 
-        resolved: resolvedCount, 
-        dismissed: dismissedCount, 
-        incoming: allRows.length 
-      }} />
+      <IncidentTabNav 
+        counts={{ 
+          all: allRows.length,
+          active: activeRows.length, 
+          resolved: resolvedCount, 
+          dismissed: dismissedCount, 
+          incoming: allRows.length 
+        }}
+        basePath="/manager/field-incidents"
+      />
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 mb-4">

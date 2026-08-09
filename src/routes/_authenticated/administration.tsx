@@ -7,12 +7,10 @@ import { motion } from "framer-motion";
 import { TeamSection } from "@/components/administration/TeamSection";
 import { SecuritySection } from "@/components/administration/SecuritySection";
 import { ActivityLogsSection } from "@/components/administration/ActivityLogsSection";
-import { FieldIncidentsSection } from "@/components/administration/FieldIncidentsSection";
-import { Users, ShieldCheck, ClipboardList, Flag, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, ShieldCheck, ClipboardList, TrendingUp, TrendingDown } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
-import { listFieldIncidents } from "@/lib/field-incidents.functions";
 
 export const Route = createFileRoute("/_authenticated/administration")({
   head: () => ({
@@ -27,13 +25,12 @@ export const Route = createFileRoute("/_authenticated/administration")({
   component: AdministrationWorkspace,
 });
 
-type Tab = "team" | "security" | "activity" | "field";
+type Tab = "team" | "security" | "activity";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "team", label: "Team Management", icon: Users },
-  { key: "security", label: "Security Center", icon: ShieldCheck },
-  { key: "activity", label: "Activity Logs", icon: ClipboardList },
-  { key: "field", label: "Field Incidents", icon: Flag },
+  { key: "team",     label: "Team Management", icon: Users },
+  { key: "security", label: "Security Center",  icon: ShieldCheck },
+  { key: "activity", label: "Activity Logs",    icon: ClipboardList },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
@@ -47,11 +44,11 @@ function AdministrationWorkspace() {
   const isSuperAdmin = role === "super_admin";
   const isAdmin = ["super_admin", "admin"].includes(role);
 
-  // Filter tabs based on role - manager only sees Activity Logs and Field Incidents
+  // Managers only see Activity Logs
   const visibleTabs =
-    role === "manager" ? TABS.filter((t) => t.key === "activity" || t.key === "field") : TABS;
+    role === "manager" ? TABS.filter((t) => t.key === "activity") : TABS;
 
-  // Set default tab based on role for managers
+  // Reset to activity tab if manager lands on a restricted tab
   useEffect(() => {
     if (role === "manager" && (activeTab === "team" || activeTab === "security")) {
       setActiveTab("activity");
@@ -60,7 +57,6 @@ function AdministrationWorkspace() {
 
   const fetchMembers = useServerFn(listTeamMembers);
   const fetchSecurity = useServerFn(getSecurityOverview);
-  const fetchFieldIncidents = useServerFn(listFieldIncidents);
 
   const { data: members } = useQuery({
     queryKey: ["team-members"],
@@ -72,32 +68,23 @@ function AdministrationWorkspace() {
     queryFn: () => fetchSecurity(),
     enabled: isAdmin,
   });
-  const { data: fieldIncidents } = useQuery({
-    queryKey: ["field-incidents"],
-    queryFn: () => fetchFieldIncidents(),
-    enabled: !isSuperAdmin,
-  });
 
   const memberList = (members ?? []) as any[];
   const pendingMembers = memberList.filter((m) => m.role === "pending").length;
   const securityEvents = security?.logs?.length ?? 0;
-  const fieldIncidentList = fieldIncidents?.incidents ?? [];
-  const openFieldIncidents = fieldIncidentList.filter((i: any) => i.status !== "closed").length;
 
   const counts = {
-    team: memberList.length,
+    team:     memberList.length,
     security: securityEvents,
     activity: 0,
-    field: fieldIncidentList.length,
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Team Members", value: memberList.length, up: true },
-    { label: "Pending Invites", value: pendingMembers, up: pendingMembers === 0 },
-    { label: "Security Events", value: securityEvents, up: securityEvents === 0 },
-    { label: "Open Field Incidents", value: openFieldIncidents, up: openFieldIncidents === 0 },
+    { label: "Team Members",   value: memberList.length,  up: true },
+    { label: "Pending Invites",value: pendingMembers,      up: pendingMembers === 0 },
+    { label: "Security Events",value: securityEvents,      up: securityEvents === 0 },
   ];
 
   return (
@@ -142,8 +129,7 @@ function AdministrationWorkspace() {
                       <div
                         className="absolute inset-0 pointer-events-none opacity-10"
                         style={{
-                          backgroundImage:
-                            "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
+                          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
                           backgroundSize: "8px 8px",
                         }}
                       />
@@ -187,7 +173,7 @@ function AdministrationWorkspace() {
 
         {/* Tabbed Sections */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          {/* Tab Bar — variable-font hover nav */}
+          {/* Tab Bar */}
           <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {visibleTabs.map((tab) => {
@@ -208,9 +194,7 @@ function AdministrationWorkspace() {
                     />
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${
-                        isActive
-                          ? "bg-primary/20 text-primary"
-                          : "bg-muted text-muted-foreground/60"
+                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"
                       }`}
                     >
                       {counts[tab.key]}
@@ -230,10 +214,9 @@ function AdministrationWorkspace() {
 
           {/* Tab Content */}
           <div className="p-4 md:p-6">
-            {activeTab === "team" && <TeamSection />}
+            {activeTab === "team"     && <TeamSection />}
             {activeTab === "security" && <SecuritySection />}
             {activeTab === "activity" && <ActivityLogsSection />}
-            {activeTab === "field" && <FieldIncidentsSection />}
           </div>
         </div>
       </div>

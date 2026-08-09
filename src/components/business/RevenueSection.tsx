@@ -11,6 +11,7 @@ import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Pl
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
+import type { AppRole } from "@/lib/roles.functions";
 
 function payBadge(s: string | null) {
   switch (s) {
@@ -26,7 +27,7 @@ function money(n: number, ccy: string | null | undefined) {
   return `${ccy ?? "PKR"} ${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function RevenueSection() {
+export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
   const qc = useQueryClient();
@@ -34,6 +35,9 @@ export function RevenueSection() {
 
   const [q, setQ] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
+
+  // Managers see revenue read-only: no outgoing sale creation, no mark-paid action
+  const canWrite = role === "admin" || role === "super_admin";
 
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
@@ -59,11 +63,18 @@ export function RevenueSection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button onClick={() => setWizardOpen(true)} className="gap-1.5">
-          <Plus className="h-4 w-4" /> New sale (Invoice → Dispatch → Payment)
-        </Button>
-      </div>
+      {canWrite && (
+        <div className="flex justify-end">
+          <Button onClick={() => setWizardOpen(true)} className="gap-1.5">
+            <Plus className="h-4 w-4" /> New sale (Invoice → Dispatch → Payment)
+          </Button>
+        </div>
+      )}
+      {!canWrite && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-2">
+          <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is restricted to admin.
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
@@ -120,7 +131,7 @@ export function RevenueSection() {
                         <div className="font-bold">{money(i.total_amount, i.currency)}</div>
                         {remaining > 0 && <div className="text-xs text-amber-600">{money(remaining, i.currency)} due</div>}
                       </div>
-                      {remaining > 0 && (
+                      {remaining > 0 && canWrite && (
                         <Button size="sm" variant="outline" onClick={() => markM.mutate(i.id)} disabled={markM.isPending}>
                           <DollarSign className="h-3.5 w-3.5 mr-1" /> Mark paid
                         </Button>
