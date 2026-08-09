@@ -661,6 +661,59 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
     return row;
   });
 
+// ---------------------------------------------------------------------------
+// Task 5.1 — "Mark Outcome" Validation
+// ---------------------------------------------------------------------------
+// Writes the human-confirmed final state of a batch to `validation_status`.
+// This column is the ground-truth label used by the ML retraining pipeline:
+//   'safe'    → batch was sold in good condition  (positive / no-spoilage label)
+//   'spoiled' → batch was found spoiled at dispatch (negative label for XGBoost)
+//
+// DB migration required (run once in Supabase SQL editor):
+//   ALTER TABLE grain_batches
+//     ADD COLUMN IF NOT EXISTS validation_status TEXT
+//     CHECK (validation_status IN ('safe', 'spoiled'));
+//
+// Auth: any authenticated user who can view their tenant's batches can mark
+// an outcome.  No role restriction — the person dispatching or accepting the
+// grain is the one with direct knowledge of its condition.
+const markOutcomeInput = z.object({
+  id: z.string().uuid(),
+  outcome: z.enum(["safe", "spoiled"]),
+});
+
+export const markOutcome = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => parseOrThrow(markOutcomeInput, d))
+  .handler(async ({ data, context }) => {
+    // validation_status is not yet in the generated Supabase types, so we
+    // cast to `never` — same pattern used elsewhere for new columns (e.g.
+    // assigned_technician_id).  Remove the cast once types are regenerated.
+    const { data: row, error } = await context.supabase
+      .from("grain_batches")
+      .update({ validation_status: data.outcome } as never)
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: prof?.admin_id ?? context.userId,
+      action: "batch.outcome_marked",
+      targetType: "grain_batch",
+      targetId: data.id,
+      meta: { outcome: data.outcome },
+    });
+
+    return { success: true, data: row };
+  });
+
 // Aggregate `dispatches` (new silo-based model) revenue/profit per tenant.
 // Shared by analytics/dashboard reads that need to merge legacy per-batch
 // numbers (grain_batches.revenue/profit) with the new model — see the

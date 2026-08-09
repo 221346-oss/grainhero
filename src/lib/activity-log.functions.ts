@@ -14,14 +14,89 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 export type LogSeverity = "info" | "warning" | "error" | "critical";
-export type LogCategory = "system" | "user" | "sensor" | "billing" | "security" | "hardware";
+
+// ─── Expanded category enum (Task 3.1) ───────────────────────────────────────
+export type LogCategory =
+  | "system"
+  | "user"
+  | "sensor"
+  | "billing"
+  | "security"
+  | "hardware"
+  | "silo"
+  | "subscription"
+  | "threshold"
+  | "actuator"
+  | "alert"
+  | "export";
+
+// ─── Typed action enum (Task 3.1) ─────────────────────────────────────────────
+export type LogAction =
+  // Insurance policy actions
+  | "insurance_policy_created"
+  | "insurance_policy_renewed"
+  | "insurance_policy_cancelled"
+  | "insurance_policy_deleted"
+  // Insurance claim actions
+  | "insurance_claim_filed"
+  | "insurance_claim_reviewed"
+  | "insurance_claim_approved"
+  | "insurance_claim_rejected"
+  | "insurance_claim_payment_processed"
+  | "insurance_claim_document_uploaded"
+  | "insurance_claim_escalated"
+  | "insurance_claim_closed"
+  // Silo actions
+  | "silo_created"
+  | "silo_updated"
+  | "silo_deleted"
+  // Sensor actions
+  | "sensor_configured"
+  | "sensor_calibrated"
+  // User management actions
+  | "user_created"
+  | "user_updated"
+  | "user_deleted"
+  | "user_role_changed"
+  // Subscription actions
+  | "subscription_created"
+  | "subscription_renewed"
+  | "subscription_expired"
+  | "subscription_cancelled"
+  // Threshold & actuator actions
+  | "threshold_updated"
+  | "actuator_triggered"
+  // Alert actions
+  | "alert_acknowledged"
+  | "alert_resolved"
+  | "alert_escalated"
+  // Export actions
+  | "report_exported"
+  | "data_exported"
+  // Allow arbitrary strings for future actions without breaking the system
+  | (string & {});
+
+// ─── Typed entity type enum (Task 3.1) ────────────────────────────────────────
+export type LogEntityType =
+  | "InsurancePolicy"
+  | "InsuranceClaim"
+  | "GrainBatch"
+  | "Silo"
+  | "SensorDevice"
+  | "Tenant"
+  | "Subscription"
+  | "Threshold"
+  | "Actuator"
+  | "GrainAlert"
+  | "User"
+  | (string & {});
 
 export interface LogActivityParams {
   userId?: string;
   adminId: string;
-  action: string;
+  action: LogAction;
   category?: LogCategory;
-  entityType?: string;
+  entityType?: LogEntityType;
   entityId?: string;
   entityRef?: string;
   description: string;
@@ -183,3 +258,205 @@ export const getActivityLogsSummary = createServerFn({ method: "POST" })
 
     return { success: true, summary };
   });
+
+
+// ─── DOMAIN-SPECIFIC LOGGING HELPERS (Task 3.1) ───────────────────────────────
+// One-liner helpers so every feature area logs consistently. Each pre-fills the
+// correct action / category / severity — caller only supplies the "who" and "what".
+
+/** Log when an insurance policy is created. */
+export async function logInsurancePolicyCreated(
+  adminId: string, userId: string, policyId: string, policyRef: string, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "insurance_policy_created",
+    category: "billing",
+    entityType: "InsurancePolicy",
+    entityId: policyId,
+    entityRef: policyRef,
+    description: `Insurance policy ${policyRef} created.`,
+    severity: "info",
+    ipAddress: ip,
+  });
+}
+
+/** Log when an insurance policy is renewed. */
+export async function logInsurancePolicyRenewed(
+  adminId: string, userId: string, policyId: string, policyRef: string, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "insurance_policy_renewed",
+    category: "billing",
+    entityType: "InsurancePolicy",
+    entityId: policyId,
+    entityRef: policyRef,
+    description: `Insurance policy ${policyRef} renewed.`,
+    severity: "info",
+    ipAddress: ip,
+  });
+}
+
+/** Log when an insurance claim is approved. */
+export async function logInsuranceClaimApproved(
+  adminId: string, userId: string, claimId: string, claimRef: string, amount: number, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "insurance_claim_approved",
+    category: "billing",
+    entityType: "InsuranceClaim",
+    entityId: claimId,
+    entityRef: claimRef,
+    description: `Claim ${claimRef} approved. Settlement: PKR ${amount.toLocaleString()}.`,
+    severity: "info",
+    metadata: { settlement_amount: amount },
+    ipAddress: ip,
+  });
+}
+
+/** Log when an insurance claim is rejected. */
+export async function logInsuranceClaimRejected(
+  adminId: string, userId: string, claimId: string, claimRef: string, reason: string, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "insurance_claim_rejected",
+    category: "billing",
+    entityType: "InsuranceClaim",
+    entityId: claimId,
+    entityRef: claimRef,
+    description: `Claim ${claimRef} rejected. Reason: ${reason}`,
+    severity: "warning",
+    metadata: { rejection_reason: reason },
+    ipAddress: ip,
+  });
+}
+
+/** Log when a payment is processed for an insurance claim. */
+export async function logInsuranceClaimPaymentProcessed(
+  adminId: string, userId: string, claimId: string, claimRef: string,
+  paymentRef: string, amount: number, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "insurance_claim_payment_processed",
+    category: "billing",
+    entityType: "InsuranceClaim",
+    entityId: claimId,
+    entityRef: claimRef,
+    description: `Payment ${paymentRef} of PKR ${amount.toLocaleString()} processed for claim ${claimRef}.`,
+    severity: "info",
+    metadata: { payment_ref: paymentRef, amount },
+    ipAddress: ip,
+  });
+}
+
+/** Log when an alert is acknowledged by a user. */
+export async function logAlertAcknowledged(
+  adminId: string, userId: string, alertId: string, alertTitle: string, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "alert_acknowledged",
+    category: "alert",
+    entityType: "GrainAlert",
+    entityId: alertId,
+    entityRef: alertTitle,
+    description: `Alert "${alertTitle}" acknowledged.`,
+    severity: "info",
+    ipAddress: ip,
+  });
+}
+
+/** Log when an alert is resolved. */
+export async function logAlertResolved(
+  adminId: string, userId: string, alertId: string, alertTitle: string, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "alert_resolved",
+    category: "alert",
+    entityType: "GrainAlert",
+    entityId: alertId,
+    entityRef: alertTitle,
+    description: `Alert "${alertTitle}" marked as resolved.`,
+    severity: "info",
+    ipAddress: ip,
+  });
+}
+
+/** Log when an alert is escalated to a higher role. */
+export async function logAlertEscalated(
+  adminId: string, userId: string, alertId: string, alertTitle: string,
+  escalatedTo: string, ip?: string
+) {
+  await logActivity({
+    adminId, userId,
+    action: "alert_escalated",
+    category: "alert",
+    entityType: "GrainAlert",
+    entityId: alertId,
+    entityRef: alertTitle,
+    description: `Alert "${alertTitle}" escalated to ${escalatedTo}.`,
+    severity: "warning",
+    metadata: { escalated_to: escalatedTo },
+    ipAddress: ip,
+  });
+}
+
+/** Log a subscription lifecycle event (created / renewed / expired / cancelled). */
+export async function logSubscriptionEvent(
+  adminId: string, userId: string,
+  event: "subscription_created" | "subscription_renewed" | "subscription_expired" | "subscription_cancelled",
+  tenantId: string, planName: string, ip?: string
+) {
+  const severityMap = {
+    subscription_created: "info",
+    subscription_renewed: "info",
+    subscription_expired: "warning",
+    subscription_cancelled: "warning",
+  } as const;
+
+  await logActivity({
+    adminId, userId,
+    action: event,
+    category: "subscription",
+    entityType: "Subscription",
+    entityId: tenantId,
+    entityRef: planName,
+    description: `Subscription ${event.replace("subscription_", "").replace("_", " ")} — Plan: ${planName}.`,
+    severity: severityMap[event],
+    metadata: { tenant_id: tenantId, plan: planName },
+    ipAddress: ip,
+  });
+}
+
+/** Log a user management action (create / update / delete / role change). */
+export async function logUserManagement(
+  adminId: string, actorId: string,
+  action: "user_created" | "user_updated" | "user_deleted" | "user_role_changed",
+  targetUserId: string, targetUserName: string, meta?: Record<string, unknown>, ip?: string
+) {
+  const descMap = {
+    user_created: `User "${targetUserName}" created.`,
+    user_updated: `User "${targetUserName}" profile updated.`,
+    user_deleted: `User "${targetUserName}" deleted.`,
+    user_role_changed: `User "${targetUserName}" role changed.`,
+  };
+
+  await logActivity({
+    adminId, userId: actorId,
+    action,
+    category: "user",
+    entityType: "User",
+    entityId: targetUserId,
+    entityRef: targetUserName,
+    description: descMap[action],
+    severity: action === "user_deleted" ? "warning" : "info",
+    metadata: meta,
+    ipAddress: ip,
+  });
+}
+

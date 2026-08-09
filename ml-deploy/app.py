@@ -34,6 +34,18 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
+import tempfile
+
+# Load .env file FIRST — before any other imports that read env vars.
+# This ensures SUPABASE_URL, GEMINI_API_KEY etc. are available when
+# rag_ingest.py, rag_agent.py, and supabase_client.py are imported.
+try:
+    from dotenv import load_dotenv
+    _env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+    load_dotenv(dotenv_path=_env_path, override=False)
+except ImportError:
+    pass  # python-dotenv not installed — env vars must be set externally (Render/prod)
 
 from contextlib import asynccontextmanager
 from functools import lru_cache
@@ -43,9 +55,13 @@ from typing import Any, Dict, List, Optional
 # import joblib
 import numpy as np
 # import shap
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
+
+# RAG imports
+from rag.rag_agent import GrainHeroAgent
+from rag.rag_ingest import RAGIngestionPipeline
 
 from model_registry import FEATURE_NAMES, SUPPORTED_GRAINS, registry
 from hot_swap import HotSwapPoller
@@ -160,30 +176,93 @@ def _natural_storage_life(grain_type: str, moisture_content: float, temperature:
 
 
 # ── EMA spoilage trend ────────────────────────────────────────────────────────
-def _spoilage_trend(temp_h: List[float], hum_h: List[float], mc_h: List[float]) -> dict:
-    def trend(history):
-        if len(history) < 3:
-            return "stable"
-        alpha, ema = 0.4, history[0]
-        for v in history[1:]:
-            ema = alpha * v + (1 - alpha) * ema
-        delta = ema - history[0]
-        return "rising" if delta > 0.5 else ("falling" if delta < -0.5 else "stable")
+# FAO/IRRI-based safe upper limits per grain type
+DANGER_THRESHOLDS = {
+    "rice":    {"temperature": 25.0, "humidity": 70.0, "moisture": 14.0},
+    "wheat":   {"temperature": 20.0, "humidity": 65.0, "moisture": 13.0},
+    "maize":   {"temperature": 25.0, "humidity": 70.0, "moisture": 14.0},
+    "sorghum": {"temperature": 28.0, "humidity": 70.0, "moisture": 13.0},
+    "barley":  {"temperature": 20.0, "humidity": 65.0, "moisture": 13.0},
+}
 
-    t, h, m = trend(temp_h), trend(hum_h), trend(mc_h)
-    bads = sum(x == "rising" for x in [t, h, m])
+def _analyze_sensor_trend(history: List[float], danger_threshold: float) -> dict:
+    """Rate-of-change + projection for a single sensor stream."""
+    if len(history) < 3:
+        return {
+            "trend": "insufficient_data",
+            "rate_per_hour": 0.0,
+            "current_value": round(history[-1], 2) if history else 0.0,
+            "ema": round(history[-1], 2) if history else 0.0,
+            "projected_hours_to_danger": None,
+        }
+    alpha, ema = 0.4, history[0]
+    for v in history[1:]:
+        ema = alpha * v + (1 - alpha) * ema
+    recent = history[-6:] if len(history) >= 6 else history
+    rate   = (recent[-1] - recent[0]) / max(len(recent) - 1, 1)
+    direction = "rising" if rate > 0.1 else ("falling" if rate < -0.1 else "stable")
+    current = history[-1]
+    hours_to_danger = None
+    if rate > 0 and current < danger_threshold:
+        hours_to_danger = round((danger_threshold - current) / rate, 1)
+    elif current >= danger_threshold:
+        hours_to_danger = 0.0  # already at or past danger
     return {
-        "temperature_trend": t,
-        "humidity_trend":    h,
-        "moisture_trend":    m,
-        "overall_trend":     "WORSENING" if bads >= 2 else ("CAUTION" if bads == 1 else "STABLE"),
-        "trend_alert":       bads >= 2,
-        "trend_message": (
-            "Multiple key sensors rising. Spoilage risk increasing. Intervene now."
-            if bads >= 2 else
-            "One sensor rising. Monitor closely." if bads == 1 else
-            "Conditions are stable."
-        ),
+        "trend": direction,
+        "rate_per_hour": round(rate, 3),
+        "current_value": round(current, 2),
+        "ema": round(ema, 2),
+        "projected_hours_to_danger": hours_to_danger,
+    }
+
+
+def _spoilage_trend(
+    temp_h: List[float],
+    hum_h:  List[float],
+    mc_h:   List[float],
+    grain_type: str = "wheat",
+) -> dict:
+    """
+    Full trend analysis: direction + rate + projection.
+    Core of GrainHero's predictive spoilage prevention mandate.
+    """
+    th = DANGER_THRESHOLDS.get(grain_type, DANGER_THRESHOLDS["wheat"])
+    t  = _analyze_sensor_trend(temp_h, th["temperature"])
+    h  = _analyze_sensor_trend(hum_h,  th["humidity"])
+    m  = _analyze_sensor_trend(mc_h,   th["moisture"])
+
+    bads        = sum(x["trend"] == "rising" for x in [t, h, m])
+    projections = [x["projected_hours_to_danger"] for x in [t, h, m]
+                   if x["projected_hours_to_danger"] is not None]
+    min_hours   = round(min(projections), 1) if projections else None
+
+    if bads >= 2 and min_hours is not None and min_hours <= 6:
+        urgency = "CRITICAL"
+        msg = f"🚨 {bads} sensors rising fast. Danger in ~{min_hours}h. START AERATION NOW."
+    elif bads >= 2:
+        urgency = "WORSENING"
+        msg = f"⚠️ {bads} sensors rising. Danger in ~{min_hours}h. Prepare intervention."
+    elif bads == 1:
+        urgency = "CAUTION"
+        msg = "📈 One sensor rising. Monitor closely. Check aeration."
+    else:
+        urgency = "STABLE"
+        msg = "✅ All conditions stable."
+
+    return {
+        "temperature_analysis":     t,
+        "humidity_analysis":        h,
+        "moisture_analysis":        m,
+        "overall_trend":            urgency,
+        "trend_alert":              bads >= 2,
+        "earliest_danger_in_hours": min_hours,
+        "urgency":                  urgency,
+        "action_message":           msg,
+        # Legacy backward-compat fields (keep for existing frontend consumers)
+        "temperature_trend":        t["trend"],
+        "humidity_trend":           h["trend"],
+        "moisture_trend":           m["trend"],
+        "trend_message":            msg,
     }
 
 
@@ -269,6 +348,7 @@ class PredictionRequest(BaseModel):
     longitude:      Optional[float] = Field(None, description="Used to auto-fetch rainfall if omitted")
     tvoc_ppb:       Optional[float] = Field(None,
                         description="Raw TVOC in ppb (used if Pest_Presence omitted)")
+    silo_id:        Optional[str] = Field(None, description="Auto-fetches last 24 sensor readings from Supabase for trend analysis")
 
     # Rolling window support
     window:   Optional[List[Dict[str, Any]]] = Field(None, description="Optional array of W reading dicts")
@@ -503,6 +583,33 @@ def _fetch_rainfall(lat: float, lon: float) -> float:
     return 0.0
 
 
+async def _fetch_sensor_history(silo_id: str, limit: int = 24) -> dict:
+    """
+    Fetch the last `limit` sensor readings for a silo from Supabase.
+    Returns arrays ordered oldest → newest, ready for trend analysis.
+    """
+    from supabase_client import get_supabase_client
+    try:
+        client = get_supabase_client()
+        resp = (
+            client.table("sensor_readings")
+            .select("temperature, humidity, grain_moisture, recorded_at")
+            .eq("silo_id", silo_id)
+            .order("recorded_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        rows = sorted(resp.data, key=lambda x: x["recorded_at"])  # oldest → newest
+        return {
+            "temperature_history": [r["temperature"]    for r in rows],
+            "humidity_history":    [r["humidity"]       for r in rows],
+            "moisture_history":    [r["grain_moisture"] for r in rows],
+        }
+    except Exception as exc:
+        logger.warning("History fetch failed for silo '%s': %s", silo_id, exc)
+        return {"temperature_history": [], "humidity_history": [], "moisture_history": []}
+
+
 def _run_inference(req: PredictionRequest) -> PredictionResponse:
     grain = req.grain_type
 
@@ -567,7 +674,8 @@ def _run_inference(req: PredictionRequest) -> PredictionResponse:
             grain, req.Grain_Moisture, req.Temperature
         ),
         spoilage_trend       = _spoilage_trend(
-            req.temperature_history, req.humidity_history, req.moisture_history
+            req.temperature_history, req.humidity_history, req.moisture_history,
+            grain_type=req.grain_type,
         ),
         features_used        = features_used,
         model_version        = onnx_model.version,
@@ -608,6 +716,13 @@ async def predict(req: PredictionRequest, background_tasks: BackgroundTasks):
 
     After sending the response, logs the reading to Supabase asynchronously.
     """
+    # Auto-inject history from Supabase if silo_id provided and arrays not manually passed
+    if req.silo_id and not req.temperature_history:
+        history = await _fetch_sensor_history(req.silo_id)
+        req.temperature_history = history["temperature_history"]
+        req.humidity_history    = history["humidity_history"]
+        req.moisture_history    = history["moisture_history"]
+
     result = _run_inference(req)
 
     # Fire-and-forget: log to Supabase (never delays response)
@@ -654,6 +769,90 @@ async def predict_batch(req: BatchPredictionRequest, background_tasks: Backgroun
         except HTTPException as exc:
             errors.append({"index": i, "error": exc.detail})
     return {"results": results, "errors": errors, "total": len(req.rows)}
+
+
+class TrendRequest(BaseModel):
+    grain_type:          str           = Field("wheat")
+    silo_id:             Optional[str] = None
+    temperature_history: List[float]   = Field(default_factory=list)
+    humidity_history:    List[float]   = Field(default_factory=list)
+    moisture_history:    List[float]   = Field(default_factory=list)
+
+
+@app.post("/trend", summary="Trend-only analysis — no ONNX inference (< 5ms, call every 5 min)")
+async def trend_only(req: TrendRequest):
+    """
+    Lightweight proactive monitoring endpoint.
+    Skips ONNX entirely. Use for frequent polling (every 5 minutes).
+    Returns: rate_per_hour, urgency, projected_hours_to_danger per sensor.
+    """
+    temp_h, hum_h, mc_h = req.temperature_history, req.humidity_history, req.moisture_history
+    if req.silo_id and not temp_h:
+        history = await _fetch_sensor_history(req.silo_id)
+        temp_h  = history["temperature_history"]
+        hum_h   = history["humidity_history"]
+        mc_h    = history["moisture_history"]
+    return _spoilage_trend(temp_h, hum_h, mc_h, grain_type=req.grain_type)
+
+
+# ── RAG (Agentic AI) Endpoints ────────────────────────────────────────────────
+
+class RAGQueryRequest(BaseModel):
+    query: str = Field(..., description="The user's question")
+    tenant_id: str = Field(..., description="UUID of the tenant for data isolation")
+
+@app.post("/query", summary="RAG AI Assistant Query")
+async def rag_query(req: RAGQueryRequest):
+    """
+    Executes a query against the GrainHero AI Assistant.
+    It will autonomously decide whether to query the knowledge base (manuals),
+    live telemetry, or both.
+    """
+    try:
+        agent = GrainHeroAgent(tenant_id=req.tenant_id)
+        response = agent.run(req.query)
+        return {"answer": response, "query": req.query, "tenant_id": req.tenant_id}
+    except Exception as exc:
+        logger.error("RAG Query failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/ingest", summary="Upload a document to the Knowledge Base")
+async def rag_ingest(
+    file: UploadFile = File(...),
+    tenant_id: str = Form(...),
+    category: str = Form("Manuals")
+):
+    """
+    Ingests a PDF or TXT file into the RAG vector database.
+    Performs extraction, semantic chunking, embedding, and storage.
+    """
+    try:
+        # Save uploaded file temporarily
+        suffix = Path(file.filename).suffix if file.filename else ".txt"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            shutil.copyfileobj(file.file, tmp)
+            tmp_path = Path(tmp.name)
+
+        pipeline = RAGIngestionPipeline()
+        result = pipeline.ingest_file(
+            file_path=tmp_path,
+            tenant_id=tenant_id,
+            category=category
+        )
+        
+        # Cleanup temp file
+        os.remove(tmp_path)
+        
+        return {
+            "status": "success",
+            "filename": file.filename,
+            "chunks_inserted": result.get("chunks_inserted", 0),
+            "doc_id": result.get("doc_id")
+        }
+    except Exception as exc:
+        logger.error("RAG Ingestion failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get("/model-info/{grain}", summary="Model metadata")

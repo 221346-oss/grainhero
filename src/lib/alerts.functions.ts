@@ -53,16 +53,14 @@ export const acknowledgeAlert = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
 
-    const { logActivity } = await import("@/lib/activity");
-    await logActivity({
-      actorId: context.userId,
-      tenantAdminId: (updated as Row).admin_id as string,
-      action: "alert.acknowledged",
-      targetType: "grain_alert",
-      targetId: data.id,
-      meta: { title: (updated as Row).title },
-    });
-    return { ok: true };
+    const { logAlertAcknowledged } = await import("@/lib/activity-log.functions");
+    await logAlertAcknowledged(
+      (updated as Row).admin_id as string,
+      context.userId,
+      data.id,
+      (updated as Row).title as string,
+    );
+    return { success: true, data: updated };
   });
 
 export const assignAlert = createServerFn({ method: "POST" })
@@ -100,4 +98,70 @@ export const assignAlert = createServerFn({ method: "POST" })
       meta: { assigneeId: data.assigneeId },
     });
     return { ok: true };
+  });
+
+export const resolveAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), resolutionNote: z.string().optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: updated, error } = await context.supabase
+      .from("grain_alerts")
+      .update({
+        status: "resolved",
+        resolved_at: new Date().toISOString(),
+        resolved_by: context.userId,
+        resolution_note: data.resolutionNote ?? null,
+      } as never)
+      .eq("id", data.id)
+      .select("id, admin_id, title")
+      .single();
+    if (error) throw error;
+
+    const { logAlertResolved } = await import("@/lib/activity-log.functions");
+    await logAlertResolved(
+      (updated as Row).admin_id as string,
+      context.userId,
+      data.id,
+      (updated as Row).title as string,
+    );
+    return { success: true, data: updated };
+  });
+
+export const escalateAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), reason: z.string().optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: updated, error } = await context.supabase
+      .from("grain_alerts")
+      .update({
+        status: "escalated",
+      } as never)
+      .eq("id", data.id)
+      .select("id, admin_id, title")
+      .single();
+    if (error) throw error;
+
+    const { emitNotification } = await import("@/lib/notify");
+    // Escalate to tenant admin
+    await emitNotification(context.supabase, {
+      recipientId: (updated as Row).admin_id as string,
+      tenantAdminId: (updated as Row).admin_id as string,
+      category: "ops",
+      severity: "warning",
+      title: "🚨 Alert Escalated",
+      body: `Alert "${(updated as Row).title}" was escalated by a user. Reason: ${data.reason ?? 'None provided'}`,
+      link: "/grain-alerts",
+      entityType: "grain_alert",
+      entityId: data.id,
+    });
+
+    const { logAlertEscalated } = await import("@/lib/activity-log.functions");
+    await logAlertEscalated(
+      (updated as Row).admin_id as string,
+      context.userId,
+      data.id,
+      (updated as Row).title as string,
+      "Manager/Admin", // escalatedTo placeholder
+    );
+    return { success: true, data: updated };
   });

@@ -365,14 +365,32 @@ export const moderateClaim = createServerFn({ method: "POST" })
       patch.paid_at = new Date().toISOString();
     }
     if (data.decision_reason) patch.decision_reason = data.decision_reason;
-    const { error } = await sb.from("insurance_claims").update(patch).eq("id", data.id);
+    const { data: updated, error } = await sb.from("insurance_claims").update(patch).eq("id", data.id).select("*, policy:insurance_policies(admin_id)").single();
     if (error) throw error;
+    
     await sb.from("insurance_claim_events").insert({
       claim_id: data.id, actor_id: context.userId,
       event_type: `decision_${data.decision}`,
       payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null },
     });
-    await audit(context, { action: `claim.${data.decision}`, subject_type: "claim", subject_id: data.id, claim_id: data.id, payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null } });
+    
+    const adminId = (updated as Row).policy?.admin_id ?? (updated as Row).admin_id;
+    
+    if (data.decision === "approved") {
+      const { logInsuranceClaimApproved } = await import("@/lib/activity-log.functions");
+      await logInsuranceClaimApproved(adminId as string, context.userId, data.id, data.id, (data.approved_payout_cents ?? 0) / 100);
+      
+      const { alertInsuranceClaimApproved } = await import("@/lib/alert-engine.functions");
+      await alertInsuranceClaimApproved(adminId as string, data.id, data.id, (data.approved_payout_cents ?? 0) / 100);
+    } else if (data.decision === "rejected") {
+      const { logInsuranceClaimRejected } = await import("@/lib/activity-log.functions");
+      await logInsuranceClaimRejected(adminId as string, context.userId, data.id, data.id, data.decision_reason ?? "");
+      
+      const { alertInsuranceClaimRejected } = await import("@/lib/alert-engine.functions");
+      await alertInsuranceClaimRejected(adminId as string, data.id, data.id, data.decision_reason ?? "");
+    } else {
+      await audit(context, { action: `claim.${data.decision}`, subject_type: "claim", subject_id: data.id, claim_id: data.id, payload: { approved_payout_cents: data.approved_payout_cents ?? null, reason: data.decision_reason ?? null } });
+    }
     // Fan-out notifications to tenant + super-admins.
     try {
       const { data: cl } = await sb.from("insurance_claims").select("admin_id").eq("id", data.id).maybeSingle();
@@ -401,7 +419,7 @@ export const moderateClaim = createServerFn({ method: "POST" })
     } catch (e) {
       console.warn("[insurance] notify moderate failed", (e as Error).message);
     }
-    return { ok: true };
+    return { success: true, data: updated };
   });
 
 export const getClaimTimeline = createServerFn({ method: "GET" })
@@ -800,4 +818,95 @@ export const createEvidenceUploadUrl = createServerFn({ method: "POST" })
     const { data: signed, error } = await sb.storage.from("insurance-attachments").createSignedUploadUrl(path);
     if (error) throw error;
     return { path, token: signed?.token as string, signedUrl: signed?.signedUrl as string };
+  });
+
+/* -------------------- Task 3.3 Missing Endpoints -------------------- */
+
+export const startClaimInvestigation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const { data: updated, error } = await sb.from("insurance_claims").update({ status: "under_review" }).eq("id", data.id).select().single();
+    if (error) throw error;
+
+    await sb.from("insurance_claim_events").insert({
+      claim_id: data.id, actor_id: context.userId,
+      event_type: "investigation_started",
+    });
+    await audit(context, { action: "claim.investigation_started", subject_type: "claim", subject_id: data.id, claim_id: data.id });
+    return { success: true, data: updated };
+  });
+
+export const updateClaimInvestigation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), findings: z.string().min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    await sb.from("insurance_claim_events").insert({
+      claim_id: data.id, actor_id: context.userId,
+      event_type: "investigation_updated", payload: { findings: data.findings },
+    });
+    await audit(context, { action: "claim.investigation_updated", subject_type: "claim", subject_id: data.id, claim_id: data.id });
+    const { data: claim } = await sb.from("insurance_claims").select().eq("id", data.id).single();
+    return { success: true, data: claim };
+  });
+
+export const updateClaimAssessment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), assessed_loss_cents: z.number().int().nonnegative(), settlement_cents: z.number().int().nonnegative() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    
+    // Update the claim with assessed amounts (in a real schema, we'd add these columns, using payload in events for now)
+    await sb.from("insurance_claim_events").insert({
+      claim_id: data.id, actor_id: context.userId,
+      event_type: "assessment_updated", payload: { assessed_loss_cents: data.assessed_loss_cents, settlement_cents: data.settlement_cents },
+    });
+    await audit(context, { action: "claim.assessment_updated", subject_type: "claim", subject_id: data.id, claim_id: data.id });
+    const { data: claim } = await sb.from("insurance_claims").select().eq("id", data.id).single();
+    return { success: true, data: claim };
+  });
+
+export const recordClaimPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), payment_ref: z.string().min(1), amount_cents: z.number().int().nonnegative() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    const { data: updated, error } = await sb.from("insurance_claims").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", data.id).select("*, policy:insurance_policies(admin_id)").single();
+    if (error) throw error;
+
+    await sb.from("insurance_claim_events").insert({
+      claim_id: data.id, actor_id: context.userId,
+      event_type: "payment_recorded", payload: { payment_ref: data.payment_ref, amount_cents: data.amount_cents },
+    });
+    
+    const adminId = (updated as Row).policy?.admin_id ?? (updated as Row).admin_id;
+    const { logInsuranceClaimPaymentProcessed } = await import("@/lib/activity-log.functions");
+    await logInsuranceClaimPaymentProcessed(adminId as string, context.userId, data.id, data.id, data.payment_ref, data.amount_cents / 100);
+    
+    return { success: true, data: updated };
+  });
+
+export const addClaimNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), note: z.string().min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = (context.supabase as any);
+    await sb.from("insurance_claim_events").insert({
+      claim_id: data.id, actor_id: context.userId,
+      event_type: "note_added", payload: { note: data.note },
+    });
+    await audit(context, { action: "claim.note_added", subject_type: "claim", subject_id: data.id, claim_id: data.id });
+    const { data: claim } = await sb.from("insurance_claims").select().eq("id", data.id).single();
+    return { success: true, data: claim };
   });

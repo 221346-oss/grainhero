@@ -57,8 +57,11 @@ logging.basicConfig(
 logger = logging.getLogger("rag_ingest")
 
 # ── Environment ───────────────────────────────────────────────────────────────
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+# Use .get() with empty string default so the module can be imported
+# safely even when env vars are not yet set (e.g. during server startup).
+# The actual values are validated at runtime when methods are called.
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "gemini").lower()
 

@@ -72,7 +72,7 @@ CREATE INDEX IF NOT EXISTS research_intel_embedding_idx ON research_intelligence
 
 
 
-### 🟢 Task 2.4 — Trend History Injection Middleware [ML-INTERNEE]
+### ✅ Task 2.4 — Trend History Injection Middleware [ML-INTERNEE]
 
 **Why this is the highest-priority task after Render deploy:** The existing `_spoilage_trend()` function accepts history arrays, but the firmware only sends the current reading — so trend analysis has been blind since day one. This task fixes that automatically: the ML service queries Supabase for the last 24 readings on every prediction call. **Zero firmware changes. Zero model changes.**
 
@@ -151,7 +151,7 @@ If the table uses different column names, adjust the `.select()` call to match.
 
 
 
-### 🟢 Task 2.5 — Upgrade Spoilage Trend Engine: Rate + Projection [ML-INTERNEE]
+### ✅ Task 2.5 — Upgrade Spoilage Trend Engine: Rate + Projection [ML-INTERNEE]
 
 **Why:** The current `_spoilage_trend()` only says *direction* (rising/stable/falling). This upgrade adds:
 - `rate_per_hour` — how fast each sensor is changing
@@ -432,7 +432,7 @@ Verify in **Supabase → Table Editor → research_embeddings**. Expect 50–100
 
 
 
-### 🟢 Task 3.1 — Expand ActivityLog Enums & LoggingService [ML-INTERNEE]
+### ✅ Task 3.1 — Expand ActivityLog Enums & LoggingService [ML-INTERNEE]
 
 **File: `models/ActivityLog.js`** — add to the `action` enum:
 ```javascript
@@ -475,7 +475,7 @@ static async logUserManagement(user, action, targetUser, ip) { ... }
 
 
 
-### 🟢 Task 3.2 — Build the AlertEngine Service [ML-INTERNEE]
+### ✅ Task 3.2 — Build the AlertEngine Service [ML-INTERNEE]
 
 **File to create: `services/alertEngine.js`**
 
@@ -508,7 +508,7 @@ It checks if the action matches any alert rule, and if so, creates a `GrainAlert
 
 
 
-### 🟢 Task 3.2.5 — Trend-Based Alert Triggers in AlertEngine [ML-INTERNEE]
+### ✅ Task 3.2.5 — Trend-Based Alert Triggers in AlertEngine [ML-INTERNEE]
 
 **Why:** AlertEngine (Task 3.2) fires on events like "spoilage detected" or "sensor offline". This task adds an entirely new category: **trajectory-based pre-spoilage alerts** that fire when conditions are *heading toward* danger — not when they arrive. This is what makes GrainHero proactive, not reactive.
 
@@ -616,7 +616,7 @@ if (mlResponse.spoilage_trend) {
 
 
 
-### 🟢 Task 3.3 — Add Missing API Endpoints [ML-INTERNEE]
+### ✅ Task 3.3 — Add Missing API Endpoints [ML-INTERNEE]
 
 **File: `routes/insurance.js`** — add 9 missing endpoints:
 
@@ -706,11 +706,11 @@ Role-based content:
    - Admin: everything for their tenant
    - Super Admin: all tenants + tenant selector dropdown at top
 
-
+                                                                                                
 
 ### 🟢 Task 4.4 — Alert Management Center [ML-INTERNEE]
 
-**File:** `src/pages/AlertsPage.tsx`
+**File:** `src/pages/AlertsPage.tsx`                                                                               
 
 **Top row:** 4 KPI Cards (clickable to filter):
 ```
@@ -874,9 +874,9 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 - [ ] **4.3** Build Activity Logs vertical timeline (severity colors, role-aware filters).
 - [ ] **4.4** Build Alert Management Center: KPI cards, alert feed, side-panel detail. Include 📈 trend source icon. Implement Trend Alert Card with urgency badge, danger countdown chip, per-sensor sparkline row (`🌡️ +0.6°C/hr`), and ⚡ aeration quick-action button for CRITICAL trend alerts.
 - [ ] **4.5** Add live badge counts to sidebar nav. Add 3 count endpoints to backend.
-- [ ] **5.1** Add Mark Outcome buttons to Grain Batch Detail page.
-- [ ] **5.2** Replace random split with `TimeSeriesSplit` in `fast_retrain.py`.
-- [ ] **5.3** Write `scripts/generate_sliding_window.py` dataset prep script.
+- [x] **5.1** Add Mark Outcome buttons to Grain Batch Detail page.
+- [x] **5.2** Replace random split with `TimeSeriesSplit` in `fast_retrain.py`.
+- [x] **5.3** Write `scripts/generate_sliding_window.py` dataset prep script.
 
 
 
