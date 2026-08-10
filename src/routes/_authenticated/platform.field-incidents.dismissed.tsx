@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { listFieldIncidents } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import {
 import { SlidersHorizontal } from "lucide-react";
 import {
   IncidentTabNav, SearchCombobox, FilterChips, IncidentCard, DetailPanel,
-  safeRows, extractTargetRole,
+  safeRows, extractTargetRole, isIncomingIncident,
   type IncidentRow,
 } from "@/components/app/incidents/IncidentShared";
 
@@ -55,7 +56,7 @@ function DismissedIncidentsPage() {
         active:    allRows.filter((r) => r.status === "open" || r.status === "investigating").length,
         resolved:  allRows.filter((r) => r.status === "resolved").length,
         dismissed: dismissedRows.length,
-        incoming:  allRows.length,
+        incoming:  allRows.filter(isIncomingIncident).length,
       }} />
 
       <div className="flex flex-wrap items-center gap-2 mb-4">

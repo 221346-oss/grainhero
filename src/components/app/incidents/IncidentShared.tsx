@@ -79,6 +79,11 @@ export function extractReporterRole(row: IncidentRow): string | null {
   return null;
 }
 
+export function isIncomingIncident(row: IncidentRow): boolean {
+  const rr = extractReporterRole(row);
+  return rr === "admin" || rr === "technician" || rr !== "manager";
+}
+
 export function cleanNotes(notes: string | null | undefined): string {
   if (!notes) return "—";
   return notes.replace(/Reported by:.*?(?:➔ Target Role:[^\n]*)?\n?/g, "").trim() || "—";

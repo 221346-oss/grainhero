@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { listFieldIncidents } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
 import {
   IncidentTabNav, SearchCombobox, FilterChips, IncidentCard, DetailPanel,
-  safeRows, extractTargetRole,
+  safeRows, extractTargetRole, extractReporterRole, isIncomingIncident,
   type IncidentRow,
   STATUS_COLOR,
   SEVERITY_COLOR,
@@ -63,7 +64,7 @@ function AllIncidentsPage() {
           active: allRows.filter((r) => r.status === "open" || r.status === "investigating").length,
           resolved: allRows.filter((r) => r.status === "resolved").length,
           dismissed: allRows.filter((r) => r.status === "dismissed").length,
-          incoming: allRows.length,
+          incoming: allRows.filter(isIncomingIncident).length,
         }}
         basePath="/manager/field-incidents"
       />

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { listFieldIncidents } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   IncidentTabNav, DetailPanel,
-  safeRows, extractReporterName, extractReporterRole,
+  safeRows, extractReporterName, extractReporterRole, isIncomingIncident,
   type IncidentRow,
 } from "@/components/app/incidents/IncidentShared";
 
@@ -61,8 +62,11 @@ function IncomingIncidentsPage() {
 
   const allRows = useMemo(() => safeRows(data), [data]);
 
+  // Incoming = only incidents reported by admin or technician (or non-manager)
+  const incomingRows = useMemo(() => allRows.filter(isIncomingIncident), [allRows]);
+
   const groups = useMemo(() => {
-    let src = allRows;
+    let src = incomingRows;
     if (roleFilter !== "all") {
       src = src.filter((r) => {
         const rr = extractReporterRole(r);
@@ -77,7 +81,7 @@ function IncomingIncidentsPage() {
       );
     }
     return groupByReporter(src);
-  }, [allRows, roleFilter, search]);
+  }, [incomingRows, roleFilter, search]);
 
   const splitView = !!active;
 
@@ -89,7 +93,7 @@ function IncomingIncidentsPage() {
           active:    allRows.filter((r) => r.status === "open" || r.status === "investigating").length,
           resolved:  allRows.filter((r) => r.status === "resolved").length,
           dismissed: allRows.filter((r) => r.status === "dismissed").length,
-          incoming:  allRows.length,
+          incoming:  incomingRows.length,
         }}
         basePath="/manager/field-incidents"
       />
@@ -128,7 +132,7 @@ function IncomingIncidentsPage() {
         <div className="space-y-2">{[1,2,3].map((i) => <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />)}</div>
       ) : groups.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
-          {allRows.length === 0 ? "No incidents reported yet." : "No incidents match your filters."}
+          {incomingRows.length === 0 ? "No incoming incidents from admin or technicians." : "No incidents match your filters."}
         </CardContent></Card>
       ) : (
         <div className={splitView ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start" : "space-y-3"}>

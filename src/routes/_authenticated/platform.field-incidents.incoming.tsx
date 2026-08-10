@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { listFieldIncidents } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +12,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  IncidentTabNav, IncidentCard, DetailPanel,
-  safeRows, extractReporterName, extractReporterRole,
+  IncidentTabNav, DetailPanel,
+  safeRows, extractReporterName, extractReporterRole, isIncomingIncident,
   type IncidentRow,
 } from "@/components/app/incidents/IncidentShared";
 
@@ -61,8 +62,10 @@ function IncomingIncidentsPage() {
 
   const allRows = useMemo(() => safeRows(data), [data]);
 
+  const incomingRows = useMemo(() => allRows.filter(isIncomingIncident), [allRows]);
+
   const groups = useMemo(() => {
-    let src = allRows;
+    let src = incomingRows;
     if (roleFilter !== "all") {
       src = src.filter((r) => {
         const rr = extractReporterRole(r);
@@ -77,7 +80,7 @@ function IncomingIncidentsPage() {
       );
     }
     return groupByReporter(src);
-  }, [allRows, roleFilter, search]);
+  }, [incomingRows, roleFilter, search]);
 
   const splitView = !!active;
 
@@ -88,7 +91,7 @@ function IncomingIncidentsPage() {
         active:    allRows.filter((r) => r.status === "open" || r.status === "investigating").length,
         resolved:  allRows.filter((r) => r.status === "resolved").length,
         dismissed: allRows.filter((r) => r.status === "dismissed").length,
-        incoming:  allRows.length,
+        incoming:  incomingRows.length,
       }} />
 
       {/* Toolbar */}

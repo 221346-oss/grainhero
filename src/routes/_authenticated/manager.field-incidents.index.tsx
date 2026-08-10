@@ -16,11 +16,11 @@ import { TicketDiscussionDialog, type TicketItem } from "@/components/app/Ticket
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
 import {
   IncidentTabNav, SearchCombobox, FilterChips, IncidentCard, DetailPanel,
-  safeRows, extractTargetRole,
+  safeRows, extractTargetRole, extractReporterRole, isIncomingIncident,
   type IncidentRow,
 } from "@/components/app/incidents/IncidentShared";
 
-export const Route = createFileRoute("/_authenticated/manager/field-incidents")({
+export const Route = createFileRoute("/_authenticated/manager/field-incidents/")({
   head: () => ({ meta: [{ title: "Manager · Field Incidents — Grain Hero" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: FieldIncidentsPage,
 });
@@ -45,6 +45,7 @@ function FieldIncidentsPage() {
   const activeRows   = useMemo(() => allRows.filter((r) => r.status === "open" || r.status === "investigating"), [allRows]);
   const resolvedCount  = useMemo(() => allRows.filter((r) => r.status === "resolved").length, [allRows]);
   const dismissedCount = useMemo(() => allRows.filter((r) => r.status === "dismissed").length, [allRows]);
+  const incomingCount  = useMemo(() => allRows.filter(isIncomingIncident).length, [allRows]);
 
   const existingTitles = useMemo(
     () => Array.from(new Set(activeRows.map((r) => r.category).filter(Boolean))),
@@ -82,7 +83,7 @@ function FieldIncidentsPage() {
           active: activeRows.length, 
           resolved: resolvedCount, 
           dismissed: dismissedCount, 
-          incoming: allRows.length 
+          incoming: incomingCount 
         }}
         basePath="/manager/field-incidents"
       />
