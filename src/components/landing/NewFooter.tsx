@@ -3,27 +3,27 @@ import { Link } from '@tanstack/react-router'
 
 export function NewFooter() {
   return (
-    <footer className="bg-[#111512] text-[#FAFAF7] pt-16 pb-8 px-4 sm:px-6 lg:px-8">
+    <footer className="bg-[#111512] text-[#FAFAF7] pt-10 pb-6 px-4 sm:pt-16 sm:pb-8 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-12 mb-12">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-7 mb-8 sm:gap-8 sm:mb-12 lg:grid-cols-4 lg:gap-12">
           {/* Brand Column */}
-          <div className="col-span-2 space-y-4 lg:col-span-1">
+          <div className="col-span-2 space-y-3 sm:space-y-4 lg:col-span-1">
             <div className="flex items-center gap-2">
               <Wheat className="w-8 h-8 text-[#2FA84F]" />
               <span className="text-xl font-bold text-[#FAFAF7]">GrainHero</span>
             </div>
-            <p className="text-[#FAFAF7]/70 text-sm leading-relaxed">
+            <p className="text-[#FAFAF7]/70 text-sm leading-relaxed line-clamp-2 sm:line-clamp-none">
               AI-powered grain storage management platform helping farmers protect their harvest
               and maximize profits with intelligent monitoring and predictive analytics.
             </p>
             {/* Social Media */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2.5 pt-1 sm:gap-3 sm:pt-2">
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5" />
@@ -32,7 +32,7 @@ export function NewFooter() {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="Twitter"
               >
                 <Twitter className="w-5 h-5" />
@@ -41,7 +41,7 @@ export function NewFooter() {
                 href="https://www.linkedin.com/in/grain-hero-841723419/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />
@@ -50,7 +50,7 @@ export function NewFooter() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5" />
@@ -60,8 +60,8 @@ export function NewFooter() {
 
           {/* Product Column */}
           <div>
-            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Solutions</h3>
-            <ul className="space-y-3">
+            <h3 className="text-[#FAFAF7] font-bold text-base mb-2.5 sm:text-lg sm:mb-4">Solutions</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <Link to="/solutions/grain-storage-monitoring" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Grain storage monitoring
@@ -92,8 +92,8 @@ export function NewFooter() {
 
           {/* Company Column */}
           <div>
-            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Company</h3>
-            <ul className="space-y-3">
+            <h3 className="text-[#FAFAF7] font-bold text-base mb-2.5 sm:text-lg sm:mb-4">Company</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <Link to="/about" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   About Us
@@ -124,8 +124,8 @@ export function NewFooter() {
 
           {/* Support & Contact Column */}
           <div>
-            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Support</h3>
-            <ul className="space-y-3 mb-6">
+            <h3 className="text-[#FAFAF7] font-bold text-base mb-2.5 sm:text-lg sm:mb-4">Support</h3>
+            <ul className="space-y-2 mb-4 sm:space-y-3 sm:mb-6">
               <li>
                 <Link to="/help" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Help Center
@@ -167,8 +167,8 @@ export function NewFooter() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-[#FAFAF7]/10 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="border-t border-[#FAFAF7]/10 pt-5 sm:pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2.5 sm:gap-4">
             <p className="text-[#FAFAF7]/50 text-sm text-center md:text-left">
               © {new Date().getFullYear()} GrainHero. All rights reserved.
             </p>
