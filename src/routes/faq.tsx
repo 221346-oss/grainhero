@@ -22,27 +22,27 @@ const DESC =
 const operations = [
   {
     q: 'Is moisture rising in silo 3?',
-    a: 'Each silo carries probes at several depths, so moisture is tracked layer by layer instead of as one average for the structure. The silo view shows the current reading beside its recent trend, and a sustained rise raises an alert rather than waiting for a fixed threshold to be crossed.',
+    a: 'Moisture is recorded on every reading for that silo, alongside temperature, humidity, CO₂ and VOC. Each silo sets its own thresholds per metric — a normal band, a separate critical band, and a time window a reading has to stay outside the band before it counts, so a momentary spike does not trigger anything. A hysteresis margin stops a value sitting on the line from firing over and over. Cross the band for the full window and the silo raises a prioritised alert.',
   },
   {
     q: 'Why did that batch spoil?',
-    a: 'Every batch keeps its condition history from intake through to dispatch — temperature, humidity, moisture and CO₂. When something goes wrong you can go back to the window where the readings drifted and see what was recorded at the time, which alerts fired, and who acted on them.',
+    a: 'Every state change on a batch is written to its event log with the state it moved from, the state it moved to, who made the change, an optional note and a snapshot of the batch at that moment. The batch itself carries its quality tests, its grade and any spoilage events recorded against it. Alerts raised on it keep who they were assigned to, who acknowledged them and what action was taken — so you can reconstruct both the conditions and the response, not just the outcome.',
   },
   {
     q: 'Can we predict spoilage?',
-    a: 'Yes. GrainHero flags the pattern that comes before spoilage, typically 24 to 48 hours early. It reads how the measurements move together over time rather than reacting to any single value crossing a line, which is what gives you the window to act.',
+    a: 'Yes. Each prediction takes grain type, temperature, humidity, moisture, CO₂ and VOC together with how long the batch has been in storage, and where available the recent history of those readings rather than only the latest value. It returns a risk class — low, moderate, high or critical — a score from 0 to 100, a confidence figure, and the factors behind the result. Predictions are stored against the silo and the batch, so you can see how risk moved over time instead of only where it stands now.',
   },
   {
     q: 'Are the sensors online?',
-    a: 'Sensor and controller health is reported continuously, so a unit that stops sending is surfaced rather than silently missing. If connectivity drops, the controller keeps logging locally for up to 7 days and backfills the gap once it reconnects.',
+    a: 'Devices send a heartbeat on their own schedule and are counted as offline when one is missed. The triage view flags anything with no heartbeat in the last 15 minutes; the platform monitoring view allows three times the device’s own expected interval before calling it offline. Each device record also tracks battery level, firmware version and when calibration is next due, so a unit that is still reporting but degrading is visible too. The offline count sits on the attention queue next to any failed actuator commands.',
   },
   {
     q: 'Which silo needs attention?',
-    a: 'The dashboard orders silos by risk rather than by name, so whatever needs a decision today sits at the top. Each entry shows what put it there — the reading that moved, how long it has been moving, and the batch affected.',
+    a: 'The attention queue scores every silo rather than listing them alphabetically. Unresolved alerts from the last 24 hours are weighted by severity — critical counts 100, warning 30, info 5 — and a near-full silo adds to that, 20 points at 95% of capacity and 8 at 85%. Silos scoring zero drop out entirely and the rest sort highest first. Each row shows its fill percentage, how many alerts are open, how many of those are critical, and the specific alert driving the score.',
   },
   {
     q: 'How much did we lose?',
-    a: 'Spoilage is tracked against each batch and its grade, so loss is expressed in tonnes and in value rather than as an incident count. Totals roll up by silo and by period, which also shows what acting earlier would have been worth.',
+    a: 'Each batch carries its own economics — quantity, purchase price per kg, sale price per kg, and the resulting revenue and profit — together with its grade and any spoilage label applied to it. Analytics totals revenue and profit across batches and dispatches, so what a spoiled batch cost is visible against what comparable batches returned over the same period.',
   },
 ]
 
