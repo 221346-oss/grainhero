@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion'
+import { Link } from '@tanstack/react-router'
+import { faqSlug } from '@/components/marketing/MarketingPage'
 
 const rows = [
   {
@@ -52,15 +54,18 @@ export function ProblemMarquee() {
             >
               {[...row.items, ...row.items, ...row.items, ...row.items].map((t, i) => (
                 <span key={i} className="flex shrink-0 items-center">
-                  <span
-                    className={`px-8 text-2xl font-black tracking-tight sm:text-4xl ${
+                  <Link
+                    to="/faq"
+                    search={{ q: faqSlug(t) }}
+                    aria-label={`Read the answer to: ${t}`}
+                    className={`px-8 text-2xl font-black tracking-tight transition-colors hover:text-[#2FA84F] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2FA84F] sm:text-4xl ${
                       (i + ri) % 2 === 0
                         ? 'text-[#111512] dark:text-foreground'
                         : 'text-[#C7D9C1] dark:text-muted-foreground/50'
                     }`}
                   >
                     {t}
-                  </span>
+                  </Link>
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#2FA84F]" />
                 </span>
               ))}
