@@ -320,43 +320,44 @@ function PlatformReportingPage() {
 
         {/* Customer Feedback Tab */}
         <TabsContent value="feedback" className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                <Star className="h-3 w-3" />
-                <span>Avg Rating</span>
+          {/* Feedback stats - Neon hairline grid */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-5">
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Star className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Avg Rating</span>
               </div>
-              <div className="text-2xl font-bold text-slate-900">
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgOverallRating.toFixed(1)}
-                <span className="text-sm text-slate-400">/5</span>
+                <span className="text-sm text-muted-foreground">/5</span>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Technician</div>
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Technician</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgTechnicianRating.toFixed(1)}
-                <span className="text-sm text-slate-400">/5</span>
+                <span className="text-sm text-muted-foreground">/5</span>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Install Quality</div>
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Install Quality</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgInstallQuality.toFixed(1)}
-                <span className="text-sm text-slate-400">/5</span>
+                <span className="text-sm text-muted-foreground">/5</span>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                <CheckCircle2 className="h-3 w-3" />
-                <span>Would Recommend</span>
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <CheckCircle2 className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Recommend</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-xl font-bold tabular-nums text-success">
                 {feedback.aggregates.recommendPercent.toFixed(0)}%
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Total Responses</div>
-              <div className="text-2xl font-bold text-slate-900">{feedback.aggregates.totalCount}</div>
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Total</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">{feedback.aggregates.totalCount}</div>
             </div>
           </div>
 
@@ -426,31 +427,32 @@ function PlatformReportingPage() {
 
         {/* Warehouse Metrics Tab */}
         <TabsContent value="warehouses" className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Total Warehouses</div>
-              <div className="text-2xl font-bold text-slate-900">
+          {/* Warehouse stats - Neon hairline grid */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-4">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Total Warehouses</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {warehouses.platformAggregates.totalWarehouses}
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Avg Utilization</div>
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Avg Utilization</span>
+              <div className="text-xl font-bold tabular-nums text-info">
                 {warehouses.platformAggregates.avgUtilizationPercent}%
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Active Silos</div>
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Active Silos</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {warehouses.platformAggregates.totalActiveSilos}
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                <AlertTriangle className="h-3 w-3" />
-                <span>Quality Incidents</span>
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <AlertTriangle className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Incidents</span>
               </div>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="text-xl font-bold tabular-nums text-warning">
                 {warehouses.platformAggregates.totalQualityIncidents}
               </div>
             </div>

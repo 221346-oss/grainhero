@@ -1,24 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
+import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
+import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 const fmtPKR = new Intl.NumberFormat("en-PK", {
   style: "currency", currency: "PKR", maximumFractionDigits: 0,
 });
-
-function Spark({ data }: { data: number[] }) {
-  if (!data.length) return null;
-  const max = Math.max(1, ...data);
-  const pts = data.map((v, i) => {
-    const x = (i / Math.max(1, data.length - 1)) * 100;
-    const y = 28 - (v / max) * 26;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-  return (
-    <svg viewBox="0 0 100 28" preserveAspectRatio="none" className="w-full h-8">
-      <polyline points={pts} fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-500" />
-    </svg>
-  );
-}
 
 type Row = { label: string; value: number | string; to: string; danger?: boolean };
 
@@ -35,6 +23,18 @@ export function SuperKpiSummary({
   ordersOpen: number;
   criticalAlerts: number;
 }) {
+  // Calculate platform health score
+  const calculateHealthScore = () => {
+    const revenueScore = Math.min(40, Math.max(0, 20 + (mrrDeltaPct ?? 0) * 0.5));
+    const alertScore = criticalAlerts === 0 ? 30 : Math.max(0, 30 - (criticalAlerts * 5));
+    const subsScore = Math.min(30, (activeSubs / Math.max(1, totalTenants)) * 30);
+    return Math.round(revenueScore + alertScore + subsScore);
+  };
+
+  const healthScore = calculateHealthScore();
+  const healthColor = healthScore >= 80 ? "text-success" : healthScore >= 60 ? "text-warning" : "text-severity-critical";
+  const healthLabel = healthScore >= 90 ? "Excellent" : healthScore >= 80 ? "Very Good" : healthScore >= 70 ? "Good" : healthScore >= 60 ? "Fair" : "Needs Attention";
+
   const rows: Row[] = [
     { label: "Tenants", value: totalTenants, to: "/platform/users" },
     { label: "Users", value: totalUsers, to: "/platform/users" },
@@ -45,69 +45,107 @@ export function SuperKpiSummary({
   const positive = (mrrDeltaPct ?? 0) >= 0;
 
   return (
-    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
-      <div className="flex items-center gap-1.5 mb-3">
-        <h2 className="text-sm font-semibold text-foreground">Platform KPI Summary</h2>
-        <InfoDot text="MRR trend and live platform totals. Every number links to its full page." />
+    <section className="rounded-xl border border-border bg-card/60 p-3 backdrop-blur-sm">
+      <div className="flex items-center gap-1.5 mb-2">
+        <h2 className="text-sm font-semibold text-foreground">Platform Performance</h2>
+        <InfoDot text="MRR, platform health, and key metrics." />
       </div>
 
-      <div className="grid gap-2 md:grid-cols-[1fr_35%]">
+      {/* Platform Health Score - Compact */}
+      <div className="mb-2 pb-2 border-b border-border/60">
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Health</span>
+            <span className={`text-2xl font-bold tabular-nums ${healthColor}`}>{healthScore}</span>
+            <span className="text-sm text-muted-foreground">/100</span>
+            <span className={`text-[11px] font-medium ${healthColor}`}>{healthLabel}</span>
+          </div>
+        </div>
+        {/* Compact health bar */}
+        <div className="flex items-center gap-0.5 mt-1.5">
+          {Array.from({ length: 10 }).map((_, i) => {
+            const filledSegments = Math.round((healthScore / 100) * 10);
+            const isFilled = i < filledSegments;
+            const bgClass = isFilled 
+              ? (healthScore >= 80 ? "bg-success" : healthScore >= 60 ? "bg-warning" : "bg-severity-critical")
+              : "bg-muted";
+            
+            return <div key={i} className={`h-1.5 flex-1 rounded-sm transition-all duration-500 ${bgClass}`} style={{ transitionDelay: `${i * 50}ms` }} />;
+          })}
+        </div>
+      </div>
+
+      {/* Main Grid - Compact */}
+      <div className="grid gap-2 md:grid-cols-[1.2fr_1fr]">
+        {/* Revenue Card - Compact */}
         <Link
           to="/platform/financials"
-          className="group rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between"
+          className="group rounded-lg border border-border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Monthly Revenue</span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-success/10 text-success">
               {activeSubs} active
             </span>
           </div>
-          <div className="mt-1 flex-1 flex flex-col justify-between gap-3">
-            <div>
-              <div className="text-3xl md:text-4xl font-bold tabular-nums text-emerald-600 leading-tight">
-                {fmtPKR.format(mrr)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Total Revenue</p>
+          
+          <div className="text-3xl font-bold tabular-nums text-success leading-tight">
+            {fmtPKR.format(mrr)}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Total Platform Revenue</p>
+
+          {/* Compact Growth with Sparkline */}
+          <div className="mt-2">
+            <div className={`flex items-center gap-1 text-[11px] font-semibold ${positive ? "text-success" : "text-severity-critical"}`}>
+              {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <span>{positive ? "+" : ""}{mrrDeltaPct ?? 0}% vs last month</span>
             </div>
-            <div className="pt-3 border-t border-border/60">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-foreground">Growth vs Last Month</span>
-                <span className={`text-sm font-semibold ${positive ? "text-emerald-600" : "text-red-600"}`}>
-                  {positive ? "+" : ""}{mrrDeltaPct ?? 0}%
-                </span>
+
+            {/* Compact Neon Sparkline */}
+            {mrrSpark && mrrSpark.length > 1 && (
+              <div className="h-8 -mx-0.5 mt-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={mrrSpark.map(v => ({ v }))} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="platformRevSparkGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={positive ? "hsl(var(--success))" : "hsl(var(--severity-critical))"} stopOpacity={0.3} />
+                        <stop offset="100%" stopColor={positive ? "hsl(var(--success))" : "hsl(var(--severity-critical))"} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <Area 
+                      type="monotone" 
+                      dataKey="v" 
+                      stroke={positive ? "hsl(var(--success))" : "hsl(var(--severity-critical))"} 
+                      strokeWidth={1.5} 
+                      fill="url(#platformRevSparkGrad)" 
+                      dot={false} 
+                      isAnimationActive={true} 
+                      animationDuration={800} 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <div className="w-full bg-muted rounded-full h-2 mt-2 overflow-hidden">
-                <div
-                  className={`h-2 rounded-full transition-all duration-500 ${positive ? "bg-emerald-500" : "bg-red-500"}`}
-                  style={{ width: `${Math.min(100, Math.abs(mrrDeltaPct ?? 0))}%` }}
-                />
-              </div>
-              {mrrSpark && mrrSpark.length > 0 && (
-                <div className="mt-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                  <Spark data={mrrSpark} />
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </Link>
 
-        <div className="rounded-lg border bg-card overflow-hidden">
-          <ul className="divide-y">
-            {rows.map((r) => (
-              <li key={r.label}>
-                <Link
-                  to={r.to}
-                  className="flex items-center justify-between px-3 py-1.5 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition"
-                >
-                  <span className="text-xs text-foreground">{r.label}</span>
-                  <span className={`text-sm font-bold tabular-nums w-12 text-right ${r.danger ? "text-red-600" : "text-foreground"}`}>
-                    {r.value}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Platform Metrics - Compact Hairline Grid (No Icons) */}
+        <HairlineGrid cols="grid-cols-1">
+          {rows.map((r) => {
+            return (
+              <Link key={r.label} to={r.to}>
+                <NeonPanel className="hover:bg-muted/30 cursor-pointer transition-colors py-1.5 px-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-muted-foreground">{r.label}</span>
+                    <span className={`text-lg font-bold tabular-nums ${r.danger ? "text-severity-critical" : "text-foreground"}`}>
+                      {r.value}
+                    </span>
+                  </div>
+                </NeonPanel>
+              </Link>
+            );
+          })}
+        </HairlineGrid>
       </div>
     </section>
   );

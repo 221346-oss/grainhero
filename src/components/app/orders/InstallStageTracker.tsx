@@ -8,15 +8,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { AlertTriangle, Check, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type InstallStageKey = "paid" | "assigned" | "en_route" | "onsite" | "installed" | "completed";
+export type InstallStageKey = "paid" | "en_route" | "onsite" | "installed" | "completed";
 
 export const STAGES: { key: InstallStageKey; label: string; short: string; actor: "system" | "super_admin" | "admin" }[] = [
   { key: "paid",      label: "Paid",      short: "1", actor: "system" },
-  { key: "assigned",  label: "Assigned",  short: "2", actor: "super_admin" },
-  { key: "en_route",  label: "En route",  short: "3", actor: "super_admin" },
-  { key: "onsite",    label: "On-site",   short: "4", actor: "super_admin" },
-  { key: "installed", label: "Installed", short: "5", actor: "super_admin" },
-  { key: "completed", label: "Completed", short: "6", actor: "admin" },
+  { key: "en_route",  label: "En route",  short: "2", actor: "super_admin" },
+  { key: "onsite",    label: "On-site",   short: "3", actor: "super_admin" },
+  { key: "installed", label: "Installed", short: "4", actor: "super_admin" },
+  { key: "completed", label: "Completed", short: "5", actor: "admin" },
 ];
 
 export interface StageHistoryItem {
@@ -31,7 +30,7 @@ function rank(stage: InstallStageKey) {
 
 export function InstallStageTracker({
   stage, blocked, blockerNote, history = [], variant = "row",
-  canAdvanceAs, onAdvance,
+  canAdvanceAs, onAdvance, order,
 }: {
   stage: InstallStageKey;
   blocked?: boolean;
@@ -40,9 +39,16 @@ export function InstallStageTracker({
   variant?: "row" | "full";
   canAdvanceAs?: { superAdmin: boolean; admin: boolean };
   onAdvance?: (next: "en_route" | "onsite" | "installed" | "completed" | "blocked", note?: string) => Promise<void> | void;
+  order?: Record<string, unknown>;
 }) {
   const cur = rank(stage);
   const nextStage = STAGES[cur + 1];
+  
+  // Check if order is unpaid (status: approved, or pending_payment)
+  // "new" means paid (legacy status from webhook after successful payment)
+  const orderStatus = String(order?.status ?? "");
+  const unpaidStatuses = new Set(["approved", "pending_payment"]);
+  const isUnpaid = unpaidStatuses.has(orderStatus);
 
   const stampOf = (k: InstallStageKey | "blocked") => history.find((h) => h.stage === k)?.at;
 
@@ -79,10 +85,10 @@ export function InstallStageTracker({
 
   const label = (
     <div className="flex items-center gap-1.5 text-xs">
-      <span className={cn("font-medium", blocked ? "text-amber-600" : "text-emerald-600")}>
-        {blocked ? "Blocked at " : ""}{STAGES[cur]?.label ?? stage}
+      <span className={cn("font-medium", blocked ? "text-amber-600" : isUnpaid ? "text-slate-600" : "text-emerald-600")}>
+        {blocked ? "Blocked at " : ""}{isUnpaid ? "Pending" : STAGES[cur]?.label ?? stage}
       </span>
-      {nextStage && !blocked && (
+      {nextStage && !blocked && !isUnpaid && (
         <span className="text-muted-foreground flex items-center gap-0.5">
           <ArrowRight className="h-3 w-3" /> {nextStage.label}
         </span>
@@ -234,7 +240,6 @@ export function deriveStage(order: Record<string, unknown> | null | undefined, i
   stage: InstallStageKey; blocked: boolean; blockerNote?: string | null; history: StageHistoryItem[];
 } {
   const status = (install?.status as string | undefined) ?? "scheduled";
-  const paidAt = (order?.created_at as string | undefined) ?? undefined;
   const assignedAt = (install?.assigned_at as string | undefined) ?? undefined;
   const enRouteAt = (install?.en_route_at as string | undefined) ?? undefined;
   const onsiteAt = (install?.onsite_at as string | undefined) ?? undefined;
@@ -245,26 +250,57 @@ export function deriveStage(order: Record<string, unknown> | null | undefined, i
   const blocked = status === "blocked";
   const blockerNote = (install?.blocker_note as string | null | undefined) ?? null;
 
-  let stage: InstallStageKey = "paid";
-  if (completedAt || status === "completed" || orderStatus === "live") stage = "completed";
-  else if (installedAt || status === "installed" || orderStatus === "installed") stage = "installed";
-  else if (onsiteAt || status === "onsite") stage = "onsite";
-  else if (enRouteAt || status === "en_route") stage = "en_route";
-  else if (assignedAt || install || orderStatus === "tech_assigned" || orderStatus === "approved") stage = "assigned";
-  else stage = "paid";
-  if (blocked && stage === "paid") stage = "assigned";
+  // Orders with "approved" or "pending_payment" status haven't been paid yet
+  // "new" is a LEGACY status that means "paid" (after checkout.session.completed webhook)
+  // Only consider the order "paid" (stage 1) once payment is confirmed by Stripe
+  const unpaidStatuses = new Set(["approved", "pending_payment"]);
+  const isPaid = !unpaidStatuses.has(orderStatus);
 
+  // Determine current stage
+  let stage: InstallStageKey = "paid";
+  
+  // If payment hasn't been confirmed, stay at initial "paid" stage regardless of other conditions
+  if (!isPaid) {
+    stage = "paid";
+  } else if (completedAt || status === "completed" || orderStatus === "live") {
+    stage = "completed";
+  } else if (installedAt || status === "installed" || orderStatus === "installed") {
+    stage = "installed";
+  } else if (onsiteAt || status === "onsite") {
+    stage = "onsite";
+  } else if (enRouteAt || status === "en_route" || assignedAt) {
+    // "assigned" is tracked via assigned_at timestamp, but the stage is "en_route"
+    stage = "en_route";
+  }
+  
+  // Special case: if blocked, show as en_route stage minimum
+  if (blocked && stage === "paid" && isPaid) {
+    stage = "en_route";
+  }
+
+  // Build history - only include paid timestamp if actually paid
   const history: StageHistoryItem[] = [];
-  if (paidAt) history.push({ stage: "paid", at: paidAt });
-  if (assignedAt) history.push({ stage: "assigned", at: assignedAt });
-  if (enRouteAt) history.push({ stage: "en_route", at: enRouteAt });
-  if (onsiteAt) history.push({ stage: "onsite", at: onsiteAt });
-  if (installedAt) history.push({ stage: "installed", at: installedAt });
-  if (completedAt) history.push({ stage: "completed", at: completedAt });
+  if (isPaid) {
+    // Use updated_at as payment timestamp (when status changed to paid/new)
+    // Fall back to created_at if updated_at not available
+    const paidTimestamp = (order?.updated_at as string | undefined) ?? (order?.created_at as string | undefined);
+    if (paidTimestamp) {
+      history.push({ stage: "paid", at: paidTimestamp });
+    }
+  }
+  // Note: "assigned" is not a stage - it's tracked via assigned_at but maps to "en_route" stage
+  if (enRouteAt && isPaid) history.push({ stage: "en_route", at: enRouteAt });
+  else if (assignedAt && isPaid) history.push({ stage: "en_route", at: assignedAt });
+  if (onsiteAt && isPaid) history.push({ stage: "onsite", at: onsiteAt });
+  if (installedAt && isPaid) history.push({ stage: "installed", at: installedAt });
+  if (completedAt && isPaid) history.push({ stage: "completed", at: completedAt });
+  
+  // Add blocked events
   for (const e of events) {
     if ((e.event_type as string) === "blocked") {
       history.push({ stage: "blocked", at: (e.event_at as string) ?? (e.created_at as string), note: (e.note as string) ?? null });
     }
   }
+  
   return { stage, blocked, blockerNote, history };
 }
