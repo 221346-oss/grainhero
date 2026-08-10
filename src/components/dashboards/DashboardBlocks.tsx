@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
-import { listGrainBatches } from "@/lib/operations.functions";
+import { listGrainBatches, listBuyers } from "@/lib/operations.functions";
 import { listDispatches } from "@/lib/dispatches.functions";
 
 // range must match whatever AdminDashboard.tsx's own useQuery is keyed on —
@@ -202,6 +202,85 @@ export function TeamCard() {
             </div>
           </div>
         ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function formatRelativeTime(iso: string) {
+  const now = new Date();
+  const then = new Date(iso);
+  const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
+  
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return then.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export function BuyerOrdersCard() {
+  const listBuyersFn = useServerFn(listBuyers);
+  const { data: buyers } = useQuery({
+    queryKey: ["buyers-overview"],
+    queryFn: () => listBuyersFn(),
+    refetchInterval: 30_000,
+  });
+
+  const rows = (buyers ?? []) as Array<{
+    id: string;
+    name: string;
+    company_name?: string | null;
+    status?: "active" | "paused" | "inactive" | null;
+    contact_name?: string | null;
+    created_at?: string | null;
+  }>;
+
+  const statusColor = (status?: string | null) => {
+    switch (status) {
+      case "active": return "bg-emerald-100 text-emerald-700";
+      case "paused": return "bg-amber-100 text-amber-700";
+      case "inactive": return "bg-slate-100 text-slate-700";
+      default: return "bg-slate-100 text-slate-700";
+    }
+  };
+
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/grain-operations" search={{ tab: "buyers" }} title="Buyers" count={rows.length} />
+      <CardContent className="p-3 pt-0">
+        {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No buyers created</p>}
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {rows.map((buyer) => (
+            <Link
+              key={buyer.id}
+              to="/grain-operations"
+              search={{ tab: "buyers" }}
+              className="flex flex-col gap-1.5 px-2 py-2 rounded-md border border-border/50 hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold truncate flex-1">{buyer.name}</span>
+                <Badge className={`text-[10px] px-1.5 py-0 shrink-0 ${statusColor(buyer.status)}`}>
+                  {buyer.status ?? "—"}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-muted-foreground truncate flex-1">
+                  {buyer.company_name ? buyer.company_name : buyer.contact_name ? buyer.contact_name : "No details"}
+                </span>
+              </div>
+              {buyer.created_at && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-muted-foreground">Created</span>
+                  <span className="text-[10px] font-medium text-muted-foreground">{formatRelativeTime(buyer.created_at)}</span>
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

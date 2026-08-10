@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
@@ -62,14 +62,14 @@ function ExportRow({ data, filename, title }: {
       <button
         onClick={() => exportToCSV(data, filename)}
         disabled={data.length === 0}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 transition-colors"
       >
         <Download className="w-3 h-3" /> CSV
       </button>
       <button
         onClick={async () => { setBusy(true); await exportToPDF(data, title, filename).catch(console.error); setBusy(false); }}
         disabled={data.length === 0 || busy}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 transition-colors"
       >
         <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
       </button>
@@ -82,10 +82,10 @@ function Tile({ label, value, sub, accent }: {
   label: string; value: string | number; sub?: string; accent?: string;
 }) {
   return (
-    <div className="border-r last:border-r-0 border-slate-100 px-5 py-4">
-      <div className={`text-lg font-semibold tabular-nums leading-tight ${accent ?? "text-[#252d26]"}`}>{value}</div>
-      <div className="text-xs text-[#404F44]/70 mt-0.5">{label}</div>
-      {sub && <div className="text-[10px] text-slate-400 mt-0.5">{sub}</div>}
+    <div className="bg-background px-3 py-3">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 truncate">{label}</div>
+      <div className={`text-[17px] font-semibold tabular-nums leading-tight ${accent ?? "text-foreground"}`}>{value}</div>
+      {sub && <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">{sub}</div>}
     </div>
   );
 }
@@ -113,6 +113,7 @@ function PlatformBusinessPage() {
   const revenueQ = useQuery({
     queryKey: ["platform-revenue"],
     queryFn: () => revenueFn(),
+    staleTime: 60_000,
     refetchInterval: 60_000,
     retry: 2,
   });
@@ -188,96 +189,137 @@ function PlatformBusinessPage() {
   });
 
   // ── Loading — skeleton that mirrors actual page layout ──────────────────
-  if (revenueQ.isLoading) {
-    const Sk = ({ className }: { className: string }) => (
-      <div className={`animate-pulse rounded bg-slate-100 ${className}`} />
-    );
+  // ── Inline skeleton helper ────────────────────────────────────────────────
+  const BSk = ({ className, style }: { className: string; style?: React.CSSProperties }) => (
+    <div className={`animate-pulse rounded bg-muted ${className}`} style={style} />
+  );
+
+  function BusinessSkeleton() {
     return (
-      <AdminPageShell title="Business" subtitle="Subscription revenue and hardware sales">
-        <div className="space-y-4">
-          {/* 7-tile stat strip */}
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-slate-100">
-              {[...Array(7)].map((_, i) => (
-                <div key={i} className="px-5 py-4 space-y-2">
-                  <Sk className="h-6 w-20" />
-                  <Sk className="h-3 w-14" />
-                </div>
-              ))}
+      <div className="space-y-4">
+
+        {/* ── Row 1: 7 stat tiles ──────────────────────────────────── */}
+        <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
+          {[...Array(7)].map((_, i) => (
+            <div key={i} className="bg-background px-5 py-4 space-y-2">
+              <BSk className="h-[18px] w-20" />
+              <BSk className="h-[11px] w-14" />
             </div>
-          </div>
-          {/* Revenue Insights + Sales Overview */}
-          <div className="grid gap-4 lg:grid-cols-5">
-            <div className="lg:col-span-3 rounded-lg border border-slate-200 bg-white p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <Sk className="h-3 w-28" />
-                  <Sk className="h-8 w-40" />
-                  <Sk className="h-3 w-36" />
-                </div>
-                <Sk className="h-6 w-24 rounded-md" />
-              </div>
-              <Sk className="h-[150px] w-full rounded-lg" />
-            </div>
-            <div className="lg:col-span-2 rounded-lg border border-slate-200 bg-white p-6 space-y-4">
-              <Sk className="h-3 w-24" />
-              <div className="flex justify-center">
-                <Sk className="h-[148px] w-[148px] rounded-full" />
-              </div>
+          ))}
+        </div>
+
+        {/* ── Row 2: Revenue chart (3/5) + Donut (2/5) ────────────── */}
+        <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-1 lg:grid-cols-5">
+          <div className="lg:col-span-3 bg-background p-5 space-y-4">
+            <div className="flex items-start justify-between">
               <div className="space-y-2">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex justify-between">
-                    <Sk className="h-3 w-20" />
-                    <Sk className="h-3 w-8" />
-                  </div>
-                ))}
+                <BSk className="h-[11px] w-28" />
+                <BSk className="h-9 w-40" />
+                <BSk className="h-[11px] w-32" />
               </div>
+              <BSk className="h-6 w-20 rounded" />
+            </div>
+            {/* Bar chart skeleton */}
+            <div className="flex items-end gap-1.5 h-[150px]">
+              {[...Array(12)].map((_, i) => {
+                const h = [40, 55, 35, 65, 50, 80, 45, 70, 60, 55, 90, 75][i];
+                return <BSk key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%` } as React.CSSProperties} />;
+              })}
             </div>
           </div>
-          {/* Plan breakdown table */}
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-100 flex justify-between">
-              <Sk className="h-3 w-32" />
-              <div className="flex gap-2">
-                <Sk className="h-6 w-12 rounded" />
-                <Sk className="h-6 w-12 rounded" />
-              </div>
+          <div className="lg:col-span-2 bg-background p-5 space-y-4">
+            <BSk className="h-[13px] w-28" />
+            {/* Donut skeleton */}
+            <div className="flex justify-center py-2">
+              <BSk className="w-36 h-36 rounded-full" />
             </div>
-            <div className="divide-y divide-slate-50">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="px-5 py-3.5 flex items-center gap-4">
-                  <div className="flex items-center gap-2 flex-1">
-                    <Sk className="h-2.5 w-2.5 rounded-full" />
-                    <Sk className="h-3.5 w-24" />
-                  </div>
-                  <Sk className="h-3.5 w-8" />
-                  <Sk className="h-3.5 w-24" />
-                  <div className="flex items-center gap-2 ml-auto">
-                    <Sk className="h-1.5 w-24 rounded-full" />
-                    <Sk className="h-3 w-8" />
-                  </div>
+            {/* Legend items */}
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BSk className="h-2.5 w-2.5 rounded-full" />
+                  <BSk className="h-[12px] w-20" />
                 </div>
-              ))}
+                <BSk className="h-[12px] w-8" />
+              </div>
+            ))}
+            {/* ARR progress bar */}
+            <div className="border-t border-border pt-3 space-y-2">
+              <div className="flex justify-between">
+                <BSk className="h-[11px] w-24" />
+                <BSk className="h-[11px] w-8" />
+              </div>
+              <BSk className="h-1.5 w-full" />
             </div>
           </div>
         </div>
-      </AdminPageShell>
+
+        {/* ── Row 3: Plan Breakdown table ──────────────────────────── */}
+        <div className="rounded-md border border-border bg-background overflow-hidden">
+          <div className="px-5 h-11 border-b border-border flex items-center justify-between">
+            <BSk className="h-[13px] w-32" />
+            <div className="flex gap-2">
+              <BSk className="h-6 w-12 rounded" />
+              <BSk className="h-6 w-12 rounded" />
+            </div>
+          </div>
+          {/* table header */}
+          <div className="px-3 py-2.5 border-b border-border bg-muted/30 grid grid-cols-4 gap-6">
+            {[20, 12, 16, 24].map((w, i) => <BSk key={i} className={`h-[10px] w-${w}`} />)}
+          </div>
+          {/* plan rows */}
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="px-3 py-3 flex items-center gap-4 border-b border-border last:border-0">
+              <div className="flex items-center gap-2.5 flex-1">
+                <BSk className="w-2.5 h-2.5 rounded-full shrink-0" />
+                <BSk className="h-[13px] w-24" />
+              </div>
+              <BSk className="h-[13px] w-8" />
+              <BSk className="h-[13px] w-24" />
+              <div className="flex items-center gap-2 w-44 justify-end">
+                <BSk className="h-1.5 w-24 rounded-full" />
+                <BSk className="h-[11px] w-8" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Row 4: Expiring soon table ───────────────────────────── */}
+        <div className="rounded-md border border-border bg-background overflow-hidden">
+          <div className="px-5 h-11 border-b border-border flex items-center justify-between">
+            <BSk className="h-[13px] w-36" />
+            <BSk className="h-6 w-12 rounded" />
+          </div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="px-3 py-3 flex items-center gap-4 border-b border-border last:border-0">
+              <BSk className="h-[13px] flex-1" />
+              <BSk className="h-[12px] w-20" />
+              <div className="text-right space-y-1">
+                <BSk className="h-[13px] w-24" />
+                <BSk className="h-[10px] w-16" />
+              </div>
+              <BSk className="h-7 w-16 rounded" />
+            </div>
+          ))}
+        </div>
+
+      </div>
     );
   }
 
-  // ── Error ─────────────────────────────────────────────────────────────────
+  // ── Error state (shown inline inside the shell) ───────────────────────────
   if (revenueQ.isError) {
     return (
-      <AdminPageShell title="Business" subtitle="Subscription revenue and hardware sales">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-5 flex items-start gap-3">
-          <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+      <AdminPageShell title="Business" subtitle="Subscription revenue and hardware sales across every tenant">
+        <div className="border border-severity-critical/20 bg-severity-critical/5 rounded-md p-4 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-severity-critical mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-red-900">Failed to load analytics</p>
-            <p className="text-xs text-red-600 mt-0.5">
+            <p className="text-[13px] font-medium text-foreground">Failed to load analytics</p>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
               {revenueQ.error instanceof Error ? revenueQ.error.message : "Unknown error"}
             </p>
             <button onClick={() => revenueQ.refetch()}
-              className="mt-2.5 inline-flex items-center gap-1 text-xs text-red-700 hover:underline">
+              className="mt-2 inline-flex items-center gap-1 text-[12px] text-severity-critical hover:underline">
               <RefreshCw className="w-3 h-3" /> Retry
             </button>
           </div>
@@ -291,37 +333,37 @@ function PlatformBusinessPage() {
       title="Business"
       subtitle="Subscription revenue and hardware sales across every tenant"
       actions={
+        revenueQ.isLoading ? undefined :
         <button onClick={() => revenueQ.refetch()}
-          className="inline-flex items-center gap-1.5 rounded border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50">
+          className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-[13px] text-muted-foreground hover:bg-muted transition-colors">
           <RefreshCw className="w-3 h-3" /> Refresh
         </button>
       }
     >
       <NeonPatternDefs />
-      {/* ── Flat stat strip ────────────────────────────────────────── */}
-      <div className="rounded-lg border border-slate-200 bg-white overflow-x-auto">
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-slate-100 min-w-max lg:min-w-0">
-          <Tile label="MRR"          value={`PKR ${fmt(kpis?.mrr ?? 0)}`} />
-          <Tile label="ARR"          value={`PKR ${fmt(kpis?.arr ?? 0)}`} />
-          <Tile label="Active subs"  value={kpis?.activeCount ?? 0} sub={`${kpis?.totalAdmins ?? 0} total admins`} />
-          <Tile label="Trial"        value={kpis?.trialCount ?? 0} />
-          <Tile label="Hardware"     value={`PKR ${fmt(kpis?.hardwareRevenue ?? 0)}`} sub={`${kpis?.hardwareOrders ?? 0} orders`} />
-          <Tile label="Churn (30d)"  value={`${kpis?.churnRate ?? 0}%`}
-            accent={kpis && kpis.churnRate > 5 ? "text-red-600" : "text-[#252d26]"} />
-          <Tile label="Expiring /7d" value={kpis?.expiringCount ?? 0}
-            accent={kpis && (kpis.expiringCount ?? 0) > 0 ? "text-amber-600" : "text-[#252d26]"} />
-        </div>
+      {revenueQ.isLoading ? <BusinessSkeleton /> : (<>
+      {/* ── Flat stat strip — neon hairline grid ─────────────────── */}
+      <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
+        <Tile label="MRR"          value={`PKR ${fmt(kpis?.mrr ?? 0)}`} />
+        <Tile label="ARR"          value={`PKR ${fmt(kpis?.arr ?? 0)}`} />
+        <Tile label="Active subs"  value={kpis?.activeCount ?? 0} sub={`${kpis?.totalAdmins ?? 0} total admins`} />
+        <Tile label="Trial"        value={kpis?.trialCount ?? 0} />
+        <Tile label="Hardware"     value={`PKR ${fmt(kpis?.hardwareRevenue ?? 0)}`} sub={`${kpis?.hardwareOrders ?? 0} orders`} />
+        <Tile label="Churn (30d)"  value={`${kpis?.churnRate ?? 0}%`}
+          accent={kpis && kpis.churnRate > 5 ? "text-severity-critical" : "text-foreground"} />
+        <Tile label="Expiring /7d" value={kpis?.expiringCount ?? 0}
+          accent={kpis && (kpis.expiringCount ?? 0) > 0 ? "text-warning" : "text-foreground"} />
       </div>
 
       {/* ── Hardware / IoT Revenue Breakdown ───────────────────────── */}
       {(kpis?.hardwareRevenue ?? 0) > 0 || (kpis?.hardwareOrders ?? 0) > 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+        <div className="rounded-lg border border-border bg-background overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <HardDrive className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Hardware / IoT Revenue</span>
+              <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Hardware / IoT Revenue</span>
               <span title="Revenue from silo hardware orders, tracked separately from subscription MRR"
-                className="text-slate-400 hover:text-slate-600 cursor-default">
+                className="text-muted-foreground hover:text-muted-foreground cursor-default">
                 <Info className="w-3.5 h-3.5" />
               </span>
             </div>
@@ -340,46 +382,46 @@ function PlatformBusinessPage() {
               title="Hardware Revenue — GrainHero"
             />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
             {/* Hardware revenue */}
             <div className="px-5 py-4">
               <div className="flex items-center gap-1.5 mb-1">
-                <Package2 className="w-3 h-3 text-slate-400" />
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Hardware Revenue</span>
+                <Package2 className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Hardware Revenue</span>
               </div>
-              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+              <div className="text-xl font-bold text-foreground tabular-nums">
                 PKR {fmt(kpis?.hardwareRevenue ?? 0)}
               </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">one-time device sales</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">one-time device sales</div>
             </div>
             {/* Orders */}
             <div className="px-5 py-4">
               <div className="flex items-center gap-1.5 mb-1">
-                <HardDrive className="w-3 h-3 text-slate-400" />
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Orders</span>
+                <HardDrive className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Orders</span>
               </div>
-              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+              <div className="text-xl font-bold text-foreground tabular-nums">
                 {kpis?.hardwareOrders ?? 0}
               </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">approved hardware orders</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">approved hardware orders</div>
             </div>
             {/* Avg order value */}
             <div className="px-5 py-4">
               <div className="flex items-center gap-1.5 mb-1">
-                <TrendingUp className="w-3 h-3 text-slate-400" />
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Avg per Order</span>
+                <TrendingUp className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Avg per Order</span>
               </div>
-              <div className="text-xl font-bold text-[#252d26] tabular-nums">
+              <div className="text-xl font-bold text-foreground tabular-nums">
                 {kpis?.hardwareOrders
                   ? `PKR ${fmt(Math.round((kpis.hardwareRevenue ?? 0) / kpis.hardwareOrders))}`
                   : "—"}
               </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">average order value</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">average order value</div>
             </div>
             {/* Share of total revenue */}
             <div className="px-5 py-4">
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">% of Total Revenue</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">% of Total Revenue</span>
               </div>
               {(() => {
                 const hwRev   = kpis?.hardwareRevenue ?? 0;
@@ -388,16 +430,16 @@ function PlatformBusinessPage() {
                 const subPct  = 100 - pct;
                 return (
                   <div>
-                    <div className="text-xl font-bold text-[#252d26] tabular-nums">{pct}%</div>
-                    <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+                    <div className="text-xl font-bold text-foreground tabular-nums">{pct}%</div>
+                    <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden flex">
                       <div className="h-full rounded-l-full" style={{ width: `${subPct}%`, background: "#2FAC0C" }} />
                       <div className="h-full rounded-r-full" style={{ width: `${pct}%`, background: "#0e7490" }} />
                     </div>
                     <div className="flex gap-3 mt-1">
-                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2FAC0C]" /> Subs {subPct}%
                       </span>
-                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0e7490]" /> HW {pct}%
                       </span>
                     </div>
@@ -412,7 +454,7 @@ function PlatformBusinessPage() {
       {/* ── Revenue Insights + Sales Overview ──────────────────────── */}
       <HairlineGrid cols="grid-cols-1 lg:grid-cols-5">
 
-        {/* Revenue Insights */}
+        {/* ── Revenue Insights — neon redesign ───────────────────────── */}
         <NeonPanel
           className="lg:col-span-3"
           title="Revenue Insights"
@@ -439,78 +481,162 @@ function PlatformBusinessPage() {
             </div>
           }
         >
-          {/* Large amount + delta */}
-          <div className="pb-4">
-            <div className="flex items-baseline gap-2.5 flex-wrap">
-              <span className="text-3xl font-bold text-foreground tabular-nums leading-none">
-                PKR {fmt(kpis?.totalRevenue ?? 0)}
-              </span>
-              {(() => {
-                const last = revenueBarData[revenueBarData.length - 1]?.revenue ?? 0;
-                const prev = revenueBarData[revenueBarData.length - 2]?.revenue ?? 0;
-                const pct  = prev > 0 ? Math.round(((last - prev) / prev) * 100) : null;
-                if (pct === null) return null;
-                const up = pct >= 0;
-                return (
-                  <span
-                    className="text-[11px] font-semibold px-1.5 py-0.5 rounded"
-                    style={{ color: up ? NEON.brand : NEON.critical, background: up ? "color-mix(in oklab, var(--chart-1) 12%, transparent)" : "color-mix(in oklab, var(--severity-critical) 12%, transparent)" }}
-                  >
-                    {up ? "+" : ""}{pct}%
-                  </span>
-                );
-              })()}
-            </div>
-            <p className="text-[12px] text-muted-foreground mt-1">
-              vs {revenueView === "monthly" ? "previous month" : "previous year"}
-            </p>
+          {/* ── KPI row: total, MRR, ARR ────────────────────────── */}
+          <div className="grid grid-cols-3 gap-px bg-border/60 rounded mb-4 overflow-hidden">
+            {(() => {
+              const last = revenueBarData[revenueBarData.length - 1]?.revenue ?? 0;
+              const prev = revenueBarData[revenueBarData.length - 2]?.revenue ?? 0;
+              const pct  = prev > 0 ? Math.round(((last - prev) / prev) * 100) : null;
+              const up   = (pct ?? 0) >= 0;
+              return (
+                <>
+                  <div className="bg-background px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total Revenue</p>
+                    <p className="text-[22px] font-bold tabular-nums leading-none" style={{ color: NEON.brand }}>
+                      PKR {fmt(kpis?.totalRevenue ?? 0)}
+                    </p>
+                    {pct !== null && (
+                      <span
+                        className="inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-sm"
+                        style={{
+                          color: up ? NEON.brand : NEON.critical,
+                          background: up
+                            ? "color-mix(in oklab, var(--chart-1) 12%, transparent)"
+                            : "color-mix(in oklab, var(--severity-critical) 12%, transparent)",
+                        }}
+                      >
+                        {up ? "▲" : "▼"} {up ? "+" : ""}{pct}% vs prev
+                      </span>
+                    )}
+                  </div>
+                  <div className="bg-background px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">MRR</p>
+                    <p className="text-[22px] font-bold tabular-nums leading-none text-foreground">
+                      PKR {fmt(kpis?.mrr ?? 0)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">monthly recurring</p>
+                  </div>
+                  <div className="bg-background px-3 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">ARR</p>
+                    <p className="text-[22px] font-bold tabular-nums leading-none text-foreground">
+                      PKR {fmt(kpis?.arr ?? 0)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">annualised run rate</p>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
-          {/* Bar chart — last bar highlighted */}
+          {/* ── Neon area + bar combo chart ─────────────────────── */}
           {revenueBarData.every((d) => !d.revenue) ? (
-            <ChartEmpty label="No revenue data yet" height={150} />
+            <ChartEmpty label="No revenue data yet" height={170} />
           ) : (
-            <ResponsiveContainer width="100%" height={150}>
-              <BarChart data={revenueBarData} margin={{ top: 0, right: 8, bottom: 0, left: 0 }} barCategoryGap="28%">
+            <ResponsiveContainer width="100%" height={170}>
+              <BarChart data={revenueBarData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }} barCategoryGap="30%">
+                <defs>
+                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={NEON.brand} stopOpacity={0.18} />
+                    <stop offset="100%" stopColor={NEON.brand} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid {...neonGrid} />
                 <XAxis dataKey="label" {...neonAxis} />
-                <YAxis {...neonAxis} tickFormatter={(v) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)} width={28} />
-                <Tooltip {...neonTooltipStyle} formatter={(v: number) => [`PKR ${fmt(v)}`, "Revenue"]} />
-                <Bar dataKey="revenue" radius={0} maxBarSize={32}>
-                  {revenueBarData.map((_, i) => (
-                    <Cell key={i} {...neonFill(i === revenueBarData.length - 1 ? NEON.brand2 : NEON.brand)} />
-                  ))}
+                <YAxis
+                  {...neonAxis}
+                  tickFormatter={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)}
+                  width={36}
+                />
+                <Tooltip
+                  {...neonTooltipStyle}
+                  formatter={(v: number) => [`PKR ${fmt(v)}`, "Revenue"]}
+                />
+                <Bar dataKey="revenue" radius={0} maxBarSize={28}>
+                  {revenueBarData.map((d, i) => {
+                    const isLast = i === revenueBarData.length - 1;
+                    const isPeak = d.revenue === Math.max(...revenueBarData.map((r) => r.revenue));
+                    const color  = isLast ? NEON.brand2 : isPeak ? NEON.accent : NEON.brand;
+                    return <Cell key={i} {...neonFill(color)} />;
+                  })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
+
+          {/* ── Growth progress bar ─────────────────────────────── */}
+          {(() => {
+            const last = revenueBarData[revenueBarData.length - 1]?.revenue ?? 0;
+            const prev = revenueBarData[revenueBarData.length - 2]?.revenue ?? 0;
+            const pct  = prev > 0 ? Math.round(((last - prev) / prev) * 100) : null;
+            if (pct === null) return null;
+            const up   = pct >= 0;
+            const barW = Math.min(100, Math.abs(pct));
+            return (
+              <div className="mt-4 pt-3 border-t border-border/60">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-muted-foreground">
+                    Growth vs {revenueView === "monthly" ? "last month" : "last year"}
+                  </span>
+                  <span
+                    className="text-[12px] font-bold tabular-nums"
+                    style={{ color: up ? NEON.brand : NEON.critical }}
+                  >
+                    {up ? "+" : ""}{pct}%
+                  </span>
+                </div>
+                {/* Segmented neon progress track */}
+                <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                    style={{
+                      width: `${barW}%`,
+                      background: up
+                        ? `linear-gradient(90deg, ${NEON.brand} 0%, ${NEON.brand2} 100%)`
+                        : `linear-gradient(90deg, ${NEON.critical} 0%, hsl(var(--severity-high)) 100%)`,
+                      boxShadow: up
+                        ? `0 0 8px 0 color-mix(in oklab, var(--chart-1) 60%, transparent)`
+                        : `0 0 8px 0 color-mix(in oklab, var(--severity-critical) 60%, transparent)`,
+                    }}
+                  />
+                  {/* tick marks every 25% */}
+                  {[25, 50, 75].map((t) => (
+                    <span
+                      key={t}
+                      className="absolute inset-y-0 w-px bg-background/50"
+                      style={{ left: `${t}%` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </NeonPanel>
 
         {/* Sales Overview — donut */}
         <NeonPanel className="lg:col-span-2" title="Sales Overview">
           {donutData.length > 0 ? (
             <div className="flex flex-col items-center pb-1">
-              <div className="relative w-[148px] h-[148px]">
-                <ResponsiveContainer width={148} height={148}>
-                  <PieChart>
-                    <Pie
-                      data={donutData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="value"
-                      startAngle={90}
-                      endAngle={-270}
-                    >
-                      {donutData.map((d, i) => <Cell key={i} {...neonFill(d.color)} />)}
-                    </Pie>
-                    <Tooltip {...neonTooltipStyle} />
-                  </PieChart>
-                </ResponsiveContainer>
+              {/* Fixed square container so the chart is always a perfect circle */}
+              <div className="relative" style={{ width: 160, height: 160, flexShrink: 0 }}>
+                <PieChart width={160} height={160}>
+                  <Pie
+                    data={donutData}
+                    cx={80}
+                    cy={80}
+                    innerRadius={52}
+                    outerRadius={76}
+                    paddingAngle={3}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={-270}
+                    strokeWidth={0}
+                  >
+                    {donutData.map((d, i) => <Cell key={i} {...neonFill(d.color)} />)}
+                  </Pie>
+                  <Tooltip {...neonTooltipStyle} />
+                </PieChart>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xl font-bold text-foreground">{donutTotal}</span>
+                  <span className="text-2xl font-bold text-foreground tabular-nums">{donutTotal}</span>
                   <span className="text-[10px] text-muted-foreground">subscribers</span>
                 </div>
               </div>
@@ -521,7 +647,7 @@ function PlatformBusinessPage() {
                   <span className="font-semibold" style={{ color: NEON.brand }}>{salesPct}%</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${salesPct}%`, background: NEON.brand }} />
+                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${salesPct}%`, background: NEON.brand }} />
                 </div>
               </div>
             </div>
@@ -604,10 +730,10 @@ function PlatformBusinessPage() {
 
       {/* ── Active Subscribers — only shown when a plan is selected ─── */}
       {planFilter !== null && adminSubs.length > 0 && (
-        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+        <div className="rounded-lg border border-border bg-background overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-xs font-semibold text-[#404F44]/80 uppercase tracking-wider">Active Subscribers</span>
+              <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Active Subscribers</span>
               {/* Plan filter pills */}
               <div className="flex gap-1.5">
                 {planTabs.map((t) => {
@@ -643,23 +769,23 @@ function PlatformBusinessPage() {
             {filteredSubs.map((a, i) => {
               const col = planColor(a.plan);
               return (
-                <div key={i} className="rounded-md border border-slate-100 bg-white px-3.5 py-3 hover:border-slate-200 transition-colors">
-                  <div className="text-sm font-medium text-[#252d26] truncate">{a.name}</div>
+                <div key={i} className="rounded-md border border-border bg-background px-3.5 py-3 hover:border-border transition-colors">
+                  <div className="text-sm font-medium text-foreground truncate">{a.name}</div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
                       style={{ background: col + "15", color: col }}>
                       {planLabel(a.plan)}
                     </span>
-                    <span className="text-[11px] text-slate-500 tabular-nums">PKR {fmt(a.mrr)}</span>
+                    <span className="text-[11px] text-muted-foreground tabular-nums">PKR {fmt(a.mrr)}</span>
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1.5">
+                  <div className="text-[10px] text-muted-foreground mt-1.5">
                     {a.joined ? new Date(a.joined).toLocaleDateString("en-PK", { month: "short", year: "numeric" }) : "—"}
                   </div>
                 </div>
               );
             })}
             {filteredSubs.length === 0 && (
-              <div className="col-span-full text-center text-sm text-slate-400 py-8">
+              <div className="col-span-full text-center text-sm text-muted-foreground py-8">
                 No subscribers on {planFilter === "all" ? "any" : planLabel(planFilter)} plan yet.
               </div>
             )}
@@ -667,12 +793,12 @@ function PlatformBusinessPage() {
 
           {/* Footer */}
           {filteredSubs.length > 0 && (
-            <div className="px-5 py-2.5 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-400">
+            <div className="px-5 py-2.5 border-t border-border flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
                 {filteredSubs.length} subscriber{filteredSubs.length !== 1 ? "s" : ""}
                 {planFilter !== "all" ? ` · ${planLabel(planFilter)}` : ""}
               </span>
-              <span className="text-xs font-semibold text-[#404F44] tabular-nums">
+              <span className="text-xs font-semibold text-muted-foreground tabular-nums">
                 PKR {fmt(filteredSubs.reduce((s, a) => s + a.mrr, 0))} / mo
               </span>
             </div>
@@ -757,6 +883,7 @@ function PlatformBusinessPage() {
         </table>
         </div>
       </div>
+      </>)}
     </AdminPageShell>
   );
 }

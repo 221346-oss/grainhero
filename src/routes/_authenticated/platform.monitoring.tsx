@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import React from "react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getPlatformEnvironmentalOverview } from "@/lib/platform-monitoring.functions";
@@ -31,8 +32,8 @@ export const Route = createFileRoute("/_authenticated/platform/monitoring")({
 
 const MAINT_STATUSES = ["requested", "acknowledged", "in_progress", "completed", "cancelled"] as const;
 
-function Sk({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded bg-muted ${className}`} />;
+function Sk({ className, style }: { className: string; style?: React.CSSProperties }) {
+  return <div className={`animate-pulse rounded bg-muted ${className}`} style={style} />;
 }
 
 // ── Donut widget — no icons, just number + label ──────────────────────────────
@@ -142,9 +143,9 @@ function PlatformMonitoringPage() {
   const maintFn    = useServerFn(listMaintenanceRequests);
   const updateFn   = useServerFn(updateMaintenanceRequest);
 
-  const envQ  = useQuery({ queryKey: ["platform-environmental"], queryFn: () => envFn(),  refetchInterval: 30_000 });
-  const incQ  = useQuery({ queryKey: ["platform-incidents-all"], queryFn: () => incFn({ data: { scope: "all" } }), refetchInterval: 30_000 });
-  const maintQ = useQuery({ queryKey: ["maintenance-requests"],  queryFn: () => maintFn(), refetchInterval: 30_000 });
+  const envQ  = useQuery({ queryKey: ["platform-environmental"], queryFn: () => envFn(),  staleTime: 30_000, refetchInterval: 30_000 });
+  const incQ  = useQuery({ queryKey: ["platform-incidents-all"], queryFn: () => incFn({ data: { scope: "all" } }), staleTime: 30_000, refetchInterval: 30_000 });
+  const maintQ = useQuery({ queryKey: ["maintenance-requests"],  queryFn: () => maintFn(), staleTime: 30_000, refetchInterval: 30_000 });
 
   const updateMut = useMutation({
     mutationFn: (v: { id: string; status: typeof MAINT_STATUSES[number] }) => updateFn({ data: v }),
@@ -181,25 +182,124 @@ function PlatformMonitoringPage() {
     </button>
   );
 
-  if (envQ.isLoading || incQ.isLoading) {
-    return (
-      <AdminPageShell title="Monitoring" subtitle="Platform-wide health across every tenant" actions={actions}>
-        <div className="space-y-3">
-          <div className="grid grid-cols-4 gap-3">{[...Array(4)].map((_, i) => <Sk key={i} className="h-36 rounded-lg" />)}</div>
-          <div className="grid grid-cols-4 gap-3">{[...Array(4)].map((_, i) => <Sk key={i} className="h-20 rounded-lg" />)}</div>
-          <div className="grid grid-cols-2 gap-3">   {[...Array(2)].map((_, i) => <Sk key={i} className="h-56 rounded-lg" />)}</div>
-          <Sk className="h-40 rounded-lg" />
-        </div>
-      </AdminPageShell>
-    );
-  }
+  const monitoringLoading = envQ.isLoading || incQ.isLoading;
 
   return (
     <AdminPageShell
       title="Monitoring"
       subtitle="Platform-wide health — devices, incidents and maintenance across every tenant"
-      actions={actions}
+      actions={monitoringLoading ? undefined : actions}
     >
+      {monitoringLoading ? (
+        <div className="space-y-4">
+
+          {/* ── Row 1: 4 donut stat cards — rounded, circle centre ──── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[0,1,2,3].map((i) => (
+              <div key={i} className="rounded-xl border border-border bg-background shadow-sm p-4 flex flex-col items-center gap-2 relative">
+                <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-muted-foreground/20" />
+                <Sk className="w-20 h-20 rounded-full" />
+                <Sk className="h-[13px] w-24" />
+                <Sk className="h-[11px] w-16" />
+              </div>
+            ))}
+          </div>
+
+          {/* ── Row 2: 4 spark trend cards ─────────────────────────── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[0,1,2,3].map((i) => (
+              <div key={i} className="rounded-xl border border-border bg-background shadow-sm p-4 flex flex-col gap-2 relative">
+                <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-muted-foreground/20" />
+                <Sk className="h-[10px] w-24" />
+                <Sk className="h-8 w-14" />
+                {/* mini sparkline bars */}
+                <div className="flex items-end gap-0.5 h-8">
+                  {[50,70,40,80,55,90,65,75].map((h, j) => (
+                    <Sk key={j} className="flex-1" style={{ height: `${h}%` } as React.CSSProperties} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Row 3: tenant health + incidents panels ─────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {/* Tenant health */}
+            <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+              <div className="px-4 h-11 border-b border-border flex items-center justify-between">
+                <Sk className="h-[13px] w-28" />
+                <div className="flex gap-3">
+                  <Sk className="h-[10px] w-16" />
+                  <Sk className="h-[10px] w-16" />
+                </div>
+              </div>
+              <div className="flex">
+                <div className="w-24 flex items-center justify-center p-4 border-r border-border shrink-0">
+                  <Sk className="w-16 h-16 rounded-full" />
+                </div>
+                <div className="flex-1">
+                  {[0,1,2,3,4].map((i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
+                      <Sk className="h-[11px] w-4 shrink-0" />
+                      <Sk className="h-[12px] flex-1" />
+                      <Sk className="h-1.5 w-20 rounded-full shrink-0" />
+                      <Sk className="h-[10px] w-6 shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Incidents panel */}
+            <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+              <div className="px-4 h-11 border-b border-border flex items-center justify-between">
+                <Sk className="h-[13px] w-40" />
+                <Sk className="h-[11px] w-32" />
+              </div>
+              <div className="p-3">
+                <Sk className="h-10 w-full rounded-lg" />
+              </div>
+              <div>
+                {[0,1,2,3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
+                    <Sk className="h-[13px] flex-1" />
+                    <Sk className="h-[13px] w-8 shrink-0" />
+                    <Sk className="h-[13px] w-8 shrink-0" />
+                    <Sk className="h-5 w-16 rounded-full shrink-0" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Row 4: maintenance table ───────────────────────────── */}
+          <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+            <div className="px-4 h-11 border-b border-border flex items-center justify-between">
+              <Sk className="h-[13px] w-44" />
+              <Sk className="h-[11px] w-28" />
+            </div>
+            <div className="px-4 py-2.5 border-b border-border bg-muted/30 flex gap-6">
+              {[24, 36, 16, 14, 20].map((w, i) => (
+                <Sk key={i} className={`h-[10px] w-${w}`} />
+              ))}
+            </div>
+            {[0,1,2,3].map((i) => (
+              <div key={i} className="px-4 py-3 flex items-center gap-5 border-b border-border last:border-0">
+                <Sk className="h-[13px] w-28" />
+                <Sk className="h-[13px] w-36" />
+                <Sk className="h-5 w-16 rounded-full" />
+                <Sk className="h-[12px] w-20" />
+                <div className="ml-auto flex gap-2">
+                  <Sk className="h-7 w-16 rounded-md" />
+                  <Sk className="h-7 w-20 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      ) : (
+      <>
       <NeonPatternDefs />
 
       {/* ── 1. Donut status strip ─────────────────────────────────── */}
@@ -318,6 +418,8 @@ function PlatformMonitoringPage() {
           </div>
         )}
       </NeonPanel>
+      </>
+      )}
     </AdminPageShell>
   );
 }

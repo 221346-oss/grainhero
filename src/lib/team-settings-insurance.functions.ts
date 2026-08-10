@@ -101,37 +101,57 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     );
 
     // Enforce plan-based staff limit via central gate.
-    await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
+    // Use supabaseAdmin for the count so RLS doesn't under-count the tenant's profiles.
+    const { supabaseAdmin: adminForCount } = await import("@/integrations/supabase/client.server");
+    const { count: currentUserCount } = await adminForCount
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .or(`admin_id.eq.${admin_id},id.eq.${admin_id}`);
+    await assertPlanAllows({
+      feature: "max_users",
+      sb: context.supabase,
+      userId: context.userId,
+      currentUsage: currentUserCount ?? 0,
+    });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.trim().toLowerCase();
     let uid: string | undefined;
     console.log("[inviteTeamMember] Creating auth user for email:", email);
-    // 1) Ensure an auth user exists. Prefer createUser (doesn't require SMTP);
-    //    fall back to locating an existing user if the email is already registered.
-    const createRes = await supabaseAdmin.auth.admin.createUser({
-      email,
-      email_confirm: false,
-      user_metadata: { name: data.name ?? "", invited_role: data.role, admin_id },
-    });
-    if (createRes.error) {
-      const msg = createRes.error.message || (createRes.error as { code?: string }).code || "";
-      const already = /already|registered|exists|duplicate/i.test(msg);
-      if (!already) {
-        console.error("[inviteTeamMember] createUser failed", createRes.error);
-        throw new Error(msg || "Could not create the user in Supabase Auth.");
-      }
-      console.log("[inviteTeamMember] User already exists, looking up...");
-      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 200,
+
+    // 1) Try to create the auth user. If it fails for any reason (including
+    //    AuthRetryableFetchError from Supabase 500s on some configs, or
+    //    "user already exists" conflicts), fall back to locating the existing user.
+    try {
+      const createRes = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: true,   // confirm immediately — invitation code is the gate
+        user_metadata: { name: data.name ?? "", invited_role: data.role, admin_id },
       });
-      if (listErr) throw new Error(listErr.message || "Failed to look up existing user");
-      uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
-      if (!uid) throw new Error("A user with that email already exists but could not be located.");
-    } else {
+      if (createRes.error) {
+        throw createRes.error;
+      }
       uid = createRes.data.user?.id;
       console.log("[inviteTeamMember] Auth user created successfully, uid:", uid);
+    } catch (createErr: any) {
+      const msg = createErr?.message || createErr?.code || String(createErr ?? "");
+      console.warn("[inviteTeamMember] createUser failed, attempting listUsers fallback. Error:", msg);
+      // Always fall back to listUsers — covers "already exists", 500s, and network blips.
+      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+      if (listErr) {
+        console.error("[inviteTeamMember] listUsers failed", listErr);
+        throw new Error(listErr.message || "Failed to look up existing user");
+      }
+      uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
+      if (!uid) {
+        // User truly doesn't exist and createUser failed — surface the real error
+        const already = /already|registered|exists|duplicate/i.test(msg);
+        if (!already) throw new Error(msg || "Could not create the user in Supabase Auth.");
+      }
+      console.log("[inviteTeamMember] Found existing user via listUsers, uid:", uid);
     }
 
     // 2) Generate a one-time invitation code. Replaces the old Supabase magic-link
@@ -347,9 +367,11 @@ async function tenantAdminId(supabase: any, userId: string): Promise<string> {
 export const listPolicies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const admin_id = await tenantAdminId(context.supabase, context.userId);
     const { data, error } = await context.supabase
       .from("insurance_policies")
       .select("*")
+      .eq("admin_id", admin_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsurancePolicyRow[];
@@ -413,9 +435,11 @@ export const deletePolicy = createServerFn({ method: "POST" })
 export const listClaims = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const admin_id = await tenantAdminId(context.supabase, context.userId);
     const { data, error } = await context.supabase
       .from("insurance_claims")
       .select("*")
+      .eq("admin_id", admin_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsuranceClaimRow[];

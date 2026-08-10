@@ -43,7 +43,7 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-2">
             <AdminSilosCard range={range} />
             <RecentBatchesCard range={range} />
             <WeeklyIntakeCard range={range} />

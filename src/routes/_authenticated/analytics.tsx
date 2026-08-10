@@ -13,6 +13,7 @@ import { getMyRole } from "@/lib/roles.functions";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 import { PageHeader } from "@/components/dashboards/_shared";
+import { AnalyticsSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
@@ -66,6 +67,8 @@ function AnalyticsPage() {
       </div>
     );
   }
+
+  if (roleQ.isLoading) return <AnalyticsSkeleton />;
 
   const t = data?.totals;
   const env = data?.environmental;

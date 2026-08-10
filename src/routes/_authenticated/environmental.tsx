@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,11 @@ function EnvironmentalPage() {
   })), [forecastList]);
 
   useEffect(() => { if (!coords) geo.mutate(cityQuery); /* eslint-disable-next-line */ }, []);
+
+  // Show skeleton while initial geocoding + weather fetches resolve
+  const isInitialLoading = geo.isPending || (!!coords && weather.isFetching && !weather.data);
+  
+  if (isInitialLoading) return <KpiChartHubSkeleton />;
 
   const useMyLocation = () => {
     if (!navigator.geolocation) return toast.error("Geolocation not available");

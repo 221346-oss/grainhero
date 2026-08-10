@@ -284,8 +284,12 @@ function GrainAlertsPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((a) => {
-            const P = PRIO_STYLES[a.priority];
-            const S = STATUS_STYLES[(a.status ?? "pending") as Status];
+            // Safety check: ensure priority and status have valid values
+            const priority = (a.priority && PRIO_STYLES[a.priority]) ? a.priority : "medium";
+            const status = (a.status && STATUS_STYLES[a.status]) ? a.status : "pending";
+            
+            const P = PRIO_STYLES[priority];
+            const S = STATUS_STYLES[status];
             const PIcon = P.icon; const SIcon = S.icon;
             const isResolved = a.status === "resolved";
             return (
