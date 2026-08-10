@@ -74,6 +74,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       siloAlertsRes,
       dispatchTotals,
       revRowsRes,
+      siloDispatchesRes,
     ] = await Promise.all([
       context.supabase
         .from("grain_batches")
@@ -162,6 +163,14 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
         .eq("status", "dispatched")
         .gte("created_at", twelveMoAgo),
+      // Outgoing kg per silo for the dashboard's silo cards — same
+      // broad-fetch-then-group-client-side shape as siloAlertsRes above,
+      // rather than one query per silo shown.
+      context.supabase
+        .from("grain_dispatches")
+        .select("silo_id, total_qty_kg")
+        .not("silo_id", "is", null)
+        .limit(500),
     ]);
 
     const batches = batchesRes.data ?? [];
@@ -252,6 +261,12 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       alerts: { cur: curAlertsCount.count ?? 0, prev: prevAlertsCount.count ?? 0, pct: pctDelta(curAlertsCount.count ?? 0, prevAlertsCount.count ?? 0) },
     };
 
+    const siloOutgoingKg: Record<string, number> = {};
+    for (const d of siloDispatchesRes.data ?? []) {
+      const id = d.silo_id as string;
+      siloOutgoingKg[id] = (siloOutgoingKg[id] ?? 0) + Number(d.total_qty_kg ?? 0);
+    }
+
     return {
       recentBatches: batches,
       recentAlerts: alertsRes.data ?? [],
@@ -259,6 +274,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       actuators: actuatorsRes.data ?? [],
       silos: silosRes.data ?? [],
       siloAlerts: siloAlertsRes.data ?? [],
+      siloOutgoingKg,
       revenue,
       installCounts,
       subscription: sub,

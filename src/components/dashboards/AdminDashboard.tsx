@@ -5,7 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WelcomeBanner } from "./WelcomeBanner";
 import { KpiSummary } from "./KpiSummary";
 import { InsightsStrip } from "./InsightsStrip";
-import { AdminSilosCard, RecentBatchesCard, SupportTicketsCard } from "./DashboardBlocks";
+import {
+  DashboardSiloCards, IncomingQueueCard, FieldIncidentsCard, RecentActivityCard,
+  RecentBatchesCard, SupportTicketsCard,
+} from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
@@ -42,8 +45,13 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
+          <DashboardSiloCards range={range} />
           <div className="grid gap-3 lg:grid-cols-3">
-            <AdminSilosCard range={range} />
+            <IncomingQueueCard range={range} />
+            <FieldIncidentsCard />
+            <RecentActivityCard />
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
             <RecentBatchesCard range={range} />
             <SupportTicketsCard
               onViewAll={() => setTicketPanelOpen(true)}

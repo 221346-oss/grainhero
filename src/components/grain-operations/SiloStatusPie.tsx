@@ -1,10 +1,15 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-export type StatusSlice = { name: string; value: number; tone: "yellow" | "green" | "red" };
+export type StatusSlice = { name: string; value: number; tone: "yellow" | "orange" | "green" | "blue" | "purple" | "red" };
 
+// 6-stage scheme: yellow = pending, orange = QC, green = stored,
+// blue = processing, purple = dispatched, red = issue.
 const TONE_HEX: Record<StatusSlice["tone"], string> = {
   yellow: "#f59e0b",
+  orange: "#f97316",
   green: "#10b981",
+  blue: "#3b82f6",
+  purple: "#a855f7",
   red: "#ef4444",
 };
 

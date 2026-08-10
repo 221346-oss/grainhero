@@ -119,6 +119,9 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => createInput.parse(d))
   .handler(async ({ data, context }) => {
+    // Mirrors upsertGrainBatch's create-time gate — the UI only ever exposes
+    // "Outgoing batch" to admin/manager, but that's a client-side hide only.
+    await requireRole(context.supabase, context.userId, ["admin", "manager"]);
     const sb = context.supabase;
     const { data: silo, error: sErr } = await sb
       .from("silos")

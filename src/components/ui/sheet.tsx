@@ -1,5 +1,42 @@
 "use client";
 
+/**
+ * Side-panel convention (applies app-wide — read before adding a new Sheet
+ * or converting a Dialog to one):
+ *
+ *  - Quick View (status, fill %, incident title, a short summary list) → Sheet.
+ *  - Create/Edit forms → Sheet.
+ *  - Full detail (full history, audit trail, payment receipts, anything
+ *    that needs its own URL) → a dedicated route, NOT crammed into a Sheet.
+ *    Give the Sheet a "View full detail" / "Open full page" link-out instead
+ *    (see SiloBatchesDrawer.tsx, BatchesSection.tsx's overview drawer).
+ *  - Confirmations (delete, block, approve, cancel) → Dialog ONLY, never a
+ *    Sheet. A confirmation has no reason to slide in from the edge of the
+ *    screen — it should interrupt as a centered modal.
+ *
+ * There is no separate wrapper component on top of these primitives — Sheet/
+ * SheetContent/SheetHeader/SheetTitle/SheetDescription/SheetFooter below ARE
+ * the shared component. Compose them directly, matching this shape:
+ *
+ *   <Sheet open={open} onOpenChange={setOpen}>
+ *     <SheetContent side="right" className="sm:max-w-md">  {/* sm:max-w-2xl for a richer quick-view with a table, e.g. SiloBatchesDrawer *\/}
+ *       <SheetHeader>
+ *         <SheetTitle>…</SheetTitle>
+ *         <SheetDescription>…</SheetDescription>
+ *       </SheetHeader>
+ *       {/* scrollable content *\/}
+ *       <SheetFooter>{/* primary action + optional "Open full page" link *\/}</SheetFooter>
+ *     </SheetContent>
+ *   </Sheet>
+ *
+ * Reference implementations: SiloBatchesDrawer.tsx (quick view + link-out),
+ * BatchesSection.tsx's Sheet at the row-click handler (quick view), and
+ * platform.metrics.tsx / platform.logistics.fleet.tsx (create/edit forms).
+ * platform.orders.tsx / platform.orders.$orderId.tsx show the confirmation
+ * rule enforced correctly — their Cancel-order confirmations use Dialog, not
+ * Sheet, even though the surrounding page otherwise uses Sheet throughout.
+ */
+
 import * as React from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";

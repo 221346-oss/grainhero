@@ -21,7 +21,7 @@ import { useMyProfile } from "@/hooks/useMyProfile";
 export function PlanManagementSection() {
   const qc = useQueryClient();
   const profile = useMyProfile();
-  const currentPlan = (profile.data as any)?.subscription_plan ?? "starter";
+  const currentPlan = (profile.data as any)?.subscription_plan ?? "basic";
   const autoUpgrade = (profile.data as any)?.auto_upgrade_enabled === true;
 
   const [note, setNote] = useState("");

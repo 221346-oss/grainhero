@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Users, Building2, Package, Container, Radio, Wallet, type LucideIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Wheat, Container, ClipboardCheck, Wallet, type LucideIcon } from "lucide-react";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { RangeChip, type RangeKey } from "./RangeChip";
-import { useDashboardStats } from "./useDashboardStats";
+import { listGrainBatches, listSilos } from "@/lib/operations.functions";
+import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
 
 const fmtPKR = new Intl.NumberFormat("en-PK", {
   style: "currency", currency: "PKR", maximumFractionDigits: 0,
@@ -46,13 +49,30 @@ export function KpiSummary({
   revenueSpark?: number[];
   planName?: string;
 }) {
-  const { data: s } = useDashboardStats();
+  // Reuses the exact same data-fetching functions (and queryKeys) that
+  // /grain-operations already uses for its own "Total Grain (kg)" /
+  // "Active Silos" stats and its Pending Approvals section — see
+  // grain-operations.tsx and PendingApprovalsSection.tsx. No new backend
+  // queries for any of these three.
+  const listBatchesFn = useServerFn(listGrainBatches);
+  const listSilosFn = useServerFn(listSilos);
+  const listPendingFn = useServerFn(listPendingApprovalBatches);
+  const { data: batches } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listBatchesFn() });
+  const { data: silos } = useQuery({ queryKey: ["silos"], queryFn: () => listSilosFn() });
+  const { data: pending } = useQuery({ queryKey: ["pending-approval-batches"], queryFn: () => listPendingFn() });
+
+  const totalGrainKg = Array.isArray(batches)
+    ? (batches as { quantity_kg?: number }[]).reduce((a, b) => a + Number(b.quantity_kg ?? 0), 0)
+    : 0;
+  const activeSilos = Array.isArray(silos)
+    ? (silos as { status?: string | null }[]).filter((s) => s.status === "active").length
+    : 0;
+  const pendingApprovals = pending?.batches?.length ?? 0;
+
   const rows: Row[] = [
-    { label: "Buyers", value: s?.buyers ?? "—", to: "/grain-operations", search: { tab: "buyers" }, icon: Users },
-    { label: "Warehouses", value: s?.warehouses ?? "—", to: "/grain-operations", search: { tab: "warehouses" }, icon: Building2 },
-    { label: "Active Batches", value: s?.batches.active ?? "—", to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches, icon: Package },
-    { label: "Silos", value: s?.silos ?? "—", to: "/grain-operations", search: { tab: "silos" }, icon: Container },
-    { label: "Sensors Online", value: s?.sensors.online ?? "—", to: "/sensors", delta: deltaAlerts, icon: Radio },
+    { label: "Total Grain (kg)", value: totalGrainKg.toLocaleString(), to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches, icon: Wheat },
+    { label: "Active Silos", value: activeSilos, to: "/grain-operations", search: { tab: "silos" }, icon: Container },
+    { label: "Pending Approvals", value: pendingApprovals, to: "/grain-operations", search: { tab: "batches" }, icon: ClipboardCheck },
   ];
   const rev = revenueMtd ?? 0;
   const revPositive = (revenueDeltaPct ?? 0) >= 0;
@@ -75,7 +95,7 @@ export function KpiSummary({
         >
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              <Wallet className="h-3 w-3" /> Revenue
+              <Wallet className="h-3 w-3" /> Revenue MTD
             </span>
             {planName && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">

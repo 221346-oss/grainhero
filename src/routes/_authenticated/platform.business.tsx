@@ -5,13 +5,14 @@ import React from "react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 import { sendExpiryReminder } from "@/lib/platform-no-admin.functions";
-import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
-import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
+import { RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/business")({
   component: PlatformBusinessPage,
@@ -40,28 +41,15 @@ const planLabel = (p: string) => PLAN_META[p.toLowerCase()]?.label ?? (p.charAt(
 const ALL_PLANS = ["starter", "professional", "enterprise"] as const;
 
 // ── Export button row ────────────────────────────────────────────────────────
+// Callers here build one-off, pre-shaped summary rows (friendly keys already
+// as the object's own keys) rather than a fixed record type, so the column
+// list is derived from those keys instead of a hand-written ExportColumn[].
 function ExportRow({ data, filename, title }: {
   data: Array<Record<string, any>>; filename: string; title: string;
 }) {
-  const [busy, setBusy] = React.useState(false);
-  return (
-    <div className="flex gap-1 shrink-0">
-      <button
-        onClick={() => exportToCSV(data, filename)}
-        disabled={data.length === 0}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
-      >
-        <Download className="w-3 h-3" /> CSV
-      </button>
-      <button
-        onClick={async () => { setBusy(true); await exportToPDF(data, title, filename).catch(console.error); setBusy(false); }}
-        disabled={data.length === 0 || busy}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
-      >
-        <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
-      </button>
-    </div>
-  );
+  const columns: ExportColumn<Record<string, any>>[] =
+    data.length > 0 ? Object.keys(data[0]).map((k) => ({ header: k, value: (row) => row[k] })) : [];
+  return <ExportMenu filename={filename} title={title} rows={data} columns={columns} />;
 }
 
 // ── Stat tile ────────────────────────────────────────────────────────────────
@@ -677,16 +665,16 @@ function PlatformBusinessPage() {
             {expiring.length > 0 && ` · ${expiring.length}`}
           </span>
           {expiring.length > 0 && (
-            <button
-              onClick={() => exportToCSV(expiring.map((s: any) => ({
-                Admin: s.admin_name ?? s.admin_id ?? "—",
-                Plan: s.plan_name ?? "—",
-                Expires: s.end_date ? new Date(s.end_date).toLocaleDateString() : "—",
-              })), "expiring-subscriptions")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100 rounded"
-            >
-              <Download className="w-3 h-3" /> CSV
-            </button>
+            <ExportMenu
+              filename="expiring-subscriptions"
+              title="Expiring Subscriptions — GrainHero"
+              rows={expiring}
+              columns={[
+                { header: "Admin", value: (s: any) => s.admin_name ?? s.admin_id ?? "—" },
+                { header: "Plan", value: (s: any) => s.plan_name ?? "—" },
+                { header: "Expires", value: (s: any) => s.end_date ? new Date(s.end_date).toLocaleDateString() : "—" },
+              ]}
+            />
           )}
         </div>
         {expiring.length === 0 ? (

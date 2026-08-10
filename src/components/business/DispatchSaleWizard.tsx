@@ -56,6 +56,12 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const [ocrBusy, setOcrBusy] = useState(false);
   const [extracted, setExtracted] = useState<ExtractedPaymentDetails | null>(null);
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  // OCR is best-effort auto-fill — when it errors out or can't find an amount,
+  // fall back to letting the admin type the details in instead of hard-blocking.
+  const [ocrFailed, setOcrFailed] = useState(false);
+  const [manualAmount, setManualAmount] = useState("");
+  const [manualReference, setManualReference] = useState("");
+  const [manualDate, setManualDate] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -64,6 +70,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
       setDestination(""); setExpected(""); setNotes("");
       setInvoiceId(null); setInvoiceNumber(null); setDispatchId(null); setDispatchNumber(null);
       setDispatchApproved(false); setReceiptFile(null); setExtracted(null); setReceiptPath(null);
+      setOcrFailed(false); setManualAmount(""); setManualReference(""); setManualDate("");
     }
   }, [open]);
 
@@ -158,17 +165,28 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
     if (!f || !dispatchId) return;
     setReceiptFile(f);
     setExtracted(null);
+    setOcrFailed(false);
+    setManualAmount(""); setManualReference(""); setManualDate("");
     setOcrBusy(true);
     try {
-      const [ocrResult, signed] = await Promise.all([
-        extractPaymentDetails(f),
-        signUploadFn({ data: { dispatchId, filename: f.name } }),
-      ]);
+      // Upload first, independent of OCR — a receipt the admin picked should
+      // still get attached to the payment even if the OCR pass below fails.
+      const signed = await signUploadFn({ data: { dispatchId, filename: f.name } });
       const up = await supabase.storage.from("payment-receipts").uploadToSignedUrl(signed.path, signed.token, f);
       if (up.error) throw up.error;
       setReceiptPath(signed.path);
-      setExtracted(ocrResult);
-      if (!ocrResult.amount) toast.warning("Couldn't detect an amount on this receipt — try a clearer photo");
+
+      try {
+        const ocrResult = await extractPaymentDetails(f);
+        setExtracted(ocrResult);
+        if (!ocrResult.amount) {
+          setOcrFailed(true);
+          toast.warning("Couldn't detect an amount on this receipt — enter it manually below");
+        }
+      } catch {
+        setOcrFailed(true);
+        toast.warning("Couldn't scan this receipt automatically — enter the details manually below");
+      }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -177,17 +195,26 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
     }
   }
 
+  const manualAmountNum = Number(manualAmount) || 0;
+  const effectiveAmount = extracted?.amount ?? (manualAmountNum > 0 ? manualAmountNum : null);
+
   const paymentMut = useMutation({
     mutationFn: () => {
-      if (!extracted?.amount) throw new Error("No amount extracted from receipt");
+      if (!effectiveAmount) throw new Error("Enter a payment amount");
       return recordPaymentFn({ data: {
         dispatchId: dispatchId!,
-        amount: extracted.amount,
+        amount: effectiveAmount,
         paymentMethod: "bank_transfer",
-        paymentReference: extracted.paymentId,
-        paymentDate: extracted.date ? new Date(extracted.date).toISOString() : null,
+        paymentReference: extracted?.paymentId ?? (manualReference.trim() || null),
+        paymentDate: extracted?.date
+          ? new Date(extracted.date).toISOString()
+          : manualDate
+            ? new Date(manualDate).toISOString()
+            : null,
         receiptUrl: receiptPath,
-        ocrExtracted: { paymentId: extracted.paymentId, amount: extracted.amount, date: extracted.date, confidence: extracted.confidence },
+        ocrExtracted: extracted
+          ? { paymentId: extracted.paymentId, amount: extracted.amount, date: extracted.date, confidence: extracted.confidence }
+          : { manualEntry: true, amount: effectiveAmount },
       } });
     },
     onSuccess: () => {
@@ -333,6 +360,28 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
                 <div className="flex justify-between"><span className="text-muted-foreground">OCR confidence</span><span>{extracted.confidence.toFixed(0)}%</span></div>
               </div>
             )}
+
+            {ocrFailed && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                <div className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                  <ScanLine className="h-3 w-3" /> Couldn&apos;t read this automatically — enter it manually
+                </div>
+                <div>
+                  <Label className="text-xs">Amount ({currency}) *</Label>
+                  <Input className="h-9" type="number" min="0" step="0.01" value={manualAmount} onChange={(e) => setManualAmount(e.target.value)} placeholder="e.g. 240000" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Payment reference (optional)</Label>
+                    <Input className="h-9" value={manualReference} onChange={(e) => setManualReference(e.target.value)} placeholder="Txn / ref #" disabled={!!extracted?.paymentId} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Payment date (optional)</Label>
+                    <Input className="h-9" type="date" value={manualDate} onChange={(e) => setManualDate(e.target.value)} disabled={!!extracted?.date} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -369,7 +418,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
             </>
           )}
           {step === "payment" && (
-            <Button disabled={!extracted?.amount || paymentMut.isPending} onClick={() => paymentMut.mutate()} className="gap-1.5">
+            <Button disabled={!effectiveAmount || paymentMut.isPending} onClick={() => paymentMut.mutate()} className="gap-1.5">
               {paymentMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Confirm payment
             </Button>
           )}

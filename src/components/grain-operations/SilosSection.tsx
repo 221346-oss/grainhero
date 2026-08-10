@@ -99,9 +99,17 @@ export function SilosSection() {
   // insert a silo row (via upsertSilo directly, or the automated
   // hardware_order_provision_silo trigger once an order's install completes).
   const siloGate = usePlanGate("max_silos");
+  // usePlanGate resolves async — never fall through to "allowed" while the
+  // gate is unresolved (loading, refetching after an error, etc). Only
+  // proceed once siloGate.data has actually arrived.
+  const siloGateReady = !siloGate.isLoading && !!siloGate.data;
 
   function handleRequestSilo() {
-    if (siloGate.data && !siloGate.data.allowed) {
+    if (!siloGateReady) {
+      toast.error("Checking your plan limits — try again in a moment.");
+      return;
+    }
+    if (!siloGate.data!.allowed) {
       navigate({ to: "/plan-management" });
       return;
     }
@@ -204,11 +212,11 @@ export function SilosSection() {
           <Button
             variant="outline"
             onClick={handleRequestSilo}
-            disabled={siloGate.isLoading}
+            disabled={!siloGateReady}
             className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
             title="Silo provisioning is handled by Super Admin — this requests a new one."
           >
-            <ShoppingCart className="w-4 h-4" /> Request Silo
+            {!siloGateReady ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />} Request Silo
           </Button>
         </div>
 
@@ -232,6 +240,7 @@ export function SilosSection() {
                 onEdit={(silo) => openEdit(silo as Silo)}
                 onDelete={(id) => setDeleteId(id)}
                 onSell={(silo) => setSellSilo(silo as Silo)}
+                onRequestMore={handleRequestSilo}
               />
             ))}
           </div>

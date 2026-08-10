@@ -8,29 +8,45 @@ import { TeamSection } from "@/components/administration/TeamSection";
 import { SecuritySection } from "@/components/administration/SecuritySection";
 import { ActivityLogsSection } from "@/components/administration/ActivityLogsSection";
 import { FieldIncidentsSection } from "@/components/administration/FieldIncidentsSection";
-import { Users, ShieldCheck, ClipboardList, Flag, TrendingUp, TrendingDown } from "lucide-react";
+import { ReportsSection } from "@/components/administration/ReportsSection";
+import { Users, ShieldCheck, ClipboardList, Flag, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
 import { listFieldIncidents } from "@/lib/field-incidents.functions";
 
+type Tab = "team" | "security" | "activity" | "field" | "reports";
+const TAB_KEYS: Tab[] = ["team", "security", "activity", "field", "reports"];
+
 export const Route = createFileRoute("/_authenticated/administration")({
+  // Lets other pages deep-link straight to a tab (e.g. the dashboard's
+  // Field Incidents panel → /administration?tab=field) — mirrors
+  // grain-operations.tsx's validateSearch pattern.
+  validateSearch: (search: Record<string, unknown>): { tab: Tab } => ({
+    tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "team",
+  }),
   component: AdministrationWorkspace,
 });
-
-type Tab = "team" | "security" | "activity" | "field";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "team", label: "Team Management", icon: Users },
   { key: "security", label: "Security Center", icon: ShieldCheck },
   { key: "activity", label: "Activity Logs", icon: ClipboardList },
   { key: "field", label: "Field Incidents", icon: Flag },
+  { key: "reports", label: "Reports", icon: FileBarChart },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function AdministrationWorkspace() {
-  const [activeTab, setActiveTab] = useState<Tab>("team");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [activeTab, setActiveTabState] = useState<Tab>(tab);
+  useEffect(() => { setActiveTabState(tab); }, [tab]);
+  function setActiveTab(next: Tab) {
+    setActiveTabState(next);
+    navigate({ search: { tab: next } });
+  }
 
   const fetchRole = useServerFn(getMyRole);
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
@@ -40,7 +56,7 @@ function AdministrationWorkspace() {
 
   // Filter tabs based on role - manager only sees Activity Logs and Field Incidents
   const visibleTabs =
-    role === "manager" ? TABS.filter((t) => t.key === "activity" || t.key === "field") : TABS;
+    role === "manager" ? TABS.filter((t) => ["activity", "field", "reports"].includes(t.key)) : TABS;
 
   // Set default tab based on role for managers
   useEffect(() => {
@@ -80,6 +96,7 @@ function AdministrationWorkspace() {
     security: securityEvents,
     activity: 0,
     field: fieldIncidentList.length,
+    reports: 0,
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
@@ -225,6 +242,7 @@ function AdministrationWorkspace() {
             {activeTab === "security" && <SecuritySection />}
             {activeTab === "activity" && <ActivityLogsSection />}
             {activeTab === "field" && <FieldIncidentsSection />}
+            {activeTab === "reports" && <ReportsSection />}
           </div>
         </div>
       </div>

@@ -9,7 +9,6 @@ import { SubscriptionSection } from "@/components/business/SubscriptionSection";
 import { InsuranceSection } from "@/components/business/InsuranceSection";
 import { Wallet, CreditCard, Shield, TrendingUp, TrendingDown } from "lucide-react";
 import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
-import { listPolicies, listClaims } from "@/lib/team-settings-insurance.functions";
 
 export const Route = createFileRoute("/_authenticated/business")({
   component: BusinessWorkspace,
@@ -36,21 +35,12 @@ function BusinessWorkspace() {
 
   const fetchRevenue = useServerFn(getRevenueOverview);
   const fetchSub = useServerFn(getMySubscription);
-  const fetchPolicies = useServerFn(listPolicies);
-  const fetchClaims = useServerFn(listClaims);
 
   const { data: revenue } = useQuery({ queryKey: ["revenue"], queryFn: () => fetchRevenue() });
   const { data: mySub } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fetchSub() });
-  const { data: policies } = useQuery({ queryKey: ["insurance-policies"], queryFn: () => fetchPolicies() });
-  const { data: claims } = useQuery({ queryKey: ["insurance-claims"], queryFn: () => fetchClaims() });
 
   const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
   const sub = mySub?.subscription;
-  const policyList = (policies ?? []) as any[];
-  const claimList = (claims ?? []) as any[];
-  const activePolicies = policyList.filter((p) => p.status === "active").length;
-  const totalCoverage = policyList.reduce((s, p) => s + (p.coverage_amount ?? 0), 0);
-  const openClaims = claimList.filter((c) => c.status !== "paid" && c.status !== "rejected").length;
 
   const counts = {
     revenue: totals.countInvoices ?? 0,
@@ -60,11 +50,15 @@ function BusinessWorkspace() {
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
+  // Insurance tab is hidden (see TABS above), so the overview no longer pulls
+  // Coverage/Open Claims — these four now match the tabs actually on this
+  // page: the first three are Revenue-tab metrics already fetched above,
+  // the last reflects the Subscription tab.
   const stats = [
+    { label: "Invoiced", value: money(totals.invoiced), up: true },
     { label: "Collected", value: money(totals.collected), up: true },
     { label: "Outstanding", value: money(totals.outstanding), up: false },
-    { label: "Coverage", value: money(totalCoverage), up: true },
-    { label: "Open Claims", value: openClaims, up: openClaims === 0 },
+    { label: "Overdue", value: totals.overdue, up: totals.overdue === 0 },
   ];
 
   return (

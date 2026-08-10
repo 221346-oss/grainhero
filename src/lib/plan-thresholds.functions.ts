@@ -203,7 +203,7 @@ export const requestPlanChange = createServerFn({ method: "POST" })
     if (!prof) throw new Error("Profile not found");
 
     const tenantAdminId = prof.admin_id ?? prof.id;
-    const current = prof.subscription_plan ?? "starter";
+    const current = prof.subscription_plan ?? "basic";
     const cur = plans?.find((p: any) => p.plan_id === current);
     const next = plans?.find((p: any) => p.plan_id === data.requested_plan);
     if (!next) throw new Error("Requested plan not found");

@@ -493,7 +493,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               const { data: prof } = await supabaseAdmin
                 .from("profiles")
-                .select("id")
+                .select("id, subscription_plan")
                 .eq("stripe_customer_id", inv.customer ?? "")
                 .maybeSingle();
               if (prof?.id) {
@@ -503,6 +503,35 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   event: `billing.${event.type}`,
                   meta: { amount: inv.amount_paid, currency: inv.currency } as never,
                 });
+
+                // Cross-check the amount actually charged against the
+                // catalog price for the tenant's plan (same source of truth
+                // computeMrr uses) — flag anything that doesn't line up as
+                // its own event rather than burying it inside the routine
+                // billing.* log above.
+                if (event.type === "invoice.paid" && (prof as { subscription_plan?: string }).subscription_plan) {
+                  try {
+                    const { loadPlanPricing } = await import("@/lib/plan-pricing.server");
+                    const planMap = await loadPlanPricing(supabaseAdmin);
+                    const plan = planMap.get(String((prof as { subscription_plan?: string }).subscription_plan).toLowerCase());
+                    const actual = typeof inv.amount_paid === "number" ? inv.amount_paid / 100 : 0;
+                    if (plan && Math.abs(actual - plan.price_rs) > 1) {
+                      await supabaseAdmin.from("security_events").insert({
+                        user_id: prof.id,
+                        tenant_id: prof.id,
+                        event: "payment_mismatch",
+                        meta: {
+                          expected: plan.price_rs,
+                          actual,
+                          currency: inv.currency,
+                          planId: plan.plan_id,
+                        } as never,
+                      });
+                    }
+                  } catch (e) {
+                    console.warn("[stripe-webhook] payment mismatch check failed", (e as Error).message);
+                  }
+                }
               }
               if (event.type === "invoice.payment_failed") {
                 try {
