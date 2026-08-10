@@ -93,7 +93,7 @@ export function RevenueSection() {
 
   const invoices = data?.invoices ?? [];
   const payments = data?.payments ?? [];
-  const totals = data?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0, countPayments: 0 };
+  const totals = data?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, due: 0, overdue: 0, countInvoices: 0, countPayments: 0 };
   const byStatus = data?.byStatus ?? {};
 
   const filteredInv = useMemo(() => {
@@ -119,7 +119,7 @@ export function RevenueSection() {
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div><div className="text-xs text-slate-500 mt-1">invoiced − collected</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Overdue</div><div className="text-2xl font-bold text-red-600">{totals.overdue}</div><div className="text-xs text-slate-500 mt-1">past due</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
       </div>
 
       <DispatchSaleWizard open={wizardOpen} onOpenChange={setWizardOpen} onDone={() => qc.invalidateQueries({ queryKey: ["revenue"] })} />

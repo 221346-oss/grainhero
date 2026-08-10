@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listSiloAvailableBatches, createDispatchFromSilo, approveDispatch } from "@/lib/dispatches.functions";
+import { listSiloAvailableBatches, createDispatchFromSilo, createDispatchPhotoUploadUrl, approveDispatch } from "@/lib/dispatches.functions";
 import { createDispatchInvoice, recordDispatchPayment, createReceiptUploadUrl } from "@/lib/dispatch-sales.functions";
 import { listBuyers, listSilos } from "@/lib/operations.functions";
 import { extractPaymentDetails, type ExtractedPaymentDetails } from "@/lib/ocr-service";
@@ -40,9 +40,13 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const [vehicle, setVehicle] = useState("");
   const [driverName, setDriverName] = useState("");
   const [driverContact, setDriverContact] = useState("");
+  const [driverCnic, setDriverCnic] = useState("");
   const [destination, setDestination] = useState("");
   const [expected, setExpected] = useState("");
   const [notes, setNotes] = useState("");
+  const [dispatchPhotoFile, setDispatchPhotoFile] = useState<File | null>(null);
+  const [dispatchPhotoPath, setDispatchPhotoPath] = useState<string | null>(null);
+  const [dispatchPhotoUploading, setDispatchPhotoUploading] = useState(false);
 
   // --- result state carried across steps ---
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
@@ -66,8 +70,9 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   useEffect(() => {
     if (open) {
       setStep("details"); setSiloId(""); setGrainType(""); setBuyerId(""); setNewBuyer("");
-      setQty(""); setPrice(""); setVehicle(""); setDriverName(""); setDriverContact("");
+      setQty(""); setPrice(""); setVehicle(""); setDriverName(""); setDriverContact(""); setDriverCnic("");
       setDestination(""); setExpected(""); setNotes("");
+      setDispatchPhotoFile(null); setDispatchPhotoPath(null);
       setInvoiceId(null); setInvoiceNumber(null); setDispatchId(null); setDispatchNumber(null);
       setDispatchApproved(false); setReceiptFile(null); setExtracted(null); setReceiptPath(null);
       setOcrFailed(false); setManualAmount(""); setManualReference(""); setManualDate("");
@@ -79,6 +84,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const listBuyersFn = useServerFn(listBuyers);
   const createInvoiceFn = useServerFn(createDispatchInvoice);
   const createDispatchFn = useServerFn(createDispatchFromSilo);
+  const signDispatchPhotoFn = useServerFn(createDispatchPhotoUploadUrl);
   const approveFn = useServerFn(approveDispatch);
   const signUploadFn = useServerFn(createReceiptUploadUrl);
   const recordPaymentFn = useServerFn(recordDispatchPayment);
@@ -130,6 +136,25 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
     onError: (e: Error) => toast.error(e.message),
   });
 
+  async function handleDispatchPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setDispatchPhotoFile(f);
+    setDispatchPhotoUploading(true);
+    try {
+      const signed = await signDispatchPhotoFn({ data: { filename: f.name } });
+      const up = await supabase.storage.from("dispatch-photos").uploadToSignedUrl(signed.path, signed.token, f);
+      if (up.error) throw up.error;
+      setDispatchPhotoPath(signed.path);
+    } catch (err) {
+      toast.error((err as Error).message || "Photo upload failed");
+      setDispatchPhotoFile(null);
+    } finally {
+      setDispatchPhotoUploading(false);
+      e.target.value = "";
+    }
+  }
+
   const dispatchMut = useMutation({
     mutationFn: () => createDispatchFn({ data: {
       siloId, grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency,
@@ -137,6 +162,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
       newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
       invoiceId: invoiceId,
       vehicleNumber: vehicle || null, driverName: driverName || null, driverContact: driverContact || null,
+      driverCnic: driverCnic || null, dispatchPhotoPath: dispatchPhotoPath,
       destination: destination || null, notes: notes || null, expectedDate: expected || null,
       stage: "staged",
     } }),
@@ -293,9 +319,21 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Input className="h-9" placeholder="Driver phone" value={driverContact} onChange={(e) => setDriverContact(e.target.value)} />
-              <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
+              <Input className="h-9" placeholder="Driver CNIC" value={driverCnic} onChange={(e) => setDriverCnic(e.target.value)} />
             </div>
+            <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
             <Textarea rows={2} placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+            <div>
+              <Label className="text-xs">Dispatch / truck photo (optional)</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <label className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs cursor-pointer hover:border-emerald-500/50">
+                  <Upload className="h-3.5 w-3.5" /> {dispatchPhotoFile ? dispatchPhotoFile.name : "Choose photo…"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleDispatchPhotoChange} disabled={dispatchPhotoUploading} />
+                </label>
+                {dispatchPhotoUploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+              </div>
+            </div>
 
             {qtyNum > 0 && priceNum > 0 && (
               <div className="rounded-lg border bg-muted/30 p-3 text-xs space-y-1">
