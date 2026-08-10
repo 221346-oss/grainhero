@@ -24,7 +24,7 @@ interface MarketingPageProps {
  */
 export function MarketingPage({ eyebrow, title, intro, crumbs, children }: MarketingPageProps) {
   return (
-    <div className="min-h-screen bg-[#FAFAF7]">
+    <div className="gh-longform min-h-screen bg-[#FAFAF7]">
       <NewGlassNav />
 
       <header className="relative overflow-hidden bg-[#111512] px-4 pb-14 pt-28 sm:px-6 sm:pb-20 sm:pt-36 lg:px-8">
@@ -159,20 +159,41 @@ export function DataTable({
   )
 }
 
-export function FaqList({ items }: { items: { q: string; a: string }[] }) {
+/** Stable, URL-safe id for a question — lets a page deep-link to one answer. */
+export function faqSlug(question: string) {
+  return question
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export function FaqList({
+  items,
+  openSlug,
+}: {
+  items: { q: string; a: string }[]
+  /** Slug of the entry to render already expanded. Omitted → all closed, as before. */
+  openSlug?: string
+}) {
   return (
     <div className="divide-y divide-[#111512]/10 border-y border-[#111512]/10">
-      {items.map((item) => (
-        <details key={item.q} className="group py-4">
-          <summary className="cursor-pointer list-none text-[15px] font-semibold text-[#111512] marker:hidden">
-            <span className="flex items-start justify-between gap-4">
-              {item.q}
-              <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#2FA84F] transition-transform group-open:rotate-90" />
-            </span>
-          </summary>
-          <p className="mt-3 text-[15px] leading-relaxed text-[#111512]/70">{item.a}</p>
-        </details>
-      ))}
+      {items.map((item) => {
+        const slug = faqSlug(item.q)
+        // `open` is only passed for the targeted entry, so every other one stays
+        // uncontrolled and keeps its native toggle behaviour.
+        const openProps = openSlug === slug ? { open: true } : {}
+        return (
+          <details key={item.q} id={slug} className="group scroll-mt-28 py-4" {...openProps}>
+            <summary className="cursor-pointer list-none text-[15px] font-semibold text-[#111512] marker:hidden">
+              <span className="flex items-start justify-between gap-4">
+                {item.q}
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#2FA84F] transition-transform group-open:rotate-90" />
+              </span>
+            </summary>
+            <p className="mt-3 text-[15px] leading-relaxed text-[#111512]/70">{item.a}</p>
+          </details>
+        )
+      })}
     </div>
   )
 }
