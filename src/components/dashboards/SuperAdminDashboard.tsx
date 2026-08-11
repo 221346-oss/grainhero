@@ -16,8 +16,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
   const qc = useQueryClient();
 
-  // Realtime invalidation — any change to revenue-shaping tables refreshes
-  // MRR, revenue trend, and by-plan chart across every SuperAdmin surface.
+  // Realtime invalidation
   useEffect(() => {
     const channel = supabase
       .channel("superadmin-revenue")
@@ -71,14 +70,13 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
 
   const reporting = w?.reportingStats ?? { totalTickets: 0 };
 
-  const signups30 = (w?.signupsSeries ?? []).reduce((acc: number, p: any) => acc + (p.count ?? 0), 0);
-
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
+      <div className="min-h-screen p-3 sm:p-4 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
         <WelcomeBanner name={name} />
 
-        <div className="space-y-3 mt-1">
+        {/* Row 1: KPI Summary - Top */}
+        <div className="mt-2">
           <SuperKpiSummary
             mrr={mrr}
             mrrDeltaPct={mrrDelta}
@@ -89,6 +87,10 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             ordersOpen={w?.ordersTotal ?? 0}
             criticalAlerts={m?.criticalAlerts ?? 0}
           />
+        </div>
+
+        {/* Row 2: Insights strip - 4 KPIs */}
+        <div className="mt-2">
           <SuperInsightsStrip
             signupsTotal={w?.signupsTotal ?? 0}
             wowDelta={w?.wowDelta ?? 0}
@@ -96,7 +98,13 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             pipelineTotal={w?.pipelineTotal ?? 0}
             criticalAlerts={m?.criticalAlerts ?? 0}
           />
-          <SuperBento recentSignups={w?.recentSignups ?? []} />
+        </div>
+
+        {/* Row 3: Charts + Tables (2 column layout) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2">
+          {/* Left: Charts */}
+          <div><SuperBento recentSignups={w?.recentSignups ?? []} /></div>
+          {/* Right: Would add pie charts or additional metrics here */}
         </div>
       </div>
     </TooltipProvider>

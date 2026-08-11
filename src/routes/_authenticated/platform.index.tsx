@@ -173,7 +173,7 @@ function PlatformOverviewPage() {
   return (
     <AdminPageShell title="Platform overview" subtitle="Tenants, revenue, devices, and health across every account" actions={actions}>
       {isLoading ? <OverviewSkeleton /> : (
-        <div className="space-y-3">
+        <div className="space-y-2">
 
           {/* ── Row 1: Platform Insights — compact hairline grid ── */}
           <HairlineGrid cols="grid-cols-2 lg:grid-cols-4">
