@@ -6284,8 +6284,12 @@ export type Database = {
           id: string
           invitation_expires: string | null
           invitation_role: string | null
+          invitation_status:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token: string | null
           invited_by: string | null
+          is_active: boolean | null
           last_active_at: string | null
           last_login: string | null
           location: Json | null
@@ -6350,8 +6354,12 @@ export type Database = {
           id: string
           invitation_expires?: string | null
           invitation_role?: string | null
+          invitation_status?:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token?: string | null
           invited_by?: string | null
+          is_active?: boolean | null
           last_active_at?: string | null
           last_login?: string | null
           location?: Json | null
@@ -6416,8 +6424,12 @@ export type Database = {
           id?: string
           invitation_expires?: string | null
           invitation_role?: string | null
+          invitation_status?:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token?: string | null
           invited_by?: string | null
+          is_active?: boolean | null
           last_active_at?: string | null
           last_login?: string | null
           location?: Json | null
@@ -8577,6 +8589,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           location: Json | null
+          location_address: string | null
+          location_city: string | null
           manager_id: string | null
           name: string
           notes: string | null
@@ -8600,6 +8614,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           location?: Json | null
+          location_address?: string | null
+          location_city?: string | null
           manager_id?: string | null
           name: string
           notes?: string | null
@@ -8623,6 +8639,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           location?: Json | null
+          location_address?: string | null
+          location_city?: string | null
           manager_id?: string | null
           name?: string
           notes?: string | null
@@ -9164,6 +9182,7 @@ export type Database = {
       device_status: "active" | "offline" | "error" | "maintenance"
       dispute_status: "open" | "under_review" | "resolved" | "rejected"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
+      invitation_status: "pending" | "accepted" | "declined"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
       notification_cat:
@@ -9390,6 +9409,7 @@ export const Constants = {
       device_status: ["active", "offline", "error", "maintenance"],
       dispute_status: ["open", "under_review", "resolved", "rejected"],
       grain_type: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
+      invitation_status: ["pending", "accepted", "declined"],
       listing_status: ["draft", "active", "paused", "sold_out", "archived"],
       listing_visibility: ["private", "buyer_network", "public"],
       notification_cat: [
