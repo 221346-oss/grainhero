@@ -27,8 +27,18 @@ import { listSensorDevices, listActuators, listGrainAlerts } from "@/lib/operati
 import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.functions";
 import { getIncidents } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
+  head: () => ({
+    meta: [
+      { title: "Monitoring — Grain Hero" },
+      { name: "description", content: "Monitoring workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Monitoring — Grain Hero" },
+      { property: "og:description", content: "Monitoring workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MonitoringWorkspace,
 });
 
@@ -56,6 +66,9 @@ function MonitoringWorkspace() {
   const getMaintenanceFn = useServerFn(getMaintenanceOverview);
   const getHealthFn = useServerFn(getDeviceHealth);
   const roleFn = useServerFn(getMyRole);
+  const listSensorsFn = useServerFn(listSensorDevices);
+  const listActuatorsFn = useServerFn(listActuators);
+  const listAlertsFn = useServerFn(listGrainAlerts);
 
   const { data: sensors } = useQuery({
     queryKey: ["sensor-devices"],
@@ -82,6 +95,8 @@ function MonitoringWorkspace() {
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
 
   const userRole = roleData?.role ?? "pending";
+
+  if (!roleData) return <KpiChartHubSkeleton />;
 
   // Filter tabs based on role - manager only sees Incidents tab
   const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;

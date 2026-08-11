@@ -22,6 +22,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/platform/invoice-failures")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Invoice Failures — Grain Hero" },
+      { name: "description", content: "Platform · Invoice Failures workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Invoice Failures — Grain Hero" },
+      { property: "og:description", content: "Platform · Invoice Failures workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: InvoiceFailuresPage,
 });
 

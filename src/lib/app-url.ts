@@ -5,9 +5,11 @@
 // this var is missing.
 export function requireAppOrigin(): string {
   const origin = process.env.APP_ORIGIN;
+  console.log("🔍 DEBUG: APP_ORIGIN from env =", origin);
   if (!origin) {
     throw new Error("APP_ORIGIN environment variable is not set — cannot build an absolute redirect URL.");
   }
+  console.log("✅ Using APP_ORIGIN:", origin);
   return origin;
 }
 

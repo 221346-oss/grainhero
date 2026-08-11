@@ -79,7 +79,7 @@ export function MLModelsSection() {
                 <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Output classes</div>
                 <div className="flex flex-wrap gap-1">
                   {m.classes.map((c: string) => (
-                    <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">{c}</span>
+                    <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{c}</span>
                   ))}
                 </div>
               </div>

@@ -52,7 +52,10 @@ export function AdminDashboard({ name }: { name?: string }) {
             <RecentActivityCard />
           </div>
           <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
+            <AdminSilosCard range={range} />
             <RecentBatchesCard range={range} />
+            <WeeklyIntakeCard range={range} />
             <SupportTicketsCard
               onViewAll={() => setTicketPanelOpen(true)}
               ticketPanelOpen={ticketPanelOpen}

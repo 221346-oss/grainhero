@@ -14,7 +14,7 @@ import { listTickets, deleteTicket, type TicketRow } from "@/lib/tickets.functio
 import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
+import { Star, TrendingUp, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
@@ -123,7 +123,6 @@ function PlatformReportingPage() {
       <Tabs defaultValue={activeTab}>
         <TabsList>
           <TabsTrigger value="hardware">Hardware ({details?.hardwareOrders?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="alerts">Sensor alerts ({details?.hardwareAlerts?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="bugs">Bug reports ({(details?.bugReports?.length ?? 0) + bugTickets.length})</TabsTrigger>
           <TabsTrigger value="queries">Manager queries ({details?.managerQueries?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="feedback">Customer Feedback ({feedback.feedback.length})</TabsTrigger>
@@ -172,44 +171,6 @@ function PlatformReportingPage() {
                 </tbody>
               </table>
             )}
-          </AdminDataCard>
-        </TabsContent>
-
-        <TabsContent value="alerts" className="mt-4">
-          <AdminDataCard title="Hardware & sensor alerts" description="Device-related alerts across tenants">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium">Alert</th>
-                  <th className="text-left px-2 py-2 font-medium">Priority</th>
-                  <th className="text-right px-4 py-2 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {(details?.hardwareAlerts ?? []).map((a: Record<string, unknown>) => (
-                  <tr key={String(a.id)} className="hover:bg-slate-50">
-                    <td className="px-4 py-2">
-                      <p className="font-medium text-slate-900">{String(a.alert_type ?? "Alert")}</p>
-                      <p className="text-[11px] text-slate-500 truncate max-w-md">{String(a.message ?? "")}</p>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Badge
-                        variant="outline"
-                        className={a.priority === "critical" ? "border-red-300 text-red-700" : "border-amber-300 text-amber-700"}
-                      >
-                        {String(a.priority ?? "—")}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-2 text-right text-slate-500 whitespace-nowrap">
-                      {a.created_at ? new Date(String(a.created_at)).toLocaleDateString() : "—"}
-                    </td>
-                  </tr>
-                ))}
-                {!details?.hardwareAlerts?.length && (
-                  <tr><td colSpan={3} className="text-center text-slate-400 py-8">No hardware alerts</td></tr>
-                )}
-              </tbody>
-            </table>
           </AdminDataCard>
         </TabsContent>
 
@@ -359,43 +320,44 @@ function PlatformReportingPage() {
 
         {/* Customer Feedback Tab */}
         <TabsContent value="feedback" className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                <Star className="h-3 w-3" />
-                <span>Avg Rating</span>
+          {/* Feedback stats - Neon hairline grid */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-5">
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Star className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Avg Rating</span>
               </div>
-              <div className="text-2xl font-bold text-slate-900">
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgOverallRating.toFixed(1)}
-                <span className="text-sm text-slate-400">/5</span>
+                <span className="text-sm text-muted-foreground">/5</span>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Technician</div>
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Technician</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgTechnicianRating.toFixed(1)}
-                <span className="text-sm text-slate-400">/5</span>
+                <span className="text-sm text-muted-foreground">/5</span>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Install Quality</div>
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Install Quality</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgInstallQuality.toFixed(1)}
-                <span className="text-sm text-slate-400">/5</span>
+                <span className="text-sm text-muted-foreground">/5</span>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                <CheckCircle2 className="h-3 w-3" />
-                <span>Would Recommend</span>
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <CheckCircle2 className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Recommend</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-600">
+              <div className="text-xl font-bold tabular-nums text-success">
                 {feedback.aggregates.recommendPercent.toFixed(0)}%
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Total Responses</div>
-              <div className="text-2xl font-bold text-slate-900">{feedback.aggregates.totalCount}</div>
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Total</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">{feedback.aggregates.totalCount}</div>
             </div>
           </div>
 
@@ -465,31 +427,32 @@ function PlatformReportingPage() {
 
         {/* Warehouse Metrics Tab */}
         <TabsContent value="warehouses" className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Total Warehouses</div>
-              <div className="text-2xl font-bold text-slate-900">
+          {/* Warehouse stats - Neon hairline grid */}
+          <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-4">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Total Warehouses</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {warehouses.platformAggregates.totalWarehouses}
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Avg Utilization</div>
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Avg Utilization</span>
+              <div className="text-xl font-bold tabular-nums text-info">
                 {warehouses.platformAggregates.avgUtilizationPercent}%
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="text-xs text-slate-500 mb-1">Active Silos</div>
-              <div className="text-2xl font-bold text-slate-900">
+            <div className="bg-background px-3 py-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Active Silos</span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
                 {warehouses.platformAggregates.totalActiveSilos}
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-                <AlertTriangle className="h-3 w-3" />
-                <span>Quality Incidents</span>
+            <div className="bg-background px-3 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <AlertTriangle className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Incidents</span>
               </div>
-              <div className="text-2xl font-bold text-amber-600">
+              <div className="text-xl font-bold tabular-nums text-warning">
                 {warehouses.platformAggregates.totalQualityIncidents}
               </div>
             </div>

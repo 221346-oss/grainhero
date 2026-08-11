@@ -8,6 +8,15 @@ import { listAllHardwareOrders } from "@/lib/hardware-orders.functions";
 import { getDeviceHealth } from "@/lib/operations2.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/key-metrics")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Key Metrics — Grain Hero" },
+      { name: "description", content: "Platform · Key Metrics workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Key Metrics — Grain Hero" },
+      { property: "og:description", content: "Platform · Key Metrics workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlatformKeyMetricsPage,
 });
 

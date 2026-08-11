@@ -17,8 +17,9 @@ function firstNameOf(name?: string | null, email?: string | null) {
 function appOrigin() {
   return (
     process.env.APP_ORIGIN ??
+    process.env.PUBLIC_APP_URL ??
     process.env.VITE_APP_URL ??
-    "https://grainheroo.lovable.app"
+    "https://grainhero.app"
   );
 }
 

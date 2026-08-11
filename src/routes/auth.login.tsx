@@ -20,7 +20,14 @@ export const Route = createFileRoute("/auth/login")({
     meta: [
       { title: "Sign in — GrainHero" },
       { name: "description", content: "Sign in to your GrainHero account." },
+      { property: 'og:title', content: "Sign in — GrainHero" },
+      { property: 'og:description', content: "Sign in to your GrainHero account." },
+      { property: 'og:url', content: 'https://grainhero.app/auth/login' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/auth/login' }],
   }),
   component: LoginPage,
 });
@@ -59,16 +66,28 @@ function LoginPage() {
     };
   }, [navigate, redirect]);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Read straight from the form so Enter/click works even when the browser
+    // autofilled the field without firing an onChange (controlled state stays
+    // empty in that case). Fall back to React state.
+    const raw = (new FormData(e.currentTarget).get("email") as string | null) ?? email;
+    const normalizedEmail = raw.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setMsg({ type: "error", text: "Please enter your email." });
+      return;
+    }
     setMsg(null);
     setLoading(true);
-    const normalizedEmail = email.trim().toLowerCase();
+    // Do NOT set emailRedirectTo here. With it set, Supabase sends a magic-link
+    // style email whose token does not verify as type "email" (and mail link
+    // scanners can pre-consume the single-use token), so the first code entry
+    // fails with "invalid token" — only the emailRedirectTo-less resend works.
+    // Sending a plain OTP matches the verify step and the resend path.
     const { error } = await supabase.auth.signInWithOtp({
       email: normalizedEmail,
-      options: { 
+      options: {
         shouldCreateUser: true,
-        emailRedirectTo: window.location.origin + (redirect ?? "/dashboard"),
       },
     });
     setLoading(false);
@@ -96,6 +115,7 @@ function LoginPage() {
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 id="li-email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -126,12 +146,25 @@ function LoginPage() {
           </Link>
         </p>
         <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors inline-flex items-center gap-1">
+          <Link
+            to="/"
+            className="hover:text-foreground transition-colors inline-flex items-center gap-1"
+          >
             ← Go to home
           </Link>
           <span>·</span>
-          <Link to="/auth/forgot-password" className="hover:text-[#00a63e] hover:underline transition-colors">
+          <Link
+            to="/auth/forgot-password"
+            className="hover:text-[#00a63e] hover:underline transition-colors"
+          >
             Forgot password?
+          </Link>
+          <span>·</span>
+          <Link
+            to="/auth/accept-invite"
+            className="hover:text-[#00a63e] hover:underline transition-colors"
+          >
+            Have an invite code?
           </Link>
         </div>
       </div>

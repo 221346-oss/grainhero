@@ -4,7 +4,7 @@ import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
 import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
@@ -22,6 +22,7 @@ import { SiloStatusPie, type StatusSlice } from "@/components/grain-operations/S
 import { type FlowGroup } from "@/components/grain-operations/SiloFlowDiagram";
 import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 type Tab = "batches" | "silos" | "warehouses" | "buyers";
 
@@ -33,6 +34,15 @@ const TAB_KEYS: Tab[] = ["batches", "silos", "warehouses", "buyers"];
 type GrainOpsSearch = { tab: Tab; status?: string };
 
 export const Route = createFileRoute("/_authenticated/grain-operations")({
+  head: () => ({
+    meta: [
+      { title: "Grain Operations — Grain Hero" },
+      { name: "description", content: "Grain Operations workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Grain Operations — Grain Hero" },
+      { property: "og:description", content: "Grain Operations workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): GrainOpsSearch => ({
     tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "silos",
     // Optional deep-link filter for the Batches tab (e.g. the global search
@@ -43,10 +53,10 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
 });
 
 const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "batches",    label: "Grain Batches", icon: Package   },
-  { key: "silos",      label: "Silos",         icon: Warehouse },
-  { key: "warehouses", label: "Warehouses",    icon: Building2 },
-  { key: "buyers",     label: "Buyers",        icon: Users     },
+  { key: "batches", label: "Grain Batches", icon: Package },
+  { key: "silos", label: "Silos", icon: Warehouse },
+  { key: "warehouses", label: "Warehouses", icon: Building2 },
+  { key: "buyers", label: "Buyers", icon: Users },
 ];
 
 function GrainOperationsWorkspace() {
@@ -62,19 +72,12 @@ function GrainOperationsWorkspace() {
   });
   const userRole = roleData?.role ?? "pending";
 
-  // Filter tabs based on role - manager doesn't see warehouses
-  const TABS = userRole === "manager" ? ALL_TABS.filter((t) => t.key !== "warehouses") : ALL_TABS;
+  // Filter tabs based on role - managers can view warehouses but cannot create them
+  const TABS = ALL_TABS;
 
   useEffect(() => {
     setActiveTabState(tab);
   }, [tab]);
-
-  // If current tab is warehouses and user is manager, redirect to batches
-  useEffect(() => {
-    if (userRole === "manager" && activeTab === "warehouses") {
-      setActiveTab("batches");
-    }
-  }, [userRole, activeTab]);
 
   function setActiveTab(next: Tab) {
     setActiveTabState(next);

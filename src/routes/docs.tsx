@@ -12,7 +12,13 @@ export const Route = createFileRoute('/docs')({
         name: 'description',
         content: 'Complete technical documentation for GrainHero platform, API references, and integration guides.',
       },
+      { property: 'og:title', content: "Documentation — GrainHero" },
+      { property: 'og:description', content: "Complete technical documentation for GrainHero platform, API references, and integration guides." },
+      { property: 'og:url', content: 'https://grainhero.app/docs' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/docs' }],
   }),
   component: DocumentationPage,
 })

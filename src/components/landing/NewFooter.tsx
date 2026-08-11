@@ -3,27 +3,27 @@ import { Link } from '@tanstack/react-router'
 
 export function NewFooter() {
   return (
-    <footer className="bg-[#252d26] text-[#EDE9D4] pt-16 pb-8 px-4 sm:px-6 lg:px-8">
+    <footer className="bg-[#111512] text-[#FAFAF7] pt-10 pb-6 px-4 sm:pt-16 sm:pb-8 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-7 mb-8 sm:gap-8 sm:mb-12 lg:grid-cols-4 lg:gap-12">
           {/* Brand Column */}
-          <div className="space-y-4">
+          <div className="col-span-2 space-y-3 sm:space-y-4 lg:col-span-1">
             <div className="flex items-center gap-2">
-              <Wheat className="w-8 h-8 text-[#2FAC0C]" />
-              <span className="text-xl font-bold text-[#EDE9D4]">GrainHero</span>
+              <Wheat className="w-8 h-8 text-[#2FA84F]" />
+              <span className="text-xl font-bold text-[#FAFAF7]">GrainHero</span>
             </div>
-            <p className="text-[#EDE9D4]/70 text-sm leading-relaxed">
+            <p className="text-[#FAFAF7]/70 text-sm leading-relaxed line-clamp-2 sm:line-clamp-none">
               AI-powered grain storage management platform helping farmers protect their harvest
               and maximize profits with intelligent monitoring and predictive analytics.
             </p>
             {/* Social Media */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2.5 pt-1 sm:gap-3 sm:pt-2">
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#EDE9D4]/10 hover:bg-[#2FAC0C] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5" />
@@ -32,7 +32,7 @@ export function NewFooter() {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#EDE9D4]/10 hover:bg-[#2FAC0C] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="Twitter"
               >
                 <Twitter className="w-5 h-5" />
@@ -41,7 +41,7 @@ export function NewFooter() {
                 href="https://www.linkedin.com/in/grain-hero-841723419/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#EDE9D4]/10 hover:bg-[#2FAC0C] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />
@@ -50,7 +50,7 @@ export function NewFooter() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#EDE9D4]/10 hover:bg-[#2FAC0C] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                className="w-9 h-9 sm:w-10 sm:h-10 bg-[#FAFAF7]/10 hover:bg-[#2FA84F] rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5" />
@@ -60,31 +60,31 @@ export function NewFooter() {
 
           {/* Product Column */}
           <div>
-            <h3 className="text-[#EDE9D4] font-bold text-lg mb-4">Product</h3>
-            <ul className="space-y-3">
+            <h3 className="text-[#FAFAF7] font-bold text-base mb-2.5 sm:text-lg sm:mb-4">Solutions</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
-                <Link to="/" hash="features" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/solutions/grain-storage-monitoring" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Grain storage monitoring
+                </Link>
+              </li>
+              <li>
+                <Link to="/solutions/silo-monitoring-system" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Silo monitoring system
+                </Link>
+              </li>
+              <li>
+                <Link to="/solutions/grain-management-software" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Grain management software
+                </Link>
+              </li>
+              <li>
+                <Link to="/" hash="features" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Features
                 </Link>
               </li>
               <li>
-                <Link to="/" hash="pricing" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/" hash="how-it-works" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/" hash="how-it-works" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   How It Works
-                </Link>
-              </li>
-              <li>
-                <Link to="/" hash="technology" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
-                  Technology
-                </Link>
-              </li>
-              <li>
-                <Link to="/" hash="faq" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
-                  FAQ
                 </Link>
               </li>
             </ul>
@@ -92,25 +92,30 @@ export function NewFooter() {
 
           {/* Company Column */}
           <div>
-            <h3 className="text-[#EDE9D4] font-bold text-lg mb-4">Company</h3>
-            <ul className="space-y-3">
+            <h3 className="text-[#FAFAF7] font-bold text-base mb-2.5 sm:text-lg sm:mb-4">Company</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
-                <Link to="/about" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/about" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/team" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/team" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Team
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
-                  Blog
+                <Link to="/blog" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Resources
+                </Link>
+              </li>
+              <li>
+                <Link to="/guides/grain-storage" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                  Grain storage guide
                 </Link>
               </li>
                <li>
-                <Link to="/contact" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/contact" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Contact
                 </Link>
               </li>
@@ -119,25 +124,25 @@ export function NewFooter() {
 
           {/* Support & Contact Column */}
           <div>
-            <h3 className="text-[#EDE9D4] font-bold text-lg mb-4">Support</h3>
-            <ul className="space-y-3 mb-6">
+            <h3 className="text-[#FAFAF7] font-bold text-base mb-2.5 sm:text-lg sm:mb-4">Support</h3>
+            <ul className="space-y-2 mb-4 sm:space-y-3 sm:mb-6">
               <li>
-                <Link to="/help" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/help" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link to="/docs" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/docs" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Documentation
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/privacy" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-[#EDE9D4]/70 hover:text-[#2FAC0C] transition-colors text-sm">
+                <Link to="/terms" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
                   Terms of Service
                 </Link>
               </li>
@@ -145,15 +150,15 @@ export function NewFooter() {
 
             {/* Contact Info */}
             <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-[#EDE9D4]/70">
-                <Mail className="w-4 h-4 text-[#2FAC0C]" />
-                <a href="mailto:grainhero@gmail.com" className="hover:text-[#2FAC0C] transition-colors">
+              <div className="flex items-center gap-2 text-[#FAFAF7]/70">
+                <Mail className="w-4 h-4 text-[#2FA84F]" />
+                <a href="mailto:grainhero@gmail.com" className="hover:text-[#2FA84F] transition-colors">
                   grainhero@gmail.com
                 </a>
               </div>
-              <div className="flex items-center gap-2 text-[#EDE9D4]/70">
-                <Phone className="w-4 h-4 text-[#2FAC0C]" />
-                <a href="tel:+923455904427" className="hover:text-[#2FAC0C] transition-colors">
+              <div className="flex items-center gap-2 text-[#FAFAF7]/70">
+                <Phone className="w-4 h-4 text-[#2FA84F]" />
+                <a href="tel:+923455904427" className="hover:text-[#2FA84F] transition-colors">
                   +92 345 5904427
                 </a>
               </div>
@@ -162,19 +167,19 @@ export function NewFooter() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-[#EDE9D4]/10 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-[#EDE9D4]/50 text-sm text-center md:text-left">
+        <div className="border-t border-[#FAFAF7]/10 pt-5 sm:pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2.5 sm:gap-4">
+            <p className="text-[#FAFAF7]/50 text-sm text-center md:text-left">
               © {new Date().getFullYear()} GrainHero. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
-              <Link to="/privacy" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
+              <Link to="/privacy" className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors">
                 Privacy
               </Link>
-              <Link to="/terms" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
+              <Link to="/terms" className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors">
                 Terms
               </Link>
-              <Link to="/cookies" className="text-[#EDE9D4]/50 hover:text-[#2FAC0C] transition-colors">
+              <Link to="/cookies" className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors">
                 Cookies
               </Link>
             </div>

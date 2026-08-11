@@ -500,6 +500,7 @@ export type Database = {
       bug_reports: {
         Row: {
           admin_id: string | null
+          category: string
           created_at: string
           description: string
           id: string
@@ -511,6 +512,7 @@ export type Database = {
         }
         Insert: {
           admin_id?: string | null
+          category?: string
           created_at?: string
           description: string
           id?: string
@@ -522,6 +524,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string | null
+          category?: string
           created_at?: string
           description?: string
           id?: string
@@ -765,7 +768,7 @@ export type Database = {
         Row: {
           admin_id: string
           amount_paid: number | null
-          batch_id: string
+          batch_id: string | null
           batch_ref: string | null
           buyer_company: string | null
           buyer_contact: Json | null
@@ -774,6 +777,7 @@ export type Database = {
           created_at: string | null
           created_by: string
           currency: string | null
+          dispatch_id: string | null
           due_date: string | null
           email_attempts: number
           email_error: string | null
@@ -799,7 +803,7 @@ export type Database = {
         Insert: {
           admin_id: string
           amount_paid?: number | null
-          batch_id: string
+          batch_id?: string | null
           batch_ref?: string | null
           buyer_company?: string | null
           buyer_contact?: Json | null
@@ -808,6 +812,7 @@ export type Database = {
           created_at?: string | null
           created_by: string
           currency?: string | null
+          dispatch_id?: string | null
           due_date?: string | null
           email_attempts?: number
           email_error?: string | null
@@ -833,7 +838,7 @@ export type Database = {
         Update: {
           admin_id?: string
           amount_paid?: number | null
-          batch_id?: string
+          batch_id?: string | null
           batch_ref?: string | null
           buyer_company?: string | null
           buyer_contact?: Json | null
@@ -842,6 +847,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           currency?: string | null
+          dispatch_id?: string | null
           due_date?: string | null
           email_attempts?: number
           email_error?: string | null
@@ -906,6 +912,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "technician_performance_v"
             referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "buyer_invoices_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_dispatches"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "buyer_invoices_order_id_fkey"
@@ -1310,12 +1323,15 @@ export type Database = {
           buyer_id: string
           created_at: string | null
           currency: string | null
+          dispatch_id: string | null
           id: string
           invoice_id: string | null
           notes: string | null
+          ocr_extracted: Json | null
           payment_date: string | null
           payment_method: string
           payment_reference: string | null
+          receipt_url: string | null
           recorded_by: string
           status: string | null
           updated_at: string | null
@@ -1327,12 +1343,15 @@ export type Database = {
           buyer_id: string
           created_at?: string | null
           currency?: string | null
+          dispatch_id?: string | null
           id?: string
           invoice_id?: string | null
           notes?: string | null
+          ocr_extracted?: Json | null
           payment_date?: string | null
           payment_method: string
           payment_reference?: string | null
+          receipt_url?: string | null
           recorded_by: string
           status?: string | null
           updated_at?: string | null
@@ -1344,12 +1363,15 @@ export type Database = {
           buyer_id?: string
           created_at?: string | null
           currency?: string | null
+          dispatch_id?: string | null
           id?: string
           invoice_id?: string | null
           notes?: string | null
+          ocr_extracted?: Json | null
           payment_date?: string | null
           payment_method?: string
           payment_reference?: string | null
+          receipt_url?: string | null
           recorded_by?: string
           status?: string | null
           updated_at?: string | null
@@ -1381,6 +1403,13 @@ export type Database = {
             columns: ["buyer_id"]
             isOneToOne: false
             referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buyer_payments_dispatch_id_fkey"
+            columns: ["dispatch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_dispatches"
             referencedColumns: ["id"]
           },
           {
@@ -2600,6 +2629,58 @@ export type Database = {
           },
         ]
       }
+      field_incident_comments: {
+        Row: {
+          author_name: string
+          author_role: string
+          created_at: string
+          id: string
+          incident_id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          author_name: string
+          author_role?: string
+          created_at?: string
+          id?: string
+          incident_id: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string
+          author_role?: string
+          created_at?: string
+          id?: string
+          incident_id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_incident_comments_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "field_incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incident_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_incident_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+        ]
+      }
       field_incidents: {
         Row: {
           assigned_at: string | null
@@ -2721,6 +2802,60 @@ export type Database = {
           },
         ]
       }
+      field_tickets: {
+        Row: {
+          admin_id: string
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          reporter_name: string
+          reporter_role: string
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_note: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          reporter_name: string
+          reporter_role?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_note?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          reporter_name?: string
+          reporter_role?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_note?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_ledger_entries: {
         Row: {
           amount: number
@@ -2817,6 +2952,7 @@ export type Database = {
           message: string
           notifications_sent: Json | null
           priority: Database["public"]["Enums"]["alert_priority"]
+          recipient_id: string | null
           related_alerts: Json | null
           resolution: Json | null
           resolved_at: string | null
@@ -2859,6 +2995,7 @@ export type Database = {
           message: string
           notifications_sent?: Json | null
           priority: Database["public"]["Enums"]["alert_priority"]
+          recipient_id?: string | null
           related_alerts?: Json | null
           resolution?: Json | null
           resolved_at?: string | null
@@ -2901,6 +3038,7 @@ export type Database = {
           message?: string
           notifications_sent?: Json | null
           priority?: Database["public"]["Enums"]["alert_priority"]
+          recipient_id?: string | null
           related_alerts?: Json | null
           resolution?: Json | null
           resolved_at?: string | null
@@ -2995,6 +3133,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sensor_devices"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_alerts_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_alerts_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
           },
           {
             foreignKeyName: "grain_alerts_resolved_by_fkey"
@@ -5082,6 +5234,107 @@ export type Database = {
           },
         ]
       }
+      maintenance_requests: {
+        Row: {
+          admin_id: string
+          assigned_technician_id: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          id: string
+          priority: string
+          requested_by: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          silo_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          assigned_technician_id?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          priority?: string
+          requested_by: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          silo_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          assigned_technician_id?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          priority?: string
+          requested_by?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          silo_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_requests_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "sensor_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metric_export_tokens: {
         Row: {
           created_at: string
@@ -5168,6 +5421,79 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      ml_inference_requests: {
+        Row: {
+          admin_id: string | null
+          confidence: number | null
+          created_at: string
+          device_id: string | null
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          model_name: string
+          risk_class: string | null
+          risk_score: number | null
+          silo_id: string | null
+          source: string | null
+          success: boolean
+          triggered_by: string
+        }
+        Insert: {
+          admin_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          device_id?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          model_name?: string
+          risk_class?: string | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          success: boolean
+          triggered_by?: string
+        }
+        Update: {
+          admin_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          device_id?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          model_name?: string
+          risk_class?: string | null
+          risk_score?: number | null
+          silo_id?: string | null
+          source?: string | null
+          success?: boolean
+          triggered_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_inference_requests_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "sensor_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ml_inference_requests_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ml_inference_requests_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ml_model_metadata: {
         Row: {
@@ -5958,8 +6284,12 @@ export type Database = {
           id: string
           invitation_expires: string | null
           invitation_role: string | null
+          invitation_status:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token: string | null
           invited_by: string | null
+          is_active: boolean | null
           last_active_at: string | null
           last_login: string | null
           location: Json | null
@@ -6024,8 +6354,12 @@ export type Database = {
           id: string
           invitation_expires?: string | null
           invitation_role?: string | null
+          invitation_status?:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token?: string | null
           invited_by?: string | null
+          is_active?: boolean | null
           last_active_at?: string | null
           last_login?: string | null
           location?: Json | null
@@ -6090,8 +6424,12 @@ export type Database = {
           id?: string
           invitation_expires?: string | null
           invitation_role?: string | null
+          invitation_status?:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token?: string | null
           invited_by?: string | null
+          is_active?: boolean | null
           last_active_at?: string | null
           last_login?: string | null
           location?: Json | null
@@ -6201,6 +6539,90 @@ export type Database = {
             referencedColumns: ["technician_id"]
           },
         ]
+      }
+      rag_ingestion_log: {
+        Row: {
+          category: string
+          completed_at: string | null
+          document_id: string
+          document_title: string
+          duration_seconds: number | null
+          fail_reason: string | null
+          id: number
+          ingested_at: string | null
+          source_file: string
+          status: string
+          tenant_id: string
+          total_chunks: number
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          document_id: string
+          document_title: string
+          duration_seconds?: number | null
+          fail_reason?: string | null
+          id?: number
+          ingested_at?: string | null
+          source_file: string
+          status?: string
+          tenant_id: string
+          total_chunks?: number
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          document_id?: string
+          document_title?: string
+          duration_seconds?: number | null
+          fail_reason?: string | null
+          id?: number
+          ingested_at?: string | null
+          source_file?: string
+          status?: string
+          tenant_id?: string
+          total_chunks?: number
+        }
+        Relationships: []
+      }
+      rag_knowledge_base: {
+        Row: {
+          category: string
+          chunk_content: string
+          chunk_index: number
+          created_at: string | null
+          document_id: string
+          document_title: string
+          embedding: string
+          id: string
+          metadata: Json | null
+          tenant_id: string
+        }
+        Insert: {
+          category: string
+          chunk_content: string
+          chunk_index: number
+          created_at?: string | null
+          document_id: string
+          document_title: string
+          embedding: string
+          id?: string
+          metadata?: Json | null
+          tenant_id: string
+        }
+        Update: {
+          category?: string
+          chunk_content?: string
+          chunk_index?: number
+          created_at?: string | null
+          document_id?: string
+          document_title?: string
+          embedding?: string
+          id?: string
+          metadata?: Json | null
+          tenant_id?: string
+        }
+        Relationships: []
       }
       retrain_log: {
         Row: {
@@ -7336,6 +7758,79 @@ export type Database = {
           },
         ]
       }
+      spoilage_predictions: {
+        Row: {
+          batch_id: string | null
+          co2: number | null
+          confidence: number | null
+          factors: Json | null
+          humidity: number | null
+          id: string
+          moisture: number | null
+          prediction_timestamp: string
+          risk_class: string | null
+          risk_score: number | null
+          silo_id: string | null
+          storage_days: number | null
+          temperature: number | null
+          voc: number | null
+        }
+        Insert: {
+          batch_id?: string | null
+          co2?: number | null
+          confidence?: number | null
+          factors?: Json | null
+          humidity?: number | null
+          id?: string
+          moisture?: number | null
+          prediction_timestamp?: string
+          risk_class?: string | null
+          risk_score?: number | null
+          silo_id?: string | null
+          storage_days?: number | null
+          temperature?: number | null
+          voc?: number | null
+        }
+        Update: {
+          batch_id?: string | null
+          co2?: number | null
+          confidence?: number | null
+          factors?: Json | null
+          humidity?: number | null
+          id?: string
+          moisture?: number | null
+          prediction_timestamp?: string
+          risk_class?: string | null
+          risk_score?: number | null
+          silo_id?: string | null
+          storage_days?: number | null
+          temperature?: number | null
+          voc?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spoilage_predictions_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spoilage_predictions_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spoilage_predictions_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stripe_events: {
         Row: {
           id: string
@@ -7377,10 +7872,14 @@ export type Database = {
           last_payment_date: string | null
           last_synced_at: string | null
           latest_invoice_id: string | null
+          max_actuators: number | null
           max_batches: number | null
           max_devices: number | null
+          max_sensors: number | null
+          max_silos: number | null
           max_storage_gb: number | null
           max_users: number | null
+          max_warehouses: number | null
           next_payment_date: string | null
           notes: string | null
           notified_expiry_thresholds: number[]
@@ -7388,6 +7887,7 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           plan_description: string | null
           plan_name: Database["public"]["Enums"]["plan_name"]
+          price: number | null
           price_per_month: number
           price_per_year: number | null
           priority_support: boolean | null
@@ -7426,10 +7926,14 @@ export type Database = {
           last_payment_date?: string | null
           last_synced_at?: string | null
           latest_invoice_id?: string | null
+          max_actuators?: number | null
           max_batches?: number | null
           max_devices?: number | null
+          max_sensors?: number | null
+          max_silos?: number | null
           max_storage_gb?: number | null
           max_users?: number | null
+          max_warehouses?: number | null
           next_payment_date?: string | null
           notes?: string | null
           notified_expiry_thresholds?: number[]
@@ -7437,6 +7941,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           plan_description?: string | null
           plan_name?: Database["public"]["Enums"]["plan_name"]
+          price?: number | null
           price_per_month?: number
           price_per_year?: number | null
           priority_support?: boolean | null
@@ -7475,10 +7980,14 @@ export type Database = {
           last_payment_date?: string | null
           last_synced_at?: string | null
           latest_invoice_id?: string | null
+          max_actuators?: number | null
           max_batches?: number | null
           max_devices?: number | null
+          max_sensors?: number | null
+          max_silos?: number | null
           max_storage_gb?: number | null
           max_users?: number | null
+          max_warehouses?: number | null
           next_payment_date?: string | null
           notes?: string | null
           notified_expiry_thresholds?: number[]
@@ -7486,6 +7995,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           plan_description?: string | null
           plan_name?: Database["public"]["Enums"]["plan_name"]
+          price?: number | null
           price_per_month?: number
           price_per_year?: number | null
           priority_support?: boolean | null
@@ -8079,6 +8589,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           location: Json | null
+          location_address: string | null
+          location_city: string | null
           manager_id: string | null
           name: string
           notes: string | null
@@ -8102,6 +8614,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           location?: Json | null
+          location_address?: string | null
+          location_city?: string | null
           manager_id?: string | null
           name: string
           notes?: string | null
@@ -8125,6 +8639,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           location?: Json | null
+          location_address?: string | null
+          location_city?: string | null
           manager_id?: string | null
           name?: string
           notes?: string | null
@@ -8207,6 +8723,54 @@ export type Database = {
       }
     }
     Views: {
+      aggregated_sensor_readings_5m: {
+        Row: {
+          avg_co2: number | null
+          avg_humidity: number | null
+          avg_moisture: number | null
+          avg_temp: number | null
+          avg_voc: number | null
+          batch_id: string | null
+          device_id: string | null
+          max_humidity: number | null
+          max_temp: number | null
+          min_humidity: number | null
+          min_temp: number | null
+          reading_count: number | null
+          silo_id: string | null
+          time_bucket: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sensor_readings_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "grain_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensor_readings_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "sensor_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensor_readings_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_silo_cockpit_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sensor_readings_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mobile_buyer_summary_v: {
         Row: {
           active_orders: number | null
@@ -8474,6 +9038,10 @@ export type Database = {
         Args: { tech_id: string }
         Returns: undefined
       }
+      delete_field_ticket: {
+        Args: { p_ticket_id: string; p_user_id: string }
+        Returns: undefined
+      }
       get_admin_warehouse_count: {
         Args: { admin_user_id: string }
         Returns: number
@@ -8507,6 +9075,38 @@ export type Database = {
         Returns: undefined
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin_user: { Args: never; Returns: boolean }
+      keyword_search: {
+        Args: {
+          match_count?: number
+          query_tenant_id: string
+          query_text: string
+        }
+        Returns: {
+          category: string
+          chunk_content: string
+          document_title: string
+          id: string
+          metadata: Json
+          rank: number
+        }[]
+      }
+      match_documents: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+          query_tenant_id: string
+        }
+        Returns: {
+          category: string
+          chunk_content: string
+          document_title: string
+          id: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
       notify_install_progress: {
         Args: {
           _event: string
@@ -8536,7 +9136,12 @@ export type Database = {
     Enums: {
       actuator_type: "fan" | "vent" | "heater" | "cooler" | "alarm" | "light"
       alert_priority: "low" | "medium" | "high" | "critical"
-      alert_status: "pending" | "acknowledged" | "resolved" | "escalated"
+      alert_status:
+        | "pending"
+        | "acknowledged"
+        | "resolved"
+        | "escalated"
+        | "closed"
       app_role:
         | "super_admin"
         | "admin"
@@ -8556,6 +9161,7 @@ export type Database = {
         | "treatment"
         | "ready"
         | "rejected"
+        | "pending_approval"
       billing_cycle: "monthly" | "yearly" | "quarterly"
       buyer_order_status:
         | "pending"
@@ -8576,6 +9182,7 @@ export type Database = {
       device_status: "active" | "offline" | "error" | "maintenance"
       dispute_status: "open" | "under_review" | "resolved" | "rejected"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
+      invitation_status: "pending" | "accepted" | "declined"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
       notification_cat:
@@ -8751,7 +9358,13 @@ export const Constants = {
     Enums: {
       actuator_type: ["fan", "vent", "heater", "cooler", "alarm", "light"],
       alert_priority: ["low", "medium", "high", "critical"],
-      alert_status: ["pending", "acknowledged", "resolved", "escalated"],
+      alert_status: [
+        "pending",
+        "acknowledged",
+        "resolved",
+        "escalated",
+        "closed",
+      ],
       app_role: [
         "super_admin",
         "admin",
@@ -8772,6 +9385,7 @@ export const Constants = {
         "treatment",
         "ready",
         "rejected",
+        "pending_approval",
       ],
       billing_cycle: ["monthly", "yearly", "quarterly"],
       buyer_order_status: [
@@ -8795,6 +9409,7 @@ export const Constants = {
       device_status: ["active", "offline", "error", "maintenance"],
       dispute_status: ["open", "under_review", "resolved", "rejected"],
       grain_type: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
+      invitation_status: ["pending", "accepted", "declined"],
       listing_status: ["draft", "active", "paused", "sold_out", "archived"],
       listing_visibility: ["private", "buyer_network", "public"],
       notification_cat: [

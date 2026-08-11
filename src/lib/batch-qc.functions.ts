@@ -10,7 +10,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireRole } from "@/lib/rbac.server";
-import { logActivity } from "@/lib/activity";
+import { logActivity, logManagerAction } from "@/lib/activity";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -152,7 +152,13 @@ export const reviewBatchQC = createServerFn({ method: "POST" })
       action: data.decision === "pass" ? "batch.qc_passed" : "batch.qc_failed",
       targetType: "grain_batch",
       targetId: data.batchId,
-      meta: { batchId: b.batch_id, note: data.note ?? null },
+      severity: "warning",
+      meta: {
+        batchId: b.batch_id,
+        decision: data.decision,
+        note: data.note ?? null,
+        reviewedBy: "manager",
+      },
     });
     return { ok: true };
   });
@@ -375,7 +381,14 @@ export const reviewManagerBatch = createServerFn({ method: "POST" })
           : "batch.manager_batch_rejected",
       targetType: "grain_batch",
       targetId: data.batchId,
-      meta: { batchId: b.batch_id, decision: data.decision, rejectionReason: data.rejectionReason },
+      severity: "warning",
+      meta: {
+        batchId: b.batch_id,
+        decision: data.decision,
+        rejectionReason: data.rejectionReason ?? null,
+        approvedBy: "admin",
+        affectsManagerBatch: true,
+      },
     });
 
     // Also a security event: an admin overriding/finalizing a manager's

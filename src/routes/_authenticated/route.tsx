@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSearch } from "@/components/app/AppSearch";
-import { AppSidebar, type SidebarMode } from "@/components/app/AppSidebar";
+import { HeaderSearch } from "@/components/app/HeaderSearch";
+import { AppSidebar } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
 import { Sun, Moon } from "lucide-react";
@@ -21,8 +21,21 @@ import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { logSecurityEvent } from "@/lib/security-events.functions";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getMySubscription } from "@/lib/billing.functions";
+import { AlertTriangle, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
+  head: () => ({
+    meta: [
+      { title: "Workspace — Grain Hero" },
+      { name: "description", content: "Workspace workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Workspace — Grain Hero" },
+      { property: "og:description", content: "Workspace workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   ssr: false,
   // Full app-chrome skeleton while the auth check runs on first paint.
   pendingComponent: AppShellSkeleton,
@@ -38,9 +51,7 @@ export const Route = createFileRoute("/_authenticated")({
     // standalone paths. /silos/:siloId (the detail view) is still a real
     // standalone route (linked from attention.tsx, ManagerBento.tsx), so it
     // stays blocked too, via the "/silos/" sub-route prefix.
-    const OPERATIONAL_PREFIXES = [
-      "/grain-operations", "/silos/", "/sensors", "/actuators",
-    ];
+    const OPERATIONAL_PREFIXES = ["/grain-operations", "/silos/", "/sensors", "/actuators"];
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
       "/team-management": "/platform/users",
@@ -84,27 +95,9 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mode, setMode] = useState<ThemeMode>(() =>
-    typeof window !== "undefined" ? getStoredThemeMode() : "light"
+    typeof window !== "undefined" ? getStoredThemeMode() : "light",
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Desktop sidebar tri-state (expanded / collapsed-icon-rail / hidden),
-  // persisted so it survives reloads. Falls back to the legacy boolean key
-  // so existing users' saved preference carries over.
-  const [sidebarMode, setSidebarModeState] = useState<SidebarMode>(() => {
-    if (typeof window === "undefined") return "collapsed";
-    const stored = localStorage.getItem("gh_sidebar_mode");
-    if (stored === "expanded" || stored === "collapsed" || stored === "hidden") return stored;
-    return localStorage.getItem("gh_sidebar_collapsed") === "false" ? "expanded" : "collapsed";
-  });
-  // Persisted mode changes — explicit user actions (logo click, collapse,
-  // hide, show-from-hidden). Scroll-driven auto-collapse below intentionally
-  // bypasses this and writes state only, so it doesn't clobber the user's
-  // saved preference for next visit.
-  const setSidebarMode = (next: SidebarMode) => {
-    setSidebarModeState(next);
-    try { localStorage.setItem("gh_sidebar_mode", next); } catch { /* ignore */ }
-  };
-  const [headerVisible, setHeaderVisible] = useState(true);
 
   useEffect(() => {
     const stored = getStoredThemeMode();
@@ -135,9 +128,7 @@ function AuthenticatedLayout() {
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
       const y = window.scrollY;
-      const scrollingDown = y > lastScrollY && y > 4;
-      setNavHidden(scrollingDown);
-      if (scrollingDown) setSidebarModeState((m) => (m === "expanded" ? "collapsed" : m));
+      setNavHidden(y > lastScrollY && y > 4);
       lastScrollY = y;
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -160,21 +151,30 @@ function AuthenticatedLayout() {
       <BugReportButton />
       <div className="app-scope min-h-screen flex w-full bg-background">
         <div data-tour="sidebar" className="contents">
-          <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
+          <AppSidebar hidden={navHidden} />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
+          <SubscriptionExpiryBanner />
           <motion.header
             initial="visible"
             animate={navHidden ? "hidden" : "visible"}
             variants={{
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
-              hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
+              visible: {
+                opacity: 1,
+                y: 0,
+                transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+              },
+              hidden: {
+                opacity: 0,
+                y: -20,
+                transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] },
+              },
             }}
             className="h-14 flex items-center gap-2 sm:gap-3 rounded-2xl bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
           >
-            <div className="flex-1 max-w-2xl mx-auto w-full">
-              <AppSearch />
+            <div className="flex-1 flex items-center justify-center">
+              <HeaderSearch />
             </div>
             <DashboardQuickTabs />
             <AdminUpgradeLink />
@@ -186,9 +186,7 @@ function AuthenticatedLayout() {
               aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
             >
-              {mode === "dark"
-                ? <Sun className="h-4 w-4" />
-                : <Moon className="h-4 w-4" />}
+              {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <NotificationBell />
             <ProfileMenu />
@@ -212,7 +210,9 @@ function AdminUpgradeLink() {
       to="/plan-management"
       className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
     >
-      <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
+      <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">
+        Upgrade
+      </TextShimmer>
     </Link>
   );
 }
@@ -231,5 +231,66 @@ function AnimatedOutlet() {
         <Outlet />
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+// ── Subscription expiry banner ────────────────────────────────────────────────
+function SubscriptionExpiryBanner() {
+  const { role } = useIsSuperAdmin();
+  const fn = useServerFn(getMySubscription);
+  const [dismissed, setDismissed] = useState(false);
+
+  const { data } = useQuery({
+    queryKey: ["my-subscription"],
+    queryFn: () => fn(),
+    staleTime: 5 * 60_000,
+    enabled: role === "admin",
+  });
+
+  const sub = (data as any)?.subscription ?? data;
+  const endDate: string | null = sub?.end_date ?? sub?.next_payment_date ?? null;
+  const planName: string = sub?.plan_name ?? "your plan";
+
+  if (!endDate || dismissed || role !== "admin") return null;
+
+  const daysLeft = Math.ceil(
+    (new Date(endDate).getTime() - Date.now()) / 86_400_000,
+  );
+
+  if (daysLeft > 7 || daysLeft < 0) return null;
+
+  const urgent = daysLeft <= 1;
+
+  return (
+    <div
+      className={`w-full flex items-center justify-between gap-3 px-4 py-2 text-sm font-medium z-40 ${
+        urgent ? "bg-red-600 text-white" : "bg-amber-500 text-white"
+      }`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <AlertTriangle className="h-4 w-4 shrink-0" />
+        <span className="truncate">
+          {urgent
+            ? `⚠️ Your ${planName} expires today! Renew now to avoid losing access.`
+            : `Your ${planName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}. Renew to keep your access.`}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Link
+          to="/plan-management"
+          className="inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-semibold transition-colors"
+        >
+          Manage plan
+        </Link>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="Dismiss"
+          className="h-6 w-6 grid place-items-center rounded-full hover:bg-white/20 transition-colors"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
   );
 }

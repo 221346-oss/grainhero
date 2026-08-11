@@ -26,7 +26,16 @@ import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 import { getPlatformInsuranceOverview } from "@/lib/platform-overviews.functions";
 
-export const Route = createFileRoute("/_authenticated/insurance")({ component: InsurancePage });
+export const Route = createFileRoute("/_authenticated/insurance")({
+  head: () => ({
+    meta: [
+      { title: "Insurance — Grain Hero" },
+      { name: "description", content: "Insurance workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Insurance — Grain Hero" },
+      { property: "og:description", content: "Insurance workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }), component: InsurancePage });
 
 const POLICY_STATUS: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700 border-emerald-200",

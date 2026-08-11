@@ -1,7 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
+import { randomInt } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { assertPlanAllows } from "@/lib/plan-gate";
+
+// Excludes visually ambiguous characters (0/O, 1/I/L).
+const INVITE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const INVITE_CODE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function generateInvitationCode(length = 8): string {
+  let out = "";
+  for (let i = 0; i < length; i++)
+    out += INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)];
+  return out;
+}
 
 async function roleFlags(supabase: any, userId: string) {
   const r = await getEffectiveRole(supabase, userId);
@@ -89,65 +101,84 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     );
 
     // Enforce plan-based staff limit via central gate.
-    await assertPlanAllows({ feature: "max_users", sb: context.supabase, userId: context.userId });
+    // Use supabaseAdmin for the count so RLS doesn't under-count the tenant's profiles.
+    const { supabaseAdmin: adminForCount } = await import("@/integrations/supabase/client.server");
+    const { count: currentUserCount } = await adminForCount
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .or(`admin_id.eq.${admin_id},id.eq.${admin_id}`);
+    await assertPlanAllows({
+      feature: "max_users",
+      sb: context.supabase,
+      userId: context.userId,
+      currentUsage: currentUserCount ?? 0,
+    });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.trim().toLowerCase();
     let uid: string | undefined;
     console.log("[inviteTeamMember] Creating auth user for email:", email);
-    // 1) Ensure an auth user exists. Prefer createUser (doesn't require SMTP);
-    //    fall back to locating an existing user if the email is already registered.
-    const createRes = await supabaseAdmin.auth.admin.createUser({
-      email,
-      email_confirm: false,
-      user_metadata: { name: data.name ?? "", invited_role: data.role, admin_id },
-    });
-    if (createRes.error) {
-      const msg = createRes.error.message || (createRes.error as { code?: string }).code || "";
-      const already = /already|registered|exists|duplicate/i.test(msg);
-      if (!already) {
-        console.error("[inviteTeamMember] createUser failed", createRes.error);
-        throw new Error(msg || "Could not create the user in Supabase Auth.");
-      }
-      console.log("[inviteTeamMember] User already exists, looking up...");
-      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 200,
+
+    // 1) Try to create the auth user. If it fails for any reason (including
+    //    AuthRetryableFetchError from Supabase 500s on some configs, or
+    //    "user already exists" conflicts), fall back to locating the existing user.
+    try {
+      const createRes = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: true,   // confirm immediately — invitation code is the gate
+        user_metadata: { name: data.name ?? "", invited_role: data.role, admin_id },
       });
-      if (listErr) throw new Error(listErr.message || "Failed to look up existing user");
-      uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
-      if (!uid) throw new Error("A user with that email already exists but could not be located.");
-    } else {
+      if (createRes.error) {
+        throw createRes.error;
+      }
       uid = createRes.data.user?.id;
       console.log("[inviteTeamMember] Auth user created successfully, uid:", uid);
+    } catch (createErr: any) {
+      const msg = createErr?.message || createErr?.code || String(createErr ?? "");
+      console.warn("[inviteTeamMember] createUser failed, attempting listUsers fallback. Error:", msg);
+      // Always fall back to listUsers — covers "already exists", 500s, and network blips.
+      const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
+      if (listErr) {
+        console.error("[inviteTeamMember] listUsers failed", listErr);
+        throw new Error(listErr.message || "Failed to look up existing user");
+      }
+      uid = existing?.users?.find((u) => (u.email ?? "").toLowerCase() === email)?.id;
+      if (!uid) {
+        // User truly doesn't exist and createUser failed — surface the real error
+        const already = /already|registered|exists|duplicate/i.test(msg);
+        if (!already) throw new Error(msg || "Could not create the user in Supabase Auth.");
+      }
+      console.log("[inviteTeamMember] Found existing user via listUsers, uid:", uid);
     }
 
-    // 2) Generate an invite/magic link (does not send email; we send via Resend).
-    let inviteLink: string | null = null;
-    try {
-      const linkRes = await supabaseAdmin.auth.admin.generateLink({
-        type: "invite",
-        email,
-        options: { data: { name: data.name ?? "", invited_role: data.role, admin_id } },
-      });
-      if (!linkRes.error) inviteLink = linkRes.data.properties?.action_link ?? null;
-    } catch (e) {
-      console.warn("[inviteTeamMember] generateLink failed (non-fatal)", e);
-    }
+    // 2) Generate a one-time invitation code. Replaces the old Supabase magic-link
+    //    invite, which the Flutter technician app can't open (no deep-link handling
+    //    set up) — a code works identically for the web (manager) and app (technician)
+    //    acceptance flows via /api/public/v1/auth/validate-invitation + accept-invite.
+    const invitationCode = generateInvitationCode();
+    const invitationExpires = new Date(Date.now() + INVITE_CODE_TTL_MS).toISOString();
+    const appBase = process.env.APP_ORIGIN ?? "https://grainhero.app";
+    const acceptUrl = `${appBase.replace(/\/$/, "")}/auth/accept-invite?email=${encodeURIComponent(email)}`;
 
     // 3) Send the invitation email via Resend (already configured in this project).
     try {
       const { sendEmailViaResend } = await import("@/lib/resend.server");
-      const cta = inviteLink
-        ? `<p><a href="${inviteLink}" style="display:inline-block;background:#059669;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Accept invitation</a></p>`
-        : `<p>Sign in at <a href="https://grainheroo.lovable.app/auth">grainheroo.lovable.app/auth</a> using this email to accept.</p>`;
+      const cta =
+        data.role === "technician"
+          ? `<p>Open the GrainHero app and enter this code to finish setting up your account.</p>`
+          : `<p>Enter this code at <a href="${acceptUrl}">${acceptUrl}</a> to finish setting up your account.</p>`;
       await sendEmailViaResend({
         to: email,
         subject: `You've been invited to GrainHero as ${data.role}`,
         html: `<div style="font-family:Inter,Arial,sans-serif;color:#0f172a;max-width:520px;margin:auto">
           <h2 style="color:#065f46">You're invited to GrainHero</h2>
           <p>Hi ${data.name ?? "there"}, you've been added to a GrainHero tenant as <strong>${data.role}</strong>.</p>
+          <p style="font-size:28px;font-weight:700;letter-spacing:6px;background:#f1f5f9;padding:14px 20px;border-radius:8px;display:inline-block;font-family:monospace">${invitationCode}</p>
           ${cta}
+          <p style="color:#64748b;font-size:12px">This code expires in 7 days.</p>
           <p style="color:#64748b;font-size:12px;margin-top:24px">If you didn't expect this, you can ignore this email.</p>
         </div>`,
       });
@@ -163,7 +194,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
           name: data.name ?? email.split("@")[0],
           admin_id,
           invited_by: context.userId,
-          invitation_role: data.role,
+          invitation_expires: invitationExpires,
         },
         { onConflict: "id" },
       );
@@ -171,6 +202,11 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         console.error("[inviteTeamMember] profiles upsert failed", pErr);
         throw new Error(pErr.message || "Failed to save profile");
       }
+      // Reset blocked status in case they were previously removed
+      await supabaseAdmin.from("profiles").update({ blocked: false }).eq("id", uid);
+      // Unban in auth just in case they were previously removed
+      await supabaseAdmin.auth.admin.updateUserById(uid, { ban_duration: "none" });
+      
       console.log("[inviteTeamMember] Profile upserted successfully");
 
       await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
@@ -246,12 +282,32 @@ export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { isSuper, isAdmin } = await roleFlags(context.supabase, context.userId);
-    if (!isSuper && !isAdmin) throw new Error("Forbidden");
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
+    if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
     if (data.id === context.userId) throw new Error("You cannot remove yourself");
+
+    if (isManager && !isAdmin && !isSuper) {
+      const { data: roleRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.id)
+        .maybeSingle();
+      const targetRole = roleRow?.role || "pending";
+      if (targetRole === "super_admin" || targetRole === "admin" || targetRole === "manager") {
+        throw new Error("Managers can only remove technicians or pending invites.");
+      }
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.id);
-    if (error) throw new Error(error.message);
+    
+    // Ban the user to prevent them from logging in
+    const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(data.id, { ban_duration: '876000h' });
+    if (banErr) throw new Error(banErr.message);
+
+    // Mark as blocked in profiles so they appear in the Blocked card
+    const { error: pErr } = await context.supabase.from("profiles").update({ blocked: true }).eq("id", data.id);
+    if (pErr) throw new Error(pErr.message);
+
     return { ok: true };
   });
 
@@ -355,9 +411,11 @@ async function tenantAdminId(supabase: any, userId: string): Promise<string> {
 export const listPolicies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const admin_id = await tenantAdminId(context.supabase, context.userId);
     const { data, error } = await context.supabase
       .from("insurance_policies")
       .select("*")
+      .eq("admin_id", admin_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsurancePolicyRow[];
@@ -421,9 +479,11 @@ export const deletePolicy = createServerFn({ method: "POST" })
 export const listClaims = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const admin_id = await tenantAdminId(context.supabase, context.userId);
     const { data, error } = await context.supabase
       .from("insurance_claims")
       .select("*")
+      .eq("admin_id", admin_id)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as InsuranceClaimRow[];

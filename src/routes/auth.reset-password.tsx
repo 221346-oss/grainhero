@@ -9,7 +9,13 @@ import { supabase } from '@/integrations/supabase/client'
 
 export const Route = createFileRoute('/auth/reset-password')({
   head: () => ({
-    meta: [{ title: 'Set a new password — GrainHero' }],
+    meta: [
+      { title: 'Set a new password — GrainHero' },
+      { name: 'description', content: 'Choose a new password for your GrainHero account.' },
+      { property: 'og:title', content: 'Set a new password — GrainHero' },
+      { property: 'og:description', content: 'Choose a new password for your GrainHero account.' },
+      { name: 'robots', content: 'noindex, nofollow' },
+    ],
   }),
   component: ResetPasswordPage,
 })

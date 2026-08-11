@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,11 +30,22 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const advanceFn = useServerFn(advanceInstallStage);
   const myProfile = useMyProfile();
   const isSuper = useIsSuperAdmin();
+  // Force-refetch role when drawer opens — ensures canAdvanceAs.superAdmin is accurate
+  useEffect(() => {
+    if (open) {
+      // useIsSuperAdmin wraps useQuery — we can't call .refetch() directly,
+      // but invalidating the cache forces a fresh fetch on next render.
+      qc.invalidateQueries({ queryKey: ["my-role"] });
+    }
+  }, [open]);
 
   const q = useQuery({
     queryKey: ["installation", orderId],
     queryFn: () => getFn({ data: { orderId: orderId! } }),
     enabled: !!orderId && open,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: open ? 10_000 : false, // live-refresh while drawer is open
   });
 
   const install = q.data?.installation as any;
@@ -44,7 +56,8 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const { stage, blocked, blockerNote, history } = deriveStage(order, install, events);
   const canAdvanceAs = {
     superAdmin: !!isSuper.isSuperAdmin,
-    admin: !!(myProfile.data as any)?.profile?.id && (myProfile.data as any)?.profile?.id === adminId,
+    // getMySettings returns the profile row directly (not wrapped in .profile)
+    admin: !!(myProfile.data as any)?.id && (myProfile.data as any)?.id === adminId,
   };
 
   // form state
@@ -104,6 +117,14 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
           <div className="p-6 text-sm text-muted-foreground">Loading…</div>
         ) : (
           <div className="mt-4 space-y-6">
+            {/* Warning: if admin_id is null the advance_install_stage RPC will throw "order not found" */}
+            {order && !order.admin_id && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                ⚠️ This order has no admin linked (admin_id is null). Stage advances will fail until
+                the admin completes payment and the order is claimed. Ask the admin to go to
+                their install orders page and complete payment.
+              </div>
+            )}
             <InstallStageTracker
               stage={stage}
               blocked={blocked}
@@ -113,7 +134,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
               canAdvanceAs={canAdvanceAs}
               onAdvance={async (next, note) => {
                 if (next === "completed") {
-                  // ensure devices are persisted so the provision trigger sees them
+                  // Devices must exist — one silo is provisioned per device serial
                   if (devices.filter((d) => d.serial.trim()).length === 0) {
                     toast.error("Add at least one device serial before completing — one silo is provisioned per serial.");
                     return;
@@ -122,12 +143,26 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
                 }
                 try {
                   await advanceFn({ data: { orderId: orderId!, next, note } });
-                  toast.success(next === "completed" ? "Confirmed — warehouse & silos provisioned." : `Advanced to ${next.replace("_", " ")}`);
+                  if (next === "completed") {
+                    toast.success("Confirmed — warehouse & silos provisioned. They will appear in your Silos page shortly.");
+                    // Give the DB trigger a moment to commit before we refetch
+                    setTimeout(() => {
+                      qc.invalidateQueries({ queryKey: ["silos"] });
+                      qc.invalidateQueries({ queryKey: ["warehouses"] });
+                      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+                      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+                    }, 1500);
+                  } else {
+                    toast.success(`Advanced to ${next.replace(/_/g, " ")}`);
+                  }
                   qc.invalidateQueries({ queryKey: ["installation", orderId] });
                   qc.invalidateQueries({ queryKey: ["platform-orders"] });
                   qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
                 } catch (e: any) {
-                  toast.error(e.message ?? "Failed to advance");
+                  const msg = e.message ?? "Failed to advance stage";
+                  // Log full error for debugging — visible in browser console
+                  console.error("[advance_install_stage] error:", msg, e);
+                  toast.error(msg);
                 }
               }}
             />

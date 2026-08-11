@@ -44,3 +44,28 @@ export async function logActivity(input: ActivityLogInput): Promise<void> {
     console.warn("[activity] insert failed", err);
   }
 }
+
+/**
+ * Log a manager action as a security event for admin review.
+ * Managers are restricted users who need close monitoring of their actions.
+ * All manager actions are logged with appropriate severity levels:
+ * - "warning" for create/edit/delete operations
+ * - "info" for view/access operations
+ */
+export async function logManagerAction(
+  input: ActivityLogInput & { managerName?: string }
+): Promise<void> {
+  // Manager actions default to "warning" severity for audit visibility
+  const severity = input.severity ?? "warning";
+
+  await logActivity({
+    ...input,
+    severity,
+    meta: {
+      ...(input.meta ?? {}),
+      actor_role: "manager",
+      event_type: "manager_action",
+      requires_admin_review: true,
+    },
+  });
+}

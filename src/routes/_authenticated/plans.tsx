@@ -6,6 +6,15 @@ import { Check } from "lucide-react";
 import pricingData from "@/lib/pricing-data";
 
 export const Route = createFileRoute("/_authenticated/plans")({
+  head: () => ({
+    meta: [
+      { title: "Plans — Grain Hero" },
+      { name: "description", content: "Plans workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Plans — Grain Hero" },
+      { property: "og:description", content: "Plans workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: PlansPage,
 });
 

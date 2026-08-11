@@ -3,7 +3,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { z } from "zod";
 import { logActivity } from "./activity";
-import { emitNotification, emitToSuperAdmins } from "./notify";
 
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
@@ -90,7 +89,7 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
         await context.supabase
           .from("subscriptions")
           .update(limitPatch as never)
-          .eq("plan_name", plan_id)
+          .eq("plan_name", plan_id as never)
           .in("status", ["active", "trial"]);
       }
     } catch (err) {
@@ -98,6 +97,7 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
     }
 
     // Notify all tenant admins on this plan so they see updated limits immediately.
+    // Also notify super admins so the editor sees confirmation in their bell.
     try {
       // Fetch plan name — context.supabase (super_admin) can read plan_thresholds
       const { data: planRow } = await context.supabase
@@ -107,45 +107,84 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
         .maybeSingle();
       const planName = planRow?.name ?? plan_id;
 
-      // Find affected tenant admin IDs via two sources.
+      // Find affected TENANT ADMIN IDs via two sources.
       // super_admin passes RLS on both profiles and subscriptions tables,
       // so context.supabase works here — no service role key needed.
 
-      // Source 1 — profiles.subscription_plan exact match
+      // Source 1 — profiles with subscription_plan match AND no admin_id (i.e., the tenant admin themselves)
       const { data: profileRows } = await context.supabase
         .from("profiles")
         .select("id")
-        .eq("subscription_plan", plan_id)
+        .eq("subscription_plan", plan_id as never)
         .is("admin_id", null);
+
+      const profileIds = (profileRows ?? []).map((r: { id: string }) => r.id);
+      const { data: roleRows } = profileIds.length
+        ? await context.supabase
+            .from("user_roles")
+            .select("user_id, role")
+            .in("user_id", profileIds)
+        : { data: [] as Array<{ user_id: string; role: string }> };
+
+      const rolesByUser = new Map<string, string[]>();
+      for (const rr of (roleRows ?? []) as Array<{ user_id: string; role: string }>) {
+        rolesByUser.set(rr.user_id, [...(rolesByUser.get(rr.user_id) ?? []), rr.role]);
+      }
 
       // Source 2 — subscriptions.plan_name match (active/trial rows)
       const { data: subRows } = await context.supabase
         .from("subscriptions")
         .select("admin_id")
-        .eq("plan_name", plan_id)
+        .eq("plan_name", plan_id as never)
         .in("status", ["active", "trial"]);
 
-      // Union and deduplicate
-      const fromProfiles = (profileRows ?? []).map((r: { id: string }) => r.id);
+      // Union and deduplicate — only keep actual tenant admins (not managers/technicians)
+      const fromProfiles = profileIds
+        .filter((id) => {
+          const roles = rolesByUser.get(id) ?? [];
+          // Include if they have admin role, or if no roles (legacy seed data), but never if manager/technician only
+          const hasManagerOrTech = roles.some((rr) => rr === "manager" || rr === "technician");
+          const hasAdmin = roles.some((rr) => rr === "admin" || rr === "super_admin");
+          if (hasManagerOrTech && !hasAdmin) return false;
+          return true;
+        });
+
       const fromSubs = (subRows ?? [])
         .map((r: { admin_id: string | null }) => r.admin_id)
         .filter(Boolean) as string[];
-      const affected = Array.from(new Set([...fromProfiles, ...fromSubs]));
+      const tenantAdminIds = Array.from(new Set([...fromProfiles, ...fromSubs]));
 
-      if (affected.length > 0) {
-        // Insert notifications directly using context.supabase — super_admin
-        // passes the INSERT RLS policy (has_role = super_admin check).
-        const notifRows = affected.map((id: string) => ({
+      // Notify tenant admins with rich detail on exactly what changed
+      if (tenantAdminIds.length > 0) {
+        // Build a readable change summary
+        const changes: string[] = [];
+        if (patch.max_silos !== undefined)      changes.push(`Silos: ${patch.max_silos}`);
+        if (patch.max_warehouses !== undefined) changes.push(`Warehouses: ${patch.max_warehouses}`);
+        if (patch.max_users !== undefined)      changes.push(`Users: ${patch.max_users}`);
+        if (patch.max_batches !== undefined)    changes.push(`Batches: ${patch.max_batches}`);
+        if (patch.max_sensors !== undefined)    changes.push(`Sensors: ${patch.max_sensors}`);
+        if (patch.max_actuators !== undefined)  changes.push(`Actuators: ${patch.max_actuators}`);
+        if (patch.price_cents !== undefined)    changes.push(`Price: PKR ${Math.round(patch.price_cents / 100)}/mo`);
+        
+        const changesSummary = changes.length > 0 
+          ? `Limits updated instantly across all tenants on this plan. You'll see a confirmation in your notification bell.`
+          : "Your plan details have been updated.";
+
+        const detailedMessage = changes.length > 0
+          ? `Your ${planName} plan limits have been updated by GrainHero:\n\n${changes.join(" · ")}\n\nYour account reflects the new limits immediately.`
+          : "Your plan limits have been adjusted by GrainHero. Your account reflects the new limits immediately.";
+
+        const notifRows = tenantAdminIds.map((id: string) => ({
           admin_id: id,
           user_id: id,
-          type: "info",
+          type: "success",
           category: "plan",
-          title: `Your ${planName} plan has been updated`,
-          message: "Your plan limits have been adjusted by GrainHero. Your account reflects the new limits immediately.",
+          title: `"${planName}" plan saved`,
+          message: detailedMessage,
           action_url: "/subscription",
           entity_type: "plan_threshold",
           entity_id: plan_id,
-          metadata: { plan_id, updated_fields: Object.keys(patch) },
+          metadata: { plan_id, updated_fields: Object.keys(patch), changes },
           read: false,
         }));
 
@@ -154,9 +193,12 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
           .insert(notifRows as never);
 
         if (notifErr) {
-          console.warn("[updatePlanThreshold] notification insert failed:", notifErr.message);
+          console.warn("[updatePlanThreshold] tenant admin notification insert failed:", notifErr.message);
         }
       }
+
+      // Only tenant admins are notified. Super admin made the change intentionally
+      // so they do not need an in-app notification — the toast on the UI is sufficient.
     } catch (err) {
       console.warn("[updatePlanThreshold] notification dispatch failed", err);
     }

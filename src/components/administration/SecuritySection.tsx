@@ -21,6 +21,7 @@ import { listTenantSecurityEvents, warnUserForSecurityEvent, logSecurityEvent } 
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthRedirectOrigin } from "@/lib/app-url";
 import { toast } from "sonner";
+import { HairlineGrid, NeonPanel, NEON } from "@/components/charts/neon";
 
 type TenantUser = { id: string; name: string | null; email: string | null; blocked: boolean; roles: string[] };
 type SecurityEvent = { id: string; user_id: string | null; event: string; ip: string | null; user_agent: string | null; meta: Record<string, unknown>; created_at: string };
@@ -185,8 +186,8 @@ export function SecuritySection() {
               {users.map((u) => (
                 <div key={u.id} className="p-3 flex items-center justify-between text-sm gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium truncate">{u.name ?? "Unnamed User"}</div>
-                    <div className="text-xs text-slate-500 truncate flex items-center gap-1">
+                    <div className="font-medium truncate text-foreground">{u.name ?? "Unnamed User"}</div>
+                    <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
                       <Mail className="h-3 w-3" />
                       {u.email}
                     </div>
@@ -200,7 +201,7 @@ export function SecuritySection() {
                     variant={u.blocked ? "default" : "outline"}
                     disabled={toggle.isPending}
                     onClick={() => toggle.mutate({ id: u.id, blocked: !u.blocked })}
-                    className={u.blocked ? "bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" : "text-red-600 hover:bg-red-50 border-red-200 text-xs h-7"}
+                    className={u.blocked ? "bg-success hover:bg-success/90 text-white text-xs h-7" : "text-severity-critical hover:bg-severity-critical/10 border-severity-critical/30 text-xs h-7"}
                   >
                     {u.blocked ? (<><ShieldCheck className="h-3 w-3 mr-1" />Unblock</>) : (<><ShieldOff className="h-3 w-3 mr-1" />Block</>)}
                   </Button>
@@ -208,8 +209,8 @@ export function SecuritySection() {
               ))}
               {users.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No users.</div>}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </NeonPanel>
 
         <Card>
           <CardHeader><CardTitle>Security events</CardTitle><CardDescription>Real security_events feed — sign-ins, access denials, role &amp; batch overrides, billing</CardDescription></CardHeader>

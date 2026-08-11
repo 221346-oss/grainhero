@@ -185,18 +185,24 @@ export const getSecurityOverview = createServerFn({ method: "GET" })
     const r = await role(context.supabase, context.userId);
     req(r, ["super_admin", "admin"]);
 
-    const [rolesRes, profilesRes, logsRes] = await Promise.all([
+    const [rolesRes, profilesRes, logsRes, managerLogsRes] = await Promise.all([
       context.supabase.from("user_roles").select("user_id, role").limit(1000),
       context.supabase.from("profiles").select("id, name, email, blocked, last_login_at, admin_id, created_at").limit(1000),
       context.supabase.from("activity_logs")
         .select("id, action, entity_type, entity_id, actor_id, severity, message, metadata, created_at")
         .in("severity", ["warning", "error", "critical"])
         .order("created_at", { ascending: false }).limit(200),
+      context.supabase.from("activity_logs")
+        .select("id, action, severity, created_at, user_id, metadata")
+        .match({ severity: "warning" })
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
 
     const profiles = (profilesRes.data ?? []) as any[];
     const roles = (rolesRes.data ?? []) as any[];
     const logs = (logsRes.data ?? []) as any[];
+    const managerLogs = (managerLogsRes.data ?? []) as any[];
 
     const roleMap = new Map<string, string[]>();
     for (const rr of roles) {
@@ -210,15 +216,30 @@ export const getSecurityOverview = createServerFn({ method: "GET" })
       roles: roleMap.get(p.id) ?? [],
     }));
 
+    // Filter for manager actions (logs from users with manager role and warning severity)
+    const userRolesMap = new Map<string, string[]>();
+    for (const rr of roles) {
+      const arr = userRolesMap.get(rr.user_id) ?? [];
+      arr.push(rr.role);
+      userRolesMap.set(rr.user_id, arr);
+    }
+
+    const managerActionLogs = managerLogs.filter((log) => {
+      const userRoles = userRolesMap.get(log.user_id) ?? [];
+      return userRoles.includes("manager") && log.severity === "warning";
+    });
+
     return {
       users,
       logs,
+      managerActionLogs,
       totals: {
         users: users.length,
         blocked: users.filter((u) => u.blocked).length,
         admins: users.filter((u) => u.roles.includes("admin") || u.roles.includes("super_admin")).length,
         pending: users.filter((u) => u.roles.includes("pending") || u.roles.length === 0).length,
         recentIncidents: logs.length,
+        managerActions: managerActionLogs.length,
       },
     };
   });

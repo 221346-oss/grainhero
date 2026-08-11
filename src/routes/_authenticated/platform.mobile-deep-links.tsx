@@ -12,6 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/platform/mobile-deep-links")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Mobile Deep Links — Grain Hero" },
+      { name: "description", content: "Platform · Mobile Deep Links workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Mobile Deep Links — Grain Hero" },
+      { property: "og:description", content: "Platform · Mobile Deep Links workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: MobileDeepLinksPage,
 });
 

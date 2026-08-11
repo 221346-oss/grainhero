@@ -2,26 +2,33 @@ import { createFileRoute } from "@tanstack/react-router";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
 import { SubscriptionSection } from "@/components/business/SubscriptionSection";
 import { InsuranceSection } from "@/components/business/InsuranceSection";
 import { Wallet, CreditCard, Shield, TrendingUp, TrendingDown } from "lucide-react";
 import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
+import { RevenueChart } from "@/components/business/RevenueChart";
+import { getMyRole } from "@/lib/roles.functions";
 
 export const Route = createFileRoute("/_authenticated/business")({
+  head: () => ({
+    meta: [
+      { title: "Business — Grain Hero" },
+      { name: "description", content: "Business workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Business — Grain Hero" },
+      { property: "og:description", content: "Business workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: BusinessWorkspace,
 });
 
-type Tab = "revenue" | "subscription" | "insurance";
+type Tab = "revenue";
 
-// Insurance tab hidden from UI for now — code retained for future use
-// when a bank partnership is confirmed.
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "revenue",      label: "Revenue",      icon: Wallet },
-  { key: "subscription", label: "Subscription", icon: CreditCard },
-  // { key: "insurance", label: "Insurance", icon: Shield },
+const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
+  { key: "revenue", label: "Revenue", icon: Wallet },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
@@ -44,9 +51,7 @@ function BusinessWorkspace() {
 
   const counts = {
     revenue: totals.countInvoices ?? 0,
-    subscription: sub ? 1 : 0,
-    // insurance: policyList.length, // hidden until bank partnership confirmed
-  };
+  } satisfies Record<Tab, number>;
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
@@ -66,8 +71,7 @@ function BusinessWorkspace() {
       className="min-h-screen bg-background p-4 md:p-8"
       style={{
         fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        backgroundImage:
-          "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
         backgroundSize: "28px 28px",
       }}
     >
@@ -79,48 +83,22 @@ function BusinessWorkspace() {
             <VariableFontText text="Business" base={650} hover={900} staggerMs={20} />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Revenue, subscription, insurance and plan management
+            Revenue and financial overview
           </p>
         </div>
 
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-          {/* Bar Chart Panel */}
+          {/* Revenue Tracking Graph - Business Overview */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
               Business Overview
             </p>
-            <div className="space-y-4">
-              {TABS.map((tab, i) => {
-                const count = counts[tab.key];
-                const pct = Math.max((count / maxCount) * 100, count > 0 ? 4 : 0);
-                return (
-                  <div key={tab.key} className="flex items-center gap-4">
-                    <span className="w-24 text-xs text-muted-foreground font-mono truncate text-right shrink-0">
-                      {tab.label.split(" ")[0]}…
-                    </span>
-                    <div className="flex-1 h-8 bg-muted rounded-md overflow-hidden relative">
-                      <div
-                        className={`h-full rounded-md bg-gradient-to-r ${BAR_COLORS[i]} transition-all duration-700`}
-                        style={{ width: `${pct}%`, boxShadow: "0 0 12px rgba(16,185,129,0.3)" }}
-                      />
-                      <div
-                        className="absolute inset-0 pointer-events-none opacity-10"
-                        style={{
-                          backgroundImage:
-                            "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-                          backgroundSize: "8px 8px",
-                        }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-xs text-muted-foreground font-mono shrink-0">
-                      {count}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <RevenueChart 
+              invoices={revenue?.invoices ?? []} 
+              payments={revenue?.payments ?? []} 
+            />
           </div>
 
           {/* Stats Panel */}
@@ -148,10 +126,10 @@ function BusinessWorkspace() {
           </div>
         </div>
 
-        {/* Tabbed Sections */}
+        {/* Revenue Section */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
 
-          {/* Tab Bar — variable-font hover nav */}
+          {/* Tab Bar */}
           <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {TABS.map((tab) => {
@@ -185,12 +163,9 @@ function BusinessWorkspace() {
             </div>
           </div>
 
-          {/* Tab Content */}
+          {/* Content */}
           <div className="p-4 md:p-6">
-            {activeTab === "revenue" && <RevenueSection />}
-            {activeTab === "subscription" && <SubscriptionSection />}
-            {/* Insurance hidden until bank partnership confirmed */}
-            {/* {activeTab === "insurance" && <InsuranceSection />} */}
+            {activeTab === "revenue" && <RevenueSection role={role} />}
           </div>
         </div>
 

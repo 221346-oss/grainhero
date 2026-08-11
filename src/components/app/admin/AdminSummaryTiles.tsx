@@ -17,10 +17,16 @@ export function AdminSummaryTiles({
   tiles: SummaryTile[];
   active?: string;
   onSelect?: (key: string) => void;
-  columns?: 3 | 4 | 5;
+  columns?: 3 | 4 | 5 | 6;
 }) {
   const colClass =
-    columns === 3 ? "md:grid-cols-3" : columns === 4 ? "md:grid-cols-4" : "md:grid-cols-5";
+    columns === 3
+      ? "md:grid-cols-3"
+      : columns === 4
+        ? "md:grid-cols-4"
+        : columns === 6
+          ? "md:grid-cols-6"
+          : "md:grid-cols-5";
   return (
     <div className={cn("grid grid-cols-2 sm:grid-cols-3 gap-3", colClass)}>
       {tiles.map((t) => {

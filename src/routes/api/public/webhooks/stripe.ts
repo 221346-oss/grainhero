@@ -9,7 +9,11 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        console.log("🔍 [STRIPE WEBHOOK] Received webhook request");
+        
         const secret = process.env.STRIPE_WEBHOOK_SECRET;
+        console.log("🔍 [STRIPE WEBHOOK] Webhook secret configured:", !!secret);
+        
         if (!secret) {
           // Return 200 so Stripe does not disable the endpoint while the secret is being configured.
           console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET not configured — acknowledging without processing");
@@ -17,6 +21,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
         }
 
         const sigHeader = request.headers.get("stripe-signature");
+        console.log("🔍 [STRIPE WEBHOOK] Signature header present:", !!sigHeader);
+        
         if (!sigHeader) return new Response("missing signature", { status: 400 });
 
         const rawBody = await request.text();
@@ -80,6 +86,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
         try {
           switch (event.type) {
             case "checkout.session.completed": {
+              console.log("🔍 [STRIPE WEBHOOK] Processing checkout.session.completed");
+              
               const s = event.data.object as {
                 customer?: string;
                 subscription?: string;
@@ -89,7 +97,12 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 amount_total?: number;
                 currency?: string;
               };
+              
+              console.log("🔍 [STRIPE WEBHOOK] Session metadata:", s.metadata);
+              console.log("🔍 [STRIPE WEBHOOK] Client reference ID:", s.client_reference_id);
+              
               let userId = s.metadata?.user_id ?? null;
+              console.log("🔍 [STRIPE WEBHOOK] User ID from metadata:", userId);
               if (!userId && s.metadata?.customer_email) {
                 const { data: profByEmail } = await supabaseAdmin
                   .from("profiles")
@@ -102,6 +115,11 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
               const buyerOrderId = s.metadata?.buyer_order_id ?? null;
               const planChangeRequestId = s.metadata?.plan_change_request_id ?? null;
+
+              console.log("🔍 [STRIPE WEBHOOK] Extracted IDs:");
+              console.log("  - planId:", planId);
+              console.log("  - hardwareOrderId:", hardwareOrderId);
+              console.log("  - buyerOrderId:", buyerOrderId);
 
               // Prorated plan change (upgrade / cycle upsize) confirmed by Stripe.
               if (planChangeRequestId) {
@@ -229,7 +247,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 
               // Fulfil the pending hardware/install order and notify super admins.
               if (hardwareOrderId) {
-                await supabaseAdmin
+                console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
+                
+                const updateResult = await supabaseAdmin
                   .from("hardware_orders" as never)
                   .update({
                     status: "new",
@@ -239,6 +259,14 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     ...(userId ? { admin_id: userId } : {}),
                   } as never)
                   .eq("id", hardwareOrderId);
+
+                console.log("🔍 [STRIPE WEBHOOK] Hardware order update result:", updateResult);
+                
+                if (updateResult.error) {
+                  console.error("❌ [STRIPE WEBHOOK] Hardware order update failed:", updateResult.error);
+                } else {
+                  console.log("✅ [STRIPE WEBHOOK] Hardware order updated successfully to status: new (paid)");
+                }
 
                 // Ensure the buyer has an active subscription row so revenue analytics
                 // pick this up immediately, without waiting for customer.subscription.created.

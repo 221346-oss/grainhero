@@ -20,7 +20,14 @@ export const Route = createFileRoute("/checkout/success")({
     meta: [
       { title: "Welcome to GrainHero 🎉" },
       { name: "description", content: "Your payment is confirmed. Setting up your account…" },
+      { property: 'og:title', content: "Welcome to GrainHero 🎉" },
+      { property: 'og:description', content: "Your payment is confirmed. Setting up your account…" },
+      { property: 'og:url', content: 'https://grainhero.app/checkout/success' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'robots', content: 'noindex, nofollow' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/checkout/success' }],
   }),
   component: SuccessPage,
 });

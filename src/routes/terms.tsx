@@ -12,7 +12,13 @@ export const Route = createFileRoute('/terms')({
         name: 'description',
         content: 'GrainHero Terms of Service. Read our terms and conditions for using the platform.',
       },
+      { property: 'og:title', content: "Terms of Service — GrainHero" },
+      { property: 'og:description', content: "GrainHero Terms of Service. Read our terms and conditions for using the platform." },
+      { property: 'og:url', content: 'https://grainhero.app/terms' },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [{ rel: 'canonical', href: 'https://grainhero.app/terms' }],
   }),
   component: TermsOfServicePage,
 })

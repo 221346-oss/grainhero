@@ -10,19 +10,31 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    // ── Use context.supabase (user-auth client) — NOT supabaseAdmin which
-    //    requires SUPABASE_SERVICE_ROLE_KEY that is not set in this environment.
-    //    context.supabase is the same client used by all other working platform fns.
     const sa = context.supabase;
     const { computeMrr } = await import("@/lib/plan-pricing.server");
 
+    // Run all queries in parallel — use graceful fallbacks so one table being
+    // empty / missing does not crash the entire function.
     const [subsRes, invRes, profRes, hwRes] = await Promise.all([
       sa.from("subscriptions").select("*"),
-      sa.from("invoices").select("*").order("billing_date", { ascending: false }).limit(500),
+      // invoices is a billing table — may be empty in dev; graceful fallback
+      sa.from("invoices")
+        .select("id,admin_id,amount,currency,status,billing_date,invoice_number,created_at")
+        .order("billing_date", { ascending: false })
+        .limit(500)
+        .then(
+          (r) => r,
+          () => ({ data: [] as any[], error: null }),
+        ),
       sa.from("profiles").select("id, subscription_plan, created_at, admin_id, name, email"),
+      // hardware_orders — filter using PostgREST array syntax (not raw SQL)
       sa.from("hardware_orders")
         .select("id, admin_id, plan_name, hardware_total, currency, status, created_at")
-        .not("status", "in", "(pending_payment,cancelled,refunded)"),
+        .not("status", "in", '("pending_payment","cancelled","refunded")')
+        .then(
+          (r) => r,
+          () => ({ data: [] as any[], error: null }),
+        ),
     ]);
 
     const subscriptions = subsRes.data ?? [];
@@ -31,7 +43,12 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
     const profiles = (profRes.data ?? []).filter((p: any) => !p.admin_id);
     const hardware = hwRes.data ?? [];
 
-    const mrrResult = await computeMrr({ supabase: sa, subscriptions, profiles });
+    let mrrResult: { mrr: number; entries: any[]; byPlan: Record<string, number> } = { mrr: 0, entries: [], byPlan: {} };
+    try {
+      mrrResult = await computeMrr({ supabase: sa, subscriptions, profiles });
+    } catch (err) {
+      console.warn("[getSaasRevenueAnalytics] computeMrr failed, using zero MRR:", err);
+    }
     const mrr = mrrResult.mrr;
     const arr = mrr * 12;
     const activeSubs = mrrResult.entries;
@@ -75,12 +92,12 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
       growth.push({ month: d.toISOString().slice(0, 7), subscribers: count });
     }
 
-    // ── Expiring in 7 days ──────────────────────────────────────────────────
+    // ── Expiring in 7 days — check subscriptions table directly ────────────
     const now = Date.now();
     const in7 = now + 7 * 86_400_000;
-    const expiring = activeSubs
-      .filter((s: any) => s.end_date && new Date(s.end_date).getTime() <= in7 && new Date(s.end_date).getTime() >= now)
-      .sort((a: any, b: any) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
+    const expiring = subscriptions
+      .filter((s: any) => s.current_period_end && new Date(s.current_period_end).getTime() <= in7 && new Date(s.current_period_end).getTime() >= now)
+      .sort((a: any, b: any) => new Date(a.current_period_end).getTime() - new Date(b.current_period_end).getTime());
 
     // ── Churn (30-day window) ───────────────────────────────────────────────
     const in30 = now - 30 * 86_400_000;

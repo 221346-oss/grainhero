@@ -13,12 +13,22 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
+import { BarChart, Bar, Cell, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
+import { NEON, NeonPatternDefs, neonFill, neonGrid, neonAxis, neonTooltipStyle, ChartEmpty } from "@/components/charts/neon";
 import { getAdminProfile, updateAdminContact, setAdminSuspended, getAdminOrderFrequency } from "@/lib/admin-profile.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
 import { AdminProfileSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/admins/$adminId")({
+  head: () => ({
+    meta: [
+      { title: "Admins · AdminId — Grain Hero" },
+      { name: "description", content: "Admins · AdminId workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Admins · AdminId — Grain Hero" },
+      { property: "og:description", content: "Admins · AdminId workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AdminProfilePage,
 });
 
@@ -74,6 +84,7 @@ function AdminProfilePage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      <NeonPatternDefs />
       <Link to="/platform/tenants" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back to tenants
       </Link>
@@ -169,15 +180,23 @@ function AdminProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={freqQ.data ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="month" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis allowDecimals={false} className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {(freqQ.data ?? []).length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={freqQ.data ?? []}>
+                    <CartesianGrid {...neonGrid} />
+                    <XAxis dataKey="month" {...neonAxis} />
+                    <YAxis allowDecimals={false} {...neonAxis} />
+                    <Tooltip {...neonTooltipStyle} />
+                    <Bar dataKey="count" radius={0}>
+                      {(freqQ.data ?? []).map((_: any, i: number) => (
+                        <Cell key={i} {...neonFill(NEON.brand)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <ChartEmpty label="No order data yet" height={260} />
+              )}
             </div>
             <div className="text-xs text-muted-foreground mt-2">Last 6 months of {source === "batches" ? "grain batches" : "hardware orders"} created by this admin.</div>
           </CardContent>

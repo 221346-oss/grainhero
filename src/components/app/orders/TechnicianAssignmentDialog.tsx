@@ -164,12 +164,15 @@ export function TechnicianAssignmentDialog({
                   No warehouses found for this customer. They may need to set up a warehouse first.
                 </div>
               ) : (
-                <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
+                <Select
+                  value={selectedWarehouse || "__all__"}
+                  onValueChange={(v) => setSelectedWarehouse(v === "__all__" ? "" : v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select warehouse..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All warehouses (no filter)</SelectItem>
+                    <SelectItem value="__all__">All warehouses (no filter)</SelectItem>
                     {warehouses.map((w: any) => (
                       <SelectItem key={w.id} value={w.id}>
                         {w.name} {w.city ? `· ${w.city}` : ""}

@@ -10,6 +10,15 @@ import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/quality")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Quality — Grain Hero" },
+      { name: "description", content: "Platform · Quality workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Quality — Grain Hero" },
+      { property: "og:description", content: "Platform · Quality workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: QualityQueue,
 });
 

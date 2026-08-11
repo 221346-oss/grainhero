@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
 import { requireRole } from "@/lib/rbac.server";
-import { logActivity } from "@/lib/activity";
+import { logActivity, logManagerAction } from "@/lib/activity";
 
 // Roles allowed to rename a silo/warehouse — same allow-list used for team
 // invite/manage (see inviteTeamMember/updateTeamMember in
@@ -19,14 +19,95 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   throw new Error(msg);
 }
 
+export const listWarehousesByCity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Get user role
+    const { getEffectiveRole } = await import("./rbac.server");
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+    
+    let query = context.supabase
+      .from("warehouses")
+      .select("*, silos:silos(id, silo_id, name, capacity_kg, current_occupancy_kg, status)")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+
+    // For managers and technicians: only show their assigned warehouses
+    if (userRole === "manager" || userRole === "technician") {
+      if (userRole === "manager") {
+        query = query.eq("manager_id", context.userId);
+      } else if (userRole === "technician") {
+        query = query.contains("technician_ids", [context.userId]);
+      }
+    }
+
+    const { data: warehouses, error } = await query;
+    if (error) throw error;
+
+    // Group warehouses by city (extracted from address)
+    const warehousesByCity: Record<string, any[]> = {};
+    
+    (warehouses ?? []).forEach((warehouse) => {
+      // Extract city from address - assume format like "Street, City, State"
+      let city = "Unknown City";
+      const loc = warehouse.location as { address?: string; city?: string } | null;
+      const address = typeof loc?.address === "string" ? loc.address : undefined;
+      if (typeof loc?.city === "string" && loc.city.trim()) {
+        city = loc.city.trim();
+      } else if (address) {
+        const addressParts = address.split(',');
+        if (addressParts.length >= 2) {
+          city = addressParts[1].trim();
+        } else {
+          city = addressParts[0].trim();
+        }
+      }
+      
+      if (!warehousesByCity[city]) {
+        warehousesByCity[city] = [];
+      }
+      
+      warehousesByCity[city].push({
+        ...warehouse,
+        city,
+        siloCount: warehouse.silos?.length || 0,
+        totalCapacity: warehouse.silos?.reduce((sum: number, silo: any) => 
+          sum + (silo.capacity_kg || 0), 0) || 0,
+        currentOccupancy: warehouse.silos?.reduce((sum: number, silo: any) => 
+          sum + (silo.current_occupancy_kg || 0), 0) || 0,
+      });
+    });
+
+    return { byCity: warehousesByCity, userRole };
+  });
+
 export const listWarehouses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    // Get user role
+    const { getEffectiveRole } = await import("./rbac.server");
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("warehouses")
       .select("*, silos:silos(id)")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(500);
+
+    // For managers and technicians: only show their assigned warehouses
+    if (userRole === "manager" || userRole === "technician") {
+      if (userRole === "manager") {
+        // Managers see warehouses where they are the manager
+        query = query.eq("manager_id", context.userId);
+      } else if (userRole === "technician") {
+        // Technicians see warehouses where they are in the technician_ids array
+        query = query.contains("technician_ids", [context.userId]);
+      }
+    }
+    // For super_admin and admin: show all warehouses (RLS enforces tenant scoping)
+
+    const { data, error } = await query;
     if (error) throw error;
     return data ?? [];
   });
@@ -151,13 +232,44 @@ export const deleteWarehouse = createServerFn({ method: "POST" })
 export const listSilos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    // Get user's role
+    const { getEffectiveRole } = await import("./rbac.server");
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("silos")
       .select(
-        "*, warehouses(id, name, warehouse_id), current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type)",
+        "*, warehouses(id, name, warehouse_id, manager_id, technician_ids), current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type)",
       )
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(500);
+
+    // For managers and technicians: only show silos from assigned warehouses
+    if (userRole === "manager" || userRole === "technician") {
+      // Fetch warehouses where user is assigned
+      const { data: userWarehouses } = await context.supabase
+        .from("warehouses")
+        .select("id")
+        .or(
+          userRole === "manager"
+            ? `manager_id.eq.${context.userId}`
+            : `technician_ids.cs.["${context.userId}"]`
+        )
+        .is("deleted_at", null);
+
+      const warehouseIds = (userWarehouses ?? []).map((w) => w.id);
+      
+      if (warehouseIds.length === 0) {
+        // User is not assigned to any warehouses
+        return [];
+      }
+
+      query = query.in("warehouse_id", warehouseIds);
+    }
+    // For super_admin and admin: show all silos (RLS enforces tenant scoping)
+
+    const { data, error } = await query;
     if (error) throw error;
     return data ?? [];
   });
@@ -226,9 +338,37 @@ export const upsertSilo = createServerFn({ method: "POST" })
       if (error) throw error;
       return row;
     }
-    // Insert: auto-generate silo_id and name if not provided
+    // Insert: auto-generate silo_id and a unique name within the same warehouse region.
     const siloId = data.silo_id ?? `SILO-${Date.now().toString().slice(-8)}`;
-    const name = data.name ?? `Silo ${siloId.slice(-4)}`;
+
+    // If no name supplied, generate one like "Silo A", "Silo B", …, "Silo Z",
+    // "Silo AA", "Silo AB", … ensuring uniqueness within this warehouse.
+    let name = data.name ?? "";
+    if (!name) {
+      const { data: existingSilos } = await context.supabase
+        .from("silos")
+        .select("name")
+        .eq("warehouse_id", data.warehouse_id)
+        .is("deleted_at" as never, null);
+
+      const used = new Set(
+        (existingSilos ?? []).map((s: { name: string }) => s.name.toLowerCase()),
+      );
+
+      const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let idx = 0;
+      while (true) {
+        let suffix = "";
+        let tmp = idx;
+        do {
+          suffix = ALPHA[tmp % 26] + suffix;
+          tmp = Math.floor(tmp / 26) - 1;
+        } while (tmp >= 0);
+        const candidate = `Silo ${suffix}`;
+        if (!used.has(candidate.toLowerCase())) { name = candidate; break; }
+        idx++;
+      }
+    }
     // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
     const { data: prof } = await context.supabase
       .from("profiles")
@@ -348,7 +488,7 @@ export const listGrainBatches = createServerFn({ method: "GET" })
     });
   });
 
-const grainTypes = ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"] as const;
+const grainTypes = ["Wheat", "Rice", "Maize", "Barley", "Sorghum"] as const;
 const batchStatuses = [
   "stored",
   "dispatched",
@@ -494,7 +634,13 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
         action: "batch.updated",
         targetType: "grain_batch",
         targetId: data.id,
-        meta: { batchId: (row as { batch_id?: string }).batch_id, status: updateStatus },
+        severity: role === "manager" ? "warning" : "info",
+        meta: {
+          batchId: (row as { batch_id?: string }).batch_id,
+          status: updateStatus,
+          updatedBy: role,
+          previousStatus: data.status,
+        },
       });
       return row;
     }
@@ -603,11 +749,14 @@ export const upsertGrainBatch = createServerFn({ method: "POST" })
       action: "batch.created",
       targetType: "grain_batch",
       targetId: (row as { id: string }).id,
+      severity: role === "manager" ? "warning" : "info",
       meta: {
         batchId,
         grainType: data.grain_type,
         quantityKg: data.quantity_kg,
         siloId: data.silo_id,
+        createdBy: role,
+        requiresApproval: role === "manager",
       },
     });
     await logActivity({
@@ -1435,7 +1584,7 @@ const buyerInput = z.object({
   state: z.string().max(120).optional().nullable(),
   country: z.string().max(120).optional().nullable(),
   preferred_grain_types: z
-    .array(z.enum(["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"]))
+    .array(z.enum(["Wheat", "Rice", "Maize", "Barley", "Sorghum"]))
     .optional()
     .nullable(),
   preferred_payment_terms: z.string().max(120).optional().nullable(),
@@ -1703,11 +1852,13 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
     const sb = context.supabase;
 
     // Load warehouses for this tenant (RLS enforces admin_id scoping).
+    // Filter out soft-deleted warehouses (deleted_at IS NULL)
     const { data: warehouses, error: whErr } = await sb
       .from("warehouses")
       .select(
         "id, warehouse_id, name, status, location, total_capacity_kg, total_silos, manager_id, technician_ids, created_at, notes",
       )
+      .is("deleted_at", null)
       .order("name", { ascending: true })
       .limit(500);
     if (whErr) throw whErr;
@@ -1716,7 +1867,9 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
 
     // Collect all unique profile IDs we need to resolve names for.
     const profileIds = new Set<string>();
+    const warehouseIds = new Set<string>();
     for (const w of warehouses) {
+      warehouseIds.add(w.id);
       if (w.manager_id) profileIds.add(w.manager_id);
       for (const tid of (w.technician_ids ?? []) as string[]) profileIds.add(tid);
     }
@@ -1733,6 +1886,21 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
       }
     }
 
+    // Batch-fetch silos for all warehouses
+    const { data: silos } = await sb
+      .from("silos")
+      .select("id, warehouse_id, name, silo_id, capacity_kg, status")
+      .in("warehouse_id", [...warehouseIds])
+      .order("name", { ascending: true });
+    
+    const silosByWarehouse = new Map<string, any[]>();
+    for (const silo of silos ?? []) {
+      if (!silosByWarehouse.has(silo.warehouse_id)) {
+        silosByWarehouse.set(silo.warehouse_id, []);
+      }
+      silosByWarehouse.get(silo.warehouse_id)!.push(silo);
+    }
+
     const resolve = (id: string | null | undefined) => {
       if (!id) return null;
       const p = profileMap.get(id);
@@ -1746,7 +1914,8 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
       status: (w.status ?? "active") as string,
       location: (w.location ?? {}) as { description?: string | null; address?: string | null },
       total_capacity_kg: (w.total_capacity_kg ?? 0) as number,
-      total_silos: (w.total_silos ?? 0) as number,
+      total_silos: (silosByWarehouse.get(w.id) ?? []).length,
+      silos: (silosByWarehouse.get(w.id) ?? []) as any[],
       notes: (w.notes ?? null) as string | null,
       manager_id: (w.manager_id ?? null) as string | null,
       manager_name: resolve(w.manager_id),
@@ -1755,4 +1924,164 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
         .map(resolve)
         .filter(Boolean) as string[],
     }));
+  });
+
+// Update manager and technician assignments for a warehouse
+export const updateWarehouseTeam = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => {
+    console.log("[updateWarehouseTeam] Raw data received:", d);
+    console.log("[updateWarehouseTeam] Data type:", typeof d);
+    console.log("[updateWarehouseTeam] Data keys:", Object.keys(d || {}));
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    console.log("[updateWarehouseTeam] Handler data:", data);
+    console.log("[updateWarehouseTeam] Handler data type:", typeof data);
+    console.log("[updateWarehouseTeam] Handler data keys:", Object.keys(data || {}));
+
+    // Check authorization
+    const { getEffectiveRole } = await import("./rbac.server");
+    const role = await getEffectiveRole(context.supabase, context.userId);
+    if (!["super_admin", "admin"].includes(role)) throw new Error("Forbidden");
+
+    const parsed = parseOrThrow(
+      z.object({
+        warehouseId: z.string().min(1),
+        managerId: z.string().nullable(),
+        technicianIds: z.array(z.string()),
+      }),
+      data,
+    );
+    console.log("[updateWarehouseTeam] Parsed data:", parsed);
+
+    const { warehouseId, managerId, technicianIds } = parsed;
+
+    const sb = context.supabase;
+
+    // Update warehouse with new assignments
+    const { error: updateErr } = await sb
+      .from("warehouses")
+      .update({
+        manager_id: managerId,
+        technician_ids: technicianIds,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", warehouseId);
+
+    if (updateErr) throw updateErr;
+
+    // Log the action
+    await logManagerAction({
+      actorId: context.userId,
+      action: "update_warehouse_team",
+      targetType: "warehouse",
+      targetId: warehouseId,
+      meta: {
+        manager_id: managerId,
+        technician_ids: technicianIds,
+      },
+    });
+
+    return { success: true };
+  });
+
+// Fetch available managers and technicians for assignment
+export const listAvailableTeam = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Check authorization
+    const { getEffectiveRole } = await import("./rbac.server");
+    const role = await getEffectiveRole(context.supabase, context.userId);
+    if (!["super_admin", "admin"].includes(role)) throw new Error("Forbidden");
+
+    const sb = context.supabase;
+
+    try {
+      // Get the tenant ID (admin_id from the current user's profile)
+      const { data: currentProfile, error: profileErr } = await sb
+        .from("profiles")
+        .select("admin_id, id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      
+      if (profileErr) {
+        console.error("[listAvailableTeam] Error fetching current profile:", profileErr);
+        throw profileErr;
+      }
+      
+      const tenantId = currentProfile?.admin_id ?? currentProfile?.id;
+      if (!tenantId) throw new Error("Could not determine tenant");
+      console.log("[listAvailableTeam] Tenant ID:", tenantId);
+
+      // Fetch all users under this tenant (admin_id) with manager/technician role
+      const { data: profiles, error: profilesErr } = await sb
+        .from("profiles")
+        .select("id, name, email, admin_id")
+        .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
+        .limit(1000);
+
+      if (profilesErr) {
+        console.error("[listAvailableTeam] Error fetching profiles:", profilesErr);
+        throw profilesErr;
+      }
+
+      console.log("[listAvailableTeam] Profiles found:", profiles?.length ?? 0);
+
+      if (!profiles || profiles.length === 0) {
+        console.warn("[listAvailableTeam] No profiles found for tenant", tenantId);
+        return { managers: [], technicians: [] };
+      }
+
+      const userIds = profiles.map((p) => p.id);
+      const profileMap = new Map<string, { name: string | null; email: string | null }>();
+      for (const p of profiles) {
+        profileMap.set(p.id, { name: p.name, email: p.email });
+      }
+
+      // Get roles for these users
+      const { data: userRoles, error: rolesErr } = await sb
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds)
+        .in("role", ["manager", "technician"]);
+
+      if (rolesErr) {
+        console.error("[listAvailableTeam] Error fetching roles:", rolesErr);
+        throw rolesErr;
+      }
+
+      console.log("[listAvailableTeam] User roles found:", userRoles?.length ?? 0);
+
+      // Separate managers and technicians
+      const managers = [];
+      const technicians = [];
+
+      for (const ur of userRoles ?? []) {
+        const profile = profileMap.get(ur.user_id);
+        if (!profile) {
+          console.warn("[listAvailableTeam] No profile for user", ur.user_id);
+          continue;
+        }
+        
+        const displayName = profile.name || profile.email || ur.user_id.slice(0, 8);
+        const item = { id: ur.user_id, name: displayName };
+
+        if (ur.role === "manager") {
+          managers.push(item);
+        } else if (ur.role === "technician") {
+          technicians.push(item);
+        }
+      }
+
+      console.log("[listAvailableTeam] Returning - managers:", managers.length, "technicians:", technicians.length);
+
+      return {
+        managers: managers.sort((a, b) => a.name.localeCompare(b.name)),
+        technicians: technicians.sort((a, b) => a.name.localeCompare(b.name)),
+      };
+    } catch (error) {
+      console.error("[listAvailableTeam] Exception:", error);
+      throw error;
+    }
   });

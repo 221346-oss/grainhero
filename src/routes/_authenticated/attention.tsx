@@ -9,6 +9,15 @@ import { AlertTriangle, WifiOff, Radio, ArrowRight } from "lucide-react";
 import { getAttentionQueue } from "@/lib/attention-queue.functions";
 
 export const Route = createFileRoute("/_authenticated/attention")({
+  head: () => ({
+    meta: [
+      { title: "Attention — Grain Hero" },
+      { name: "description", content: "Attention workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Attention — Grain Hero" },
+      { property: "og:description", content: "Attention workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AttentionPage,
 });
 

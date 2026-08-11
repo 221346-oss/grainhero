@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { PredictionsSection } from "@/components/intelligence/PredictionsSection";
 import { AnalyticsSection } from "@/components/intelligence/AnalyticsSection";
@@ -12,14 +12,24 @@ import { Brain, BarChart3, Cpu, FileBarChart, TrendingUp, TrendingDown } from "l
 import { getSiloPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
 import { getReportsData } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
+  head: () => ({
+    meta: [
+      { title: "Intelligence — Grain Hero" },
+      { name: "description", content: "Intelligence workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Intelligence — Grain Hero" },
+      { property: "og:description", content: "Intelligence workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: IntelligenceWorkspace,
 });
 
 type Tab = "predictions" | "analytics" | "ml-models" | "reports";
 
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "predictions", label: "AI Predictions", icon: Brain },
   { key: "analytics",   label: "Analytics",      icon: BarChart3 },
   { key: "ml-models",   label: "ML Models",      icon: Cpu },
@@ -35,6 +45,8 @@ function IntelligenceWorkspace() {
   const isSuperAdmin = role === "super_admin";
   const allowedAnalytics = ["super_admin", "admin", "manager"].includes(role);
   const allowedModels = ["super_admin", "admin"].includes(role);
+
+  if (roleQ.isLoading) return <KpiChartHubSkeleton />;
 
   const fetchPredictions = useServerFn(getSiloPredictions);
   const fetchOverview = useServerFn(getAnalyticsOverview);

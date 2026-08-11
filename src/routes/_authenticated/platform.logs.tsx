@@ -9,7 +9,16 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 
-export const Route = createFileRoute("/_authenticated/platform/logs")({ component: LogsPage });
+export const Route = createFileRoute("/_authenticated/platform/logs")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Logs — Grain Hero" },
+      { name: "description", content: "Platform · Logs workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Logs — Grain Hero" },
+      { property: "og:description", content: "Platform · Logs workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }), component: LogsPage });
 
 const SEV: Record<string, string> = {
   info: "bg-slate-100 text-slate-700 border-slate-200",

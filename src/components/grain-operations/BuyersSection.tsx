@@ -18,7 +18,7 @@ import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 const BUYER_TYPES = ["local_mill","exporter","wholesaler","retailer","government"] as const;
-const GRAIN_TYPES = ["Wheat","Rice","Maize","Corn","Barley","Sorghum"] as const;
+const GRAIN_TYPES = ["Wheat","Rice","Maize","Barley","Sorghum"] as const;
 type BuyerType = typeof BUYER_TYPES[number];
 type GrainType = typeof GRAIN_TYPES[number];
 type Status = "active" | "paused" | "inactive";

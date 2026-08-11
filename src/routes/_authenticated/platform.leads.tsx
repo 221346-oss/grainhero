@@ -8,6 +8,15 @@ import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 
 export const Route = createFileRoute("/_authenticated/platform/leads")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Leads — Grain Hero" },
+      { name: "description", content: "Platform · Leads workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Leads — Grain Hero" },
+      { property: "og:description", content: "Platform · Leads workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: LeadsPage,
 });
 

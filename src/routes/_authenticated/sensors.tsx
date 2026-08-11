@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SensorsSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { toast } from "sonner";
 import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 import {
@@ -32,6 +32,15 @@ import {
 } from "@/lib/operations.functions";
 
 export const Route = createFileRoute("/_authenticated/sensors")({
+  head: () => ({
+    meta: [
+      { title: "Sensors — Grain Hero" },
+      { name: "description", content: "Sensors workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Sensors — Grain Hero" },
+      { property: "og:description", content: "Sensors workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SensorsPage,
 });
 
@@ -661,7 +670,7 @@ function DeviceDetail({ device, reading, historyFn, onEdit }: {
   );
 }
 
-function MiniReading({ icon: Icon, value, unit, tone }: { icon: React.ElementType; value: number | null | undefined; unit: string; tone?: "warn" }) {
+function MiniReading({ icon: Icon, value, unit, tone }: { icon: ComponentType<{ className?: string }>; value: number | null | undefined; unit: string; tone?: "warn" }) {
   const has = value != null;
   const cls = !has ? "bg-slate-50 text-slate-400 border-slate-200"
     : tone === "warn" ? "bg-amber-50 text-amber-700 border-amber-100"
@@ -685,7 +694,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function MiniStat({ icon: Icon, label, value, tint }: { icon: React.ElementType; label: string; value: React.ReactNode; tint: "emerald"|"sky"|"amber"|"rose" }) {
+function MiniStat({ icon: Icon, label, value, tint }: { icon: ComponentType<{ className?: string }>; label: string; value: React.ReactNode; tint: "emerald"|"sky"|"amber"|"rose" }) {
   const map = { emerald: "text-emerald-600 bg-emerald-50", sky: "text-sky-600 bg-sky-50", amber: "text-amber-600 bg-amber-50", rose: "text-rose-600 bg-rose-50" };
   return (
     <Card className="border-slate-200/70 shadow-sm">

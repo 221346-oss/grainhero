@@ -3,7 +3,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,8 +11,21 @@ import { AlertTriangle, TrendingDown, ExternalLink, ScrollText } from "lucide-re
 import { Link } from "@tanstack/react-router";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, Legend } from "recharts";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  NEON, NeonPatternDefs, neonGrid, neonAxis, neonTooltipStyle, neonAnim,
+  HairlineGrid, NeonPanel, StatGrid, ChartEmpty,
+} from "@/components/charts/neon";
 
 export const Route = createFileRoute("/_authenticated/platform/sla-alerts")({
+  head: () => ({
+    meta: [
+      { title: "Platform · Sla Alerts — Grain Hero" },
+      { name: "description", content: "Platform · Sla Alerts workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Sla Alerts — Grain Hero" },
+      { property: "og:description", content: "Platform · Sla Alerts workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SlaAlertsPage,
 });
 
@@ -57,88 +69,104 @@ function SlaAlertsPage() {
         </Select>
       }
     >
+      <NeonPatternDefs />
       {isLoading || !data ? (
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Kpi label="Overdue now" value={data.totals.overdue} tone="rose" />
-            <Kpi label="Shipments (window)" value={data.totals.current} />
-            <Kpi label="Delivery rate" value={`${(data.totals.currentRate * 100).toFixed(1)}%`} tone="emerald" />
-            <Kpi
-              label="Δ vs prior window"
-              value={`${((data.totals.currentRate - data.totals.previousRate) * 100).toFixed(1)} pp`}
-              tone={data.totals.currentRate - data.totals.previousRate < 0 ? "rose" : "emerald"}
-            />
-          </div>
+          <StatGrid
+            cols="grid-cols-2 md:grid-cols-4"
+            stats={[
+              { label: "Overdue now", value: data.totals.overdue, tone: "critical" },
+              { label: "Shipments (window)", value: data.totals.current },
+              { label: "Delivery rate", value: `${(data.totals.currentRate * 100).toFixed(1)}%`, tone: "ok" },
+              {
+                label: "Δ vs prior window",
+                value: `${((data.totals.currentRate - data.totals.previousRate) * 100).toFixed(1)} pp`,
+                tone: data.totals.currentRate - data.totals.previousRate < 0 ? "critical" : "ok",
+              },
+            ]}
+          />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-emerald-600" />
-                Delivery-rate trend
-                <span className="text-xs font-normal text-muted-foreground ml-2">
-                  Baseline (prior window): {baselinePct}% · alert if drop &gt; {data.config.deliveryRateAlertDropPct} pp
+          <HairlineGrid cols="grid-cols-1">
+            <NeonPanel
+              title={
+                <span className="flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4" style={{ color: NEON.brand }} />
+                  Delivery-rate trend
                 </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-64 p-2">
-              {trendData.length === 0 ? (
-                <div className="text-sm text-muted-foreground p-6">No dispatched shipments in this window.</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendData} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}
-                    onClick={(e: { activeLabel?: string }) => {
-                      if (e?.activeLabel) setDrillKey({ day: e.activeLabel, bucket: "all" });
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="day" fontSize={11} />
-                    <YAxis fontSize={11} unit="%" domain={[0, 100]} />
-                    <Tooltip />
-                    <Legend />
-                    <ReferenceLine y={baselinePct} stroke="#059669" strokeDasharray="4 4" label={{ value: "baseline", fontSize: 10, fill: "#059669" }} />
-                    <ReferenceLine y={dropThreshold} stroke="#f43f5e" strokeDasharray="4 4" label={{ value: "alert", fontSize: 10, fill: "#f43f5e" }} />
-                    <Line type="monotone" dataKey="rate" name="Delivery rate %" stroke="#059669" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6, cursor: "pointer" }} />
-                    <Line type="monotone" dataKey="overdue" name="Overdue count" stroke="#f43f5e" strokeWidth={1.5} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
+              }
+              subtitle={`Baseline (prior window): ${baselinePct}% · alert if drop > ${data.config.deliveryRateAlertDropPct} pp`}
+            >
+              <div className="h-64">
+                {trendData.length === 0 ? (
+                  <ChartEmpty label="No dispatched shipments in this window." height={256} />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={trendData} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}
+                      onClick={(e: { activeLabel?: string }) => {
+                        if (e?.activeLabel) setDrillKey({ day: e.activeLabel, bucket: "all" });
+                      }}
+                    >
+                      <CartesianGrid {...neonGrid} />
+                      <XAxis dataKey="day" {...neonAxis} />
+                      <YAxis {...neonAxis} unit="%" domain={[0, 100]} />
+                      <Tooltip {...neonTooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <ReferenceLine y={baselinePct} stroke={NEON.brand} strokeDasharray="4 4" label={{ value: "baseline", fontSize: 10, fill: NEON.brand }} />
+                      <ReferenceLine y={dropThreshold} stroke={NEON.critical} strokeDasharray="4 4" label={{ value: "alert", fontSize: 10, fill: NEON.critical }} />
+                      <Line type="monotone" dataKey="rate" name="Delivery rate %" stroke={NEON.brand} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6, cursor: "pointer" }} {...neonAnim} />
+                      <Line type="monotone" dataKey="overdue" name="Overdue count" stroke={NEON.critical} strokeWidth={1.5} dot={false} {...neonAnim} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </NeonPanel>
+          </HairlineGrid>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-500" />
+          <NeonPanel
+            title={
+              <span className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" style={{ color: NEON.critical }} />
                 Overdue shipments ({data.overdue.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs text-muted-foreground text-left border-b">
+              </span>
+            }
+            className="border border-border rounded-md"
+          >
+            <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead className="border-b border-border bg-muted/30">
                   <tr>
-                    <th className="p-3">Order</th><th>Buyer</th><th>Courier</th>
-                    <th>Status</th><th>Overdue by</th><th>Dispatched</th><th></th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Order</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Buyer</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Courier</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Status</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Overdue by</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Dispatched</th>
+                    <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.overdue.length === 0 && (
-                    <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No overdue shipments — nice.</td></tr>
+                    <tr><td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">No overdue shipments — nice.</td></tr>
                   )}
                   {data.overdue.map((s) => {
                     const bo = (s as { buyer_orders?: { order_number?: string; buyers?: { name?: string; company_name?: string } } }).buyer_orders;
                     const buyer = bo?.buyers?.company_name ?? bo?.buyers?.name ?? "—";
                     const hours = (s as { overdueHours: number }).overdueHours;
                     return (
-                      <tr key={s.id} className="border-b hover:bg-emerald-50/30">
-                        <td className="p-3 font-mono text-xs">{bo?.order_number ?? s.order_id}</td>
-                        <td>{buyer}</td>
-                        <td>{s.courier_label ?? s.courier_key}</td>
-                        <td><Badge variant="outline">{s.status}</Badge></td>
-                        <td><Badge variant="destructive">{hours < 1 ? `${(hours * 60).toFixed(0)}m` : `${hours.toFixed(1)}h`}</Badge></td>
-                        <td className="text-xs text-muted-foreground">{s.dispatched_at ? new Date(s.dispatched_at).toLocaleDateString() : "—"}</td>
-                        <td>
+                      <tr key={s.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="px-3 py-2 font-mono text-xs">{bo?.order_number ?? s.order_id}</td>
+                        <td className="px-3 py-2">{buyer}</td>
+                        <td className="px-3 py-2">{s.courier_label ?? s.courier_key}</td>
+                        <td className="px-3 py-2"><Badge variant="outline">{s.status}</Badge></td>
+                        <td className="px-3 py-2">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium tabular-nums" style={{ color: NEON.critical, background: "color-mix(in oklch, var(--severity-critical) 15%, transparent)" }}>
+                            {hours < 1 ? `${(hours * 60).toFixed(0)}m` : `${hours.toFixed(1)}h`}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-[11px] text-muted-foreground tabular-nums">{s.dispatched_at ? new Date(s.dispatched_at).toLocaleDateString() : "—"}</td>
+                        <td className="px-3 py-2">
                           <Link to="/platform/orders/$orderId" params={{ orderId: s.order_id as string }}>
                             <Button variant="ghost" size="sm"><ExternalLink className="h-3 w-3" /></Button>
                           </Link>
@@ -151,44 +179,50 @@ function SlaAlertsPage() {
                   })}
                 </tbody>
               </table>
-            </CardContent>
-          </Card>
+            </div>
+          </NeonPanel>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingDown className="h-4 w-4 text-amber-500" />
+          <NeonPanel
+            title={
+              <span className="flex items-center gap-2">
+                <TrendingDown className="h-4 w-4" style={{ color: NEON.warning }} />
                 Seller delivery-rate drops
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs text-muted-foreground text-left border-b">
+              </span>
+            }
+            className="border border-border rounded-md"
+          >
+            <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead className="border-b border-border bg-muted/30">
                   <tr>
-                    <th className="p-3">Seller</th><th>Shipments</th><th>Overdue</th>
-                    <th>Current rate</th><th>Previous</th><th>Δ</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Seller</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Shipments</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Overdue</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Current rate</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Previous</th>
+                    <th className="text-left font-medium text-muted-foreground px-3 py-2">Δ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.sellerDrops.length === 0 && (
-                    <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">No regressions detected.</td></tr>
+                    <tr><td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">No regressions detected.</td></tr>
                   )}
                   {data.sellerDrops.map((s) => (
-                    <tr key={s.adminId} className="border-b hover:bg-emerald-50/30">
-                      <td className="p-3">{s.sellerName}</td>
-                      <td>{s.shipments}</td>
-                      <td>{s.overdue > 0 ? <Badge variant="destructive">{s.overdue}</Badge> : 0}</td>
-                      <td>{(s.currentRate * 100).toFixed(1)}%</td>
-                      <td className="text-muted-foreground">{(s.previousRate * 100).toFixed(1)}%</td>
-                      <td className={s.delta < 0 ? "text-rose-600 font-medium" : "text-emerald-600"}>
+                    <tr key={s.adminId} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-3 py-2">{s.sellerName}</td>
+                      <td className="px-3 py-2 tabular-nums">{s.shipments}</td>
+                      <td className="px-3 py-2 tabular-nums">{s.overdue > 0 ? <Badge variant="destructive">{s.overdue}</Badge> : 0}</td>
+                      <td className="px-3 py-2 tabular-nums">{(s.currentRate * 100).toFixed(1)}%</td>
+                      <td className="px-3 py-2 text-muted-foreground tabular-nums">{(s.previousRate * 100).toFixed(1)}%</td>
+                      <td className="px-3 py-2 tabular-nums font-medium" style={{ color: s.delta < 0 ? NEON.critical : NEON.success }}>
                         {(s.delta * 100).toFixed(1)} pp
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </CardContent>
-          </Card>
+            </div>
+          </NeonPanel>
 
           <p className="text-xs text-muted-foreground">
             SLA thresholds (from marketplace settings): in-transit {data.slaHours.inTransit}h · out-for-delivery {data.slaHours.outForDelivery}h · delivered {data.slaHours.delivered}h.
@@ -235,17 +269,5 @@ function SlaAlertsPage() {
         </SheetContent>
       </Sheet>
     </AdminPageShell>
-  );
-}
-
-function Kpi({ label, value, tone }: { label: string; value: number | string; tone?: "emerald" | "rose" }) {
-  const color = tone === "emerald" ? "text-emerald-600" : tone === "rose" ? "text-rose-600" : "";
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-semibold ${color}`}>{value}</div>
-      </CardContent>
-    </Card>
   );
 }

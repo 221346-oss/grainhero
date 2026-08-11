@@ -25,6 +25,15 @@ import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { SubscriptionSkeleton } from "@/components/app/skeletons";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
+  head: () => ({
+    meta: [
+      { title: "Subscription — Grain Hero" },
+      { name: "description", content: "Subscription workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Subscription — Grain Hero" },
+      { property: "og:description", content: "Subscription workspace in the Grain Hero platform." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SubscriptionPage,
 });
 
