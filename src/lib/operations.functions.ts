@@ -1972,10 +1972,15 @@ export const updateWarehouseTeam = createServerFn({ method: "POST" })
     if (updateErr) throw updateErr;
 
     // Log the action
-    await logManagerAction(context.userId, "update_warehouse_team", {
-      warehouse_id: warehouseId,
-      manager_id: managerId,
-      technician_ids: technicianIds,
+    await logManagerAction({
+      actorId: context.userId,
+      action: "update_warehouse_team",
+      targetType: "warehouse",
+      targetId: warehouseId,
+      meta: {
+        manager_id: managerId,
+        technician_ids: technicianIds,
+      },
     });
 
     return { success: true };
