@@ -209,8 +209,8 @@ export function SecuritySection() {
               ))}
               {users.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No users.</div>}
             </div>
-          </div>
-        </NeonPanel>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader><CardTitle>Security events</CardTitle><CardDescription>Real security_events feed — sign-ins, access denials, role &amp; batch overrides, billing</CardDescription></CardHeader>

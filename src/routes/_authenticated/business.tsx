@@ -42,9 +42,12 @@ function BusinessWorkspace() {
 
   const fetchRevenue = useServerFn(getRevenueOverview);
   const fetchSub = useServerFn(getMySubscription);
+  const fetchRole = useServerFn(getMyRole);
 
   const { data: revenue } = useQuery({ queryKey: ["revenue"], queryFn: () => fetchRevenue() });
   const { data: mySub } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fetchSub() });
+  const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
+  const role = roleData?.role ?? "user";
 
   const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
   const sub = mySub?.subscription;
