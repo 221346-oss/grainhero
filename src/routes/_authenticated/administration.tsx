@@ -7,36 +7,46 @@ import { motion } from "framer-motion";
 import { TeamSection } from "@/components/administration/TeamSection";
 import { SecuritySection } from "@/components/administration/SecuritySection";
 import { ActivityLogsSection } from "@/components/administration/ActivityLogsSection";
-import { Users, ShieldCheck, ClipboardList, TrendingUp, TrendingDown } from "lucide-react";
+import { FieldIncidentsSection } from "@/components/administration/FieldIncidentsSection";
+import { ReportsSection } from "@/components/administration/ReportsSection";
+import { Users, ShieldCheck, ClipboardList, Flag, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
 
+type Tab = "team" | "security" | "activity" | "field" | "reports";
+const TAB_KEYS: Tab[] = ["team", "security", "activity", "field", "reports"];
+
 export const Route = createFileRoute("/_authenticated/administration")({
-  head: () => ({
-    meta: [
-      { title: "Administration — Grain Hero" },
-      { name: "description", content: "Administration workspace in the Grain Hero platform — private, sign-in required." },
-      { property: "og:title", content: "Administration — Grain Hero" },
-      { property: "og:description", content: "Administration workspace in the Grain Hero platform." },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+  // Lets other pages deep-link straight to a tab (e.g. the dashboard's
+  // Field Incidents panel → /administration?tab=field) — mirrors
+  // grain-operations.tsx's validateSearch pattern.
+  validateSearch: (search: Record<string, unknown>): { tab: Tab } => ({
+    tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "team",
   }),
   component: AdministrationWorkspace,
 });
 
-type Tab = "team" | "security" | "activity";
-
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "team",     label: "Team Management", icon: Users },
-  { key: "security", label: "Security Center",  icon: ShieldCheck },
-  { key: "activity", label: "Activity Logs",    icon: ClipboardList },
+  { key: "team", label: "Team Management", icon: Users },
+  { key: "security", label: "Security Center", icon: ShieldCheck },
+  { key: "activity", label: "Activity Logs", icon: ClipboardList },
+  { key: "field", label: "Field Incidents", icon: Flag },
+  { key: "reports", label: "Reports", icon: FileBarChart },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function AdministrationWorkspace() {
-  const [activeTab, setActiveTab] = useState<Tab>("team");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [activeTab, setActiveTabState] = useState<Tab>(tab);
+  useEffect(() => { setActiveTabState(tab); }, [tab]);
+  function setActiveTab(next: Tab) {
+    setActiveTabState(next);
+    navigate({ search: { tab: next } });
+  }
 
   const fetchRole = useServerFn(getMyRole);
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
@@ -46,7 +56,7 @@ function AdministrationWorkspace() {
 
   // Managers only see Activity Logs
   const visibleTabs =
-    role === "manager" ? TABS.filter((t) => t.key === "activity") : TABS;
+    role === "manager" ? TABS.filter((t) => ["activity", "field", "reports"].includes(t.key)) : TABS;
 
   // Reset to activity tab if manager lands on a restricted tab
   useEffect(() => {
@@ -77,6 +87,8 @@ function AdministrationWorkspace() {
     team:     memberList.length,
     security: securityEvents,
     activity: 0,
+    field: fieldIncidentList.length,
+    reports: 0,
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
@@ -217,6 +229,8 @@ function AdministrationWorkspace() {
             {activeTab === "team"     && <TeamSection />}
             {activeTab === "security" && <SecuritySection />}
             {activeTab === "activity" && <ActivityLogsSection />}
+            {activeTab === "field" && <FieldIncidentsSection />}
+            {activeTab === "reports" && <ReportsSection />}
           </div>
         </div>
       </div>

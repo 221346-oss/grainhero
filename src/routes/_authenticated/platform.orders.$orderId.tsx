@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Truck, UserCheck, XCircle, Cpu } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -255,19 +256,20 @@ function CancelSheet({ onSubmit }: { onSubmit: (v: { reason: string }) => void }
   return (
     <>
       <Button size="sm" variant="outline" className="text-rose-700" onClick={() => setOpen(true)}><XCircle className="h-4 w-4 mr-1" />Cancel</Button>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className="sm:max-w-sm">
-          <SheetHeader><SheetTitle>Cancel order</SheetTitle></SheetHeader>
-          <div className="mt-6 space-y-1.5">
+      {/* Confirmation, not a form — popup modal per the side-panel convention (see components/ui/sheet.tsx). */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Cancel order</DialogTitle></DialogHeader>
+          <div className="mt-2 space-y-1.5">
             <Label>Reason</Label>
             <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} />
           </div>
-          <SheetFooter className="mt-6">
+          <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => setOpen(false)}>Back</Button>
             <Button variant="destructive" disabled={reason.trim().length < 3} onClick={() => { onSubmit({ reason: reason.trim() }); setOpen(false); }}>Cancel order</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

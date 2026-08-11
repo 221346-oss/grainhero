@@ -1,7 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Users, Building2, Package, Container, Radio, Wallet, TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Wheat, Container, ClipboardCheck, Wallet, type LucideIcon } from "lucide-react";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { RangeChip, type RangeKey } from "./RangeChip";
+import { listGrainBatches, listSilos } from "@/lib/operations.functions";
+import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
+import { Users, Building2, Package, Container, Radio, Wallet, TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
 import { useDashboardStats } from "./useDashboardStats";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 import { ResponsiveContainer, AreaChart, Area } from "recharts";
@@ -48,11 +53,9 @@ export function KpiSummary({
 
   // KPI rows for the secondary metrics
   const rows: Row[] = [
-    { label: "Buyers", value: s?.buyers ?? "—", to: "/grain-operations", search: { tab: "buyers" }, icon: Users },
-    { label: "Warehouses", value: s?.warehouses ?? "—", to: "/grain-operations", search: { tab: "warehouses" }, icon: Building2 },
-    { label: "Active Batches", value: s?.batches.active ?? "—", to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches, icon: Package },
-    { label: "Silos", value: s?.silos ?? "—", to: "/grain-operations", search: { tab: "silos" }, icon: Container },
-    { label: "Sensors Online", value: s?.sensors.online ?? "—", to: "/sensors", delta: deltaAlerts, icon: Radio },
+    { label: "Total Grain (kg)", value: totalGrainKg.toLocaleString(), to: "/grain-operations", search: { tab: "batches" }, delta: deltaBatches, icon: Wheat },
+    { label: "Active Silos", value: activeSilos, to: "/grain-operations", search: { tab: "silos" }, icon: Container },
+    { label: "Pending Approvals", value: pendingApprovals, to: "/grain-operations", search: { tab: "batches" }, icon: ClipboardCheck },
   ];
 
   return (

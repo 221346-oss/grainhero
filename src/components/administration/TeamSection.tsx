@@ -4,12 +4,19 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Edit2, Trash2, Mail, Loader2, Users, ArrowUpRight } from "lucide-react";
+import {
+  Plus, Search, Edit2, Trash2, Mail, Loader2, Users, ArrowUpRight,
+  ChevronDown, ChevronUp, ArrowUp, ArrowDown, ShieldOff, ShieldCheck,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RowActions, type RowAction } from "@/components/app/RowActions";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 import {
   Select,
   SelectContent,
@@ -59,13 +66,25 @@ type Member = {
   role: string;
 };
 
-const ROLE_BADGE: Record<string, string> = {
-  super_admin: "bg-red-100 text-red-700 border-red-200",
-  admin: "bg-purple-100 text-purple-700 border-purple-200",
-  manager: "bg-blue-100 text-blue-700 border-blue-200",
-  technician: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  pending: "bg-amber-100 text-amber-700 border-amber-200",
-};
+const PAGE_SIZES = [10, 25, 50] as const;
+
+// One derived status per row (Blocked > Pending > Unverified > Active) instead
+// of stacking Role + Blocked + Unverified badges side by side.
+function memberStatus(m: Member): { label: string; cls: string } {
+  if (m.blocked) return { label: "Blocked", cls: "bg-red-100 text-red-700 border-red-200" };
+  if (m.role === "pending") return { label: "Pending", cls: "bg-amber-100 text-amber-700 border-amber-200" };
+  if (!m.email_verified) return { label: "Unverified", cls: "bg-orange-100 text-orange-700 border-orange-200" };
+  return { label: "Active", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+}
+
+const teamExportColumns: ExportColumn<Member>[] = [
+  { header: "Name", value: (m) => m.name ?? "" },
+  { header: "Email", value: (m) => m.email ?? "" },
+  { header: "Role", value: (m) => m.role },
+  { header: "Status", value: (m) => memberStatus(m).label },
+  { header: "Phone", value: (m) => m.phone ?? "" },
+  { header: "Joined", value: (m) => m.created_at ? new Date(m.created_at).toLocaleDateString() : "" },
+];
 
 export function TeamSection() {
   const qc = useQueryClient();
@@ -119,6 +138,58 @@ export function TeamSection() {
     return { total, active, pending, blocked };
   }, [members]);
 
+  // ── Table redesign: sort, pagination, multi-select ──────────────────────
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<"name" | "joined">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
+
+  const sorted = useMemo(() => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      if (sortKey === "joined") {
+        return dir * (new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime());
+      }
+      return dir * (a.name ?? a.email ?? "").localeCompare(b.name ?? b.email ?? "");
+    });
+  }, [filtered, sortKey, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const paged = useMemo(
+    () => sorted.slice((page - 1) * pageSize, page * pageSize),
+    [sorted, page, pageSize],
+  );
+
+  // Search/filter/page-size changes invalidate the current page.
+  useEffect(() => { setPage(1); }, [q, roleFilter, pageSize]);
+
+  function toggleSort(key: "name" | "joined") {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+
+  const pageIds = useMemo(() => paged.map((m) => m.id), [paged]);
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  function toggleSelectAllOnPage() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) pageIds.forEach((id) => next.delete(id));
+      else pageIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+  function toggleSelectOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  const selectedMembers = useMemo(() => members.filter((m) => selected.has(m.id)), [members, selected]);
+
   const invite = useMutation({
     mutationFn: (v: {
       data: { email: string; name?: string; role: "admin" | "manager" | "technician" };
@@ -132,10 +203,10 @@ export function TeamSection() {
     onError: (e: Error) => toast.error(e.message),
   });
   const update = useMutation({
-    mutationFn: (v: { data: { id: string; name?: string; phone?: string; role?: Role } }) =>
+    mutationFn: (v: { data: { id: string; name?: string; phone?: string; role?: Role; blocked?: boolean } }) =>
       updateFn(v),
-    onSuccess: () => {
-      toast.success("Member updated");
+    onSuccess: (_r, v) => {
+      toast.success(v.data.blocked !== undefined ? (v.data.blocked ? "Member blocked" : "Member unblocked") : "Member updated");
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["team-members"] });
     },
@@ -244,9 +315,19 @@ export function TeamSection() {
         </CardContent>
       </Card>
 
+      {selected.size > 0 && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2">
+          <span className="text-sm text-emerald-800 font-medium">{selected.size} selected</span>
+          <div className="flex items-center gap-2">
+            <ExportMenu filename="team-members" title="Team Members (selected)" rows={selectedMembers} columns={teamExportColumns} />
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+          </div>
+        </div>
+      )}
+
       <AdminDataCard
         title="All members"
-        description={`Showing ${filtered.length} of ${members.length}`}
+        description={`Showing ${paged.length} of ${filtered.length} (${members.length} total)`}
       >
         {isLoading ? (
           <div className="p-4">
@@ -257,68 +338,105 @@ export function TeamSection() {
             <p className="text-sm">No team members found</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {filtered.map((m) => (
-              <div
-                key={m.id}
-                className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50"
-              >
-                <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">
-                  {(m.name ?? m.email ?? "?").slice(0, 1).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-900 truncate">{m.name ?? "—"}</div>
-                  <div className="text-xs text-slate-500 truncate">{m.email}</div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge className={ROLE_BADGE[m.role] ?? ROLE_BADGE.pending} variant="outline">
-                    {m.role}
-                  </Badge>
-                  {m.blocked && (
-                    <Badge className="bg-red-100 text-red-700 border-red-200" variant="outline">
-                      Blocked
-                    </Badge>
-                  )}
-                  {!m.email_verified && m.role !== "pending" && (
-                    <Badge
-                      className="bg-orange-100 text-orange-700 border-orange-200"
-                      variant="outline"
+          <div>
+            {/* Sticky column header — sticks to AdminDataCard's own scroll container. */}
+            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-100 bg-card px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+              <Checkbox checked={allOnPageSelected} onCheckedChange={toggleSelectAllOnPage} aria-label="Select all on page" />
+              <button className="flex-1 min-w-0 flex items-center gap-1 text-left hover:text-slate-600" onClick={() => toggleSort("name")}>
+                Member {sortKey === "name" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+              </button>
+              <span className="w-20 hidden sm:block">Role</span>
+              <span className="w-20">Status</span>
+              <button className="w-24 hidden md:flex items-center gap-1 hover:text-slate-600" onClick={() => toggleSort("joined")}>
+                Joined {sortKey === "joined" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+              </button>
+              {canManage && <span className="w-8" />}
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              {paged.map((m) => {
+                const status = memberStatus(m);
+                const expanded = expandedId === m.id;
+                const rowActions: RowAction[] = canManage ? [
+                  {
+                    label: "Edit", icon: Edit2, onClick: () => {
+                      setEditing(m);
+                      setEditForm({ name: m.name ?? "", phone: m.phone ?? "", role: m.role as Role });
+                    },
+                  },
+                  {
+                    label: m.blocked ? "Unblock" : "Block",
+                    icon: m.blocked ? ShieldCheck : ShieldOff,
+                    onClick: () => update.mutate({ data: { id: m.id, blocked: !m.blocked } }),
+                  },
+                  { label: "Remove", icon: Trash2, destructive: true, onClick: () => setDeleting(m) },
+                ] : [];
+                return (
+                  <div key={m.id}>
+                    <div
+                      className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer"
+                      onClick={() => setExpandedId(expanded ? null : m.id)}
                     >
-                      Unverified
-                    </Badge>
-                  )}
-                </div>
-                {canManage && (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditing(m);
-                        setEditForm({
-                          name: m.name ?? "",
-                          phone: m.phone ?? "",
-                          role: m.role as Role,
-                        });
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => setDeleting(m)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <Checkbox
+                        checked={selected.has(m.id)}
+                        onCheckedChange={() => toggleSelectOne(m.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Select ${m.name ?? m.email}`}
+                      />
+                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">
+                        {(m.name ?? m.email ?? "?").slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-900 truncate">{m.name ?? "—"}</div>
+                        <div className="text-xs text-slate-500 truncate">{m.email}</div>
+                      </div>
+                      <span className="w-20 hidden sm:block text-sm text-slate-600 capitalize truncate">{m.role}</span>
+                      <span className="w-20">
+                        <Badge className={status.cls} variant="outline">{status.label}</Badge>
+                      </span>
+                      <span className="w-24 hidden md:block text-xs text-slate-500">
+                        {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
+                      </span>
+                      <div className="w-8 flex justify-end" onClick={(e) => e.stopPropagation()}>
+                        {canManage ? <RowActions actions={rowActions} visible={0} /> : (
+                          expanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />
+                        )}
+                      </div>
+                    </div>
+                    {expanded && (
+                      <div className="px-4 pb-3 pl-16 -mt-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-600 bg-slate-50/60">
+                        <div><span className="text-slate-400 block">Phone</span>{m.phone ?? "—"}</div>
+                        <div><span className="text-slate-400 block">Department</span>{m.department ?? "—"}</div>
+                        <div><span className="text-slate-400 block">Email verified</span>{m.email_verified ? "Yes" : "No"}</div>
+                        <div><span className="text-slate-400 block">Joined</span>{m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}</div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
         )}
       </AdminDataCard>
+
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-between gap-3 flex-wrap px-1">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span>Rows per page</span>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="h-8 w-16"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
+            <span className="text-sm text-slate-500">Page {page} of {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>

@@ -6,28 +6,28 @@ import {
   listAllHardwareOrders,
   updateHardwareOrder,
 } from "@/lib/hardware-orders.functions";
-import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
 import { TechnicianAssignmentDialog } from "@/components/app/orders/TechnicianAssignmentDialog";
 import {
-  Truck, MoreHorizontal, Users, Download, FileDown,
+  Truck, MoreHorizontal, Users,
   Search, RefreshCw, MapPin, Phone,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import React from "react";
-
 export const Route = createFileRoute("/_authenticated/platform/orders")({
   head: () => ({ meta: [{ title: "Install orders — Platform" }] }),
   component: PlatformOrdersPage,
@@ -95,22 +95,20 @@ function matchesStatusFilter(orderStatus: string, filter: string): boolean {
   return orderStatus === filter;
 }
 
-// ── Export helper ────────────────────────────────────────────────────────────
-function toExportRows(orders: any[]) {
-  return orders.map((o) => ({
-    "Order ID":      String(o.id ?? "").slice(0, 8),
-    "Plan":          o.plan_name ?? o.plan_id ?? "—",
-    "Buyer name":    o.buyer?.name ?? o.customer_name ?? "—",
-    "Buyer email":   o.buyer?.email ?? o.customer_email ?? "—",
-    "Qty":           o.hardware_quantity ?? 0,
-    "Total (PKR)":   fmt(Number(o.hardware_total ?? 0)),
-    "Status":        STATUS_CFG[o.status]?.label ?? o.status ?? "—",
-    "City":          o.install_city ?? "—",
-    "Country":       o.install_country ?? "—",
-    "Placed":        o.created_at ? new Date(o.created_at).toLocaleDateString() : "—",
-    "Technician":    o.technician_name ?? "—",
-  }));
-}
+// ── Export columns ───────────────────────────────────────────────────────────
+const orderExportColumns: ExportColumn<any>[] = [
+  { header: "Order ID", value: (o) => String(o.id ?? "").slice(0, 8) },
+  { header: "Plan", value: (o) => o.plan_name ?? o.plan_id ?? "—" },
+  { header: "Buyer name", value: (o) => o.buyer?.name ?? o.customer_name ?? "—" },
+  { header: "Buyer email", value: (o) => o.buyer?.email ?? o.customer_email ?? "—" },
+  { header: "Qty", value: (o) => o.hardware_quantity ?? 0 },
+  { header: "Total (PKR)", value: (o) => fmt(Number(o.hardware_total ?? 0)) },
+  { header: "Status", value: (o) => STATUS_CFG[o.status]?.label ?? o.status ?? "—" },
+  { header: "City", value: (o) => o.install_city ?? "—" },
+  { header: "Country", value: (o) => o.install_country ?? "—" },
+  { header: "Placed", value: (o) => o.created_at ? new Date(o.created_at).toLocaleDateString() : "—" },
+  { header: "Technician", value: (o) => o.technician_name ?? "—" },
+];
 
 // ── Export button row ────────────────────────────────────────────────────────
 function ExportRow({ rows, label, filename }: { rows: any[]; label: string; filename: string }) {
@@ -667,14 +665,14 @@ function OrderRow({
         </SheetContent>
       </Sheet>
 
-      {/* ── Cancel Sheet ────────────────────────────────────────── */}
-      <Sheet open={cancelOpen} onOpenChange={setCancelOpen}>
-        <SheetContent className="sm:max-w-sm">
-          <SheetHeader>
-            <SheetTitle>Cancel this order?</SheetTitle>
-            <SheetDescription>The buyer will be notified in-app. Refunds are handled in Stripe.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
+      {/* ── Cancel confirmation — popup modal, not a Sheet (see side-panel convention in components/ui/sheet.tsx) ── */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Cancel this order?</DialogTitle>
+            <DialogDescription>The buyer will be notified in-app. Refunds are handled in Stripe.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2">
             <Textarea
               rows={4}
               value={cancelReason}
@@ -682,7 +680,7 @@ function OrderRow({
               placeholder="Reason (optional)"
             />
           </div>
-          <SheetFooter className="mt-6">
+          <DialogFooter className="mt-6">
             <Button variant="outline" size="sm" onClick={() => setCancelOpen(false)}>Back</Button>
             <Button
               variant="destructive"
@@ -692,9 +690,9 @@ function OrderRow({
             >
               Confirm cancel
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

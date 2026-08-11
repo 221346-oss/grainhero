@@ -5,9 +5,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
+import { SubscriptionSection } from "@/components/business/SubscriptionSection";
+import { InsuranceSection } from "@/components/business/InsuranceSection";
+import { Wallet, CreditCard, Shield, TrendingUp, TrendingDown } from "lucide-react";
+import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
 import { RevenueChart } from "@/components/business/RevenueChart";
-import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
-import { getRevenueOverview } from "@/lib/billing.functions";
 import { getMyRole } from "@/lib/roles.functions";
 
 export const Route = createFileRoute("/_authenticated/business")({
@@ -39,14 +41,13 @@ function BusinessWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("revenue");
 
   const fetchRevenue = useServerFn(getRevenueOverview);
-  const fetchRole = useServerFn(getMyRole);
+  const fetchSub = useServerFn(getMySubscription);
 
   const { data: revenue } = useQuery({ queryKey: ["revenue"], queryFn: () => fetchRevenue() });
-  const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
-
-  const role = roleData?.role ?? "admin";
+  const { data: mySub } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fetchSub() });
 
   const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
+  const sub = mySub?.subscription;
 
   const counts = {
     revenue: totals.countInvoices ?? 0,
@@ -54,11 +55,15 @@ function BusinessWorkspace() {
 
   const maxCount = Math.max(...Object.values(counts), 1);
 
+  // Insurance tab is hidden (see TABS above), so the overview no longer pulls
+  // Coverage/Open Claims — these four now match the tabs actually on this
+  // page: the first three are Revenue-tab metrics already fetched above,
+  // the last reflects the Subscription tab.
   const stats = [
-    { label: "Collected",    value: money(totals.collected),    up: true  },
-    { label: "Outstanding",  value: money(totals.outstanding),  up: false },
-    { label: "Invoiced",     value: money(totals.invoiced),     up: true  },
-    { label: "Overdue",      value: totals.overdue,             up: totals.overdue === 0 },
+    { label: "Invoiced", value: money(totals.invoiced), up: true },
+    { label: "Collected", value: money(totals.collected), up: true },
+    { label: "Outstanding", value: money(totals.outstanding), up: false },
+    { label: "Overdue", value: totals.overdue, up: totals.overdue === 0 },
   ];
 
   return (

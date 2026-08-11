@@ -238,6 +238,27 @@ export const updateTeamMember = createServerFn({ method: "POST" })
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
 
+    // Role changes are a privilege-escalation surface — a manager could
+    // otherwise promote any team member (including themselves) to admin,
+    // since the role-change branch below uses a service-role client that
+    // bypasses RLS. Only admin/super_admin may change roles; a manager
+    // attempting it is logged as a security event, not silently ignored.
+    if (data.role && !isSuper && !isAdmin) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: actorProfile } = await context.supabase
+        .from("profiles")
+        .select("admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      await supabaseAdmin.from("security_events").insert({
+        user_id: context.userId,
+        tenant_id: (actorProfile as { admin_id?: string } | null)?.admin_id ?? context.userId,
+        event: "role_escalation_attempt",
+        meta: { targetUserId: data.id, attemptedRole: data.role } as never,
+      });
+      throw new Error("Forbidden: only admins can change roles");
+    }
+
     const update: Record<string, any> = {};
     if (data.name !== undefined) update.name = data.name;
     if (data.phone !== undefined) update.phone = data.phone;

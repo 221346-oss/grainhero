@@ -2,17 +2,18 @@ import { TableSkeleton } from "@/components/app/skeletons";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, RefreshCw, X, FileText } from "lucide-react";
+import { RefreshCw, X, FileText } from "lucide-react";
 import { listActivityLogs } from "@/lib/notifications-audit.functions";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { AdminDetailPanel, DetailField } from "@/components/app/admin/AdminDetailPanel";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 type Log = Awaited<ReturnType<typeof listActivityLogs>>["logs"][number];
 
@@ -82,25 +83,16 @@ export function ActivityLogsSection() {
 
   const applySearch = () => { setPage(1); setSearch(searchInput); };
 
-  const exportCSV = () => {
-    if (!logs.length) return toast.error("No logs to export");
-    const header = ["Timestamp", "Action", "Category", "Severity", "User", "Role", "Entity", "Description"];
-    const rows = logs.map((l) => [
-      new Date(l.created_at).toISOString(),
-      l.action, l.category, l.severity,
-      l.user_name ?? "System", l.user_role ?? "",
-      l.entity_ref ?? "", (l.description ?? "").replace(/"/g, '""'),
-    ]);
-    const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c)}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `activity-logs-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported");
-  };
+  const activityLogExportColumns: ExportColumn<Log>[] = [
+    { header: "Timestamp", value: (l) => new Date(l.created_at).toISOString() },
+    { header: "Action", value: (l) => l.action },
+    { header: "Category", value: (l) => l.category },
+    { header: "Severity", value: (l) => l.severity },
+    { header: "User", value: (l) => l.user_name ?? "System" },
+    { header: "Role", value: (l) => l.user_role ?? "" },
+    { header: "Entity", value: (l) => l.entity_ref ?? "" },
+    { header: "Description", value: (l) => l.description ?? "" },
+  ];
 
   const scopeText = isSuper
     ? "Own actions plus every admin across all tenants."
@@ -122,9 +114,7 @@ export function ActivityLogsSection() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted-foreground">{scopeText}</p>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportCSV}>
-            <Download className="h-4 w-4 mr-2" /> Export CSV
-          </Button>
+          <ExportMenu filename="activity-logs" title="Activity Logs" rows={logs} columns={activityLogExportColumns} />
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Refresh
           </Button>

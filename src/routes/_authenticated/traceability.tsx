@@ -3,7 +3,6 @@ import QRCodeDisplay from "@/components/QRCodeDisplay";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatsSkeleton, TableSkeleton } from "@/components/app/skeletons";
 import {
@@ -19,12 +18,14 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  QrCode, MapPin, Clock, Search, Eye, Download, Truck, Thermometer,
+  QrCode, MapPin, Clock, Search, Eye, Truck, Thermometer,
   AlertTriangle, Calendar, ClipboardList,
 } from "lucide-react";
 import { listGrainBatches } from "@/lib/operations.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { getBatchTraceability } from "@/lib/traceability.functions";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 export const Route = createFileRoute("/_authenticated/traceability")({
   head: () => ({
@@ -83,25 +84,17 @@ function TraceabilityPage() {
     });
   }, [batches, search, status]);
 
-  const exportCSV = () => {
-    const headers = "Batch ID,Grain Type,Quantity (kg),Status,Risk Score,Spoilage,Silo,Farmer,Intake Date\n";
-    const rows = batches.map((b) => {
-      const silo = (b as { silos?: { name?: string } | null }).silos?.name ?? "N/A";
-      return [
-        b.batch_id, b.grain_type, b.quantity_kg, b.status, b.risk_score,
-        b.spoilage_label, silo, b.farmer_name ?? "N/A",
-        b.intake_date ? new Date(b.intake_date).toLocaleDateString() : "",
-      ].map((c) => `"${String(c ?? "")}"`).join(",");
-    }).join("\n");
-    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `grain-traceability-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Traceability report exported");
-  };
+  const traceabilityExportColumns: ExportColumn<Batch>[] = [
+    { header: "Batch ID", value: (b) => b.batch_id },
+    { header: "Grain Type", value: (b) => b.grain_type },
+    { header: "Quantity (kg)", value: (b) => b.quantity_kg },
+    { header: "Status", value: (b) => b.status },
+    { header: "Risk Score", value: (b) => b.risk_score },
+    { header: "Spoilage", value: (b) => b.spoilage_label },
+    { header: "Silo", value: (b) => (b as { silos?: { name?: string } | null }).silos?.name ?? "N/A" },
+    { header: "Farmer", value: (b) => b.farmer_name ?? "N/A" },
+    { header: "Intake Date", value: (b) => b.intake_date ? new Date(b.intake_date).toLocaleDateString() : "" },
+  ];
 
   if (isLoading) {
     return (
@@ -127,9 +120,7 @@ function TraceabilityPage() {
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <Search className="h-4 w-4 mr-2" /> Refresh
           </Button>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={exportCSV}>
-            <Download className="h-4 w-4 mr-2" /> Export CSV
-          </Button>
+          <ExportMenu filename="grain-traceability" title="Grain Traceability" rows={batches} columns={traceabilityExportColumns} />
         </div>
       </header>
 

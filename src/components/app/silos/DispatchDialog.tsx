@@ -2,17 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Truck, Loader2 } from "lucide-react";
+import { Truck, Loader2, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createDispatchFromSilo, listSiloAvailableBatches } from "@/lib/dispatches.functions";
+import { createDispatchFromSilo, createDispatchPhotoUploadUrl, listSiloAvailableBatches } from "@/lib/dispatches.functions";
 import { listBuyers } from "@/lib/operations.functions";
 import { getPriceSettings } from "@/lib/suppliers.functions";
 import { pricePerKgToPerMan } from "@/lib/units";
+import { supabase } from "@/integrations/supabase/client";
 
 type Batch = { id: string; batch_id: string; grain_type: string; remaining_kg: number | string; purchase_price_per_kg: number | string | null };
 type Buyer = { id: string; name: string; company_name: string | null };
@@ -30,19 +31,24 @@ export function DispatchDialog({
   const [vehicle, setVehicle] = useState("");
   const [driver, setDriver] = useState("");
   const [driverPhone, setDriverPhone] = useState("");
+  const [driverCnic, setDriverCnic] = useState("");
   const [destination, setDestination] = useState("");
   const [notes, setNotes] = useState("");
   const [expected, setExpected] = useState("");
   const [basis, setBasis] = useState<"cost_margin" | "market" | "manual">("manual");
   const [stage, setStage] = useState<"staged" | "in_transit">("staged");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   useEffect(() => {
-    if (open) { setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDriverPhone(""); setDestination(""); setNotes(""); setExpected(""); setBasis("manual"); setStage("staged"); }
+    if (open) { setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDriverPhone(""); setDriverCnic(""); setDestination(""); setNotes(""); setExpected(""); setBasis("manual"); setStage("staged"); setPhotoFile(null); setPhotoPath(null); }
   }, [open]);
 
   const listBatchesFn = useServerFn(listSiloAvailableBatches);
   const listBuyersFn = useServerFn(listBuyers);
   const createFn = useServerFn(createDispatchFromSilo);
+  const signPhotoFn = useServerFn(createDispatchPhotoUploadUrl);
   const priceFn = useServerFn(getPriceSettings);
   const priceQ = useQuery({ queryKey: ["price-settings"], queryFn: () => priceFn(), enabled: open });
 
@@ -79,6 +85,25 @@ export function DispatchDialog({
   const avgCost = costed > 0 ? costSum / costed : null;
   const profit = avgCost != null ? total - avgCost * qtyNum : null;
 
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setPhotoFile(f);
+    setPhotoUploading(true);
+    try {
+      const signed = await signPhotoFn({ data: { filename: f.name } });
+      const up = await supabase.storage.from("dispatch-photos").uploadToSignedUrl(signed.path, signed.token, f);
+      if (up.error) throw up.error;
+      setPhotoPath(signed.path);
+    } catch (err) {
+      toast.error((err as Error).message || "Photo upload failed");
+      setPhotoFile(null);
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = "";
+    }
+  }
+
   // Suggested prices
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const settings = (priceQ.data ?? null) as any;
@@ -99,7 +124,9 @@ export function DispatchDialog({
         siloId, grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency,
         buyerId: buyerId || null,
         newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
-        vehicleNumber: vehicle || null, driverName: driver || null, driverContact: driverPhone || null, destination: destination || null,
+        vehicleNumber: vehicle || null, driverName: driver || null, driverContact: driverPhone || null,
+        driverCnic: driverCnic || null, dispatchPhotoPath: photoPath,
+        destination: destination || null,
         notes: notes || null, expectedDate: expected || null,
         priceBasis: basis, marketPriceSnapshot: suggestedMarket, stage,
       } });
@@ -145,6 +172,9 @@ export function DispatchDialog({
               <div>
                 <Label className="text-xs">Price / kg ({currency})</Label>
                 <Input className="h-9" type="number" min="0" step="0.01" value={price} onChange={(e) => { setPrice(e.target.value); setBasis("manual"); }} placeholder="e.g. 120" />
+                {priceNum > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">≈ {currency} {pricePerKgToPerMan(priceNum).toFixed(2)} / man</p>
+                )}
               </div>
               <div>
                 <Label className="text-xs">Expected date</Label>
@@ -188,9 +218,21 @@ export function DispatchDialog({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Input className="h-9" placeholder="Driver phone" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
-              <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
+              <Input className="h-9" placeholder="Driver CNIC" value={driverCnic} onChange={(e) => setDriverCnic(e.target.value)} />
             </div>
+            <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
             <Textarea rows={2} placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+            <div>
+              <Label className="text-xs">Dispatch / truck photo (optional)</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <label className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs cursor-pointer hover:border-emerald-500/50">
+                  <Upload className="h-3.5 w-3.5" /> {photoFile ? photoFile.name : "Choose photo…"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={photoUploading} />
+                </label>
+                {photoUploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+              </div>
+            </div>
 
             <div>
               <Label className="text-xs">Stage</Label>

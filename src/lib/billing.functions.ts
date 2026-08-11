@@ -154,6 +154,7 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
 
     const invoiced = invoices.reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
     const collected = payments.filter((p) => (p.status ?? "completed") === "completed").reduce((s, p) => s + Number(p.amount ?? 0), 0);
+    const overdueInvoices = invoices.filter((x) => x.due_date && new Date(x.due_date) < new Date() && x.payment_status !== "paid");
     const totals = {
       invoiced,
       // "paid" kept for back-compat with any older callers; Collected/Outstanding
@@ -161,7 +162,10 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
       paid: invoices.reduce((s, x) => s + Number(x.amount_paid ?? 0), 0),
       collected,
       outstanding: Math.max(0, invoiced - collected),
-      overdue: invoices.filter((x) => x.due_date && new Date(x.due_date) < new Date() && x.payment_status !== "paid").length,
+      // "Due" tile — amount currently past-due (a subset of Outstanding, not
+      // all of it), distinct from the count used for its caption.
+      due: overdueInvoices.reduce((s, x) => s + Math.max(0, Number(x.total_amount ?? 0) - Number(x.amount_paid ?? 0)), 0),
+      overdue: overdueInvoices.length,
       countInvoices: invoices.length,
       countPayments: payments.length,
     };

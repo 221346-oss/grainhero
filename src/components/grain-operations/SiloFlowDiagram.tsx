@@ -1,19 +1,29 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Warehouse } from "lucide-react";
 
-export type FlowGroup = { label: string; count: number; kg: number; tone: "yellow" | "green" | "red" };
+export type FlowGroup = {
+  label: string;
+  count: number;
+  kg: number;
+  tone: "yellow" | "orange" | "green" | "blue" | "purple" | "red";
+};
 
+// 6-stage scheme: yellow = pending, orange = QC, green = stored,
+// blue = processing, purple = dispatched, red = issue.
 const TONE_CLS: Record<FlowGroup["tone"], { dot: string; text: string; bg: string }> = {
   yellow: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/10 border-amber-500/30" },
+  orange: { dot: "bg-orange-500", text: "text-orange-700 dark:text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
   green: { dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/30" },
+  blue: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400", bg: "bg-blue-500/10 border-blue-500/30" },
+  purple: { dot: "bg-purple-500", text: "text-purple-700 dark:text-purple-400", bg: "bg-purple-500/10 border-purple-500/30" },
   red: { dot: "bg-red-500", text: "text-red-700 dark:text-red-400", bg: "bg-red-500/10 border-red-500/30" },
 };
 
 /**
  * Incoming batches (left) -> silo (center) -> outgoing dispatches (right),
  * animated arrows flowing toward/away from the silo. Color follows the
- * status groupings the redesign asked for: yellow = in-progress/processing,
- * green = completed/stored, red = error/QC-failed/rejected.
+ * spec's 6-stage scheme: yellow = pending, orange = QC, green = stored,
+ * blue = processing, purple = dispatched, red = issue.
  */
 export function SiloFlowDiagram({
   siloName,

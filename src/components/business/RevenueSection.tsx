@@ -11,7 +11,56 @@ import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Pl
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
-import type { AppRole } from "@/lib/roles.functions";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
+
+type Invoice = {
+  id: string;
+  invoice_number: string;
+  buyer_name: string | null;
+  buyer_company: string | null;
+  batch_ref: string | null;
+  total_amount: number;
+  amount_paid: number | null;
+  currency: string | null;
+  payment_status: string | null;
+  due_date: string | null;
+  grain_dispatches: { dispatch_number: string } | null;
+};
+
+type Payment = {
+  id: string;
+  amount: number;
+  currency: string | null;
+  payment_method: string | null;
+  payment_reference: string | null;
+  status: string | null;
+  payment_date: string | null;
+  grain_dispatches: { dispatch_number: string } | null;
+};
+
+const invoiceExportColumns: ExportColumn<Invoice>[] = [
+  { header: "Invoice #", value: (i) => i.invoice_number },
+  { header: "Buyer", value: (i) => i.buyer_name ?? "" },
+  { header: "Company", value: (i) => i.buyer_company ?? "" },
+  { header: "Batch ref", value: (i) => i.batch_ref ?? "" },
+  { header: "Total", value: (i) => i.total_amount },
+  { header: "Paid", value: (i) => i.amount_paid ?? 0 },
+  { header: "Currency", value: (i) => i.currency ?? "" },
+  { header: "Status", value: (i) => i.payment_status ?? "" },
+  { header: "Due date", value: (i) => i.due_date ? new Date(i.due_date).toLocaleDateString() : "" },
+  { header: "Dispatch #", value: (i) => i.grain_dispatches?.dispatch_number ?? "" },
+];
+
+const paymentExportColumns: ExportColumn<Payment>[] = [
+  { header: "Reference", value: (p) => p.payment_reference ?? p.id.slice(0, 8) },
+  { header: "Amount", value: (p) => p.amount },
+  { header: "Currency", value: (p) => p.currency ?? "" },
+  { header: "Method", value: (p) => p.payment_method ?? "" },
+  { header: "Status", value: (p) => p.status ?? "" },
+  { header: "Date", value: (p) => p.payment_date ? new Date(p.payment_date).toLocaleDateString() : "" },
+  { header: "Dispatch #", value: (p) => p.grain_dispatches?.dispatch_number ?? "" },
+];
 
 function payBadge(s: string | null) {
   switch (s) {
@@ -47,7 +96,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
   const invoices = data?.invoices ?? [];
   const payments = data?.payments ?? [];
-  const totals = data?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0, countPayments: 0 };
+  const totals = data?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, due: 0, overdue: 0, countInvoices: 0, countPayments: 0 };
   const byStatus = data?.byStatus ?? {};
 
   const filteredInv = useMemo(() => {
@@ -80,7 +129,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div><div className="text-xs text-slate-500 mt-1">invoiced − collected</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Overdue</div><div className="text-2xl font-bold text-red-600">{totals.overdue}</div><div className="text-xs text-slate-500 mt-1">past due</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
       </div>
 
       <DispatchSaleWizard open={wizardOpen} onOpenChange={setWizardOpen} onDone={() => qc.invalidateQueries({ queryKey: ["revenue"] })} />
@@ -105,7 +154,10 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           <Card>
             <CardHeader className="flex flex-row justify-between items-center gap-3">
               <div><CardTitle>Buyer invoices</CardTitle><CardDescription>{filteredInv.length} of {invoices.length}</CardDescription></div>
-              <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 w-64" /></div>
+              <div className="flex items-center gap-2">
+                <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 w-64" /></div>
+                <ExportMenu filename="invoices" title="Buyer Invoices" rows={filteredInv} columns={invoiceExportColumns} />
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y">
@@ -147,7 +199,10 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
         <TabsContent value="payments">
           <Card>
-            <CardHeader><CardTitle>Recent payments</CardTitle><CardDescription>{payments.length} entries</CardDescription></CardHeader>
+            <CardHeader className="flex flex-row justify-between items-center gap-3">
+              <div><CardTitle>Recent payments</CardTitle><CardDescription>{payments.length} entries</CardDescription></div>
+              <ExportMenu filename="payments" title="Payments" rows={payments} columns={paymentExportColumns} />
+            </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y">
                 {payments.map((p: any) => (

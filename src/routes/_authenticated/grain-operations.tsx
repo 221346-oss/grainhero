@@ -132,21 +132,26 @@ function GrainOperationsWorkspace() {
       )
     : 0;
 
-  // Batch status breakdown across every silo — same yellow/green/red tone
-  // mapping used on each silo card, just aggregated for the bird's-eye view.
+  // Batch status breakdown across every silo — same 6-stage tone mapping
+  // used on each silo card, just aggregated for the bird's-eye view.
   const statusPieData: StatusSlice[] = (() => {
-    const byTone: Record<FlowGroup["tone"], number> = { yellow: 0, green: 0, red: 0 };
+    const byTone: Record<FlowGroup["tone"], number> = {
+      yellow: 0, orange: 0, green: 0, blue: 0, purple: 0, red: 0,
+    };
     if (Array.isArray(batches)) {
       for (const b of batches as Array<{ status?: string | null }>) {
         byTone[BATCH_TONE[String(b.status ?? "")] ?? "yellow"] += 1;
       }
     }
     const labels: Record<FlowGroup["tone"], string> = {
-      yellow: "In progress",
+      yellow: "Pending",
+      orange: "QC",
       green: "Stored",
-      red: "Rejected/error",
+      blue: "Processing",
+      purple: "Dispatched",
+      red: "Issue",
     };
-    return (["yellow", "green", "red"] as const)
+    return (["yellow", "orange", "green", "blue", "purple", "red"] as const)
       .filter((t) => byTone[t] > 0)
       .map((t) => ({ name: labels[t], value: byTone[t], tone: t }));
   })();

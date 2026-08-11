@@ -60,7 +60,7 @@ export function PendingApprovalsSection() {
     onSuccess: (result, variables) => {
       toast.success(
         variables.decision === "approve"
-          ? "Batch approved and added to storage"
+          ? "Batch approved — sent for quality control"
           : "Batch rejected and manager notified",
       );
       setReviewDialogOpen(false);
@@ -69,7 +69,6 @@ export function PendingApprovalsSection() {
       setRejectionReason("");
       qc.invalidateQueries({ queryKey: ["pending-approval-batches"] });
       qc.invalidateQueries({ queryKey: ["grain-batches"] });
-      qc.invalidateQueries({ queryKey: ["silos"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -231,7 +230,7 @@ export function PendingApprovalsSection() {
             <DialogTitle>{decision === "approve" ? "Approve Batch" : "Reject Batch"}</DialogTitle>
             <DialogDescription>
               {decision === "approve"
-                ? `Approving ${selectedBatch?.batch_id} will add ${selectedBatch?.quantity_kg.toLocaleString()}kg to ${selectedBatch?.silo?.name || "the silo"} and mark it as stored.`
+                ? `Approving ${selectedBatch?.batch_id} sends it for quality control (technician submits QC values, then a manager passes/fails it) before it can be stored in ${selectedBatch?.silo?.name || "the silo"}.`
                 : `Rejecting ${selectedBatch?.batch_id} will notify the manager and prevent this batch from entering storage.`}
             </DialogDescription>
           </DialogHeader>

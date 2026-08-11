@@ -9,261 +9,203 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BlogRouteImport } from './routes/blog'
-import { Route as CheckoutRouteImport } from './routes/checkout'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as CookiesRouteImport } from './routes/cookies'
-import { Route as DocsRouteImport } from './routes/docs'
-import { Route as HelpRouteImport } from './routes/help'
-import { Route as MarketplaceRouteImport } from './routes/marketplace'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
-import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
-import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
-import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
-import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
-import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
-import { Route as AuthenticatedGrainOperationsRouteImport } from './routes/_authenticated/grain-operations'
-import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
-import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
-import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
-import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
-import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
-import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
-import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
-import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
-import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
-import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
-import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
-import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
-import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
-import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
-import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedSiloRequestRouteImport } from './routes/_authenticated/silo-request'
-import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
-import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
-import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
-import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
-import { Route as AuthAcceptInviteRouteImport } from './routes/auth.accept-invite'
-import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
-import { Route as AuthLoginRouteImport } from './routes/auth.login'
-import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
-import { Route as AuthSignupRouteImport } from './routes/auth.signup'
-import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
-import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
-import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
-import { Route as GuidesGrainStorageRouteImport } from './routes/guides.grain-storage'
+import { Route as TeamRouteImport } from './routes/team'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as DocsRouteImport } from './routes/docs'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as BlogRouteImport } from './routes/blog'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
-import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
-import { Route as SolutionsGrainManagementSoftwareRouteImport } from './routes/solutions.grain-management-software'
-import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
+import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
 import { Route as SolutionsSiloMonitoringSystemRouteImport } from './routes/solutions.silo-monitoring-system'
-import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
-import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
-import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
+import { Route as SolutionsGrainStorageMonitoringRouteImport } from './routes/solutions.grain-storage-monitoring'
+import { Route as SolutionsGrainManagementSoftwareRouteImport } from './routes/solutions.grain-management-software'
+import { Route as MarketplaceSlugRouteImport } from './routes/marketplace.$slug'
+import { Route as GuidesGrainStorageRouteImport } from './routes/guides.grain-storage'
+import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
+import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
+import { Route as AuthSignupRouteImport } from './routes/auth.signup'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AuthAcceptInviteRouteImport } from './routes/auth.accept-invite'
+import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
+import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
+import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
+import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
+import { Route as AuthenticatedSiloRequestRouteImport } from './routes/_authenticated/silo-request'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_authenticated/server-monitoring'
+import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
+import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
+import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
+import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
+import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
+import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
+import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
+import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
+import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
+import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
+import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
+import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
+import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
+import { Route as AuthenticatedGrainOperationsRouteImport } from './routes/_authenticated/grain-operations'
+import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
+import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
+import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
+import { Route as AuthenticatedAttentionRouteImport } from './routes/_authenticated/attention'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
+import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
+import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
-import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
-import { Route as AuthenticatedPlatformBusinessRouteImport } from './routes/_authenticated/platform.business'
-import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
-import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
-import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
-import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
-import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
-import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
-import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
-import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
-import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
-import { Route as AuthenticatedPlatformIntelligenceRouteImport } from './routes/_authenticated/platform.intelligence'
-import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
-import { Route as AuthenticatedPlatformKeyMetricsRouteImport } from './routes/_authenticated/platform.key-metrics'
-import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
-import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
-import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
-import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
-import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './routes/_authenticated/platform.marketplace-mobile'
-import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
-import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
-import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
-import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
-import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
-import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
-import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
-import { Route as AuthenticatedPlatformMonitoringRouteImport } from './routes/_authenticated/platform.monitoring'
-import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
-import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
-import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
-import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
-import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
-import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
-import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
-import { Route as AuthenticatedPlatformSiloRequestsRouteImport } from './routes/_authenticated/platform.silo-requests'
-import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
-import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
-import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
-import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
-import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenticated/silos.$siloId'
-import { Route as AuthenticatedSuppliersSupplierIdRouteImport } from './routes/_authenticated/suppliers.$supplierId'
-import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
-import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
-import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
-import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
 import { Route as MarketplaceSellerAdminIdRouteImport } from './routes/marketplace.seller.$adminId'
-import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
-import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
-import { Route as AuthenticatedManagerFieldIncidentsIndexRouteImport } from './routes/_authenticated/manager.field-incidents.index'
-import { Route as AuthenticatedManagerFieldIncidentsAllRouteImport } from './routes/_authenticated/manager.field-incidents.all'
-import { Route as AuthenticatedManagerFieldIncidentsDismissedRouteImport } from './routes/_authenticated/manager.field-incidents.dismissed'
-import { Route as AuthenticatedManagerFieldIncidentsIncomingRouteImport } from './routes/_authenticated/manager.field-incidents.incoming'
-import { Route as AuthenticatedManagerFieldIncidentsResolvedRouteImport } from './routes/_authenticated/manager.field-incidents.resolved'
+import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
+import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
+import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
+import { Route as AuthenticatedSuppliersSupplierIdRouteImport } from './routes/_authenticated/suppliers.$supplierId'
+import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenticated/silos.$siloId'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
+import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
+import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
+import { Route as AuthenticatedPlatformSiloRequestsRouteImport } from './routes/_authenticated/platform.silo-requests'
+import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
+import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
+import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
+import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
+import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
+import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
+import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformMonitoringRouteImport } from './routes/_authenticated/platform.monitoring'
+import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
+import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
+import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
+import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
+import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
+import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
+import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
+import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './routes/_authenticated/platform.marketplace-mobile'
+import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
+import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
+import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
+import { Route as AuthenticatedPlatformKeyMetricsRouteImport } from './routes/_authenticated/platform.key-metrics'
+import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
+import { Route as AuthenticatedPlatformIntelligenceRouteImport } from './routes/_authenticated/platform.intelligence'
+import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
+import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
+import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
+import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
+import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
+import { Route as AuthenticatedPlatformEnvHealthRouteImport } from './routes/_authenticated/platform.env-health'
+import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
+import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
+import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
+import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
+import { Route as AuthenticatedPlatformBusinessRouteImport } from './routes/_authenticated/platform.business'
+import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
+import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
+import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
+import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
 import { Route as AuthenticatedPlatformFieldIncidentsIndexRouteImport } from './routes/_authenticated/platform.field-incidents.index'
-import { Route as AuthenticatedPlatformFieldIncidentsAllRouteImport } from './routes/_authenticated/platform.field-incidents.all'
-import { Route as AuthenticatedPlatformFieldIncidentsDismissedRouteImport } from './routes/_authenticated/platform.field-incidents.dismissed'
-import { Route as AuthenticatedPlatformFieldIncidentsIncomingRouteImport } from './routes/_authenticated/platform.field-incidents.incoming'
-import { Route as AuthenticatedPlatformFieldIncidentsResolvedRouteImport } from './routes/_authenticated/platform.field-incidents.resolved'
-import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
-import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
-import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
-import { Route as AuthenticatedPlatformInsuranceAuditRouteImport } from './routes/_authenticated/platform.insurance.audit'
-import { Route as AuthenticatedPlatformInsuranceWebhooksRouteImport } from './routes/_authenticated/platform.insurance.webhooks'
-import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
-import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
-import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
-import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
-import { Route as AuthenticatedPlatformTenantsAdminIdRouteImport } from './routes/_authenticated/platform.tenants.$adminId'
-import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
-import { Route as ApiPublicCronApplyScheduledPlanChangesRouteImport } from './routes/api/public/cron/apply-scheduled-plan-changes'
-import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
-import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
-import { Route as ApiPublicCronDriverLicenseExpiryRouteImport } from './routes/api/public/cron/driver-license-expiry'
-import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
-import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
-import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api/public/cron/return-auto-approve'
-import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/public/cron/review-prompts'
-import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
-import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
-import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
-import { Route as ApiPublicHooksAnalyticsRefreshRouteImport } from './routes/api/public/hooks/analytics-refresh'
-import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
-import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
-import { Route as ApiPublicV1MetaRouteImport } from './routes/api/public/v1/meta'
-import { Route as ApiPublicV1StatusRouteImport } from './routes/api/public/v1/status'
+import { Route as AuthenticatedManagerFieldIncidentsIndexRouteImport } from './routes/_authenticated/manager.field-incidents.index'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
-import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
-import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
-import { Route as ApiPublicV1ActionsAckAlertRouteImport } from './routes/api/public/v1/actions/ack-alert'
-import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
-import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
-import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
-import { Route as ApiPublicV1AuthAcceptInviteRouteImport } from './routes/api/public/v1/auth/accept-invite'
-import { Route as ApiPublicV1AuthValidateInvitationRouteImport } from './routes/api/public/v1/auth/validate-invitation'
-import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
-import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
-import { Route as ApiPublicV1CommerceCheckoutRouteImport } from './routes/api/public/v1/commerce/checkout'
-import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/public/v1/commerce/config'
-import { Route as ApiPublicV1CommerceOrdersRouteImport } from './routes/api/public/v1/commerce/orders'
-import { Route as ApiPublicV1CommerceQuoteRouteImport } from './routes/api/public/v1/commerce/quote'
-import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
-import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
-import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
-import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
-import { Route as ApiPublicV1FieldBundleRouteImport } from './routes/api/public/v1/field/bundle'
-import { Route as ApiPublicV1FieldMutationsRouteImport } from './routes/api/public/v1/field/mutations'
+import { Route as ApiPublicV1StatusRouteImport } from './routes/api/public/v1/status'
+import { Route as ApiPublicV1MetaRouteImport } from './routes/api/public/v1/meta'
+import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
+import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
+import { Route as ApiPublicHooksAnalyticsRefreshRouteImport } from './routes/api/public/hooks/analytics-refresh'
+import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
+import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
+import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
+import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/public/cron/review-prompts'
+import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api/public/cron/return-auto-approve'
+import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
+import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
+import { Route as ApiPublicCronDriverLicenseExpiryRouteImport } from './routes/api/public/cron/driver-license-expiry'
+import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
+import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
+import { Route as ApiPublicCronApplyScheduledPlanChangesRouteImport } from './routes/api/public/cron/apply-scheduled-plan-changes'
+import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
+import { Route as AuthenticatedPlatformTenantsAdminIdRouteImport } from './routes/_authenticated/platform.tenants.$adminId'
+import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
+import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
+import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
+import { Route as AuthenticatedPlatformInsuranceWebhooksRouteImport } from './routes/_authenticated/platform.insurance.webhooks'
+import { Route as AuthenticatedPlatformInsuranceAuditRouteImport } from './routes/_authenticated/platform.insurance.audit'
+import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
+import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
+import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
+import { Route as AuthenticatedPlatformFieldIncidentsResolvedRouteImport } from './routes/_authenticated/platform.field-incidents.resolved'
+import { Route as AuthenticatedPlatformFieldIncidentsIncomingRouteImport } from './routes/_authenticated/platform.field-incidents.incoming'
+import { Route as AuthenticatedPlatformFieldIncidentsDismissedRouteImport } from './routes/_authenticated/platform.field-incidents.dismissed'
+import { Route as AuthenticatedPlatformFieldIncidentsAllRouteImport } from './routes/_authenticated/platform.field-incidents.all'
+import { Route as AuthenticatedManagerFieldIncidentsResolvedRouteImport } from './routes/_authenticated/manager.field-incidents.resolved'
+import { Route as AuthenticatedManagerFieldIncidentsIncomingRouteImport } from './routes/_authenticated/manager.field-incidents.incoming'
+import { Route as AuthenticatedManagerFieldIncidentsDismissedRouteImport } from './routes/_authenticated/manager.field-incidents.dismissed'
+import { Route as AuthenticatedManagerFieldIncidentsAllRouteImport } from './routes/_authenticated/manager.field-incidents.all'
+import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
+import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as ApiPublicV1NotificationsIndexRouteImport } from './routes/api/public/v1/notifications/index'
-import { Route as ApiPublicV1NotificationsPreferencesRouteImport } from './routes/api/public/v1/notifications/preferences'
-import { Route as ApiPublicV1NotificationsReadRouteImport } from './routes/api/public/v1/notifications/read'
-import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
-import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/public/v1/sync/buyer-orders'
-import { Route as ApiPublicV1SyncBuyerSummaryRouteImport } from './routes/api/public/v1/sync/buyer-summary'
-import { Route as ApiPublicV1SyncFieldIncidentsRouteImport } from './routes/api/public/v1/sync/field-incidents'
-import { Route as ApiPublicV1SyncFieldTasksRouteImport } from './routes/api/public/v1/sync/field-tasks'
-import { Route as ApiPublicV1SyncHardwareOrdersRouteImport } from './routes/api/public/v1/sync/hardware-orders'
-import { Route as ApiPublicV1SyncMarketplaceRouteImport } from './routes/api/public/v1/sync/marketplace'
-import { Route as ApiPublicV1SyncNotificationsRouteImport } from './routes/api/public/v1/sync/notifications'
-import { Route as ApiPublicV1SyncSensorsRouteImport } from './routes/api/public/v1/sync/sensors'
-import { Route as ApiPublicV1SyncSilosRouteImport } from './routes/api/public/v1/sync/silos'
-import { Route as ApiPublicV1SyncSilosCockpitRouteImport } from './routes/api/public/v1/sync/silos-cockpit'
-import { Route as ApiPublicV1UploadsSignRouteImport } from './routes/api/public/v1/uploads/sign'
-import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
 import { Route as ApiPublicWebhooksInsuranceCarrierCodeRouteImport } from './routes/api/public/webhooks/insurance.$carrierCode'
+import { Route as ApiPublicWebhooksCarrierCarrierCodeRouteImport } from './routes/api/public/webhooks/carrier.$carrierCode'
+import { Route as ApiPublicV1UploadsSignRouteImport } from './routes/api/public/v1/uploads/sign'
+import { Route as ApiPublicV1SyncSilosCockpitRouteImport } from './routes/api/public/v1/sync/silos-cockpit'
+import { Route as ApiPublicV1SyncSilosRouteImport } from './routes/api/public/v1/sync/silos'
+import { Route as ApiPublicV1SyncSensorsRouteImport } from './routes/api/public/v1/sync/sensors'
+import { Route as ApiPublicV1SyncNotificationsRouteImport } from './routes/api/public/v1/sync/notifications'
+import { Route as ApiPublicV1SyncMarketplaceRouteImport } from './routes/api/public/v1/sync/marketplace'
+import { Route as ApiPublicV1SyncHardwareOrdersRouteImport } from './routes/api/public/v1/sync/hardware-orders'
+import { Route as ApiPublicV1SyncFieldTasksRouteImport } from './routes/api/public/v1/sync/field-tasks'
+import { Route as ApiPublicV1SyncFieldIncidentsRouteImport } from './routes/api/public/v1/sync/field-incidents'
+import { Route as ApiPublicV1SyncBuyerSummaryRouteImport } from './routes/api/public/v1/sync/buyer-summary'
+import { Route as ApiPublicV1SyncBuyerOrdersRouteImport } from './routes/api/public/v1/sync/buyer-orders'
+import { Route as ApiPublicV1SyncAlertsRouteImport } from './routes/api/public/v1/sync/alerts'
+import { Route as ApiPublicV1NotificationsReadRouteImport } from './routes/api/public/v1/notifications/read'
+import { Route as ApiPublicV1NotificationsPreferencesRouteImport } from './routes/api/public/v1/notifications/preferences'
+import { Route as ApiPublicV1FieldMutationsRouteImport } from './routes/api/public/v1/field/mutations'
+import { Route as ApiPublicV1FieldBundleRouteImport } from './routes/api/public/v1/field/bundle'
+import { Route as ApiPublicV1DevicesRevokeRouteImport } from './routes/api/public/v1/devices/revoke'
+import { Route as ApiPublicV1DevicesRegisterRouteImport } from './routes/api/public/v1/devices/register'
+import { Route as ApiPublicV1DevicesHeartbeatRouteImport } from './routes/api/public/v1/devices/heartbeat'
+import { Route as ApiPublicV1DeeplinkKeyRouteImport } from './routes/api/public/v1/deeplink/$key'
+import { Route as ApiPublicV1CommerceQuoteRouteImport } from './routes/api/public/v1/commerce/quote'
+import { Route as ApiPublicV1CommerceOrdersRouteImport } from './routes/api/public/v1/commerce/orders'
+import { Route as ApiPublicV1CommerceConfigRouteImport } from './routes/api/public/v1/commerce/config'
+import { Route as ApiPublicV1CommerceCheckoutRouteImport } from './routes/api/public/v1/commerce/checkout'
+import { Route as ApiPublicV1CommerceCartRouteImport } from './routes/api/public/v1/commerce/cart'
+import { Route as ApiPublicV1CommerceAddressesRouteImport } from './routes/api/public/v1/commerce/addresses'
+import { Route as ApiPublicV1AuthValidateInvitationRouteImport } from './routes/api/public/v1/auth/validate-invitation'
+import { Route as ApiPublicV1AuthAcceptInviteRouteImport } from './routes/api/public/v1/auth/accept-invite'
+import { Route as ApiPublicV1ActionsReplayRouteImport } from './routes/api/public/v1/actions/replay'
+import { Route as ApiPublicV1ActionsInstallStepRouteImport } from './routes/api/public/v1/actions/install-step'
+import { Route as ApiPublicV1ActionsConfirmDeliveryRouteImport } from './routes/api/public/v1/actions/confirm-delivery'
+import { Route as ApiPublicV1ActionsAckAlertRouteImport } from './routes/api/public/v1/actions/ack-alert'
+import { Route as AuthenticatedPlatformOrdersOrderIdAuditRouteImport } from './routes/_authenticated/platform.orders.$orderId.audit'
+import { Route as AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/platform.insurance.claims.$claimId'
 import { Route as ApiPublicV1CommerceOrdersOrderIdRouteImport } from './routes/api/public/v1/commerce/orders.$orderId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckoutRoute = CheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CookiesRoute = CookiesRouteImport.update({
-  id: '/cookies',
-  path: '/cookies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocsRoute = DocsRouteImport.update({
-  id: '/docs',
-  path: '/docs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HelpRoute = HelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketplaceRoute = MarketplaceRouteImport.update({
-  id: '/marketplace',
-  path: '/marketplace',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamRoute = TeamRouteImport.update({
@@ -271,244 +213,68 @@ const TeamRoute = TeamRouteImport.update({
   path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedActivityLogsRoute =
-  AuthenticatedActivityLogsRouteImport.update({
-    id: '/activity-logs',
-    path: '/activity-logs',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
-  id: '/actuators',
-  path: '/actuators',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdministrationRoute =
-  AuthenticatedAdministrationRouteImport.update({
-    id: '/administration',
-    path: '/administration',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAttentionRoute = AuthenticatedAttentionRouteImport.update({
-  id: '/attention',
-  path: '/attention',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedBusinessRoute = AuthenticatedBusinessRouteImport.update({
-  id: '/business',
-  path: '/business',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
-  id: '/earnings',
-  path: '/earnings',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedEnvironmentalRoute =
-  AuthenticatedEnvironmentalRouteImport.update({
-    id: '/environmental',
-    path: '/environmental',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedGrainAlertsRoute =
-  AuthenticatedGrainAlertsRouteImport.update({
-    id: '/grain-alerts',
-    path: '/grain-alerts',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedGrainOperationsRoute =
-  AuthenticatedGrainOperationsRouteImport.update({
-    id: '/grain-operations',
-    path: '/grain-operations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedIncidentsRoute = AuthenticatedIncidentsRouteImport.update({
-  id: '/incidents',
-  path: '/incidents',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
-  id: '/insurance',
-  path: '/insurance',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIntelligenceRoute =
-  AuthenticatedIntelligenceRouteImport.update({
-    id: '/intelligence',
-    path: '/intelligence',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedListingsRoute = AuthenticatedListingsRouteImport.update({
-  id: '/listings',
-  path: '/listings',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedMaintenanceRoute =
-  AuthenticatedMaintenanceRouteImport.update({
-    id: '/maintenance',
-    path: '/maintenance',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
-  id: '/monitoring',
-  path: '/monitoring',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
-  id: '/not-allowed',
-  path: '/not-allowed',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedNotificationsRoute =
-  AuthenticatedNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPlanManagementRoute =
-  AuthenticatedPlanManagementRouteImport.update({
-    id: '/plan-management',
-    path: '/plan-management',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReturnsRoute = AuthenticatedReturnsRouteImport.update({
-  id: '/returns',
-  path: '/returns',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
-  id: '/revenue',
-  path: '/revenue',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
-  id: '/sales',
-  path: '/sales',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSecurityCenterRoute =
-  AuthenticatedSecurityCenterRouteImport.update({
-    id: '/security-center',
-    path: '/security-center',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
-  id: '/sensors',
-  path: '/sensors',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedServerMonitoringRoute =
-  AuthenticatedServerMonitoringRouteImport.update({
-    id: '/server-monitoring',
-    path: '/server-monitoring',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSiloRequestRoute =
-  AuthenticatedSiloRequestRouteImport.update({
-    id: '/silo-request',
-    path: '/silo-request',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSubscriptionRoute =
-  AuthenticatedSubscriptionRouteImport.update({
-    id: '/subscription',
-    path: '/subscription',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
-  id: '/suppliers',
-  path: '/suppliers',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTeamManagementRoute =
-  AuthenticatedTeamManagementRouteImport.update({
-    id: '/team-management',
-    path: '/team-management',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedTraceabilityRoute =
-  AuthenticatedTraceabilityRouteImport.update({
-    id: '/traceability',
-    path: '/traceability',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthAcceptInviteRoute = AuthAcceptInviteRouteImport.update({
-  id: '/accept-invite',
-  path: '/accept-invite',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSignupRoute = AuthSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
-  id: '/verify-otp',
-  path: '/verify-otp',
-  getParentRoute: () => AuthRoute,
-} as any)
-const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => CheckoutRoute,
-} as any)
-const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
-  id: '/success',
-  path: '/success',
-  getParentRoute: () => CheckoutRoute,
-} as any)
-const GuidesGrainStorageRoute = GuidesGrainStorageRouteImport.update({
-  id: '/guides/grain-storage',
-  path: '/guides/grain-storage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
@@ -516,15 +282,15 @@ const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MarketplaceRoute,
 } as any)
-const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => MarketplaceRoute,
+const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CheckoutRoute,
 } as any)
-const SolutionsGrainManagementSoftwareRoute =
-  SolutionsGrainManagementSoftwareRouteImport.update({
-    id: '/solutions/grain-management-software',
-    path: '/solutions/grain-management-software',
+const SolutionsSiloMonitoringSystemRoute =
+  SolutionsSiloMonitoringSystemRouteImport.update({
+    id: '/solutions/silo-monitoring-system',
+    path: '/solutions/silo-monitoring-system',
     getParentRoute: () => rootRouteImport,
   } as any)
 const SolutionsGrainStorageMonitoringRoute =
@@ -533,28 +299,245 @@ const SolutionsGrainStorageMonitoringRoute =
     path: '/solutions/grain-storage-monitoring',
     getParentRoute: () => rootRouteImport,
   } as any)
-const SolutionsSiloMonitoringSystemRoute =
-  SolutionsSiloMonitoringSystemRouteImport.update({
-    id: '/solutions/silo-monitoring-system',
-    path: '/solutions/silo-monitoring-system',
+const SolutionsGrainManagementSoftwareRoute =
+  SolutionsGrainManagementSoftwareRouteImport.update({
+    id: '/solutions/grain-management-software',
+    path: '/solutions/grain-management-software',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedAdminsAdminIdRoute =
-  AuthenticatedAdminsAdminIdRouteImport.update({
-    id: '/admins/$adminId',
-    path: '/admins/$adminId',
+const MarketplaceSlugRoute = MarketplaceSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
+const GuidesGrainStorageRoute = GuidesGrainStorageRouteImport.update({
+  id: '/guides/grain-storage',
+  path: '/guides/grain-storage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
+  id: '/success',
+  path: '/success',
+  getParentRoute: () => CheckoutRoute,
+} as any)
+const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthAcceptInviteRoute = AuthAcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthenticatedTraceabilityRoute =
+  AuthenticatedTraceabilityRouteImport.update({
+    id: '/traceability',
+    path: '/traceability',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedBuyerOrdersRoute =
-  AuthenticatedBuyerOrdersRouteImport.update({
-    id: '/buyer/orders',
-    path: '/buyer/orders',
+const AuthenticatedTeamManagementRoute =
+  AuthenticatedTeamManagementRouteImport.update({
+    id: '/team-management',
+    path: '/team-management',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedInsuranceClaimsClaimIdRoute =
-  AuthenticatedInsuranceClaimsClaimIdRouteImport.update({
-    id: '/insurance-claims/$claimId',
-    path: '/insurance-claims/$claimId',
+const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSubscriptionRoute =
+  AuthenticatedSubscriptionRouteImport.update({
+    id: '/subscription',
+    path: '/subscription',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSiloRequestRoute =
+  AuthenticatedSiloRequestRouteImport.update({
+    id: '/silo-request',
+    path: '/silo-request',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedServerMonitoringRoute =
+  AuthenticatedServerMonitoringRouteImport.update({
+    id: '/server-monitoring',
+    path: '/server-monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
+  id: '/sensors',
+  path: '/sensors',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSecurityCenterRoute =
+  AuthenticatedSecurityCenterRouteImport.update({
+    id: '/security-center',
+    path: '/security-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
+  id: '/revenue',
+  path: '/revenue',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReturnsRoute = AuthenticatedReturnsRouteImport.update({
+  id: '/returns',
+  path: '/returns',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlanManagementRoute =
+  AuthenticatedPlanManagementRouteImport.update({
+    id: '/plan-management',
+    path: '/plan-management',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNotAllowedRoute = AuthenticatedNotAllowedRouteImport.update({
+  id: '/not-allowed',
+  path: '/not-allowed',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMaintenanceRoute =
+  AuthenticatedMaintenanceRouteImport.update({
+    id: '/maintenance',
+    path: '/maintenance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedListingsRoute = AuthenticatedListingsRouteImport.update({
+  id: '/listings',
+  path: '/listings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedIntelligenceRoute =
+  AuthenticatedIntelligenceRouteImport.update({
+    id: '/intelligence',
+    path: '/intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
+  id: '/insurance',
+  path: '/insurance',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedIncidentsRoute = AuthenticatedIncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGrainOperationsRoute =
+  AuthenticatedGrainOperationsRouteImport.update({
+    id: '/grain-operations',
+    path: '/grain-operations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGrainAlertsRoute =
+  AuthenticatedGrainAlertsRouteImport.update({
+    id: '/grain-alerts',
+    path: '/grain-alerts',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEnvironmentalRoute =
+  AuthenticatedEnvironmentalRouteImport.update({
+    id: '/environmental',
+    path: '/environmental',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBusinessRoute = AuthenticatedBusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAttentionRoute = AuthenticatedAttentionRouteImport.update({
+  id: '/attention',
+  path: '/attention',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdministrationRoute =
+  AuthenticatedAdministrationRouteImport.update({
+    id: '/administration',
+    path: '/administration',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedActuatorsRoute = AuthenticatedActuatorsRouteImport.update({
+  id: '/actuators',
+  path: '/actuators',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedActivityLogsRoute =
+  AuthenticatedActivityLogsRouteImport.update({
+    id: '/activity-logs',
+    path: '/activity-logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformIndexRoute =
@@ -563,244 +546,31 @@ const AuthenticatedPlatformIndexRoute =
     path: '/platform/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformAuditLogsRoute =
-  AuthenticatedPlatformAuditLogsRouteImport.update({
-    id: '/platform/audit-logs',
-    path: '/platform/audit-logs',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const MarketplaceSellerAdminIdRoute =
+  MarketplaceSellerAdminIdRouteImport.update({
+    id: '/seller/$adminId',
+    path: '/seller/$adminId',
+    getParentRoute: () => MarketplaceRoute,
   } as any)
-const AuthenticatedPlatformBusinessRoute =
-  AuthenticatedPlatformBusinessRouteImport.update({
-    id: '/platform/business',
-    path: '/platform/business',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformCommerceMobileRoute =
-  AuthenticatedPlatformCommerceMobileRouteImport.update({
-    id: '/platform/commerce-mobile',
-    path: '/platform/commerce-mobile',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformDashboardBuilderRoute =
-  AuthenticatedPlatformDashboardBuilderRouteImport.update({
-    id: '/platform/dashboard-builder',
-    path: '/platform/dashboard-builder',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformDispatchAnalyticsRoute =
-  AuthenticatedPlatformDispatchAnalyticsRouteImport.update({
-    id: '/platform/dispatch-analytics',
-    path: '/platform/dispatch-analytics',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformDisputesRoute =
-  AuthenticatedPlatformDisputesRouteImport.update({
-    id: '/platform/disputes',
-    path: '/platform/disputes',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformFieldSettingsRoute =
-  AuthenticatedPlatformFieldSettingsRouteImport.update({
-    id: '/platform/field-settings',
-    path: '/platform/field-settings',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformFinanceRoute =
-  AuthenticatedPlatformFinanceRouteImport.update({
-    id: '/platform/finance',
-    path: '/platform/finance',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformFinancialsRoute =
-  AuthenticatedPlatformFinancialsRouteImport.update({
-    id: '/platform/financials',
-    path: '/platform/financials',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformHealthRoute =
-  AuthenticatedPlatformHealthRouteImport.update({
-    id: '/platform/health',
-    path: '/platform/health',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformInsuranceRoute =
-  AuthenticatedPlatformInsuranceRouteImport.update({
-    id: '/platform/insurance',
-    path: '/platform/insurance',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformIntelligenceRoute =
-  AuthenticatedPlatformIntelligenceRouteImport.update({
-    id: '/platform/intelligence',
-    path: '/platform/intelligence',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformInvoiceFailuresRoute =
-  AuthenticatedPlatformInvoiceFailuresRouteImport.update({
-    id: '/platform/invoice-failures',
-    path: '/platform/invoice-failures',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformKeyMetricsRoute =
-  AuthenticatedPlatformKeyMetricsRouteImport.update({
-    id: '/platform/key-metrics',
-    path: '/platform/key-metrics',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformLaunchReadinessRoute =
-  AuthenticatedPlatformLaunchReadinessRouteImport.update({
-    id: '/platform/launch-readiness',
-    path: '/platform/launch-readiness',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformLeadsRoute =
-  AuthenticatedPlatformLeadsRouteImport.update({
-    id: '/platform/leads',
-    path: '/platform/leads',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformLogsRoute =
-  AuthenticatedPlatformLogsRouteImport.update({
-    id: '/platform/logs',
-    path: '/platform/logs',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMarketplaceHealthRoute =
-  AuthenticatedPlatformMarketplaceHealthRouteImport.update({
-    id: '/platform/marketplace-health',
-    path: '/platform/marketplace-health',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMarketplaceMobileRoute =
-  AuthenticatedPlatformMarketplaceMobileRouteImport.update({
-    id: '/platform/marketplace-mobile',
-    path: '/platform/marketplace-mobile',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMarketplaceSettingsRoute =
-  AuthenticatedPlatformMarketplaceSettingsRouteImport.update({
-    id: '/platform/marketplace-settings',
-    path: '/platform/marketplace-settings',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMessagesRoute =
-  AuthenticatedPlatformMessagesRouteImport.update({
-    id: '/platform/messages',
-    path: '/platform/messages',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMetricsRoute =
-  AuthenticatedPlatformMetricsRouteImport.update({
-    id: '/platform/metrics',
-    path: '/platform/metrics',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMobileDeepLinksRoute =
-  AuthenticatedPlatformMobileDeepLinksRouteImport.update({
-    id: '/platform/mobile-deep-links',
-    path: '/platform/mobile-deep-links',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMobilePushDiagnosticsRoute =
-  AuthenticatedPlatformMobilePushDiagnosticsRouteImport.update({
-    id: '/platform/mobile-push-diagnostics',
-    path: '/platform/mobile-push-diagnostics',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMobileSettingsRoute =
-  AuthenticatedPlatformMobileSettingsRouteImport.update({
-    id: '/platform/mobile-settings',
-    path: '/platform/mobile-settings',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMobileSyncMonitorRoute =
-  AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
-    id: '/platform/mobile-sync-monitor',
-    path: '/platform/mobile-sync-monitor',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformMonitoringRoute =
-  AuthenticatedPlatformMonitoringRouteImport.update({
-    id: '/platform/monitoring',
-    path: '/platform/monitoring',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformOrdersRoute =
-  AuthenticatedPlatformOrdersRouteImport.update({
-    id: '/platform/orders',
-    path: '/platform/orders',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformPipelineRoute =
-  AuthenticatedPlatformPipelineRouteImport.update({
-    id: '/platform/pipeline',
-    path: '/platform/pipeline',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformPlansRoute =
-  AuthenticatedPlatformPlansRouteImport.update({
-    id: '/platform/plans',
-    path: '/platform/plans',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformQualityRoute =
-  AuthenticatedPlatformQualityRouteImport.update({
-    id: '/platform/quality',
-    path: '/platform/quality',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformReportingRoute =
-  AuthenticatedPlatformReportingRouteImport.update({
-    id: '/platform/reporting',
-    path: '/platform/reporting',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformReviewsRoute =
-  AuthenticatedPlatformReviewsRouteImport.update({
-    id: '/platform/reviews',
-    path: '/platform/reviews',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformSellersRoute =
-  AuthenticatedPlatformSellersRouteImport.update({
-    id: '/platform/sellers',
-    path: '/platform/sellers',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformSiloRequestsRoute =
-  AuthenticatedPlatformSiloRequestsRouteImport.update({
-    id: '/platform/silo-requests',
-    path: '/platform/silo-requests',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformSlaAlertsRoute =
-  AuthenticatedPlatformSlaAlertsRouteImport.update({
-    id: '/platform/sla-alerts',
-    path: '/platform/sla-alerts',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformTenantsRoute =
-  AuthenticatedPlatformTenantsRouteImport.update({
-    id: '/platform/tenants',
-    path: '/platform/tenants',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformUsersRoute =
-  AuthenticatedPlatformUsersRouteImport.update({
-    id: '/platform/users',
-    path: '/platform/users',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsNotificationsRoute =
-  AuthenticatedSettingsNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedSettingsRoute,
-  } as any)
-const AuthenticatedSilosSiloIdRoute =
-  AuthenticatedSilosSiloIdRouteImport.update({
-    id: '/silos/$siloId',
-    path: '/silos/$siloId',
+const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
+  id: '/api/public/telemetry',
+  path: '/api/public/telemetry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicActuatorAckRoute = ApiPublicActuatorAckRouteImport.update({
+  id: '/api/public/actuator-ack',
+  path: '/api/public/actuator-ack',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
+  id: '/api/firebase/live-sensors',
+  path: '/api/firebase/live-sensors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTechnicianInstallsRoute =
+  AuthenticatedTechnicianInstallsRouteImport.update({
+    id: '/technician/installs',
+    path: '/technician/installs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSuppliersSupplierIdRoute =
@@ -809,73 +579,268 @@ const AuthenticatedSuppliersSupplierIdRoute =
     path: '/$supplierId',
     getParentRoute: () => AuthenticatedSuppliersRoute,
   } as any)
-const AuthenticatedTechnicianInstallsRoute =
-  AuthenticatedTechnicianInstallsRouteImport.update({
-    id: '/technician/installs',
-    path: '/technician/installs',
+const AuthenticatedSilosSiloIdRoute =
+  AuthenticatedSilosSiloIdRouteImport.update({
+    id: '/silos/$siloId',
+    path: '/silos/$siloId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiFirebaseLiveSensorsRoute = ApiFirebaseLiveSensorsRouteImport.update({
-  id: '/api/firebase/live-sensors',
-  path: '/api/firebase/live-sensors',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicActuatorAckRoute = ApiPublicActuatorAckRouteImport.update({
-  id: '/api/public/actuator-ack',
-  path: '/api/public/actuator-ack',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTelemetryRoute = ApiPublicTelemetryRouteImport.update({
-  id: '/api/public/telemetry',
-  path: '/api/public/telemetry',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketplaceSellerAdminIdRoute =
-  MarketplaceSellerAdminIdRouteImport.update({
-    id: '/seller/$adminId',
-    path: '/seller/$adminId',
-    getParentRoute: () => MarketplaceRoute,
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
-const AuthenticatedBuyerOrdersOrderIdRoute =
-  AuthenticatedBuyerOrdersOrderIdRouteImport.update({
-    id: '/$orderId',
-    path: '/$orderId',
-    getParentRoute: () => AuthenticatedBuyerOrdersRoute,
-  } as any)
-const AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute =
-  AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport.update({
-    id: '/insurance-policies/$policyId/documents',
-    path: '/insurance-policies/$policyId/documents',
+const AuthenticatedPlatformUsersRoute =
+  AuthenticatedPlatformUsersRouteImport.update({
+    id: '/platform/users',
+    path: '/platform/users',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedManagerFieldIncidentsIndexRoute =
-  AuthenticatedManagerFieldIncidentsIndexRouteImport.update({
-    id: '/manager/field-incidents/',
-    path: '/manager/field-incidents/',
+const AuthenticatedPlatformTenantsRoute =
+  AuthenticatedPlatformTenantsRouteImport.update({
+    id: '/platform/tenants',
+    path: '/platform/tenants',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedManagerFieldIncidentsAllRoute =
-  AuthenticatedManagerFieldIncidentsAllRouteImport.update({
-    id: '/manager/field-incidents/all',
-    path: '/manager/field-incidents/all',
+const AuthenticatedPlatformSlaAlertsRoute =
+  AuthenticatedPlatformSlaAlertsRouteImport.update({
+    id: '/platform/sla-alerts',
+    path: '/platform/sla-alerts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedManagerFieldIncidentsDismissedRoute =
-  AuthenticatedManagerFieldIncidentsDismissedRouteImport.update({
-    id: '/manager/field-incidents/dismissed',
-    path: '/manager/field-incidents/dismissed',
+const AuthenticatedPlatformSiloRequestsRoute =
+  AuthenticatedPlatformSiloRequestsRouteImport.update({
+    id: '/platform/silo-requests',
+    path: '/platform/silo-requests',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedManagerFieldIncidentsIncomingRoute =
-  AuthenticatedManagerFieldIncidentsIncomingRouteImport.update({
-    id: '/manager/field-incidents/incoming',
-    path: '/manager/field-incidents/incoming',
+const AuthenticatedPlatformSellersRoute =
+  AuthenticatedPlatformSellersRouteImport.update({
+    id: '/platform/sellers',
+    path: '/platform/sellers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedManagerFieldIncidentsResolvedRoute =
-  AuthenticatedManagerFieldIncidentsResolvedRouteImport.update({
-    id: '/manager/field-incidents/resolved',
-    path: '/manager/field-incidents/resolved',
+const AuthenticatedPlatformReviewsRoute =
+  AuthenticatedPlatformReviewsRouteImport.update({
+    id: '/platform/reviews',
+    path: '/platform/reviews',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformReportingRoute =
+  AuthenticatedPlatformReportingRouteImport.update({
+    id: '/platform/reporting',
+    path: '/platform/reporting',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformQualityRoute =
+  AuthenticatedPlatformQualityRouteImport.update({
+    id: '/platform/quality',
+    path: '/platform/quality',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformPlansRoute =
+  AuthenticatedPlatformPlansRouteImport.update({
+    id: '/platform/plans',
+    path: '/platform/plans',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformPipelineRoute =
+  AuthenticatedPlatformPipelineRouteImport.update({
+    id: '/platform/pipeline',
+    path: '/platform/pipeline',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformOrdersRoute =
+  AuthenticatedPlatformOrdersRouteImport.update({
+    id: '/platform/orders',
+    path: '/platform/orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMonitoringRoute =
+  AuthenticatedPlatformMonitoringRouteImport.update({
+    id: '/platform/monitoring',
+    path: '/platform/monitoring',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobileSyncMonitorRoute =
+  AuthenticatedPlatformMobileSyncMonitorRouteImport.update({
+    id: '/platform/mobile-sync-monitor',
+    path: '/platform/mobile-sync-monitor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobileSettingsRoute =
+  AuthenticatedPlatformMobileSettingsRouteImport.update({
+    id: '/platform/mobile-settings',
+    path: '/platform/mobile-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobilePushDiagnosticsRoute =
+  AuthenticatedPlatformMobilePushDiagnosticsRouteImport.update({
+    id: '/platform/mobile-push-diagnostics',
+    path: '/platform/mobile-push-diagnostics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMobileDeepLinksRoute =
+  AuthenticatedPlatformMobileDeepLinksRouteImport.update({
+    id: '/platform/mobile-deep-links',
+    path: '/platform/mobile-deep-links',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMetricsRoute =
+  AuthenticatedPlatformMetricsRouteImport.update({
+    id: '/platform/metrics',
+    path: '/platform/metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMessagesRoute =
+  AuthenticatedPlatformMessagesRouteImport.update({
+    id: '/platform/messages',
+    path: '/platform/messages',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMarketplaceSettingsRoute =
+  AuthenticatedPlatformMarketplaceSettingsRouteImport.update({
+    id: '/platform/marketplace-settings',
+    path: '/platform/marketplace-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMarketplaceMobileRoute =
+  AuthenticatedPlatformMarketplaceMobileRouteImport.update({
+    id: '/platform/marketplace-mobile',
+    path: '/platform/marketplace-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformMarketplaceHealthRoute =
+  AuthenticatedPlatformMarketplaceHealthRouteImport.update({
+    id: '/platform/marketplace-health',
+    path: '/platform/marketplace-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLogsRoute =
+  AuthenticatedPlatformLogsRouteImport.update({
+    id: '/platform/logs',
+    path: '/platform/logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLeadsRoute =
+  AuthenticatedPlatformLeadsRouteImport.update({
+    id: '/platform/leads',
+    path: '/platform/leads',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLaunchReadinessRoute =
+  AuthenticatedPlatformLaunchReadinessRouteImport.update({
+    id: '/platform/launch-readiness',
+    path: '/platform/launch-readiness',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformKeyMetricsRoute =
+  AuthenticatedPlatformKeyMetricsRouteImport.update({
+    id: '/platform/key-metrics',
+    path: '/platform/key-metrics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformInvoiceFailuresRoute =
+  AuthenticatedPlatformInvoiceFailuresRouteImport.update({
+    id: '/platform/invoice-failures',
+    path: '/platform/invoice-failures',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformIntelligenceRoute =
+  AuthenticatedPlatformIntelligenceRouteImport.update({
+    id: '/platform/intelligence',
+    path: '/platform/intelligence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceRoute =
+  AuthenticatedPlatformInsuranceRouteImport.update({
+    id: '/platform/insurance',
+    path: '/platform/insurance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformHealthRoute =
+  AuthenticatedPlatformHealthRouteImport.update({
+    id: '/platform/health',
+    path: '/platform/health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFinancialsRoute =
+  AuthenticatedPlatformFinancialsRouteImport.update({
+    id: '/platform/financials',
+    path: '/platform/financials',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFinanceRoute =
+  AuthenticatedPlatformFinanceRouteImport.update({
+    id: '/platform/finance',
+    path: '/platform/finance',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldSettingsRoute =
+  AuthenticatedPlatformFieldSettingsRouteImport.update({
+    id: '/platform/field-settings',
+    path: '/platform/field-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformEnvHealthRoute =
+  AuthenticatedPlatformEnvHealthRouteImport.update({
+    id: '/platform/env-health',
+    path: '/platform/env-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformDisputesRoute =
+  AuthenticatedPlatformDisputesRouteImport.update({
+    id: '/platform/disputes',
+    path: '/platform/disputes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformDispatchAnalyticsRoute =
+  AuthenticatedPlatformDispatchAnalyticsRouteImport.update({
+    id: '/platform/dispatch-analytics',
+    path: '/platform/dispatch-analytics',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformDashboardBuilderRoute =
+  AuthenticatedPlatformDashboardBuilderRouteImport.update({
+    id: '/platform/dashboard-builder',
+    path: '/platform/dashboard-builder',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformCommerceMobileRoute =
+  AuthenticatedPlatformCommerceMobileRouteImport.update({
+    id: '/platform/commerce-mobile',
+    path: '/platform/commerce-mobile',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformBusinessRoute =
+  AuthenticatedPlatformBusinessRouteImport.update({
+    id: '/platform/business',
+    path: '/platform/business',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformAuditLogsRoute =
+  AuthenticatedPlatformAuditLogsRouteImport.update({
+    id: '/platform/audit-logs',
+    path: '/platform/audit-logs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInsuranceClaimsClaimIdRoute =
+  AuthenticatedInsuranceClaimsClaimIdRouteImport.update({
+    id: '/insurance-claims/$claimId',
+    path: '/insurance-claims/$claimId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBuyerOrdersRoute =
+  AuthenticatedBuyerOrdersRouteImport.update({
+    id: '/buyer/orders',
+    path: '/buyer/orders',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminsAdminIdRoute =
+  AuthenticatedAdminsAdminIdRouteImport.update({
+    id: '/admins/$adminId',
+    path: '/admins/$adminId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformFieldIncidentsIndexRoute =
@@ -884,165 +849,31 @@ const AuthenticatedPlatformFieldIncidentsIndexRoute =
     path: '/platform/field-incidents/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformFieldIncidentsAllRoute =
-  AuthenticatedPlatformFieldIncidentsAllRouteImport.update({
-    id: '/platform/field-incidents/all',
-    path: '/platform/field-incidents/all',
+const AuthenticatedManagerFieldIncidentsIndexRoute =
+  AuthenticatedManagerFieldIncidentsIndexRouteImport.update({
+    id: '/manager/field-incidents/',
+    path: '/manager/field-incidents/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformFieldIncidentsDismissedRoute =
-  AuthenticatedPlatformFieldIncidentsDismissedRouteImport.update({
-    id: '/platform/field-incidents/dismissed',
-    path: '/platform/field-incidents/dismissed',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformFieldIncidentsIncomingRoute =
-  AuthenticatedPlatformFieldIncidentsIncomingRouteImport.update({
-    id: '/platform/field-incidents/incoming',
-    path: '/platform/field-incidents/incoming',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformFieldIncidentsResolvedRoute =
-  AuthenticatedPlatformFieldIncidentsResolvedRouteImport.update({
-    id: '/platform/field-incidents/resolved',
-    path: '/platform/field-incidents/resolved',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformFinanceLedgerRoute =
-  AuthenticatedPlatformFinanceLedgerRouteImport.update({
-    id: '/ledger',
-    path: '/ledger',
-    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
-  } as any)
-const AuthenticatedPlatformFinancePayoutsRoute =
-  AuthenticatedPlatformFinancePayoutsRouteImport.update({
-    id: '/payouts',
-    path: '/payouts',
-    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
-  } as any)
-const AuthenticatedPlatformFinanceTaxRulesRoute =
-  AuthenticatedPlatformFinanceTaxRulesRouteImport.update({
-    id: '/tax-rules',
-    path: '/tax-rules',
-    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
-  } as any)
-const AuthenticatedPlatformInsuranceAuditRoute =
-  AuthenticatedPlatformInsuranceAuditRouteImport.update({
-    id: '/audit',
-    path: '/audit',
-    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
-  } as any)
-const AuthenticatedPlatformInsuranceWebhooksRoute =
-  AuthenticatedPlatformInsuranceWebhooksRouteImport.update({
-    id: '/webhooks',
-    path: '/webhooks',
-    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
-  } as any)
-const AuthenticatedPlatformLogisticsCarriersRoute =
-  AuthenticatedPlatformLogisticsCarriersRouteImport.update({
-    id: '/platform/logistics/carriers',
-    path: '/platform/logistics/carriers',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformLogisticsCommandCenterRoute =
-  AuthenticatedPlatformLogisticsCommandCenterRouteImport.update({
-    id: '/platform/logistics/command-center',
-    path: '/platform/logistics/command-center',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformLogisticsFleetRoute =
-  AuthenticatedPlatformLogisticsFleetRouteImport.update({
-    id: '/platform/logistics/fleet',
-    path: '/platform/logistics/fleet',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformOrdersOrderIdRoute =
-  AuthenticatedPlatformOrdersOrderIdRouteImport.update({
-    id: '/$orderId',
-    path: '/$orderId',
-    getParentRoute: () => AuthenticatedPlatformOrdersRoute,
-  } as any)
-const AuthenticatedPlatformTenantsAdminIdRoute =
-  AuthenticatedPlatformTenantsAdminIdRouteImport.update({
-    id: '/$adminId',
-    path: '/$adminId',
-    getParentRoute: () => AuthenticatedPlatformTenantsRoute,
-  } as any)
-const AuthenticatedTechnicianInstallsInstallIdRoute =
-  AuthenticatedTechnicianInstallsInstallIdRouteImport.update({
-    id: '/$installId',
-    path: '/$installId',
-    getParentRoute: () => AuthenticatedTechnicianInstallsRoute,
-  } as any)
-const ApiPublicCronApplyScheduledPlanChangesRoute =
-  ApiPublicCronApplyScheduledPlanChangesRouteImport.update({
-    id: '/api/public/cron/apply-scheduled-plan-changes',
-    path: '/api/public/cron/apply-scheduled-plan-changes',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronDeliveryDelayScanRoute =
-  ApiPublicCronDeliveryDelayScanRouteImport.update({
-    id: '/api/public/cron/delivery-delay-scan',
-    path: '/api/public/cron/delivery-delay-scan',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronDispatchSlaSweepRoute =
-  ApiPublicCronDispatchSlaSweepRouteImport.update({
-    id: '/api/public/cron/dispatch-sla-sweep',
-    path: '/api/public/cron/dispatch-sla-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronDriverLicenseExpiryRoute =
-  ApiPublicCronDriverLicenseExpiryRouteImport.update({
-    id: '/api/public/cron/driver-license-expiry',
-    path: '/api/public/cron/driver-license-expiry',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronHeartbeatSweepRoute =
-  ApiPublicCronHeartbeatSweepRouteImport.update({
-    id: '/api/public/cron/heartbeat-sweep',
-    path: '/api/public/cron/heartbeat-sweep',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronLifecycleEmailsRoute =
-  ApiPublicCronLifecycleEmailsRouteImport.update({
-    id: '/api/public/cron/lifecycle-emails',
-    path: '/api/public/cron/lifecycle-emails',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronReturnAutoApproveRoute =
-  ApiPublicCronReturnAutoApproveRouteImport.update({
-    id: '/api/public/cron/return-auto-approve',
-    path: '/api/public/cron/return-auto-approve',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronReviewPromptsRoute =
-  ApiPublicCronReviewPromptsRouteImport.update({
-    id: '/api/public/cron/review-prompts',
-    path: '/api/public/cron/review-prompts',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronSlaDigestRoute = ApiPublicCronSlaDigestRouteImport.update({
-  id: '/api/public/cron/sla-digest',
-  path: '/api/public/cron/sla-digest',
+const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
+  id: '/api/public/webhooks/stripe',
+  path: '/api/public/webhooks/stripe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicCronSyncFirebaseRoute =
-  ApiPublicCronSyncFirebaseRouteImport.update({
-    id: '/api/public/cron/sync-firebase',
-    path: '/api/public/cron/sync-firebase',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksAlertsEscalationRoute =
-  ApiPublicHooksAlertsEscalationRouteImport.update({
-    id: '/api/public/hooks/alerts-escalation',
-    path: '/api/public/hooks/alerts-escalation',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksAnalyticsRefreshRoute =
-  ApiPublicHooksAnalyticsRefreshRouteImport.update({
-    id: '/api/public/hooks/analytics-refresh',
-    path: '/api/public/hooks/analytics-refresh',
+const ApiPublicV1StatusRoute = ApiPublicV1StatusRouteImport.update({
+  id: '/api/public/v1/status',
+  path: '/api/public/v1/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1MetaRoute = ApiPublicV1MetaRouteImport.update({
+  id: '/api/public/v1/meta',
+  path: '/api/public/v1/meta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksSensorOfflineDetectorRoute =
+  ApiPublicHooksSensorOfflineDetectorRouteImport.update({
+    id: '/api/public/hooks/sensor-offline-detector',
+    path: '/api/public/hooks/sensor-offline-detector',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksExpiryRemindersRoute =
@@ -1051,143 +882,202 @@ const ApiPublicHooksExpiryRemindersRoute =
     path: '/api/public/hooks/expiry-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksSensorOfflineDetectorRoute =
-  ApiPublicHooksSensorOfflineDetectorRouteImport.update({
-    id: '/api/public/hooks/sensor-offline-detector',
-    path: '/api/public/hooks/sensor-offline-detector',
+const ApiPublicHooksAnalyticsRefreshRoute =
+  ApiPublicHooksAnalyticsRefreshRouteImport.update({
+    id: '/api/public/hooks/analytics-refresh',
+    path: '/api/public/hooks/analytics-refresh',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicV1MetaRoute = ApiPublicV1MetaRouteImport.update({
-  id: '/api/public/v1/meta',
-  path: '/api/public/v1/meta',
+const ApiPublicHooksAlertsEscalationRoute =
+  ApiPublicHooksAlertsEscalationRouteImport.update({
+    id: '/api/public/hooks/alerts-escalation',
+    path: '/api/public/hooks/alerts-escalation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronSyncFirebaseRoute =
+  ApiPublicCronSyncFirebaseRouteImport.update({
+    id: '/api/public/cron/sync-firebase',
+    path: '/api/public/cron/sync-firebase',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronSlaDigestRoute = ApiPublicCronSlaDigestRouteImport.update({
+  id: '/api/public/cron/sla-digest',
+  path: '/api/public/cron/sla-digest',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicV1StatusRoute = ApiPublicV1StatusRouteImport.update({
-  id: '/api/public/v1/status',
-  path: '/api/public/v1/status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
-  id: '/api/public/webhooks/stripe',
-  path: '/api/public/webhooks/stripe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedPlatformInsuranceClaimsClaimIdRoute =
-  AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport.update({
-    id: '/claims/$claimId',
-    path: '/claims/$claimId',
+const ApiPublicCronReviewPromptsRoute =
+  ApiPublicCronReviewPromptsRouteImport.update({
+    id: '/api/public/cron/review-prompts',
+    path: '/api/public/cron/review-prompts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronReturnAutoApproveRoute =
+  ApiPublicCronReturnAutoApproveRouteImport.update({
+    id: '/api/public/cron/return-auto-approve',
+    path: '/api/public/cron/return-auto-approve',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronLifecycleEmailsRoute =
+  ApiPublicCronLifecycleEmailsRouteImport.update({
+    id: '/api/public/cron/lifecycle-emails',
+    path: '/api/public/cron/lifecycle-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronHeartbeatSweepRoute =
+  ApiPublicCronHeartbeatSweepRouteImport.update({
+    id: '/api/public/cron/heartbeat-sweep',
+    path: '/api/public/cron/heartbeat-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDriverLicenseExpiryRoute =
+  ApiPublicCronDriverLicenseExpiryRouteImport.update({
+    id: '/api/public/cron/driver-license-expiry',
+    path: '/api/public/cron/driver-license-expiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDispatchSlaSweepRoute =
+  ApiPublicCronDispatchSlaSweepRouteImport.update({
+    id: '/api/public/cron/dispatch-sla-sweep',
+    path: '/api/public/cron/dispatch-sla-sweep',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDeliveryDelayScanRoute =
+  ApiPublicCronDeliveryDelayScanRouteImport.update({
+    id: '/api/public/cron/delivery-delay-scan',
+    path: '/api/public/cron/delivery-delay-scan',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronApplyScheduledPlanChangesRoute =
+  ApiPublicCronApplyScheduledPlanChangesRouteImport.update({
+    id: '/api/public/cron/apply-scheduled-plan-changes',
+    path: '/api/public/cron/apply-scheduled-plan-changes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedTechnicianInstallsInstallIdRoute =
+  AuthenticatedTechnicianInstallsInstallIdRouteImport.update({
+    id: '/$installId',
+    path: '/$installId',
+    getParentRoute: () => AuthenticatedTechnicianInstallsRoute,
+  } as any)
+const AuthenticatedPlatformTenantsAdminIdRoute =
+  AuthenticatedPlatformTenantsAdminIdRouteImport.update({
+    id: '/$adminId',
+    path: '/$adminId',
+    getParentRoute: () => AuthenticatedPlatformTenantsRoute,
+  } as any)
+const AuthenticatedPlatformOrdersOrderIdRoute =
+  AuthenticatedPlatformOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedPlatformOrdersRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsFleetRoute =
+  AuthenticatedPlatformLogisticsFleetRouteImport.update({
+    id: '/platform/logistics/fleet',
+    path: '/platform/logistics/fleet',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsCommandCenterRoute =
+  AuthenticatedPlatformLogisticsCommandCenterRouteImport.update({
+    id: '/platform/logistics/command-center',
+    path: '/platform/logistics/command-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformLogisticsCarriersRoute =
+  AuthenticatedPlatformLogisticsCarriersRouteImport.update({
+    id: '/platform/logistics/carriers',
+    path: '/platform/logistics/carriers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceWebhooksRoute =
+  AuthenticatedPlatformInsuranceWebhooksRouteImport.update({
+    id: '/webhooks',
+    path: '/webhooks',
     getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
   } as any)
-const AuthenticatedPlatformOrdersOrderIdAuditRoute =
-  AuthenticatedPlatformOrdersOrderIdAuditRouteImport.update({
+const AuthenticatedPlatformInsuranceAuditRoute =
+  AuthenticatedPlatformInsuranceAuditRouteImport.update({
     id: '/audit',
     path: '/audit',
-    getParentRoute: () => AuthenticatedPlatformOrdersOrderIdRoute,
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
   } as any)
-const ApiPublicV1ActionsAckAlertRoute =
-  ApiPublicV1ActionsAckAlertRouteImport.update({
-    id: '/api/public/v1/actions/ack-alert',
-    path: '/api/public/v1/actions/ack-alert',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedPlatformFinanceTaxRulesRoute =
+  AuthenticatedPlatformFinanceTaxRulesRouteImport.update({
+    id: '/tax-rules',
+    path: '/tax-rules',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
-const ApiPublicV1ActionsConfirmDeliveryRoute =
-  ApiPublicV1ActionsConfirmDeliveryRouteImport.update({
-    id: '/api/public/v1/actions/confirm-delivery',
-    path: '/api/public/v1/actions/confirm-delivery',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedPlatformFinancePayoutsRoute =
+  AuthenticatedPlatformFinancePayoutsRouteImport.update({
+    id: '/payouts',
+    path: '/payouts',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
-const ApiPublicV1ActionsInstallStepRoute =
-  ApiPublicV1ActionsInstallStepRouteImport.update({
-    id: '/api/public/v1/actions/install-step',
-    path: '/api/public/v1/actions/install-step',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedPlatformFinanceLedgerRoute =
+  AuthenticatedPlatformFinanceLedgerRouteImport.update({
+    id: '/ledger',
+    path: '/ledger',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
-const ApiPublicV1ActionsReplayRoute =
-  ApiPublicV1ActionsReplayRouteImport.update({
-    id: '/api/public/v1/actions/replay',
-    path: '/api/public/v1/actions/replay',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedPlatformFieldIncidentsResolvedRoute =
+  AuthenticatedPlatformFieldIncidentsResolvedRouteImport.update({
+    id: '/platform/field-incidents/resolved',
+    path: '/platform/field-incidents/resolved',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1AuthAcceptInviteRoute =
-  ApiPublicV1AuthAcceptInviteRouteImport.update({
-    id: '/api/public/v1/auth/accept-invite',
-    path: '/api/public/v1/auth/accept-invite',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedPlatformFieldIncidentsIncomingRoute =
+  AuthenticatedPlatformFieldIncidentsIncomingRouteImport.update({
+    id: '/platform/field-incidents/incoming',
+    path: '/platform/field-incidents/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1AuthValidateInvitationRoute =
-  ApiPublicV1AuthValidateInvitationRouteImport.update({
-    id: '/api/public/v1/auth/validate-invitation',
-    path: '/api/public/v1/auth/validate-invitation',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedPlatformFieldIncidentsDismissedRoute =
+  AuthenticatedPlatformFieldIncidentsDismissedRouteImport.update({
+    id: '/platform/field-incidents/dismissed',
+    path: '/platform/field-incidents/dismissed',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1CommerceAddressesRoute =
-  ApiPublicV1CommerceAddressesRouteImport.update({
-    id: '/api/public/v1/commerce/addresses',
-    path: '/api/public/v1/commerce/addresses',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedPlatformFieldIncidentsAllRoute =
+  AuthenticatedPlatformFieldIncidentsAllRouteImport.update({
+    id: '/platform/field-incidents/all',
+    path: '/platform/field-incidents/all',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1CommerceCartRoute = ApiPublicV1CommerceCartRouteImport.update({
-  id: '/api/public/v1/commerce/cart',
-  path: '/api/public/v1/commerce/cart',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicV1CommerceCheckoutRoute =
-  ApiPublicV1CommerceCheckoutRouteImport.update({
-    id: '/api/public/v1/commerce/checkout',
-    path: '/api/public/v1/commerce/checkout',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedManagerFieldIncidentsResolvedRoute =
+  AuthenticatedManagerFieldIncidentsResolvedRouteImport.update({
+    id: '/manager/field-incidents/resolved',
+    path: '/manager/field-incidents/resolved',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1CommerceConfigRoute =
-  ApiPublicV1CommerceConfigRouteImport.update({
-    id: '/api/public/v1/commerce/config',
-    path: '/api/public/v1/commerce/config',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedManagerFieldIncidentsIncomingRoute =
+  AuthenticatedManagerFieldIncidentsIncomingRouteImport.update({
+    id: '/manager/field-incidents/incoming',
+    path: '/manager/field-incidents/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1CommerceOrdersRoute =
-  ApiPublicV1CommerceOrdersRouteImport.update({
-    id: '/api/public/v1/commerce/orders',
-    path: '/api/public/v1/commerce/orders',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedManagerFieldIncidentsDismissedRoute =
+  AuthenticatedManagerFieldIncidentsDismissedRouteImport.update({
+    id: '/manager/field-incidents/dismissed',
+    path: '/manager/field-incidents/dismissed',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1CommerceQuoteRoute =
-  ApiPublicV1CommerceQuoteRouteImport.update({
-    id: '/api/public/v1/commerce/quote',
-    path: '/api/public/v1/commerce/quote',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedManagerFieldIncidentsAllRoute =
+  AuthenticatedManagerFieldIncidentsAllRouteImport.update({
+    id: '/manager/field-incidents/all',
+    path: '/manager/field-incidents/all',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1DeeplinkKeyRoute = ApiPublicV1DeeplinkKeyRouteImport.update({
-  id: '/api/public/v1/deeplink/$key',
-  path: '/api/public/v1/deeplink/$key',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicV1DevicesHeartbeatRoute =
-  ApiPublicV1DevicesHeartbeatRouteImport.update({
-    id: '/api/public/v1/devices/heartbeat',
-    path: '/api/public/v1/devices/heartbeat',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute =
+  AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport.update({
+    id: '/insurance-policies/$policyId/documents',
+    path: '/insurance-policies/$policyId/documents',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicV1DevicesRegisterRoute =
-  ApiPublicV1DevicesRegisterRouteImport.update({
-    id: '/api/public/v1/devices/register',
-    path: '/api/public/v1/devices/register',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1DevicesRevokeRoute =
-  ApiPublicV1DevicesRevokeRouteImport.update({
-    id: '/api/public/v1/devices/revoke',
-    path: '/api/public/v1/devices/revoke',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1FieldBundleRoute = ApiPublicV1FieldBundleRouteImport.update({
-  id: '/api/public/v1/field/bundle',
-  path: '/api/public/v1/field/bundle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicV1FieldMutationsRoute =
-  ApiPublicV1FieldMutationsRouteImport.update({
-    id: '/api/public/v1/field/mutations',
-    path: '/api/public/v1/field/mutations',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedBuyerOrdersOrderIdRoute =
+  AuthenticatedBuyerOrdersOrderIdRouteImport.update({
+    id: '/$orderId',
+    path: '/$orderId',
+    getParentRoute: () => AuthenticatedBuyerOrdersRoute,
   } as any)
 const ApiPublicV1NotificationsIndexRoute =
   ApiPublicV1NotificationsIndexRouteImport.update({
@@ -1195,73 +1085,21 @@ const ApiPublicV1NotificationsIndexRoute =
     path: '/api/public/v1/notifications/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicV1NotificationsPreferencesRoute =
-  ApiPublicV1NotificationsPreferencesRouteImport.update({
-    id: '/api/public/v1/notifications/preferences',
-    path: '/api/public/v1/notifications/preferences',
+const ApiPublicWebhooksInsuranceCarrierCodeRoute =
+  ApiPublicWebhooksInsuranceCarrierCodeRouteImport.update({
+    id: '/api/public/webhooks/insurance/$carrierCode',
+    path: '/api/public/webhooks/insurance/$carrierCode',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicV1NotificationsReadRoute =
-  ApiPublicV1NotificationsReadRouteImport.update({
-    id: '/api/public/v1/notifications/read',
-    path: '/api/public/v1/notifications/read',
+const ApiPublicWebhooksCarrierCarrierCodeRoute =
+  ApiPublicWebhooksCarrierCarrierCodeRouteImport.update({
+    id: '/api/public/webhooks/carrier/$carrierCode',
+    path: '/api/public/webhooks/carrier/$carrierCode',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicV1SyncAlertsRoute = ApiPublicV1SyncAlertsRouteImport.update({
-  id: '/api/public/v1/sync/alerts',
-  path: '/api/public/v1/sync/alerts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicV1SyncBuyerOrdersRoute =
-  ApiPublicV1SyncBuyerOrdersRouteImport.update({
-    id: '/api/public/v1/sync/buyer-orders',
-    path: '/api/public/v1/sync/buyer-orders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1SyncBuyerSummaryRoute =
-  ApiPublicV1SyncBuyerSummaryRouteImport.update({
-    id: '/api/public/v1/sync/buyer-summary',
-    path: '/api/public/v1/sync/buyer-summary',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1SyncFieldIncidentsRoute =
-  ApiPublicV1SyncFieldIncidentsRouteImport.update({
-    id: '/api/public/v1/sync/field-incidents',
-    path: '/api/public/v1/sync/field-incidents',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1SyncFieldTasksRoute =
-  ApiPublicV1SyncFieldTasksRouteImport.update({
-    id: '/api/public/v1/sync/field-tasks',
-    path: '/api/public/v1/sync/field-tasks',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1SyncHardwareOrdersRoute =
-  ApiPublicV1SyncHardwareOrdersRouteImport.update({
-    id: '/api/public/v1/sync/hardware-orders',
-    path: '/api/public/v1/sync/hardware-orders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1SyncMarketplaceRoute =
-  ApiPublicV1SyncMarketplaceRouteImport.update({
-    id: '/api/public/v1/sync/marketplace',
-    path: '/api/public/v1/sync/marketplace',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1SyncNotificationsRoute =
-  ApiPublicV1SyncNotificationsRouteImport.update({
-    id: '/api/public/v1/sync/notifications',
-    path: '/api/public/v1/sync/notifications',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicV1SyncSensorsRoute = ApiPublicV1SyncSensorsRouteImport.update({
-  id: '/api/public/v1/sync/sensors',
-  path: '/api/public/v1/sync/sensors',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicV1SyncSilosRoute = ApiPublicV1SyncSilosRouteImport.update({
-  id: '/api/public/v1/sync/silos',
-  path: '/api/public/v1/sync/silos',
+const ApiPublicV1UploadsSignRoute = ApiPublicV1UploadsSignRouteImport.update({
+  id: '/api/public/v1/uploads/sign',
+  path: '/api/public/v1/uploads/sign',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicV1SyncSilosCockpitRoute =
@@ -1270,22 +1108,191 @@ const ApiPublicV1SyncSilosCockpitRoute =
     path: '/api/public/v1/sync/silos-cockpit',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicV1UploadsSignRoute = ApiPublicV1UploadsSignRouteImport.update({
-  id: '/api/public/v1/uploads/sign',
-  path: '/api/public/v1/uploads/sign',
+const ApiPublicV1SyncSilosRoute = ApiPublicV1SyncSilosRouteImport.update({
+  id: '/api/public/v1/sync/silos',
+  path: '/api/public/v1/sync/silos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicWebhooksCarrierCarrierCodeRoute =
-  ApiPublicWebhooksCarrierCarrierCodeRouteImport.update({
-    id: '/api/public/webhooks/carrier/$carrierCode',
-    path: '/api/public/webhooks/carrier/$carrierCode',
+const ApiPublicV1SyncSensorsRoute = ApiPublicV1SyncSensorsRouteImport.update({
+  id: '/api/public/v1/sync/sensors',
+  path: '/api/public/v1/sync/sensors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1SyncNotificationsRoute =
+  ApiPublicV1SyncNotificationsRouteImport.update({
+    id: '/api/public/v1/sync/notifications',
+    path: '/api/public/v1/sync/notifications',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicWebhooksInsuranceCarrierCodeRoute =
-  ApiPublicWebhooksInsuranceCarrierCodeRouteImport.update({
-    id: '/api/public/webhooks/insurance/$carrierCode',
-    path: '/api/public/webhooks/insurance/$carrierCode',
+const ApiPublicV1SyncMarketplaceRoute =
+  ApiPublicV1SyncMarketplaceRouteImport.update({
+    id: '/api/public/v1/sync/marketplace',
+    path: '/api/public/v1/sync/marketplace',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncHardwareOrdersRoute =
+  ApiPublicV1SyncHardwareOrdersRouteImport.update({
+    id: '/api/public/v1/sync/hardware-orders',
+    path: '/api/public/v1/sync/hardware-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncFieldTasksRoute =
+  ApiPublicV1SyncFieldTasksRouteImport.update({
+    id: '/api/public/v1/sync/field-tasks',
+    path: '/api/public/v1/sync/field-tasks',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncFieldIncidentsRoute =
+  ApiPublicV1SyncFieldIncidentsRouteImport.update({
+    id: '/api/public/v1/sync/field-incidents',
+    path: '/api/public/v1/sync/field-incidents',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncBuyerSummaryRoute =
+  ApiPublicV1SyncBuyerSummaryRouteImport.update({
+    id: '/api/public/v1/sync/buyer-summary',
+    path: '/api/public/v1/sync/buyer-summary',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncBuyerOrdersRoute =
+  ApiPublicV1SyncBuyerOrdersRouteImport.update({
+    id: '/api/public/v1/sync/buyer-orders',
+    path: '/api/public/v1/sync/buyer-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SyncAlertsRoute = ApiPublicV1SyncAlertsRouteImport.update({
+  id: '/api/public/v1/sync/alerts',
+  path: '/api/public/v1/sync/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1NotificationsReadRoute =
+  ApiPublicV1NotificationsReadRouteImport.update({
+    id: '/api/public/v1/notifications/read',
+    path: '/api/public/v1/notifications/read',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1NotificationsPreferencesRoute =
+  ApiPublicV1NotificationsPreferencesRouteImport.update({
+    id: '/api/public/v1/notifications/preferences',
+    path: '/api/public/v1/notifications/preferences',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1FieldMutationsRoute =
+  ApiPublicV1FieldMutationsRouteImport.update({
+    id: '/api/public/v1/field/mutations',
+    path: '/api/public/v1/field/mutations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1FieldBundleRoute = ApiPublicV1FieldBundleRouteImport.update({
+  id: '/api/public/v1/field/bundle',
+  path: '/api/public/v1/field/bundle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1DevicesRevokeRoute =
+  ApiPublicV1DevicesRevokeRouteImport.update({
+    id: '/api/public/v1/devices/revoke',
+    path: '/api/public/v1/devices/revoke',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesRegisterRoute =
+  ApiPublicV1DevicesRegisterRouteImport.update({
+    id: '/api/public/v1/devices/register',
+    path: '/api/public/v1/devices/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesHeartbeatRoute =
+  ApiPublicV1DevicesHeartbeatRouteImport.update({
+    id: '/api/public/v1/devices/heartbeat',
+    path: '/api/public/v1/devices/heartbeat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DeeplinkKeyRoute = ApiPublicV1DeeplinkKeyRouteImport.update({
+  id: '/api/public/v1/deeplink/$key',
+  path: '/api/public/v1/deeplink/$key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1CommerceQuoteRoute =
+  ApiPublicV1CommerceQuoteRouteImport.update({
+    id: '/api/public/v1/commerce/quote',
+    path: '/api/public/v1/commerce/quote',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceOrdersRoute =
+  ApiPublicV1CommerceOrdersRouteImport.update({
+    id: '/api/public/v1/commerce/orders',
+    path: '/api/public/v1/commerce/orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceConfigRoute =
+  ApiPublicV1CommerceConfigRouteImport.update({
+    id: '/api/public/v1/commerce/config',
+    path: '/api/public/v1/commerce/config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceCheckoutRoute =
+  ApiPublicV1CommerceCheckoutRouteImport.update({
+    id: '/api/public/v1/commerce/checkout',
+    path: '/api/public/v1/commerce/checkout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1CommerceCartRoute = ApiPublicV1CommerceCartRouteImport.update({
+  id: '/api/public/v1/commerce/cart',
+  path: '/api/public/v1/commerce/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1CommerceAddressesRoute =
+  ApiPublicV1CommerceAddressesRouteImport.update({
+    id: '/api/public/v1/commerce/addresses',
+    path: '/api/public/v1/commerce/addresses',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthValidateInvitationRoute =
+  ApiPublicV1AuthValidateInvitationRouteImport.update({
+    id: '/api/public/v1/auth/validate-invitation',
+    path: '/api/public/v1/auth/validate-invitation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthAcceptInviteRoute =
+  ApiPublicV1AuthAcceptInviteRouteImport.update({
+    id: '/api/public/v1/auth/accept-invite',
+    path: '/api/public/v1/auth/accept-invite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsReplayRoute =
+  ApiPublicV1ActionsReplayRouteImport.update({
+    id: '/api/public/v1/actions/replay',
+    path: '/api/public/v1/actions/replay',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsInstallStepRoute =
+  ApiPublicV1ActionsInstallStepRouteImport.update({
+    id: '/api/public/v1/actions/install-step',
+    path: '/api/public/v1/actions/install-step',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsConfirmDeliveryRoute =
+  ApiPublicV1ActionsConfirmDeliveryRouteImport.update({
+    id: '/api/public/v1/actions/confirm-delivery',
+    path: '/api/public/v1/actions/confirm-delivery',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ActionsAckAlertRoute =
+  ApiPublicV1ActionsAckAlertRouteImport.update({
+    id: '/api/public/v1/actions/ack-alert',
+    path: '/api/public/v1/actions/ack-alert',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedPlatformOrdersOrderIdAuditRoute =
+  AuthenticatedPlatformOrdersOrderIdAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
+    getParentRoute: () => AuthenticatedPlatformOrdersOrderIdRoute,
+  } as any)
+const AuthenticatedPlatformInsuranceClaimsClaimIdRoute =
+  AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport.update({
+    id: '/claims/$claimId',
+    path: '/claims/$claimId',
+    getParentRoute: () => AuthenticatedPlatformInsuranceRoute,
   } as any)
 const ApiPublicV1CommerceOrdersOrderIdRoute =
   ApiPublicV1CommerceOrdersOrderIdRouteImport.update({
@@ -1367,6 +1374,7 @@ export interface FileRoutesByFullPath {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1558,6 +1566,7 @@ export interface FileRoutesByTo {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1753,6 +1762,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/_authenticated/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/_authenticated/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1948,6 +1958,7 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/env-health'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -2139,6 +2150,7 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/env-health'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -2333,6 +2345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
+    | '/_authenticated/platform/env-health'
     | '/_authenticated/platform/field-settings'
     | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
@@ -2533,95 +2546,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkout': {
-      id: '/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof CheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cookies': {
-      id: '/cookies'
-      path: '/cookies'
-      fullPath: '/cookies'
-      preLoaderRoute: typeof CookiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs': {
-      id: '/docs'
-      path: '/docs'
-      fullPath: '/docs'
-      preLoaderRoute: typeof DocsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/help': {
-      id: '/help'
-      path: '/help'
-      fullPath: '/help'
-      preLoaderRoute: typeof HelpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/marketplace': {
-      id: '/marketplace'
-      path: '/marketplace'
-      fullPath: '/marketplace'
-      preLoaderRoute: typeof MarketplaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/team': {
@@ -2631,319 +2560,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/activity-logs': {
-      id: '/_authenticated/activity-logs'
-      path: '/activity-logs'
-      fullPath: '/activity-logs'
-      preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/actuators': {
-      id: '/_authenticated/actuators'
-      path: '/actuators'
-      fullPath: '/actuators'
-      preLoaderRoute: typeof AuthenticatedActuatorsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/administration': {
-      id: '/_authenticated/administration'
-      path: '/administration'
-      fullPath: '/administration'
-      preLoaderRoute: typeof AuthenticatedAdministrationRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/analytics': {
-      id: '/_authenticated/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/attention': {
-      id: '/_authenticated/attention'
-      path: '/attention'
-      fullPath: '/attention'
-      preLoaderRoute: typeof AuthenticatedAttentionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/business': {
-      id: '/_authenticated/business'
-      path: '/business'
-      fullPath: '/business'
-      preLoaderRoute: typeof AuthenticatedBusinessRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/earnings': {
-      id: '/_authenticated/earnings'
-      path: '/earnings'
-      fullPath: '/earnings'
-      preLoaderRoute: typeof AuthenticatedEarningsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/environmental': {
-      id: '/_authenticated/environmental'
-      path: '/environmental'
-      fullPath: '/environmental'
-      preLoaderRoute: typeof AuthenticatedEnvironmentalRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/grain-alerts': {
-      id: '/_authenticated/grain-alerts'
-      path: '/grain-alerts'
-      fullPath: '/grain-alerts'
-      preLoaderRoute: typeof AuthenticatedGrainAlertsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/grain-operations': {
-      id: '/_authenticated/grain-operations'
-      path: '/grain-operations'
-      fullPath: '/grain-operations'
-      preLoaderRoute: typeof AuthenticatedGrainOperationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/incidents': {
-      id: '/_authenticated/incidents'
-      path: '/incidents'
-      fullPath: '/incidents'
-      preLoaderRoute: typeof AuthenticatedIncidentsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/insurance': {
-      id: '/_authenticated/insurance'
-      path: '/insurance'
-      fullPath: '/insurance'
-      preLoaderRoute: typeof AuthenticatedInsuranceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/intelligence': {
-      id: '/_authenticated/intelligence'
-      path: '/intelligence'
-      fullPath: '/intelligence'
-      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/listings': {
-      id: '/_authenticated/listings'
-      path: '/listings'
-      fullPath: '/listings'
-      preLoaderRoute: typeof AuthenticatedListingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/maintenance': {
-      id: '/_authenticated/maintenance'
-      path: '/maintenance'
-      fullPath: '/maintenance'
-      preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/monitoring': {
-      id: '/_authenticated/monitoring'
-      path: '/monitoring'
-      fullPath: '/monitoring'
-      preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/not-allowed': {
-      id: '/_authenticated/not-allowed'
-      path: '/not-allowed'
-      fullPath: '/not-allowed'
-      preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/orders': {
-      id: '/_authenticated/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/plan-management': {
-      id: '/_authenticated/plan-management'
-      path: '/plan-management'
-      fullPath: '/plan-management'
-      preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/plans': {
-      id: '/_authenticated/plans'
-      path: '/plans'
-      fullPath: '/plans'
-      preLoaderRoute: typeof AuthenticatedPlansRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/returns': {
-      id: '/_authenticated/returns'
-      path: '/returns'
-      fullPath: '/returns'
-      preLoaderRoute: typeof AuthenticatedReturnsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/revenue': {
-      id: '/_authenticated/revenue'
-      path: '/revenue'
-      fullPath: '/revenue'
-      preLoaderRoute: typeof AuthenticatedRevenueRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/sales': {
-      id: '/_authenticated/sales'
-      path: '/sales'
-      fullPath: '/sales'
-      preLoaderRoute: typeof AuthenticatedSalesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/security-center': {
-      id: '/_authenticated/security-center'
-      path: '/security-center'
-      fullPath: '/security-center'
-      preLoaderRoute: typeof AuthenticatedSecurityCenterRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/sensors': {
-      id: '/_authenticated/sensors'
-      path: '/sensors'
-      fullPath: '/sensors'
-      preLoaderRoute: typeof AuthenticatedSensorsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/server-monitoring': {
-      id: '/_authenticated/server-monitoring'
-      path: '/server-monitoring'
-      fullPath: '/server-monitoring'
-      preLoaderRoute: typeof AuthenticatedServerMonitoringRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/silo-request': {
-      id: '/_authenticated/silo-request'
-      path: '/silo-request'
-      fullPath: '/silo-request'
-      preLoaderRoute: typeof AuthenticatedSiloRequestRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/subscription': {
-      id: '/_authenticated/subscription'
-      path: '/subscription'
-      fullPath: '/subscription'
-      preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/suppliers': {
-      id: '/_authenticated/suppliers'
-      path: '/suppliers'
-      fullPath: '/suppliers'
-      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/team-management': {
-      id: '/_authenticated/team-management'
-      path: '/team-management'
-      fullPath: '/team-management'
-      preLoaderRoute: typeof AuthenticatedTeamManagementRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/traceability': {
-      id: '/_authenticated/traceability'
-      path: '/traceability'
-      fullPath: '/traceability'
-      preLoaderRoute: typeof AuthenticatedTraceabilityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/auth/accept-invite': {
-      id: '/auth/accept-invite'
-      path: '/accept-invite'
-      fullPath: '/auth/accept-invite'
-      preLoaderRoute: typeof AuthAcceptInviteRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/forgot-password': {
-      id: '/auth/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/auth/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/reset-password': {
-      id: '/auth/reset-password'
-      path: '/reset-password'
-      fullPath: '/auth/reset-password'
-      preLoaderRoute: typeof AuthResetPasswordRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/signup': {
-      id: '/auth/signup'
-      path: '/signup'
-      fullPath: '/auth/signup'
-      preLoaderRoute: typeof AuthSignupRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/verify-otp': {
-      id: '/auth/verify-otp'
-      path: '/verify-otp'
-      fullPath: '/auth/verify-otp'
-      preLoaderRoute: typeof AuthVerifyOtpRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/checkout/': {
-      id: '/checkout/'
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/checkout/'
-      preLoaderRoute: typeof CheckoutIndexRouteImport
-      parentRoute: typeof CheckoutRoute
-    }
-    '/checkout/success': {
-      id: '/checkout/success'
-      path: '/success'
-      fullPath: '/checkout/success'
-      preLoaderRoute: typeof CheckoutSuccessRouteImport
-      parentRoute: typeof CheckoutRoute
-    }
-    '/guides/grain-storage': {
-      id: '/guides/grain-storage'
-      path: '/guides/grain-storage'
-      fullPath: '/guides/grain-storage'
-      preLoaderRoute: typeof GuidesGrainStorageRouteImport
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace/': {
@@ -2953,18 +2658,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketplaceIndexRouteImport
       parentRoute: typeof MarketplaceRoute
     }
-    '/marketplace/$slug': {
-      id: '/marketplace/$slug'
-      path: '/$slug'
-      fullPath: '/marketplace/$slug'
-      preLoaderRoute: typeof MarketplaceSlugRouteImport
-      parentRoute: typeof MarketplaceRoute
+    '/checkout/': {
+      id: '/checkout/'
+      path: '/'
+      fullPath: '/checkout/'
+      preLoaderRoute: typeof CheckoutIndexRouteImport
+      parentRoute: typeof CheckoutRoute
     }
-    '/solutions/grain-management-software': {
-      id: '/solutions/grain-management-software'
-      path: '/solutions/grain-management-software'
-      fullPath: '/solutions/grain-management-software'
-      preLoaderRoute: typeof SolutionsGrainManagementSoftwareRouteImport
+    '/solutions/silo-monitoring-system': {
+      id: '/solutions/silo-monitoring-system'
+      path: '/solutions/silo-monitoring-system'
+      fullPath: '/solutions/silo-monitoring-system'
+      preLoaderRoute: typeof SolutionsSiloMonitoringSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/solutions/grain-storage-monitoring': {
@@ -2974,32 +2679,319 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SolutionsGrainStorageMonitoringRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/solutions/silo-monitoring-system': {
-      id: '/solutions/silo-monitoring-system'
-      path: '/solutions/silo-monitoring-system'
-      fullPath: '/solutions/silo-monitoring-system'
-      preLoaderRoute: typeof SolutionsSiloMonitoringSystemRouteImport
+    '/solutions/grain-management-software': {
+      id: '/solutions/grain-management-software'
+      path: '/solutions/grain-management-software'
+      fullPath: '/solutions/grain-management-software'
+      preLoaderRoute: typeof SolutionsGrainManagementSoftwareRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admins/$adminId': {
-      id: '/_authenticated/admins/$adminId'
-      path: '/admins/$adminId'
-      fullPath: '/admins/$adminId'
-      preLoaderRoute: typeof AuthenticatedAdminsAdminIdRouteImport
+    '/marketplace/$slug': {
+      id: '/marketplace/$slug'
+      path: '/$slug'
+      fullPath: '/marketplace/$slug'
+      preLoaderRoute: typeof MarketplaceSlugRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/guides/grain-storage': {
+      id: '/guides/grain-storage'
+      path: '/guides/grain-storage'
+      fullPath: '/guides/grain-storage'
+      preLoaderRoute: typeof GuidesGrainStorageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/success': {
+      id: '/checkout/success'
+      path: '/success'
+      fullPath: '/checkout/success'
+      preLoaderRoute: typeof CheckoutSuccessRouteImport
+      parentRoute: typeof CheckoutRoute
+    }
+    '/auth/verify-otp': {
+      id: '/auth/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/auth/verify-otp'
+      preLoaderRoute: typeof AuthVerifyOtpRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/accept-invite': {
+      id: '/auth/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/auth/accept-invite'
+      preLoaderRoute: typeof AuthAcceptInviteRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_authenticated/traceability': {
+      id: '/_authenticated/traceability'
+      path: '/traceability'
+      fullPath: '/traceability'
+      preLoaderRoute: typeof AuthenticatedTraceabilityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/buyer/orders': {
-      id: '/_authenticated/buyer/orders'
-      path: '/buyer/orders'
-      fullPath: '/buyer/orders'
-      preLoaderRoute: typeof AuthenticatedBuyerOrdersRouteImport
+    '/_authenticated/team-management': {
+      id: '/_authenticated/team-management'
+      path: '/team-management'
+      fullPath: '/team-management'
+      preLoaderRoute: typeof AuthenticatedTeamManagementRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/insurance-claims/$claimId': {
-      id: '/_authenticated/insurance-claims/$claimId'
-      path: '/insurance-claims/$claimId'
-      fullPath: '/insurance-claims/$claimId'
-      preLoaderRoute: typeof AuthenticatedInsuranceClaimsClaimIdRouteImport
+    '/_authenticated/suppliers': {
+      id: '/_authenticated/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/subscription': {
+      id: '/_authenticated/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/silo-request': {
+      id: '/_authenticated/silo-request'
+      path: '/silo-request'
+      fullPath: '/silo-request'
+      preLoaderRoute: typeof AuthenticatedSiloRequestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/server-monitoring': {
+      id: '/_authenticated/server-monitoring'
+      path: '/server-monitoring'
+      fullPath: '/server-monitoring'
+      preLoaderRoute: typeof AuthenticatedServerMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sensors': {
+      id: '/_authenticated/sensors'
+      path: '/sensors'
+      fullPath: '/sensors'
+      preLoaderRoute: typeof AuthenticatedSensorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/security-center': {
+      id: '/_authenticated/security-center'
+      path: '/security-center'
+      fullPath: '/security-center'
+      preLoaderRoute: typeof AuthenticatedSecurityCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sales': {
+      id: '/_authenticated/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof AuthenticatedSalesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revenue': {
+      id: '/_authenticated/revenue'
+      path: '/revenue'
+      fullPath: '/revenue'
+      preLoaderRoute: typeof AuthenticatedRevenueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/returns': {
+      id: '/_authenticated/returns'
+      path: '/returns'
+      fullPath: '/returns'
+      preLoaderRoute: typeof AuthenticatedReturnsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plans': {
+      id: '/_authenticated/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof AuthenticatedPlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plan-management': {
+      id: '/_authenticated/plan-management'
+      path: '/plan-management'
+      fullPath: '/plan-management'
+      preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/not-allowed': {
+      id: '/_authenticated/not-allowed'
+      path: '/not-allowed'
+      fullPath: '/not-allowed'
+      preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/monitoring': {
+      id: '/_authenticated/monitoring'
+      path: '/monitoring'
+      fullPath: '/monitoring'
+      preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/maintenance': {
+      id: '/_authenticated/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof AuthenticatedMaintenanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/listings': {
+      id: '/_authenticated/listings'
+      path: '/listings'
+      fullPath: '/listings'
+      preLoaderRoute: typeof AuthenticatedListingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/intelligence': {
+      id: '/_authenticated/intelligence'
+      path: '/intelligence'
+      fullPath: '/intelligence'
+      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/insurance': {
+      id: '/_authenticated/insurance'
+      path: '/insurance'
+      fullPath: '/insurance'
+      preLoaderRoute: typeof AuthenticatedInsuranceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/incidents': {
+      id: '/_authenticated/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof AuthenticatedIncidentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/grain-operations': {
+      id: '/_authenticated/grain-operations'
+      path: '/grain-operations'
+      fullPath: '/grain-operations'
+      preLoaderRoute: typeof AuthenticatedGrainOperationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/grain-alerts': {
+      id: '/_authenticated/grain-alerts'
+      path: '/grain-alerts'
+      fullPath: '/grain-alerts'
+      preLoaderRoute: typeof AuthenticatedGrainAlertsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/environmental': {
+      id: '/_authenticated/environmental'
+      path: '/environmental'
+      fullPath: '/environmental'
+      preLoaderRoute: typeof AuthenticatedEnvironmentalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/earnings': {
+      id: '/_authenticated/earnings'
+      path: '/earnings'
+      fullPath: '/earnings'
+      preLoaderRoute: typeof AuthenticatedEarningsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/business': {
+      id: '/_authenticated/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof AuthenticatedBusinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/attention': {
+      id: '/_authenticated/attention'
+      path: '/attention'
+      fullPath: '/attention'
+      preLoaderRoute: typeof AuthenticatedAttentionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/administration': {
+      id: '/_authenticated/administration'
+      path: '/administration'
+      fullPath: '/administration'
+      preLoaderRoute: typeof AuthenticatedAdministrationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/actuators': {
+      id: '/_authenticated/actuators'
+      path: '/actuators'
+      fullPath: '/actuators'
+      preLoaderRoute: typeof AuthenticatedActuatorsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/activity-logs': {
+      id: '/_authenticated/activity-logs'
+      path: '/activity-logs'
+      fullPath: '/activity-logs'
+      preLoaderRoute: typeof AuthenticatedActivityLogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/': {
@@ -3009,305 +3001,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/audit-logs': {
-      id: '/_authenticated/platform/audit-logs'
-      path: '/platform/audit-logs'
-      fullPath: '/platform/audit-logs'
-      preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/marketplace/seller/$adminId': {
+      id: '/marketplace/seller/$adminId'
+      path: '/seller/$adminId'
+      fullPath: '/marketplace/seller/$adminId'
+      preLoaderRoute: typeof MarketplaceSellerAdminIdRouteImport
+      parentRoute: typeof MarketplaceRoute
     }
-    '/_authenticated/platform/business': {
-      id: '/_authenticated/platform/business'
-      path: '/platform/business'
-      fullPath: '/platform/business'
-      preLoaderRoute: typeof AuthenticatedPlatformBusinessRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/commerce-mobile': {
-      id: '/_authenticated/platform/commerce-mobile'
-      path: '/platform/commerce-mobile'
-      fullPath: '/platform/commerce-mobile'
-      preLoaderRoute: typeof AuthenticatedPlatformCommerceMobileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/dashboard-builder': {
-      id: '/_authenticated/platform/dashboard-builder'
-      path: '/platform/dashboard-builder'
-      fullPath: '/platform/dashboard-builder'
-      preLoaderRoute: typeof AuthenticatedPlatformDashboardBuilderRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/dispatch-analytics': {
-      id: '/_authenticated/platform/dispatch-analytics'
-      path: '/platform/dispatch-analytics'
-      fullPath: '/platform/dispatch-analytics'
-      preLoaderRoute: typeof AuthenticatedPlatformDispatchAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/disputes': {
-      id: '/_authenticated/platform/disputes'
-      path: '/platform/disputes'
-      fullPath: '/platform/disputes'
-      preLoaderRoute: typeof AuthenticatedPlatformDisputesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/field-settings': {
-      id: '/_authenticated/platform/field-settings'
-      path: '/platform/field-settings'
-      fullPath: '/platform/field-settings'
-      preLoaderRoute: typeof AuthenticatedPlatformFieldSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/finance': {
-      id: '/_authenticated/platform/finance'
-      path: '/platform/finance'
-      fullPath: '/platform/finance'
-      preLoaderRoute: typeof AuthenticatedPlatformFinanceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/financials': {
-      id: '/_authenticated/platform/financials'
-      path: '/platform/financials'
-      fullPath: '/platform/financials'
-      preLoaderRoute: typeof AuthenticatedPlatformFinancialsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/health': {
-      id: '/_authenticated/platform/health'
-      path: '/platform/health'
-      fullPath: '/platform/health'
-      preLoaderRoute: typeof AuthenticatedPlatformHealthRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/insurance': {
-      id: '/_authenticated/platform/insurance'
-      path: '/platform/insurance'
-      fullPath: '/platform/insurance'
-      preLoaderRoute: typeof AuthenticatedPlatformInsuranceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/intelligence': {
-      id: '/_authenticated/platform/intelligence'
-      path: '/platform/intelligence'
-      fullPath: '/platform/intelligence'
-      preLoaderRoute: typeof AuthenticatedPlatformIntelligenceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/invoice-failures': {
-      id: '/_authenticated/platform/invoice-failures'
-      path: '/platform/invoice-failures'
-      fullPath: '/platform/invoice-failures'
-      preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/key-metrics': {
-      id: '/_authenticated/platform/key-metrics'
-      path: '/platform/key-metrics'
-      fullPath: '/platform/key-metrics'
-      preLoaderRoute: typeof AuthenticatedPlatformKeyMetricsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/launch-readiness': {
-      id: '/_authenticated/platform/launch-readiness'
-      path: '/platform/launch-readiness'
-      fullPath: '/platform/launch-readiness'
-      preLoaderRoute: typeof AuthenticatedPlatformLaunchReadinessRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/leads': {
-      id: '/_authenticated/platform/leads'
-      path: '/platform/leads'
-      fullPath: '/platform/leads'
-      preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/logs': {
-      id: '/_authenticated/platform/logs'
-      path: '/platform/logs'
-      fullPath: '/platform/logs'
-      preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/marketplace-health': {
-      id: '/_authenticated/platform/marketplace-health'
-      path: '/platform/marketplace-health'
-      fullPath: '/platform/marketplace-health'
-      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceHealthRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/marketplace-mobile': {
-      id: '/_authenticated/platform/marketplace-mobile'
-      path: '/platform/marketplace-mobile'
-      fullPath: '/platform/marketplace-mobile'
-      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceMobileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/marketplace-settings': {
-      id: '/_authenticated/platform/marketplace-settings'
-      path: '/platform/marketplace-settings'
-      fullPath: '/platform/marketplace-settings'
-      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/messages': {
-      id: '/_authenticated/platform/messages'
-      path: '/platform/messages'
-      fullPath: '/platform/messages'
-      preLoaderRoute: typeof AuthenticatedPlatformMessagesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/metrics': {
-      id: '/_authenticated/platform/metrics'
-      path: '/platform/metrics'
-      fullPath: '/platform/metrics'
-      preLoaderRoute: typeof AuthenticatedPlatformMetricsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/mobile-deep-links': {
-      id: '/_authenticated/platform/mobile-deep-links'
-      path: '/platform/mobile-deep-links'
-      fullPath: '/platform/mobile-deep-links'
-      preLoaderRoute: typeof AuthenticatedPlatformMobileDeepLinksRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/mobile-push-diagnostics': {
-      id: '/_authenticated/platform/mobile-push-diagnostics'
-      path: '/platform/mobile-push-diagnostics'
-      fullPath: '/platform/mobile-push-diagnostics'
-      preLoaderRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/mobile-settings': {
-      id: '/_authenticated/platform/mobile-settings'
-      path: '/platform/mobile-settings'
-      fullPath: '/platform/mobile-settings'
-      preLoaderRoute: typeof AuthenticatedPlatformMobileSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/mobile-sync-monitor': {
-      id: '/_authenticated/platform/mobile-sync-monitor'
-      path: '/platform/mobile-sync-monitor'
-      fullPath: '/platform/mobile-sync-monitor'
-      preLoaderRoute: typeof AuthenticatedPlatformMobileSyncMonitorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/monitoring': {
-      id: '/_authenticated/platform/monitoring'
-      path: '/platform/monitoring'
-      fullPath: '/platform/monitoring'
-      preLoaderRoute: typeof AuthenticatedPlatformMonitoringRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/orders': {
-      id: '/_authenticated/platform/orders'
-      path: '/platform/orders'
-      fullPath: '/platform/orders'
-      preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/pipeline': {
-      id: '/_authenticated/platform/pipeline'
-      path: '/platform/pipeline'
-      fullPath: '/platform/pipeline'
-      preLoaderRoute: typeof AuthenticatedPlatformPipelineRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/plans': {
-      id: '/_authenticated/platform/plans'
-      path: '/platform/plans'
-      fullPath: '/platform/plans'
-      preLoaderRoute: typeof AuthenticatedPlatformPlansRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/quality': {
-      id: '/_authenticated/platform/quality'
-      path: '/platform/quality'
-      fullPath: '/platform/quality'
-      preLoaderRoute: typeof AuthenticatedPlatformQualityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/reporting': {
-      id: '/_authenticated/platform/reporting'
-      path: '/platform/reporting'
-      fullPath: '/platform/reporting'
-      preLoaderRoute: typeof AuthenticatedPlatformReportingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/reviews': {
-      id: '/_authenticated/platform/reviews'
-      path: '/platform/reviews'
-      fullPath: '/platform/reviews'
-      preLoaderRoute: typeof AuthenticatedPlatformReviewsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/sellers': {
-      id: '/_authenticated/platform/sellers'
-      path: '/platform/sellers'
-      fullPath: '/platform/sellers'
-      preLoaderRoute: typeof AuthenticatedPlatformSellersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/silo-requests': {
-      id: '/_authenticated/platform/silo-requests'
-      path: '/platform/silo-requests'
-      fullPath: '/platform/silo-requests'
-      preLoaderRoute: typeof AuthenticatedPlatformSiloRequestsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/sla-alerts': {
-      id: '/_authenticated/platform/sla-alerts'
-      path: '/platform/sla-alerts'
-      fullPath: '/platform/sla-alerts'
-      preLoaderRoute: typeof AuthenticatedPlatformSlaAlertsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/tenants': {
-      id: '/_authenticated/platform/tenants'
-      path: '/platform/tenants'
-      fullPath: '/platform/tenants'
-      preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/users': {
-      id: '/_authenticated/platform/users'
-      path: '/platform/users'
-      fullPath: '/platform/users'
-      preLoaderRoute: typeof AuthenticatedPlatformUsersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/notifications': {
-      id: '/_authenticated/settings/notifications'
-      path: '/notifications'
-      fullPath: '/settings/notifications'
-      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
-      parentRoute: typeof AuthenticatedSettingsRoute
-    }
-    '/_authenticated/silos/$siloId': {
-      id: '/_authenticated/silos/$siloId'
-      path: '/silos/$siloId'
-      fullPath: '/silos/$siloId'
-      preLoaderRoute: typeof AuthenticatedSilosSiloIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/suppliers/$supplierId': {
-      id: '/_authenticated/suppliers/$supplierId'
-      path: '/$supplierId'
-      fullPath: '/suppliers/$supplierId'
-      preLoaderRoute: typeof AuthenticatedSuppliersSupplierIdRouteImport
-      parentRoute: typeof AuthenticatedSuppliersRoute
-    }
-    '/_authenticated/technician/installs': {
-      id: '/_authenticated/technician/installs'
-      path: '/technician/installs'
-      fullPath: '/technician/installs'
-      preLoaderRoute: typeof AuthenticatedTechnicianInstallsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/firebase/live-sensors': {
-      id: '/api/firebase/live-sensors'
-      path: '/api/firebase/live-sensors'
-      fullPath: '/api/firebase/live-sensors'
-      preLoaderRoute: typeof ApiFirebaseLiveSensorsRouteImport
+    '/api/public/telemetry': {
+      id: '/api/public/telemetry'
+      path: '/api/public/telemetry'
+      fullPath: '/api/public/telemetry'
+      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/actuator-ack': {
@@ -3317,67 +3022,333 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicActuatorAckRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/telemetry': {
-      id: '/api/public/telemetry'
-      path: '/api/public/telemetry'
-      fullPath: '/api/public/telemetry'
-      preLoaderRoute: typeof ApiPublicTelemetryRouteImport
+    '/api/firebase/live-sensors': {
+      id: '/api/firebase/live-sensors'
+      path: '/api/firebase/live-sensors'
+      fullPath: '/api/firebase/live-sensors'
+      preLoaderRoute: typeof ApiFirebaseLiveSensorsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/marketplace/seller/$adminId': {
-      id: '/marketplace/seller/$adminId'
-      path: '/seller/$adminId'
-      fullPath: '/marketplace/seller/$adminId'
-      preLoaderRoute: typeof MarketplaceSellerAdminIdRouteImport
-      parentRoute: typeof MarketplaceRoute
-    }
-    '/_authenticated/buyer/orders/$orderId': {
-      id: '/_authenticated/buyer/orders/$orderId'
-      path: '/$orderId'
-      fullPath: '/buyer/orders/$orderId'
-      preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
-      parentRoute: typeof AuthenticatedBuyerOrdersRoute
-    }
-    '/_authenticated/insurance-policies/$policyId/documents': {
-      id: '/_authenticated/insurance-policies/$policyId/documents'
-      path: '/insurance-policies/$policyId/documents'
-      fullPath: '/insurance-policies/$policyId/documents'
-      preLoaderRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport
+    '/_authenticated/technician/installs': {
+      id: '/_authenticated/technician/installs'
+      path: '/technician/installs'
+      fullPath: '/technician/installs'
+      preLoaderRoute: typeof AuthenticatedTechnicianInstallsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/manager/field-incidents/': {
-      id: '/_authenticated/manager/field-incidents/'
-      path: '/manager/field-incidents'
-      fullPath: '/manager/field-incidents/'
-      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIndexRouteImport
+    '/_authenticated/suppliers/$supplierId': {
+      id: '/_authenticated/suppliers/$supplierId'
+      path: '/$supplierId'
+      fullPath: '/suppliers/$supplierId'
+      preLoaderRoute: typeof AuthenticatedSuppliersSupplierIdRouteImport
+      parentRoute: typeof AuthenticatedSuppliersRoute
+    }
+    '/_authenticated/silos/$siloId': {
+      id: '/_authenticated/silos/$siloId'
+      path: '/silos/$siloId'
+      fullPath: '/silos/$siloId'
+      preLoaderRoute: typeof AuthenticatedSilosSiloIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/manager/field-incidents/all': {
-      id: '/_authenticated/manager/field-incidents/all'
-      path: '/manager/field-incidents/all'
-      fullPath: '/manager/field-incidents/all'
-      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsAllRouteImport
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/platform/users': {
+      id: '/_authenticated/platform/users'
+      path: '/platform/users'
+      fullPath: '/platform/users'
+      preLoaderRoute: typeof AuthenticatedPlatformUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/manager/field-incidents/dismissed': {
-      id: '/_authenticated/manager/field-incidents/dismissed'
-      path: '/manager/field-incidents/dismissed'
-      fullPath: '/manager/field-incidents/dismissed'
-      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsDismissedRouteImport
+    '/_authenticated/platform/tenants': {
+      id: '/_authenticated/platform/tenants'
+      path: '/platform/tenants'
+      fullPath: '/platform/tenants'
+      preLoaderRoute: typeof AuthenticatedPlatformTenantsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/manager/field-incidents/incoming': {
-      id: '/_authenticated/manager/field-incidents/incoming'
-      path: '/manager/field-incidents/incoming'
-      fullPath: '/manager/field-incidents/incoming'
-      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIncomingRouteImport
+    '/_authenticated/platform/sla-alerts': {
+      id: '/_authenticated/platform/sla-alerts'
+      path: '/platform/sla-alerts'
+      fullPath: '/platform/sla-alerts'
+      preLoaderRoute: typeof AuthenticatedPlatformSlaAlertsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/manager/field-incidents/resolved': {
-      id: '/_authenticated/manager/field-incidents/resolved'
-      path: '/manager/field-incidents/resolved'
-      fullPath: '/manager/field-incidents/resolved'
-      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsResolvedRouteImport
+    '/_authenticated/platform/silo-requests': {
+      id: '/_authenticated/platform/silo-requests'
+      path: '/platform/silo-requests'
+      fullPath: '/platform/silo-requests'
+      preLoaderRoute: typeof AuthenticatedPlatformSiloRequestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/sellers': {
+      id: '/_authenticated/platform/sellers'
+      path: '/platform/sellers'
+      fullPath: '/platform/sellers'
+      preLoaderRoute: typeof AuthenticatedPlatformSellersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/reviews': {
+      id: '/_authenticated/platform/reviews'
+      path: '/platform/reviews'
+      fullPath: '/platform/reviews'
+      preLoaderRoute: typeof AuthenticatedPlatformReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/reporting': {
+      id: '/_authenticated/platform/reporting'
+      path: '/platform/reporting'
+      fullPath: '/platform/reporting'
+      preLoaderRoute: typeof AuthenticatedPlatformReportingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/quality': {
+      id: '/_authenticated/platform/quality'
+      path: '/platform/quality'
+      fullPath: '/platform/quality'
+      preLoaderRoute: typeof AuthenticatedPlatformQualityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/plans': {
+      id: '/_authenticated/platform/plans'
+      path: '/platform/plans'
+      fullPath: '/platform/plans'
+      preLoaderRoute: typeof AuthenticatedPlatformPlansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/pipeline': {
+      id: '/_authenticated/platform/pipeline'
+      path: '/platform/pipeline'
+      fullPath: '/platform/pipeline'
+      preLoaderRoute: typeof AuthenticatedPlatformPipelineRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/orders': {
+      id: '/_authenticated/platform/orders'
+      path: '/platform/orders'
+      fullPath: '/platform/orders'
+      preLoaderRoute: typeof AuthenticatedPlatformOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/monitoring': {
+      id: '/_authenticated/platform/monitoring'
+      path: '/platform/monitoring'
+      fullPath: '/platform/monitoring'
+      preLoaderRoute: typeof AuthenticatedPlatformMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-sync-monitor': {
+      id: '/_authenticated/platform/mobile-sync-monitor'
+      path: '/platform/mobile-sync-monitor'
+      fullPath: '/platform/mobile-sync-monitor'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileSyncMonitorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-settings': {
+      id: '/_authenticated/platform/mobile-settings'
+      path: '/platform/mobile-settings'
+      fullPath: '/platform/mobile-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-push-diagnostics': {
+      id: '/_authenticated/platform/mobile-push-diagnostics'
+      path: '/platform/mobile-push-diagnostics'
+      fullPath: '/platform/mobile-push-diagnostics'
+      preLoaderRoute: typeof AuthenticatedPlatformMobilePushDiagnosticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/mobile-deep-links': {
+      id: '/_authenticated/platform/mobile-deep-links'
+      path: '/platform/mobile-deep-links'
+      fullPath: '/platform/mobile-deep-links'
+      preLoaderRoute: typeof AuthenticatedPlatformMobileDeepLinksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/metrics': {
+      id: '/_authenticated/platform/metrics'
+      path: '/platform/metrics'
+      fullPath: '/platform/metrics'
+      preLoaderRoute: typeof AuthenticatedPlatformMetricsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/messages': {
+      id: '/_authenticated/platform/messages'
+      path: '/platform/messages'
+      fullPath: '/platform/messages'
+      preLoaderRoute: typeof AuthenticatedPlatformMessagesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/marketplace-settings': {
+      id: '/_authenticated/platform/marketplace-settings'
+      path: '/platform/marketplace-settings'
+      fullPath: '/platform/marketplace-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/marketplace-mobile': {
+      id: '/_authenticated/platform/marketplace-mobile'
+      path: '/platform/marketplace-mobile'
+      fullPath: '/platform/marketplace-mobile'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/marketplace-health': {
+      id: '/_authenticated/platform/marketplace-health'
+      path: '/platform/marketplace-health'
+      fullPath: '/platform/marketplace-health'
+      preLoaderRoute: typeof AuthenticatedPlatformMarketplaceHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/logs': {
+      id: '/_authenticated/platform/logs'
+      path: '/platform/logs'
+      fullPath: '/platform/logs'
+      preLoaderRoute: typeof AuthenticatedPlatformLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/leads': {
+      id: '/_authenticated/platform/leads'
+      path: '/platform/leads'
+      fullPath: '/platform/leads'
+      preLoaderRoute: typeof AuthenticatedPlatformLeadsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/launch-readiness': {
+      id: '/_authenticated/platform/launch-readiness'
+      path: '/platform/launch-readiness'
+      fullPath: '/platform/launch-readiness'
+      preLoaderRoute: typeof AuthenticatedPlatformLaunchReadinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/key-metrics': {
+      id: '/_authenticated/platform/key-metrics'
+      path: '/platform/key-metrics'
+      fullPath: '/platform/key-metrics'
+      preLoaderRoute: typeof AuthenticatedPlatformKeyMetricsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/invoice-failures': {
+      id: '/_authenticated/platform/invoice-failures'
+      path: '/platform/invoice-failures'
+      fullPath: '/platform/invoice-failures'
+      preLoaderRoute: typeof AuthenticatedPlatformInvoiceFailuresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/intelligence': {
+      id: '/_authenticated/platform/intelligence'
+      path: '/platform/intelligence'
+      fullPath: '/platform/intelligence'
+      preLoaderRoute: typeof AuthenticatedPlatformIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/insurance': {
+      id: '/_authenticated/platform/insurance'
+      path: '/platform/insurance'
+      fullPath: '/platform/insurance'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/health': {
+      id: '/_authenticated/platform/health'
+      path: '/platform/health'
+      fullPath: '/platform/health'
+      preLoaderRoute: typeof AuthenticatedPlatformHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/financials': {
+      id: '/_authenticated/platform/financials'
+      path: '/platform/financials'
+      fullPath: '/platform/financials'
+      preLoaderRoute: typeof AuthenticatedPlatformFinancialsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/finance': {
+      id: '/_authenticated/platform/finance'
+      path: '/platform/finance'
+      fullPath: '/platform/finance'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-settings': {
+      id: '/_authenticated/platform/field-settings'
+      path: '/platform/field-settings'
+      fullPath: '/platform/field-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/env-health': {
+      id: '/_authenticated/platform/env-health'
+      path: '/platform/env-health'
+      fullPath: '/platform/env-health'
+      preLoaderRoute: typeof AuthenticatedPlatformEnvHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/disputes': {
+      id: '/_authenticated/platform/disputes'
+      path: '/platform/disputes'
+      fullPath: '/platform/disputes'
+      preLoaderRoute: typeof AuthenticatedPlatformDisputesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/dispatch-analytics': {
+      id: '/_authenticated/platform/dispatch-analytics'
+      path: '/platform/dispatch-analytics'
+      fullPath: '/platform/dispatch-analytics'
+      preLoaderRoute: typeof AuthenticatedPlatformDispatchAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/dashboard-builder': {
+      id: '/_authenticated/platform/dashboard-builder'
+      path: '/platform/dashboard-builder'
+      fullPath: '/platform/dashboard-builder'
+      preLoaderRoute: typeof AuthenticatedPlatformDashboardBuilderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/commerce-mobile': {
+      id: '/_authenticated/platform/commerce-mobile'
+      path: '/platform/commerce-mobile'
+      fullPath: '/platform/commerce-mobile'
+      preLoaderRoute: typeof AuthenticatedPlatformCommerceMobileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/business': {
+      id: '/_authenticated/platform/business'
+      path: '/platform/business'
+      fullPath: '/platform/business'
+      preLoaderRoute: typeof AuthenticatedPlatformBusinessRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/audit-logs': {
+      id: '/_authenticated/platform/audit-logs'
+      path: '/platform/audit-logs'
+      fullPath: '/platform/audit-logs'
+      preLoaderRoute: typeof AuthenticatedPlatformAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/insurance-claims/$claimId': {
+      id: '/_authenticated/insurance-claims/$claimId'
+      path: '/insurance-claims/$claimId'
+      fullPath: '/insurance-claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/buyer/orders': {
+      id: '/_authenticated/buyer/orders'
+      path: '/buyer/orders'
+      fullPath: '/buyer/orders'
+      preLoaderRoute: typeof AuthenticatedBuyerOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admins/$adminId': {
+      id: '/_authenticated/admins/$adminId'
+      path: '/admins/$adminId'
+      fullPath: '/admins/$adminId'
+      preLoaderRoute: typeof AuthenticatedAdminsAdminIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/field-incidents/': {
@@ -3387,214 +3358,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/field-incidents/all': {
-      id: '/_authenticated/platform/field-incidents/all'
-      path: '/platform/field-incidents/all'
-      fullPath: '/platform/field-incidents/all'
-      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsAllRouteImport
+    '/_authenticated/manager/field-incidents/': {
+      id: '/_authenticated/manager/field-incidents/'
+      path: '/manager/field-incidents'
+      fullPath: '/manager/field-incidents/'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/field-incidents/dismissed': {
-      id: '/_authenticated/platform/field-incidents/dismissed'
-      path: '/platform/field-incidents/dismissed'
-      fullPath: '/platform/field-incidents/dismissed'
-      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsDismissedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/field-incidents/incoming': {
-      id: '/_authenticated/platform/field-incidents/incoming'
-      path: '/platform/field-incidents/incoming'
-      fullPath: '/platform/field-incidents/incoming'
-      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsIncomingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/field-incidents/resolved': {
-      id: '/_authenticated/platform/field-incidents/resolved'
-      path: '/platform/field-incidents/resolved'
-      fullPath: '/platform/field-incidents/resolved'
-      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsResolvedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/finance/ledger': {
-      id: '/_authenticated/platform/finance/ledger'
-      path: '/ledger'
-      fullPath: '/platform/finance/ledger'
-      preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
-      parentRoute: typeof AuthenticatedPlatformFinanceRoute
-    }
-    '/_authenticated/platform/finance/payouts': {
-      id: '/_authenticated/platform/finance/payouts'
-      path: '/payouts'
-      fullPath: '/platform/finance/payouts'
-      preLoaderRoute: typeof AuthenticatedPlatformFinancePayoutsRouteImport
-      parentRoute: typeof AuthenticatedPlatformFinanceRoute
-    }
-    '/_authenticated/platform/finance/tax-rules': {
-      id: '/_authenticated/platform/finance/tax-rules'
-      path: '/tax-rules'
-      fullPath: '/platform/finance/tax-rules'
-      preLoaderRoute: typeof AuthenticatedPlatformFinanceTaxRulesRouteImport
-      parentRoute: typeof AuthenticatedPlatformFinanceRoute
-    }
-    '/_authenticated/platform/insurance/audit': {
-      id: '/_authenticated/platform/insurance/audit'
-      path: '/audit'
-      fullPath: '/platform/insurance/audit'
-      preLoaderRoute: typeof AuthenticatedPlatformInsuranceAuditRouteImport
-      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
-    }
-    '/_authenticated/platform/insurance/webhooks': {
-      id: '/_authenticated/platform/insurance/webhooks'
-      path: '/webhooks'
-      fullPath: '/platform/insurance/webhooks'
-      preLoaderRoute: typeof AuthenticatedPlatformInsuranceWebhooksRouteImport
-      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
-    }
-    '/_authenticated/platform/logistics/carriers': {
-      id: '/_authenticated/platform/logistics/carriers'
-      path: '/platform/logistics/carriers'
-      fullPath: '/platform/logistics/carriers'
-      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/logistics/command-center': {
-      id: '/_authenticated/platform/logistics/command-center'
-      path: '/platform/logistics/command-center'
-      fullPath: '/platform/logistics/command-center'
-      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/logistics/fleet': {
-      id: '/_authenticated/platform/logistics/fleet'
-      path: '/platform/logistics/fleet'
-      fullPath: '/platform/logistics/fleet'
-      preLoaderRoute: typeof AuthenticatedPlatformLogisticsFleetRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/platform/orders/$orderId': {
-      id: '/_authenticated/platform/orders/$orderId'
-      path: '/$orderId'
-      fullPath: '/platform/orders/$orderId'
-      preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
-      parentRoute: typeof AuthenticatedPlatformOrdersRoute
-    }
-    '/_authenticated/platform/tenants/$adminId': {
-      id: '/_authenticated/platform/tenants/$adminId'
-      path: '/$adminId'
-      fullPath: '/platform/tenants/$adminId'
-      preLoaderRoute: typeof AuthenticatedPlatformTenantsAdminIdRouteImport
-      parentRoute: typeof AuthenticatedPlatformTenantsRoute
-    }
-    '/_authenticated/technician/installs/$installId': {
-      id: '/_authenticated/technician/installs/$installId'
-      path: '/$installId'
-      fullPath: '/technician/installs/$installId'
-      preLoaderRoute: typeof AuthenticatedTechnicianInstallsInstallIdRouteImport
-      parentRoute: typeof AuthenticatedTechnicianInstallsRoute
-    }
-    '/api/public/cron/apply-scheduled-plan-changes': {
-      id: '/api/public/cron/apply-scheduled-plan-changes'
-      path: '/api/public/cron/apply-scheduled-plan-changes'
-      fullPath: '/api/public/cron/apply-scheduled-plan-changes'
-      preLoaderRoute: typeof ApiPublicCronApplyScheduledPlanChangesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/delivery-delay-scan': {
-      id: '/api/public/cron/delivery-delay-scan'
-      path: '/api/public/cron/delivery-delay-scan'
-      fullPath: '/api/public/cron/delivery-delay-scan'
-      preLoaderRoute: typeof ApiPublicCronDeliveryDelayScanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/dispatch-sla-sweep': {
-      id: '/api/public/cron/dispatch-sla-sweep'
-      path: '/api/public/cron/dispatch-sla-sweep'
-      fullPath: '/api/public/cron/dispatch-sla-sweep'
-      preLoaderRoute: typeof ApiPublicCronDispatchSlaSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/driver-license-expiry': {
-      id: '/api/public/cron/driver-license-expiry'
-      path: '/api/public/cron/driver-license-expiry'
-      fullPath: '/api/public/cron/driver-license-expiry'
-      preLoaderRoute: typeof ApiPublicCronDriverLicenseExpiryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/heartbeat-sweep': {
-      id: '/api/public/cron/heartbeat-sweep'
-      path: '/api/public/cron/heartbeat-sweep'
-      fullPath: '/api/public/cron/heartbeat-sweep'
-      preLoaderRoute: typeof ApiPublicCronHeartbeatSweepRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/lifecycle-emails': {
-      id: '/api/public/cron/lifecycle-emails'
-      path: '/api/public/cron/lifecycle-emails'
-      fullPath: '/api/public/cron/lifecycle-emails'
-      preLoaderRoute: typeof ApiPublicCronLifecycleEmailsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/return-auto-approve': {
-      id: '/api/public/cron/return-auto-approve'
-      path: '/api/public/cron/return-auto-approve'
-      fullPath: '/api/public/cron/return-auto-approve'
-      preLoaderRoute: typeof ApiPublicCronReturnAutoApproveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/review-prompts': {
-      id: '/api/public/cron/review-prompts'
-      path: '/api/public/cron/review-prompts'
-      fullPath: '/api/public/cron/review-prompts'
-      preLoaderRoute: typeof ApiPublicCronReviewPromptsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/sla-digest': {
-      id: '/api/public/cron/sla-digest'
-      path: '/api/public/cron/sla-digest'
-      fullPath: '/api/public/cron/sla-digest'
-      preLoaderRoute: typeof ApiPublicCronSlaDigestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/sync-firebase': {
-      id: '/api/public/cron/sync-firebase'
-      path: '/api/public/cron/sync-firebase'
-      fullPath: '/api/public/cron/sync-firebase'
-      preLoaderRoute: typeof ApiPublicCronSyncFirebaseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/alerts-escalation': {
-      id: '/api/public/hooks/alerts-escalation'
-      path: '/api/public/hooks/alerts-escalation'
-      fullPath: '/api/public/hooks/alerts-escalation'
-      preLoaderRoute: typeof ApiPublicHooksAlertsEscalationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/analytics-refresh': {
-      id: '/api/public/hooks/analytics-refresh'
-      path: '/api/public/hooks/analytics-refresh'
-      fullPath: '/api/public/hooks/analytics-refresh'
-      preLoaderRoute: typeof ApiPublicHooksAnalyticsRefreshRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/expiry-reminders': {
-      id: '/api/public/hooks/expiry-reminders'
-      path: '/api/public/hooks/expiry-reminders'
-      fullPath: '/api/public/hooks/expiry-reminders'
-      preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/sensor-offline-detector': {
-      id: '/api/public/hooks/sensor-offline-detector'
-      path: '/api/public/hooks/sensor-offline-detector'
-      fullPath: '/api/public/hooks/sensor-offline-detector'
-      preLoaderRoute: typeof ApiPublicHooksSensorOfflineDetectorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/meta': {
-      id: '/api/public/v1/meta'
-      path: '/api/public/v1/meta'
-      fullPath: '/api/public/v1/meta'
-      preLoaderRoute: typeof ApiPublicV1MetaRouteImport
+    '/api/public/webhooks/stripe': {
+      id: '/api/public/webhooks/stripe'
+      path: '/api/public/webhooks/stripe'
+      fullPath: '/api/public/webhooks/stripe'
+      preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/status': {
@@ -3604,152 +3379,257 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1StatusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/webhooks/stripe': {
-      id: '/api/public/webhooks/stripe'
-      path: '/api/public/webhooks/stripe'
-      fullPath: '/api/public/webhooks/stripe'
-      preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
+    '/api/public/v1/meta': {
+      id: '/api/public/v1/meta'
+      path: '/api/public/v1/meta'
+      fullPath: '/api/public/v1/meta'
+      preLoaderRoute: typeof ApiPublicV1MetaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/platform/insurance/claims/$claimId': {
-      id: '/_authenticated/platform/insurance/claims/$claimId'
-      path: '/claims/$claimId'
-      fullPath: '/platform/insurance/claims/$claimId'
-      preLoaderRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport
+    '/api/public/hooks/sensor-offline-detector': {
+      id: '/api/public/hooks/sensor-offline-detector'
+      path: '/api/public/hooks/sensor-offline-detector'
+      fullPath: '/api/public/hooks/sensor-offline-detector'
+      preLoaderRoute: typeof ApiPublicHooksSensorOfflineDetectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/expiry-reminders': {
+      id: '/api/public/hooks/expiry-reminders'
+      path: '/api/public/hooks/expiry-reminders'
+      fullPath: '/api/public/hooks/expiry-reminders'
+      preLoaderRoute: typeof ApiPublicHooksExpiryRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/analytics-refresh': {
+      id: '/api/public/hooks/analytics-refresh'
+      path: '/api/public/hooks/analytics-refresh'
+      fullPath: '/api/public/hooks/analytics-refresh'
+      preLoaderRoute: typeof ApiPublicHooksAnalyticsRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/alerts-escalation': {
+      id: '/api/public/hooks/alerts-escalation'
+      path: '/api/public/hooks/alerts-escalation'
+      fullPath: '/api/public/hooks/alerts-escalation'
+      preLoaderRoute: typeof ApiPublicHooksAlertsEscalationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/sync-firebase': {
+      id: '/api/public/cron/sync-firebase'
+      path: '/api/public/cron/sync-firebase'
+      fullPath: '/api/public/cron/sync-firebase'
+      preLoaderRoute: typeof ApiPublicCronSyncFirebaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/sla-digest': {
+      id: '/api/public/cron/sla-digest'
+      path: '/api/public/cron/sla-digest'
+      fullPath: '/api/public/cron/sla-digest'
+      preLoaderRoute: typeof ApiPublicCronSlaDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/review-prompts': {
+      id: '/api/public/cron/review-prompts'
+      path: '/api/public/cron/review-prompts'
+      fullPath: '/api/public/cron/review-prompts'
+      preLoaderRoute: typeof ApiPublicCronReviewPromptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/return-auto-approve': {
+      id: '/api/public/cron/return-auto-approve'
+      path: '/api/public/cron/return-auto-approve'
+      fullPath: '/api/public/cron/return-auto-approve'
+      preLoaderRoute: typeof ApiPublicCronReturnAutoApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/lifecycle-emails': {
+      id: '/api/public/cron/lifecycle-emails'
+      path: '/api/public/cron/lifecycle-emails'
+      fullPath: '/api/public/cron/lifecycle-emails'
+      preLoaderRoute: typeof ApiPublicCronLifecycleEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/heartbeat-sweep': {
+      id: '/api/public/cron/heartbeat-sweep'
+      path: '/api/public/cron/heartbeat-sweep'
+      fullPath: '/api/public/cron/heartbeat-sweep'
+      preLoaderRoute: typeof ApiPublicCronHeartbeatSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/driver-license-expiry': {
+      id: '/api/public/cron/driver-license-expiry'
+      path: '/api/public/cron/driver-license-expiry'
+      fullPath: '/api/public/cron/driver-license-expiry'
+      preLoaderRoute: typeof ApiPublicCronDriverLicenseExpiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/dispatch-sla-sweep': {
+      id: '/api/public/cron/dispatch-sla-sweep'
+      path: '/api/public/cron/dispatch-sla-sweep'
+      fullPath: '/api/public/cron/dispatch-sla-sweep'
+      preLoaderRoute: typeof ApiPublicCronDispatchSlaSweepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/delivery-delay-scan': {
+      id: '/api/public/cron/delivery-delay-scan'
+      path: '/api/public/cron/delivery-delay-scan'
+      fullPath: '/api/public/cron/delivery-delay-scan'
+      preLoaderRoute: typeof ApiPublicCronDeliveryDelayScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/apply-scheduled-plan-changes': {
+      id: '/api/public/cron/apply-scheduled-plan-changes'
+      path: '/api/public/cron/apply-scheduled-plan-changes'
+      fullPath: '/api/public/cron/apply-scheduled-plan-changes'
+      preLoaderRoute: typeof ApiPublicCronApplyScheduledPlanChangesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/technician/installs/$installId': {
+      id: '/_authenticated/technician/installs/$installId'
+      path: '/$installId'
+      fullPath: '/technician/installs/$installId'
+      preLoaderRoute: typeof AuthenticatedTechnicianInstallsInstallIdRouteImport
+      parentRoute: typeof AuthenticatedTechnicianInstallsRoute
+    }
+    '/_authenticated/platform/tenants/$adminId': {
+      id: '/_authenticated/platform/tenants/$adminId'
+      path: '/$adminId'
+      fullPath: '/platform/tenants/$adminId'
+      preLoaderRoute: typeof AuthenticatedPlatformTenantsAdminIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformTenantsRoute
+    }
+    '/_authenticated/platform/orders/$orderId': {
+      id: '/_authenticated/platform/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/platform/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformOrdersRoute
+    }
+    '/_authenticated/platform/logistics/fleet': {
+      id: '/_authenticated/platform/logistics/fleet'
+      path: '/platform/logistics/fleet'
+      fullPath: '/platform/logistics/fleet'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsFleetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/logistics/command-center': {
+      id: '/_authenticated/platform/logistics/command-center'
+      path: '/platform/logistics/command-center'
+      fullPath: '/platform/logistics/command-center'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/logistics/carriers': {
+      id: '/_authenticated/platform/logistics/carriers'
+      path: '/platform/logistics/carriers'
+      fullPath: '/platform/logistics/carriers'
+      preLoaderRoute: typeof AuthenticatedPlatformLogisticsCarriersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/insurance/webhooks': {
+      id: '/_authenticated/platform/insurance/webhooks'
+      path: '/webhooks'
+      fullPath: '/platform/insurance/webhooks'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceWebhooksRouteImport
       parentRoute: typeof AuthenticatedPlatformInsuranceRoute
     }
-    '/_authenticated/platform/orders/$orderId/audit': {
-      id: '/_authenticated/platform/orders/$orderId/audit'
+    '/_authenticated/platform/insurance/audit': {
+      id: '/_authenticated/platform/insurance/audit'
       path: '/audit'
-      fullPath: '/platform/orders/$orderId/audit'
-      preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdAuditRouteImport
-      parentRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
+      fullPath: '/platform/insurance/audit'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceAuditRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
     }
-    '/api/public/v1/actions/ack-alert': {
-      id: '/api/public/v1/actions/ack-alert'
-      path: '/api/public/v1/actions/ack-alert'
-      fullPath: '/api/public/v1/actions/ack-alert'
-      preLoaderRoute: typeof ApiPublicV1ActionsAckAlertRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/platform/finance/tax-rules': {
+      id: '/_authenticated/platform/finance/tax-rules'
+      path: '/tax-rules'
+      fullPath: '/platform/finance/tax-rules'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceTaxRulesRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
     }
-    '/api/public/v1/actions/confirm-delivery': {
-      id: '/api/public/v1/actions/confirm-delivery'
-      path: '/api/public/v1/actions/confirm-delivery'
-      fullPath: '/api/public/v1/actions/confirm-delivery'
-      preLoaderRoute: typeof ApiPublicV1ActionsConfirmDeliveryRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/platform/finance/payouts': {
+      id: '/_authenticated/platform/finance/payouts'
+      path: '/payouts'
+      fullPath: '/platform/finance/payouts'
+      preLoaderRoute: typeof AuthenticatedPlatformFinancePayoutsRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
     }
-    '/api/public/v1/actions/install-step': {
-      id: '/api/public/v1/actions/install-step'
-      path: '/api/public/v1/actions/install-step'
-      fullPath: '/api/public/v1/actions/install-step'
-      preLoaderRoute: typeof ApiPublicV1ActionsInstallStepRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/platform/finance/ledger': {
+      id: '/_authenticated/platform/finance/ledger'
+      path: '/ledger'
+      fullPath: '/platform/finance/ledger'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
     }
-    '/api/public/v1/actions/replay': {
-      id: '/api/public/v1/actions/replay'
-      path: '/api/public/v1/actions/replay'
-      fullPath: '/api/public/v1/actions/replay'
-      preLoaderRoute: typeof ApiPublicV1ActionsReplayRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/platform/field-incidents/resolved': {
+      id: '/_authenticated/platform/field-incidents/resolved'
+      path: '/platform/field-incidents/resolved'
+      fullPath: '/platform/field-incidents/resolved'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsResolvedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/auth/accept-invite': {
-      id: '/api/public/v1/auth/accept-invite'
-      path: '/api/public/v1/auth/accept-invite'
-      fullPath: '/api/public/v1/auth/accept-invite'
-      preLoaderRoute: typeof ApiPublicV1AuthAcceptInviteRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/platform/field-incidents/incoming': {
+      id: '/_authenticated/platform/field-incidents/incoming'
+      path: '/platform/field-incidents/incoming'
+      fullPath: '/platform/field-incidents/incoming'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/auth/validate-invitation': {
-      id: '/api/public/v1/auth/validate-invitation'
-      path: '/api/public/v1/auth/validate-invitation'
-      fullPath: '/api/public/v1/auth/validate-invitation'
-      preLoaderRoute: typeof ApiPublicV1AuthValidateInvitationRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/platform/field-incidents/dismissed': {
+      id: '/_authenticated/platform/field-incidents/dismissed'
+      path: '/platform/field-incidents/dismissed'
+      fullPath: '/platform/field-incidents/dismissed'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsDismissedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/commerce/addresses': {
-      id: '/api/public/v1/commerce/addresses'
-      path: '/api/public/v1/commerce/addresses'
-      fullPath: '/api/public/v1/commerce/addresses'
-      preLoaderRoute: typeof ApiPublicV1CommerceAddressesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/platform/field-incidents/all': {
+      id: '/_authenticated/platform/field-incidents/all'
+      path: '/platform/field-incidents/all'
+      fullPath: '/platform/field-incidents/all'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsAllRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/commerce/cart': {
-      id: '/api/public/v1/commerce/cart'
-      path: '/api/public/v1/commerce/cart'
-      fullPath: '/api/public/v1/commerce/cart'
-      preLoaderRoute: typeof ApiPublicV1CommerceCartRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/manager/field-incidents/resolved': {
+      id: '/_authenticated/manager/field-incidents/resolved'
+      path: '/manager/field-incidents/resolved'
+      fullPath: '/manager/field-incidents/resolved'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsResolvedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/commerce/checkout': {
-      id: '/api/public/v1/commerce/checkout'
-      path: '/api/public/v1/commerce/checkout'
-      fullPath: '/api/public/v1/commerce/checkout'
-      preLoaderRoute: typeof ApiPublicV1CommerceCheckoutRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/manager/field-incidents/incoming': {
+      id: '/_authenticated/manager/field-incidents/incoming'
+      path: '/manager/field-incidents/incoming'
+      fullPath: '/manager/field-incidents/incoming'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/commerce/config': {
-      id: '/api/public/v1/commerce/config'
-      path: '/api/public/v1/commerce/config'
-      fullPath: '/api/public/v1/commerce/config'
-      preLoaderRoute: typeof ApiPublicV1CommerceConfigRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/manager/field-incidents/dismissed': {
+      id: '/_authenticated/manager/field-incidents/dismissed'
+      path: '/manager/field-incidents/dismissed'
+      fullPath: '/manager/field-incidents/dismissed'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsDismissedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/commerce/orders': {
-      id: '/api/public/v1/commerce/orders'
-      path: '/api/public/v1/commerce/orders'
-      fullPath: '/api/public/v1/commerce/orders'
-      preLoaderRoute: typeof ApiPublicV1CommerceOrdersRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/manager/field-incidents/all': {
+      id: '/_authenticated/manager/field-incidents/all'
+      path: '/manager/field-incidents/all'
+      fullPath: '/manager/field-incidents/all'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsAllRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/commerce/quote': {
-      id: '/api/public/v1/commerce/quote'
-      path: '/api/public/v1/commerce/quote'
-      fullPath: '/api/public/v1/commerce/quote'
-      preLoaderRoute: typeof ApiPublicV1CommerceQuoteRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/insurance-policies/$policyId/documents': {
+      id: '/_authenticated/insurance-policies/$policyId/documents'
+      path: '/insurance-policies/$policyId/documents'
+      fullPath: '/insurance-policies/$policyId/documents'
+      preLoaderRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/v1/deeplink/$key': {
-      id: '/api/public/v1/deeplink/$key'
-      path: '/api/public/v1/deeplink/$key'
-      fullPath: '/api/public/v1/deeplink/$key'
-      preLoaderRoute: typeof ApiPublicV1DeeplinkKeyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/devices/heartbeat': {
-      id: '/api/public/v1/devices/heartbeat'
-      path: '/api/public/v1/devices/heartbeat'
-      fullPath: '/api/public/v1/devices/heartbeat'
-      preLoaderRoute: typeof ApiPublicV1DevicesHeartbeatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/devices/register': {
-      id: '/api/public/v1/devices/register'
-      path: '/api/public/v1/devices/register'
-      fullPath: '/api/public/v1/devices/register'
-      preLoaderRoute: typeof ApiPublicV1DevicesRegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/devices/revoke': {
-      id: '/api/public/v1/devices/revoke'
-      path: '/api/public/v1/devices/revoke'
-      fullPath: '/api/public/v1/devices/revoke'
-      preLoaderRoute: typeof ApiPublicV1DevicesRevokeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/field/bundle': {
-      id: '/api/public/v1/field/bundle'
-      path: '/api/public/v1/field/bundle'
-      fullPath: '/api/public/v1/field/bundle'
-      preLoaderRoute: typeof ApiPublicV1FieldBundleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/field/mutations': {
-      id: '/api/public/v1/field/mutations'
-      path: '/api/public/v1/field/mutations'
-      fullPath: '/api/public/v1/field/mutations'
-      preLoaderRoute: typeof ApiPublicV1FieldMutationsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/buyer/orders/$orderId': {
+      id: '/_authenticated/buyer/orders/$orderId'
+      path: '/$orderId'
+      fullPath: '/buyer/orders/$orderId'
+      preLoaderRoute: typeof AuthenticatedBuyerOrdersOrderIdRouteImport
+      parentRoute: typeof AuthenticatedBuyerOrdersRoute
     }
     '/api/public/v1/notifications/': {
       id: '/api/public/v1/notifications/'
@@ -3758,102 +3638,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1NotificationsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/v1/notifications/preferences': {
-      id: '/api/public/v1/notifications/preferences'
-      path: '/api/public/v1/notifications/preferences'
-      fullPath: '/api/public/v1/notifications/preferences'
-      preLoaderRoute: typeof ApiPublicV1NotificationsPreferencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/notifications/read': {
-      id: '/api/public/v1/notifications/read'
-      path: '/api/public/v1/notifications/read'
-      fullPath: '/api/public/v1/notifications/read'
-      preLoaderRoute: typeof ApiPublicV1NotificationsReadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/alerts': {
-      id: '/api/public/v1/sync/alerts'
-      path: '/api/public/v1/sync/alerts'
-      fullPath: '/api/public/v1/sync/alerts'
-      preLoaderRoute: typeof ApiPublicV1SyncAlertsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/buyer-orders': {
-      id: '/api/public/v1/sync/buyer-orders'
-      path: '/api/public/v1/sync/buyer-orders'
-      fullPath: '/api/public/v1/sync/buyer-orders'
-      preLoaderRoute: typeof ApiPublicV1SyncBuyerOrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/buyer-summary': {
-      id: '/api/public/v1/sync/buyer-summary'
-      path: '/api/public/v1/sync/buyer-summary'
-      fullPath: '/api/public/v1/sync/buyer-summary'
-      preLoaderRoute: typeof ApiPublicV1SyncBuyerSummaryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/field-incidents': {
-      id: '/api/public/v1/sync/field-incidents'
-      path: '/api/public/v1/sync/field-incidents'
-      fullPath: '/api/public/v1/sync/field-incidents'
-      preLoaderRoute: typeof ApiPublicV1SyncFieldIncidentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/field-tasks': {
-      id: '/api/public/v1/sync/field-tasks'
-      path: '/api/public/v1/sync/field-tasks'
-      fullPath: '/api/public/v1/sync/field-tasks'
-      preLoaderRoute: typeof ApiPublicV1SyncFieldTasksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/hardware-orders': {
-      id: '/api/public/v1/sync/hardware-orders'
-      path: '/api/public/v1/sync/hardware-orders'
-      fullPath: '/api/public/v1/sync/hardware-orders'
-      preLoaderRoute: typeof ApiPublicV1SyncHardwareOrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/marketplace': {
-      id: '/api/public/v1/sync/marketplace'
-      path: '/api/public/v1/sync/marketplace'
-      fullPath: '/api/public/v1/sync/marketplace'
-      preLoaderRoute: typeof ApiPublicV1SyncMarketplaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/notifications': {
-      id: '/api/public/v1/sync/notifications'
-      path: '/api/public/v1/sync/notifications'
-      fullPath: '/api/public/v1/sync/notifications'
-      preLoaderRoute: typeof ApiPublicV1SyncNotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/sensors': {
-      id: '/api/public/v1/sync/sensors'
-      path: '/api/public/v1/sync/sensors'
-      fullPath: '/api/public/v1/sync/sensors'
-      preLoaderRoute: typeof ApiPublicV1SyncSensorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/silos': {
-      id: '/api/public/v1/sync/silos'
-      path: '/api/public/v1/sync/silos'
-      fullPath: '/api/public/v1/sync/silos'
-      preLoaderRoute: typeof ApiPublicV1SyncSilosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/sync/silos-cockpit': {
-      id: '/api/public/v1/sync/silos-cockpit'
-      path: '/api/public/v1/sync/silos-cockpit'
-      fullPath: '/api/public/v1/sync/silos-cockpit'
-      preLoaderRoute: typeof ApiPublicV1SyncSilosCockpitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/v1/uploads/sign': {
-      id: '/api/public/v1/uploads/sign'
-      path: '/api/public/v1/uploads/sign'
-      fullPath: '/api/public/v1/uploads/sign'
-      preLoaderRoute: typeof ApiPublicV1UploadsSignRouteImport
+    '/api/public/webhooks/insurance/$carrierCode': {
+      id: '/api/public/webhooks/insurance/$carrierCode'
+      path: '/api/public/webhooks/insurance/$carrierCode'
+      fullPath: '/api/public/webhooks/insurance/$carrierCode'
+      preLoaderRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhooks/carrier/$carrierCode': {
@@ -3863,12 +3652,243 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksCarrierCarrierCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/webhooks/insurance/$carrierCode': {
-      id: '/api/public/webhooks/insurance/$carrierCode'
-      path: '/api/public/webhooks/insurance/$carrierCode'
-      fullPath: '/api/public/webhooks/insurance/$carrierCode'
-      preLoaderRoute: typeof ApiPublicWebhooksInsuranceCarrierCodeRouteImport
+    '/api/public/v1/uploads/sign': {
+      id: '/api/public/v1/uploads/sign'
+      path: '/api/public/v1/uploads/sign'
+      fullPath: '/api/public/v1/uploads/sign'
+      preLoaderRoute: typeof ApiPublicV1UploadsSignRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/silos-cockpit': {
+      id: '/api/public/v1/sync/silos-cockpit'
+      path: '/api/public/v1/sync/silos-cockpit'
+      fullPath: '/api/public/v1/sync/silos-cockpit'
+      preLoaderRoute: typeof ApiPublicV1SyncSilosCockpitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/silos': {
+      id: '/api/public/v1/sync/silos'
+      path: '/api/public/v1/sync/silos'
+      fullPath: '/api/public/v1/sync/silos'
+      preLoaderRoute: typeof ApiPublicV1SyncSilosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/sensors': {
+      id: '/api/public/v1/sync/sensors'
+      path: '/api/public/v1/sync/sensors'
+      fullPath: '/api/public/v1/sync/sensors'
+      preLoaderRoute: typeof ApiPublicV1SyncSensorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/notifications': {
+      id: '/api/public/v1/sync/notifications'
+      path: '/api/public/v1/sync/notifications'
+      fullPath: '/api/public/v1/sync/notifications'
+      preLoaderRoute: typeof ApiPublicV1SyncNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/marketplace': {
+      id: '/api/public/v1/sync/marketplace'
+      path: '/api/public/v1/sync/marketplace'
+      fullPath: '/api/public/v1/sync/marketplace'
+      preLoaderRoute: typeof ApiPublicV1SyncMarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/hardware-orders': {
+      id: '/api/public/v1/sync/hardware-orders'
+      path: '/api/public/v1/sync/hardware-orders'
+      fullPath: '/api/public/v1/sync/hardware-orders'
+      preLoaderRoute: typeof ApiPublicV1SyncHardwareOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/field-tasks': {
+      id: '/api/public/v1/sync/field-tasks'
+      path: '/api/public/v1/sync/field-tasks'
+      fullPath: '/api/public/v1/sync/field-tasks'
+      preLoaderRoute: typeof ApiPublicV1SyncFieldTasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/field-incidents': {
+      id: '/api/public/v1/sync/field-incidents'
+      path: '/api/public/v1/sync/field-incidents'
+      fullPath: '/api/public/v1/sync/field-incidents'
+      preLoaderRoute: typeof ApiPublicV1SyncFieldIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/buyer-summary': {
+      id: '/api/public/v1/sync/buyer-summary'
+      path: '/api/public/v1/sync/buyer-summary'
+      fullPath: '/api/public/v1/sync/buyer-summary'
+      preLoaderRoute: typeof ApiPublicV1SyncBuyerSummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/buyer-orders': {
+      id: '/api/public/v1/sync/buyer-orders'
+      path: '/api/public/v1/sync/buyer-orders'
+      fullPath: '/api/public/v1/sync/buyer-orders'
+      preLoaderRoute: typeof ApiPublicV1SyncBuyerOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sync/alerts': {
+      id: '/api/public/v1/sync/alerts'
+      path: '/api/public/v1/sync/alerts'
+      fullPath: '/api/public/v1/sync/alerts'
+      preLoaderRoute: typeof ApiPublicV1SyncAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/notifications/read': {
+      id: '/api/public/v1/notifications/read'
+      path: '/api/public/v1/notifications/read'
+      fullPath: '/api/public/v1/notifications/read'
+      preLoaderRoute: typeof ApiPublicV1NotificationsReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/notifications/preferences': {
+      id: '/api/public/v1/notifications/preferences'
+      path: '/api/public/v1/notifications/preferences'
+      fullPath: '/api/public/v1/notifications/preferences'
+      preLoaderRoute: typeof ApiPublicV1NotificationsPreferencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/field/mutations': {
+      id: '/api/public/v1/field/mutations'
+      path: '/api/public/v1/field/mutations'
+      fullPath: '/api/public/v1/field/mutations'
+      preLoaderRoute: typeof ApiPublicV1FieldMutationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/field/bundle': {
+      id: '/api/public/v1/field/bundle'
+      path: '/api/public/v1/field/bundle'
+      fullPath: '/api/public/v1/field/bundle'
+      preLoaderRoute: typeof ApiPublicV1FieldBundleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/revoke': {
+      id: '/api/public/v1/devices/revoke'
+      path: '/api/public/v1/devices/revoke'
+      fullPath: '/api/public/v1/devices/revoke'
+      preLoaderRoute: typeof ApiPublicV1DevicesRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/register': {
+      id: '/api/public/v1/devices/register'
+      path: '/api/public/v1/devices/register'
+      fullPath: '/api/public/v1/devices/register'
+      preLoaderRoute: typeof ApiPublicV1DevicesRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/heartbeat': {
+      id: '/api/public/v1/devices/heartbeat'
+      path: '/api/public/v1/devices/heartbeat'
+      fullPath: '/api/public/v1/devices/heartbeat'
+      preLoaderRoute: typeof ApiPublicV1DevicesHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/deeplink/$key': {
+      id: '/api/public/v1/deeplink/$key'
+      path: '/api/public/v1/deeplink/$key'
+      fullPath: '/api/public/v1/deeplink/$key'
+      preLoaderRoute: typeof ApiPublicV1DeeplinkKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/quote': {
+      id: '/api/public/v1/commerce/quote'
+      path: '/api/public/v1/commerce/quote'
+      fullPath: '/api/public/v1/commerce/quote'
+      preLoaderRoute: typeof ApiPublicV1CommerceQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/orders': {
+      id: '/api/public/v1/commerce/orders'
+      path: '/api/public/v1/commerce/orders'
+      fullPath: '/api/public/v1/commerce/orders'
+      preLoaderRoute: typeof ApiPublicV1CommerceOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/config': {
+      id: '/api/public/v1/commerce/config'
+      path: '/api/public/v1/commerce/config'
+      fullPath: '/api/public/v1/commerce/config'
+      preLoaderRoute: typeof ApiPublicV1CommerceConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/checkout': {
+      id: '/api/public/v1/commerce/checkout'
+      path: '/api/public/v1/commerce/checkout'
+      fullPath: '/api/public/v1/commerce/checkout'
+      preLoaderRoute: typeof ApiPublicV1CommerceCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/cart': {
+      id: '/api/public/v1/commerce/cart'
+      path: '/api/public/v1/commerce/cart'
+      fullPath: '/api/public/v1/commerce/cart'
+      preLoaderRoute: typeof ApiPublicV1CommerceCartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/commerce/addresses': {
+      id: '/api/public/v1/commerce/addresses'
+      path: '/api/public/v1/commerce/addresses'
+      fullPath: '/api/public/v1/commerce/addresses'
+      preLoaderRoute: typeof ApiPublicV1CommerceAddressesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/validate-invitation': {
+      id: '/api/public/v1/auth/validate-invitation'
+      path: '/api/public/v1/auth/validate-invitation'
+      fullPath: '/api/public/v1/auth/validate-invitation'
+      preLoaderRoute: typeof ApiPublicV1AuthValidateInvitationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/accept-invite': {
+      id: '/api/public/v1/auth/accept-invite'
+      path: '/api/public/v1/auth/accept-invite'
+      fullPath: '/api/public/v1/auth/accept-invite'
+      preLoaderRoute: typeof ApiPublicV1AuthAcceptInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/replay': {
+      id: '/api/public/v1/actions/replay'
+      path: '/api/public/v1/actions/replay'
+      fullPath: '/api/public/v1/actions/replay'
+      preLoaderRoute: typeof ApiPublicV1ActionsReplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/install-step': {
+      id: '/api/public/v1/actions/install-step'
+      path: '/api/public/v1/actions/install-step'
+      fullPath: '/api/public/v1/actions/install-step'
+      preLoaderRoute: typeof ApiPublicV1ActionsInstallStepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/confirm-delivery': {
+      id: '/api/public/v1/actions/confirm-delivery'
+      path: '/api/public/v1/actions/confirm-delivery'
+      fullPath: '/api/public/v1/actions/confirm-delivery'
+      preLoaderRoute: typeof ApiPublicV1ActionsConfirmDeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/actions/ack-alert': {
+      id: '/api/public/v1/actions/ack-alert'
+      path: '/api/public/v1/actions/ack-alert'
+      fullPath: '/api/public/v1/actions/ack-alert'
+      preLoaderRoute: typeof ApiPublicV1ActionsAckAlertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/platform/orders/$orderId/audit': {
+      id: '/_authenticated/platform/orders/$orderId/audit'
+      path: '/audit'
+      fullPath: '/platform/orders/$orderId/audit'
+      preLoaderRoute: typeof AuthenticatedPlatformOrdersOrderIdAuditRouteImport
+      parentRoute: typeof AuthenticatedPlatformOrdersOrderIdRoute
+    }
+    '/_authenticated/platform/insurance/claims/$claimId': {
+      id: '/_authenticated/platform/insurance/claims/$claimId'
+      path: '/claims/$claimId'
+      fullPath: '/platform/insurance/claims/$claimId'
+      preLoaderRoute: typeof AuthenticatedPlatformInsuranceClaimsClaimIdRouteImport
+      parentRoute: typeof AuthenticatedPlatformInsuranceRoute
     }
     '/api/public/v1/commerce/orders/$orderId': {
       id: '/api/public/v1/commerce/orders/$orderId'
@@ -4070,6 +4090,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
+  AuthenticatedPlatformEnvHealthRoute: typeof AuthenticatedPlatformEnvHealthRoute
   AuthenticatedPlatformFieldSettingsRoute: typeof AuthenticatedPlatformFieldSettingsRoute
   AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
@@ -4170,6 +4191,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
+  AuthenticatedPlatformEnvHealthRoute: AuthenticatedPlatformEnvHealthRoute,
   AuthenticatedPlatformFieldSettingsRoute:
     AuthenticatedPlatformFieldSettingsRoute,
   AuthenticatedPlatformFinanceRoute:
@@ -4406,13 +4428,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

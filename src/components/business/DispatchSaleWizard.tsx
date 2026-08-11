@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listSiloAvailableBatches, createDispatchFromSilo, approveDispatch } from "@/lib/dispatches.functions";
+import { listSiloAvailableBatches, createDispatchFromSilo, createDispatchPhotoUploadUrl, approveDispatch } from "@/lib/dispatches.functions";
 import { createDispatchInvoice, recordDispatchPayment, createReceiptUploadUrl } from "@/lib/dispatch-sales.functions";
 import { listBuyers, listSilos } from "@/lib/operations.functions";
 import { extractPaymentDetails, type ExtractedPaymentDetails } from "@/lib/ocr-service";
@@ -40,9 +40,13 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const [vehicle, setVehicle] = useState("");
   const [driverName, setDriverName] = useState("");
   const [driverContact, setDriverContact] = useState("");
+  const [driverCnic, setDriverCnic] = useState("");
   const [destination, setDestination] = useState("");
   const [expected, setExpected] = useState("");
   const [notes, setNotes] = useState("");
+  const [dispatchPhotoFile, setDispatchPhotoFile] = useState<File | null>(null);
+  const [dispatchPhotoPath, setDispatchPhotoPath] = useState<string | null>(null);
+  const [dispatchPhotoUploading, setDispatchPhotoUploading] = useState(false);
 
   // --- result state carried across steps ---
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
@@ -56,14 +60,22 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const [ocrBusy, setOcrBusy] = useState(false);
   const [extracted, setExtracted] = useState<ExtractedPaymentDetails | null>(null);
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  // OCR is best-effort auto-fill — when it errors out or can't find an amount,
+  // fall back to letting the admin type the details in instead of hard-blocking.
+  const [ocrFailed, setOcrFailed] = useState(false);
+  const [manualAmount, setManualAmount] = useState("");
+  const [manualReference, setManualReference] = useState("");
+  const [manualDate, setManualDate] = useState("");
 
   useEffect(() => {
     if (open) {
       setStep("details"); setSiloId(""); setGrainType(""); setBuyerId(""); setNewBuyer("");
-      setQty(""); setPrice(""); setVehicle(""); setDriverName(""); setDriverContact("");
+      setQty(""); setPrice(""); setVehicle(""); setDriverName(""); setDriverContact(""); setDriverCnic("");
       setDestination(""); setExpected(""); setNotes("");
+      setDispatchPhotoFile(null); setDispatchPhotoPath(null);
       setInvoiceId(null); setInvoiceNumber(null); setDispatchId(null); setDispatchNumber(null);
       setDispatchApproved(false); setReceiptFile(null); setExtracted(null); setReceiptPath(null);
+      setOcrFailed(false); setManualAmount(""); setManualReference(""); setManualDate("");
     }
   }, [open]);
 
@@ -72,6 +84,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const listBuyersFn = useServerFn(listBuyers);
   const createInvoiceFn = useServerFn(createDispatchInvoice);
   const createDispatchFn = useServerFn(createDispatchFromSilo);
+  const signDispatchPhotoFn = useServerFn(createDispatchPhotoUploadUrl);
   const approveFn = useServerFn(approveDispatch);
   const signUploadFn = useServerFn(createReceiptUploadUrl);
   const recordPaymentFn = useServerFn(recordDispatchPayment);
@@ -97,11 +110,23 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const detailsValid = !!siloId && !!grainType && qtyNum > 0 && priceNum > 0 && (!!buyerId || !!newBuyer.trim());
 
   const invoiceMut = useMutation({
-    mutationFn: () => createInvoiceFn({ data: {
-      buyerId: buyerId || null,
-      newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
-      grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency, notes: notes || null,
-    } }),
+    mutationFn: () => {
+      // Validated here (not via a disabled button) so a missing/invalid field
+      // always produces a clear toast instead of the button silently doing
+      // nothing — same pattern as the silo-card DispatchDialog's mutationFn.
+      if (!siloId) throw new Error("Pick a silo first");
+      if (batches.length === 0) throw new Error("This silo has no available stock to invoice");
+      if (!grainType) throw new Error("Pick a grain type");
+      if (!(qtyNum > 0)) throw new Error("Enter a valid quantity greater than 0");
+      if (qtyNum > available) throw new Error(`Only ${available.toLocaleString()} kg of ${grainType} available in this silo`);
+      if (!(priceNum > 0)) throw new Error("Enter a valid price greater than 0");
+      if (!buyerId && !newBuyer.trim()) throw new Error("Pick a buyer or enter a new buyer name");
+      return createInvoiceFn({ data: {
+        buyerId: buyerId || null,
+        newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
+        grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency, notes: notes || null,
+      } });
+    },
     onSuccess: (r) => {
       setInvoiceId(r.id); setInvoiceNumber(r.invoiceNumber);
       if (r.buyerId) setBuyerId(r.buyerId);
@@ -111,6 +136,25 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
     onError: (e: Error) => toast.error(e.message),
   });
 
+  async function handleDispatchPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setDispatchPhotoFile(f);
+    setDispatchPhotoUploading(true);
+    try {
+      const signed = await signDispatchPhotoFn({ data: { filename: f.name } });
+      const up = await supabase.storage.from("dispatch-photos").uploadToSignedUrl(signed.path, signed.token, f);
+      if (up.error) throw up.error;
+      setDispatchPhotoPath(signed.path);
+    } catch (err) {
+      toast.error((err as Error).message || "Photo upload failed");
+      setDispatchPhotoFile(null);
+    } finally {
+      setDispatchPhotoUploading(false);
+      e.target.value = "";
+    }
+  }
+
   const dispatchMut = useMutation({
     mutationFn: () => createDispatchFn({ data: {
       siloId, grainType, qtyKg: qtyNum, pricePerKg: priceNum, currency,
@@ -118,6 +162,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
       newBuyer: !buyerId && newBuyer.trim() ? { name: newBuyer.trim() } : null,
       invoiceId: invoiceId,
       vehicleNumber: vehicle || null, driverName: driverName || null, driverContact: driverContact || null,
+      driverCnic: driverCnic || null, dispatchPhotoPath: dispatchPhotoPath,
       destination: destination || null, notes: notes || null, expectedDate: expected || null,
       stage: "staged",
     } }),
@@ -146,17 +191,28 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
     if (!f || !dispatchId) return;
     setReceiptFile(f);
     setExtracted(null);
+    setOcrFailed(false);
+    setManualAmount(""); setManualReference(""); setManualDate("");
     setOcrBusy(true);
     try {
-      const [ocrResult, signed] = await Promise.all([
-        extractPaymentDetails(f),
-        signUploadFn({ data: { dispatchId, filename: f.name } }),
-      ]);
+      // Upload first, independent of OCR — a receipt the admin picked should
+      // still get attached to the payment even if the OCR pass below fails.
+      const signed = await signUploadFn({ data: { dispatchId, filename: f.name } });
       const up = await supabase.storage.from("payment-receipts").uploadToSignedUrl(signed.path, signed.token, f);
       if (up.error) throw up.error;
       setReceiptPath(signed.path);
-      setExtracted(ocrResult);
-      if (!ocrResult.amount) toast.warning("Couldn't detect an amount on this receipt — try a clearer photo");
+
+      try {
+        const ocrResult = await extractPaymentDetails(f);
+        setExtracted(ocrResult);
+        if (!ocrResult.amount) {
+          setOcrFailed(true);
+          toast.warning("Couldn't detect an amount on this receipt — enter it manually below");
+        }
+      } catch {
+        setOcrFailed(true);
+        toast.warning("Couldn't scan this receipt automatically — enter the details manually below");
+      }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -165,17 +221,26 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
     }
   }
 
+  const manualAmountNum = Number(manualAmount) || 0;
+  const effectiveAmount = extracted?.amount ?? (manualAmountNum > 0 ? manualAmountNum : null);
+
   const paymentMut = useMutation({
     mutationFn: () => {
-      if (!extracted?.amount) throw new Error("No amount extracted from receipt");
+      if (!effectiveAmount) throw new Error("Enter a payment amount");
       return recordPaymentFn({ data: {
         dispatchId: dispatchId!,
-        amount: extracted.amount,
+        amount: effectiveAmount,
         paymentMethod: "bank_transfer",
-        paymentReference: extracted.paymentId,
-        paymentDate: extracted.date ? new Date(extracted.date).toISOString() : null,
+        paymentReference: extracted?.paymentId ?? (manualReference.trim() || null),
+        paymentDate: extracted?.date
+          ? new Date(extracted.date).toISOString()
+          : manualDate
+            ? new Date(manualDate).toISOString()
+            : null,
         receiptUrl: receiptPath,
-        ocrExtracted: { paymentId: extracted.paymentId, amount: extracted.amount, date: extracted.date, confidence: extracted.confidence },
+        ocrExtracted: extracted
+          ? { paymentId: extracted.paymentId, amount: extracted.amount, date: extracted.date, confidence: extracted.confidence }
+          : { manualEntry: true, amount: effectiveAmount },
       } });
     },
     onSuccess: () => {
@@ -254,9 +319,21 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Input className="h-9" placeholder="Driver phone" value={driverContact} onChange={(e) => setDriverContact(e.target.value)} />
-              <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
+              <Input className="h-9" placeholder="Driver CNIC" value={driverCnic} onChange={(e) => setDriverCnic(e.target.value)} />
             </div>
+            <Input className="h-9" placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
             <Textarea rows={2} placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+            <div>
+              <Label className="text-xs">Dispatch / truck photo (optional)</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <label className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs cursor-pointer hover:border-emerald-500/50">
+                  <Upload className="h-3.5 w-3.5" /> {dispatchPhotoFile ? dispatchPhotoFile.name : "Choose photo…"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleDispatchPhotoChange} disabled={dispatchPhotoUploading} />
+                </label>
+                {dispatchPhotoUploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+              </div>
+            </div>
 
             {qtyNum > 0 && priceNum > 0 && (
               <div className="rounded-lg border bg-muted/30 p-3 text-xs space-y-1">
@@ -321,6 +398,28 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
                 <div className="flex justify-between"><span className="text-muted-foreground">OCR confidence</span><span>{extracted.confidence.toFixed(0)}%</span></div>
               </div>
             )}
+
+            {ocrFailed && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                <div className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                  <ScanLine className="h-3 w-3" /> Couldn&apos;t read this automatically — enter it manually
+                </div>
+                <div>
+                  <Label className="text-xs">Amount ({currency}) *</Label>
+                  <Input className="h-9" type="number" min="0" step="0.01" value={manualAmount} onChange={(e) => setManualAmount(e.target.value)} placeholder="e.g. 240000" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Payment reference (optional)</Label>
+                    <Input className="h-9" value={manualReference} onChange={(e) => setManualReference(e.target.value)} placeholder="Txn / ref #" disabled={!!extracted?.paymentId} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Payment date (optional)</Label>
+                    <Input className="h-9" type="date" value={manualDate} onChange={(e) => setManualDate(e.target.value)} disabled={!!extracted?.date} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -336,7 +435,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
           {step === "details" && (<>
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button variant="outline" disabled={!detailsValid} onClick={() => setStep("dispatch")}>Skip invoice → Dispatch</Button>
-            <Button disabled={!detailsValid || invoiceMut.isPending} onClick={() => invoiceMut.mutate()} className="gap-1.5">
+            <Button disabled={invoiceMut.isPending} onClick={() => invoiceMut.mutate()} className="gap-1.5">
               {invoiceMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Generate invoice
             </Button>
           </>)}
@@ -357,7 +456,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
             </>
           )}
           {step === "payment" && (
-            <Button disabled={!extracted?.amount || paymentMut.isPending} onClick={() => paymentMut.mutate()} className="gap-1.5">
+            <Button disabled={!effectiveAmount || paymentMut.isPending} onClick={() => paymentMut.mutate()} className="gap-1.5">
               {paymentMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} Confirm payment
             </Button>
           )}

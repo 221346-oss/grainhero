@@ -74,6 +74,8 @@ const createInput = z.object({
   vehicleNumber: z.string().max(50).optional().nullable(),
   driverName: z.string().max(200).optional().nullable(),
   driverContact: z.string().max(50).optional().nullable(),
+  driverCnic: z.string().max(20).optional().nullable(),
+  dispatchPhotoPath: z.string().max(2000).optional().nullable(),
   destination: z.string().max(500).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
   priceBasis: z.enum(["cost_margin", "market", "manual"]).optional().nullable(),
@@ -119,6 +121,9 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => createInput.parse(d))
   .handler(async ({ data, context }) => {
+    // Mirrors upsertGrainBatch's create-time gate — the UI only ever exposes
+    // "Outgoing batch" to admin/manager, but that's a client-side hide only.
+    await requireRole(context.supabase, context.userId, ["admin", "manager"]);
     const sb = context.supabase;
     const { data: silo, error: sErr } = await sb
       .from("silos")
@@ -199,6 +204,8 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
         vehicle_number: data.vehicleNumber ?? null,
         driver_name: data.driverName ?? null,
         driver_contact: data.driverContact ?? null,
+        driver_cnic: data.driverCnic ?? null,
+        dispatch_photo_url: data.dispatchPhotoPath ?? null,
         destination: data.destination ?? null,
         notes: data.notes ?? null,
         created_by: context.userId,
@@ -395,4 +402,37 @@ export const getDispatchDetail = createServerFn({ method: "GET" })
       .eq("dispatch_id", data.id);
     if (e2) throw e2;
     return { dispatch: d1 as Row, allocations: (allocs ?? []) as Row[] };
+  });
+
+/**
+ * Signed upload URL for a dispatch/truck photo — same signed-upload-then-
+ * attach shape as createReceiptUploadUrl in dispatch-sales.functions.ts, just
+ * a separate bucket since this is a distinct kind of attachment.
+ */
+export const createDispatchPhotoUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ filename: z.string().min(1).max(200) }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: adminId } = await (context.supabase as any).rpc("get_tenant_admin_id", { _user_id: context.userId });
+    const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${adminId ?? context.userId}/${Date.now()}-${safe}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: signed, error } = await (context.supabase as any).storage
+      .from("dispatch-photos")
+      .createSignedUploadUrl(path);
+    if (error) throw error;
+    return { path, token: signed?.token as string };
+  });
+
+export const getDispatchPhotoSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ path: z.string().min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: signed, error } = await (context.supabase as any).storage
+      .from("dispatch-photos")
+      .createSignedUrl(data.path, 60 * 10);
+    if (error) throw error;
+    return { url: signed?.signedUrl as string };
   });

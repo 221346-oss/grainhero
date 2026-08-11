@@ -9,12 +9,17 @@ import {
   NEON,
 } from "@/components/charts/neon";
 
-export type StatusSlice = { name: string; value: number; tone: "yellow" | "green" | "red" };
+export type StatusSlice = { name: string; value: number; tone: "yellow" | "orange" | "green" | "blue" | "purple" | "red" };
 
-const TONE_TOKEN: Record<StatusSlice["tone"], string> = {
-  yellow: NEON.warning,
-  green: NEON.success,
-  red: NEON.critical,
+// 6-stage scheme: yellow = pending, orange = QC, green = stored,
+// blue = processing, purple = dispatched, red = issue.
+const TONE_HEX: Record<StatusSlice["tone"], string> = {
+  yellow: "#f59e0b",
+  orange: "#f97316",
+  green: "#10b981",
+  blue: "#3b82f6",
+  purple: "#a855f7",
+  red: "#ef4444",
 };
 
 /** Batch status breakdown for one silo — hatched neon donut. */

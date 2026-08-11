@@ -9,6 +9,7 @@ import {
   cancelPlanChangeRequest,
   setAutoUpgrade,
 } from "@/lib/plan-thresholds.functions";
+import { usePlanGate, type PlanNumericFeature } from "@/lib/plan-gate";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import { useMyProfile } from "@/hooks/useMyProfile";
 export function PlanManagementSection() {
   const qc = useQueryClient();
   const profile = useMyProfile();
-  const currentPlan = (profile.data as any)?.subscription_plan ?? "starter";
+  const currentPlan = (profile.data as any)?.subscription_plan ?? "basic";
   const autoUpgrade = (profile.data as any)?.auto_upgrade_enabled === true;
 
   const [note, setNote] = useState("");
@@ -41,6 +42,18 @@ export function PlanManagementSection() {
   const plans = plansQ.data ?? [];
   const requests = reqQ.data ?? [];
   const current = plans.find((p: any) => p.plan_id === currentPlan);
+
+  // Usage vs. allowance for the tenant's CURRENT plan only — usage is
+  // per-tenant, not per-plan, so it's only meaningful on the "Current" card.
+  const usageGates: Partial<Record<PlanNumericFeature, ReturnType<typeof usePlanGate>>> = {
+    max_users: usePlanGate("max_users"),
+    max_silos: usePlanGate("max_silos"),
+    max_batches: usePlanGate("max_batches"),
+    max_sensors: usePlanGate("max_sensors"),
+  };
+  const USAGE_LABELS: Partial<Record<PlanNumericFeature, string>> = {
+    max_users: "Users", max_silos: "Silos", max_batches: "Batches", max_sensors: "Sensors",
+  };
 
   const tiles = useMemo(
     () => [
@@ -113,10 +126,21 @@ export function PlanManagementSection() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-slate-700">
-                <div className="flex justify-between"><span className="text-slate-500">Users</span>{p.max_users}</div>
-                <div className="flex justify-between"><span className="text-slate-500">Silos</span>{p.max_silos}</div>
-                <div className="flex justify-between"><span className="text-slate-500">Batches</span>{p.max_batches}</div>
-                <div className="flex justify-between"><span className="text-slate-500">Sensors</span>{p.max_sensors}</div>
+                {(["max_users", "max_silos", "max_batches", "max_sensors"] as PlanNumericFeature[]).map((feature) => {
+                  const gate = isCurrent ? usageGates[feature]?.data : undefined;
+                  return (
+                    <div key={feature} className="flex justify-between">
+                      <span className="text-slate-500">{USAGE_LABELS[feature]}</span>
+                      {isCurrent && gate ? (
+                        <span className={gate.used != null && Number(gate.limit) > 0 && gate.used >= Number(gate.limit) ? "font-semibold text-amber-600" : ""}>
+                          {gate.used ?? "—"} / {p[feature]}
+                        </span>
+                      ) : (
+                        <span>{p[feature]}</span>
+                      )}
+                    </div>
+                  );
+                })}
                 <Button
                   className="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
                   disabled={isCurrent || reqMut.isPending}
