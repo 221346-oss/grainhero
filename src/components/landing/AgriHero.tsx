@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import heroLoop from '@/assets/silo-ai-loop-v3-web.mp4.asset.json'
 import heroPoster from '@/assets/landing/hero-poster.jpg'
+import { getAssetUrl } from '@/lib/utils'
 
 export function AgriHero() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -27,7 +28,7 @@ export function AgriHero() {
         preload="auto"
         poster={heroPoster}
       >
-        <source src={heroLoop.url} type="video/mp4" />
+        <source src={getAssetUrl(heroLoop)} type="video/mp4" />
       </video>
 
       {/* Cinematic grade — dark top for nav, bone bottom to hand off to the next section */}
