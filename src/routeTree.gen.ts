@@ -114,6 +114,7 @@ import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authe
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
 import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
 import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
+import { Route as AuthenticatedPlatformEnvHealthRouteImport } from './routes/_authenticated/platform.env-health'
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
@@ -782,6 +783,12 @@ const AuthenticatedPlatformFieldSettingsRoute =
     path: '/platform/field-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformEnvHealthRoute =
+  AuthenticatedPlatformEnvHealthRouteImport.update({
+    id: '/platform/env-health',
+    path: '/platform/env-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformDisputesRoute =
   AuthenticatedPlatformDisputesRouteImport.update({
     id: '/platform/disputes',
@@ -1367,6 +1374,7 @@ export interface FileRoutesByFullPath {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1558,6 +1566,7 @@ export interface FileRoutesByTo {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1753,6 +1762,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/_authenticated/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/_authenticated/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1948,6 +1958,7 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/env-health'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -2139,6 +2150,7 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/env-health'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -2333,6 +2345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
+    | '/_authenticated/platform/env-health'
     | '/_authenticated/platform/field-settings'
     | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
@@ -3268,6 +3281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFieldSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/env-health': {
+      id: '/_authenticated/platform/env-health'
+      path: '/platform/env-health'
+      fullPath: '/platform/env-health'
+      preLoaderRoute: typeof AuthenticatedPlatformEnvHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/disputes': {
       id: '/_authenticated/platform/disputes'
       path: '/platform/disputes'
@@ -4070,6 +4090,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
+  AuthenticatedPlatformEnvHealthRoute: typeof AuthenticatedPlatformEnvHealthRoute
   AuthenticatedPlatformFieldSettingsRoute: typeof AuthenticatedPlatformFieldSettingsRoute
   AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
@@ -4170,6 +4191,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
+  AuthenticatedPlatformEnvHealthRoute: AuthenticatedPlatformEnvHealthRoute,
   AuthenticatedPlatformFieldSettingsRoute:
     AuthenticatedPlatformFieldSettingsRoute,
   AuthenticatedPlatformFinanceRoute:
