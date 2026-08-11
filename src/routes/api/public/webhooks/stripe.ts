@@ -136,6 +136,20 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 if (r && r.status !== "approved") {
                   const cycleDays = r.billing_cycle === "yearly" ? 365 : 30;
                   const nextEnd = new Date(Date.now() + cycleDays * 86400_000).toISOString();
+                  
+                  // Map plan_id to plan_name for the subscriptions table
+                  const planNameMap: Record<string, string> = {
+                    starter: "Grain Starter",
+                    basic: "Grain Starter",
+                    professional: "Grain Professional",
+                    intermediate: "Grain Professional",
+                    growth: "Grain Professional",
+                    enterprise: "Grain Enterprise",
+                    pro: "Grain Enterprise",
+                    scale: "Grain Enterprise",
+                  };
+                  const planName = planNameMap[String(r.requested_plan).toLowerCase()] ?? String(r.requested_plan);
+                  
                   await supabaseAdmin
                     .from("profiles")
                     .update({
@@ -144,6 +158,18 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                       current_period_end: nextEnd,
                     } as never)
                     .eq("id", r.tenant_admin_id);
+                  
+                  // CRITICAL FIX: Also update the subscriptions table with the new plan_name
+                  // so that computeMrr() can find it in plan_thresholds and count it in revenue
+                  await supabaseAdmin
+                    .from("subscriptions")
+                    .update({
+                      plan_name: planName as never,
+                      status: "active" as never,
+                      updated_at: new Date().toISOString(),
+                    } as never)
+                    .eq("admin_id", r.tenant_admin_id);
+                  
                   await supabaseAdmin
                     .from("tenant_plan_change_requests")
                     .update({ status: "approved", decided_at: new Date().toISOString() } as never)
