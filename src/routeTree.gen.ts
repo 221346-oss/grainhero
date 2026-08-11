@@ -75,56 +75,91 @@ import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authe
 import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
 import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
 import { Route as AuthenticatedPlatformIndexRouteImport } from './routes/_authenticated/platform.index'
-import { Route as MarketplaceSellerAdminIdRouteImport } from './routes/marketplace.seller.$adminId'
-import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
-import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
-import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
-import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
-import { Route as AuthenticatedSuppliersSupplierIdRouteImport } from './routes/_authenticated/suppliers.$supplierId'
-import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenticated/silos.$siloId'
-import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
-import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
-import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
-import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
-import { Route as AuthenticatedPlatformSiloRequestsRouteImport } from './routes/_authenticated/platform.silo-requests'
-import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
-import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
-import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
-import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
-import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
-import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
-import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
-import { Route as AuthenticatedPlatformMonitoringRouteImport } from './routes/_authenticated/platform.monitoring'
-import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
-import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
-import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
-import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
-import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
-import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
-import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
-import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './routes/_authenticated/platform.marketplace-mobile'
-import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
-import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
-import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
-import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
-import { Route as AuthenticatedPlatformKeyMetricsRouteImport } from './routes/_authenticated/platform.key-metrics'
-import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
-import { Route as AuthenticatedPlatformIntelligenceRouteImport } from './routes/_authenticated/platform.intelligence'
-import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
-import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
-import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
-import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
-import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
-import { Route as AuthenticatedPlatformFieldIncidentsRouteImport } from './routes/_authenticated/platform.field-incidents'
-import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
-import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
-import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
-import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
-import { Route as AuthenticatedPlatformBusinessRouteImport } from './routes/_authenticated/platform.business'
 import { Route as AuthenticatedPlatformAuditLogsRouteImport } from './routes/_authenticated/platform.audit-logs'
-import { Route as AuthenticatedInsuranceClaimsClaimIdRouteImport } from './routes/_authenticated/insurance-claims.$claimId'
-import { Route as AuthenticatedBuyerOrdersRouteImport } from './routes/_authenticated/buyer.orders'
-import { Route as AuthenticatedAdminsAdminIdRouteImport } from './routes/_authenticated/admins.$adminId'
+import { Route as AuthenticatedPlatformBusinessRouteImport } from './routes/_authenticated/platform.business'
+import { Route as AuthenticatedPlatformCommerceMobileRouteImport } from './routes/_authenticated/platform.commerce-mobile'
+import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
+import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
+import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
+import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
+import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
+import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
+import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authenticated/platform.health'
+import { Route as AuthenticatedPlatformInsuranceRouteImport } from './routes/_authenticated/platform.insurance'
+import { Route as AuthenticatedPlatformIntelligenceRouteImport } from './routes/_authenticated/platform.intelligence'
+import { Route as AuthenticatedPlatformInvoiceFailuresRouteImport } from './routes/_authenticated/platform.invoice-failures'
+import { Route as AuthenticatedPlatformKeyMetricsRouteImport } from './routes/_authenticated/platform.key-metrics'
+import { Route as AuthenticatedPlatformLaunchReadinessRouteImport } from './routes/_authenticated/platform.launch-readiness'
+import { Route as AuthenticatedPlatformLeadsRouteImport } from './routes/_authenticated/platform.leads'
+import { Route as AuthenticatedPlatformLogsRouteImport } from './routes/_authenticated/platform.logs'
+import { Route as AuthenticatedPlatformMarketplaceHealthRouteImport } from './routes/_authenticated/platform.marketplace-health'
+import { Route as AuthenticatedPlatformMarketplaceMobileRouteImport } from './routes/_authenticated/platform.marketplace-mobile'
+import { Route as AuthenticatedPlatformMarketplaceSettingsRouteImport } from './routes/_authenticated/platform.marketplace-settings'
+import { Route as AuthenticatedPlatformMessagesRouteImport } from './routes/_authenticated/platform.messages'
+import { Route as AuthenticatedPlatformMetricsRouteImport } from './routes/_authenticated/platform.metrics'
+import { Route as AuthenticatedPlatformMobileDeepLinksRouteImport } from './routes/_authenticated/platform.mobile-deep-links'
+import { Route as AuthenticatedPlatformMobilePushDiagnosticsRouteImport } from './routes/_authenticated/platform.mobile-push-diagnostics'
+import { Route as AuthenticatedPlatformMobileSettingsRouteImport } from './routes/_authenticated/platform.mobile-settings'
+import { Route as AuthenticatedPlatformMobileSyncMonitorRouteImport } from './routes/_authenticated/platform.mobile-sync-monitor'
+import { Route as AuthenticatedPlatformMonitoringRouteImport } from './routes/_authenticated/platform.monitoring'
+import { Route as AuthenticatedPlatformOrdersRouteImport } from './routes/_authenticated/platform.orders'
+import { Route as AuthenticatedPlatformPipelineRouteImport } from './routes/_authenticated/platform.pipeline'
+import { Route as AuthenticatedPlatformPlansRouteImport } from './routes/_authenticated/platform.plans'
+import { Route as AuthenticatedPlatformQualityRouteImport } from './routes/_authenticated/platform.quality'
+import { Route as AuthenticatedPlatformReportingRouteImport } from './routes/_authenticated/platform.reporting'
+import { Route as AuthenticatedPlatformReviewsRouteImport } from './routes/_authenticated/platform.reviews'
+import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_authenticated/platform.sellers'
+import { Route as AuthenticatedPlatformSiloRequestsRouteImport } from './routes/_authenticated/platform.silo-requests'
+import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
+import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
+import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
+import { Route as AuthenticatedSilosSiloIdRouteImport } from './routes/_authenticated/silos.$siloId'
+import { Route as AuthenticatedSuppliersSupplierIdRouteImport } from './routes/_authenticated/suppliers.$supplierId'
+import { Route as AuthenticatedTechnicianInstallsRouteImport } from './routes/_authenticated/technician.installs'
+import { Route as ApiFirebaseLiveSensorsRouteImport } from './routes/api/firebase/live-sensors'
+import { Route as ApiPublicActuatorAckRouteImport } from './routes/api/public/actuator-ack'
+import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/telemetry'
+import { Route as MarketplaceSellerAdminIdRouteImport } from './routes/marketplace.seller.$adminId'
+import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
+import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
+import { Route as AuthenticatedManagerFieldIncidentsIndexRouteImport } from './routes/_authenticated/manager.field-incidents.index'
+import { Route as AuthenticatedManagerFieldIncidentsAllRouteImport } from './routes/_authenticated/manager.field-incidents.all'
+import { Route as AuthenticatedManagerFieldIncidentsDismissedRouteImport } from './routes/_authenticated/manager.field-incidents.dismissed'
+import { Route as AuthenticatedManagerFieldIncidentsIncomingRouteImport } from './routes/_authenticated/manager.field-incidents.incoming'
+import { Route as AuthenticatedManagerFieldIncidentsResolvedRouteImport } from './routes/_authenticated/manager.field-incidents.resolved'
+import { Route as AuthenticatedPlatformFieldIncidentsIndexRouteImport } from './routes/_authenticated/platform.field-incidents.index'
+import { Route as AuthenticatedPlatformFieldIncidentsAllRouteImport } from './routes/_authenticated/platform.field-incidents.all'
+import { Route as AuthenticatedPlatformFieldIncidentsDismissedRouteImport } from './routes/_authenticated/platform.field-incidents.dismissed'
+import { Route as AuthenticatedPlatformFieldIncidentsIncomingRouteImport } from './routes/_authenticated/platform.field-incidents.incoming'
+import { Route as AuthenticatedPlatformFieldIncidentsResolvedRouteImport } from './routes/_authenticated/platform.field-incidents.resolved'
+import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
+import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
+import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
+import { Route as AuthenticatedPlatformInsuranceAuditRouteImport } from './routes/_authenticated/platform.insurance.audit'
+import { Route as AuthenticatedPlatformInsuranceWebhooksRouteImport } from './routes/_authenticated/platform.insurance.webhooks'
+import { Route as AuthenticatedPlatformLogisticsCarriersRouteImport } from './routes/_authenticated/platform.logistics.carriers'
+import { Route as AuthenticatedPlatformLogisticsCommandCenterRouteImport } from './routes/_authenticated/platform.logistics.command-center'
+import { Route as AuthenticatedPlatformLogisticsFleetRouteImport } from './routes/_authenticated/platform.logistics.fleet'
+import { Route as AuthenticatedPlatformOrdersOrderIdRouteImport } from './routes/_authenticated/platform.orders.$orderId'
+import { Route as AuthenticatedPlatformTenantsAdminIdRouteImport } from './routes/_authenticated/platform.tenants.$adminId'
+import { Route as AuthenticatedTechnicianInstallsInstallIdRouteImport } from './routes/_authenticated/technician.installs.$installId'
+import { Route as ApiPublicCronApplyScheduledPlanChangesRouteImport } from './routes/api/public/cron/apply-scheduled-plan-changes'
+import { Route as ApiPublicCronDeliveryDelayScanRouteImport } from './routes/api/public/cron/delivery-delay-scan'
+import { Route as ApiPublicCronDispatchSlaSweepRouteImport } from './routes/api/public/cron/dispatch-sla-sweep'
+import { Route as ApiPublicCronDriverLicenseExpiryRouteImport } from './routes/api/public/cron/driver-license-expiry'
+import { Route as ApiPublicCronHeartbeatSweepRouteImport } from './routes/api/public/cron/heartbeat-sweep'
+import { Route as ApiPublicCronLifecycleEmailsRouteImport } from './routes/api/public/cron/lifecycle-emails'
+import { Route as ApiPublicCronReturnAutoApproveRouteImport } from './routes/api/public/cron/return-auto-approve'
+import { Route as ApiPublicCronReviewPromptsRouteImport } from './routes/api/public/cron/review-prompts'
+import { Route as ApiPublicCronSlaDigestRouteImport } from './routes/api/public/cron/sla-digest'
+import { Route as ApiPublicCronSyncFirebaseRouteImport } from './routes/api/public/cron/sync-firebase'
+import { Route as ApiPublicHooksAlertsEscalationRouteImport } from './routes/api/public/hooks/alerts-escalation'
+import { Route as ApiPublicHooksAnalyticsRefreshRouteImport } from './routes/api/public/hooks/analytics-refresh'
+import { Route as ApiPublicHooksExpiryRemindersRouteImport } from './routes/api/public/hooks/expiry-reminders'
+import { Route as ApiPublicHooksSensorOfflineDetectorRouteImport } from './routes/api/public/hooks/sensor-offline-detector'
+import { Route as ApiPublicV1MetaRouteImport } from './routes/api/public/v1/meta'
+import { Route as ApiPublicV1StatusRouteImport } from './routes/api/public/v1/status'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicV1StatusRouteImport } from './routes/api/public/v1/status'
 import { Route as ApiPublicV1MetaRouteImport } from './routes/api/public/v1/meta'
@@ -623,16 +658,10 @@ const AuthenticatedPlatformReviewsRoute =
     path: '/platform/reviews',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformReportingRoute =
-  AuthenticatedPlatformReportingRouteImport.update({
-    id: '/platform/reporting',
-    path: '/platform/reporting',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlatformQualityRoute =
-  AuthenticatedPlatformQualityRouteImport.update({
-    id: '/platform/quality',
-    path: '/platform/quality',
+const AuthenticatedPlatformFieldSettingsRoute =
+  AuthenticatedPlatformFieldSettingsRouteImport.update({
+    id: '/platform/field-settings',
+    path: '/platform/field-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformPlansRoute =
@@ -872,11 +901,71 @@ const ApiPublicHooksAnalyticsRefreshRoute =
     path: '/api/public/hooks/analytics-refresh',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksAlertsEscalationRoute =
-  ApiPublicHooksAlertsEscalationRouteImport.update({
-    id: '/api/public/hooks/alerts-escalation',
-    path: '/api/public/hooks/alerts-escalation',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedManagerFieldIncidentsIndexRoute =
+  AuthenticatedManagerFieldIncidentsIndexRouteImport.update({
+    id: '/manager/field-incidents/',
+    path: '/manager/field-incidents/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsAllRoute =
+  AuthenticatedManagerFieldIncidentsAllRouteImport.update({
+    id: '/manager/field-incidents/all',
+    path: '/manager/field-incidents/all',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsDismissedRoute =
+  AuthenticatedManagerFieldIncidentsDismissedRouteImport.update({
+    id: '/manager/field-incidents/dismissed',
+    path: '/manager/field-incidents/dismissed',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsIncomingRoute =
+  AuthenticatedManagerFieldIncidentsIncomingRouteImport.update({
+    id: '/manager/field-incidents/incoming',
+    path: '/manager/field-incidents/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsResolvedRoute =
+  AuthenticatedManagerFieldIncidentsResolvedRouteImport.update({
+    id: '/manager/field-incidents/resolved',
+    path: '/manager/field-incidents/resolved',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsIndexRoute =
+  AuthenticatedPlatformFieldIncidentsIndexRouteImport.update({
+    id: '/platform/field-incidents/',
+    path: '/platform/field-incidents/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsAllRoute =
+  AuthenticatedPlatformFieldIncidentsAllRouteImport.update({
+    id: '/platform/field-incidents/all',
+    path: '/platform/field-incidents/all',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsDismissedRoute =
+  AuthenticatedPlatformFieldIncidentsDismissedRouteImport.update({
+    id: '/platform/field-incidents/dismissed',
+    path: '/platform/field-incidents/dismissed',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsIncomingRoute =
+  AuthenticatedPlatformFieldIncidentsIncomingRouteImport.update({
+    id: '/platform/field-incidents/incoming',
+    path: '/platform/field-incidents/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsResolvedRoute =
+  AuthenticatedPlatformFieldIncidentsResolvedRouteImport.update({
+    id: '/platform/field-incidents/resolved',
+    path: '/platform/field-incidents/resolved',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFinanceLedgerRoute =
+  AuthenticatedPlatformFinanceLedgerRouteImport.update({
+    id: '/ledger',
+    path: '/ledger',
+    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
 const ApiPublicCronSyncFirebaseRoute =
   ApiPublicCronSyncFirebaseRouteImport.update({
@@ -1311,7 +1400,6 @@ export interface FileRoutesByFullPath {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
-  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1355,6 +1443,14 @@ export interface FileRoutesByFullPath {
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  '/manager/field-incidents/all': typeof AuthenticatedManagerFieldIncidentsAllRoute
+  '/manager/field-incidents/dismissed': typeof AuthenticatedManagerFieldIncidentsDismissedRoute
+  '/manager/field-incidents/incoming': typeof AuthenticatedManagerFieldIncidentsIncomingRoute
+  '/manager/field-incidents/resolved': typeof AuthenticatedManagerFieldIncidentsResolvedRoute
+  '/platform/field-incidents/all': typeof AuthenticatedPlatformFieldIncidentsAllRoute
+  '/platform/field-incidents/dismissed': typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
+  '/platform/field-incidents/incoming': typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
+  '/platform/field-incidents/resolved': typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1383,6 +1479,8 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/manager/field-incidents/': typeof AuthenticatedManagerFieldIncidentsIndexRoute
+  '/platform/field-incidents/': typeof AuthenticatedPlatformFieldIncidentsIndexRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
@@ -1494,7 +1592,6 @@ export interface FileRoutesByTo {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
-  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1538,6 +1635,14 @@ export interface FileRoutesByTo {
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  '/manager/field-incidents/all': typeof AuthenticatedManagerFieldIncidentsAllRoute
+  '/manager/field-incidents/dismissed': typeof AuthenticatedManagerFieldIncidentsDismissedRoute
+  '/manager/field-incidents/incoming': typeof AuthenticatedManagerFieldIncidentsIncomingRoute
+  '/manager/field-incidents/resolved': typeof AuthenticatedManagerFieldIncidentsResolvedRoute
+  '/platform/field-incidents/all': typeof AuthenticatedPlatformFieldIncidentsAllRoute
+  '/platform/field-incidents/dismissed': typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
+  '/platform/field-incidents/incoming': typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
+  '/platform/field-incidents/resolved': typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1566,6 +1671,8 @@ export interface FileRoutesByTo {
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/manager/field-incidents': typeof AuthenticatedManagerFieldIncidentsIndexRoute
+  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsIndexRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
@@ -1681,7 +1788,6 @@ export interface FileRoutesById {
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
-  '/_authenticated/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsRoute
   '/_authenticated/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1725,6 +1831,14 @@ export interface FileRoutesById {
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  '/_authenticated/manager/field-incidents/all': typeof AuthenticatedManagerFieldIncidentsAllRoute
+  '/_authenticated/manager/field-incidents/dismissed': typeof AuthenticatedManagerFieldIncidentsDismissedRoute
+  '/_authenticated/manager/field-incidents/incoming': typeof AuthenticatedManagerFieldIncidentsIncomingRoute
+  '/_authenticated/manager/field-incidents/resolved': typeof AuthenticatedManagerFieldIncidentsResolvedRoute
+  '/_authenticated/platform/field-incidents/all': typeof AuthenticatedPlatformFieldIncidentsAllRoute
+  '/_authenticated/platform/field-incidents/dismissed': typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
+  '/_authenticated/platform/field-incidents/incoming': typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
+  '/_authenticated/platform/field-incidents/resolved': typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1753,6 +1867,8 @@ export interface FileRoutesById {
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/_authenticated/manager/field-incidents/': typeof AuthenticatedManagerFieldIncidentsIndexRoute
+  '/_authenticated/platform/field-incidents/': typeof AuthenticatedPlatformFieldIncidentsIndexRoute
   '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
@@ -1868,7 +1984,6 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
-    | '/platform/field-incidents'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -1912,6 +2027,14 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/buyer/orders/$orderId'
     | '/insurance-policies/$policyId/documents'
+    | '/manager/field-incidents/all'
+    | '/manager/field-incidents/dismissed'
+    | '/manager/field-incidents/incoming'
+    | '/manager/field-incidents/resolved'
+    | '/platform/field-incidents/all'
+    | '/platform/field-incidents/dismissed'
+    | '/platform/field-incidents/incoming'
+    | '/platform/field-incidents/resolved'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
@@ -1940,6 +2063,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/meta'
     | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
+    | '/manager/field-incidents/'
+    | '/platform/field-incidents/'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/v1/actions/ack-alert'
@@ -2051,7 +2176,6 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
-    | '/platform/field-incidents'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -2095,6 +2219,14 @@ export interface FileRouteTypes {
     | '/platform'
     | '/buyer/orders/$orderId'
     | '/insurance-policies/$policyId/documents'
+    | '/manager/field-incidents/all'
+    | '/manager/field-incidents/dismissed'
+    | '/manager/field-incidents/incoming'
+    | '/manager/field-incidents/resolved'
+    | '/platform/field-incidents/all'
+    | '/platform/field-incidents/dismissed'
+    | '/platform/field-incidents/incoming'
+    | '/platform/field-incidents/resolved'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
@@ -2123,6 +2255,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/meta'
     | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
+    | '/manager/field-incidents'
+    | '/platform/field-incidents'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/v1/actions/ack-alert'
@@ -2237,7 +2371,6 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
-    | '/_authenticated/platform/field-incidents'
     | '/_authenticated/platform/field-settings'
     | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
@@ -2281,6 +2414,14 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/insurance-policies/$policyId/documents'
+    | '/_authenticated/manager/field-incidents/all'
+    | '/_authenticated/manager/field-incidents/dismissed'
+    | '/_authenticated/manager/field-incidents/incoming'
+    | '/_authenticated/manager/field-incidents/resolved'
+    | '/_authenticated/platform/field-incidents/all'
+    | '/_authenticated/platform/field-incidents/dismissed'
+    | '/_authenticated/platform/field-incidents/incoming'
+    | '/_authenticated/platform/field-incidents/resolved'
     | '/_authenticated/platform/finance/ledger'
     | '/_authenticated/platform/finance/payouts'
     | '/_authenticated/platform/finance/tax-rules'
@@ -2309,6 +2450,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/meta'
     | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
+    | '/_authenticated/manager/field-incidents/'
+    | '/_authenticated/platform/field-incidents/'
     | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
     | '/api/public/v1/actions/ack-alert'
@@ -2828,18 +2971,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEnvironmentalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/earnings': {
-      id: '/_authenticated/earnings'
-      path: '/earnings'
-      fullPath: '/earnings'
-      preLoaderRoute: typeof AuthenticatedEarningsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/platform/field-settings': {
+      id: '/_authenticated/platform/field-settings'
+      path: '/platform/field-settings'
+      fullPath: '/platform/field-settings'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/business': {
@@ -3157,12 +3293,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformFinancialsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/platform/finance': {
-      id: '/_authenticated/platform/finance'
-      path: '/platform/finance'
-      fullPath: '/platform/finance'
-      preLoaderRoute: typeof AuthenticatedPlatformFinanceRouteImport
+    '/_authenticated/manager/field-incidents/': {
+      id: '/_authenticated/manager/field-incidents/'
+      path: '/manager/field-incidents'
+      fullPath: '/manager/field-incidents/'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/all': {
+      id: '/_authenticated/manager/field-incidents/all'
+      path: '/manager/field-incidents/all'
+      fullPath: '/manager/field-incidents/all'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsAllRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/dismissed': {
+      id: '/_authenticated/manager/field-incidents/dismissed'
+      path: '/manager/field-incidents/dismissed'
+      fullPath: '/manager/field-incidents/dismissed'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsDismissedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/incoming': {
+      id: '/_authenticated/manager/field-incidents/incoming'
+      path: '/manager/field-incidents/incoming'
+      fullPath: '/manager/field-incidents/incoming'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/resolved': {
+      id: '/_authenticated/manager/field-incidents/resolved'
+      path: '/manager/field-incidents/resolved'
+      fullPath: '/manager/field-incidents/resolved'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsResolvedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/': {
+      id: '/_authenticated/platform/field-incidents/'
+      path: '/platform/field-incidents'
+      fullPath: '/platform/field-incidents/'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/all': {
+      id: '/_authenticated/platform/field-incidents/all'
+      path: '/platform/field-incidents/all'
+      fullPath: '/platform/field-incidents/all'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsAllRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/dismissed': {
+      id: '/_authenticated/platform/field-incidents/dismissed'
+      path: '/platform/field-incidents/dismissed'
+      fullPath: '/platform/field-incidents/dismissed'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsDismissedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/incoming': {
+      id: '/_authenticated/platform/field-incidents/incoming'
+      path: '/platform/field-incidents/incoming'
+      fullPath: '/platform/field-incidents/incoming'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/resolved': {
+      id: '/_authenticated/platform/field-incidents/resolved'
+      path: '/platform/field-incidents/resolved'
+      fullPath: '/platform/field-incidents/resolved'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsResolvedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/finance/ledger': {
+      id: '/_authenticated/platform/finance/ledger'
+      path: '/ledger'
+      fullPath: '/platform/finance/ledger'
+      preLoaderRoute: typeof AuthenticatedPlatformFinanceLedgerRouteImport
+      parentRoute: typeof AuthenticatedPlatformFinanceRoute
     }
     '/_authenticated/platform/field-settings': {
       id: '/_authenticated/platform/field-settings'
@@ -3910,7 +4116,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
-  AuthenticatedPlatformFieldIncidentsRoute: typeof AuthenticatedPlatformFieldIncidentsRoute
   AuthenticatedPlatformFieldSettingsRoute: typeof AuthenticatedPlatformFieldSettingsRoute
   AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
@@ -3947,9 +4152,19 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
   AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
+  AuthenticatedManagerFieldIncidentsAllRoute: typeof AuthenticatedManagerFieldIncidentsAllRoute
+  AuthenticatedManagerFieldIncidentsDismissedRoute: typeof AuthenticatedManagerFieldIncidentsDismissedRoute
+  AuthenticatedManagerFieldIncidentsIncomingRoute: typeof AuthenticatedManagerFieldIncidentsIncomingRoute
+  AuthenticatedManagerFieldIncidentsResolvedRoute: typeof AuthenticatedManagerFieldIncidentsResolvedRoute
+  AuthenticatedPlatformFieldIncidentsAllRoute: typeof AuthenticatedPlatformFieldIncidentsAllRoute
+  AuthenticatedPlatformFieldIncidentsDismissedRoute: typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
+  AuthenticatedPlatformFieldIncidentsIncomingRoute: typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
+  AuthenticatedPlatformFieldIncidentsResolvedRoute: typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
   AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   AuthenticatedPlatformLogisticsFleetRoute: typeof AuthenticatedPlatformLogisticsFleetRoute
+  AuthenticatedManagerFieldIncidentsIndexRoute: typeof AuthenticatedManagerFieldIncidentsIndexRoute
+  AuthenticatedPlatformFieldIncidentsIndexRoute: typeof AuthenticatedPlatformFieldIncidentsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -4001,8 +4216,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
-  AuthenticatedPlatformFieldIncidentsRoute:
-    AuthenticatedPlatformFieldIncidentsRoute,
   AuthenticatedPlatformFieldSettingsRoute:
     AuthenticatedPlatformFieldSettingsRoute,
   AuthenticatedPlatformFinanceRoute:
@@ -4057,12 +4270,32 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
   AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute:
     AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute,
+  AuthenticatedManagerFieldIncidentsAllRoute:
+    AuthenticatedManagerFieldIncidentsAllRoute,
+  AuthenticatedManagerFieldIncidentsDismissedRoute:
+    AuthenticatedManagerFieldIncidentsDismissedRoute,
+  AuthenticatedManagerFieldIncidentsIncomingRoute:
+    AuthenticatedManagerFieldIncidentsIncomingRoute,
+  AuthenticatedManagerFieldIncidentsResolvedRoute:
+    AuthenticatedManagerFieldIncidentsResolvedRoute,
+  AuthenticatedPlatformFieldIncidentsAllRoute:
+    AuthenticatedPlatformFieldIncidentsAllRoute,
+  AuthenticatedPlatformFieldIncidentsDismissedRoute:
+    AuthenticatedPlatformFieldIncidentsDismissedRoute,
+  AuthenticatedPlatformFieldIncidentsIncomingRoute:
+    AuthenticatedPlatformFieldIncidentsIncomingRoute,
+  AuthenticatedPlatformFieldIncidentsResolvedRoute:
+    AuthenticatedPlatformFieldIncidentsResolvedRoute,
   AuthenticatedPlatformLogisticsCarriersRoute:
     AuthenticatedPlatformLogisticsCarriersRoute,
   AuthenticatedPlatformLogisticsCommandCenterRoute:
     AuthenticatedPlatformLogisticsCommandCenterRoute,
   AuthenticatedPlatformLogisticsFleetRoute:
     AuthenticatedPlatformLogisticsFleetRoute,
+  AuthenticatedManagerFieldIncidentsIndexRoute:
+    AuthenticatedManagerFieldIncidentsIndexRoute,
+  AuthenticatedPlatformFieldIncidentsIndexRoute:
+    AuthenticatedPlatformFieldIncidentsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

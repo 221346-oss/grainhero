@@ -194,8 +194,6 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
           name: data.name ?? email.split("@")[0],
           admin_id,
           invited_by: context.userId,
-          invitation_role: data.role,
-          invitation_token: invitationCode,
           invitation_expires: invitationExpires,
         },
         { onConflict: "id" },
@@ -204,6 +202,11 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         console.error("[inviteTeamMember] profiles upsert failed", pErr);
         throw new Error(pErr.message || "Failed to save profile");
       }
+      // Reset blocked status in case they were previously removed
+      await supabaseAdmin.from("profiles").update({ blocked: false }).eq("id", uid);
+      // Unban in auth just in case they were previously removed
+      await supabaseAdmin.auth.admin.updateUserById(uid, { ban_duration: "none" });
+      
       console.log("[inviteTeamMember] Profile upserted successfully");
 
       await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
@@ -258,12 +261,32 @@ export const removeTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { isSuper, isAdmin } = await roleFlags(context.supabase, context.userId);
-    if (!isSuper && !isAdmin) throw new Error("Forbidden");
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
+    if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
     if (data.id === context.userId) throw new Error("You cannot remove yourself");
+
+    if (isManager && !isAdmin && !isSuper) {
+      const { data: roleRow } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.id)
+        .maybeSingle();
+      const targetRole = roleRow?.role || "pending";
+      if (targetRole === "super_admin" || targetRole === "admin" || targetRole === "manager") {
+        throw new Error("Managers can only remove technicians or pending invites.");
+      }
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.id);
-    if (error) throw new Error(error.message);
+    
+    // Ban the user to prevent them from logging in
+    const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(data.id, { ban_duration: '876000h' });
+    if (banErr) throw new Error(banErr.message);
+
+    // Mark as blocked in profiles so they appear in the Blocked card
+    const { error: pErr } = await context.supabase.from("profiles").update({ blocked: true }).eq("id", data.id);
+    if (pErr) throw new Error(pErr.message);
+
     return { ok: true };
   });
 
