@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/app/DataListPage";
+import { Badge } from "@/components/ui/badge";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import { SiloFlowDiagram, type FlowGroup } from "./SiloFlowDiagram";
 import { SiloStatusPie, type StatusSlice } from "./SiloStatusPie";
@@ -36,34 +36,56 @@ export type BatchRow = {
   silos?: { id: string } | null;
 };
 
-// Task's explicit mapping: yellow = processing/in-progress, green =
-// completed/stored, red = error/QC-failed/rejected.
+// Spec's 6-stage scheme: yellow = pending, orange = QC, green = stored,
+// blue = processing, purple = dispatched, red = issue.
 export const BATCH_TONE: Record<string, FlowGroup["tone"]> = {
-  pending_qc: "yellow", qc_submitted: "yellow", qc_passed: "yellow", processing: "yellow", on_hold: "yellow",
-  stored: "green", sold: "green", dispatched: "green", ready: "green",
+  pending_qc: "yellow", pending_approval: "yellow", on_hold: "yellow",
+  qc_submitted: "orange", qc_passed: "orange",
+  stored: "green", ready: "green",
+  processing: "blue",
+  dispatched: "purple", sold: "purple",
   qc_failed: "red", admin_rejected: "red", damaged: "red", expired: "red", rejected: "red",
 };
+const BATCH_TONE_LABELS: Record<FlowGroup["tone"], string> = {
+  yellow: "Pending", orange: "QC", green: "Stored", blue: "Processing", purple: "Dispatched", red: "Issue",
+};
 const DISPATCH_TONE: Record<string, FlowGroup["tone"]> = {
-  draft: "yellow", staged: "yellow", in_transit: "yellow",
-  confirmed: "green", delivered: "green",
+  draft: "yellow", staged: "yellow", in_transit: "blue",
+  confirmed: "green", delivered: "purple",
   cancelled: "red",
 };
+const DISPATCH_TONE_LABELS: Record<FlowGroup["tone"], string> = {
+  yellow: "Pending", orange: "QC", green: "Confirmed", blue: "In transit", purple: "Delivered", red: "Cancelled",
+};
+
+const ALL_TONES: FlowGroup["tone"][] = ["yellow", "orange", "green", "blue", "purple", "red"];
+
+// Shared with DashboardBlocks.tsx's silo cards — one derived Active/Full/
+// Maintenance/Offline badge, not a raw pass-through of silos.status (which
+// has no "full" value; that's derived from occupancy %).
+export function siloStatusBadge(pct: number, status: string | null): { label: string; cls: string } {
+  if (pct >= 98) return { label: "Full", cls: "bg-red-100 text-red-700 border-red-200" };
+  if (status === "maintenance") return { label: "Maintenance", cls: "bg-amber-100 text-amber-700 border-amber-200" };
+  if (status === "offline" || status === "error") return { label: status === "error" ? "Error" : "Offline", cls: "bg-slate-100 text-slate-600 border-slate-200" };
+  return { label: "Active", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+}
 
 function groupByTone<T extends { status: string | null }>(
   rows: T[],
   toneMap: Record<string, FlowGroup["tone"]>,
   qtyOf: (r: T) => number,
+  labels: Record<FlowGroup["tone"], string>,
 ): FlowGroup[] {
   const byTone: Record<FlowGroup["tone"], { count: number; kg: number }> = {
-    yellow: { count: 0, kg: 0 }, green: { count: 0, kg: 0 }, red: { count: 0, kg: 0 },
+    yellow: { count: 0, kg: 0 }, orange: { count: 0, kg: 0 }, green: { count: 0, kg: 0 },
+    blue: { count: 0, kg: 0 }, purple: { count: 0, kg: 0 }, red: { count: 0, kg: 0 },
   };
   for (const r of rows) {
     const tone = toneMap[String(r.status ?? "")] ?? "yellow";
     byTone[tone].count += 1;
     byTone[tone].kg += qtyOf(r);
   }
-  const labels: Record<FlowGroup["tone"], string> = { yellow: "In progress", green: "Completed", red: "Error / rejected" };
-  return (["yellow", "green", "red"] as const)
+  return ALL_TONES
     .filter((t) => byTone[t].count > 0)
     .map((t) => ({ label: labels[t], count: byTone[t].count, kg: byTone[t].kg, tone: t }));
 }
@@ -75,6 +97,7 @@ export function SiloOperationsCard({
   onDelete,
   onView,
   onSell,
+  onRequestMore,
   isAdmin,
 }: {
   silo: SiloRow;
@@ -83,6 +106,8 @@ export function SiloOperationsCard({
   onDelete: (id: string) => void;
   onView: (s: SiloRow) => void;
   onSell: (s: SiloRow) => void;
+  /** Wired to the same Silo Request Flow as the page-level "Request Silo" button. */
+  onRequestMore?: () => void;
   isAdmin: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -92,6 +117,7 @@ export function SiloOperationsCard({
   const occ = Number(silo.current_occupancy_kg ?? 0);
   const pct = cap ? Math.round((occ / cap) * 100) : 0;
   const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
+  const siloBadge = siloStatusBadge(pct, silo.status);
 
   const siloBatches = useMemo(() => batches.filter((b) => b.silos?.id === silo.id), [batches, silo.id]);
 
@@ -104,16 +130,18 @@ export function SiloOperationsCard({
     id: string; status: string | null; total_qty_kg: number; dispatch_number: string;
   }>;
 
-  const incoming = useMemo(() => groupByTone(siloBatches, BATCH_TONE, (b) => Number(b.quantity_kg ?? 0)), [siloBatches]);
+  const incoming = useMemo(
+    () => groupByTone(siloBatches, BATCH_TONE, (b) => Number(b.quantity_kg ?? 0), BATCH_TONE_LABELS),
+    [siloBatches],
+  );
   const outgoing = useMemo(
-    () => (expanded ? groupByTone(dispatches, DISPATCH_TONE, (d) => Number(d.total_qty_kg ?? 0)) : []),
+    () => (expanded ? groupByTone(dispatches, DISPATCH_TONE, (d) => Number(d.total_qty_kg ?? 0), DISPATCH_TONE_LABELS) : []),
     [dispatches, expanded],
   );
   const pieData: StatusSlice[] = useMemo(() => {
-    const byTone: Record<FlowGroup["tone"], number> = { yellow: 0, green: 0, red: 0 };
+    const byTone: Record<FlowGroup["tone"], number> = { yellow: 0, orange: 0, green: 0, blue: 0, purple: 0, red: 0 };
     for (const b of siloBatches) byTone[BATCH_TONE[String(b.status ?? "")] ?? "yellow"] += 1;
-    const labels: Record<FlowGroup["tone"], string> = { yellow: "In progress", green: "Stored", red: "Rejected/error" };
-    return (["yellow", "green", "red"] as const).filter((t) => byTone[t] > 0).map((t) => ({ name: labels[t], value: byTone[t], tone: t }));
+    return ALL_TONES.filter((t) => byTone[t] > 0).map((t) => ({ name: BATCH_TONE_LABELS[t], value: byTone[t], tone: t }));
   }, [siloBatches]);
 
   const incomingCount = siloBatches.length;
@@ -134,7 +162,7 @@ export function SiloOperationsCard({
           <p className="text-sm font-semibold truncate">{silo.name}</p>
           <p className="text-[10px] text-muted-foreground truncate">{silo.warehouses?.name ?? "—"} · {silo.silo_id}</p>
         </div>
-        <StatusBadge value={silo.status} />
+        <Badge className={siloBadge.cls} variant="outline">{siloBadge.label}</Badge>
       </CardHeader>
       <CardContent className="p-3 pt-0 space-y-2">
         <div className="flex items-center gap-2">
@@ -178,6 +206,16 @@ export function SiloOperationsCard({
             {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </Button>
         </div>
+
+        {onRequestMore && (
+          <button
+            type="button"
+            onClick={onRequestMore}
+            className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
+          >
+            Request more capacity
+          </button>
+        )}
 
         {expanded && (
           <div className="pt-2 border-t border-border/50 space-y-2">

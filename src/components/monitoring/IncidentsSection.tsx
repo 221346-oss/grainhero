@@ -16,9 +16,34 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 
 const emptyForm = { title: "", message: "", priority: "high" as const };
 const emptyAdminForm = { title: "", description: "", recipientId: "" };
+
+type IncidentRow = {
+  id: string;
+  title: string;
+  message: string;
+  status: string;
+  priority: string;
+  isFieldIncident: boolean;
+  reportedByName: string | null;
+  recipientName: string | null;
+  assignedToName: string | null;
+  triggered_at: string | null;
+};
+
+const incidentExportColumns: ExportColumn<IncidentRow>[] = [
+  { header: "Title", value: (i) => i.title },
+  { header: "Type", value: (i) => i.isFieldIncident ? "Field" : i.priority },
+  { header: "Status", value: (i) => i.status },
+  { header: "Message", value: (i) => i.message },
+  { header: "Reported by", value: (i) => i.reportedByName ?? "" },
+  { header: "Assigned to / Recipient", value: (i) => (i.isFieldIncident ? i.recipientName : i.assignedToName) ?? "" },
+  { header: "Triggered at", value: (i) => i.triggered_at ? new Date(i.triggered_at).toLocaleString() : "" },
+];
 
 // Dialog for technician — uses reportIncident (manual source, high/critical)
 function ReportIncidentDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
@@ -204,16 +229,19 @@ export function IncidentsSection() {
             <p className="text-xs text-muted-foreground">No incidents reported yet.</p>
           )}
         </div>
-        {canReport && (
-          <Button size="sm" className="gap-1.5" onClick={() => setDlgOpen(true)}>
-            <Megaphone className="w-3.5 h-3.5" /> Report incident
-          </Button>
-        )}
-        {canReportAsAdmin && (
-          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setAdminDlgOpen(true)}>
-            <Flag className="w-3.5 h-3.5" /> Report field incident
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <ExportMenu filename="incidents" title="Incidents" rows={incidents as IncidentRow[]} columns={incidentExportColumns} />
+          {canReport && (
+            <Button size="sm" className="gap-1.5" onClick={() => setDlgOpen(true)}>
+              <Megaphone className="w-3.5 h-3.5" /> Report incident
+            </Button>
+          )}
+          {canReportAsAdmin && (
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setAdminDlgOpen(true)}>
+              <Flag className="w-3.5 h-3.5" /> Report field incident
+            </Button>
+          )}
+        </div>
       </div>
 
       {isLoading ? (

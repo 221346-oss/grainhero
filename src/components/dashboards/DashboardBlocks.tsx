@@ -1,19 +1,26 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
-import { listGrainBatches, listBuyers } from "@/lib/operations.functions";
+import { listGrainBatches, listSilos } from "@/lib/operations.functions";
+import { listFieldIncidents } from "@/lib/field-incidents.functions";
+import { listActivityLogs } from "@/lib/notifications-audit.functions";
+import { usePlanGate } from "@/lib/plan-gate";
+import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
+import { siloStatusBadge } from "@/components/grain-operations/SiloOperationsCard";
+import { listBuyers } from "@/lib/operations.functions";
 import { listDispatches } from "@/lib/dispatches.functions";
 
 // range must match whatever AdminDashboard.tsx's own useQuery is keyed on —
@@ -295,18 +302,56 @@ export function SilosOccupancyCard() {
   );
 }
 
-/**
- * Admin-dashboard-only variant of the silos widget: same compact fill bars,
- * but folds each silo's active alerts in inline instead of a separate
- * alerts card next to it. Kept as its own export (not a prop on
- * SilosOccupancyCard) so TechnicianDashboard's layout/behavior is
- * untouched — see AdminDashboard.tsx for the only place this is used.
- */
-export function AdminSilosCard({ range }: { range?: string } = {}) {
-  const { data } = useExtras(range);
-  const rows = data?.silos ?? [];
-  const alerts = data?.siloAlerts ?? [];
-  const [expandedSiloId, setExpandedSiloId] = useState<string | null>(null);
+// ── Horizontal-scroll silo status cards ─────────────────────────────────────
+// Trimmed version of SiloOperationsCard's styling (capacity %, current
+// stock, status badge, Sell/View actions) for a compact dashboard row —
+// the full card's expand/flow-diagram/dispatch-approval internals aren't
+// needed here. Incoming kg is grouped client-side from the same
+// listGrainBatches() call KpiSummary already makes (shared react-query
+// cache); outgoing kg comes from getDashboardExtras' siloOutgoingKg, the
+// one new query added for this — see dashboard-extras.functions.ts.
+type DashSilo = {
+  id: string; silo_id: string; name: string;
+  capacity_kg: number | null; current_occupancy_kg: number | null;
+  status: string | null;
+};
+
+export function DashboardSiloCards({ range }: { range?: string } = {}) {
+  const navigate = useNavigate();
+  const listSilosFn = useServerFn(listSilos);
+  const listBatchesFn = useServerFn(listGrainBatches);
+  const { data: extras } = useExtras(range);
+  const { data: silos } = useQuery({
+    queryKey: ["silos"],
+    queryFn: () => listSilosFn() as Promise<DashSilo[]>,
+  });
+  const { data: batches } = useQuery({
+    queryKey: ["grain-batches"],
+    queryFn: () => listBatchesFn() as Promise<Array<{ quantity_kg: number; silos?: { id: string } | null }>>,
+  });
+  const siloGate = usePlanGate("max_silos");
+  const [dispatchSilo, setDispatchSilo] = useState<DashSilo | null>(null);
+
+  const incomingBySilo = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const b of batches ?? []) {
+      const id = b.silos?.id;
+      if (!id) continue;
+      map[id] = (map[id] ?? 0) + Number(b.quantity_kg ?? 0);
+    }
+    return map;
+  }, [batches]);
+  const outgoingBySilo = extras?.siloOutgoingKg ?? {};
+  const rows = silos ?? [];
+
+  function handleRequestMore() {
+    if (siloGate.isLoading || !siloGate.data) {
+      toast.error("Checking your plan limits — try again in a moment.");
+      return;
+    }
+    navigate({ to: siloGate.data.allowed ? "/orders" : "/plan-management" });
+  }
+
   return (
     <Card className="border-border/60 shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
@@ -333,114 +378,170 @@ export function AdminSilosCard({ range }: { range?: string } = {}) {
                   <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                     <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
                   </div>
-                  <span className="text-[11px] tabular-nums font-semibold w-8 text-right">{pct}%</span>
-                </Link>
-                {siloAlerts.length > 0 && (
-                  <span className={`inline-flex items-center gap-0.5 shrink-0 ${topAlert?.priority === "critical" ? "text-red-600" : "text-amber-600"}`}>
-                    <AlertTriangle className="h-3 w-3" />
-                    <span className="text-[10px] font-semibold tabular-nums">{siloAlerts.length}</span>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setExpandedSiloId(expanded ? null : s.id)}
-                  aria-label={expanded ? `Collapse ${s.name}` : `Expand ${s.name} — incoming/outgoing`}
-                  className="shrink-0 text-muted-foreground hover:text-foreground transition"
-                >
-                  {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-              {expanded && <SiloInOutPanel siloId={s.id} />}
-            </div>
-          );
-        })}
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div className={`h-full ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground tabular-nums">{occ.toLocaleString()} / {cap.toLocaleString()} kg ({pct}%)</p>
+                  <div className="grid grid-cols-2 gap-1 text-[10px]">
+                    <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
+                      <p className="text-muted-foreground">In</p>
+                      <p className="font-semibold tabular-nums">{(incomingBySilo[s.id] ?? 0).toLocaleString()}kg</p>
+                    </div>
+                    <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
+                      <p className="text-muted-foreground">Out</p>
+                      <p className="font-semibold tabular-nums">{(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" className="h-6 flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setDispatchSilo(s)}>
+                      Sell
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" asChild>
+                      <Link to="/silos/$siloId" params={{ siloId: s.id }}>View</Link>
+                    </Button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRequestMore}
+                    className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
+                  >
+                    Request more capacity
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+      <DispatchDialog
+        open={!!dispatchSilo}
+        onOpenChange={(o) => !o && setDispatchSilo(null)}
+        siloId={dispatchSilo?.id ?? null}
+        siloName={dispatchSilo?.name}
+      />
+    </Card>
+  );
+}
+
+// ── Incoming Queue — batches awaiting QC (pending_qc/qc_submitted) ─────────
+// Reuses getDashboardExtras' allBatches (already fetched for RecentBatchesCard
+// et al.) rather than a new query.
+export function IncomingQueueCard({ range }: { range?: string } = {}) {
+  const { data } = useExtras(range);
+  const incoming = (data?.allBatches ?? []).filter((b) => ["pending_qc", "qc_submitted"].includes(String(b.status)));
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/grain-operations" search={{ tab: "batches" }} title="Incoming Queue" count={incoming.length} />
+      <CardContent className="p-2 pt-0">
+        {incoming.length === 0 ? (
+          <p className="text-xs text-muted-foreground p-4 text-center">Nothing pending intake</p>
+        ) : (
+          <div className="divide-y divide-border/40 max-h-[180px] overflow-y-auto">
+            {incoming.slice(0, 8).map((b) => (
+              <Link
+                key={b.id}
+                to="/grain-operations"
+                search={{ tab: "batches" }}
+                className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded"
+              >
+                <span className="font-medium truncate flex-1 min-w-0">{b.batch_id}</span>
+                <span className="tabular-nums text-muted-foreground text-[11px] shrink-0">{Number(b.quantity_kg).toLocaleString()}kg</span>
+                <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">{String(b.status).replace("_", " ")}</Badge>
+              </Link>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-/**
- * Compact Incoming/Outgoing tabs shown when a silo row in AdminSilosCard is
- * expanded — last 3 intake batches and last 3 dispatches for that silo only.
- * Mirrors the fuller tables on the silo detail page (silos.$siloId.tsx),
- * just trimmed to widget scale; "View full silo" links there for everything
- * else (batch/dispatch editing, cost & margin summaries, etc.).
- */
-function SiloInOutPanel({ siloId }: { siloId: string }) {
-  const listBatchesFn = useServerFn(listGrainBatches);
-  const listDispatchesFn = useServerFn(listDispatches);
+// ── Field Incidents — open incidents visible to this admin ─────────────────
+// Reuses listFieldIncidents (Administration → Field Incidents' own data
+// source) rather than a new query.
+type FieldIncidentRow = {
+  id: string; title: string; status: string; created_at: string;
+  isMine: boolean; reportedByName: string | null; recipientName: string | null;
+};
 
-  const batchesQ = useQuery({
-    queryKey: ["grain-batches"],
-    queryFn: () => listBatchesFn() as Promise<Array<{
-      id: string; quantity_kg: number; farmer_name: string | null;
-      harvest_date: string | null; intake_date: string | null;
-      silos?: { id: string } | null;
-    }>>,
-  });
-  const dispatchesQ = useQuery({
-    queryKey: ["silo-dispatches", siloId],
-    queryFn: () => listDispatchesFn({ data: { siloId, limit: 3 } }),
-  });
-
-  const incoming = (batchesQ.data ?? []).filter((b) => b.silos?.id === siloId).slice(0, 3);
-  const outgoing = (dispatchesQ.data?.dispatches ?? []) as Array<{
-    id: string; total_qty_kg: number; dispatched_at: string | null; created_at: string | null;
-    buyers?: { name: string } | null;
-  }>;
-
+export function FieldIncidentsCard() {
+  const fn = useServerFn(listFieldIncidents);
+  const { data } = useQuery({ queryKey: ["field-incidents"], queryFn: () => fn() });
+  const incidents = (data?.incidents ?? []) as unknown as FieldIncidentRow[];
+  const open = incidents.filter((i) => i.status !== "closed");
   return (
-    <div className="ml-[72px] mr-8 mt-1 mb-1 rounded-md border border-border/50 bg-muted/20 p-2">
-      <Tabs defaultValue="incoming">
-        <TabsList className="h-6 p-0.5">
-          <TabsTrigger value="incoming" className="text-[10px] px-2 py-0 h-5">Incoming</TabsTrigger>
-          <TabsTrigger value="outgoing" className="text-[10px] px-2 py-0 h-5">Outgoing</TabsTrigger>
-        </TabsList>
-        <TabsContent value="incoming" className="mt-1.5 space-y-1">
-          {batchesQ.isLoading ? (
-            <p className="text-[10px] text-muted-foreground px-1 py-1">Loading…</p>
-          ) : incoming.length === 0 ? (
-            <p className="text-[10px] text-muted-foreground px-1 py-1">No recent intake</p>
-          ) : (
-            incoming.map((b) => {
-              const date = b.harvest_date ?? b.intake_date;
-              return (
-                <div key={b.id} className="flex items-center justify-between gap-2 text-[10px] px-1">
-                  <span className="truncate text-muted-foreground flex-1 min-w-0">{b.farmer_name ?? "—"}</span>
-                  <span className="tabular-nums font-medium shrink-0">{Number(b.quantity_kg).toLocaleString()}kg</span>
-                  <span className="text-muted-foreground shrink-0">{date ? new Date(date).toLocaleDateString() : "—"}</span>
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/administration" search={{ tab: "field" }} title="Field Incidents" count={open.length} />
+      <CardContent className="p-2 pt-0">
+        {open.length === 0 ? (
+          <p className="text-xs text-muted-foreground p-4 text-center">No open incidents</p>
+        ) : (
+          <div className="divide-y divide-border/40 max-h-[180px] overflow-y-auto">
+            {open.slice(0, 8).map((i) => (
+              <div key={i.id} className="px-2 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium truncate">{i.title}</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{new Date(i.created_at).toLocaleDateString()}</span>
                 </div>
-              );
-            })
-          )}
-        </TabsContent>
-        <TabsContent value="outgoing" className="mt-1.5 space-y-1">
-          {dispatchesQ.isLoading ? (
-            <p className="text-[10px] text-muted-foreground px-1 py-1">Loading…</p>
-          ) : outgoing.length === 0 ? (
-            <p className="text-[10px] text-muted-foreground px-1 py-1">No recent dispatches</p>
-          ) : (
-            outgoing.map((d) => {
-              const date = d.dispatched_at ?? d.created_at;
-              return (
-                <div key={d.id} className="flex items-center justify-between gap-2 text-[10px] px-1">
-                  <span className="truncate text-muted-foreground flex-1 min-w-0">{d.buyers?.name ?? "—"}</span>
-                  <span className="tabular-nums font-medium shrink-0">{Number(d.total_qty_kg).toLocaleString()}kg</span>
-                  <span className="text-muted-foreground shrink-0">{date ? new Date(date).toLocaleDateString() : "—"}</span>
+                <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                  {i.isMine ? `To ${i.recipientName ?? "—"}` : `From ${i.reportedByName ?? "—"}`}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Recent Activity — genuine cross-entity feed from activity_logs ─────────
+// Reuses listActivityLogs (Administration → Activity Logs' own data source),
+// unlike RecentBatchesCard above which is scoped to grain_batches only.
+const ACTIVITY_SEVERITY_DOT: Record<string, string> = {
+  info: "bg-blue-400", warning: "bg-amber-400", critical: "bg-red-500",
+};
+function fmtRelTime(s: string) {
+  const d = (Date.now() - new Date(s).getTime()) / 1000;
+  if (d < 60) return "just now";
+  if (d < 3600) return `${Math.floor(d / 60)}m ago`;
+  if (d < 86400) return `${Math.floor(d / 3600)}h ago`;
+  if (d < 604800) return `${Math.floor(d / 86400)}d ago`;
+  return new Date(s).toLocaleDateString();
+}
+
+export function RecentActivityCard() {
+  const fn = useServerFn(listActivityLogs);
+  const { data } = useQuery({
+    queryKey: ["activity-logs", "dashboard-recent"],
+    queryFn: () => fn({ data: { page: 1, limit: 8 } }),
+  });
+  const logs = data?.logs ?? [];
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/activity-logs" title="Recent Activity" count={logs.length} />
+      <CardContent className="p-2 pt-0">
+        {logs.length === 0 ? (
+          <p className="text-xs text-muted-foreground p-4 text-center">No recent activity</p>
+        ) : (
+          <div className="divide-y divide-border/40 max-h-[220px] overflow-y-auto">
+            {logs.map((l) => (
+              <Link
+                key={l.id}
+                to="/activity-logs"
+                className="flex items-start gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded"
+              >
+                <span className={`h-1.5 w-1.5 rounded-full shrink-0 mt-1 ${ACTIVITY_SEVERITY_DOT[l.severity] ?? "bg-slate-400"}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="truncate">{l.description ?? l.action}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{l.user_name ?? "System"} · {fmtRelTime(l.created_at)}</p>
                 </div>
-              );
-            })
-          )}
-        </TabsContent>
-      </Tabs>
-      <Link
-        to="/silos/$siloId"
-        params={{ siloId }}
-        className="mt-1.5 flex items-center justify-end gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
-      >
-        View full silo <ArrowUpRight className="h-3 w-3" />
-      </Link>
-    </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

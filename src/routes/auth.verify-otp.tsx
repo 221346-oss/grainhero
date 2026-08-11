@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Message, type Msg } from "@/components/auth/AuthShell";
-import { logSecurityEvent } from "@/lib/security-events.functions";
+import { logSecurityEvent, logFailedSignIn } from "@/lib/security-events.functions";
 import { claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
 
 const PENDING_SESSION_KEY = "grainhero.pendingCheckoutSession";
@@ -124,6 +124,7 @@ function VerifyOtpPage() {
       }
 
       const isExpiredOrInvalid = error.message.toLowerCase().includes("expired") || error.message.toLowerCase().includes("invalid");
+      void logFailedSignIn({ data: { email, reason: error.message } }).catch(() => {});
       setMsg({
         type: "error",
         text: isExpiredOrInvalid

@@ -145,6 +145,10 @@ export function SilosSection() {
   // insert a silo row (via upsertSilo directly, or the automated
   // hardware_order_provision_silo trigger once an order's install completes).
   const siloGate = usePlanGate("max_silos");
+  // usePlanGate resolves async — never fall through to "allowed" while the
+  // gate is unresolved (loading, refetching after an error, etc). Only
+  // proceed once siloGate.data has actually arrived.
+  const siloGateReady = !siloGate.isLoading && !!siloGate.data;
 
   function handleRequestSilo() {
     // Super admin has no tenant subscription — send them to the platform
@@ -347,6 +351,20 @@ export function SilosSection() {
             <p className="text-sm">No silos yet.</p>
           </div>
         ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {rows.map((s) => (
+              <SiloOperationsCard
+                key={s.id}
+                silo={s}
+                batches={batches}
+                isAdmin={isAdmin}
+                onView={(silo) => { setSelected(silo as Silo); setViewOpen(true); }}
+                onEdit={(silo) => openEdit(silo as Silo)}
+                onDelete={(id) => setDeleteId(id)}
+                onSell={(silo) => setSellSilo(silo as Silo)}
+                onRequestMore={handleRequestSilo}
+              />
+            ))}
           <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
             {/* ── Column headers ─────────────────────────────────── */}
             <div className="grid grid-cols-[32px_2.5fr_1.2fr_1fr_1fr_80px] gap-0 bg-slate-50 border-b border-slate-200 px-0">

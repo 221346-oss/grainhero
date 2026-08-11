@@ -5,12 +5,14 @@ import React from "react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 import { sendExpiryReminder } from "@/lib/platform-no-admin.functions";
-import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
+import { RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 import {
   NEON, NeonPatternDefs, useNeonCharts, neonFill, neonGrid, neonAxis,
   neonTooltipStyle, HairlineGrid, NeonPanel, NeonLegend, ChartEmpty,
@@ -53,6 +55,9 @@ const planLabel = (p: string) => PLAN_META[p.toLowerCase()]?.label ?? (p.charAt(
 const ALL_PLANS = ["starter", "professional", "enterprise"] as const;
 
 // ── Export button row ────────────────────────────────────────────────────────
+// Callers here build one-off, pre-shaped summary rows (friendly keys already
+// as the object's own keys) rather than a fixed record type, so the column
+// list is derived from those keys instead of a hand-written ExportColumn[].
 function ExportRow({ data, filename, title }: {
   data: Array<Record<string, any>>; filename: string; title: string;
 }) {
@@ -814,16 +819,16 @@ function PlatformBusinessPage() {
             {expiring.length > 0 && ` · ${expiring.length}`}
           </span>
           {expiring.length > 0 && (
-            <button
-              onClick={() => exportToCSV(expiring.map((s: any) => ({
-                Admin: s.admin_name ?? s.admin_id ?? "—",
-                Plan: s.plan_name ?? "—",
-                Expires: s.end_date ? new Date(s.end_date).toLocaleDateString() : "—",
-              })), "expiring-subscriptions")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 rounded"
-            >
-              <Download className="w-3 h-3" /> CSV
-            </button>
+            <ExportMenu
+              filename="expiring-subscriptions"
+              title="Expiring Subscriptions — GrainHero"
+              rows={expiring}
+              columns={[
+                { header: "Admin", value: (s: any) => s.admin_name ?? s.admin_id ?? "—" },
+                { header: "Plan", value: (s: any) => s.plan_name ?? "—" },
+                { header: "Expires", value: (s: any) => s.end_date ? new Date(s.end_date).toLocaleDateString() : "—" },
+              ]}
+            />
           )}
         </div>
         <div className="overflow-x-auto">

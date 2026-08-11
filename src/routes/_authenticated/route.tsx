@@ -20,6 +20,7 @@ import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { logSecurityEvent } from "@/lib/security-events.functions";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMySubscription } from "@/lib/billing.functions";
@@ -77,6 +78,7 @@ export const Route = createFileRoute("/_authenticated")({
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
       if (isSuperAdmin && !alsoOperational) {
         if (OPERATIONAL_PREFIXES.some((p) => path.startsWith(p))) {
+          void logSecurityEvent({ data: { event: "unauthorized_access", meta: { page: path } } }).catch(() => {});
           throw redirect({ to: "/not-allowed" });
         }
         for (const [from, to] of Object.entries(SUPER_ADMIN_REDIRECTS)) {

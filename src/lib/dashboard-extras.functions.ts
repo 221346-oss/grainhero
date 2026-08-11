@@ -74,6 +74,8 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       siloAlertsRes,
       dispatchTotals,
       revRowsRes,
+      siloDispatchesRes,
+      intake7Res,
     ] = await Promise.all([
       context.supabase
         .from("grain_batches")
@@ -252,6 +254,12 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       alerts: { cur: curAlertsCount.count ?? 0, prev: prevAlertsCount.count ?? 0, pct: pctDelta(curAlertsCount.count ?? 0, prevAlertsCount.count ?? 0) },
     };
 
+    const siloOutgoingKg: Record<string, number> = {};
+    for (const d of siloDispatchesRes.data ?? []) {
+      const id = d.silo_id as string;
+      siloOutgoingKg[id] = (siloOutgoingKg[id] ?? 0) + Number(d.total_qty_kg ?? 0);
+    }
+
     return {
       recentBatches: batches,
       recentAlerts: alertsRes.data ?? [],
@@ -259,6 +267,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       actuators: actuatorsRes.data ?? [],
       silos: silosRes.data ?? [],
       siloAlerts: siloAlertsRes.data ?? [],
+      siloOutgoingKg,
       revenue,
       installCounts,
       subscription: sub,

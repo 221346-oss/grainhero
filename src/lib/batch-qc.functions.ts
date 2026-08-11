@@ -293,7 +293,16 @@ const managerApprovalInput = z.object({
   rejectionReason: z.string().optional(),
 });
 
-/** Admin approves or rejects a manager-created batch with pending_approval status */
+/**
+ * Admin gives the initial approval on a manager-created batch (pending_approval
+ * status). Approving feeds the batch into the same, unmodified QC pipeline
+ * admin-created batches use — pending_qc -> technician submits QC -> manager
+ * passes/fails -> admin's FINAL approval (adminReviewBatch) -> stored. This
+ * function is deliberately NOT the stock-effective moment: occupancy is only
+ * committed at adminReviewBatch, same as the admin-created pipeline. Adding
+ * it here too would double-count once adminReviewBatch later runs for this
+ * same batch.
+ */
 export const reviewManagerBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => managerApprovalInput.parse(d))
@@ -304,10 +313,13 @@ export const reviewManagerBatch = createServerFn({ method: "POST" })
       throw new Error(`Batch isn't awaiting approval (currently ${b.status})`);
     }
 
-    const toStatus = data.decision === "approve" ? "stored" : "admin_rejected";
+    const toStatus = data.decision === "approve" ? "pending_qc" : "admin_rejected";
 
     if (data.decision === "approve" && b.silo_id) {
-      // Add grain to silo occupancy on approval
+      // Early capacity sanity-check only, same as upsertGrainBatch's
+      // intake-time check — an obvious "doesn't fit at all" reject before QC
+      // even starts. adminReviewBatch re-checks against then-current
+      // occupancy at the real stock-effective moment.
       const { data: silo, error: siloErr } = await context.supabase
         .from("silos")
         .select("id, capacity_kg, current_occupancy_kg")
@@ -326,15 +338,6 @@ export const reviewManagerBatch = createServerFn({ method: "POST" })
           `Cannot approve: silo only has ${free.toLocaleString()}kg free (capacity ${capacity.toLocaleString()}kg), this batch needs ${qty.toLocaleString()}kg.`,
         );
       }
-
-      const { error: occErr } = await context.supabase
-        .from("silos")
-        .update({
-          current_occupancy_kg: currentOccupancy + qty,
-          updated_by: context.userId,
-        } as never)
-        .eq("id", b.silo_id);
-      if (occErr) throw occErr;
     }
 
     // Update batch status
@@ -354,7 +357,7 @@ export const reviewManagerBatch = createServerFn({ method: "POST" })
     if (b.created_by) {
       const notificationMessage =
         data.decision === "approve"
-          ? `Batch ${b.batch_id} has been approved and added to storage.`
+          ? `Batch ${b.batch_id} has been approved and sent for quality control.`
           : `Batch ${b.batch_id} has been rejected. ${data.rejectionReason || ""}`;
 
       await context.supabase.from("notifications").insert({
@@ -386,6 +389,16 @@ export const reviewManagerBatch = createServerFn({ method: "POST" })
         approvedBy: "admin",
         affectsManagerBatch: true,
       },
+    });
+
+    // Also a security event: an admin overriding/finalizing a manager's
+    // batch decision, distinct from the routine activity_logs entry above.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("security_events").insert({
+      user_id: context.userId,
+      tenant_id: b.admin_id,
+      event: "batch_approval_override",
+      meta: { batchId: b.batch_id, decision: data.decision } as never,
     });
 
     return { ok: true, status: toStatus };
