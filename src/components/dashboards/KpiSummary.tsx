@@ -1,12 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Wheat, Container, ClipboardCheck, Wallet, type LucideIcon } from "lucide-react";
+import { Wheat, Container, ClipboardCheck, Wallet, Users, Building2, Package, Radio, TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { RangeChip, type RangeKey } from "./RangeChip";
 import { listGrainBatches, listSilos } from "@/lib/operations.functions";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
-import { Users, Building2, Package, Container, Radio, Wallet, TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
 import { useDashboardStats } from "./useDashboardStats";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 import { ResponsiveContainer, AreaChart, Area } from "recharts";

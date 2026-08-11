@@ -10,7 +10,6 @@ import { ActivityLogsSection } from "@/components/administration/ActivityLogsSec
 import { FieldIncidentsSection } from "@/components/administration/FieldIncidentsSection";
 import { ReportsSection } from "@/components/administration/ReportsSection";
 import { Users, ShieldCheck, ClipboardList, Flag, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
-import { TrendingUp, TrendingDown } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";

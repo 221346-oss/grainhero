@@ -362,16 +362,13 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
           const occ = Number(s.current_occupancy_kg ?? 0);
           const pct = cap ? Math.round((occ / cap) * 100) : 0;
           const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
-          const siloAlerts = alerts.filter((a) => a.silo_id === s.id);
-          const topAlert = siloAlerts.find((a) => a.priority === "critical") ?? siloAlerts[0];
-          const expanded = expandedSiloId === s.id;
           return (
             <div key={s.id}>
               <div className="flex items-center gap-2 group">
                 <Link
                   to="/grain-operations"
                   search={{ tab: "silos" }}
-                  title={topAlert ? `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg · ${topAlert.title}` : `${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
+                  title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
                   className="flex items-center gap-2 flex-1 min-w-0"
                 >
                   <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
@@ -392,26 +389,26 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                       <p className="font-semibold tabular-nums">{(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="sm" className="h-6 flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setDispatchSilo(s)}>
-                      Sell
-                    </Button>
-                    <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" asChild>
-                      <Link to="/silos/$siloId" params={{ siloId: s.id }}>View</Link>
-                    </Button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRequestMore}
-                    className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
-                  >
-                    Request more capacity
-                  </button>
+                </Link>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" className="h-6 flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setDispatchSilo(s)}>
+                    Sell
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" asChild>
+                    <Link to="/silos/$siloId" params={{ siloId: s.id }}>View</Link>
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <button
+                  type="button"
+                  onClick={handleRequestMore}
+                  className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
+                >
+                  Request more capacity
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </CardContent>
       <DispatchDialog
         open={!!dispatchSilo}

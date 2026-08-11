@@ -9,7 +9,7 @@ import {
   DashboardSiloCards, IncomingQueueCard, FieldIncidentsCard, RecentActivityCard,
   RecentBatchesCard, SupportTicketsCard,
 } from "./DashboardBlocks";
-import { AdminSilosCard } from "./DashboardBlocks";
+import { DashboardSiloCards as AdminSilosCard } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
