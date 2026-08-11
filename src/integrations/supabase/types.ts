@@ -3633,7 +3633,9 @@ export type Database = {
           currency: string
           destination: string | null
           dispatch_number: string
+          dispatch_photo_url: string | null
           dispatched_at: string | null
+          driver_cnic: string | null
           driver_contact: string | null
           driver_name: string | null
           expected_date: string | null
@@ -3665,7 +3667,9 @@ export type Database = {
           currency?: string
           destination?: string | null
           dispatch_number: string
+          dispatch_photo_url?: string | null
           dispatched_at?: string | null
+          driver_cnic?: string | null
           driver_contact?: string | null
           driver_name?: string | null
           expected_date?: string | null
@@ -3697,7 +3701,9 @@ export type Database = {
           currency?: string
           destination?: string | null
           dispatch_number?: string
+          dispatch_photo_url?: string | null
           dispatched_at?: string | null
+          driver_cnic?: string | null
           driver_contact?: string | null
           driver_name?: string | null
           expected_date?: string | null

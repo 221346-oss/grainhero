@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ export function DispatchDialog({
   open, onOpenChange, siloId, siloName,
 }: { open: boolean; onOpenChange: (o: boolean) => void; siloId: string | null; siloName?: string }) {
   const qc = useQueryClient();
+  const toastShownRef = useRef(false);
   const [grainType, setGrainType] = useState("");
   const [buyerId, setBuyerId] = useState("");
   const [newBuyer, setNewBuyer] = useState("");
@@ -42,7 +43,10 @@ export function DispatchDialog({
   const [photoUploading, setPhotoUploading] = useState(false);
 
   useEffect(() => {
-    if (open) { setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDriverPhone(""); setDriverCnic(""); setDestination(""); setNotes(""); setExpected(""); setBasis("manual"); setStage("staged"); setPhotoFile(null); setPhotoPath(null); }
+    if (open) {
+      setGrainType(""); setBuyerId(""); setNewBuyer(""); setQty(""); setPrice(""); setVehicle(""); setDriver(""); setDriverPhone(""); setDriverCnic(""); setDestination(""); setNotes(""); setExpected(""); setBasis("manual"); setStage("staged"); setPhotoFile(null); setPhotoPath(null);
+      toastShownRef.current = false;
+    }
   }, [open]);
 
   const listBatchesFn = useServerFn(listSiloAvailableBatches);
@@ -135,9 +139,15 @@ export function DispatchDialog({
       toast.success(`Sale request ${r.dispatchNumber} submitted — awaiting admin approval`);
       qc.invalidateQueries({ queryKey: ["silo-dispatch-drafts", siloId] });
       qc.invalidateQueries({ queryKey: ["silo-dispatches", siloId] });
+      toastShownRef.current = false;
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      if (!toastShownRef.current) {
+        toast.error(e.message);
+        toastShownRef.current = true;
+      }
+    },
   });
 
   return (
