@@ -136,29 +136,16 @@ function VerifyOtpPage() {
     setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
     void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
 
-    // Claim any pending Stripe checkout in the BACKGROUND — don't block the
-    // redirect on it. Normal logins have no pending checkout, and the dashboard
-    // doesn't need it resolved before it paints. It keeps running after this
-    // page unmounts, and only touches localStorage/console — never React state.
     let pendingSessionId: string | null = null;
+    try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
     try {
-      pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY);
-    } catch {
-      /* ignore */
+      await claimFn({ data: pendingSessionId ? { sessionId: pendingSessionId } : {} });
+      if (pendingSessionId) window.localStorage.removeItem(PENDING_SESSION_KEY);
+    } catch (e) {
+      console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
     }
-    void claimFn({ data: pendingSessionId ? { sessionId: pendingSessionId } : {} })
-      .then(() => {
-        if (pendingSessionId) {
-          try {
-            window.localStorage.removeItem(PENDING_SESSION_KEY);
-          } catch {
-            /* ignore */
-          }
-        }
-      })
-      .catch((e) => console.warn("[verify-otp] claim checkout failed:", (e as Error).message));
 
-    navigate({ to: "/dashboard", replace: true });
+    setTimeout(() => navigate({ to: "/dashboard", replace: true }), 500);
   };
 
   const resend = async () => {
@@ -190,7 +177,8 @@ function VerifyOtpPage() {
           </div>
           <h1 className="text-2xl font-semibold">Check your email</h1>
           <p className="text-sm text-muted-foreground">
-            We sent a 6-digit code to <span className="font-medium text-slate-900">{email}</span>
+            We sent a 6-digit code to{" "}
+            <span className="font-medium text-slate-900">{email}</span>
           </p>
           <p className="text-xs text-muted-foreground">
             If you don't see the email, please check your spam or junk folder.
@@ -202,9 +190,7 @@ function VerifyOtpPage() {
             {otp.map((digit, i) => (
               <Input
                 key={i}
-                ref={(el) => {
-                  inputRefs.current[i] = el;
-                }}
+                ref={(el) => { inputRefs.current[i] = el; }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -224,7 +210,9 @@ function VerifyOtpPage() {
             disabled={loading}
             className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & go to dashboard"}
+            {loading
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : "Verify & go to dashboard"}
           </Button>
         </form>
 
@@ -235,11 +223,9 @@ function VerifyOtpPage() {
             disabled={resending}
             className="text-sm text-[#00a63e] hover:underline inline-flex items-center gap-1.5 disabled:opacity-50"
           >
-            {resending ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3 h-3" />
-            )}
+            {resending
+              ? <Loader2 className="w-3 h-3 animate-spin" />
+              : <RefreshCw className="w-3 h-3" />}
             Resend code
           </button>
         </div>

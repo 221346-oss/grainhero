@@ -6,7 +6,6 @@ import { WelcomeBanner } from "./WelcomeBanner";
 import { KpiSummary } from "./KpiSummary";
 import { InsightsStrip } from "./InsightsStrip";
 import { AdminSilosCard, RecentBatchesCard, SupportTicketsCard } from "./DashboardBlocks";
-import { WeeklyIntakeCard } from "./WeeklyIntakeCard";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
@@ -43,10 +42,9 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2">
             <AdminSilosCard range={range} />
             <RecentBatchesCard range={range} />
-            <WeeklyIntakeCard range={range} />
             <SupportTicketsCard
               onViewAll={() => setTicketPanelOpen(true)}
               ticketPanelOpen={ticketPanelOpen}

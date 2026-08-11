@@ -13,19 +13,6 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    server: {
-      // Lovable stores large media outside the repo — src/assets/*.asset.json are
-      // pointers to /__l5e/ paths that only Lovable's infrastructure serves, so
-      // they 404 locally and the landing page renders without its videos.
-      // Proxying to production makes local match the deployed site.
-      // Dev-only: Vite ignores server.proxy when building.
-      proxy: {
-        "/__l5e": {
-          target: "https://grainhero.app",
-          changeOrigin: true,
-        },
-      },
-    },
     optimizeDeps: {
       include: ["tesseract.js"],
     },

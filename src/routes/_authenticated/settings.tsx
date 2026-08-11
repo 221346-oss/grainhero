@@ -21,6 +21,7 @@ import { LocationMap } from "@/components/app/LocationMap";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { initialsOf } from "@/hooks/useMyProfile";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { getPlatformSettings, updatePlatformSettings, type PlatformConfig, type IotPricingItem } from "@/lib/platform-settings.functions";
 
@@ -37,13 +38,28 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 type Prefs = { email_alerts?: boolean; sms_alerts?: boolean; push_notifications?: boolean; weekly_reports?: boolean; expiry_email_alerts?: boolean; expiry_push_alerts?: boolean };
 
-function DefaultAvatar() {
+function DefaultAvatar({ initials }: { initials: string }) {
   return (
-    <img
-      src="/avatars/default-avatar.svg"
-      alt=""
-      className="absolute inset-0 h-full w-full object-cover bg-muted"
-    />
+    <svg viewBox="0 0 80 80" className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="url(#avatar-grad)" />
+      <defs>
+        <linearGradient id="avatar-grad" x1="0" y1="0" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#00a63e" />
+          <stop offset="1" stopColor="#22c55e" />
+        </linearGradient>
+      </defs>
+      <text
+        x="40" y="40"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontSize="28"
+        fontWeight="700"
+        fontFamily="system-ui, sans-serif"
+        fill="white"
+      >
+        {initials}
+      </text>
+    </svg>
   );
 }
 
@@ -73,51 +89,29 @@ function SettingsPage() {
   });
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  // Serialized snapshot of what the server currently holds. Autosave compares
-  // against this so refetches and re-renders don't trigger redundant writes.
-  const lastSavedRef = useRef<string | null>(null);
-  const hydratedRef = useRef(false);
-  const serialize = (f: typeof form) => JSON.stringify({
-    name: f.name, phone: f.phone, avatar: f.avatar,
-    address: { address: f.address, city: f.city, country: f.country },
-    preferences: f.prefs as Record<string, unknown>,
-  });
-
   useEffect(() => {
-    if (!data || hydratedRef.current) return;
+    if (!data) return;
     const addr = (data.address ?? {}) as any;
     const prefs = (data.preferences ?? {}) as any;
-    const next = {
+    setForm({
       name: data.name ?? "", phone: data.phone ?? "",
       avatar: (data as any).avatar ?? null,
       address: addr.address ?? "", city: addr.city ?? "", country: addr.country ?? "",
       prefs: { email_alerts: prefs.email_alerts ?? true, sms_alerts: prefs.sms_alerts ?? false, push_notifications: prefs.push_notifications ?? true, weekly_reports: prefs.weekly_reports ?? true, expiry_email_alerts: prefs.expiry_email_alerts ?? true, expiry_push_alerts: prefs.expiry_push_alerts ?? true },
-    };
-    hydratedRef.current = true;
-    lastSavedRef.current = serialize(next);
-    setForm(next);
+    });
     // Also use profile email as fallback if auth email not loaded yet
     if (!authEmail && data.email) setAuthEmail(data.email);
   }, [data, authEmail]);
 
   const save = useMutation({
-    mutationFn: (snapshot: string) => saveFn({ data: JSON.parse(snapshot) }),
-    onSuccess: (_res, snapshot) => {
-      lastSavedRef.current = snapshot;
-      qc.invalidateQueries({ queryKey: ["my-settings"] });
-    },
+    mutationFn: () => saveFn({ data: {
+      name: form.name, phone: form.phone, avatar: form.avatar,
+      address: { address: form.address, city: form.city, country: form.country },
+      preferences: form.prefs as Record<string, unknown>,
+    } }),
+    onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["my-settings"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  // Autosave: debounce edits, then persist whatever differs from the server copy.
-  useEffect(() => {
-    if (lastSavedRef.current === null) return;
-    const snapshot = serialize(form);
-    if (snapshot === lastSavedRef.current) return;
-    const t = setTimeout(() => save.mutate(snapshot), 800);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form]);
 
   async function handleFile(file: File) {
     if (!file.type.startsWith("image/")) { toast.error("Please choose an image"); return; }
@@ -146,6 +140,8 @@ function SettingsPage() {
     setForm((f) => ({ ...f, avatar: resized }));
   }
 
+  const initials = initialsOf(form.name, authEmail || data?.email || "");
+
   if (isLoading) return <SettingsSkeleton />;
 
   return (
@@ -153,11 +149,10 @@ function SettingsPage() {
       title="Settings"
       subtitle="Manage your profile, location and appearance"
       actions={
-        save.isPending ? (
-          <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Saving…
-          </span>
-        ) : null
+        <Button onClick={() => save.mutate()} disabled={save.isPending} className="bg-emerald-600 hover:bg-emerald-700">
+          {save.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          Save changes
+        </Button>
       }
     >
       <Tabs value={tab} onValueChange={setTab}>
@@ -196,41 +191,27 @@ function SettingsPage() {
         </div>
 
         <TabsContent value="profile">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.currentTarget.value = ""; }}
-          />
-
-          <div className="w-full max-w-5xl mx-auto">
-            {/* Desktop: avatar left, profile card overlapping on the right */}
-            <div className="hidden md:flex relative items-center">
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                aria-label="Change profile picture"
-                className="relative w-[470px] h-[470px] rounded-3xl overflow-hidden flex-shrink-0 group"
-              >
-                {form.avatar ? (
-                  <img src={form.avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                ) : (
-                  <DefaultAvatar />
-                )}
-                <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
-                  <Camera className="h-8 w-8" />
-                </span>
-              </button>
-
-              <div className="bg-white dark:bg-card rounded-2xl shadow-xl p-4 ml-[-80px] z-10 w-[340px] flex-shrink-0">
-                <div className="mb-4">
-                  <h2 className="text-lg font-bold text-foreground">Profile</h2>
-                  <p className="text-xs text-muted-foreground">Basic information about you.</p>
-                </div>
-
-                <div className="space-y-1.5 mb-4">
-                  <div className="text-xs font-medium text-foreground">Profile picture</div>
+          <Card>
+            <CardHeader><CardTitle>Profile</CardTitle><CardDescription>Basic information about you.</CardDescription></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="relative h-20 w-20 rounded-full overflow-hidden ring-2 ring-border shadow-sm group flex-shrink-0"
+                  aria-label="Change profile picture"
+                >
+                  {form.avatar ? (
+                    <img src={form.avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <DefaultAvatar initials={initials} />
+                  )}
+                  <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white rounded-full">
+                    <Camera className="h-5 w-5" />
+                  </span>
+                </button>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-foreground">Profile picture</div>
                   <div className="flex gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
                       <Camera className="h-4 w-4 mr-2" /> {form.avatar ? "Change" : "Upload"}
@@ -241,70 +222,26 @@ function SettingsPage() {
                       </Button>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">Square image works best.</p>
+                  <p className="text-xs text-muted-foreground">Square image works best. Save to apply.</p>
                 </div>
-
-                <div className="space-y-2.5">
-                  <div><Label className="text-xs">Full name</Label><Input className="h-9" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></div>
-                  <div>
-                    <Label className="text-xs">Email</Label>
-                    <Input value={authEmail || data?.email || ""} disabled className="h-9 bg-muted/50 cursor-not-allowed" />
-                  </div>
-                  <div><Label className="text-xs">Phone</Label><Input className="h-9" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+92 300 0000000" /></div>
-                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.currentTarget.value = ""; }}
+                />
               </div>
-            </div>
-
-            {/* Mobile: avatar stacked above the profile card */}
-            <div className="md:hidden max-w-sm mx-auto">
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                aria-label="Change profile picture"
-                className="relative w-40 h-40 mx-auto rounded-2xl overflow-hidden mb-4 group"
-              >
-                {form.avatar ? (
-                  <img src={form.avatar} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                ) : (
-                  <DefaultAvatar />
-                )}
-                <span className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
-                  <Camera className="h-6 w-6" />
-                </span>
-              </button>
-
-              <div className="bg-white dark:bg-card rounded-2xl shadow-xl p-5">
-                <div className="mb-4">
-                  <h2 className="text-lg font-bold text-foreground">Profile</h2>
-                  <p className="text-xs text-muted-foreground">Basic information about you.</p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div><Label>Full name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></div>
+                <div>
+                  <Label>Email</Label>
+                  <Input value={authEmail || data?.email || ""} disabled className="bg-muted/50 cursor-not-allowed" />
                 </div>
-
-                <div className="space-y-1.5 mb-4">
-                  <div className="text-xs font-medium text-foreground">Profile picture</div>
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
-                      <Camera className="h-4 w-4 mr-2" /> {form.avatar ? "Change" : "Upload"}
-                    </Button>
-                    {form.avatar && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, avatar: null })}>
-                        <Trash2 className="h-4 w-4 mr-2" /> Remove
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Square image works best.</p>
-                </div>
-
-                <div className="space-y-2.5">
-                  <div><Label className="text-xs">Full name</Label><Input className="h-9" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></div>
-                  <div>
-                    <Label className="text-xs">Email</Label>
-                    <Input value={authEmail || data?.email || ""} disabled className="h-9 bg-muted/50 cursor-not-allowed" />
-                  </div>
-                  <div><Label className="text-xs">Phone</Label><Input className="h-9" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+92 300 0000000" /></div>
-                </div>
+                <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+92 300 0000000" /></div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="location">
