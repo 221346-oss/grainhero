@@ -32,6 +32,21 @@ export function KpiSummary({
   planName?: string;
 }) {
   const { data: s } = useDashboardStats();
+  const listBatchesFn = useServerFn(listGrainBatches);
+  const listSilosFn = useServerFn(listSilos);
+  const listApprovalsFn = useServerFn(listPendingApprovalBatches);
+
+  const { data: batchesData } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listBatchesFn() });
+  const { data: silosData } = useQuery({ queryKey: ["silos"], queryFn: () => listSilosFn() });
+  const { data: approvalsData } = useQuery({ queryKey: ["pending-approvals"], queryFn: () => listApprovalsFn() });
+
+  const batches = Array.isArray(batchesData) ? batchesData : [];
+  const silos = Array.isArray(silosData) ? silosData : [];
+  const approvals = approvalsData?.batches ?? [];
+
+  const totalGrainKg = batches.reduce((sum, b: any) => sum + (b.quantity_kg ?? 0), 0);
+  const activeSilos = silos.filter((s: any) => s.status === "active").length;
+  const pendingApprovals = approvals.length;
   
   // Calculate business health score (0-100)
   const calculateHealthScore = () => {

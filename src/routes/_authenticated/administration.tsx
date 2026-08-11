@@ -13,6 +13,7 @@ import { Users, ShieldCheck, ClipboardList, Flag, FileBarChart, TrendingUp, Tren
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
+import { listFieldIncidents } from "@/lib/field-incidents.functions";
 
 type Tab = "team" | "security" | "activity" | "field" | "reports";
 const TAB_KEYS: Tab[] = ["team", "security", "activity", "field", "reports"];
@@ -66,6 +67,7 @@ function AdministrationWorkspace() {
 
   const fetchMembers = useServerFn(listTeamMembers);
   const fetchSecurity = useServerFn(getSecurityOverview);
+  const fetchFieldIncidents = useServerFn(listFieldIncidents);
 
   const { data: members } = useQuery({
     queryKey: ["team-members"],
@@ -77,10 +79,15 @@ function AdministrationWorkspace() {
     queryFn: () => fetchSecurity(),
     enabled: isAdmin,
   });
+  const { data: fieldIncidentsData } = useQuery({
+    queryKey: ["field-incidents"],
+    queryFn: () => fetchFieldIncidents(),
+  });
 
   const memberList = (members ?? []) as any[];
   const pendingMembers = memberList.filter((m) => m.role === "pending").length;
   const securityEvents = security?.logs?.length ?? 0;
+  const fieldIncidentList = (fieldIncidentsData?.incidents ?? []) as any[];
 
   const counts = {
     team:     memberList.length,

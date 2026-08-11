@@ -451,13 +451,53 @@ export const deleteSilo = createServerFn({ method: "POST" })
 export const listGrainBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: batches, error } = await context.supabase
+    // Get user role to filter visible batches
+    const { getEffectiveRole } = await import("./rbac.server");
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("grain_batches")
       .select(
         "*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)",
       )
       .order("created_at", { ascending: false })
       .limit(500);
+
+    // Apply role-based visibility filtering
+    if (userRole === "technician") {
+      // Technicians only see batches assigned to them
+      query = query.eq("assigned_technician_id", context.userId);
+    } else if (userRole === "manager") {
+      // Managers only see batches in their assigned warehouses
+      // First, get the warehouses assigned to this manager
+      const { data: managerWarehouses } = await context.supabase
+        .from("warehouses")
+        .select("id")
+        .eq("manager_id", context.userId);
+      
+      if (managerWarehouses && managerWarehouses.length > 0) {
+        const warehouseIds = managerWarehouses.map((w) => w.id);
+        // Get silos for these warehouses, then batches in these silos
+        const { data: silosInWarehouses } = await context.supabase
+          .from("silos")
+          .select("id")
+          .in("warehouse_id", warehouseIds);
+        
+        if (silosInWarehouses && silosInWarehouses.length > 0) {
+          const siloIds = silosInWarehouses.map((s) => s.id);
+          query = query.in("silo_id", siloIds);
+        } else {
+          // Manager has no silos in their warehouses, return empty
+          return [];
+        }
+      } else {
+        // Manager has no assigned warehouses, return empty
+        return [];
+      }
+    }
+    // Admins and super_admins see all batches (no additional filtering needed)
+
+    const { data: batches, error } = await query;
     if (error) throw error;
     if (!batches || batches.length === 0) return [];
 
