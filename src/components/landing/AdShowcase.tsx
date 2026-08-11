@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Play, Volume2, VolumeX } from 'lucide-react'
 import brandAd from '@/assets/brand-ad.mp4.asset.json'
+import { getAssetUrl } from '@/lib/utils'
 
 export function AdShowcase() {
   const ref = useRef<HTMLVideoElement>(null)
@@ -55,7 +56,7 @@ export function AdShowcase() {
           <video
             ref={ref}
             className="h-full w-full object-cover"
-            src={brandAd.url}
+            src={getAssetUrl(brandAd)}
             autoPlay
             muted
             loop

@@ -102,7 +102,12 @@ function TeamPage() {
       );
     }
   }, [currentRole, canInvite]);
-  const canManage = ["super_admin", "admin"].includes(currentRole);
+  const canManageMember = (targetRole: string) => {
+    if (currentRole === "super_admin") return true;
+    if (currentRole === "admin") return targetRole !== "super_admin";
+    if (currentRole === "manager") return targetRole === "technician" || targetRole === "pending";
+    return false;
+  };
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["team-members"],
@@ -133,11 +138,11 @@ function TeamPage() {
 
   const stats = useMemo(() => {
     const total = members.length;
-    const active = members.filter(
-      (m) => m.email_verified && m.role !== "pending" && !m.blocked,
-    ).length;
-    const pending = members.filter((m) => m.role === "pending").length;
     const blocked = members.filter((m) => m.blocked).length;
+    // Anyone who is unverified or has a pending role is "Pending", unless they are blocked
+    const pending = members.filter((m) => !m.blocked && (m.role === "pending" || !m.email_verified)).length;
+    // Active members are verified, have a role, and are not blocked
+    const active = members.filter((m) => !m.blocked && m.email_verified && m.role !== "pending").length;
     return { total, active, pending, blocked };
   }, [members]);
 
@@ -289,7 +294,7 @@ function TeamPage() {
                     </Badge>
                   )}
                 </div>
-                {canManage && (
+                {canManageMember(m.role) && (
                   <div className="flex items-center gap-1">
                     <Button
                       size="sm"
