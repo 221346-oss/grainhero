@@ -164,13 +164,6 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
         .eq("status", "dispatched")
         .gte("created_at", twelveMoAgo),
-      // Rows behind the 7-day intake chart. Only the two columns the buckets
-      // need — this is a full row scan of the week, not a capped "recent" list
-      // like allBatchesRes, so a busy week can't silently fall off the end.
-      context.supabase
-        .from("grain_batches")
-        .select("created_at, quantity_kg")
-        .gte("created_at", sevenDaysAgo),
     ]);
 
     const batches = batchesRes.data ?? [];
@@ -252,25 +245,6 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       ? Math.round(((revenueMtd - revenuePrev) / revenuePrev) * 100)
       : (revenueMtd ? 100 : 0);
 
-    // 7-day intake series — kg booked in per day, oldest first. Always exactly
-    // seven buckets (zeros included) so the chart keeps its shape on a quiet
-    // week instead of collapsing to however many days happened to have rows.
-    const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const dayBuckets: { key: string; label: string; total: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now0.getFullYear(), now0.getMonth(), now0.getDate() - i);
-      dayBuckets.push({
-        key: dayKey(d),
-        label: d.toLocaleDateString("en", { weekday: "short" }),
-        total: 0,
-      });
-    }
-    for (const r of intake7Res.data ?? []) {
-      const b = dayBuckets.find((x) => x.key === dayKey(new Date(r.created_at as string)));
-      if (b) b.total += Number(r.quantity_kg ?? 0);
-    }
-    const intake7d = dayBuckets.map((b) => ({ label: b.label, value: Math.round(b.total) }));
-
     function pctDelta(cur: number, prev: number) {
       if (!prev) return cur ? 100 : 0;
       return Math.round(((cur - prev) / prev) * 100);
@@ -305,7 +279,6 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       revenueSpark,
       revenueMtd,
       revenueDeltaPct,
-      intake7d,
       trends: {
         newBatches7d: batches7Res.count ?? 0,
         newSensors7d: sensors7Res.count ?? 0,

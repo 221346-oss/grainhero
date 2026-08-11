@@ -3241,6 +3241,7 @@ export type Database = {
           actual_dispatch_date: string | null
           admin_id: string
           ai_prediction_confidence: number | null
+          assigned_technician_id: string | null
           batch_id: string
           buyer_id: string | null
           created_at: string | null
@@ -3311,6 +3312,7 @@ export type Database = {
           actual_dispatch_date?: string | null
           admin_id: string
           ai_prediction_confidence?: number | null
+          assigned_technician_id?: string | null
           batch_id: string
           buyer_id?: string | null
           created_at?: string | null
@@ -3381,6 +3383,7 @@ export type Database = {
           actual_dispatch_date?: string | null
           admin_id?: string
           ai_prediction_confidence?: number | null
+          assigned_technician_id?: string | null
           batch_id?: string
           buyer_id?: string | null
           created_at?: string | null

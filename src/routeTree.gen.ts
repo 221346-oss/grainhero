@@ -15,7 +15,6 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as HelpRouteImport } from './routes/help'
-import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -115,6 +114,7 @@ import { Route as AuthenticatedPlatformHealthRouteImport } from './routes/_authe
 import { Route as AuthenticatedPlatformFinancialsRouteImport } from './routes/_authenticated/platform.financials'
 import { Route as AuthenticatedPlatformFinanceRouteImport } from './routes/_authenticated/platform.finance'
 import { Route as AuthenticatedPlatformFieldSettingsRouteImport } from './routes/_authenticated/platform.field-settings'
+import { Route as AuthenticatedPlatformEnvHealthRouteImport } from './routes/_authenticated/platform.env-health'
 import { Route as AuthenticatedPlatformDisputesRouteImport } from './routes/_authenticated/platform.disputes'
 import { Route as AuthenticatedPlatformDispatchAnalyticsRouteImport } from './routes/_authenticated/platform.dispatch-analytics'
 import { Route as AuthenticatedPlatformDashboardBuilderRouteImport } from './routes/_authenticated/platform.dashboard-builder'
@@ -231,11 +231,6 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRoute = DocsRouteImport.update({
@@ -788,6 +783,12 @@ const AuthenticatedPlatformFieldSettingsRoute =
     path: '/platform/field-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformEnvHealthRoute =
+  AuthenticatedPlatformEnvHealthRouteImport.update({
+    id: '/platform/env-health',
+    path: '/platform/env-health',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformDisputesRoute =
   AuthenticatedPlatformDisputesRouteImport.update({
     id: '/platform/disputes',
@@ -1309,7 +1310,6 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
-  '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -1374,6 +1374,7 @@ export interface FileRoutesByFullPath {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1502,7 +1503,6 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
-  '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -1566,6 +1566,7 @@ export interface FileRoutesByTo {
   '/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1697,7 +1698,6 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/docs': typeof DocsRoute
-  '/faq': typeof FaqRoute
   '/help': typeof HelpRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -1762,6 +1762,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/dashboard-builder': typeof AuthenticatedPlatformDashboardBuilderRoute
   '/_authenticated/platform/dispatch-analytics': typeof AuthenticatedPlatformDispatchAnalyticsRoute
   '/_authenticated/platform/disputes': typeof AuthenticatedPlatformDisputesRoute
+  '/_authenticated/platform/env-health': typeof AuthenticatedPlatformEnvHealthRoute
   '/_authenticated/platform/field-settings': typeof AuthenticatedPlatformFieldSettingsRoute
   '/_authenticated/platform/finance': typeof AuthenticatedPlatformFinanceRouteWithChildren
   '/_authenticated/platform/financials': typeof AuthenticatedPlatformFinancialsRoute
@@ -1893,7 +1894,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
-    | '/faq'
     | '/help'
     | '/marketplace'
     | '/privacy'
@@ -1958,6 +1958,7 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/env-health'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -2086,7 +2087,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
-    | '/faq'
     | '/help'
     | '/privacy'
     | '/sitemap.xml'
@@ -2150,6 +2150,7 @@ export interface FileRouteTypes {
     | '/platform/dashboard-builder'
     | '/platform/dispatch-analytics'
     | '/platform/disputes'
+    | '/platform/env-health'
     | '/platform/field-settings'
     | '/platform/finance'
     | '/platform/financials'
@@ -2280,7 +2281,6 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/docs'
-    | '/faq'
     | '/help'
     | '/marketplace'
     | '/privacy'
@@ -2345,6 +2345,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/dashboard-builder'
     | '/_authenticated/platform/dispatch-analytics'
     | '/_authenticated/platform/disputes'
+    | '/_authenticated/platform/env-health'
     | '/_authenticated/platform/field-settings'
     | '/_authenticated/platform/finance'
     | '/_authenticated/platform/financials'
@@ -2476,7 +2477,6 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   DocsRoute: typeof DocsRoute
-  FaqRoute: typeof FaqRoute
   HelpRoute: typeof HelpRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
@@ -2586,13 +2586,6 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof HelpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs': {
@@ -3286,6 +3279,13 @@ declare module '@tanstack/react-router' {
       path: '/platform/field-settings'
       fullPath: '/platform/field-settings'
       preLoaderRoute: typeof AuthenticatedPlatformFieldSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/env-health': {
+      id: '/_authenticated/platform/env-health'
+      path: '/platform/env-health'
+      fullPath: '/platform/env-health'
+      preLoaderRoute: typeof AuthenticatedPlatformEnvHealthRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/disputes': {
@@ -4090,6 +4090,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformDashboardBuilderRoute: typeof AuthenticatedPlatformDashboardBuilderRoute
   AuthenticatedPlatformDispatchAnalyticsRoute: typeof AuthenticatedPlatformDispatchAnalyticsRoute
   AuthenticatedPlatformDisputesRoute: typeof AuthenticatedPlatformDisputesRoute
+  AuthenticatedPlatformEnvHealthRoute: typeof AuthenticatedPlatformEnvHealthRoute
   AuthenticatedPlatformFieldSettingsRoute: typeof AuthenticatedPlatformFieldSettingsRoute
   AuthenticatedPlatformFinanceRoute: typeof AuthenticatedPlatformFinanceRouteWithChildren
   AuthenticatedPlatformFinancialsRoute: typeof AuthenticatedPlatformFinancialsRoute
@@ -4190,6 +4191,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformDispatchAnalyticsRoute:
     AuthenticatedPlatformDispatchAnalyticsRoute,
   AuthenticatedPlatformDisputesRoute: AuthenticatedPlatformDisputesRoute,
+  AuthenticatedPlatformEnvHealthRoute: AuthenticatedPlatformEnvHealthRoute,
   AuthenticatedPlatformFieldSettingsRoute:
     AuthenticatedPlatformFieldSettingsRoute,
   AuthenticatedPlatformFinanceRoute:
@@ -4350,7 +4352,6 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   DocsRoute: DocsRoute,
-  FaqRoute: FaqRoute,
   HelpRoute: HelpRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
@@ -4427,13 +4428,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

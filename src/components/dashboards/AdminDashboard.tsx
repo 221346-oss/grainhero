@@ -9,6 +9,7 @@ import {
   DashboardSiloCards, IncomingQueueCard, FieldIncidentsCard, RecentActivityCard,
   RecentBatchesCard, SupportTicketsCard,
 } from "./DashboardBlocks";
+import { AdminSilosCard } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
@@ -45,17 +46,9 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
-          <DashboardSiloCards range={range} />
-          <div className="grid gap-3 lg:grid-cols-3">
-            <IncomingQueueCard range={range} />
-            <FieldIncidentsCard />
-            <RecentActivityCard />
-          </div>
           <div className="grid gap-3 lg:grid-cols-2">
-          <div className="grid gap-3 md:grid-cols-2">
             <AdminSilosCard range={range} />
             <RecentBatchesCard range={range} />
-            <WeeklyIntakeCard range={range} />
             <SupportTicketsCard
               onViewAll={() => setTicketPanelOpen(true)}
               ticketPanelOpen={ticketPanelOpen}
