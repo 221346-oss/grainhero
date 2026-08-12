@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Plus, Truck } from "lucide-react";
+import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Plus, Truck, RotateCcw } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import type { AppRole } from "@/lib/roles.functions";
 
 type Invoice = {
   id: string;
@@ -26,6 +27,19 @@ type Invoice = {
   payment_status: string | null;
   due_date: string | null;
   grain_dispatches: { dispatch_number: string } | null;
+};
+
+type OutstandingDispatch = {
+  id: string;
+  dispatch_number: string;
+  total_amount: number;
+  currency: string | null;
+  status: string;
+  dispatched_at: string | null;
+  created_at: string;
+  buyers: { name: string; company_name: string | null } | null;
+  paid: number;
+  remaining: number;
 };
 
 type Payment = {
@@ -50,6 +64,18 @@ const invoiceExportColumns: ExportColumn<Invoice>[] = [
   { header: "Status", value: (i) => i.payment_status ?? "" },
   { header: "Due date", value: (i) => i.due_date ? new Date(i.due_date).toLocaleDateString() : "" },
   { header: "Dispatch #", value: (i) => i.grain_dispatches?.dispatch_number ?? "" },
+];
+
+const outstandingExportColumns: ExportColumn<OutstandingDispatch>[] = [
+  { header: "Dispatch #", value: (d) => d.dispatch_number },
+  { header: "Buyer", value: (d) => d.buyers?.name ?? "—" },
+  { header: "Company", value: (d) => d.buyers?.company_name ?? "" },
+  { header: "Total", value: (d) => d.total_amount },
+  { header: "Paid", value: (d) => d.paid },
+  { header: "Remaining", value: (d) => d.remaining },
+  { header: "Currency", value: (d) => d.currency ?? "" },
+  { header: "Status", value: (d) => d.status },
+  { header: "Dispatched", value: (d) => d.dispatched_at ? new Date(d.dispatched_at).toLocaleDateString() : "" },
 ];
 
 const paymentExportColumns: ExportColumn<Payment>[] = [
@@ -84,6 +110,10 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
   const [q, setQ] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [resumeDispatch, setResumeDispatch] = useState<{ id: string; dispatchNumber: string } | null>(null);
+
+  function openNewSale() { setResumeDispatch(null); setWizardOpen(true); }
+  function openReopen(d: OutstandingDispatch) { setResumeDispatch({ id: d.id, dispatchNumber: d.dispatch_number }); setWizardOpen(true); }
 
   // Managers see revenue read-only: no outgoing sale creation, no mark-paid action
   const canWrite = role === "admin" || role === "super_admin";
@@ -96,6 +126,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
   const invoices = data?.invoices ?? [];
   const payments = data?.payments ?? [];
+  const outstandingDispatches = (data?.outstandingDispatches ?? []) as OutstandingDispatch[];
   const totals = data?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, due: 0, overdue: 0, countInvoices: 0, countPayments: 0 };
   const byStatus = data?.byStatus ?? {};
 
@@ -114,7 +145,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
     <div className="space-y-6">
       {canWrite && (
         <div className="flex justify-end">
-          <Button onClick={() => setWizardOpen(true)} className="gap-1.5">
+          <Button onClick={openNewSale} className="gap-1.5">
             <Plus className="h-4 w-4" /> New sale (Invoice → Dispatch → Payment)
           </Button>
         </div>
@@ -132,7 +163,49 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
       </div>
 
-      <DispatchSaleWizard open={wizardOpen} onOpenChange={setWizardOpen} onDone={() => qc.invalidateQueries({ queryKey: ["revenue"] })} />
+      <DispatchSaleWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        onDone={() => qc.invalidateQueries({ queryKey: ["revenue"] })}
+        resumeDispatch={resumeDispatch}
+      />
+
+      {outstandingDispatches.length > 0 && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardHeader className="flex flex-row justify-between items-center gap-3">
+            <div>
+              <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4 text-amber-600" /> Outstanding payments</CardTitle>
+              <CardDescription>Approved dispatches with no fully-recorded payment — closed out of the payment step before a receipt was added.</CardDescription>
+            </div>
+            <ExportMenu filename="outstanding-payments" title="Outstanding Payments" rows={outstandingDispatches} columns={outstandingExportColumns} />
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {outstandingDispatches.map((d) => (
+                <div key={d.id} className="p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> {d.dispatch_number}</Badge>
+                      <span className="text-sm font-medium">{d.buyers?.name ?? "—"}{d.buyers?.company_name ? ` · ${d.buyers.company_name}` : ""}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {d.dispatched_at ? `Dispatched ${new Date(d.dispatched_at).toLocaleDateString()}` : "Not yet dispatched"} · {d.paid > 0 ? `${money(d.paid, d.currency)} of ${money(d.total_amount, d.currency)} paid` : "No payment recorded"}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-amber-600 font-semibold">{money(d.remaining, d.currency)} due</div>
+                  </div>
+                  {canWrite && (
+                    <Button size="sm" variant="outline" onClick={() => openReopen(d)} className="gap-1.5">
+                      <RotateCcw className="h-3.5 w-3.5" /> Reopen
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-sm">By status</CardTitle></CardHeader>

@@ -1,0 +1,39 @@
+name: Plan expiry reminders
+
+# Batch 5 audit, Item 6 — daily trigger for the expiry-reminder webhook
+# (src/routes/api/public/hooks/expiry-reminders.ts -> runExpiryReminders in
+# src/lib/expiry-reminders.server.ts), which already implements the 7/3/1-day
+# threshold logic, email (Resend) and push (emitNotification). This workflow
+# exists only because the deployed Cloudflare Worker for this app doesn't
+# export a scheduled() handler (Nitro's cloudflare-module preset here only
+# wires `fetch`), so a Workers Cron Trigger on that same Worker would fire
+# into nothing. This calls the existing HTTP webhook on a schedule instead —
+# no change to the app's build/deploy pipeline required.
+#
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   APP_ORIGIN        the deployed app's base URL, e.g. https://app.grainhero.com
+#                      (same value as the APP_ORIGIN env var the app itself uses)
+#   EXPIRY_HOOK_KEY    the value of SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY,
+#                      whichever the deployed app has set) — the webhook checks
+#                      the `apikey` header against that same env var.
+
+on:
+  schedule:
+    # 03:00 UTC daily — once a day is enough; runExpiryReminders tracks which
+    # thresholds already fired per subscription (notified_expiry_thresholds),
+    # so an extra run never double-sends.
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call expiry-reminders webhook
+        run: |
+          curl -sf -X POST "${APP_ORIGIN}/api/public/hooks/expiry-reminders" \
+            -H "apikey: ${EXPIRY_HOOK_KEY}" \
+            -H "Content-Type: application/json"
+        env:
+          APP_ORIGIN: ${{ secrets.APP_ORIGIN }}
+          EXPIRY_HOOK_KEY: ${{ secrets.EXPIRY_HOOK_KEY }}

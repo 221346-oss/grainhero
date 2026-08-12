@@ -8,7 +8,6 @@ import {
 } from "@/lib/hardware-orders.functions";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
-import { downloadCsv, downloadPdf } from "@/lib/csv-pdf-export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +22,7 @@ import { InstallStageTracker, deriveStage } from "@/components/app/orders/Instal
 import { TechnicianAssignmentDialog } from "@/components/app/orders/TechnicianAssignmentDialog";
 import {
   Truck, MoreHorizontal, Users,
-  Search, RefreshCw, MapPin, Phone, Download, FileDown,
+  Search, RefreshCw, MapPin, Phone,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -113,25 +112,7 @@ const orderExportColumns: ExportColumn<any>[] = [
 
 // ── Export button row ────────────────────────────────────────────────────────
 function ExportRow({ rows, label, filename }: { rows: any[]; label: string; filename: string }) {
-  const [busy, setBusy] = useState(false);
-  return (
-    <div className="flex items-center gap-1 shrink-0">
-      <button
-        disabled={rows.length === 0}
-        onClick={() => downloadCsv(filename, rows, EXPORT_COLS)}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"
-      >
-        <Download className="w-3 h-3" /> CSV
-      </button>
-      <button
-        disabled={rows.length === 0 || busy}
-        onClick={async () => { setBusy(true); await downloadPdf(filename, label, rows, EXPORT_COLS).catch(console.error); setBusy(false); }}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"
-      >
-        <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
-      </button>
-    </div>
-  );
+  return <ExportMenu filename={filename} title={label} rows={rows} columns={orderExportColumns} />;
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────

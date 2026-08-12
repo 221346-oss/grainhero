@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Loader2, QrCode,
   Truck, AlertTriangle, User, Calendar, Wheat, FlaskConical, ShieldCheck, Undo2,
-  ChevronDown, ArrowUpRight,
+  ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +19,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-  DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -50,7 +46,6 @@ import { BatchQCDialog, type QCMode } from "./BatchQCDialog";
 import { cn } from "@/lib/utils";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
-import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 
 const GRAIN_TYPES = ["Wheat", "Rice", "Maize", "Barley", "Sorghum"] as const;
 const STATUSES = [
@@ -345,7 +340,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [dispatchSilo, setDispatchSilo] = useState<Silo | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [spoilageOpen, setSpoilageOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -643,32 +637,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           columns={batchExportColumns}
         />
         {canCreate && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New batch <ChevronDown className="w-3.5 h-3.5" /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={openCreate} className="gap-2">
-                <Package className="w-4 h-4" /> Incoming batch
-              </DropdownMenuItem>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="gap-2">
-                  <Truck className="w-4 h-4" /> Outgoing batch
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {availableSilos.length === 0 ? (
-                    <DropdownMenuItem disabled>No silos with stock</DropdownMenuItem>
-                  ) : (
-                    availableSilos.map((s) => (
-                      <DropdownMenuItem key={s.id} onClick={() => setDispatchSilo(s)}>
-                        {s.name} ({s.silo_id})
-                      </DropdownMenuItem>
-                    ))
-                  )}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Package className="w-4 h-4" /> New batch</Button>
         )}
       </div>
 
@@ -1495,14 +1464,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       </Dialog>
 
       <BatchQCDialog batch={qcBatch} mode={qcMode} open={qcOpen} onOpenChange={setQcOpen} />
-
-      {/* Outgoing batch — "New batch" > "Outgoing batch" > pick a silo triggers this directly, no batch form involved */}
-      <DispatchDialog
-        open={!!dispatchSilo}
-        onOpenChange={(o) => !o && setDispatchSilo(null)}
-        siloId={dispatchSilo?.id ?? null}
-        siloName={dispatchSilo?.name}
-      />
     </div>
   );
 }

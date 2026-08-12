@@ -12,7 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
-import { RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell, Download, FileDown } from "lucide-react";
+import { RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 import {
   NEON, NeonPatternDefs, useNeonCharts, neonFill, neonGrid, neonAxis,
   neonTooltipStyle, HairlineGrid, NeonPanel, NeonLegend, ChartEmpty,
@@ -60,25 +60,9 @@ const ALL_PLANS = ["starter", "professional", "enterprise"] as const;
 function ExportRow({ data, filename, title }: {
   data: Array<Record<string, any>>; filename: string; title: string;
 }) {
-  const [busy, setBusy] = React.useState(false);
-  return (
-    <div className="flex gap-1 shrink-0">
-      <button
-        onClick={() => exportToCSV(data, filename)}
-        disabled={data.length === 0}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 transition-colors"
-      >
-        <Download className="w-3 h-3" /> CSV
-      </button>
-      <button
-        onClick={async () => { setBusy(true); await exportToPDF(data, title, filename).catch(console.error); setBusy(false); }}
-        disabled={data.length === 0 || busy}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 transition-colors"
-      >
-        <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
-      </button>
-    </div>
-  );
+  const columns: ExportColumn<Record<string, any>>[] =
+    data.length > 0 ? Object.keys(data[0]).map((k) => ({ header: k, value: (row) => row[k] })) : [];
+  return <ExportMenu filename={filename} title={title} rows={data} columns={columns} />;
 }
 
 // ── Stat tile ────────────────────────────────────────────────────────────────
