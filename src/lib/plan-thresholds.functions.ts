@@ -188,13 +188,13 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
           read: false,
         }));
 
-        const { error: notifErr } = await context.supabase
-          .from("notifications")
-          .insert(notifRows as never);
+        // const { error: notifErr } = await context.supabase
+        //   .from("notifications")
+        //   .insert(notifRows as never);
 
-        if (notifErr) {
-          console.warn("[updatePlanThreshold] tenant admin notification insert failed:", notifErr.message);
-        }
+        // if (notifErr) {
+        //   console.warn("[updatePlanThreshold] tenant admin notification insert failed:", notifErr.message);
+        // }
       }
 
       // Only tenant admins are notified. Super admin made the change intentionally

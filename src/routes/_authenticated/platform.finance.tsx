@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FinanceCommandSkeleton } from "@/components/app/skeletons";
@@ -37,7 +38,7 @@ function FinanceCommandPage() {
     queryKey: ["finance-summary", days],
     queryFn: () => fn({ data: { days } }),
   });
-  if (isLoading || !data) return <FinanceCommandSkeleton />;
+  if (isLoading || !data) return <AdminPageShell title="Finance" subtitle="Ledger-driven view of every money movement across the marketplace"><FinanceCommandSkeleton /></AdminPageShell>;
   const { totals, trend, currency } = data;
   const tiles = [
     { label: "GMV", value: totals.gmv, icon: DollarSign },
@@ -49,19 +50,19 @@ function FinanceCommandPage() {
     { label: "Pending payouts", value: totals.pendingPayouts, icon: Package },
   ];
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <NeonPatternDefs />
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Finance command center</h1>
-          <p className="text-sm text-muted-foreground mt-1">Ledger-driven view of every money movement across the marketplace.</p>
-        </div>
+    <AdminPageShell 
+      title="Finance" 
+      subtitle="Ledger-driven view of every money movement across the marketplace"
+      actions={
         <div className="flex gap-1">
           {[7,30,90].map((d) => (
             <Button key={d} size="sm" variant={days === d ? "default" : "outline"} onClick={() => setDays(d)}>{d}d</Button>
           ))}
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6 max-w-[1400px]">
+      <NeonPatternDefs />
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {tiles.map((t) => (
@@ -105,6 +106,7 @@ function FinanceCommandPage() {
           />
         </NeonPanel>
       </HairlineGrid>
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }

@@ -428,28 +428,30 @@ function PlatformOrdersPage() {
           </div>
         ) : (
           <div className="rounded-lg border border-border bg-background overflow-hidden">
-            {/* Column headers */}
-            <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30/80">
-              <span>Order</span>
-              <span>Buyer</span>
-              <span>Location</span>
-              <span>Total</span>
-              <span>Status</span>
-              <span>Placed</span>
-              <span />
-            </div>
-            <div className="divide-y divide-border">
-              {filtered.map((o) => (
-                <OrderRow
-                  key={o.id as string}
-                  order={o}
-                  tabColor={tabColor}
-                  onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
-                  busy={update.isPending}
-                  onOpenInstall={() => setInstall(o.id as string)}
-                  onAssign={() => setAssign(o)}
-                />
-              ))}
+            <div className="overflow-x-auto">
+              {/* Column headers */}
+              <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 min-w-[900px]">
+                <span>Order</span>
+                <span>Buyer</span>
+                <span>Location</span>
+                <span>Total</span>
+                <span>Status</span>
+                <span>Placed</span>
+                <span />
+              </div>
+              <div className="divide-y divide-border">
+                {filtered.map((o) => (
+                  <OrderRow
+                    key={o.id as string}
+                    order={o}
+                    tabColor={tabColor}
+                    onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
+                    busy={update.isPending}
+                    onOpenInstall={() => setInstall(o.id as string)}
+                    onAssign={() => setAssign(o)}
+                  />
+                ))}
+              </div>
             </div>
             <div className="px-5 py-2.5 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
               <span>{filtered.length} order{filtered.length !== 1 ? "s" : ""}</span>
@@ -507,7 +509,75 @@ function OrderRow({
 
   return (
     <>
-      <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 items-center px-5 py-3 hover:bg-muted/30/60 transition-colors">
+      {/* Mobile Card View */}
+      <div className="block md:hidden p-4 border-b border-border space-y-3 bg-white">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="text-sm font-bold text-foreground">
+              {order.plan_name ?? order.plan_id ?? "—"}
+            </div>
+            <div className="text-xs text-muted-foreground font-mono mt-0.5">
+              {String(order.id ?? "").slice(0, 8)} · {order.hardware_quantity ?? 0} unit{Number(order.hardware_quantity) !== 1 ? "s" : ""}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-emerald-600">
+              PKR {fmt(Number(order.hardware_total ?? 0))}
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={() => setDetailOpen(true)}>
+                  View &amp; edit details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onAssign}>
+                  <Users className="w-3.5 h-3.5 mr-1.5" /> Assign technician
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenInstall}>
+                  <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "completed" })}>
+                  Mark completed
+                </DropdownMenuItem>
+                {order.status !== "cancelled" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>
+                      Cancel order
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/50 pt-2 text-muted-foreground">
+          <div>
+            <span className="font-semibold text-foreground block">{order.buyer?.name ?? order.customer_name ?? "—"}</span>
+            <span className="truncate block text-[11px]">{order.buyer?.email ?? order.customer_email ?? "—"}</span>
+          </div>
+          <div className="flex items-center gap-1 text-[11px]">
+            <MapPin className="w-3 h-3 shrink-0 text-muted-foreground" />
+            <span className="truncate">{[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}</span>
+          </div>
+        </div>
+
+        <div className="pt-1">
+          <InstallStageTracker
+            variant="row"
+            {...deriveStage(order, order.installation ?? null, order.visit_events ?? [])}
+          />
+        </div>
+      </div>
+
+      {/* Desktop Grid View */}
+      <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 items-center px-5 py-3 hover:bg-muted/30 transition-colors min-w-[900px]">
         {/* Order */}
         <div>
           <div className="text-sm font-medium text-foreground">

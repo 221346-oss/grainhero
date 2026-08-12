@@ -579,24 +579,54 @@ function RequestRow({ order, tabColor, onOpen }: { order: any; tabColor: string;
     <button
       type="button"
       onClick={onOpen}
-      className="w-full grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-2 md:gap-0 items-center px-5 py-4 hover:bg-muted/30/70 transition-colors text-left"
+      className="w-full px-5 py-4 hover:bg-muted/30 transition-colors text-left block"
     >
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{order.buyer?.name ?? order.customer_name ?? "—"}</p>
-        <p className="text-[11px] text-muted-foreground truncate">{order.buyer?.email ?? order.customer_email ?? ""}</p>
+      {/* Mobile view */}
+      <div className="flex md:hidden flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground truncate">{order.buyer?.name ?? order.customer_name ?? "—"}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{order.buyer?.email ?? order.customer_email ?? ""}</p>
+          </div>
+          <div className="shrink-0 flex flex-col items-end gap-1">
+            <Badge variant="outline" className={cn("capitalize text-[10px] px-2 py-0.5", cfg.badge)}>{cfg.label}</Badge>
+            {isPending && <p className="text-[9px] text-amber-500 font-medium">● Awaiting review</p>}
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2 pt-1 border-t border-border/30">
+          <div className="truncate">
+            <span className="font-medium text-foreground">{order.plan_name ?? order.plan_id ?? "—"}</span>
+            <span> · {order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="shrink-0">
+            {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
+          </div>
+        </div>
+        <div className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+          <MapPin className="w-3 h-3 shrink-0" />
+          <span className="truncate">{[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}</span>
+        </div>
       </div>
-      <div className="text-sm text-muted-foreground truncate">{order.plan_name ?? order.plan_id ?? "—"}</div>
-      <div className="text-sm text-muted-foreground">{order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}</div>
-      <div className="text-xs text-muted-foreground flex items-center gap-1">
-        <MapPin className="w-3 h-3 shrink-0" />
-        <span className="truncate">{[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}</span>
-      </div>
-      <div>
-        <Badge variant="outline" className={cn("capitalize text-xs", cfg.badge)}>{cfg.label}</Badge>
-        {isPending && <p className="text-[10px] text-amber-500 font-medium mt-1">● Awaiting review</p>}
-      </div>
-      <div className="text-xs text-muted-foreground text-right md:pl-4 shrink-0">
-        {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
+
+      {/* Desktop view */}
+      <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 items-center">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">{order.buyer?.name ?? order.customer_name ?? "—"}</p>
+          <p className="text-[11px] text-muted-foreground truncate">{order.buyer?.email ?? order.customer_email ?? ""}</p>
+        </div>
+        <div className="text-sm text-muted-foreground truncate">{order.plan_name ?? order.plan_id ?? "—"}</div>
+        <div className="text-sm text-muted-foreground">{order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}</div>
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <MapPin className="w-3 h-3 shrink-0" />
+          <span className="truncate">{[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}</span>
+        </div>
+        <div>
+          <Badge variant="outline" className={cn("capitalize text-xs", cfg.badge)}>{cfg.label}</Badge>
+          {isPending && <p className="text-[10px] text-amber-500 font-medium mt-1">● Awaiting review</p>}
+        </div>
+        <div className="text-xs text-muted-foreground text-right pl-4 shrink-0">
+          {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
+        </div>
       </div>
     </button>
   );

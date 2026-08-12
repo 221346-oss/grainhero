@@ -1,4 +1,4 @@
-import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -6,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { ResponsiveTabs, ResponsiveTabsList, ResponsiveTabsTrigger, ResponsiveTabsContent } from "@/components/app/mobile/ResponsiveTabs";
+
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getPlatformOverviewWidgets, getPlatformReportingDetails } from "@/lib/platform-no-admin.functions";
 import { getCustomerFeedback, getWarehouseOperationsMetrics, getTechnicianPerformance } from "@/lib/platform-reporting.functions";
 import { listTickets, deleteTicket, type TicketRow } from "@/lib/tickets.functions";
@@ -27,7 +28,20 @@ export const Route = createFileRoute("/_authenticated/platform/reporting")({
 
 function PlatformReportingPage() {
   const search = useSearch({ from: "/_authenticated/platform/reporting" });
+  const navigate = useNavigate();
   const activeTab = (search as { tab?: string }).tab ?? "hardware";
+  const [tabState, setTabState] = useState(activeTab);
+
+  useEffect(() => {
+    if (activeTab && activeTab !== tabState) {
+      setTabState(activeTab);
+    }
+  }, [activeTab]);
+
+  const handleTabChange = (val: string) => {
+    setTabState(val);
+    navigate({ to: "/platform/reporting", search: { tab: val }, replace: true });
+  };
 
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
   const detailsFn = useServerFn(getPlatformReportingDetails);
@@ -112,6 +126,13 @@ function PlatformReportingPage() {
     >
       <AdminSummaryTiles
         columns={4}
+        active={tabState === "tickets" ? "total" : tabState === "hardware" ? "hw" : tabState === "bugs" ? "bugs" : tabState === "queries" ? "queries" : undefined}
+        onSelect={(key) => {
+          if (key === "total") handleTabChange("tickets");
+          else if (key === "hw") handleTabChange("hardware");
+          else if (key === "bugs") handleTabChange("bugs");
+          else if (key === "queries") handleTabChange("queries");
+        }}
         tiles={[
           { key: "total", label: "Total tickets (30d)", value: stats.totalTickets },
           { key: "hw", label: "Hardware issues", value: stats.hardwareIssues },
@@ -120,20 +141,20 @@ function PlatformReportingPage() {
         ]}
       />
 
-      <Tabs defaultValue={activeTab}>
-        <TabsList>
-          <TabsTrigger value="hardware">Hardware ({details?.hardwareOrders?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="bugs">Bug reports ({(details?.bugReports?.length ?? 0) + bugTickets.length})</TabsTrigger>
-          <TabsTrigger value="queries">Manager queries ({details?.managerQueries?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="feedback">Customer Feedback ({feedback.feedback.length})</TabsTrigger>
-          <TabsTrigger value="warehouses">Warehouse Metrics ({warehouses.warehouses.length})</TabsTrigger>
-          <TabsTrigger value="technicians">Technicians ({technicians.technicians.length})</TabsTrigger>
-          <TabsTrigger value="tickets">
+      <ResponsiveTabs value={tabState} onValueChange={handleTabChange}>
+        <ResponsiveTabsList>
+          <ResponsiveTabsTrigger value="hardware">Hardware ({details?.hardwareOrders?.length ?? 0})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="bugs">Bug reports ({(details?.bugReports?.length ?? 0) + bugTickets.length})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="queries">Manager queries ({details?.managerQueries?.length ?? 0})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="feedback">Customer Feedback ({feedback.feedback.length})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="warehouses">Warehouse Metrics ({warehouses.warehouses.length})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="technicians">Technicians ({technicians.technicians.length})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="tickets">
             Incident Tickets ({allTickets.length})
-          </TabsTrigger>
-        </TabsList>
+          </ResponsiveTabsTrigger>
+        </ResponsiveTabsList>
 
-        <TabsContent value="hardware" className="mt-4">
+        <ResponsiveTabsContent value="hardware" className="mt-4">
           <AdminDataCard title="Open hardware orders" description="Install and hardware orders needing attention">
             {isLoading ? (
               <p className="p-6 text-sm text-slate-500">Loading…</p>
@@ -172,9 +193,9 @@ function PlatformReportingPage() {
               </table>
             )}
           </AdminDataCard>
-        </TabsContent>
+        </ResponsiveTabsContent>
 
-        <TabsContent value="bugs" className="mt-4 space-y-4">
+        <ResponsiveTabsContent value="bugs" className="mt-4 space-y-4">
           {/* Bug reports from admins via the ticket system */}
           <AdminDataCard
             title={`Bug reports from admins (${bugTickets.length})`}
@@ -278,9 +299,9 @@ function PlatformReportingPage() {
               </tbody>
             </table>
           </AdminDataCard>
-        </TabsContent>
+        </ResponsiveTabsContent>
 
-        <TabsContent value="queries" className="mt-4">
+        <ResponsiveTabsContent value="queries" className="mt-4">
           <AdminDataCard
             title="Manager queries"
             description="Questions and support requests sent by tenant admins and managers"
@@ -316,10 +337,10 @@ function PlatformReportingPage() {
               </tbody>
             </table>
           </AdminDataCard>
-        </TabsContent>
+        </ResponsiveTabsContent>
 
         {/* Customer Feedback Tab */}
-        <TabsContent value="feedback" className="mt-4 space-y-4">
+        <ResponsiveTabsContent value="feedback" className="mt-4 space-y-4">
           {/* Feedback stats - Neon hairline grid */}
           <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-5">
             <div className="bg-background px-3 py-3">
@@ -423,10 +444,10 @@ function PlatformReportingPage() {
               </div>
             )}
           </AdminDataCard>
-        </TabsContent>
+        </ResponsiveTabsContent>
 
         {/* Warehouse Metrics Tab */}
-        <TabsContent value="warehouses" className="mt-4 space-y-4">
+        <ResponsiveTabsContent value="warehouses" className="mt-4 space-y-4">
           {/* Warehouse stats - Neon hairline grid */}
           <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-4">
             <div className="bg-background px-3 py-3">
@@ -521,10 +542,10 @@ function PlatformReportingPage() {
               )}
             </AdminDataCard>
           </div>
-        </TabsContent>
+        </ResponsiveTabsContent>
 
         {/* Technician Performance Tab */}
-        <TabsContent value="technicians" className="mt-4">
+        <ResponsiveTabsContent value="technicians" className="mt-4">
           <AdminDataCard title="Technician performance" description="Installation metrics and customer ratings">
             {loadingTech ? (
               <div className="p-4 space-y-3">
@@ -596,10 +617,10 @@ function PlatformReportingPage() {
               </table>
             )}
           </AdminDataCard>
-        </TabsContent>
+        </ResponsiveTabsContent>
 
         {/* Incident Tickets Tab — all tickets for super admin with status filter */}
-        <TabsContent value="tickets" className="mt-4">
+        <ResponsiveTabsContent value="tickets" className="mt-4">
           <AdminDataCard
             title="Incident tickets"
             description="All tickets raised by admins — open, resolved, and closed"
@@ -726,8 +747,8 @@ function PlatformReportingPage() {
               </div>
             )}
           </AdminDataCard>
-        </TabsContent>
-      </Tabs>
+        </ResponsiveTabsContent>
+      </ResponsiveTabs>
 
       {/* Detail sheet — superadmin can resolve/discuss from reporting page too */}
 
@@ -742,3 +763,4 @@ function PlatformReportingPage() {
     </AdminPageShell>
   );
 }
+

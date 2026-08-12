@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ function TaxRulesPage() {
   const [form, setForm] = useState<{ region: string; ratePct: number; ruleType: "vat" | "gst" | "sales" | "withholding"; appliesTo: "buyer" | "seller" | "platform_fee" }>({
     region: "", ratePct: 0, ruleType: "vat", appliesTo: "buyer",
   });
-  if (isLoading) return <TaxRulesSkeleton />;
+  if (isLoading) return <AdminPageShell title="Tax Rules" subtitle="Region-based tax rates driving invoices and payouts."><TaxRulesSkeleton /></AdminPageShell>;
 
   async function submit() {
     if (!form.region) return toast.error("Region required");
@@ -46,11 +47,11 @@ function TaxRulesPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Tax rules</h1>
-        <p className="text-sm text-muted-foreground mt-1">Region-based tax rates driving invoices and payouts.</p>
-      </div>
+    <AdminPageShell 
+      title="Tax Rules" 
+      subtitle="Region-based tax rates driving invoices and payouts."
+    >
+      <div className="space-y-6 max-w-[1400px]">
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Add rule</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-3">
@@ -106,6 +107,7 @@ function TaxRulesPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }

@@ -140,7 +140,7 @@ export function TicketDiscussion({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-full max-w-md p-0 flex flex-col gap-0 overflow-hidden"
+      <DialogContent className="p-0 flex flex-col gap-0 overflow-hidden sm:max-w-md max-sm:top-auto max-sm:bottom-0 max-sm:translate-y-0 max-sm:rounded-t-xl max-sm:rounded-b-none"
         style={{ maxHeight: "min(80vh, 600px)" }}>
         <DialogHeader className="px-5 pt-4 pb-3 border-b border-slate-200 shrink-0">
           <DialogTitle className="text-sm font-bold text-slate-900">Discussion</DialogTitle>
