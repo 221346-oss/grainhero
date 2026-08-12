@@ -465,11 +465,40 @@ export const listGrainBatches = createServerFn({ method: "GET" })
 
     // Apply role-based visibility filtering
     if (userRole === "technician") {
-      // Technicians only see batches assigned to them
-      query = query.eq("assigned_technician_id", context.userId);
+      // Technicians must satisfy BOTH conditions:
+      // 1. Be in warehouse's technician_ids array
+      // 2. Be assigned to the specific batch (assigned_technician_id)
+      
+      // Get warehouses where this technician is assigned
+      const { data: techWarehouses } = await context.supabase
+        .from("warehouses")
+        .select("id")
+        .contains("technician_ids", [context.userId]);
+      
+      if (techWarehouses && techWarehouses.length > 0) {
+        const warehouseIds = techWarehouses.map((w) => w.id);
+        // Get silos in these warehouses
+        const { data: silosInWarehouses } = await context.supabase
+          .from("silos")
+          .select("id")
+          .in("warehouse_id", warehouseIds);
+        
+        if (silosInWarehouses && silosInWarehouses.length > 0) {
+          const siloIds = silosInWarehouses.map((s) => s.id);
+          // Technician sees batches in their warehouse silos that are ASSIGNED to them
+          query = query
+            .in("silo_id", siloIds)
+            .eq("assigned_technician_id", context.userId);
+        } else {
+          // Technician has no silos in their warehouses, return empty
+          return [];
+        }
+      } else {
+        // Technician not assigned to any warehouse, return empty
+        return [];
+      }
     } else if (userRole === "manager") {
       // Managers only see batches in their assigned warehouses
-      // First, get the warehouses assigned to this manager
       const { data: managerWarehouses } = await context.supabase
         .from("warehouses")
         .select("id")
