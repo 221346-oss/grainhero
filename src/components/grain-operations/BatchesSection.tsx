@@ -380,15 +380,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const rows = useMemo(() => {
     const all = (data ?? []) as Batch[];
     return all.filter((b) => {
-      // Managers can only see:
-      // 1. Batches they created (pending_approval status)
-      // 2. Outgoing batches (dispatched, sold)
-      if (isManager) {
-        const isManagerBatch = b.status === "pending_approval";
-        const isOutgoing = b.status === "dispatched" || b.status === "sold";
-        if (!isManagerBatch && !isOutgoing) return false;
-      }
-
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (grainFilter !== "all" && b.grain_type !== grainFilter) return false;
       if (!q.trim()) return true;
@@ -677,13 +668,17 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
             <p className="text-sm mb-4">No batches yet.</p>
             {availableSilos.length === 0 ? (
-              <Link
-                to="/grain-operations"
-                search={{ tab: "silos" }}
-                className="text-sm text-primary hover:text-primary/80 underline underline-offset-4"
-              >
-                Create a silo first →
-              </Link>
+              isAdmin ? (
+                <Link
+                  to="/grain-operations"
+                  search={{ tab: "silos" }}
+                  className="text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+                >
+                  Create a silo first →
+                </Link>
+              ) : (
+                <span className="text-sm text-muted-foreground">No available silos in your assigned warehouses.</span>
+              )
             ) : canCreate ? (
               <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add incoming batch</Button>
             ) : null}

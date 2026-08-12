@@ -32,8 +32,7 @@ async function resolveTenantAdminId(supabase: Row, userId: string): Promise<stri
 const reportInput = z.object({
   title: z.string().trim().min(3).max(200),
   description: z.string().trim().min(3).max(1000),
-  // Only required (and only used) when the creator is a technician — they're
-  // the one case that still picks a specific person (a manager) themselves.
+  // Required for technicians. Optional for admins (if they want to assign to a team member).
   recipientId: z.string().uuid().optional().nullable(),
 });
 
@@ -68,16 +67,25 @@ export const reportFieldIncident = createServerFn({ method: "POST" })
     } else if (role === "manager") {
       recipientId = tenantAdminId;
     } else {
-      // role === "admin": route to the platform's super_admin. The system is
-      // built assuming exactly one; if more than one exists we just take the
-      // first found rather than fan out to all of them.
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: supers } = await supabaseAdmin
-        .from("user_roles").select("user_id").eq("role", "super_admin").limit(1);
-      const superAdminId = (supers as { user_id: string }[] | null)?.[0]?.user_id;
-      if (!superAdminId) throw new Error("No super admin found to route this to");
-      recipientId = superAdminId;
-      notifyWithAdmin = true;
+      // role === "admin"
+      if (data.recipientId) {
+        // Admin is assigning this incident to a team member (e.g. a manager)
+        const { data: recipient } = await context.supabase
+          .from("profiles").select("id, admin_id").eq("id", data.recipientId).maybeSingle();
+        const r = recipient as { id: string; admin_id: string | null } | null;
+        if (!r || (r.admin_id ?? r.id) !== tenantAdminId) throw new Error("Recipient must be a member of your team");
+        
+        recipientId = data.recipientId;
+      } else {
+        // Fallback: route to the platform's super_admin
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: supers } = await supabaseAdmin
+          .from("user_roles").select("user_id").eq("role", "super_admin").limit(1);
+        const superAdminId = (supers as { user_id: string }[] | null)?.[0]?.user_id;
+        if (!superAdminId) throw new Error("No super admin found to route this to");
+        recipientId = superAdminId;
+        notifyWithAdmin = true;
+      }
     }
 
     const { data: row, error } = await context.supabase
