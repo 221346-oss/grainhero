@@ -57,8 +57,8 @@ function friendlySaveError(e: Error): string {
   return e.message || "Save failed";
 }
 
-// Same allow-list used for team invite/manage — technicians can't rename.
-const RENAME_ROLES = ["super_admin", "admin", "manager"];
+// Managers are not allowed to edit/rename silos.
+const RENAME_ROLES = ["super_admin", "admin"];
 
 type Silo = {
   id: string;
@@ -321,24 +321,26 @@ export function SilosSection() {
               <SelectItem value="maintenance">Maintenance</SelectItem>
             </SelectContent>
           </Select>
-          {siloGate.data && !siloGate.data.allowed && me?.role !== "super_admin" ? (
-            <Button
-              variant="outline"
-              onClick={() => navigate({ to: "/plan-management" })}
-              className="gap-2 h-9 whitespace-nowrap border-emerald-400 text-emerald-700 hover:bg-emerald-50"
-            >
-              <ShoppingCart className="w-4 h-4" /> Upgrade Plan
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              onClick={handleRequestSilo}
-              disabled={siloGate.isLoading}
-              className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
-              title="Silo provisioning is handled by Super Admin — this requests a new one."
-            >
-              <ShoppingCart className="w-4 h-4" /> Request Silo
-            </Button>
+          {isAdmin && (
+            siloGate.data && !siloGate.data.allowed && me?.role !== "super_admin" ? (
+              <Button
+                variant="outline"
+                onClick={() => navigate({ to: "/plan-management" })}
+                className="gap-2 h-9 whitespace-nowrap border-emerald-400 text-emerald-700 hover:bg-emerald-50"
+              >
+                <ShoppingCart className="w-4 h-4" /> Upgrade Plan
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={handleRequestSilo}
+                disabled={siloGate.isLoading}
+                className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                title="Silo provisioning is handled by Super Admin — this requests a new one."
+              >
+                <ShoppingCart className="w-4 h-4" /> Request Silo
+              </Button>
+            )
           )}
         </div>
 

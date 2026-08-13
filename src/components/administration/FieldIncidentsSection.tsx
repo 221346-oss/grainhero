@@ -37,17 +37,19 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn(), enabled: open });
   const myRole = roleQ.data?.role ?? null;
   const isTechnician = myRole === "technician";
+  const isAdmin = myRole === "admin";
+  const canAssign = isTechnician || isAdmin;
 
-  const membersQ = useQuery({ queryKey: ["team-members"], queryFn: () => listMembersFn() as Promise<any[]>, enabled: open && isTechnician });
-  // Technician picks exactly one Manager — the auto-routing rule for this creator role.
-  const recipients = (membersQ.data ?? []).filter((m: any) => m.id !== myId && m.role === "manager");
+  const membersQ = useQuery({ queryKey: ["team-members"], queryFn: () => listMembersFn() as Promise<any[]>, enabled: open && canAssign });
+  // Technician picks exactly one Manager. Admin can pick a Manager or Technician.
+  const recipients = (membersQ.data ?? []).filter((m: any) => m.id !== myId && (m.role === "manager" || (isAdmin && m.role === "technician")));
 
   const mutation = useMutation({
     mutationFn: () =>
       reportFn({ data: {
         title: form.title.trim(),
         description: form.description.trim(),
-        recipientId: isTechnician ? form.recipientId : null,
+        recipientId: (canAssign && form.recipientId && form.recipientId !== "none") ? form.recipientId : null,
       } }),
     onSuccess: () => {
       toast.success("Incident reported");
@@ -59,7 +61,7 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
   });
 
   const canSubmit = form.title.trim().length >= 3 && form.description.trim().length >= 3
-    && (!isTechnician || !!form.recipientId) && !!myRole;
+    && (!isTechnician || (form.recipientId && form.recipientId !== "none")) && !!myRole;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setForm(emptyForm); }}>
@@ -73,18 +75,19 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
             <Label>Title</Label>
             <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required minLength={3} />
           </div>
-          {isTechnician ? (
+          {canAssign ? (
             <div className="grid gap-1.5">
-              <Label>Send to (manager)</Label>
+              <Label>Send to {isAdmin ? "(optional)" : "(manager)"}</Label>
               <Select value={form.recipientId} onValueChange={(v) => setForm((f) => ({ ...f, recipientId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Pick a manager" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={isAdmin ? "Pick a team member or leave default" : "Pick a manager"} /></SelectTrigger>
                 <SelectContent>
+                  {isAdmin && <SelectItem value="none">Route to Super Admin (Default)</SelectItem>}
                   {recipients.map((m: any) => (
-                    <SelectItem key={m.id} value={m.id}>{m.name ?? m.email}</SelectItem>
+                    <SelectItem key={m.id} value={m.id}>{m.name ?? m.email} ({m.role})</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">Not acknowledged in 30 minutes? It&apos;s auto-reassigned to your Admin.</p>
+              {isTechnician && <p className="text-[11px] text-muted-foreground">Not acknowledged in 30 minutes? It&apos;s auto-reassigned to your Admin.</p>}
             </div>
           ) : myRole ? (
             <p className="text-xs text-muted-foreground rounded-md bg-muted/40 px-3 py-2">{ROUTING_COPY[myRole] ?? "Auto-routed."}</p>

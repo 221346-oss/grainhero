@@ -11,6 +11,9 @@ import { logActivity, logManagerAction } from "@/lib/activity";
 // team-settings-insurance.functions.ts). Technicians are excluded.
 const RENAME_ROLES = ["super_admin", "admin", "manager"] as const;
 
+// Roles allowed to rename a silo. Managers are excluded from editing silos.
+const SILO_RENAME_ROLES = ["super_admin", "admin"] as const;
+
 // Turn ZodError into a readable one-liner so the client toast is helpful.
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
@@ -318,7 +321,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
           .eq("id", data.id)
           .maybeSingle();
         if (current && current.name !== data.name) {
-          await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+          await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
         }
       }
       const { data: row, error } = await context.supabase
@@ -403,7 +406,7 @@ export const renameSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(renameInput, d))
   .handler(async ({ data, context }) => {
-    await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+    await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
     const { data: row, error } = await context.supabase
       .from("silos")
       .update({ name: data.name, updated_by: context.userId })
@@ -498,11 +501,18 @@ export const listGrainBatches = createServerFn({ method: "GET" })
         return [];
       }
     } else if (userRole === "manager") {
-      // Managers only see batches in their assigned warehouses
+      // Managers see batches in their assigned warehouses OR batches created by the admin
       const { data: managerWarehouses } = await context.supabase
         .from("warehouses")
         .select("id")
         .eq("manager_id", context.userId);
+      
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      const tenantAdminId = profile?.admin_id ?? context.userId;
       
       if (managerWarehouses && managerWarehouses.length > 0) {
         const warehouseIds = managerWarehouses.map((w) => w.id);
@@ -514,14 +524,14 @@ export const listGrainBatches = createServerFn({ method: "GET" })
         
         if (silosInWarehouses && silosInWarehouses.length > 0) {
           const siloIds = silosInWarehouses.map((s) => s.id);
-          query = query.in("silo_id", siloIds);
+          query = query.or(`silo_id.in.(${siloIds.join(",")}),created_by.eq.${tenantAdminId}`);
         } else {
-          // Manager has no silos in their warehouses, return empty
-          return [];
+          // Manager has no silos in their warehouses, show admin batches only
+          query = query.eq("created_by", tenantAdminId);
         }
       } else {
-        // Manager has no assigned warehouses, return empty
-        return [];
+        // Manager has no assigned warehouses, show admin batches only
+        query = query.eq("created_by", tenantAdminId);
       }
     }
     // Admins and super_admins see all batches (no additional filtering needed)
