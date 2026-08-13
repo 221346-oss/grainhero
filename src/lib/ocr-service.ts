@@ -102,23 +102,15 @@ export async function extractPaymentDetails(imageFile: File): Promise<ExtractedP
 
   const worker = await createWorker("eng");
   try {
-    // Dynamic import with better error handling
-    const tesseract = await import("tesseract.js");
-    const worker = await tesseract.createWorker("eng");
-    
-    try {
-      const { data } = await worker.recognize(imageFile);
-      const rawText = data.text ?? "";
-      return {
-        paymentId: parsePaymentId(rawText),
-        amount: parseAmount(rawText),
-        date: parseDate(rawText),
-        rawText,
-        confidence: data.confidence ?? 0,
-      };
-    } finally {
-      await worker.terminate();
-    }
+    const { data } = await worker.recognize(imageFile);
+    const rawText = data.text ?? "";
+    return {
+      paymentId: parsePaymentId(rawText),
+      amount: parseAmount(rawText),
+      date: parseDate(rawText),
+      rawText,
+      confidence: data.confidence ?? 0,
+    };
   } catch (error) {
     console.error("OCR processing failed:", error);
     // Return empty result if OCR fails

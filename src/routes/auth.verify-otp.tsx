@@ -81,8 +81,13 @@ function VerifyOtpPage() {
       }
     });
 
+    // SIGNED_IN deliberately excluded here — verify() below already navigates
+    // once its own sign-in flow (claim checkout, security-event log) finishes.
+    // Reacting to SIGNED_IN here too meant two navigates racing for the same
+    // destination right after OTP verification, one of them firing before
+    // those side effects had a chance to run.
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+      if (session?.user && event === "TOKEN_REFRESHED") {
         navigate({ to: "/dashboard", replace: true });
       }
     });
