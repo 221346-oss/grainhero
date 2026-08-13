@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
 import { getFinancialSummary, generateFinancialPdf } from "@/lib/financials.functions";
 import { toast } from "sonner";
 import { FinancialsSkeleton } from "@/components/app/skeletons";
+import { useTicketCount } from "@/hooks/useTicketCount";
 
 export const Route = createFileRoute("/_authenticated/platform/financials")({
   head: () => ({
@@ -37,6 +39,7 @@ function FinancialsPage() {
   const pdfFn = useServerFn(generateFinancialPdf);
   const [iotCostPct, setIotCostPct] = useState<number>(55);
   const [opexPct, setOpexPct] = useState<number>(25);
+  const ticketCount = useTicketCount();
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["platform-financials", iotCostPct, opexPct],
     queryFn: () => fn({ data: { iotCostPct, opexPct } }),
@@ -53,23 +56,23 @@ function FinancialsPage() {
     } catch (e: any) { toast.error(e?.message ?? "Failed to generate PDF"); }
   }
 
-  if (isLoading || !data) return <FinancialsSkeleton />;
+  if (isLoading || !data) return <AdminPageShell title="Financials" subtitle="Platform-wide revenue, profit, and subscription health"><FinancialsSkeleton /></AdminPageShell>;
   const { kpis, pnl, mix, planSplit, trend } = data;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <NeonPatternDefs />
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Financial dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Platform-wide revenue, profit, and subscription health.</p>
-        </div>
+    <AdminPageShell 
+      title="Financials" 
+      subtitle="Platform-wide revenue, profit, and subscription health"
+      actions={
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => downloadPdf("pnl")}><FileDown className="h-4 w-4 mr-1.5" /> P&L PDF</Button>
           <Button variant="outline" size="sm" onClick={() => downloadPdf("revenue")}><FileDown className="h-4 w-4 mr-1.5" /> Revenue PDF</Button>
           <Button variant="outline" size="sm" onClick={() => downloadPdf("mrr")}><FileDown className="h-4 w-4 mr-1.5" /> MRR PDF</Button>
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6 max-w-[1400px]">
+      <NeonPatternDefs />
 
       {/* Cost assumptions */}
       <Card>
@@ -179,7 +182,8 @@ function FinancialsPage() {
           )}
         </NeonPanel>
       </HairlineGrid>
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }
 

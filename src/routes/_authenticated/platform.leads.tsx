@@ -60,28 +60,40 @@ function LeadsPage() {
               <thead className="bg-transparent">
                 <tr>
                   <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Name</th>
-                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Email</th>
-                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Company</th>
-                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Phone</th>
-                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500">Created</th>
+                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500 hidden sm:table-cell">Email</th>
+                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500 hidden sm:table-cell">Company</th>
+                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500 hidden sm:table-cell">Phone</th>
+                  <th className="text-left py-2 px-4 text-xs font-medium uppercase text-slate-500 hidden sm:table-cell">Created</th>
                 </tr>
               </thead>
               <tbody className="">
                 {(data?.results ?? []).map((c: any) => {
                   const fullName = [c.properties?.firstname, c.properties?.lastname].filter(Boolean).join(" ");
                   return (
-                    <tr key={c.id} className="hover:bg-slate-50">
-                      <td className="py-2 px-4 font-medium text-slate-900">{fullName || "—"}</td>
-                      <td className="py-2 px-4 text-slate-700">{c.properties?.email ?? "—"}</td>
-                      <td className="py-2 px-4">
+                    <tr key={c.id} className="hover:bg-slate-50 border-b border-slate-100 last:border-0">
+                      <td className="py-3 px-4 font-medium text-slate-900">
+                        {fullName || "—"}
+                        <div className="sm:hidden text-xs font-normal text-slate-500 mt-1 space-y-0.5">
+                          <div className="truncate">{c.properties?.email ?? "—"}</div>
+                          {c.properties?.company && (
+                            <div className="font-semibold text-slate-600">{c.properties.company}</div>
+                          )}
+                          <div className="text-[11px]">{c.properties?.phone ?? ""}</div>
+                          <div className="text-[10px] text-slate-400">
+                            {c.properties?.createdate ? new Date(c.properties.createdate).toLocaleDateString() : ""}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2 px-4 text-slate-700 hidden sm:table-cell">{c.properties?.email ?? "—"}</td>
+                      <td className="py-2 px-4 hidden sm:table-cell">
                         {c.properties?.company ? (
                           <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
                             {c.properties.company}
                           </Badge>
                         ) : <span className="text-slate-400">—</span>}
                       </td>
-                      <td className="py-2 px-4 text-slate-600">{c.properties?.phone ?? "—"}</td>
-                      <td className="py-2 px-4 text-slate-500">
+                      <td className="py-2 px-4 text-slate-600 hidden sm:table-cell">{c.properties?.phone ?? "—"}</td>
+                      <td className="py-2 px-4 text-slate-500 hidden sm:table-cell">
                         {c.properties?.createdate ? new Date(c.properties.createdate).toLocaleDateString() : "—"}
                       </td>
                     </tr>

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { Shield, ShieldCheck, AlertTriangle, DollarSign, Clock, TrendingDown, Pl
 import { Link } from "@tanstack/react-router";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Legend } from "recharts";
 import { toast } from "sonner";
+import { MobileTableWrapper } from "@/components/app/mobile/ResponsiveTable";
 import {
   getInsuranceKpis, listCarriers, upsertCarrier, deleteCarrier,
   listProducts, upsertProduct, deleteProduct,
@@ -56,7 +58,7 @@ function PlatformInsurancePage() {
   const kpiFn = useServerFn(getInsuranceKpis);
   const { data: kpis, isLoading } = useQuery({ queryKey: ["ins-kpis"], queryFn: () => kpiFn() });
 
-  if (isLoading || !kpis) return <InsuranceCommandSkeleton />;
+  if (isLoading || !kpis) return <AdminPageShell title="Insurance" subtitle="Carriers, products, policies, and claims — all configurable, no hardcoding."><InsuranceCommandSkeleton /></AdminPageShell>;
 
   const tiles = [
     { label: "Active policies", value: kpis.activePolicies.toLocaleString(), icon: ShieldCheck },
@@ -68,14 +70,12 @@ function PlatformInsurancePage() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+    <AdminPageShell 
+      title="Insurance" 
+      subtitle="Carriers, products, policies, and claims — all configurable, no hardcoding."
+    >
+      <div className="space-y-6 max-w-[1400px]">
       <NeonPatternDefs />
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
-          <Shield className="h-6 w-6 text-emerald-600" /> Insurance command center
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">Carriers, products, policies, and claims — all configurable, no hardcoding.</p>
-      </div>
 
       <HairlineGrid cols="grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         {tiles.map((t) => (
@@ -110,7 +110,8 @@ function PlatformInsurancePage() {
           <ScrollText className="h-4 w-4" /> Audit log
         </Link>
       </div>
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }
 
@@ -170,8 +171,8 @@ function AnalyticsTab() {
           </div>
         </NeonPanel>
         <NeonPanel title="Product performance" bodyClassName="-m-4 mt-0">
-          <div className="border-t border-border overflow-hidden overflow-x-auto">
-            <table className="w-full text-[13px]">
+          <MobileTableWrapper className="border-t border-border overflow-hidden">
+            <table className="w-full text-[13px] min-w-[600px]">
               <thead className="border-b border-border bg-muted/30">
                 <tr>
                   <th className="text-left font-medium text-muted-foreground px-3 py-2">Product</th>
@@ -196,7 +197,7 @@ function AnalyticsTab() {
                 )}
               </tbody>
             </table>
-          </div>
+          </MobileTableWrapper>
         </NeonPanel>
       </HairlineGrid>
     </div>
@@ -227,8 +228,8 @@ function ClaimsQueue() {
           </SelectContent>
         </Select>
       </div>
-      <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
-        <table className="w-full text-[13px]">
+      <MobileTableWrapper>
+        <table className="w-full text-[13px] min-w-[700px]">
           <thead className="border-b border-border bg-muted/30">
             <tr>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Filed</th>
@@ -264,7 +265,7 @@ function ClaimsQueue() {
             )}
           </tbody>
         </table>
-      </div>
+      </MobileTableWrapper>
       {openId && <ClaimReviewSheet claimId={openId} onClose={() => { setOpenId(null); qc.invalidateQueries({ queryKey: ["ins-claims"] }); qc.invalidateQueries({ queryKey: ["ins-kpis"] }); }} />}
     </div>
   );
@@ -415,8 +416,8 @@ function ProductsTab() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-      <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
-        <table className="w-full text-[13px]">
+      <MobileTableWrapper>
+        <table className="w-full text-[13px] min-w-[800px]">
           <thead className="border-b border-border bg-muted/30">
             <tr>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Code</th>
@@ -454,7 +455,7 @@ function ProductsTab() {
             )}
           </tbody>
         </table>
-      </div>
+      </MobileTableWrapper>
     </div>
   );
 }
@@ -505,8 +506,8 @@ function CarriersTab() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-      <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
-        <table className="w-full text-[13px]">
+      <MobileTableWrapper>
+        <table className="w-full text-[13px] min-w-[500px]">
           <thead className="border-b border-border bg-muted/30">
             <tr>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Name</th>
@@ -535,7 +536,7 @@ function CarriersTab() {
             )}
           </tbody>
         </table>
-      </div>
+      </MobileTableWrapper>
     </div>
   );
 }

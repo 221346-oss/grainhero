@@ -168,7 +168,7 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
       onClick={handleRailClick}
       aria-hidden={isHidden}
       className={cn(
-        "sticky top-0 h-screen bg-transparent transition-[width] duration-300 ease-out overflow-hidden",
+        "hidden md:block sticky top-0 h-screen bg-transparent transition-[width] duration-300 ease-out overflow-hidden",
         isHidden ? "w-0" : collapsed ? "w-16" : "w-56",
       )}
       style={isHidden ? { pointerEvents: "none" } : undefined}

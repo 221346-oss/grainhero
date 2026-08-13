@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getOrderDetail, assignTechnician, markShipped, cancelOrder, listTechniciansForAssignment } from "@/lib/hardware-lifecycle.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,29 +71,28 @@ function OrderDetailPage() {
   });
 
   if (isLoading || !data) {
-    return <div className="p-6"><div className="h-32 rounded-xl bg-muted animate-pulse" /></div>;
+    return <AdminPageShell title="Order Detail" subtitle=""><div className="p-6"><div className="h-32 rounded-xl bg-muted animate-pulse" /></div></AdminPageShell>;
   }
   const { order, installs, history, devices, buyer, technician } = data;
   const status = order.status_normalized as string;
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-      <Link to="/platform/orders" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> All orders
-      </Link>
-
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Order {order.id.slice(0, 8)}</h1>
-          <p className="text-sm text-muted-foreground">Created {new Date(order.created_at).toLocaleString()}</p>
-        </div>
+    <AdminPageShell 
+      title={`Order ${order.id.slice(0, 8)}`}
+      subtitle={`Created ${new Date(order.created_at).toLocaleString()}`}
+      actions={
         <div className="flex items-center gap-2">
           <Badge className={STATUS_COLOR[status]}>{status.replace("_", " ")}</Badge>
           <AssignSheet technicians={techData?.technicians ?? []} onSubmit={(v) => assign.mutate(v)} />
           <ShipSheet onSubmit={(v) => ship.mutate(v)} />
           <CancelSheet onSubmit={(v) => cancel.mutate(v)} />
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6 max-w-6xl">
+      <Link to="/platform/orders" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> All orders
+      </Link>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -183,7 +183,8 @@ function OrderDetailPage() {
       </div>
 
       <HardwareOrderThread orderId={orderId} as="super_admin" />
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }
 

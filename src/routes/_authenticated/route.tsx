@@ -7,7 +7,7 @@ import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar, type SidebarMode } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Menu } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
@@ -16,6 +16,7 @@ import { PlanExpiryBanner } from "@/components/app/PlanExpiryBanner";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { BugReportButton } from "@/components/app/BugReportButton";
 import { TicketSidePanel } from "@/components/app/tickets/TicketSidePanel";
+import { MobileAdminNav } from "@/components/app/mobile/MobileAdminNav";
 import { TicketChannelKeepAlive } from "@/components/app/tickets/TicketChannelKeepAlive";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import TextShimmer from "@/components/ui/text-shimmer";
@@ -176,9 +177,10 @@ function AuthenticatedLayout() {
       <SessionGuard />
       <OnboardingTour />
       <BugReportButton />
-      <div className="app-scope min-h-screen flex w-full bg-background">
+      <div className="app-scope min-h-screen flex w-full bg-white">
         <div data-tour="sidebar" className="contents">
           <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
+          <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
@@ -190,9 +192,23 @@ function AuthenticatedLayout() {
               visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
               hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
             }}
-            className="h-14 flex items-center gap-2 sm:gap-3 rounded-2xl bg-background/90 backdrop-blur-md px-3 sm:px-6 shadow-lg shadow-black/5 sticky top-2 z-30 mx-2 sm:mx-3 mt-2"
+            className="h-14 flex items-center gap-2 sm:gap-3 bg-white/90 backdrop-blur-md px-3 sm:px-6 border-b border-border sticky top-0 z-30 w-full"
           >
-            <div className="flex-1 max-w-2xl mx-auto w-full">
+            {/* Mobile menu button + logo */}
+            <div className="flex md:hidden items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen((o) => !o)}
+                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-foreground"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <Link to="/dashboard" className="h-7 w-7 rounded-lg bg-[#2FAC0C] flex items-center justify-center font-black text-white text-xs">
+                GH
+              </Link>
+            </div>
+            <div className="flex-1 max-w-2xl mx-auto w-full min-w-0">
               <AppSearch />
             </div>
             <DashboardQuickTabs />
