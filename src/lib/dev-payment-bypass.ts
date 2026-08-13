@@ -23,8 +23,11 @@ export const devSimulatePayment = createServerFn({ method: "POST" })
       throw new Error("This endpoint is only available in development mode");
     }
 
-    // Fetch the order
-    const { data: order, error } = await context.supabase
+    // Import admin client to bypass RLS for dev testing
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch the order using admin client (bypasses RLS)
+    const { data: order, error } = await supabaseAdmin
       .from("hardware_orders" as never)
       .select("*")
       .eq("id", data.orderId)
@@ -42,9 +45,9 @@ export const devSimulatePayment = createServerFn({ method: "POST" })
       throw new Error(`Cannot simulate payment for order with status: ${orderStatus}`);
     }
 
-    // Update order status to simulate successful payment
+    // Update order status to simulate successful payment (using admin client to bypass RLS)
     // This mimics what the Stripe webhook does
-    const { error: updateError } = await context.supabase
+    const { error: updateError } = await supabaseAdmin
       .from("hardware_orders" as never)
       .update({
         status: "paid",
@@ -58,7 +61,6 @@ export const devSimulatePayment = createServerFn({ method: "POST" })
 
     // Notify the user
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { emitNotification } = await import("@/lib/notify");
       
       await emitNotification(supabaseAdmin, {

@@ -87,9 +87,8 @@ function VerifyOtpPage() {
     // destination right after OTP verification, one of them firing before
     // those side effects had a chance to run.
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user && event === "TOKEN_REFRESHED") {
-        navigate({ to: "/dashboard", replace: true });
-      }
+      // Do NOT navigate on any auth event - verify() handles all navigation
+      // This prevents double navigation/verification prompts
     });
 
     return () => {
@@ -127,21 +126,7 @@ function VerifyOtpPage() {
         // Session established, proceed to dashboard
         setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
         void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
-        
-        let pendingSessionId: string | null = null;
-        // DO NOT auto-claim from localStorage - only claim if explicitly passed from checkout flow
-        // Prevents old PENDING_SESSION_KEY from triggering false order claims on simple login
-        // try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
-        if (false) { // Explicitly disable auto-claim on login-only flow
-          try {
-            await claimFn({ data: pendingSessionId ? { sessionId: pendingSessionId } : {} });
-            if (pendingSessionId) window.localStorage.removeItem(PENDING_SESSION_KEY);
-          } catch (e) {
-            console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
-          }
-        }
-        
-        setTimeout(() => navigate({ to: "/dashboard", replace: true }), 500);
+        navigate({ to: "/dashboard", replace: true });
         return;
       }
 
@@ -159,40 +144,8 @@ function VerifyOtpPage() {
     setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
     void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
 
-    // Wait for session to be available before claiming checkout or navigating
-    // This prevents the double signin issue by ensuring the session is fully established
-    let attempts = 0;
-    const maxAttempts = 10; // 1 second total
-    const waitForSession = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData?.session?.user) {
-        // Session is ready
-        return true;
-      }
-      if (attempts < maxAttempts) {
-        attempts++;
-        await new Promise(r => setTimeout(r, 100));
-        return waitForSession();
-      }
-      // Timeout - session should have been available by now
-      console.warn("[verify-otp] Session not available after retries, proceeding anyway");
-      return false;
-    };
-
-    await waitForSession();
-
-    let pendingSessionId: string | null = null;
-    // DO NOT auto-claim from localStorage - only claim if explicitly passed from checkout flow
-    // Prevents old PENDING_SESSION_KEY from triggering false order claims on simple login
-    // try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
-    if (false) { // Explicitly disable auto-claim on login-only flow
-      try {
-        await claimFn({ data: pendingSessionId ? { sessionId: pendingSessionId } : {} });
-        if (pendingSessionId) window.localStorage.removeItem(PENDING_SESSION_KEY);
-      } catch (e) {
-        console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
-      }
-    }
+    // Navigate immediately - Supabase has already verified and established session
+    navigate({ to: "/dashboard", replace: true });
   };
 
   const resend = async () => {

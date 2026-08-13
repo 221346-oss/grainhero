@@ -93,7 +93,7 @@ BEGIN
   IF _wh_id IS NULL THEN
     INSERT INTO public.warehouses (
       admin_id, created_by, name, warehouse_id, status, is_active,
-      origin_order_id, address_line1, city, country
+      origin_order_id, location_address, location_city, location_country
     ) VALUES (
       _order.admin_id, _order.admin_id,
       COALESCE(NULLIF(_order.install_city, ''), 'Warehouse') || ' — ' || upper(substr(_order.id::text, 1, 6)),

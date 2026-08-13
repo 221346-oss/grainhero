@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
-import { payApprovedSiloOrder, createSiloDraftRequest } from "@/lib/stripe-checkout.functions";
+import { payApprovedSiloOrder, createSiloDraftRequest, checkAndUpdatePaymentStatus } from "@/lib/stripe-checkout.functions";
 import { devSimulatePayment } from "@/lib/dev-payment-bypass";
 import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
@@ -185,6 +185,20 @@ function MyOrdersPage() {
       toast.success("🎉 Payment received! Your silo install order is now active.");
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       qc.invalidateQueries({ queryKey: ["plan-gate"] });
+      
+      // Poll for status change from webhook (every 2 seconds for 30 seconds)
+      // In case webhook is delayed or hasn't fired yet
+      let attempts = 0;
+      const pollInterval = setInterval(() => {
+        attempts++;
+        if (attempts > 15) {
+          clearInterval(pollInterval);
+          return; // Stop after 30 seconds
+        }
+        qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+      }, 2000);
+      
+      return () => clearInterval(pollInterval);
     } else if (paymentStatus === "cancelled") {
       window.history.replaceState({}, "", window.location.pathname);
       toast.info("Payment cancelled — your request is still saved. You can pay later.");
@@ -219,6 +233,22 @@ function MyOrdersPage() {
     },
   });
 
+  // ── Fallback: Check Stripe session status if webhook is delayed ─────────────
+  const checkPaymentMut = useMutation({
+    mutationFn: (orderId: string) => checkAndUpdatePaymentStatus({ data: { orderId } }),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success("✅ Payment confirmed! Order updated.");
+      } else {
+        toast.info(`Payment status: ${result.status}`);
+      }
+      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+    },
+    onError: (e: Error) => {
+      toast.error(e.message || "Could not check payment status");
+    },
+  });
+
   // ── Admin sign-off after install ─────────────────────────────────────────
   const completeMut = useMutation({
     mutationFn: (orderId: string) => advanceFn({ data: { orderId, next: "completed" } }),
@@ -245,13 +275,14 @@ function MyOrdersPage() {
     refetchOnWindowFocus: true,
   });
   const orders      = data?.orders ?? [];
-  const hasApproved = orders.some((o) => o.status === "approved");
-  // Auto-poll every 8s while any approved order is waiting for payment confirmation
+  const hasApproved = orders.some((o) => o.status === "approved" || o.status === "pending_payment");
+  // Auto-poll every 3s while any approved/pending order is waiting for payment confirmation
+  // (Stripe webhook updates to "paid" and we need to reflect that quickly)
   useQuery({
     queryKey: ["my-hardware-orders"],
     queryFn:  () => fetchFn(),
     staleTime: 0,
-    refetchInterval: hasApproved ? 8_000 : false,
+    refetchInterval: hasApproved ? 3_000 : false,
     enabled: hasApproved,
   });
 
@@ -272,22 +303,33 @@ function MyOrdersPage() {
             Track the technician install for each subscription you purchased.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            if (siloGate.data && !siloGate.data.allowed) {
-              setLimitOpen(true);
-              return;
-            }
-            setDraftForm(emptyDraftForm);
-            setPhoneError(null);
-            setRequestOpen(true);
-          }}
-          disabled={siloGate.isLoading}
-          className="gap-2 h-8 text-sm"
-          size="sm"
-        >
-          <PlusCircle className="h-3.5 w-3.5" /> Request new silo
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => qc.invalidateQueries({ queryKey: ["my-hardware-orders"] })}
+            disabled={isLoading}
+            variant="outline"
+            className="h-8 text-xs"
+            size="sm"
+          >
+            Refresh
+          </Button>
+          <Button
+            onClick={() => {
+              if (siloGate.data && !siloGate.data.allowed) {
+                setLimitOpen(true);
+                return;
+              }
+              setDraftForm(emptyDraftForm);
+              setPhoneError(null);
+              setRequestOpen(true);
+            }}
+            disabled={siloGate.isLoading}
+            className="gap-2 h-8 text-sm"
+            size="sm"
+          >
+            <PlusCircle className="h-3.5 w-3.5" /> Request new silo
+          </Button>
+        </div>
       </div>
 
       {/* Approved-but-unpaid top banner */}
@@ -400,7 +442,7 @@ function MyOrdersPage() {
                     Rs. {Number(o.hardware_total ?? 0).toLocaleString()} in hardware · order id:{" "}
                     {o.id}
                   </div>
-                  <div className="md:col-span-2 flex justify-end pt-1">
+                  <div className="md:col-span-2 flex justify-end pt-1 gap-2">
                     <CardActions
                       order={o}
                       onTrack={() => setOpenOrderId(o.id as string)}
@@ -409,6 +451,33 @@ function MyOrdersPage() {
                       onPay={() => payMut.mutate(o.id as string)}
                       paying={payMut.isPending && payMut.variables === o.id}
                     />
+                    {/* DEV ONLY: Manual payment simulation when Stripe webhook isn't working */}
+                    {process.env.NODE_ENV === "development" && (o.status === "approved" || o.status === "pending_payment") && (
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-orange-600 border-orange-300 hover:bg-orange-50 text-xs h-7"
+                          onClick={() => devPayMut.mutate(o.id as string)}
+                          disabled={devPayMut.isPending}
+                          title="DEV ONLY: Simulate payment for testing"
+                        >
+                          {devPayMut.isPending ? "Simulating…" : "Dev: Simulate"}
+                        </Button>
+                        {o.status === "pending_payment" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 border-blue-300 hover:bg-blue-50 text-xs h-7"
+                            onClick={() => checkPaymentMut.mutate(o.id as string)}
+                            disabled={checkPaymentMut.isPending}
+                            title="Check Stripe session status and update if paid"
+                          >
+                            {checkPaymentMut.isPending ? "Checking…" : "Check Payment"}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <HardwareOrderThread orderId={o.id as string} as="admin" />

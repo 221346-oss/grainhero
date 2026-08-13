@@ -732,18 +732,25 @@ export const payApprovedSiloOrder = createServerFn({ method: "POST" })
 
     const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
 
-    let customerId = profile?.stripe_customer_id ?? (order.stripe_customer_id as string | null) ?? null;
-    if (!customerId && email) {
-      const created = await stripeFetch(
-        "/customers",
-        stripeForm({ email, name, "metadata[user_id]": context.userId }),
-      );
-      customerId = created.id as string;
-      // Use context.supabase — user owns their own profile row
-      await context.supabase
-        .from("profiles")
-        .update({ stripe_customer_id: customerId })
-        .eq("id", context.userId);
+    // Always create a fresh customer to avoid "No such customer" errors when switching Stripe accounts
+    let customerId: string | null = null;
+    if (email) {
+      try {
+        const created = await stripeFetch(
+          "/customers",
+          stripeForm({ email, name, "metadata[user_id]": context.userId }),
+        );
+        customerId = created.id as string;
+        // Use context.supabase — user owns their own profile row
+        await context.supabase
+          .from("profiles")
+          .update({ stripe_customer_id: customerId })
+          .eq("id", context.userId);
+      } catch (e) {
+        // If customer creation fails, proceed without customer ID
+        console.warn("[payApprovedSiloOrder] Could not create Stripe customer:", e);
+        customerId = null;
+      }
     }
 
     const iotUnit   = Number(order.hardware_total ?? order.hardware_unit_price ?? 7000);
@@ -772,10 +779,89 @@ export const payApprovedSiloOrder = createServerFn({ method: "POST" })
     const session = await stripeFetch("/checkout/sessions", params) as { url: string; id: string };
 
     // Stash session id and advance to pending_payment — use context.supabase (user owns this order).
-    await context.supabase
+    // NOTE: We update to pending_payment here, then webhook will update to "paid"
+    // If webhook fails, this leaves order in pending_payment state (customer can retry)
+    const { error: sessionError } = await context.supabase
       .from("hardware_orders" as never)
-      .update({ stripe_session_id: session.id, status: "pending_payment" } as never)
+      .update({ 
+        stripe_session_id: session.id, 
+        status: "pending_payment" 
+      } as never)
       .eq("id", data.orderId);
 
+    if (sessionError) {
+      throw new Error(`Failed to save checkout session: ${sessionError.message}`);
+    }
+
+    console.log(`[payApprovedSiloOrder] Session created: ${session.id}, order moved to pending_payment`);
+
     return { url: session.url as string };
+  });
+
+
+// ── Check Stripe session and update order if payment succeeded ────────────────
+
+const checkSessionInput = z.object({ orderId: z.string().uuid() });
+
+/**
+ * Polls Stripe to check if checkout.session was paid.
+ * If yes, updates order status to "paid".
+ * Used as fallback if webhook hasn't fired yet.
+ */
+export const checkAndUpdatePaymentStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => checkSessionInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { stripeFetch } = await import("@/lib/stripe-api.server");
+
+    // Get the order
+    const { data: order } = await context.supabase
+      .from("hardware_orders" as never)
+      .select("id, status, stripe_session_id, admin_id")
+      .eq("id", data.orderId)
+      .eq("admin_id", context.userId)
+      .maybeSingle();
+
+    if (!order || !order.stripe_session_id) {
+      throw new Error("Order not found or no session ID");
+    }
+
+    // Check session status on Stripe
+    const session = await stripeFetch(`/checkout/sessions/${order.stripe_session_id}`, {});
+    const sessionData = session as {
+      id: string;
+      payment_status: string;
+      status: string;
+      payment_intent?: string;
+      customer?: string;
+    };
+
+    // If payment succeeded, update order status
+    if (sessionData.payment_status === "paid" || sessionData.status === "complete") {
+      const { error } = await supabaseAdmin
+        .from("hardware_orders" as never)
+        .update({
+          status: "paid",
+          stripe_payment_intent: sessionData.payment_intent ?? null,
+          stripe_customer_id: sessionData.customer ?? null,
+        } as never)
+        .eq("id", data.orderId);
+
+      if (error) {
+        throw new Error(`Could not update order: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        status: "paid",
+        message: "Payment confirmed and order updated to paid status",
+      };
+    }
+
+    return {
+      success: false,
+      status: sessionData.payment_status,
+      message: `Payment status: ${sessionData.payment_status}`,
+    };
   });
