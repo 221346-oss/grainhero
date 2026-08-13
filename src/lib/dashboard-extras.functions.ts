@@ -75,7 +75,6 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       dispatchTotals,
       revRowsRes,
       siloDispatchesRes,
-      intake7Res,
     ] = await Promise.all([
       context.supabase
         .from("grain_batches")
@@ -164,6 +163,10 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
         .eq("status", "dispatched")
         .gte("created_at", twelveMoAgo),
+      context.supabase
+        .from("grain_dispatches")
+        .select("silo_id, total_qty_kg")
+        .limit(5000),
     ]);
 
     const batches = batchesRes.data ?? [];

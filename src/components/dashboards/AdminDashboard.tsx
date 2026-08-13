@@ -108,7 +108,7 @@ export function AdminDashboard({ name }: { name?: string }) {
                   <h3 className="text-lg font-semibold text-foreground">Silos</h3>
                 </div>
                 <div className="flex-1 overflow-auto">
-                  <AdminSilosCard range={range} />
+                  <DashboardSiloCards range={range} />
                 </div>
               </div>
             </div>
