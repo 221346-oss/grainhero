@@ -3626,6 +3626,8 @@ export type Database = {
           admin_id: string
           avg_cost_snapshot: number | null
           avg_unit_cost: number | null
+          buyer_confirmed_at: string | null
+          buyer_confirmed_by: string | null
           buyer_id: string | null
           buyer_order_id: string | null
           created_at: string
@@ -3660,6 +3662,8 @@ export type Database = {
           admin_id: string
           avg_cost_snapshot?: number | null
           avg_unit_cost?: number | null
+          buyer_confirmed_at?: string | null
+          buyer_confirmed_by?: string | null
           buyer_id?: string | null
           buyer_order_id?: string | null
           created_at?: string
@@ -3694,6 +3698,8 @@ export type Database = {
           admin_id?: string
           avg_cost_snapshot?: number | null
           avg_unit_cost?: number | null
+          buyer_confirmed_at?: string | null
+          buyer_confirmed_by?: string | null
           buyer_id?: string | null
           buyer_order_id?: string | null
           created_at?: string
@@ -9171,6 +9177,11 @@ export type Database = {
         | "ready"
         | "rejected"
         | "pending_approval"
+        | "pending_qc"
+        | "qc_submitted"
+        | "qc_failed"
+        | "qc_passed"
+        | "admin_rejected"
       billing_cycle: "monthly" | "yearly" | "quarterly"
       buyer_order_status:
         | "pending"
@@ -9395,6 +9406,11 @@ export const Constants = {
         "ready",
         "rejected",
         "pending_approval",
+        "pending_qc",
+        "qc_submitted",
+        "qc_failed",
+        "qc_passed",
+        "admin_rejected",
       ],
       billing_cycle: ["monthly", "yearly", "quarterly"],
       buyer_order_status: [
