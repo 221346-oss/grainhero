@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ function PayoutsPage() {
     queryKey: ["payouts-list"], queryFn: () => payouts({ data: {} }),
   });
 
-  if (l1 || l2) return <PayoutsSkeleton />;
+  if (l1 || l2) return <AdminPageShell title="Payouts" subtitle="Approve, batch and mark payouts as paid."><PayoutsSkeleton /></AdminPageShell>;
 
   async function runCreate() {
     if (!selected.length) return toast.error("Select at least one seller");
@@ -59,18 +60,19 @@ function PayoutsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Seller payouts</h1>
-        <p className="text-sm text-muted-foreground mt-1">Approve, batch and mark payouts as paid.</p>
-      </div>
-
+    <AdminPageShell 
+      title="Payouts" 
+      subtitle="Approve, batch and mark payouts as paid."
+      actions={
+        <Button size="sm" onClick={runCreate} disabled={!selected.length}>
+          Create {selected.length ? `(${selected.length})` : ""} batch
+        </Button>
+      }
+    >
+      <div className="space-y-6 max-w-[1400px]">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">Payable balances</CardTitle>
-          <Button size="sm" onClick={runCreate} disabled={!selected.length}>
-            Create {selected.length ? `(${selected.length})` : ""} batch
-          </Button>
         </CardHeader>
         <CardContent className="p-0">
           {(payableData?.rows ?? []).length === 0 ? (
@@ -102,7 +104,9 @@ function PayoutsPage() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3"><CardTitle className="text-base">Recent payouts</CardTitle></CardHeader>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Recent payouts</CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           {(payoutData?.rows ?? []).length === 0 ? (
             <div className="text-sm text-muted-foreground text-center py-8">No payouts yet.</div>
@@ -145,6 +149,7 @@ function PayoutsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }

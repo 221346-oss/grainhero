@@ -9,6 +9,19 @@ async function assertSuperAdmin(ctx: { supabase: any; userId: string }) {
   if (!data) throw new Error("Forbidden: super_admin only");
 }
 
+
+export const getMyProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const supa = context.supabase;
+    const { data: profile } = await supa
+      .from("profiles")
+      .select("id, name, email, avatar_url")
+      .eq("id", context.userId)
+      .maybeSingle();
+    return profile ?? { id: context.userId, name: "Admin", email: "" };
+  });
+
 export const getAdminProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { adminId: string }) => d)

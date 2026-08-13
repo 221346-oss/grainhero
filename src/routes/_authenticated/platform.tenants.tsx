@@ -10,6 +10,7 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { useTicketCount } from "@/hooks/useTicketCount";
 
 export const Route = createFileRoute("/_authenticated/platform/tenants")({
   head: () => ({
@@ -252,6 +253,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
 function TenantsPage() {
   const fn = useServerFn(listAllTenants);
   const { data = [], isLoading } = useQuery({ queryKey: ["platform-tenants"], queryFn: () => fn() as Promise<Tenant[]>, staleTime: 60_000 });
+  const ticketCount = useTicketCount();
   const [q, setQ] = useState("");
   const [qInput, setQInput] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -330,29 +332,31 @@ function TenantsPage() {
                 key={t.id}
                 type="button"
                 onClick={() => setSelectedId(t.id)}
-                className="w-full flex flex-wrap items-center gap-4 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 px-4 py-3.5 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-900 truncate">{t.name ?? "Unnamed organization"}</div>
-                  <div className="text-xs text-slate-500 truncate mt-0.5">
-                    {t.email}
-                    {t.business_type && <span className="ml-2">• {t.business_type}</span>}
-                    {t.created_at && <span className="ml-2 text-slate-400">• Joined {new Date(t.created_at).toLocaleDateString()}</span>}
+                  <div className="font-semibold text-slate-900 truncate">{t.name ?? "Unnamed organization"}</div>
+                  <div className="text-xs text-slate-500 truncate mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span>{t.email}</span>
+                    {t.business_type && <span>• {t.business_type}</span>}
+                    {t.created_at && <span className="text-slate-400">• Joined {new Date(t.created_at).toLocaleDateString()}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span><span className="font-semibold text-slate-700">{t.team_size}</span> <span className="text-slate-500">users</span></span>
-                  <span><span className="font-semibold text-slate-700">{t.batch_count}</span> <span className="text-slate-500">batches</span></span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={t.blocked ? "bg-red-100 text-red-700 border-red-200" : "bg-emerald-100 text-emerald-700 border-emerald-200"}>
-                    {t.blocked ? "Blocked" : "Active"}
-                  </Badge>
-                  {t.subscription_plan && (
-                    <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
-                      {t.subscription_plan}
+                <div className="flex flex-wrap items-center gap-3.5 mt-1 sm:mt-0">
+                  <div className="flex items-center gap-3 text-xs">
+                    <span><span className="font-semibold text-slate-700">{t.team_size}</span> <span className="text-slate-500">users</span></span>
+                    <span><span className="font-semibold text-slate-700">{t.batch_count}</span> <span className="text-slate-500">batches</span></span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="outline" className={t.blocked ? "bg-red-100 text-red-700 border-red-200 text-[10px]" : "bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px]"}>
+                      {t.blocked ? "Blocked" : "Active"}
                     </Badge>
-                  )}
+                    {t.subscription_plan && (
+                      <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]">
+                        {t.subscription_plan}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </button>
             ))}

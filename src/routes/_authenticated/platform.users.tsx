@@ -19,6 +19,8 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { Badge } from "@/components/ui/badge";
+import { useTicketCount } from "@/hooks/useTicketCount";
 
 export const Route = createFileRoute("/_authenticated/platform/users")({
   head: () => ({
@@ -107,6 +109,7 @@ function UsersPage() {
   const [qInput, setQInput] = useState("");
   const [role, setRole] = useState("all");
   const [roleTarget, setRoleTarget] = useState<Row | null>(null);
+  const ticketCount = useTicketCount();
 
   const filtered = useMemo(() => data.filter((u) => {
     const s = q.toLowerCase();
@@ -127,7 +130,6 @@ function UsersPage() {
     },
     onSuccess: (data) => {
       console.log("Impersonation success:", data);
-      // Persist session to localStorage so the banner picks it up
       saveImpersonationSession({
         adminId: data.adminId,
         adminName: data.adminName ?? "",
@@ -260,8 +262,8 @@ function UsersPage() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="h-10 font-normal text-muted-foreground">User</TableHead>
                   <TableHead className="h-10 font-normal text-muted-foreground">Role</TableHead>
-                  <TableHead className="h-10 font-normal text-muted-foreground">Joined</TableHead>
-                  <TableHead className="h-10 font-normal text-muted-foreground">Status</TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground hidden sm:table-cell">Joined</TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground hidden sm:table-cell">Status</TableHead>
                   <TableHead className="h-10 font-normal text-muted-foreground text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -273,18 +275,18 @@ function UsersPage() {
                     className="border-0 hover:bg-muted/40 [&>td]:border-0 [&_td:first-child]:rounded-s-lg [&_td:last-child]:rounded-e-lg"
                   >
                     <TableCell className="py-3">
-                      <div className="font-medium truncate">{u.name ?? "Unnamed user"}</div>
-                      <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                      <div className="font-medium truncate max-w-[120px] sm:max-w-none">{u.name ?? "Unnamed user"}</div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">{u.email}</div>
                     </TableCell>
                     <TableCell>
                       <span className={`text-sm font-medium ${ROLE_TEXT[u.role] ?? ROLE_TEXT.pending}`}>
                         {u.role.replace("_", " ")}
                       </span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                    <TableCell className="text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                       {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {u.blocked ? (
                         <span className="text-sm font-medium text-destructive">Blocked</span>
                       ) : (
@@ -300,9 +302,10 @@ function UsersPage() {
                             disabled={impersonate.isPending}
                             onClick={() => impersonate.mutate(u.id)}
                             className="h-auto p-0 text-primary"
+                            title="View as"
                           >
-                            <UserCog className="me-1 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
-                            View as
+                            <UserCog className="opacity-60 sm:me-1" size={16} strokeWidth={2} aria-hidden="true" />
+                            <span className="hidden sm:inline">View as</span>
                           </Button>
                         )}
                         <Button
@@ -310,9 +313,10 @@ function UsersPage() {
                           variant="link"
                           onClick={() => setRoleTarget(u)}
                           className="h-auto p-0 text-slate-500 hover:text-slate-800"
+                          title="Role"
                         >
-                          <ShieldCheck className="me-1 opacity-60" size={16} strokeWidth={2} aria-hidden="true" />
-                          Role
+                          <ShieldCheck className="opacity-60 sm:me-1" size={16} strokeWidth={2} aria-hidden="true" />
+                          <span className="hidden sm:inline">Role</span>
                         </Button>
                         <Button
                           size="sm"
@@ -331,7 +335,7 @@ function UsersPage() {
             </Table>
           </div>
         )}
-      </AdminDataCard >
+      </AdminDataCard>
 
       <ChangeRoleSheet
         user={roleTarget}
@@ -340,6 +344,6 @@ function UsersPage() {
         onConfirm={(userId, role) => changeRole.mutate({ userId, role })}
         isPending={changeRole.isPending}
       />
-    </AdminPageShell >
+    </AdminPageShell>
   );
 }

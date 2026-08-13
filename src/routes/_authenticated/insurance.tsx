@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
+import { ResponsiveTabs, ResponsiveTabsList, ResponsiveTabsTrigger, ResponsiveTabsContent } from "@/components/app/mobile/ResponsiveTabs";
 import { PageHeader, StatCard } from "@/components/dashboards/_shared";
 import {
   listPolicies, upsertPolicy, deletePolicy,
@@ -160,8 +161,13 @@ function InsurancePage() {
     setClaimOpen(true);
   };
 
+  const [activeTab, setActiveTab] = useState("policies");
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <AdminPageShell
+      title="Insurance"
+      subtitle="Track your policies and claims across grain operations"
+    >
       {isSuperAdmin && (
         <div className="mb-6">
           <PlatformScopeBanner label="Policies and claims across every tenant. Totals reflect all insured value on the platform." />
@@ -171,12 +177,12 @@ function InsurancePage() {
         <div className="mb-6">
           <PlatformOverviewTable
             title="Per-tenant insurance"
-            description={`Total coverage $${platformInsQ.data.totals.coverage.toLocaleString()} · ${platformInsQ.data.totals.openClaims} open claims`}
+            description={`Total coverage PKR ${platformInsQ.data.totals.coverage.toLocaleString()} · ${platformInsQ.data.totals.openClaims} open claims`}
             rows={platformInsQ.data.rows}
             columns={[
               { key: "activePolicies", label: "Active", align: "right", render: (r) => `${r.activePolicies}/${r.policies}` },
-              { key: "coverage", label: "Coverage", align: "right", render: (r) => `$${r.coverage.toLocaleString()}` },
-              { key: "premium", label: "Premium", align: "right", render: (r) => `$${r.premium.toLocaleString()}` },
+              { key: "coverage", label: "Coverage", align: "right", render: (r) => `PKR ${r.coverage.toLocaleString()}` },
+              { key: "premium", label: "Premium", align: "right", render: (r) => `PKR ${r.premium.toLocaleString()}` },
               { key: "openClaims", label: "Open claims", align: "right", render: (r) => (
                   <span className={r.openClaims > 0 ? "text-amber-700 font-medium" : ""}>{r.openClaims}</span>
                 ) },
@@ -185,7 +191,6 @@ function InsurancePage() {
           />
         </div>
       )}
-      <PageHeader title="Insurance" subtitle="Track your policies and claims across grain operations" />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="Active Policies" value={stats.active} icon={Shield} accent="emerald" />
@@ -194,37 +199,37 @@ function InsurancePage() {
         <StatCard label="Claimed Amount" value={`PKR ${stats.totalClaimed.toLocaleString()}`} icon={FileText} accent="violet" />
       </div>
 
-      <Tabs defaultValue="policies">
-        <TabsList className="mb-4">
-          <TabsTrigger value="policies">Policies</TabsTrigger>
-          <TabsTrigger value="claims">Claims</TabsTrigger>
-        </TabsList>
+      <ResponsiveTabs value={activeTab} onValueChange={setActiveTab}>
+        <ResponsiveTabsList className="mb-4">
+          <ResponsiveTabsTrigger value="policies">Policies ({policies.length})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="claims">Claims ({claims.length})</ResponsiveTabsTrigger>
+        </ResponsiveTabsList>
 
-        <TabsContent value="policies">
+        <ResponsiveTabsContent value="policies">
           <div className="flex justify-end mb-3">
-            <Button onClick={() => { setPolicyForm(emptyPolicy); setPolicyOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={() => { setPolicyForm(emptyPolicy); setPolicyOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
               <Plus className="h-4 w-4 mr-2" /> New policy
             </Button>
           </div>
-          <Card>
+          <Card className="bg-white border border-border">
             <CardContent className="p-0">
               {policiesLoading ? (
                 <DashboardSkeleton />
               ) : policies.length === 0 ? (
-                <div className="p-10 text-center text-slate-500">No policies yet</div>
+                <div className="p-10 text-center text-slate-500 font-medium">No policies found</div>
               ) : (
-                <div className="">
+                <div className="divide-y divide-border">
                   {policies.map((p) => (
-                    <div key={p.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900">{p.policy_number}</div>
-                        <div className="text-xs text-slate-500">{p.provider_name} · {p.coverage_type}</div>
+                    <div key={p.id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30 transition-colors bg-white">
+                      <div className="flex-1 min-w-[200px]">
+                        <div className="font-bold text-slate-900 text-base">{p.policy_number}</div>
+                        <div className="text-xs text-slate-500 font-medium mt-0.5">{p.provider_name} · <span className="capitalize">{p.coverage_type}</span></div>
                       </div>
-                      <div className="text-sm text-slate-700">
-                        <span className="text-slate-500">Coverage: </span>${(p.coverage_amount ?? 0).toLocaleString()}
+                      <div className="text-sm font-semibold text-slate-900">
+                        <span className="text-xs font-normal text-slate-500 block">Coverage</span>PKR {(p.coverage_amount ?? 0).toLocaleString()}
                       </div>
-                      <div className="text-sm text-slate-700">
-                        <span className="text-slate-500">Premium: </span>${(p.premium_amount ?? 0).toLocaleString()}
+                      <div className="text-sm font-semibold text-slate-900">
+                        <span className="text-xs font-normal text-slate-500 block">Premium</span>PKR {(p.premium_amount ?? 0).toLocaleString()}
                       </div>
                       <Badge className={POLICY_STATUS[p.status] ?? POLICY_STATUS.pending} variant="outline">{p.status}</Badge>
                       <div className="flex items-center gap-1">
@@ -237,30 +242,30 @@ function InsurancePage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </ResponsiveTabsContent>
 
-        <TabsContent value="claims">
+        <ResponsiveTabsContent value="claims">
           <div className="flex justify-end mb-3">
-            <Button onClick={() => { setClaimForm(emptyClaim); setClaimOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={() => { setClaimForm(emptyClaim); setClaimOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
               <Plus className="h-4 w-4 mr-2" /> New claim
             </Button>
           </div>
-          <Card>
+          <Card className="bg-white border border-border">
             <CardContent className="p-0">
               {claimsLoading ? (
                 <DashboardSkeleton />
               ) : claims.length === 0 ? (
-                <div className="p-10 text-center text-slate-500">No claims yet</div>
+                <div className="p-10 text-center text-slate-500 font-medium">No claims found</div>
               ) : (
-                <div className="">
+                <div className="divide-y divide-border">
                   {claims.map((c) => (
-                    <div key={c.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900">{c.claim_number}</div>
-                        <div className="text-xs text-slate-500 truncate">{c.claim_type} · {c.description ?? "—"}</div>
+                    <div key={c.id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30 transition-colors bg-white">
+                      <div className="flex-1 min-w-[200px]">
+                        <div className="font-bold text-slate-900 text-base">{c.claim_number}</div>
+                        <div className="text-xs text-slate-500 font-medium mt-0.5 truncate">{c.claim_type} · {c.description ?? "—"}</div>
                       </div>
-                      <div className="text-sm text-slate-700"><span className="text-slate-500">Claimed: </span>${(c.amount_claimed ?? 0).toLocaleString()}</div>
-                      <div className="text-sm text-slate-700"><span className="text-slate-500">Approved: </span>${(c.amount_approved ?? 0).toLocaleString()}</div>
+                      <div className="text-sm font-semibold text-slate-900"><span className="text-xs font-normal text-slate-500 block">Claimed</span>PKR {(c.amount_claimed ?? 0).toLocaleString()}</div>
+                      <div className="text-sm font-semibold text-slate-900"><span className="text-xs font-normal text-slate-500 block">Approved</span>PKR {(c.amount_approved ?? 0).toLocaleString()}</div>
                       <Badge className={CLAIM_STATUS[c.status] ?? CLAIM_STATUS.filed} variant="outline">{c.status}</Badge>
                       <div className="flex items-center gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openEditClaim(c)}><Edit2 className="h-4 w-4" /></Button>
@@ -272,8 +277,8 @@ function InsurancePage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </ResponsiveTabsContent>
+      </ResponsiveTabs>
 
       {/* Policy dialog */}
       <Dialog open={policyOpen} onOpenChange={setPolicyOpen}>
@@ -398,6 +403,6 @@ function InsurancePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminPageShell>
   );
 }

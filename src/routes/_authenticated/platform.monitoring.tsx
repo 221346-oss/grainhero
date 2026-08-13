@@ -378,22 +378,28 @@ function PlatformMonitoringPage() {
             <table className="w-full text-[13px]">
               <thead className="border-b border-border bg-muted/30">
                 <tr>
-                  <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant</th>
-                  <th className="text-left font-medium text-muted-foreground px-3 py-2">Title</th>
-                  <th className="text-left font-medium text-muted-foreground px-3 py-2">Priority</th>
-                  <th className="text-left font-medium text-muted-foreground px-3 py-2">Date</th>
+                  <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant / Title</th>
+                  <th className="text-left font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Priority</th>
+                  <th className="text-left font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Date</th>
                   <th className="text-right font-medium text-muted-foreground px-3 py-2">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {maints.map((r) => (
                   <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-3 py-2 font-medium text-foreground truncate max-w-[130px]">{r.tenantName ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground truncate max-w-[180px]">{r.title}</td>
                     <td className="px-3 py-2">
+                      <div className="font-medium text-foreground truncate max-w-[160px] sm:max-w-none">{r.tenantName ?? "—"}</div>
+                      <div className="text-[11px] text-muted-foreground truncate max-w-[160px] sm:max-w-none">{r.title}</div>
+                      {/* Mobile: show priority + date */}
+                      <div className="sm:hidden text-[10px] text-muted-foreground mt-0.5 flex gap-2">
+                        <span className="capitalize px-1 py-0.5 rounded border border-border">{r.priority}</span>
+                        <span>{new Date(r.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 hidden sm:table-cell">
                       <span className="capitalize text-[11px] px-1.5 py-0.5 rounded border border-border text-muted-foreground">{r.priority}</span>
                     </td>
-                    <td className="px-3 py-2 text-[11px] text-muted-foreground whitespace-nowrap">
+                    <td className="px-3 py-2 text-[11px] text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                       {new Date(r.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-3 py-2 text-right">
@@ -401,7 +407,7 @@ function PlatformMonitoringPage() {
                         value={r.status}
                         onValueChange={(v) => updateMut.mutate({ id: r.id, status: v as typeof MAINT_STATUSES[number] })}
                       >
-                        <SelectTrigger className={`h-6 w-[124px] text-[10px] border-0 font-medium ${maintTone(r.status)}`}>
+                        <SelectTrigger className={`h-6 w-[100px] sm:w-[124px] text-[10px] border-0 font-medium ${maintTone(r.status)}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

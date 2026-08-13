@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, ShieldAlert, UserX, Users, AlertTriangle, ShieldOff, Mail } from "lucide-react";
@@ -13,17 +12,17 @@ import { CommandConsoleSkeleton } from "@/components/app/skeletons";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 
-export const Route = createFileRoute("/_authenticated/security-center")({
+export const Route = createFileRoute("/_authenticated/platform/security")({
   head: () => ({
     meta: [
-      { title: "Security Center — Grain Hero" },
-      { name: "description", content: "Security Center workspace in the Grain Hero platform — private, sign-in required." },
-      { property: "og:title", content: "Security Center — Grain Hero" },
-      { property: "og:description", content: "Security Center workspace in the Grain Hero platform." },
+      { title: "Platform · Security — Grain Hero" },
+      { name: "description", content: "Platform · Security workspace in the Grain Hero platform — private, sign-in required." },
+      { property: "og:title", content: "Platform · Security — Grain Hero" },
+      { property: "og:description", content: "Platform · Security workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: SecurityCenterPage,
+  component: PlatformSecurityPage,
 });
 
 function sevBadge(s: string | null) {
@@ -35,7 +34,7 @@ function sevBadge(s: string | null) {
   }
 }
 
-function SecurityCenterPage() {
+function PlatformSecurityPage() {
   const qc = useQueryClient();
   const fnRole = useServerFn(getMyRole);
   const fn = useServerFn(getSecurityOverview);
@@ -45,7 +44,6 @@ function SecurityCenterPage() {
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fnRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin"].includes(role);
-  const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
     queryKey: ["security-center"],
@@ -53,7 +51,7 @@ function SecurityCenterPage() {
     enabled: allowed,
   });
 
-  const { data: allUsers = [], isLoading: usersLoading } = useQuery({
+  const { data: allUsers = [] } = useQuery({
     queryKey: ["security-users"],
     queryFn: () => usersListFn() as Promise<any[]>,
     enabled: allowed,
@@ -71,13 +69,13 @@ function SecurityCenterPage() {
 
   if (!roleQ.isLoading && !allowed) {
     return (
-      <AdminPageShell title="Security Center" subtitle="Access restricted">
-        <Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>Security Center is available to admins and super admins.</CardDescription></CardHeader></Card>
+      <AdminPageShell title="Security" subtitle="Access restricted">
+        <div className="p-8 text-center text-sm text-muted-foreground">Security workspace is available to admins and super admins.</div>
       </AdminPageShell>
     );
   }
 
-  if (roleQ.isLoading) return <AdminPageShell title="Security Center" subtitle="Loading..."><CommandConsoleSkeleton /></AdminPageShell>;
+  if (roleQ.isLoading) return <AdminPageShell title="Security" subtitle="Loading..."><CommandConsoleSkeleton /></AdminPageShell>;
 
   // Calculate stats from allUsers data
   const totalUsers = allUsers.length;
@@ -86,13 +84,12 @@ function SecurityCenterPage() {
   const blockedCount = allUsers.filter((u: any) => u.blocked).length;
   const recentIncidents = data?.totals?.recentIncidents ?? 0;
   
-  const users = data?.users ?? [];
   const logs = data?.logs ?? [];
 
   return (
     <AdminPageShell 
-      title="Security Center" 
-      subtitle="User access, privilege overview and recent security events."
+      title="Security" 
+      subtitle="Platform-wide user access, privilege overview and security events."
     >
       {/* Stats - Neon hairline grid */}
       <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-5">

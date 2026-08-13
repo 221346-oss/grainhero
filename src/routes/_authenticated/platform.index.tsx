@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import {
   getPlatformMetrics,
   getPlatformOverviewWidgets,
@@ -19,6 +20,7 @@ import { AreaChart, Area, ResponsiveContainer, BarChart, Bar, CartesianGrid, XAx
 import { HairlineGrid, NeonPanel, neonFill, neonGrid, neonAxis } from "@/components/charts/neon";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import React from "react";
+import { useTicketCount } from "@/hooks/useTicketCount";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
   head: () => ({
@@ -142,6 +144,7 @@ function HealthPill({ label, status, latencyMs }: {
 function PlatformOverviewPage() {
   const fetchMetrics   = useServerFn(getPlatformMetrics);
   const fetchWidgets   = useServerFn(getPlatformOverviewWidgets);
+  const ticketCount = useTicketCount();
   const fetchOrders    = useServerFn(listAllHardwareOrders);
   const fetchHealth    = useServerFn(getDeviceHealth);
   const fetchApiHealth = useServerFn(getPlatformApiHealth);
@@ -595,9 +598,9 @@ function PlatformOverviewPage() {
                   <thead className="sticky top-0 bg-muted/40 border-b border-border">
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-3 py-1.5 font-medium">Name</th>
-                      <th className="text-left px-2 py-1.5 font-medium">Business</th>
+                      <th className="text-left px-2 py-1.5 font-medium hidden sm:table-cell">Business</th>
                       <th className="text-left px-2 py-1.5 font-medium">Plan</th>
-                      <th className="text-right px-3 py-1.5 font-medium">Joined</th>
+                      <th className="text-right px-3 py-1.5 font-medium hidden sm:table-cell">Joined</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -607,16 +610,20 @@ function PlatformOverviewPage() {
                         onClick={() => navigate({ to: "/platform/tenants/$adminId", params: { adminId: s.id } })}>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1">
-                            <span className="font-medium text-foreground truncate max-w-[100px]">{s.name ?? "—"}</span>
+                            <span className="font-medium text-foreground truncate max-w-[100px] sm:max-w-none">{s.name ?? "—"}</span>
                             <ChevronRight className="w-3 h-3 text-muted-foreground/30 group-hover:text-muted-foreground shrink-0" />
                           </div>
-                          <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{s.email}</div>
+                          <div className="text-[10px] text-muted-foreground truncate max-w-[120px] sm:max-w-none">{s.email}</div>
+                          {/* Mobile inline info */}
+                          <div className="sm:hidden text-[10px] text-muted-foreground mt-0.5">
+                            {s.business_type ?? "—"} · {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
+                          </div>
                         </td>
-                        <td className="px-2 py-2 text-muted-foreground">{s.business_type ?? "—"}</td>
+                        <td className="px-2 py-2 text-muted-foreground hidden sm:table-cell">{s.business_type ?? "—"}</td>
                         <td className="px-2 py-2">
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">{s.subscription_plan ?? "starter"}</Badge>
                         </td>
-                        <td className="px-3 py-2 text-right text-[11px] text-muted-foreground whitespace-nowrap">
+                        <td className="px-3 py-2 text-right text-[11px] text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                           {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
                         </td>
                       </tr>
@@ -644,22 +651,26 @@ function PlatformOverviewPage() {
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-3 py-1.5 font-medium">Alert</th>
                       <th className="text-left px-2 py-1.5 font-medium">Priority</th>
-                      <th className="text-right px-3 py-1.5 font-medium">When</th>
+                      <th className="text-right px-3 py-1.5 font-medium hidden sm:table-cell">When</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(w?.systemAlerts ?? []).map((a: any) => (
                       <tr key={a.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                         <td className="px-3 py-2">
-                          <div className="font-medium text-foreground truncate max-w-[180px]">{a.alert_type}</div>
-                          <div className="text-[10px] text-muted-foreground truncate max-w-[180px]">{a.message}</div>
+                          <div className="font-medium text-foreground truncate max-w-[180px] sm:max-w-none">{a.alert_type}</div>
+                          <div className="text-[10px] text-muted-foreground truncate max-w-[180px] sm:max-w-none">{a.message}</div>
+                          {/* Mobile inline info */}
+                          <div className="sm:hidden text-[10px] text-muted-foreground mt-0.5">
+                            {a.created_at ? new Date(a.created_at).toLocaleDateString() : "—"}
+                          </div>
                         </td>
                         <td className="px-2 py-2">
                           <span className={`text-[11px] font-medium ${a.priority === "critical" ? "text-severity-critical" : "text-warning"}`}>
                             {a.priority}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right text-[11px] text-muted-foreground whitespace-nowrap">
+                        <td className="px-3 py-2 text-right text-[11px] text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                           {a.created_at ? new Date(a.created_at).toLocaleDateString() : "—"}
                         </td>
                       </tr>
