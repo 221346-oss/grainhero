@@ -16,7 +16,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
     const supa = context.supabase;
     const { data: profile } = await supa
       .from("profiles")
-      .select("id, name, email, avatar_url")
+      .select("id, name, email")
       .eq("id", context.userId)
       .maybeSingle();
     return profile ?? { id: context.userId, name: "Admin", email: "" };
