@@ -9,7 +9,6 @@ import {
   DashboardSiloCards, IncomingQueueCard, FieldIncidentsCard, RecentActivityCard,
   RecentBatchesCard, SupportTicketsCard,
 } from "./DashboardBlocks";
-import { DashboardSiloCards as AdminSilosCard } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
 
@@ -26,26 +25,38 @@ export function AdminDashboard({ name }: { name?: string }) {
 
   return (
     <TooltipProvider delayDuration={150}>
-      {/* Main Container with padding and background */}
-      <div className="w-full min-h-screen p-8 bg-neutral-100 dark:bg-neutral-900">
-        {/* Welcome Banner */}
-        <div className="mb-8">
-          <WelcomeBanner name={name} />
-        </div>
+      <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
+        <WelcomeBanner name={name} />
 
-        {/* Grid Container - 12 columns with row gaps */}
-        <div className="grid gap-6">
-          {/* Row 1: KPI Summary */}
-          <div className="w-full">
-            <KpiSummary
-              range={range}
-              onRange={setRange}
-              deltaBatches={extras?.deltas?.batches?.pct}
-              deltaAlerts={extras?.deltas?.alerts?.pct}
-              revenueMtd={extras?.revenueMtd}
-              revenueDeltaPct={extras?.revenueDeltaPct}
-              revenueSpark={extras?.revenueSpark}
-              planName={extras?.subscription?.plan_name}
+        <div className="space-y-3 mt-1">
+          <KpiSummary
+            range={range}
+            onRange={setRange}
+            deltaBatches={extras?.deltas?.batches?.pct}
+            deltaAlerts={extras?.deltas?.alerts?.pct}
+            revenueMtd={extras?.revenueMtd}
+            revenueDeltaPct={extras?.revenueDeltaPct}
+            revenueSpark={extras?.revenueSpark}
+            planName={extras?.subscription?.plan_name}
+          />
+          <InsightsStrip
+            insights={extras?.insights}
+            ordersOpen={extras?.installCounts?.pending}
+            alertsOpen={extras?.deltas?.alerts?.cur}
+            pipeline={extras?.pipeline}
+          />
+          <DashboardSiloCards range={range} />
+          <div className="grid gap-3 lg:grid-cols-3">
+            <IncomingQueueCard range={range} />
+            <FieldIncidentsCard />
+            <RecentActivityCard />
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <RecentBatchesCard range={range} />
+            <SupportTicketsCard
+              onViewAll={() => setTicketPanelOpen(true)}
+              ticketPanelOpen={ticketPanelOpen}
+              onTicketPanelClose={() => setTicketPanelOpen(false)}
             />
           </div>
 

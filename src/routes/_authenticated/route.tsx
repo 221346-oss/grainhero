@@ -12,6 +12,7 @@ import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
+import { PlanExpiryBanner } from "@/components/app/PlanExpiryBanner";
 import { NotificationBell } from "@/components/app/notifications/NotificationBell";
 import { BugReportButton } from "@/components/app/BugReportButton";
 import { TicketSidePanel } from "@/components/app/tickets/TicketSidePanel";
@@ -22,10 +23,6 @@ import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { logSecurityEvent } from "@/lib/security-events.functions";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { getMySubscription } from "@/lib/billing.functions";
-import { AlertTriangle, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   head: () => ({
@@ -41,8 +38,16 @@ export const Route = createFileRoute("/_authenticated")({
   // Full app-chrome skeleton while the auth check runs on first paint.
   pendingComponent: AppShellSkeleton,
   beforeLoad: async ({ location }) => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth/login" });
+    // getSession() reads the local/in-memory session (no network round-trip),
+    // so it can't lose a race against the auth-lock-bound calls that fire
+    // right after sign-in (verifyOtp's own getSession() checks, the second
+    // delayed navigate, etc) the way getUser()'s live revalidation could —
+    // that race was landing users back on /auth/login on the first attempt.
+    // This is a client-side UX gate only; every server fn independently
+    // re-verifies the JWT via requireSupabaseAuth's getClaims(), so no
+    // actual authorization boundary depends on this check.
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session?.user) throw redirect({ to: "/auth/login" });
 
     // Role-aware guardrails: block super_admins from tenant-operational
     // routes, and redirect them off tenant pages that have a canonical
@@ -73,7 +78,7 @@ export const Route = createFileRoute("/_authenticated")({
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", data.user.id);
+        .eq("user_id", data.session.user.id);
       const rs = (roles ?? []).map((r) => r.role as string);
       const isSuperAdmin = rs.includes("super_admin");
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
@@ -90,7 +95,7 @@ export const Route = createFileRoute("/_authenticated")({
       }
     }
 
-    return { user: data.user };
+    return { user: data.session.user };
   },
   component: AuthenticatedLayout,
 });
@@ -179,7 +184,7 @@ function AuthenticatedLayout() {
         </div>
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
-          <SubscriptionExpiryBanner />
+          <PlanExpiryBanner />
           <motion.header
             initial="visible"
             animate={navHidden ? "hidden" : "visible"}
@@ -264,63 +269,3 @@ function AnimatedOutlet() {
   );
 }
 
-// ── Subscription expiry banner ────────────────────────────────────────────────
-function SubscriptionExpiryBanner() {
-  const { role } = useIsSuperAdmin();
-  const fn = useServerFn(getMySubscription);
-  const [dismissed, setDismissed] = useState(false);
-
-  const { data } = useQuery({
-    queryKey: ["my-subscription"],
-    queryFn: () => fn(),
-    staleTime: 5 * 60_000,
-    enabled: role === "admin",
-  });
-
-  const sub = (data as any)?.subscription ?? data;
-  const endDate: string | null = sub?.end_date ?? sub?.next_payment_date ?? null;
-  const planName: string = sub?.plan_name ?? "your plan";
-
-  if (!endDate || dismissed || role !== "admin") return null;
-
-  const daysLeft = Math.ceil(
-    (new Date(endDate).getTime() - Date.now()) / 86_400_000,
-  );
-
-  if (daysLeft > 7 || daysLeft < 0) return null;
-
-  const urgent = daysLeft <= 1;
-
-  return (
-    <div
-      className={`w-full flex items-center justify-between gap-3 px-4 py-2 text-sm font-medium z-40 ${
-        urgent ? "bg-red-600 text-white" : "bg-amber-500 text-white"
-      }`}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <AlertTriangle className="h-4 w-4 shrink-0" />
-        <span className="truncate">
-          {urgent
-            ? `⚠️ Your ${planName} expires today! Renew now to avoid losing access.`
-            : `Your ${planName} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}. Renew to keep your access.`}
-        </span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <Link
-          to="/plan-management"
-          className="inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-semibold transition-colors"
-        >
-          Manage plan
-        </Link>
-        <button
-          type="button"
-          onClick={() => setDismissed(true)}
-          aria-label="Dismiss"
-          className="h-6 w-6 grid place-items-center rounded-full hover:bg-white/20 transition-colors"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}

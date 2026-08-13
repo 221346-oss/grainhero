@@ -111,6 +111,24 @@ export const listSiloAvailableBatches = createServerFn({ method: "GET" })
   });
 
 /**
+ * Tenant-wide map of silos that currently have an active (not yet
+ * delivered/cancelled) dispatch against them — lets any "Sell"/dispatch
+ * entry point (DispatchDialog, DispatchSaleWizard's silo picker) show
+ * "Dispatch pending approval" up front instead of letting the admin fill
+ * out a whole form only to hit createDispatchFromSilo's server-side guard.
+ */
+export const listSilosWithActiveDispatch = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("grain_dispatches")
+      .select("silo_id, dispatch_number, status")
+      .not("status", "in", "(delivered,cancelled)");
+    if (error) throw error;
+    return { active: (data ?? []) as Array<{ silo_id: string; dispatch_number: string; status: string }> };
+  });
+
+/**
  * Creates a dispatch (sale) request as a "draft" — this only records what's
  * being requested and a cost/profit *preview*. It does NOT touch batch
  * remaining_kg or silo occupancy yet: grain must not leave the books until an
@@ -127,11 +145,28 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     const sb = context.supabase;
     const { data: silo, error: sErr } = await sb
       .from("silos")
-      .select("id, admin_id, warehouse_id, current_occupancy_kg")
+      .select("id, name, admin_id, warehouse_id, current_occupancy_kg")
       .eq("id", data.siloId)
       .single();
     if (sErr || !silo) throw new Error("Silo not found");
     const adminId = (silo as Row).admin_id as string;
+
+    // Exactly one dispatch may be in flight against a silo at a time — a
+    // second draft/confirmed/in_transit dispatch against the same silo is
+    // how the same stock ends up requested twice with no visible warning.
+    // Only delivered/cancelled dispatches free the silo up again.
+    const { data: existingDispatch, error: existingErr } = await sb
+      .from("grain_dispatches")
+      .select("id, dispatch_number, status")
+      .eq("silo_id", data.siloId)
+      .not("status", "in", "(delivered,cancelled)")
+      .limit(1)
+      .maybeSingle();
+    if (existingErr) throw existingErr;
+    if (existingDispatch) {
+      const ed = existingDispatch as Row;
+      throw new Error(`This silo already has a pending dispatch (${ed.dispatch_number}, status: ${ed.status}) — resolve it before starting a new one.`);
+    }
 
     // If this dispatch is fulfilling a Step-1 invoice/quote, pull the buyer off
     // it and make sure it's a real, unlinked, same-tenant invoice.
@@ -232,7 +267,84 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
       meta: { siloId: data.siloId, qtyKg: data.qtyKg, pricePerKg: data.pricePerKg, totalAmount, profit },
     });
 
+    // Notify tenant admins — this was missing entirely, regardless of which
+    // of the several entry points (Business wizard, per-silo "Sell") created
+    // the dispatch. Never blocks/fails dispatch creation on notify errors.
+    try {
+      const { emitToRole } = await import("./notify");
+      await emitToRole(sb, adminId, "admin", {
+        category: "ops",
+        severity: "info",
+        title: "New dispatch awaiting approval",
+        body: `${dispatchNumber} — ${(silo as Row).name ?? "a silo"}, ${data.qtyKg.toLocaleString()} kg ${data.grainType}, ${data.currency} ${totalAmount.toLocaleString()}. Needs your approval before stock leaves.`,
+        link: "/grain-operations?tab=silos",
+        entityType: "grain_dispatch",
+        entityId: dispatchId,
+      });
+    } catch (e) {
+      console.warn("[createDispatchFromSilo] Failed to emit admin notification:", e);
+    }
+
     return { id: dispatchId, dispatchNumber, totalAmount, avgCost, profit, allocations: allocs.length, status: "draft" as const };
+  });
+
+/**
+ * Admin/manager: records that the buyer has confirmed the sale. Buyers are
+ * external parties with no account/login in this system, so there's no way
+ * for them to click a "confirm" button themselves — this lets whoever is
+ * handling the sale record that confirmation happened (a call, a signed
+ * note, a WhatsApp message) on the buyer's behalf. Required before
+ * approveDispatch will release stock (see the gate below), mirroring how
+ * the manager-batch QC pipeline gates on adminReviewBatch rather than on
+ * batch creation.
+ */
+export const confirmDispatchBuyer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, ["admin", "manager"]);
+    const sb = context.supabase;
+
+    const { data: full, error: fullErr } = await sb
+      .from("grain_dispatches")
+      .select("id, admin_id, status, buyer_confirmed_at")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fullErr) throw fullErr;
+    if (!full) throw new Error("Dispatch not found");
+    const disp = full as Row;
+    if (disp.status !== "draft") throw new Error(`Dispatch isn't awaiting confirmation (currently ${disp.status})`);
+    if (disp.buyer_confirmed_at) throw new Error("Buyer confirmation is already recorded for this dispatch");
+
+    const confirmedAt = new Date().toISOString();
+    const { error: updErr } = await sb.from("grain_dispatches").update({
+      buyer_confirmed_at: confirmedAt,
+      buyer_confirmed_by: context.userId,
+    } as never).eq("id", data.id);
+    if (updErr) throw updErr;
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: disp.admin_id,
+      action: "dispatch.buyer_confirmed",
+      targetType: "grain_dispatch",
+      targetId: data.id,
+      severity: "warning",
+      meta: { confirmedOnBehalfOfBuyer: true },
+    });
+
+    // Security event — an admin/manager is recording an action on behalf of
+    // an external party with no account in this system, same audit-trail
+    // treatment as batch_approval_override in batch-qc.functions.ts.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("security_events").insert({
+      user_id: context.userId,
+      tenant_id: disp.admin_id,
+      event: "buyer_confirmation_recorded_by_admin",
+      meta: { dispatchId: data.id } as never,
+    });
+
+    return { ok: true, buyerConfirmedAt: confirmedAt };
   });
 
 /**
@@ -252,13 +364,14 @@ export const approveDispatch = createServerFn({ method: "POST" })
 
     const { data: full, error: fullErr } = await sb
       .from("grain_dispatches")
-      .select("id, admin_id, silo_id, grain_type, total_qty_kg, price_per_kg, stage, status")
+      .select("id, admin_id, silo_id, grain_type, total_qty_kg, price_per_kg, stage, status, buyer_confirmed_at")
       .eq("id", data.id)
       .maybeSingle();
     if (fullErr) throw fullErr;
     if (!full) throw new Error("Dispatch not found");
     const disp = full as Row;
     if (disp.status !== "draft") throw new Error(`Dispatch isn't awaiting approval (currently ${disp.status})`);
+    if (!disp.buyer_confirmed_at) throw new Error("Buyer confirmation is required before approving this dispatch");
 
     const { data: silo, error: sErr } = await sb
       .from("silos")

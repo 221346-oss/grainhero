@@ -1,9 +1,9 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, X, Loader2, Clock } from "lucide-react";
+import { Check, X, Loader2, Clock, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { listDispatches, approveDispatch, rejectDispatch } from "@/lib/dispatches.functions";
+import { listDispatches, approveDispatch, confirmDispatchBuyer, rejectDispatch } from "@/lib/dispatches.functions";
 
 /**
  * Admin-only approve/reject queue for a silo's pending ("draft") dispatch
@@ -15,6 +15,7 @@ export function DispatchApprovalPanel({ siloId, isAdmin }: { siloId: string; isA
   const qc = useQueryClient();
   const listFn = useServerFn(listDispatches);
   const approveFn = useServerFn(approveDispatch);
+  const confirmBuyerFn = useServerFn(confirmDispatchBuyer);
   const rejectFn = useServerFn(rejectDispatch);
 
   const { data, isLoading } = useQuery({
@@ -25,6 +26,7 @@ export function DispatchApprovalPanel({ siloId, isAdmin }: { siloId: string; isA
   const drafts = (data?.dispatches ?? []) as Array<{
     id: string; dispatch_number: string; total_qty_kg: number; grain_type: string;
     price_per_kg: number; total_amount: number; buyers?: { name: string } | null;
+    buyer_confirmed_at: string | null;
   }>;
 
   function invalidateAfterDecision() {
@@ -39,6 +41,11 @@ export function DispatchApprovalPanel({ siloId, isAdmin }: { siloId: string; isA
     mutationFn: (id: string) => approveFn({ data: { id } }),
     onSuccess: () => { toast.success("Sale approved — stock deducted"); invalidateAfterDecision(); },
     onError: (e: Error) => toast.error(e.message || "Approval failed"),
+  });
+  const confirmBuyerMut = useMutation({
+    mutationFn: (id: string) => confirmBuyerFn({ data: { id } }),
+    onSuccess: () => { toast.success("Buyer confirmation recorded"); invalidateAfterDecision(); },
+    onError: (e: Error) => toast.error(e.message || "Failed to record buyer confirmation"),
   });
   const rejectMut = useMutation({
     mutationFn: (id: string) => rejectFn({ data: { id } }),
@@ -62,20 +69,32 @@ export function DispatchApprovalPanel({ siloId, isAdmin }: { siloId: string; isA
           </div>
           {isAdmin ? (
             <div className="flex items-center gap-1 shrink-0">
-              <Button
-                size="sm" variant="outline"
-                className="h-6 w-6 p-0 border-emerald-400 text-emerald-700 hover:bg-emerald-50"
-                title="Approve"
-                disabled={approveMut.isPending || rejectMut.isPending}
-                onClick={() => approveMut.mutate(d.id)}
-              >
-                {approveMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-              </Button>
+              {!d.buyer_confirmed_at ? (
+                <Button
+                  size="sm" variant="outline"
+                  className="h-6 px-1.5 gap-1 border-amber-400 text-amber-700 hover:bg-amber-50 text-[10px]"
+                  title="Confirm on buyer's behalf — buyers have no account in this system"
+                  disabled={confirmBuyerMut.isPending || rejectMut.isPending}
+                  onClick={() => confirmBuyerMut.mutate(d.id)}
+                >
+                  {confirmBuyerMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserCheck className="h-3 w-3" />} Confirm buyer
+                </Button>
+              ) : (
+                <Button
+                  size="sm" variant="outline"
+                  className="h-6 w-6 p-0 border-emerald-400 text-emerald-700 hover:bg-emerald-50"
+                  title="Approve"
+                  disabled={approveMut.isPending || rejectMut.isPending}
+                  onClick={() => approveMut.mutate(d.id)}
+                >
+                  {approveMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                </Button>
+              )}
               <Button
                 size="sm" variant="outline"
                 className="h-6 w-6 p-0 border-red-300 text-red-600 hover:bg-red-50"
                 title="Reject"
-                disabled={approveMut.isPending || rejectMut.isPending}
+                disabled={approveMut.isPending || rejectMut.isPending || confirmBuyerMut.isPending}
                 onClick={() => rejectMut.mutate(d.id)}
               >
                 {rejectMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}

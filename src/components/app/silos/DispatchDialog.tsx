@@ -3,13 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Truck, Loader2, Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createDispatchFromSilo, createDispatchPhotoUploadUrl, listSiloAvailableBatches } from "@/lib/dispatches.functions";
+import { createDispatchFromSilo, createDispatchPhotoUploadUrl, listSiloAvailableBatches, listSilosWithActiveDispatch } from "@/lib/dispatches.functions";
 import { listBuyers } from "@/lib/operations.functions";
 import { getPriceSettings } from "@/lib/suppliers.functions";
 import { pricePerKgToPerMan } from "@/lib/units";
@@ -54,7 +54,10 @@ export function DispatchDialog({
   const createFn = useServerFn(createDispatchFromSilo);
   const signPhotoFn = useServerFn(createDispatchPhotoUploadUrl);
   const priceFn = useServerFn(getPriceSettings);
+  const listActiveFn = useServerFn(listSilosWithActiveDispatch);
   const priceQ = useQuery({ queryKey: ["price-settings"], queryFn: () => priceFn(), enabled: open });
+  const activeDispatchQ = useQuery({ queryKey: ["silos-active-dispatch"], queryFn: () => listActiveFn(), enabled: open });
+  const pendingDispatch = (activeDispatchQ.data?.active ?? []).find((a) => a.silo_id === siloId);
 
   const batchesQ = useQuery({
     queryKey: ["silo-batches", siloId],
@@ -119,6 +122,7 @@ export function DispatchDialog({
   const mut = useMutation({
     mutationFn: async () => {
       if (!siloId) throw new Error("No silo");
+      if (pendingDispatch) throw new Error(`This silo already has a pending dispatch (${pendingDispatch.dispatch_number})`);
       if (!grainType) throw new Error("Pick a grain");
       if (!(qtyNum > 0)) throw new Error("Quantity required");
       if (!(priceNum > 0)) throw new Error("Price required");
@@ -151,14 +155,21 @@ export function DispatchDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Truck className="h-4 w-4 text-emerald-600" /> Sell from {siloName ?? "silo"}</DialogTitle>
-          <DialogDescription>Requests a sale from this silo (FIFO cost preview below). Stock isn&apos;t deducted until an Admin approves the request.</DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2"><Truck className="h-4 w-4 text-emerald-600" /> Sell from {siloName ?? "silo"}</SheetTitle>
+          <SheetDescription>Requests a sale from this silo (FIFO cost preview below). Stock isn&apos;t deducted until an Admin approves the request.</SheetDescription>
+        </SheetHeader>
 
-        {batchesQ.isLoading ? (
+        {pendingDispatch ? (
+          <div className="py-8 text-center text-sm space-y-2">
+            <p className="font-medium text-amber-700 dark:text-amber-400">Dispatch pending approval</p>
+            <p className="text-muted-foreground">
+              This silo already has a dispatch in progress ({pendingDispatch.dispatch_number}, {pendingDispatch.status}). Resolve it in Grain Operations before starting a new one.
+            </p>
+          </div>
+        ) : batchesQ.isLoading ? (
           <div className="py-8 text-center text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading batches…</div>
         ) : batches.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">This silo has no batches with remaining stock.</div>
@@ -294,13 +305,13 @@ export function DispatchDialog({
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <SheetFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending || batches.length === 0} className="gap-1.5">
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending || batches.length === 0 || !!pendingDispatch} className="gap-1.5">
             {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />} Request sale (needs admin approval)
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

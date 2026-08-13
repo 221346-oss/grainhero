@@ -81,8 +81,13 @@ function VerifyOtpPage() {
       }
     });
 
+    // SIGNED_IN deliberately excluded here — verify() below already navigates
+    // once its own sign-in flow (claim checkout, security-event log) finishes.
+    // Reacting to SIGNED_IN here too meant two navigates racing for the same
+    // destination right after OTP verification, one of them firing before
+    // those side effects had a chance to run.
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+      if (session?.user && event === "TOKEN_REFRESHED") {
         navigate({ to: "/dashboard", replace: true });
       }
     });
@@ -139,14 +144,21 @@ function VerifyOtpPage() {
 
     let pendingSessionId: string | null = null;
     try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
-    try {
-      await claimFn({ data: pendingSessionId ? { sessionId: pendingSessionId } : {} });
-      if (pendingSessionId) window.localStorage.removeItem(PENDING_SESSION_KEY);
-    } catch (e) {
-      console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
+    // Only claim when there's an actual pending Stripe checkout to attach —
+    // calling this unconditionally on every plain login re-notifies admins
+    // about old orders (see claimPaidCheckoutForUser's admin_id.eq match).
+    if (pendingSessionId) {
+      try {
+        await claimFn({ data: { sessionId: pendingSessionId } });
+        window.localStorage.removeItem(PENDING_SESSION_KEY);
+      } catch (e) {
+        console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
+      }
     }
 
-    setTimeout(() => navigate({ to: "/dashboard", replace: true }), 500);
+    // No artificial delay — beforeLoad now uses the fast local getSession()
+    // check, so there's nothing left to "wait out" before navigating.
+    navigate({ to: "/dashboard", replace: true });
   };
 
   const resend = async () => {

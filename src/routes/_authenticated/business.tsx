@@ -47,7 +47,7 @@ function BusinessWorkspace() {
   const { data: revenue } = useQuery({ queryKey: ["revenue"], queryFn: () => fetchRevenue() });
   const { data: mySub } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fetchSub() });
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
-  const role = roleData?.role ?? "user";
+  const role = roleData?.role ?? "pending";
 
   const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
   const sub = mySub?.subscription;

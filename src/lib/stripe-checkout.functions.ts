@@ -406,10 +406,13 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
     // Promote only orders that have a Stripe session (i.e. actual payments),
     // NOT draft silo requests (status=new, no stripe_session_id).
     try {
-      const pendingIds = orders
-        .filter((o) => String(o.status ?? "") === "pending_payment" && o.stripe_session_id)
-        .map((o) => String(o.id ?? ""))
-        .filter(Boolean);
+      // These are the ONLY orders genuinely newly-claimed by this call —
+      // `orders` above also includes every order already claimed on a
+      // previous call (matched via admin_id.eq.userId), so notifying over
+      // the whole `orders` list re-fires "new order placed" on every login,
+      // not just on an actual new order. Notify strictly over this subset.
+      const pendingOrders = orders.filter((o) => String(o.status ?? "") === "pending_payment" && o.stripe_session_id);
+      const pendingIds = pendingOrders.map((o) => String(o.id ?? "")).filter(Boolean);
       if (pendingIds.length > 0) {
         await supabaseAdmin
           .from("hardware_orders" as never)
@@ -417,7 +420,7 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
           .in("id", pendingIds);
       }
       const { emitToSuperAdmins } = await import("@/lib/notify");
-      for (const o of orders) {
+      for (const o of pendingOrders) {
         await emitToSuperAdmins(supabaseAdmin, {
           category: "order",
           severity: "info",

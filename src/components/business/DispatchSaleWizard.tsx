@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CheckCircle2, FileText, Loader2, ScanLine, Truck, Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CheckCircle2, FileText, Loader2, ScanLine, Truck, Upload, UserCheck } from "lucide-react";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listSiloAvailableBatches, createDispatchFromSilo, createDispatchPhotoUploadUrl, approveDispatch } from "@/lib/dispatches.functions";
+import { listSiloAvailableBatches, createDispatchFromSilo, createDispatchPhotoUploadUrl, confirmDispatchBuyer, approveDispatch, listSilosWithActiveDispatch } from "@/lib/dispatches.functions";
 import { createDispatchInvoice, recordDispatchPayment, createReceiptUploadUrl } from "@/lib/dispatch-sales.functions";
 import { listBuyers, listSilos } from "@/lib/operations.functions";
 import { extractPaymentDetails, type ExtractedPaymentDetails } from "@/lib/ocr-service";
@@ -25,7 +25,13 @@ function money(n: number, ccy: string) {
   return `${ccy} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (o: boolean) => void; onDone?: () => void }) {
+export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch }: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onDone?: () => void;
+  /** Reopen straight at the payment step for an already-approved dispatch that was closed before a receipt was recorded — see the Outstanding payments table in RevenueSection. */
+  resumeDispatch?: { id: string; dispatchNumber: string } | null;
+}) {
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>("details");
 
@@ -53,6 +59,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const [invoiceNumber, setInvoiceNumber] = useState<string | null>(null);
   const [dispatchId, setDispatchId] = useState<string | null>(null);
   const [dispatchNumber, setDispatchNumber] = useState<string | null>(null);
+  const [buyerConfirmed, setBuyerConfirmed] = useState(false);
   const [dispatchApproved, setDispatchApproved] = useState(false);
 
   // --- payment / OCR state ---
@@ -69,15 +76,26 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
 
   useEffect(() => {
     if (open) {
-      setStep("details"); setSiloId(""); setGrainType(""); setBuyerId(""); setNewBuyer("");
+      setSiloId(""); setGrainType(""); setBuyerId(""); setNewBuyer("");
       setQty(""); setPrice(""); setVehicle(""); setDriverName(""); setDriverContact(""); setDriverCnic("");
       setDestination(""); setExpected(""); setNotes("");
       setDispatchPhotoFile(null); setDispatchPhotoPath(null);
-      setInvoiceId(null); setInvoiceNumber(null); setDispatchId(null); setDispatchNumber(null);
-      setDispatchApproved(false); setReceiptFile(null); setExtracted(null); setReceiptPath(null);
+      setInvoiceId(null); setInvoiceNumber(null);
+      setReceiptFile(null); setExtracted(null); setReceiptPath(null);
       setOcrFailed(false); setManualAmount(""); setManualReference(""); setManualDate("");
+      if (resumeDispatch) {
+        // Invoice/dispatch/approval already happened in an earlier session —
+        // only the payment step was left incomplete.
+        setDispatchId(resumeDispatch.id); setDispatchNumber(resumeDispatch.dispatchNumber);
+        setBuyerConfirmed(true); setDispatchApproved(true);
+        setStep("payment");
+      } else {
+        setDispatchId(null); setDispatchNumber(null);
+        setBuyerConfirmed(false); setDispatchApproved(false);
+        setStep("details");
+      }
     }
-  }, [open]);
+  }, [open, resumeDispatch]);
 
   const listSilosFn = useServerFn(listSilos);
   const listBatchesFn = useServerFn(listSiloAvailableBatches);
@@ -85,12 +103,21 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const createInvoiceFn = useServerFn(createDispatchInvoice);
   const createDispatchFn = useServerFn(createDispatchFromSilo);
   const signDispatchPhotoFn = useServerFn(createDispatchPhotoUploadUrl);
+  const confirmBuyerFn = useServerFn(confirmDispatchBuyer);
   const approveFn = useServerFn(approveDispatch);
   const signUploadFn = useServerFn(createReceiptUploadUrl);
   const recordPaymentFn = useServerFn(recordDispatchPayment);
+  const listActiveFn = useServerFn(listSilosWithActiveDispatch);
 
   const silosQ = useQuery({ queryKey: ["wizard-silos"], queryFn: () => listSilosFn(), enabled: open });
   const buyersQ = useQuery({ queryKey: ["buyers-mini"], queryFn: () => listBuyersFn(), enabled: open });
+  const activeDispatchQ = useQuery({ queryKey: ["silos-active-dispatch"], queryFn: () => listActiveFn(), enabled: open });
+  const activeBySilo = useMemo(() => {
+    const m = new Map<string, { dispatch_number: string; status: string }>();
+    for (const a of activeDispatchQ.data?.active ?? []) m.set(a.silo_id, a);
+    return m;
+  }, [activeDispatchQ.data]);
+  const siloPending = siloId ? activeBySilo.get(siloId) : undefined;
   const batchesQ = useQuery({
     queryKey: ["silo-batches", siloId],
     queryFn: () => listBatchesFn({ data: { siloId } }),
@@ -107,7 +134,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   const total = qtyNum * priceNum;
   const available = batches.filter((b) => b.grain_type === grainType).reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
 
-  const detailsValid = !!siloId && !!grainType && qtyNum > 0 && priceNum > 0 && (!!buyerId || !!newBuyer.trim());
+  const detailsValid = !!siloId && !siloPending && !!grainType && qtyNum > 0 && priceNum > 0 && (!!buyerId || !!newBuyer.trim());
 
   const invoiceMut = useMutation({
     mutationFn: () => {
@@ -168,8 +195,17 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
     } }),
     onSuccess: (r) => {
       setDispatchId(r.id); setDispatchNumber(r.dispatchNumber);
-      toast.success(`Dispatch ${r.dispatchNumber} created — awaiting admin approval`);
+      toast.success(`Dispatch ${r.dispatchNumber} created — confirm with the buyer, then finalize`);
       qc.invalidateQueries({ queryKey: ["revenue"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const confirmBuyerMut = useMutation({
+    mutationFn: () => confirmBuyerFn({ data: { id: dispatchId! } }),
+    onSuccess: () => {
+      setBuyerConfirmed(true);
+      toast.success("Buyer confirmation recorded");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -253,18 +289,21 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Truck className="h-4 w-4 text-emerald-600" /> New sale — Invoice → Dispatch → Payment</DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Truck className="h-4 w-4 text-emerald-600" />
+            {resumeDispatch ? `Complete payment — ${resumeDispatch.dispatchNumber}` : "New sale — Invoice → Dispatch → Payment"}
+          </SheetTitle>
+          <SheetDescription>
             {step === "details" && "Step 1 of 3 · Sale details (invoice is optional)"}
             {step === "invoice" && "Step 1 of 3 · Invoice generated"}
-            {step === "dispatch" && "Step 2 of 3 · Dispatch (needs admin approval before stock leaves)"}
+            {step === "dispatch" && "Step 2 of 3 · Dispatch (confirm with buyer, then finalize to deduct stock)"}
             {step === "payment" && "Step 3 of 3 · Payment (via OCR receipt scan)"}
             {step === "complete" && "Done"}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         {step === "details" && (
           <div className="grid gap-3 py-2">
@@ -274,9 +313,21 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
                 <Select value={siloId} onValueChange={setSiloId}>
                   <SelectTrigger className="h-9"><SelectValue placeholder="Select silo" /></SelectTrigger>
                   <SelectContent>
-                    {silos.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} ({s.silo_id})</SelectItem>)}
+                    {silos.map((s) => {
+                      const pending = activeBySilo.get(s.id);
+                      return (
+                        <SelectItem key={s.id} value={s.id} disabled={!!pending}>
+                          {s.name} ({s.silo_id}){pending ? " — dispatch pending" : ""}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                {siloPending && (
+                  <p className="text-[10px] text-amber-600 mt-1">
+                    {siloPending.dispatch_number} is already {siloPending.status} against this silo — resolve it first.
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="text-xs">Grain</Label>
@@ -360,13 +411,23 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
         {step === "dispatch" && (
           <div className="py-4 space-y-3">
             {!dispatchId ? (
-              <p className="text-sm text-muted-foreground">Ready to submit the dispatch request for admin approval.</p>
-            ) : (
+              <p className="text-sm text-muted-foreground">Ready to submit the dispatch request — sent to the buyer for confirmation before you finalize it.</p>
+            ) : !buyerConfirmed ? (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
                 <Truck className="h-5 w-5 text-amber-600 mt-0.5" />
                 <div>
-                  <div className="font-semibold text-sm">Dispatch {dispatchNumber} created — draft</div>
-                  <div className="text-xs text-muted-foreground mt-1">Awaiting admin approval before stock leaves the silo. This is the same approval queue as Grain Operations.</div>
+                  <div className="font-semibold text-sm">Dispatch {dispatchNumber} sent to buyer</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Awaiting buyer confirmation. Buyers don&apos;t have an account in this system, so once they&apos;ve confirmed the sale (call, message, signed note), record it below on their behalf.
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-start gap-3">
+                <UserCheck className="h-5 w-5 text-emerald-600 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-sm">Buyer confirmation recorded</div>
+                  <div className="text-xs text-muted-foreground mt-1">Ready to finalize — this deducts stock from the silo now.</div>
                 </div>
               </div>
             )}
@@ -431,7 +492,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <SheetFooter className="gap-2">
           {step === "details" && (<>
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button variant="outline" disabled={!detailsValid} onClick={() => setStep("dispatch")}>Skip invoice → Dispatch</Button>
@@ -447,7 +508,15 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
               {dispatchMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />} Submit dispatch request
             </Button>
           )}
-          {step === "dispatch" && dispatchId && !dispatchApproved && (
+          {step === "dispatch" && dispatchId && !buyerConfirmed && !dispatchApproved && (
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Close (confirm/approve later in Grain Operations)</Button>
+              <Button disabled={confirmBuyerMut.isPending} onClick={() => confirmBuyerMut.mutate()} className="gap-1.5">
+                {confirmBuyerMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />} Confirm on buyer&apos;s behalf
+              </Button>
+            </>
+          )}
+          {step === "dispatch" && dispatchId && buyerConfirmed && !dispatchApproved && (
             <>
               <Button variant="outline" onClick={() => onOpenChange(false)}>Close (approve later in Grain Operations)</Button>
               <Button disabled={approveMut.isPending} onClick={() => approveMut.mutate()} className="gap-1.5">
@@ -463,8 +532,8 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone }: { open: boole
           {step === "complete" && (
             <Button onClick={() => onOpenChange(false)}>Close</Button>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
