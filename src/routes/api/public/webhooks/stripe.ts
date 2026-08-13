@@ -112,14 +112,15 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 userId = (profByEmail as { id?: string } | null)?.id ?? null;
               }
               const planId = s.metadata?.plan_id ?? null;
-              const hardwareOrderId = s.metadata?.hardware_order_id ?? s.client_reference_id ?? null;
+              const hardwareOrderId = (s.metadata?.hardware_order_id || s.client_reference_id || "").toString().trim();
               const buyerOrderId = s.metadata?.buyer_order_id ?? null;
               const planChangeRequestId = s.metadata?.plan_change_request_id ?? null;
 
               console.log("🔍 [STRIPE WEBHOOK] Extracted IDs:");
               console.log("  - planId:", planId);
-              console.log("  - hardwareOrderId:", hardwareOrderId);
+              console.log("  - hardwareOrderId:", `"${hardwareOrderId}"`, "(length:", hardwareOrderId.length, ")");
               console.log("  - buyerOrderId:", buyerOrderId);
+              console.log("  - planChangeRequestId:", planChangeRequestId);
 
               // Prorated plan change (upgrade / cycle upsize) confirmed by Stripe.
               if (planChangeRequestId) {
@@ -272,7 +273,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
 
               // Fulfil the pending hardware/install order and notify super admins.
-              if (hardwareOrderId) {
+              // Only process if hardwareOrderId is a valid, non-empty UUID string
+              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10) {
                 console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
                 
                 const updateResult = await supabaseAdmin
@@ -356,21 +358,50 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   });
                 }
 
-                // Email SUPPORT_EMAIL via Resend gateway or direct API.
+                // Email the field admin (order creator) via Resend gateway or direct API.
+                // Also notify SUPPORT_EMAIL if configured.
                 try {
                   const gatewayKey = process.env.LOVABLE_API_KEY;
                   const resendKey = process.env.RESEND_API_KEY;
-                  const to = process.env.SUPPORT_EMAIL;
+                  const supportEmail = process.env.SUPPORT_EMAIL;
                   const configFrom = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
-                  if (resendKey && to) {
+                  
+                  if (resendKey) {
                     const { data: order } = await supabaseAdmin
                       .from("hardware_orders" as never)
-                      .select("id,plan_name,hardware_quantity,hardware_total,install_address,install_city,install_country,contact_phone,preferred_install_date,notes")
+                      .select("id,plan_name,hardware_quantity,hardware_total,install_address,install_city,install_country,contact_phone,preferred_install_date,notes,admin_id")
                       .eq("id", hardwareOrderId)
                       .maybeSingle();
                     const o = (order as Record<string, unknown> | null) ?? {};
-                    const subject = `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`;
-                    const html = `<h2>New install order</h2>
+                    
+                    // Get the admin's email from profiles table
+                    const adminId = o.admin_id;
+                    let adminEmail: string | null = null;
+                    if (adminId) {
+                      const { data: admin } = await supabaseAdmin
+                        .from("profiles")
+                        .select("email")
+                        .eq("id", adminId)
+                        .maybeSingle();
+                      adminEmail = (admin as { email?: string } | null)?.email ?? null;
+                    }
+                    
+                    // Determine email recipients: admin gets the primary email, support gets CC if configured
+                    const recipients = adminEmail ? [adminEmail] : [];
+                    if (supportEmail && adminEmail !== supportEmail) {
+                      recipients.push(supportEmail);
+                    }
+                    
+                    // If no admin email found but support email is configured, send to support
+                    if (!adminEmail && supportEmail) {
+                      recipients.push(supportEmail);
+                    }
+                    
+                    if (recipients.length === 0) {
+                      console.warn("[order email] No valid recipients found for hardware order", hardwareOrderId);
+                    } else {
+                      const subject = `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`;
+                      const html = `<h2>New install order</h2>
 <p><b>Order:</b> ${o.id ?? hardwareOrderId}</p>
 <p><b>Plan:</b> ${o.plan_name ?? planId ?? "-"}</p>
 <p><b>Hardware units:</b> ${o.hardware_quantity ?? 0} × Rs. 7,000 = Rs. ${Number(o.hardware_total ?? 0).toLocaleString()}</p>
@@ -380,53 +411,55 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 <p><b>Notes:</b> ${o.notes ?? "-"}</p>
 <p>Open the Platform → Orders console to assign a technician.</p>`;
 
-                    const trySendWebhookEmail = async (fromAddress: string) => {
-                      if (gatewayKey) {
+                      const trySendWebhookEmail = async (fromAddress: string) => {
+                        if (gatewayKey) {
+                          try {
+                            const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${gatewayKey}`,
+                                "X-Connection-Api-Key": resendKey,
+                              },
+                              body: JSON.stringify({
+                                from: fromAddress,
+                                to: recipients,
+                                subject,
+                                html,
+                              }),
+                            });
+                            if (res.ok) return true;
+                          } catch (e) {
+                            console.warn("[webhook email] gateway send failed:", e);
+                          }
+                        }
                         try {
-                          const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+                          const res = await fetch("https://api.resend.com/emails", {
                             method: "POST",
                             headers: {
                               "Content-Type": "application/json",
-                              Authorization: `Bearer ${gatewayKey}`,
-                              "X-Connection-Api-Key": resendKey,
+                              Authorization: `Bearer ${resendKey}`,
                             },
                             body: JSON.stringify({
                               from: fromAddress,
-                              to: [to],
+                              to: recipients,
                               subject,
                               html,
                             }),
                           });
-                          if (res.ok) return true;
+                          return res.ok;
                         } catch (e) {
-                          console.warn("[webhook email] gateway send failed:", e);
+                          console.warn("[webhook email] direct send failed:", e);
+                          return false;
                         }
-                      }
-                      try {
-                        const res = await fetch("https://api.resend.com/emails", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${resendKey}`,
-                          },
-                          body: JSON.stringify({
-                            from: fromAddress,
-                            to: [to],
-                            subject,
-                            html,
-                          }),
-                        });
-                        return res.ok;
-                      } catch (e) {
-                        console.warn("[webhook email] direct send failed:", e);
-                        return false;
-                      }
-                    };
+                      };
 
-                    let ok = await trySendWebhookEmail(configFrom);
-                    if (!ok && !configFrom.includes("resend.dev")) {
-                      console.log("[webhook email] Retrying with sandbox onboarding@resend.dev sender");
-                      await trySendWebhookEmail("GrainHero <onboarding@resend.dev>");
+                      let ok = await trySendWebhookEmail(configFrom);
+                      if (!ok && !configFrom.includes("resend.dev")) {
+                        console.log("[webhook email] Retrying with sandbox onboarding@resend.dev sender");
+                        await trySendWebhookEmail("GrainHero <onboarding@resend.dev>");
+                      }
+                      console.log(`[webhook email] Hardware order ${hardwareOrderId} email sent to: ${recipients.join(", ")}`);
                     }
                   }
                 } catch (e) {
