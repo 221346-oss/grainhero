@@ -528,8 +528,15 @@ export const createDispatchPhotoUploadUrl = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: adminId } = await (context.supabase as any).rpc("get_tenant_admin_id", { _user_id: context.userId });
+    // Falling back to context.userId here (instead of failing loudly like
+    // createReceiptUploadUrl's tenantAdminId() helper does) would silently
+    // put the upload in a folder the "dispatch photos: tenant insert" RLS
+    // policy can never match — get_tenant_admin_id(auth.uid()) is
+    // re-evaluated fresh at INSERT time and would never equal a bare
+    // userId once a real admin_id exists, so WITH CHECK fails.
+    if (!adminId) throw new Error("No tenant admin found for this account — cannot upload a dispatch photo");
     const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${adminId ?? context.userId}/${Date.now()}-${safe}`;
+    const path = `${adminId}/${Date.now()}-${safe}`;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: signed, error } = await (context.supabase as any).storage
       .from("dispatch-photos")

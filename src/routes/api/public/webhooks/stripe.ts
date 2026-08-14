@@ -273,10 +273,20 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
 
               // Fulfil the pending hardware/install order and notify super admins.
-              // Only process if hardwareOrderId is a valid, non-empty UUID string
-              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10) {
+              // Only process if hardwareOrderId is a valid, non-empty UUID string.
+              // Gated on the order still being pending_payment — same idempotency
+              // pattern as the buyer-order block above — so a Stripe webhook
+              // retry/redelivery for an already-fulfilled order doesn't
+              // re-notify super admins about an order they already saw.
+              const { data: existingHardwareOrder } = hardwareOrderId
+                ? await supabaseAdmin.from("hardware_orders" as never).select("status").eq("id", hardwareOrderId).maybeSingle()
+                : { data: null };
+              const hardwareOrderAlreadyFulfilled =
+                !!existingHardwareOrder && (existingHardwareOrder as { status?: string }).status !== "pending_payment";
+
+              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10 && !hardwareOrderAlreadyFulfilled) {
                 console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
-                
+
                 const updateResult = await supabaseAdmin
                   .from("hardware_orders" as never)
                   .update({
