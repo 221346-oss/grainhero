@@ -886,6 +886,7 @@ CREATE INDEX IF NOT EXISTS research_embeddings_embedding_idx
 Click **Run**. Confirm: `Success. No rows returned.`
 
 #### Step B: Create `scripts/source_papers.py`
+> **IMPORTANT RAG NOTE:** We do NOT ingest entire PDFs. The RAG pipeline should extract only the abstract, findings, and conclusion from the papers. Adding raw, unchunked PDFs into the vector DB creates excessive noise and token bloat. The script should chunk at 500 words per embedding.
 
 ```python
 import os, httpx
@@ -1482,4 +1483,5 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 | DHT sensor library | Adafruit | 1.4.6 | Update available (1.4.7) |
 | ESP32Servo | Kevin Harrington | 3.0.9 | Update available (3.2.1) |
 | PubSubClient | Nick O'Leary | 2.8 | |
+
 
