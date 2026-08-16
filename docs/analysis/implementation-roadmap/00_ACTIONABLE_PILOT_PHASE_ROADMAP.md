@@ -1485,3 +1485,29 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 | PubSubClient | Nick O'Leary | 2.8 | |
 
 
+
+## APPENDIX: GitHub Collaboration & Paywalled Research Guidelines
+
+### How to Handle Paywalled Research Papers
+If a paper is behind a paywall (e.g., IEEE, Elsevier):
+1. **Do NOT** try to download full PDFs illegally or buy them if unnecessary.
+2. **Do** fetch the direct link (DOI/URL) and the abstract.
+3. Use the scripts/source_papers.py script to scrape the abstract and conclusion via Semantic Scholar API. This is usually 80% of the valuable information (the exact methodology is often unnecessary for our high-level RAG).
+4. For the owner (you): Review the abstract. If you decide the full methodology is critical, *then* manually procure it.
+
+### How to Collaborate Without Messing Up GitHub History (Owner & Intern)
+Since you are both working on Ai/Ml-Branch but want to avoid pushing the local AI_CHAT_LOG.md or large PDFs, follow this workflow:
+
+1. **Gitignore is your shield:** AI_CHAT_LOG.md and KNOWLEDGE_BASE/02_research_papers/*.pdf MUST be in .gitignore. (I have already done this for you).
+2. **Pulling her changes:** When the intern pushes her ML code, run this to get her code without merge conflicts:
+   `ash
+   git pull origin Ai/Ml-Branch --rebase
+   `
+   *Rebasing* applies your local, unpushed commits on top of her newly pulled commits, keeping history clean and linear.
+3. **Pushing your changes:**
+   `ash
+   git add .  # (Because sensitive stuff is ignored, it won't be added)
+   git commit -m "feat: added new xyz"
+   git push origin Ai/Ml-Branch
+   `
+4. **Never Force Push:** Because you are connected to Lovable, never run git push -f. If you have a conflict, fix it locally and run git rebase --continue.
