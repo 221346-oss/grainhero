@@ -325,7 +325,13 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
             // 2. Threshold Alerts (GH1 Parity)
             if (dev.silo_id && (temp != null || hum != null)) {
               const alertsToCreate = [];
-              if (temp != null && temp > 35) {
+              let tempThreshold = 35;
+              let tempPriority = "high";
+              if (batch?.grain_type?.toLowerCase() === "wheat") {
+                tempThreshold = 20;
+                tempPriority = temp != null && temp > 25 ? "high" : "medium";
+              }
+              if (temp != null && temp > tempThreshold) {
                 alertsToCreate.push({
                   alert_id: `TEMP-${Date.now()}`,
                   admin_id: dev.admin_id,
@@ -333,9 +339,9 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                   silo_id: dev.silo_id,
                   warehouse_id: dev.warehouse_id,
                   batch_id: batchId,
-                  title: "High Temperature Warning",
+                  title: tempPriority === "high" ? "High Temperature Warning" : "Elevated Temperature Warning",
                   message: `Temperature reached ${temp.toFixed(1)}°C`,
-                  priority: "high",
+                  priority: tempPriority,
                   status: "pending",
                   triggered_at: now.toISOString(),
                 });
@@ -403,12 +409,94 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           }
         }
 
+        // Trend-Based Alerts (Phase 1.5)
+        const siloIds = Array.from(deviceMap.values()).map(d => d.silo_id).filter(Boolean);
+        if (siloIds.length > 0) {
+          const { data: recentReadings } = await supabaseAdmin.from("sensor_readings")
+            .select("silo_id, temperature_value, humidity_value, reading_timestamp")
+            .in("silo_id", siloIds)
+            .order("reading_timestamp", { ascending: false })
+            .limit(100);
+
+          const readingsBySilo = new Map<string, any[]>();
+          for (const r of recentReadings || []) {
+             if (!readingsBySilo.has(r.silo_id)) readingsBySilo.set(r.silo_id, []);
+             readingsBySilo.get(r.silo_id)!.push(r);
+          }
+
+          const trendAlertsToCreate = [];
+          for (const [siloId, readings] of readingsBySilo.entries()) {
+             // We need at least a few readings to establish a trend
+             if (readings.length < 5) continue;
+             const latest = readings[0];
+             const oldest = readings[readings.length - 1];
+             if (latest.temperature_value == null || oldest.temperature_value == null || latest.humidity_value == null || oldest.humidity_value == null) continue;
+
+             const tempDelta = latest.temperature_value - oldest.temperature_value;
+             const humDelta = latest.humidity_value - oldest.humidity_value;
+             
+             // If temp rises by > 1.5C and humidity by > 3% over this short window, flag it
+             if (tempDelta > 1.5 && humDelta > 3) {
+                const device = Array.from(deviceMap.values()).find(d => d.silo_id === siloId);
+                if (device) {
+                    // Deduplicate: Max 1 trend alert per 4 hours per silo
+                    const cutoff = new Date(now.getTime() - 4 * 3600 * 1000).toISOString();
+                    const { data: recentTrend } = await supabaseAdmin.from("grain_alerts")
+                       .select("id")
+                       .eq("silo_id", siloId)
+                       .eq("title", "WORSENING Trend Detected")
+                       .gte("triggered_at", cutoff)
+                       .limit(1)
+                       .maybeSingle();
+
+                    if (!recentTrend) {
+                       trendAlertsToCreate.push({
+                          alert_id: `TREND-${siloId}-${Date.now()}`,
+                          admin_id: device.admin_id,
+                          source: "ai",
+                          silo_id: siloId,
+                          warehouse_id: device.warehouse_id,
+                          title: "WORSENING Trend Detected",
+                          message: `Both temperature (+${tempDelta.toFixed(1)}°C) and humidity (+${humDelta.toFixed(1)}%) have risen steadily over the last window. Early intervention recommended.`,
+                          priority: "high",
+                          status: "pending",
+                          triggered_at: now.toISOString(),
+                       });
+                    }
+                }
+             }
+          }
+          if (trendAlertsToCreate.length > 0) {
+             await supabaseAdmin.from("grain_alerts").insert(trendAlertsToCreate as never);
+          }
+        }
+
         // Offline Detection — mark devices that have not pinged in 15 minutes.
         const offlineThreshold = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
-        await supabaseAdmin.from("sensor_devices")
-          .update({ status: "offline", connection_status: "offline" })
-          .lt("last_ping_at", offlineThreshold)
+        const { data: goingOffline } = await supabaseAdmin.from("sensor_devices")
+          .select("id, admin_id, silo_id, warehouse_id")
+          .lt("last_heartbeat", offlineThreshold)
           .eq("status", "active");
+
+        if (goingOffline && goingOffline.length > 0) {
+          const offlineAlerts = goingOffline.map((d: any) => ({
+            alert_id: `OFFLINE-${d.id}-${Date.now()}`,
+            admin_id: d.admin_id,
+            source: "system",
+            silo_id: d.silo_id,
+            warehouse_id: d.warehouse_id,
+            title: "Sensor Offline",
+            message: `Sensor device has not pinged in 15 minutes.`,
+            priority: "high",
+            status: "pending",
+            triggered_at: now.toISOString(),
+          }));
+          await supabaseAdmin.from("grain_alerts").insert(offlineAlerts as never);
+          
+          await supabaseAdmin.from("sensor_devices")
+            .update({ status: "offline", connection_status: "offline" })
+            .in("id", goingOffline.map((d: any) => d.id));
+        }
 
         return Response.json({ synced, total: deviceIds.length });
       },

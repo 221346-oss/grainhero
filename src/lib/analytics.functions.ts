@@ -26,7 +26,7 @@ type Reading = {
 function computeFallbackRisk(silo: {
   moisture_content: number | null;
   risk_score: number | null;
-}, r: Reading | null): { score: number; level: "low" | "moderate" | "high" | "critical"; factors: string[] } {
+}, r: Reading | null, grain_type?: string | null): { score: number; level: "low" | "moderate" | "high" | "critical"; factors: string[] } {
   const factors: string[] = [];
   let score = 0;
 
@@ -37,8 +37,13 @@ function computeFallbackRisk(silo: {
   const voc = r?.voc_value ?? null;
 
   if (temp !== null) {
-    if (temp > 30) { score += 25; factors.push(`High temp ${temp.toFixed(1)}°C`); }
-    else if (temp > 25) { score += 12; factors.push(`Elevated temp ${temp.toFixed(1)}°C`); }
+    if (grain_type?.toLowerCase() === "wheat") {
+      if (temp > 25) { score += 25; factors.push(`High temp ${temp.toFixed(1)}°C`); }
+      else if (temp > 20) { score += 12; factors.push(`Elevated temp ${temp.toFixed(1)}°C`); }
+    } else {
+      if (temp > 30) { score += 25; factors.push(`High temp ${temp.toFixed(1)}°C`); }
+      else if (temp > 25) { score += 12; factors.push(`Elevated temp ${temp.toFixed(1)}°C`); }
+    }
   }
   if (hum !== null) {
     if (hum > 70) { score += 20; factors.push(`High humidity ${hum.toFixed(0)}%`); }
@@ -130,7 +135,7 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
           factors: [`ML: ${r.ml_risk_class}`],
         };
       } else {
-        risk = computeFallbackRisk({ moisture_content: null, risk_score: s.risk_score ?? null }, r);
+        risk = computeFallbackRisk({ moisture_content: null, risk_score: s.risk_score ?? null }, r, oldest?.grain_type);
       }
 
       return {

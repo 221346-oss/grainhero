@@ -17,19 +17,20 @@
 #include <math.h>
 #include <time.h>
 
+#include "secrets.h"
+
 // ================================ CONFIGURATION
 // ================================
 #define MQTT_BROKER "x106c611.ala.asia-southeast1.emqxsl.com"
 #define MQTT_PORT 8883
-#define MQTT_USERNAME "grainhero_device"
-#define MQTT_PASSWORD "Sb596596007?#+"
+// MQTT_USERNAME and MQTT_PASSWORD now come from secrets.h
 #define AUTH_TOKEN "GrainHero_Secret_2026"
 #define FIXED_DEVICE_ID "004B12387760"
 #define FW_VERSION "1.0.0"
 #define OTA_API_URL "http://10.10.60.54:8000/grainhero_updated_ino.ino.bin"
 #define BACKEND_BASE_URL "http://192.168.100.229:5000/api/iot"
 #define FIREBASE_HOST "smart-silo-8ce12-default-rtdb.firebaseio.com"
-#define FIREBASE_AUTH "9VmddGd8EjIYCfCwoI6Kl6RnSOEaCIDfC62gmDXg"
+// FIREBASE_AUTH now comes from secrets.h
 
 // Pins
 #define DHTPIN1 15
