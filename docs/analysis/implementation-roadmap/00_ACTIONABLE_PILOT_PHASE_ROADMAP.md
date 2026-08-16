@@ -1,17 +1,17 @@
-# GrainHero (by TEQrock): Master Pilot Phase Roadmap
+﻿# GrainHero (by TEQrock): Master Pilot Phase Roadmap
 ## Ultra-Detailed, Chronological, Step-by-Step Task List
 ### Updated for latest platform UIs: Supabase, Render, EMQX Cloud, Arduino IDE 2.x
 
 > **Single Source of Truth.** This is the complete execution guide from zero to a live pilot.
-> - **🔴 OWNER** = Involves secrets, money, hardware, or cloud credentials. Owner only.
-> - **🟢 INTERNEE** = Code-only tasks, safe to delegate.
+> - **ðŸ”´ OWNER** = Involves secrets, money, hardware, or cloud credentials. Owner only.
+> - **ðŸŸ¢ INTERNEE** = Code-only tasks, safe to delegate.
 
 ---
 
 
 ---
 
-## 🧭 READ THIS FIRST — How GrainHero Works (System Map)
+## ðŸ§­ READ THIS FIRST â€” How GrainHero Works (System Map)
 
 Before diving into tasks, understand how all the pieces connect:
 
@@ -29,17 +29,17 @@ Mamba has linear memory, handles months of IoT time-series, runs on Render free 
 Jamba is overkill and impossible to deploy cheaply at this stage.
 
 
-### 🚨 The "Two Environments" Rule (PERMANENT)
+### ðŸš¨ The "Two Environments" Rule (PERMANENT)
 There is a strict separation between Training and Serving. Do not mix them.
 - **TRAINING Environment (Your Local PC):** This is where you run heavy data science libraries (`xgboost`, `scikit-learn`, `shap`, `optuna`). You train models here and export them as lightweight `.onnx` files.
-- **SERVING Environment (Render Cloud):** This is the live `grainhero-ml-service`. It runs on a tiny 512MB free tier container. It ONLY needs `onnxruntime` to run the pre-trained models. It never trains anything. (This is why we commented out the heavy dependencies — to stop Out Of Memory crashes).
+- **SERVING Environment (Render Cloud):** This is the live `grainhero-ml-service`. It runs on a tiny 512MB free tier container. It ONLY needs `onnxruntime` to run the pre-trained models. It never trains anything. (This is why we commented out the heavy dependencies â€” to stop Out Of Memory crashes).
 
 
-**🎯 Core Product Mandate — Predictive Spoilage Prevention (Three Horizons):**
+**ðŸŽ¯ Core Product Mandate â€” Predictive Spoilage Prevention (Three Horizons):**
 We do NOT react to spoilage. We detect the *build-up trend* and cut it off before it begins.
-- **H1 — Now (Zero model changes):** Wire history arrays from Supabase into `_spoilage_trend()`. Add rate-of-change + projected hours-to-danger. Fire proactive alerts on trajectory, not threshold breach. *(Tasks 2.4, 2.5, 3.2.5)*
-- **H2 — Post-pilot (1–3 months, after real data flows):** Add Prophet/ARIMA 48-hour forecasting. Add Isolation Forest anomaly detection for patterns that precede spoilage.
-- **H3 — Scale (3–6 months):** Replace ONNX ensemble with Mamba sequence model trained on real silo time-series. *(Already pre-planned in Task 5.3)*
+- **H1 â€” Now (Zero model changes):** Wire history arrays from Supabase into `_spoilage_trend()`. Add rate-of-change + projected hours-to-danger. Fire proactive alerts on trajectory, not threshold breach. *(Tasks 2.4, 2.5, 3.2.5)*
+- **H2 â€” Post-pilot (1â€“3 months, after real data flows):** Add Prophet/ARIMA 48-hour forecasting. Add Isolation Forest anomaly detection for patterns that precede spoilage.
+- **H3 â€” Scale (3â€“6 months):** Replace ONNX ensemble with Mamba sequence model trained on real silo time-series. *(Already pre-planned in Task 5.3)*
 
 **Active firmware file for all future work:**
 `docs/firmware/grainhero_updated_ino.ino`
@@ -48,12 +48,12 @@ Same features, 731 lines instead of 1591, cleaner memory management for the ESP3
 
 ---
 
-## 🏃‍♂️ SPRINT SCHEDULE (Who does what, and when)
+## ðŸƒâ€â™‚ï¸ SPRINT SCHEDULE (Who does what, and when)
 
 To move fast without blocking each other, the team will work in parallel sprints.
 **Task 2.2 is already DONE.** Your internees do NOT need to redo it.
 
-### Sprint 0 — RIGHT NOW (This Week)
+### Sprint 0 â€” RIGHT NOW (This Week)
 *Everyone can start these today, simultaneously.*
 
 | Role | Tasks |
@@ -62,7 +62,7 @@ To move fast without blocking each other, the team will work in parallel sprints
 | **[ML-INTERNEE]** | **Task 2.3A:** Enable pgvector in Supabase SQL <br> **Task 2.3B:** Write `source_papers.py` script <br> **Task 2.4:** Add silo_id to PredictionRequest middleware |
 | **[IOT-INTERNEE]** | **Task 0.2:** Verify pest sensor output in Serial Monitor |
 
-### Sprint 1 — Next Week (After Sprint 0 is done)
+### Sprint 1 â€” Next Week (After Sprint 0 is done)
 
 | Role | Tasks |
 |---|---|
@@ -72,14 +72,14 @@ To move fast without blocking each other, the team will work in parallel sprints
 
 ---
 
-## PHASE 0: Pre-Cloud — Local Hardware & Firmware Prep
+## PHASE 0: Pre-Cloud â€” Local Hardware & Firmware Prep
 ### Goal: Prove the silo hardware works BEFORE waiting for cloud credentials.
 
 ---
 
-<details><summary><b>✅ Task 0.1 — Remove Hardcoded WiFi Secrets [DONE]</b></summary>
+<details><summary><b>âœ… Task 0.1 â€” Remove Hardcoded WiFi Secrets [DONE]</b></summary>
 
-### ✅ Task 0.1 — Remove Hardcoded WiFi Secrets [IOT-INTERNEE] [DONE]
+### âœ… Task 0.1 â€” Remove Hardcoded WiFi Secrets [IOT-INTERNEE] [DONE]
 
 **Status: COMPLETED.** `grainhero_updated_ino.ino` has already been updated.
 
@@ -100,7 +100,7 @@ When the ESP32 boots without a known WiFi network, it broadcasts a hotspot calle
 selects the farm WiFi + enters the password. Credentials save permanently in ESP32 flash.
 
 **Library to install (if not already):**
-1. Arduino IDE 2.x → Left sidebar **Library Manager** icon (book).
+1. Arduino IDE 2.x â†’ Left sidebar **Library Manager** icon (book).
 2. Search: `WiFiManager`
 3. Install: **WiFiManager by tzapu** (version 2.0.17 or latest).
 
@@ -109,16 +109,16 @@ selects the farm WiFi + enters the password. Credentials save permanently in ESP
 
 ---
 
-<details><summary><b>✅ Task 0.2 — Verify Pest Sensor is Live [DONE]</b></summary>
+<details><summary><b>âœ… Task 0.2 â€” Verify Pest Sensor is Live [DONE]</b></summary>
 
-### ✅ Task 0.2 — Verify Pest Sensor is Live [IOT-INTERNEE]
+### âœ… Task 0.2 â€” Verify Pest Sensor is Live [IOT-INTERNEE]
 
 **Why this matters:** `Pest_Presence` has the highest SHAP impact in the ML model.
-Previously hardcoded to `0.0` — making the AI completely blind to pests.
+Previously hardcoded to `0.0` â€” making the AI completely blind to pests.
 
 **Good news:** The updated firmware already has this fixed via `computePestMoldRisk()`.
 This function reads the BME680 gas resistance, maps it to a TVOC estimate, then
-combines it with humidity, temperature, and soil moisture to produce a 0.0–1.0 pest score.
+combines it with humidity, temperature, and soil moisture to produce a 0.0â€“1.0 pest score.
 
 **Steps to verify it is working:**
 
@@ -127,7 +127,7 @@ combines it with humidity, temperature, and soil moisture to produce a 0.0–1.0
 3. Confirm this line exists: `cd.pest_presence = pestRiskLabel;`
 4. Find `computePestMoldRisk()` (around line 225). Confirm the scoring logic is present.
 5. Find the JSON payload builder and confirm `pest_presence` is in the MQTT/Firebase payload.
-6. Flash the board. Open **Tools → Serial Monitor** at **115200 baud**.
+6. Flash the board. Open **Tools â†’ Serial Monitor** at **115200 baud**.
 7. You should see:
    ```
    Pest Risk: 0.12 (Low)
@@ -139,33 +139,33 @@ combines it with humidity, temperature, and soil moisture to produce a 0.0–1.0
 
 ---
 
-### 🔴 Task 0.3 — Set Up EMQX Cloud & Test Live Data [OWNER]
+### ðŸ”´ Task 0.3 â€” Set Up EMQX Cloud & Test Live Data [OWNER]
 
 **What this does:** Proves the silo sends secure encrypted sensor data to the cloud
 without the backend server being ready at all.
 
-**Time estimate:** 30–45 minutes.
+**Time estimate:** 30â€“45 minutes.
 
 #### Step 1: Create an EMQX Serverless Deployment
 
 1. Go to **https://cloud.emqx.com** (sign up with Google or email if needed).
 2. After login, click **Deployments** in the top navigation.
 3. Click **New Deployment** (top right corner).
-4. On the plan selection screen, choose **Serverless** (FREE — 1 million session minutes/month).
-5. Under **Cloud Region**, select **Asia Pacific (Mumbai)** — lowest latency from Pakistan.
+4. On the plan selection screen, choose **Serverless** (FREE â€” 1 million session minutes/month).
+5. Under **Cloud Region**, select **Asia Pacific (Mumbai)** â€” lowest latency from Pakistan.
 6. Name it: `grainhero-pilot`
-7. Click **Deploy Now**. Wait ~1–2 minutes.
+7. Click **Deploy Now**. Wait ~1â€“2 minutes.
 8. On the Overview page that appears, copy and save:
-   - **Connection Address** (e.g., `abc123.emqxsl.com`) — needed in firmware.
+   - **Connection Address** (e.g., `abc123.emqxsl.com`) â€” needed in firmware.
    - **Port:** `8883` (always use TLS, never plain 1883).
 
 #### Step 2: Create MQTT Credentials
 
-1. In the left sidebar, click **Access Control** → **Authentication**.
+1. In the left sidebar, click **Access Control** â†’ **Authentication**.
 2. Click **+ Add**.
 3. First user (for the silo device):
    - **Username:** `grainhero_device`
-   - **Password:** `GH_Silo@2026!` (or any strong password — save it securely)
+   - **Password:** `GH_Silo@2026!` (or any strong password â€” save it securely)
 4. Click **Confirm**.
 5. Click **+ Add** again for dashboard testing:
    - **Username:** `grainhero_dashboard`
@@ -175,7 +175,7 @@ without the backend server being ready at all.
 
 1. In the left sidebar, click **Overview**.
 2. Scroll to the **Connection Information** section.
-3. Find **CA Certificate** → click **Download**.
+3. Find **CA Certificate** â†’ click **Download**.
 4. Save as `emqx_root_ca.pem` on your desktop.
 5. Open it in Notepad. Copy the entire content (the full `-----BEGIN CERTIFICATE-----` block).
 
@@ -202,10 +202,10 @@ without the backend server being ready at all.
 
 1. Connect **DOIT ESP32 DEVKIT V1** to your laptop via USB.
 2. In Arduino IDE 2.x:
-   - **Tools → Board → esp32 → DOIT ESP32 DEVKIT V1**
-   - **Tools → Port** → select the COM port (e.g., COM5)
+   - **Tools â†’ Board â†’ esp32 â†’ DOIT ESP32 DEVKIT V1**
+   - **Tools â†’ Port** â†’ select the COM port (e.g., COM5)
 3. Click **Upload** (right-arrow icon). Wait for `Done uploading.`
-4. Open **Tools → Serial Monitor** at **115200 baud**.
+4. Open **Tools â†’ Serial Monitor** at **115200 baud**.
 5. Successful connection looks like:
    ```
    WiFi: 192.168.x.x
@@ -216,8 +216,8 @@ without the backend server being ready at all.
 
 #### Step 6: Verify Live Data on MQTTX Desktop App
 
-1. Download **MQTTX** from **https://mqttx.app** → MQTTX Desktop → Windows installer.
-2. Open MQTTX → Click **+** button (left sidebar) → **New Connection**.
+1. Download **MQTTX** from **https://mqttx.app** â†’ MQTTX Desktop â†’ Windows installer.
+2. Open MQTTX â†’ Click **+** button (left sidebar) â†’ **New Connection**.
 3. Fill in the form:
    - **Name:** `GrainHero Test`
    - **Protocol:** `mqtts://` (select from dropdown)
@@ -227,7 +227,7 @@ without the backend server being ready at all.
    - **Password:** (the dashboard password)
    - **SSL/TLS:** Toggle **ON**
    - **Certificate:** Select `CA_Cert_Only`
-   - **CA File:** Click the folder icon → upload `emqx_root_ca.pem`
+   - **CA File:** Click the folder icon â†’ upload `emqx_root_ca.pem`
 4. Click **Connect** (top right). Status dot turns **GREEN** when connected.
 5. At the bottom, click **+ New Subscription**.
    - **Topic:** `silos/+/telemetry` (the `+` wildcard matches any silo ID)
@@ -237,11 +237,11 @@ without the backend server being ready at all.
    { "temperature": 28.4, "humidity": 65.2, "pest_presence": "Low", "pestRiskScore": 0.12 }
    ```
 
-**✅ Task 0.3 Complete. The silo is live on the internet.**
+**âœ… Task 0.3 Complete. The silo is live on the internet.**
 
 ---
 
-### 🔴 Task 0.4 — Test OTA Firmware Updates Locally [OWNER]
+### ðŸ”´ Task 0.4 â€” Test OTA Firmware Updates Locally [OWNER]
 
 **What this does:** Proves the ESP32 can download and install new firmware over WiFi
 without Supabase Storage. After this test, just swap the URL to cloud.
@@ -251,7 +251,7 @@ without Supabase Storage. After this test, just swap the URL to cloud.
 #### Step 1: Export the Binary
 
 1. In Arduino IDE 2.x, open `grainhero_updated_ino.ino`.
-2. Go to **Sketch → Export Compiled Binary**.
+2. Go to **Sketch â†’ Export Compiled Binary**.
 3. The `.bin` file is saved here:
    `docs/firmware/grainhero_updated_ino.ino.bin`
 
@@ -305,17 +305,17 @@ After ~30 seconds:
 
 ---
 
-## PHASE 1: Foundation — Secrets & Repository Cleanup
+## PHASE 1: Foundation â€” Secrets & Repository Cleanup
 ### Goal: Secure all credentials and prepare for team collaboration.
 
 ---
 
-### 🔴 Task 1.1 — Supabase: Create Firmware Storage Bucket [OWNER]
+### ðŸ”´ Task 1.1 â€” Supabase: Create Firmware Storage Bucket [OWNER]
 
 **Time estimate:** 10 minutes.
 
 #### Step 1: Open Supabase Dashboard
-1. Go to **https://supabase.com/dashboard** → click your GrainHero project.
+1. Go to **https://supabase.com/dashboard** â†’ click your GrainHero project.
 
 #### Step 2: Navigate to Storage
 1. In the left sidebar, click the **Storage** icon (cylinder icon).
@@ -330,33 +330,33 @@ After ~30 seconds:
 #### Step 4: Set Access Policies
 1. Click on `firmware-updates` bucket.
 2. Click **Policies** tab.
-3. Click **New Policy** → **Create a policy from scratch**.
+3. Click **New Policy** â†’ **Create a policy from scratch**.
 4. Configure:
    - **Policy name:** `service_role_full_access`
    - **Allowed operations:** Check all four: SELECT, INSERT, UPDATE, DELETE
    - **Target roles:** `service_role`
    - **USING expression:** `true`
    - **WITH CHECK expression:** `true`
-5. Click **Review** → **Save policy**.
+5. Click **Review** â†’ **Save policy**.
 
 #### Step 5: Copy API Credentials
 1. In the left sidebar, click **Project Settings** (gear icon at the bottom).
 2. Click the **API** tab.
 3. Copy and save securely (NOT in any code file, NOT on GitHub):
-   - **Project URL:** `https://xxxx.supabase.co` — safe to share with interns
-   - **anon public key:** `eyJh...` — safe to share with interns for frontend
-   - **service_role secret:** `eyJh...` — **NEVER share. NEVER commit. Owner only.**
+   - **Project URL:** `https://xxxx.supabase.co` â€” safe to share with interns
+   - **anon public key:** `eyJh...` â€” safe to share with interns for frontend
+   - **service_role secret:** `eyJh...` â€” **NEVER share. NEVER commit. Owner only.**
 
 ---
 
-### 🔴 Task 1.2 — Add GitHub Secrets [OWNER]
+### ðŸ”´ Task 1.2 â€” Add GitHub Secrets [OWNER]
 
 **Why:** GitHub Actions CI/CD needs these to auto-deploy models and run RAG weekly.
 
 **Time estimate:** 5 minutes.
 
-1. Go to your GitHub repository → click **Settings** tab (top of the page).
-2. In the left sidebar: **Secrets and variables** → **Actions**.
+1. Go to your GitHub repository â†’ click **Settings** tab (top of the page).
+2. In the left sidebar: **Secrets and variables** â†’ **Actions**.
 3. Under **Repository secrets**, click **New repository secret** for each:
 
 | Secret Name | Value | Where to get it |
@@ -367,15 +367,15 @@ After ~30 seconds:
 
 > **How to get a Google API Key:**
 > 1. Go to **https://aistudio.google.com/app/apikey**
-> 2. Click **Create API Key** → Copy it.
+> 2. Click **Create API Key** â†’ Copy it.
 
 ---
 
-<details><summary><b>✅ Task 1.3 — Clean Git: Remove ML Models [DONE]</b></summary>
+<details><summary><b>âœ… Task 1.3 â€” Clean Git: Remove ML Models [DONE]</b></summary>
 
-### ✅ Task 1.3 — Clean Git: Remove ML Models from Tracking [ML-INTERNEE]
+### âœ… Task 1.3 â€” Clean Git: Remove ML Models from Tracking [ML-INTERNEE]
 
-**Why:** `.onnx` and `.pkl` files are 11–20MB each. GitHub's hard limit is 100MB per file.
+**Why:** `.onnx` and `.pkl` files are 11â€“20MB each. GitHub's hard limit is 100MB per file.
 They will live in Supabase Storage instead of Git.
 
 ```powershell
@@ -401,7 +401,7 @@ git commit -m "chore: remove ML binaries from git tracking"
 git push
 ```
 
-**Verify:** Go to GitHub repo → `ml-deploy/` folder. The `.onnx` files should be gone.
+**Verify:** Go to GitHub repo â†’ `ml-deploy/` folder. The `.onnx` files should be gone.
 
 
 </details>
@@ -411,13 +411,13 @@ git push
 
 ---
 
-## 🔄 How the Model Gets Smarter Over Time (Data Flywheel)
+## ðŸ”„ How the Model Gets Smarter Over Time (Data Flywheel)
 
-**Phase 1 — Synthetic (NOW):** Our current ONNX models were trained on 50,000+ simulated readings generated from FAO grain science equations. Accuracy is ~92% on the synthetic test set. This proves the system works, but isn't commercial-ready.
+**Phase 1 â€” Synthetic (NOW):** Our current ONNX models were trained on 50,000+ simulated readings generated from FAO grain science equations. Accuracy is ~92% on the synthetic test set. This proves the system works, but isn't commercial-ready.
 
-**Phase 2 — Real Data Collection (Pilot Weeks 1-8):** Every sensor reading from the live silo is stored in Supabase `sensor_readings`. We do NOT retrain during this phase. Just collect real data (target: 2,000+ readings per silo).
+**Phase 2 â€” Real Data Collection (Pilot Weeks 1-8):** Every sensor reading from the live silo is stored in Supabase `sensor_readings`. We do NOT retrain during this phase. Just collect real data (target: 2,000+ readings per silo).
 
-**Phase 3 — First Real Retrain (After first batch outcome):** 
+**Phase 3 â€” First Real Retrain (After first batch outcome):** 
 1. The silo is emptied. The owner uses the "Mark Outcome" button (Task 5.1) to label the batch as Safe/Risky/Spoiled.
 2. The ML Team exports these real labeled readings as a CSV.
 3. The ML Team retrains the model locally using `TimeSeriesSplit` cross-validation (no data leakage).
@@ -431,7 +431,7 @@ git push
 
 ---
 
-### 🔴 Task 1.4 — Fix Render Auto-Deploy (Deploy Hook Workaround) [OWNER]
+### ðŸ”´ Task 1.4 â€” Fix Render Auto-Deploy (Deploy Hook Workaround) [OWNER]
 
 **Why the normal way failed:** Based on your screenshot, your GitHub account does not have "Admin" access to the `221346-oss` organization repo, which is required to see the "Webhooks" menu. 
 **The Workaround:** We will use Render's "Deploy Hook" feature and a GitHub Action instead.
@@ -440,11 +440,11 @@ git push
 
 **Steps:**
 1. **Get the Deploy Hook from Render:**
-   - Go to your Render dashboard → `grainhero-ml-service` → **Settings**.
+   - Go to your Render dashboard â†’ `grainhero-ml-service` â†’ **Settings**.
    - Scroll down to the **Deploy Hook** section.
    - Copy the unique URL (it looks like `https://api.render.com/deploy/srv-...`).
 2. **Add it as a GitHub Secret:**
-   - Go back to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**.
+   - Go back to your GitHub repo â†’ **Settings** â†’ **Secrets and variables** â†’ **Actions**.
    - Create a New repository secret:
      - Name: `RENDER_DEPLOY_HOOK_URL`
      - Secret: (paste the URL you copied from Render)
@@ -453,12 +453,12 @@ git push
 
 ---
 
-### 🔴 Task 2.1 — Upload ML Models to Supabase Storage [OWNER]
+### ðŸ”´ Task 2.1 â€” Upload ML Models to Supabase Storage [OWNER]
 
 **What this does:** Pushes all 5 ONNX models from your laptop to Supabase Storage.
 The Render ML service downloads them on startup.
 
-**Time estimate:** 5–10 minutes.
+**Time estimate:** 5â€“10 minutes.
 
 **Step 1: Set temporary environment variables:**
 ```powershell
@@ -483,24 +483,24 @@ Uploading barley_model.onnx... OK
 All models uploaded.
 ```
 
-**Verify:** Supabase Dashboard → Storage → models bucket → all 5 `.onnx` files appear.
+**Verify:** Supabase Dashboard â†’ Storage â†’ models bucket â†’ all 5 `.onnx` files appear.
 
 ---
 
-<details><summary><b>✅ Task 2.2 — Deploy ML Service to Render [DONE]</b></summary>
+<details><summary><b>âœ… Task 2.2 â€” Deploy ML Service to Render [DONE]</b></summary>
 
-### ✅ Task 2.2 — Deploy ML Service to Render [OWNER] [DONE]
+### âœ… Task 2.2 â€” Deploy ML Service to Render [OWNER] [DONE]
 
 **What this does:** Hosts the FastAPI prediction server on the internet.
 The frontend calls this URL for every spoilage prediction.
 
-**Time estimate:** 15–20 minutes.
+**Time estimate:** 15â€“20 minutes.
 
 #### Step 1: Create a New Web Service
-1. Go to **https://dashboard.render.com** → Click **New +** (top right).
+1. Go to **https://dashboard.render.com** â†’ Click **New +** (top right).
 2. Click **Web Service**.
 3. Click **Deploy from a GitHub repository**.
-4. Find your GrainHero repository → click **Connect**.
+4. Find your GrainHero repository â†’ click **Connect**.
 
 #### Step 2: Configure the Service
 
@@ -528,7 +528,7 @@ The frontend calls this URL for every spoilage prediction.
 | `PORT` | `8000` |
 
 #### Step 4: Deploy and Verify
-1. Click **Create Web Service**. Render builds the Docker image (~3–7 min).
+1. Click **Create Web Service**. Render builds the Docker image (~3â€“7 min).
 2. Watch the **Logs** tab. Success looks like:
    ```
    INFO:     Application startup complete.
@@ -537,7 +537,7 @@ The frontend calls this URL for every spoilage prediction.
 3. Your ML service is live at: `https://grainhero-ml-service.onrender.com`
 4. Test it: open `https://grainhero-ml-service.onrender.com/docs` in a browser.
    You should see the FastAPI Swagger UI.
-5. Click **POST /predict** → **Try it out** → paste and execute:
+5. Click **POST /predict** â†’ **Try it out** â†’ paste and execute:
    ```json
    {
      "grain_type": "wheat",
@@ -555,13 +555,13 @@ GRAINHERO_ML_API_URL=https://grainhero-ml-service.onrender.com
 ```
 
 > **NOTE on Render Free Tier:** Services spin down after 15 min of inactivity.
-> First prediction after cold start takes 30–50 seconds. Acceptable for the pilot.
+> First prediction after cold start takes 30â€“50 seconds. Acceptable for the pilot.
 > The cron job has a local Python subprocess fallback that handles this automatically.
 
 
 ---
 
-### 🟢 Task 2.3E — Create Research Intelligence Table [ML-INTERNEE]
+### ðŸŸ¢ Task 2.3E â€” Create Research Intelligence Table [ML-INTERNEE]
 
 **What this does:** Prepares Supabase to store scraped research papers and AI models.
 
@@ -585,31 +585,31 @@ CREATE INDEX IF NOT EXISTS research_intel_embedding_idx ON research_intelligence
 
 ---
 
-### 🟢 Task 2.3F — Write Research Intel Scraper (`research_intel_scraper.py`) [ML-INTERNEE]
+### ðŸŸ¢ Task 2.3F â€” Write Research Intel Scraper (`research_intel_scraper.py`) [ML-INTERNEE]
 
 **What this does:** A Python script that hits the APIs for arxiv, Semantic Scholar, and HuggingFace, looking for keywords like "grain storage IoT", "edge AI time-series", "ONNX microcontroller", etc. It uses Gemini to create embeddings and pushes them to the `research_intelligence` table.
 
 ---
 
-### 🟢 Task 2.3G — Automate Research Intel via GitHub Actions [ML-INTERNEE]
+### ðŸŸ¢ Task 2.3G â€” Automate Research Intel via GitHub Actions [ML-INTERNEE]
 
 **What this does:** Updates `.github/workflows/rag-update.yml` to run `research_intel_scraper.py` automatically every Monday at 8:00 AM PKT. Zero maintenance required.
 
 
 ---
 
-### 🟢 Task 2.4 — Trend History Injection Middleware [ML-INTERNEE]
+### ðŸŸ¢ Task 2.4 â€” Trend History Injection Middleware [ML-INTERNEE]
 
-**Why this is the highest-priority task after Render deploy:** The existing `_spoilage_trend()` function accepts history arrays, but the firmware only sends the current reading — so trend analysis has been blind since day one. This task fixes that automatically: the ML service queries Supabase for the last 24 readings on every prediction call. **Zero firmware changes. Zero model changes.**
+**Why this is the highest-priority task after Render deploy:** The existing `_spoilage_trend()` function accepts history arrays, but the firmware only sends the current reading â€” so trend analysis has been blind since day one. This task fixes that automatically: the ML service queries Supabase for the last 24 readings on every prediction call. **Zero firmware changes. Zero model changes.**
 
-**Time estimate:** 2–3 hours.
+**Time estimate:** 2â€“3 hours.
 
 **File: `ml-deploy/app.py`**
 
 #### Step 1: Add `silo_id` to `PredictionRequest` (around line 256)
 
 ```python
-silo_id: Optional[str] = Field(None, description="Silo ID — auto-fetches last 24 sensor readings from Supabase for trend analysis")
+silo_id: Optional[str] = Field(None, description="Silo ID â€” auto-fetches last 24 sensor readings from Supabase for trend analysis")
 ```
 
 #### Step 2: Add the history-fetch helper (add after `_fetch_rainfall()`, around line 407)
@@ -618,7 +618,7 @@ silo_id: Optional[str] = Field(None, description="Silo ID — auto-fetches last 
 async def _fetch_sensor_history(silo_id: str, limit: int = 24) -> dict:
     """
     Fetch the last `limit` sensor readings for a silo from Supabase.
-    Returns arrays ordered oldest → newest, ready for trend analysis.
+    Returns arrays ordered oldest â†’ newest, ready for trend analysis.
     """
     from supabase_client import get_supabase_client
     try:
@@ -631,7 +631,7 @@ async def _fetch_sensor_history(silo_id: str, limit: int = 24) -> dict:
             .limit(limit)
             .execute()
         )
-        rows = sorted(resp.data, key=lambda x: x["recorded_at"])  # oldest → newest
+        rows = sorted(resp.data, key=lambda x: x["recorded_at"])  # oldest â†’ newest
         return {
             "temperature_history": [r["temperature"]    for r in rows],
             "humidity_history":    [r["humidity"]       for r in rows],
@@ -673,21 +673,21 @@ If the table uses different column names, adjust the `.select()` call to match.
 2. Call `POST /predict` with `"silo_id": "<your-silo-uuid>"` and no history arrays.
 3. The `spoilage_trend` in the response should now show trend values (not all `"insufficient_data"`).
 
-**✅ Task 2.4 Complete when:** A `/predict` request with only `silo_id` (no history arrays) returns `spoilage_trend` with non-trivial trend values reflecting the last 24 Supabase readings.
+**âœ… Task 2.4 Complete when:** A `/predict` request with only `silo_id` (no history arrays) returns `spoilage_trend` with non-trivial trend values reflecting the last 24 Supabase readings.
 
 ---
 
-### 🟢 Task 2.5 — Upgrade Spoilage Trend Engine: Rate + Projection [ML-INTERNEE]
+### ðŸŸ¢ Task 2.5 â€” Upgrade Spoilage Trend Engine: Rate + Projection [ML-INTERNEE]
 
 **Why:** The current `_spoilage_trend()` only says *direction* (rising/stable/falling). This upgrade adds:
-- `rate_per_hour` — how fast each sensor is changing
-- `projected_hours_to_danger` — estimated time until the safe threshold is crossed
+- `rate_per_hour` â€” how fast each sensor is changing
+- `projected_hours_to_danger` â€” estimated time until the safe threshold is crossed
 - Grain-specific danger thresholds (not hardcoded universals)
 - A lightweight `/trend` endpoint for fast 5-minute polling without ONNX inference
 
-This is what makes the dashboard say: *"Danger in ~8 hours. Intervene now."* — the core of our predictive mandate.
+This is what makes the dashboard say: *"Danger in ~8 hours. Intervene now."* â€” the core of our predictive mandate.
 
-**Time estimate:** 3–4 hours.
+**Time estimate:** 3â€“4 hours.
 
 **File: `ml-deploy/app.py`**
 
@@ -734,7 +734,7 @@ def _analyze_sensor_trend(history: List[float], danger_threshold: float) -> dict
     }
 ```
 
-#### Step 2: Replace `_spoilage_trend()` entirely (lines 162–187 in current app.py)
+#### Step 2: Replace `_spoilage_trend()` entirely (lines 162â€“187 in current app.py)
 
 ```python
 def _spoilage_trend(
@@ -759,16 +759,16 @@ def _spoilage_trend(
 
     if bads >= 2 and min_hours is not None and min_hours <= 6:
         urgency = "CRITICAL"
-        msg = f"🚨 {bads} sensors rising fast. Danger in ~{min_hours}h. START AERATION NOW."
+        msg = f"ðŸš¨ {bads} sensors rising fast. Danger in ~{min_hours}h. START AERATION NOW."
     elif bads >= 2:
         urgency = "WORSENING"
-        msg = f"⚠️ {bads} sensors rising. Danger in ~{min_hours}h. Prepare intervention."
+        msg = f"âš ï¸ {bads} sensors rising. Danger in ~{min_hours}h. Prepare intervention."
     elif bads == 1:
         urgency = "CAUTION"
-        msg = "📈 One sensor rising. Monitor closely. Check aeration."
+        msg = "ðŸ“ˆ One sensor rising. Monitor closely. Check aeration."
     else:
         urgency = "STABLE"
-        msg = "✅ All conditions stable."
+        msg = "âœ… All conditions stable."
 
     return {
         "temperature_analysis":     t,
@@ -798,7 +798,7 @@ spoilage_trend = _spoilage_trend(
 # AFTER:
 spoilage_trend = _spoilage_trend(
     req.temperature_history, req.humidity_history, req.moisture_history,
-    grain_type=req.grain_type,  # ← ADD THIS
+    grain_type=req.grain_type,  # â† ADD THIS
 ),
 ```
 
@@ -813,7 +813,7 @@ class TrendRequest(BaseModel):
     moisture_history:    List[float]   = Field(default_factory=list)
 
 
-@app.post("/trend", summary="Trend-only analysis — no ONNX inference (< 5ms, call every 5 min)")
+@app.post("/trend", summary="Trend-only analysis â€” no ONNX inference (< 5ms, call every 5 min)")
 async def trend_only(req: TrendRequest):
     """
     Lightweight proactive monitoring endpoint.
@@ -846,23 +846,23 @@ Expected response:
 {
   "urgency": "WORSENING",
   "earliest_danger_in_hours": 0.2,
-  "action_message": "⚠️ 2 sensors rising. Danger in ~0.2h. Prepare intervention.",
+  "action_message": "âš ï¸ 2 sensors rising. Danger in ~0.2h. Prepare intervention.",
   "temperature_analysis": { "rate_per_hour": 0.64, "projected_hours_to_danger": 0.3 },
   "humidity_analysis":    { "rate_per_hour": 1.0,  "projected_hours_to_danger": 0.0 }
 }
 ```
 
-**✅ Task 2.5 Complete when:** `/trend` returns `rate_per_hour` and `projected_hours_to_danger` per sensor. The `/predict` response also carries the richer trend data with `urgency` and `action_message`.
+**âœ… Task 2.5 Complete when:** `/trend` returns `rate_per_hour` and `projected_hours_to_danger` per sensor. The `/predict` response also carries the richer trend data with `urgency` and `action_message`.
 
 ---
 
-### 🟢 Task 2.3 — Build the RAG Pipeline [ML-INTERNEE]
+### ðŸŸ¢ Task 2.3 â€” Build the RAG Pipeline [ML-INTERNEE]
 
 **What this does:** Connects the AI assistant to real grain science research papers via pgvector.
 When users ask "why is my grain risky?", the AI cites actual published science.
 
 #### Step A: Enable pgvector in Supabase
-1. Supabase Dashboard → **SQL Editor** → **New Query**.
+1. Supabase Dashboard â†’ **SQL Editor** â†’ **New Query**.
 2. Paste and run:
 
 ```sql
@@ -954,18 +954,18 @@ pip install supabase httpx
 python scripts/source_papers.py
 ```
 
-Verify in **Supabase → Table Editor → research_embeddings**. Expect 50–100+ rows.
+Verify in **Supabase â†’ Table Editor â†’ research_embeddings**. Expect 50â€“100+ rows.
 
 ---
 
-## PHASE 3: Backend — Insurance, Logs & Alert Engine
+## PHASE 3: Backend â€” Insurance, Logs & Alert Engine
 ### Goal: Complete the transparency backbone. Every action is logged, alerted, and traceable.
 
 ---
 
-### 🟢 Task 3.1 — Expand ActivityLog Enums & LoggingService [ML-INTERNEE]
+### ðŸŸ¢ Task 3.1 â€” Expand ActivityLog Enums & LoggingService [ML-INTERNEE]
 
-**File: `models/ActivityLog.js`** — add to the `action` enum:
+**File: `models/ActivityLog.js`** â€” add to the `action` enum:
 ```javascript
 'insurance_policy_renewed', 'insurance_policy_cancelled', 'insurance_policy_deleted',
 'insurance_claim_reviewed', 'insurance_claim_approved', 'insurance_claim_rejected',
@@ -990,7 +990,7 @@ Add to `entity_type` enum:
 'Silo', 'SensorDevice', 'Tenant', 'Subscription', 'Threshold', 'Actuator', 'GrainAlert'
 ```
 
-**File: `services/loggingService.js`** — add static helpers:
+**File: `services/loggingService.js`** â€” add static helpers:
 ```javascript
 static async logInsurancePolicyCreated(user, policy, ip) { ... }
 static async logInsurancePolicyRenewed(user, policy, ip) { ... }
@@ -1006,7 +1006,7 @@ static async logUserManagement(user, action, targetUser, ip) { ... }
 
 ---
 
-### 🟢 Task 3.2 — Build the AlertEngine Service [ML-INTERNEE]
+### ðŸŸ¢ Task 3.2 â€” Build the AlertEngine Service [ML-INTERNEE]
 
 **File to create: `services/alertEngine.js`**
 
@@ -1017,35 +1017,35 @@ It checks if the action matches any alert rule, and if so, creates a `GrainAlert
 
 | Trigger | Priority | Roles Notified |
 |---|---|---|
-| Batch deleted | 🔴 Critical | Admin, Super Admin |
-| Batch quantity modified | 🟠 High | Admin, Manager |
-| Spoilage detected (critical) | 🔴 Critical | Admin, Manager |
-| Insurance claim filed | 🟠 High | Super Admin |
-| Insurance claim approved | 🟡 Medium | Admin, Manager |
-| Insurance claim rejected | 🟠 High | Admin, Manager |
-| Policy expiring in 30 days | 🟠 High | Admin |
-| Policy expiring in 7 days | 🔴 Critical | Admin, Super Admin |
-| Subscription expiring in 7 days | 🔴 Critical | Admin |
-| Subscription expired | 🔴 Critical | Admin, Super Admin |
-| Payment overdue > 30 days | 🟠 High | Admin |
-| Sensor offline > 1 hour | 🟠 High | Technician, Manager |
-| Batch ML risk score > 80% | 🔴 Critical | Admin, Manager |
+| Batch deleted | ðŸ”´ Critical | Admin, Super Admin |
+| Batch quantity modified | ðŸŸ  High | Admin, Manager |
+| Spoilage detected (critical) | ðŸ”´ Critical | Admin, Manager |
+| Insurance claim filed | ðŸŸ  High | Super Admin |
+| Insurance claim approved | ðŸŸ¡ Medium | Admin, Manager |
+| Insurance claim rejected | ðŸŸ  High | Admin, Manager |
+| Policy expiring in 30 days | ðŸŸ  High | Admin |
+| Policy expiring in 7 days | ðŸ”´ Critical | Admin, Super Admin |
+| Subscription expiring in 7 days | ðŸ”´ Critical | Admin |
+| Subscription expired | ðŸ”´ Critical | Admin, Super Admin |
+| Payment overdue > 30 days | ðŸŸ  High | Admin |
+| Sensor offline > 1 hour | ðŸŸ  High | Technician, Manager |
+| Batch ML risk score > 80% | ðŸ”´ Critical | Admin, Manager |
 
 **Cron-based scheduled checks in this service:**
-- `checkSubscriptionExpirations()` — runs daily at midnight
-- `checkInsuranceRenewals()` — runs daily
-- `checkBatchQualityDegradation()` — runs daily
-- `checkSensorOffline()` — runs every hour
+- `checkSubscriptionExpirations()` â€” runs daily at midnight
+- `checkInsuranceRenewals()` â€” runs daily
+- `checkBatchQualityDegradation()` â€” runs daily
+- `checkSensorOffline()` â€” runs every hour
 
 ---
 
-### 🟢 Task 3.2.5 — Trend-Based Alert Triggers in AlertEngine [ML-INTERNEE]
+### ðŸŸ¢ Task 3.2.5 â€” Trend-Based Alert Triggers in AlertEngine [ML-INTERNEE]
 
-**Why:** AlertEngine (Task 3.2) fires on events like "spoilage detected" or "sensor offline". This task adds an entirely new category: **trajectory-based pre-spoilage alerts** that fire when conditions are *heading toward* danger — not when they arrive. This is what makes GrainHero proactive, not reactive.
+**Why:** AlertEngine (Task 3.2) fires on events like "spoilage detected" or "sensor offline". This task adds an entirely new category: **trajectory-based pre-spoilage alerts** that fire when conditions are *heading toward* danger â€” not when they arrive. This is what makes GrainHero proactive, not reactive.
 
 **Dependency:** Complete Task 2.5 first. This task consumes the `urgency` and `earliest_danger_in_hours` fields from the upgraded `_spoilage_trend()` output.
 
-**Time estimate:** 2–3 hours.
+**Time estimate:** 2â€“3 hours.
 
 **File: `services/alertEngine.js`**
 
@@ -1065,7 +1065,7 @@ static async evaluateTrend(siloId, tenantId, trendResult) {
       tenant_id:            tenantId,
       type:                 'spoilage_trend',
       priority:             'critical',
-      title:                '🚨 Spoilage Trend: Critical — Immediate Action Required',
+      title:                'ðŸš¨ Spoilage Trend: Critical â€” Immediate Action Required',
       message:              action_message,
       metadata:             { urgency, earliest_danger_in_hours, trend: trendResult },
       auto_trigger_actuator: 'aeration',  // signal aeration system immediately
@@ -1077,13 +1077,13 @@ static async evaluateTrend(siloId, tenantId, trendResult) {
       tenant_id: tenantId,
       type:      'spoilage_trend',
       priority:  'high',
-      title:     '⚠️ Spoilage Trend: Worsening — Prepare Intervention',
+      title:     'âš ï¸ Spoilage Trend: Worsening â€” Prepare Intervention',
       message:   action_message,
       metadata:  { urgency, earliest_danger_in_hours, trend: trendResult },
     });
 
   } else if (urgency === 'CAUTION') {
-    // Suppress duplicate caution alerts — max 1 per 4 hours per silo
+    // Suppress duplicate caution alerts â€” max 1 per 4 hours per silo
     const recent = await AlertEngine.findRecentTrendAlert(siloId, 240);
     if (!recent) {
       await AlertEngine.createAlert({
@@ -1091,16 +1091,16 @@ static async evaluateTrend(siloId, tenantId, trendResult) {
         tenant_id: tenantId,
         type:      'spoilage_trend',
         priority:  'medium',
-        title:     '📈 Spoilage Trend: Caution — Monitor Closely',
+        title:     'ðŸ“ˆ Spoilage Trend: Caution â€” Monitor Closely',
         message:   action_message,
         metadata:  { urgency, trend: trendResult },
       });
     }
   }
-  // STABLE → no alert
+  // STABLE â†’ no alert
 }
 
-/** Deduplication helper — find an unresolved trend alert within N minutes. */
+/** Deduplication helper â€” find an unresolved trend alert within N minutes. */
 static async findRecentTrendAlert(siloId, withinMinutes = 60) {
   const since = new Date(Date.now() - withinMinutes * 60 * 1000);
   return await GrainAlert.findOne({
@@ -1119,7 +1119,7 @@ In whichever backend service/route calls the ML `/predict` endpoint, add after r
 ```javascript
 const mlResponse = await callMLService(predictionPayload);
 
-// Proactive trend evaluation — fires alert BEFORE spoilage
+// Proactive trend evaluation â€” fires alert BEFORE spoilage
 if (mlResponse.spoilage_trend) {
   await AlertEngine.evaluateTrend(
     silo.id,
@@ -1133,9 +1133,9 @@ if (mlResponse.spoilage_trend) {
 
 | Trigger | Priority | Roles Notified |
 |---|---|---|
-| Spoilage trend CRITICAL (danger ≤ 6h) | 🔴 Critical + auto-aeration | Admin, Manager, Technician |
-| Spoilage trend WORSENING (2+ sensors rising) | 🟠 High | Admin, Manager |
-| Spoilage trend CAUTION (1 sensor rising) | 🟡 Medium (deduplicated, max 1/4hr/silo) | Manager, Technician |
+| Spoilage trend CRITICAL (danger â‰¤ 6h) | ðŸ”´ Critical + auto-aeration | Admin, Manager, Technician |
+| Spoilage trend WORSENING (2+ sensors rising) | ðŸŸ  High | Admin, Manager |
+| Spoilage trend CAUTION (1 sensor rising) | ðŸŸ¡ Medium (deduplicated, max 1/4hr/silo) | Manager, Technician |
 
 #### Step 4: Verify
 
@@ -1143,13 +1143,13 @@ if (mlResponse.spoilage_trend) {
 2. Check `GrainAlert` collection in MongoDB.
 3. A document with `type: 'spoilage_trend'` and `priority: 'high'` or `'critical'` must appear.
 
-**✅ Task 3.2.5 Complete when:** A test prediction with rising temperature + humidity history automatically creates a `GrainAlert` of type `spoilage_trend` in the database, with no manual intervention.
+**âœ… Task 3.2.5 Complete when:** A test prediction with rising temperature + humidity history automatically creates a `GrainAlert` of type `spoilage_trend` in the database, with no manual intervention.
 
 ---
 
-### 🟢 Task 3.3 — Add Missing API Endpoints [ML-INTERNEE]
+### ðŸŸ¢ Task 3.3 â€” Add Missing API Endpoints [ML-INTERNEE]
 
-**File: `routes/insurance.js`** — add 9 missing endpoints:
+**File: `routes/insurance.js`** â€” add 9 missing endpoints:
 
 ```javascript
 POST   /claims/:id/review          // Super admin starts investigation
@@ -1163,7 +1163,7 @@ DELETE /policies/:id                // Soft-delete a policy
 PUT    /policies/:id/renew          // Renew an expired policy
 ```
 
-**File: `routes/alerts.js`** — add 3 missing endpoints:
+**File: `routes/alerts.js`** â€” add 3 missing endpoints:
 
 ```javascript
 POST   /grain-alerts/:id/acknowledge  // Mark alert as seen
@@ -1180,12 +1180,12 @@ POST   /grain-alerts/:id/escalate      // Escalate to a higher role
 
 ---
 
-## PHASE 4: Frontend — Professional UI Upgrade
+## PHASE 4: Frontend â€” Professional UI Upgrade
 ### Goal: Build premium, role-aware UIs using the Shadcn/Radix design system.
 
 ---
 
-### 🟢 Task 4.1 — Install Shadcn UI Components [ML-INTERNEE]
+### ðŸŸ¢ Task 4.1 â€” Install Shadcn UI Components [ML-INTERNEE]
 
 Run in the **frontend** project directory:
 ```powershell
@@ -1202,13 +1202,13 @@ npx shadcn-ui@latest add separator
 
 ---
 
-### 🟢 Task 4.2 — Insurance Claim Stepper Modal [ML-INTERNEE]
+### ðŸŸ¢ Task 4.2 â€” Insurance Claim Stepper Modal [ML-INTERNEE]
 
 **File:** `src/components/insurance/ClaimDetailModal.tsx`
 
 Build a 7-step visual progress indicator:
 ```
-Filed → Under Review → Investigation → Assessment → Decision → Payment → Closed
+Filed â†’ Under Review â†’ Investigation â†’ Assessment â†’ Decision â†’ Payment â†’ Closed
 ```
 
 Visual design spec:
@@ -1223,17 +1223,17 @@ Role-based content:
 
 ---
 
-### 🟢 Task 4.3 — Activity Logs Visual Timeline [ML-INTERNEE]
+### ðŸŸ¢ Task 4.3 â€” Activity Logs Visual Timeline [ML-INTERNEE]
 
 **File:** `src/pages/ActivityLogsPage.tsx`
 
 1. Add a toggle at the top: **List View | Timeline View**.
 2. In Timeline View, render a vertical grey line on the left side.
    Each log is a node with a severity-colored dot:
-   - 🔴 Red = Critical
-   - 🟠 Orange = High
-   - 🟡 Yellow = Medium
-   - 🟢 Green = Normal/Info
+   - ðŸ”´ Red = Critical
+   - ðŸŸ  Orange = High
+   - ðŸŸ¡ Yellow = Medium
+   - ðŸŸ¢ Green = Normal/Info
 3. Each node shows: timestamp, actor name, action description.
    Click to expand and show full metadata.
 4. Role-aware filters:
@@ -1244,34 +1244,34 @@ Role-based content:
 
 ---
 
-### 🟢 Task 4.4 — Alert Management Center [ML-INTERNEE]
+### ðŸŸ¢ Task 4.4 â€” Alert Management Center [ML-INTERNEE]
 
 **File:** `src/pages/AlertsPage.tsx`
 
 **Top row:** 4 KPI Cards (clickable to filter):
 ```
-[🔴 CRITICAL: 3]  [🟠 HIGH: 7]  [🟡 MEDIUM: 12]  [🔵 LOW: 4]
+[ðŸ”´ CRITICAL: 3]  [ðŸŸ  HIGH: 7]  [ðŸŸ¡ MEDIUM: 12]  [ðŸ”µ LOW: 4]
 ```
 
-**Alert feed** — each card shows:
+**Alert feed** â€” each card shows:
 - Colored left border (red/orange/yellow/blue)
 - Priority badge
-- Source icon (🌡️ sensor | 🤖 AI | 📈 trend | 🛡️ insurance | 📦 batch | 💰 payment | 🔑 subscription | ⚙️ system)
+- Source icon (ðŸŒ¡ï¸ sensor | ðŸ¤– AI | ðŸ“ˆ trend | ðŸ›¡ï¸ insurance | ðŸ“¦ batch | ðŸ’° payment | ðŸ”‘ subscription | âš™ï¸ system)
 - Title and message
 - Time since triggered (e.g., `3 minutes ago`)
 - Quick action buttons:
-  - Active → `Acknowledge` button
-  - Acknowledged → `Mark Resolved` button
+  - Active â†’ `Acknowledge` button
+  - Acknowledged â†’ `Mark Resolved` button
 
-**Trend Alert Card (special design — type: `spoilage_trend`):**
+**Trend Alert Card (special design â€” type: `spoilage_trend`):**
 Trend alerts are visually distinct because they predict future risk, not current state.
-- Left border: animated orange→red gradient (pulsing when CRITICAL)
+- Left border: animated orangeâ†’red gradient (pulsing when CRITICAL)
 - **Urgency badge**: `CRITICAL` / `WORSENING` / `CAUTION` with color fill
-- **Danger countdown chip**: `⏱️ ~8h to threshold` — shown prominently below the title
-- **Per-sensor sparkline row**: three mini trend arrows (↑ ↓ →) with rate label:
-  e.g., `🌡️ +0.6°C/hr  💧 +1.2%/hr  🌾 +0.1%/hr`
-- **Action button for CRITICAL**: `⚡ Start Aeration Now` (calls actuator endpoint directly)
-- **Action button for WORSENING**: `👁️ Monitor` (opens side panel, no auto-action)
+- **Danger countdown chip**: `â±ï¸ ~8h to threshold` â€” shown prominently below the title
+- **Per-sensor sparkline row**: three mini trend arrows (â†‘ â†“ â†’) with rate label:
+  e.g., `ðŸŒ¡ï¸ +0.6Â°C/hr  ðŸ’§ +1.2%/hr  ðŸŒ¾ +0.1%/hr`
+- **Action button for CRITICAL**: `âš¡ Start Aeration Now` (calls actuator endpoint directly)
+- **Action button for WORSENING**: `ðŸ‘ï¸ Monitor` (opens side panel, no auto-action)
 
 **Side panel** (opens on alert click):
 - Full alert details and the trigger condition
@@ -1282,7 +1282,7 @@ Trend alerts are visually distinct because they predict future risk, not current
 
 ---
 
-### 🟢 Task 4.5 — Sidebar Live Badge Counts [ML-INTERNEE]
+### ðŸŸ¢ Task 4.5 â€” Sidebar Live Badge Counts [ML-INTERNEE]
 
 **File:** `src/components/sidebar.tsx`
 
@@ -1304,7 +1304,7 @@ GET /insurance/claims/pending-count  -> { count: 2 }
 
 ---
 
-### 🟢 Task 5.1 — "Mark Outcome" Validation Button [ML-INTERNEE]
+### ðŸŸ¢ Task 5.1 â€” "Mark Outcome" Validation Button [ML-INTERNEE]
 
 **File:** `src/pages/GrainBatchDetailPage.tsx`
 
@@ -1317,10 +1317,10 @@ When a batch is dispatched/completed, show a mandatory validation panel:
   </p>
   <div className="flex gap-4">
     <Button className="bg-green-600" onClick={() => markOutcome('safe')}>
-      ✅ Sold Safe
+      âœ… Sold Safe
     </Button>
     <Button className="bg-red-600" onClick={() => markOutcome('spoiled')}>
-      ❌ Found Spoiled
+      âŒ Found Spoiled
     </Button>
   </div>
 </div>
@@ -1330,7 +1330,7 @@ Writes to `validation_status` column in `grain_batches`. Builds real ground-trut
 
 ---
 
-### 🟢 Task 5.2 — Implement TimeSeriesSplit [ML-INTERNEE]
+### ðŸŸ¢ Task 5.2 â€” Implement TimeSeriesSplit [ML-INTERNEE]
 
 **File:** `ml-deploy/fast_retrain.py`
 
@@ -1349,7 +1349,7 @@ for train_index, test_index in tscv.split(X):
 
 ---
 
-### 🟢 Task 5.3 — Build Sliding Window Dataset Generator [ML-INTERNEE]
+### ðŸŸ¢ Task 5.3 â€” Build Sliding Window Dataset Generator [ML-INTERNEE]
 
 **File:** `scripts/generate_sliding_window.py`
 
@@ -1382,17 +1382,17 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 
 ---
 
-### 🟢 Task 6.0 — Prototype Sensor Documentation [IOT-INTERNEE]
+### ðŸŸ¢ Task 6.0 â€” Prototype Sensor Documentation [IOT-INTERNEE]
 **What this does:** Document the new sensors added to the custom PCB (e.g., CO2, internal grain temp vs ambient temp), their assigned GPIO pins, and the exact new JSON keys to add to the MQTT payload.
 
 ---
 
-### 🟢 Task 6.1 — Super-Admin Research Intel Dashboard Panel [FULLSTACK-INTERNEE]
-**What this does:** Adds a "🔬 Research Intel" page to the Super-Admin dashboard. It reads the `research_intelligence` table from Supabase, shows unread counts as a sidebar badge, and lets the owner click "Mark Implemented" on new AI breakthroughs.
+### ðŸŸ¢ Task 6.1 â€” Super-Admin Research Intel Dashboard Panel [FULLSTACK-INTERNEE]
+**What this does:** Adds a "ðŸ”¬ Research Intel" page to the Super-Admin dashboard. It reads the `research_intelligence` table from Supabase, shows unread counts as a sidebar badge, and lets the owner click "Mark Implemented" on new AI breakthroughs.
 
 ---
 
-### 🟢 Task 6.2 — Multi-Grain Protocol Testing [IOT-INTERNEE]
+### ðŸŸ¢ Task 6.2 â€” Multi-Grain Protocol Testing [IOT-INTERNEE]
 **What this does:** Proves the ML pipeline handles different grains correctly.
 - Configure Silo A with `grain_type: "wheat"`
 - Configure Silo B with `grain_type: "rice"`
@@ -1400,7 +1400,7 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 
 ---
 
-### 🟢 Task 6.3 — New Prototype Integration Test [IOT-INTERNEE]
+### ðŸŸ¢ Task 6.3 â€” New Prototype Integration Test [IOT-INTERNEE]
 **What this does:** Run the old DOIT ESP32 prototype side-by-side with the new custom PCB for 2 weeks in the same silo. Compare MQTT outputs to ensure sensor calibration matches before decommissioning the old hardware.
 
 ---
@@ -1411,33 +1411,33 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 
 ---
 
-## PHASE 8: Mamba Migration Path (H3 — 3-6 Months Post-Launch)
+## PHASE 8: Mamba Migration Path (H3 â€” 3-6 Months Post-Launch)
 ### Goal: Upgrade the AI brain from XGBoost to Mamba for sequence modeling.
 
 ---
 
-### 🟢 Task 8.1 — Train Mamba Sequence Model [ML-INTERNEE]
+### ðŸŸ¢ Task 8.1 â€” Train Mamba Sequence Model [ML-INTERNEE]
 **What this does:** After 3+ months of real data is collected, write `scripts/train_mamba.py` to train a Mamba architecture on the sliding window dataset. Export it to ONNX format.
 
 ---
 
-### 🟢 Task 8.2 — A/B Test Mamba vs XGBoost [ML-INTERNEE]
+### ðŸŸ¢ Task 8.2 â€” A/B Test Mamba vs XGBoost [ML-INTERNEE]
 **What this does:** Upload the `mamba_v1.onnx` to Supabase Storage. Render hot-swaps it in. Monitor the early warning rate and false positive rate for 2 weeks compared to the XGBoost baseline. If Mamba wins, it becomes the permanent default.
 
 
 ## FINAL MASTER CHECKLISTS
 
-### 🔴 OWNER Checklist
+### ðŸ”´ OWNER Checklist
 
 - [ ] **0.3** Set up EMQX Serverless (Mumbai). Add credentials to firmware. Confirm live data in MQTTX.
 - [ ] **0.4** Test OTA flashing locally via Python HTTP server. Confirm ESP32 flashes itself.
 - [ ] **1.1** Create private `firmware-updates` bucket in Supabase with correct policies.
-- [ ] **1.2** Add 3 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_API_KEY`.
-- [ ] **2.1** Run `upload_initial_models.py` — push all 5 ONNX models to Supabase Storage.
+- [x] **1.2** Add 3 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_API_KEY`. ~~DONE~~
+- [ ] **2.1** Run `upload_initial_models.py` â€” push all 5 ONNX models to Supabase Storage.
 - [ ] **2.2** Deploy ML service to Render (Docker). Confirm Swagger UI is live. Add URL to frontend env.
 - [ ] **PILOT** Flash ESP32 boards. Install at flour mill. Confirm live data in dashboard.
 
-### 🟢 INTERNEE Checklist
+### ðŸŸ¢ INTERNEE Checklist
 
 - [x] **0.1** WiFiManager integrated into firmware. ~~DONE~~.
 - [ ] **0.2** Verify `computePestMoldRisk()` output in Serial Monitor. Confirm `pest_presence` is in MQTT payload.
@@ -1455,7 +1455,7 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 - [ ] **4.1** Install Shadcn UI components via CLI.
 - [ ] **4.2** Build Insurance Claim Stepper modal (7 steps, role-aware action panels).
 - [ ] **4.3** Build Activity Logs vertical timeline (severity colors, role-aware filters).
-- [ ] **4.4** Build Alert Management Center: KPI cards, alert feed, side-panel detail. Include 📈 trend source icon. Implement Trend Alert Card with urgency badge, danger countdown chip, per-sensor sparkline row (`🌡️ +0.6°C/hr`), and ⚡ aeration quick-action button for CRITICAL trend alerts.
+- [ ] **4.4** Build Alert Management Center: KPI cards, alert feed, side-panel detail. Include ðŸ“ˆ trend source icon. Implement Trend Alert Card with urgency badge, danger countdown chip, per-sensor sparkline row (`ðŸŒ¡ï¸ +0.6Â°C/hr`), and âš¡ aeration quick-action button for CRITICAL trend alerts.
 - [ ] **4.5** Add live badge counts to sidebar nav. Add 3 count endpoints to backend.
 - [ ] **5.1** Add Mark Outcome buttons to Grain Batch Detail page.
 - [ ] **5.2** Replace random split with `TimeSeriesSplit` in `fast_retrain.py`.
@@ -1471,14 +1471,15 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 
 | Library | Author | Version Installed | Notes |
 |---|---|---|---|
-| WiFiManager | tzapu | 2.0.17+ | **NEW** — Required for Task 0.1 |
+| WiFiManager | tzapu | 2.0.17+ | **NEW** â€” Required for Task 0.1 |
 | ArduinoHttpClient | Arduino | 0.6.1 | |
 | Adafruit BME680 Library | Adafruit | 2.0.5 | Update available (2.0.6) |
 | Adafruit BusIO | Adafruit | 1.17.4 | |
 | Adafruit GFX Library | Adafruit | 1.12.4 | Update available (1.12.6) |
 | Adafruit SSD1306 | Adafruit | 2.5.16 | Update available (2.5.17) |
 | Adafruit Unified Sensor | Adafruit | 1.1.15 | |
-| ArduinoJson | Benoit Blanchon | 6.21.5 | Update available (7.4.3 — check breaking changes) |
+| ArduinoJson | Benoit Blanchon | 6.21.5 | Update available (7.4.3 â€” check breaking changes) |
 | DHT sensor library | Adafruit | 1.4.6 | Update available (1.4.7) |
 | ESP32Servo | Kevin Harrington | 3.0.9 | Update available (3.2.1) |
 | PubSubClient | Nick O'Leary | 2.8 | |
+
