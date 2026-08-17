@@ -28,7 +28,7 @@ function rangeWindow(range: Range) {
 
 export const getManagerDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
+  .validator((d) =>
     z.object({ range: z.enum(["today", "7d", "30d", "mtd", "ytd"]).default("mtd") }).parse(d ?? {}),
   )
   .handler(async ({ context, data }) => {
