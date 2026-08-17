@@ -40,6 +40,25 @@ function VerifyOtpPage() {
   const [resending, setResending] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  // Guards against double-submit when otp fills via more than one path at
+  // once (typing the last digit + a paste/autofill event landing together).
+  // A ref (not state) so the check is synchronous — a state flag wouldn't be
+  // read back as true until the next render, letting both paths slip through.
+  const autoSubmittedRef = useRef(false);
+
+  // Fires on ANY otp-completing update — manual typing, paste, or OS/browser
+  // one-time-code autofill. Autofill in particular often doesn't fill a
+  // 6-separate-input OTP field the way manual typing does (it can miss the
+  // per-keystroke handlers entirely), which is what "have to click a button
+  // after the code appears" actually was — the code was filled, nothing
+  // called verify(). Watching the otp state itself catches every path that
+  // gets the boxes filled, not just the ones with an inline verify() call.
+  useEffect(() => {
+    if (!autoSubmittedRef.current && otp.every(Boolean)) {
+      autoSubmittedRef.current = true;
+      verify(otp.join(""));
+    }
+  }, [otp]);
 
   const handleChange = (index: number, value: string) => {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -48,9 +67,6 @@ function VerifyOtpPage() {
     setOtp(next);
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
-    }
-    if (next.every(Boolean)) {
-      verify(next.join(""));
     }
   };
 
@@ -68,9 +84,6 @@ function VerifyOtpPage() {
     for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
     setOtp(next);
     inputRefs.current[Math.min(pasted.length, 5)]?.focus();
-    if (pasted.length === 6) {
-      verify(pasted);
-    }
   };
 
   // Auto-redirect if already signed in or session is active within validity period
@@ -101,6 +114,30 @@ function VerifyOtpPage() {
     verify(otp.join(""));
   };
 
+  // Runs once the session is actually established (either verifyOtp
+  // succeeded, or it errored but a session already existed — e.g. a
+  // just-reused/expired token after an earlier attempt already signed in).
+  // Only claims a pending Stripe checkout when a real session ID was
+  // actually stashed by the checkout flow — claiming unconditionally here
+  // is what caused "new order placed" emails to fire on every plain login.
+  const finishSignIn = async () => {
+    setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
+    void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
+
+    let pendingSessionId: string | null = null;
+    try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
+    if (pendingSessionId) {
+      try {
+        await claimFn({ data: { sessionId: pendingSessionId } });
+        window.localStorage.removeItem(PENDING_SESSION_KEY);
+      } catch (e) {
+        console.warn("[verify-otp] claim checkout failed:", (e as Error).message);
+      }
+    }
+
+    navigate({ to: "/dashboard", replace: true });
+  };
+
   const verify = async (token: string) => {
     if (loading) return;
     if (token.length < 6) {
@@ -123,10 +160,7 @@ function VerifyOtpPage() {
       // Check if session was actually established despite error, or if token already used
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session?.user) {
-        // Session established, proceed to dashboard
-        setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
-        void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
-        navigate({ to: "/dashboard", replace: true });
+        await finishSignIn();
         return;
       }
 
@@ -138,14 +172,13 @@ function VerifyOtpPage() {
           ? "This code has expired or is invalid. Please click 'Resend code' to get a fresh code."
           : error.message,
       });
+      // A failed attempt shouldn't permanently block a later successful
+      // auto-submit (e.g. user fixes a mistyped digit and it completes again).
+      autoSubmittedRef.current = false;
       return;
     }
 
-    setMsg({ type: "success", text: "Verified! Taking you to dashboard…" });
-    void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
-
-    // Navigate immediately - Supabase has already verified and established session
-    navigate({ to: "/dashboard", replace: true });
+    await finishSignIn();
   };
 
   const resend = async () => {
@@ -163,6 +196,7 @@ function VerifyOtpPage() {
       setMsg({ type: "error", text: error.message });
     } else {
       setOtp(["", "", "", "", "", ""]);
+      autoSubmittedRef.current = false;
       inputRefs.current[0]?.focus();
       setMsg({ type: "success", text: "New code sent — check your inbox." });
     }
