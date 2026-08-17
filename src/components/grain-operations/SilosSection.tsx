@@ -259,15 +259,23 @@ export function SilosSection() {
           notes: fs.notes.trim() || null,
         },
       }),
-    onSuccess: () => {
-      toast.success("Silo updated");
+    onSuccess: (result) => {
+      console.log("[SiloSection] Silo saved successfully:", result);
+      toast.success(`Silo "${result?.name || 'saved'}" updated successfully`);
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["warehouses"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setEditOpen(false);
       setForm(emptyForm);
     },
-    onError: (e: Error) => toast.error(friendlySaveError(e)),
+    onError: (e: Error) => {
+      console.error("[SiloSection] Silo save error:", {
+        message: e.message,
+        stack: e.stack,
+        fullError: e,
+      });
+      toast.error(`Error: ${friendlySaveError(e)}`);
+    },
   });
 
   const renameMutation = useMutation({

@@ -187,9 +187,18 @@ export const getSecurityOverview = createServerFn({ method: "GET" })
 
     const [rolesRes, profilesRes, logsRes, managerLogsRes] = await Promise.all([
       context.supabase.from("user_roles").select("user_id, role").limit(1000),
-      context.supabase.from("profiles").select("id, name, email, blocked, last_login_at, admin_id, created_at").limit(1000),
+      // profiles has no last_login_at column — the real column is last_login
+      // (see 20260707180839_...sql), already used everywhere else in the
+      // codebase (platform.functions.ts, platform.health.tsx, etc.) and
+      // actively written to by trackLoginAndAdvance in hubspot.functions.ts.
+      context.supabase.from("profiles").select("id, name, email, blocked, last_login, admin_id, created_at").limit(1000),
+      // activity_logs has no actor_id or message column either — the real
+      // columns are user_id and description (see
+      // 20260707192819_...sql). Aliased back to message: so the existing
+      // consumers of this same data (platform.security.tsx,
+      // security-center.tsx, which read `l.message`) don't need to change.
       context.supabase.from("activity_logs")
-        .select("id, action, entity_type, entity_id, actor_id, severity, message, metadata, created_at")
+        .select("id, action, entity_type, entity_id, user_id, severity, message:description, metadata, created_at")
         .in("severity", ["warning", "error", "critical"])
         .order("created_at", { ascending: false }).limit(200),
       context.supabase.from("activity_logs")
@@ -198,6 +207,15 @@ export const getSecurityOverview = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false })
         .limit(100),
     ]);
+
+    // These previously fell through silently on a query error (treated as
+    // "0 rows" the same as a genuinely empty table) — the User access panel
+    // showing 0 users with no visible error was indistinguishable from a
+    // tenant that actually has no team members. Surface the real failure.
+    if (rolesRes.error) throw new Error(`Failed to load user roles: ${rolesRes.error.message}`);
+    if (profilesRes.error) throw new Error(`Failed to load profiles: ${profilesRes.error.message}`);
+    if (logsRes.error) throw new Error(`Failed to load activity logs: ${logsRes.error.message}`);
+    if (managerLogsRes.error) throw new Error(`Failed to load manager action logs: ${managerLogsRes.error.message}`);
 
     const profiles = (profilesRes.data ?? []) as any[];
     const roles = (rolesRes.data ?? []) as any[];

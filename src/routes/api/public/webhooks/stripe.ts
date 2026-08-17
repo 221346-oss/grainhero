@@ -273,10 +273,20 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
 
               // Fulfil the pending hardware/install order and notify super admins.
-              // Only process if hardwareOrderId is a valid, non-empty UUID string
-              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10) {
+              // Only process if hardwareOrderId is a valid, non-empty UUID string.
+              // Gated on the order still being pending_payment — same idempotency
+              // pattern as the buyer-order block above — so a Stripe webhook
+              // retry/redelivery for an already-fulfilled order doesn't
+              // re-notify super admins about an order they already saw.
+              const { data: existingHardwareOrder } = hardwareOrderId
+                ? await supabaseAdmin.from("hardware_orders" as never).select("status").eq("id", hardwareOrderId).maybeSingle()
+                : { data: null };
+              const hardwareOrderAlreadyFulfilled =
+                !!existingHardwareOrder && (existingHardwareOrder as { status?: string }).status !== "pending_payment";
+
+              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10 && !hardwareOrderAlreadyFulfilled) {
                 console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
-                
+
                 const updateResult = await supabaseAdmin
                   .from("hardware_orders" as never)
                   .update({
@@ -288,12 +298,26 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   } as never)
                   .eq("id", hardwareOrderId);
 
-                console.log("🔍 [STRIPE WEBHOOK] Hardware order update result:", updateResult);
-                
-                if (updateResult.error) {
-                  console.error("❌ [STRIPE WEBHOOK] Hardware order update failed:", updateResult.error);
-                } else {
-                  console.log("✅ [STRIPE WEBHOOK] Hardware order updated successfully to status: new (paid)");
+                  const { data: orderAfter, error: updateError } = await supabaseAdmin
+                    .from("hardware_orders" as never)
+                    .update({
+                      status: "paid",
+                      stripe_customer_id: s.customer ?? null,
+                      stripe_subscription_id: s.subscription ?? null,
+                      stripe_payment_intent: s.payment_intent ?? null,
+                      ...(userId ? { admin_id: userId } : {}),
+                    } as never)
+                    .eq("id", hardwareOrderId)
+                    .select();
+
+                  if (updateError) {
+                    console.error("❌ [STRIPE WEBHOOK] Hardware order update FAILED:", updateError);
+                  } else {
+                    console.log("✅ [STRIPE WEBHOOK] Hardware order updated successfully");
+                    console.log("✅ [STRIPE WEBHOOK] Updated order data:", orderAfter);
+                  }
+                } catch (e) {
+                  console.error("❌ [STRIPE WEBHOOK] Exception while updating order:", e);
                 }
 
                 // Ensure the buyer has an active subscription row so revenue analytics

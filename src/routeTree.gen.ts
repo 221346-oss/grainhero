@@ -128,6 +128,16 @@ import { Route as ApiPublicTelemetryRouteImport } from './routes/api/public/tele
 import { Route as MarketplaceSellerAdminIdRouteImport } from './routes/marketplace.seller.$adminId'
 import { Route as AuthenticatedBuyerOrdersOrderIdRouteImport } from './routes/_authenticated/buyer.orders.$orderId'
 import { Route as AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport } from './routes/_authenticated/insurance-policies.$policyId.documents'
+import { Route as AuthenticatedManagerFieldIncidentsIndexRouteImport } from './routes/_authenticated/manager.field-incidents.index'
+import { Route as AuthenticatedManagerFieldIncidentsAllRouteImport } from './routes/_authenticated/manager.field-incidents.all'
+import { Route as AuthenticatedManagerFieldIncidentsDismissedRouteImport } from './routes/_authenticated/manager.field-incidents.dismissed'
+import { Route as AuthenticatedManagerFieldIncidentsIncomingRouteImport } from './routes/_authenticated/manager.field-incidents.incoming'
+import { Route as AuthenticatedManagerFieldIncidentsResolvedRouteImport } from './routes/_authenticated/manager.field-incidents.resolved'
+import { Route as AuthenticatedPlatformFieldIncidentsIndexRouteImport } from './routes/_authenticated/platform.field-incidents.index'
+import { Route as AuthenticatedPlatformFieldIncidentsAllRouteImport } from './routes/_authenticated/platform.field-incidents.all'
+import { Route as AuthenticatedPlatformFieldIncidentsDismissedRouteImport } from './routes/_authenticated/platform.field-incidents.dismissed'
+import { Route as AuthenticatedPlatformFieldIncidentsIncomingRouteImport } from './routes/_authenticated/platform.field-incidents.incoming'
+import { Route as AuthenticatedPlatformFieldIncidentsResolvedRouteImport } from './routes/_authenticated/platform.field-incidents.resolved'
 import { Route as AuthenticatedPlatformFinanceLedgerRouteImport } from './routes/_authenticated/platform.finance.ledger'
 import { Route as AuthenticatedPlatformFinancePayoutsRouteImport } from './routes/_authenticated/platform.finance.payouts'
 import { Route as AuthenticatedPlatformFinanceTaxRulesRouteImport } from './routes/_authenticated/platform.finance.tax-rules'
@@ -664,10 +674,10 @@ const AuthenticatedPlatformLogsRoute =
     path: '/platform/logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformMarketplaceHealthRoute =
-  AuthenticatedPlatformMarketplaceHealthRouteImport.update({
-    id: '/platform/marketplace-health',
-    path: '/platform/marketplace-health',
+const AuthenticatedPlatformMarketplaceSettingsRoute =
+  AuthenticatedPlatformMarketplaceSettingsRouteImport.update({
+    id: '/platform/marketplace-settings',
+    path: '/platform/marketplace-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformMarketplaceMobileRoute =
@@ -859,17 +869,77 @@ const AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute =
     path: '/insurance-policies/$policyId/documents',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedManagerFieldIncidentsIndexRoute =
+  AuthenticatedManagerFieldIncidentsIndexRouteImport.update({
+    id: '/manager/field-incidents/',
+    path: '/manager/field-incidents/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsAllRoute =
+  AuthenticatedManagerFieldIncidentsAllRouteImport.update({
+    id: '/manager/field-incidents/all',
+    path: '/manager/field-incidents/all',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsDismissedRoute =
+  AuthenticatedManagerFieldIncidentsDismissedRouteImport.update({
+    id: '/manager/field-incidents/dismissed',
+    path: '/manager/field-incidents/dismissed',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsIncomingRoute =
+  AuthenticatedManagerFieldIncidentsIncomingRouteImport.update({
+    id: '/manager/field-incidents/incoming',
+    path: '/manager/field-incidents/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerFieldIncidentsResolvedRoute =
+  AuthenticatedManagerFieldIncidentsResolvedRouteImport.update({
+    id: '/manager/field-incidents/resolved',
+    path: '/manager/field-incidents/resolved',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsIndexRoute =
+  AuthenticatedPlatformFieldIncidentsIndexRouteImport.update({
+    id: '/platform/field-incidents/',
+    path: '/platform/field-incidents/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsAllRoute =
+  AuthenticatedPlatformFieldIncidentsAllRouteImport.update({
+    id: '/platform/field-incidents/all',
+    path: '/platform/field-incidents/all',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsDismissedRoute =
+  AuthenticatedPlatformFieldIncidentsDismissedRouteImport.update({
+    id: '/platform/field-incidents/dismissed',
+    path: '/platform/field-incidents/dismissed',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsIncomingRoute =
+  AuthenticatedPlatformFieldIncidentsIncomingRouteImport.update({
+    id: '/platform/field-incidents/incoming',
+    path: '/platform/field-incidents/incoming',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlatformFieldIncidentsResolvedRoute =
+  AuthenticatedPlatformFieldIncidentsResolvedRouteImport.update({
+    id: '/platform/field-incidents/resolved',
+    path: '/platform/field-incidents/resolved',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformFinanceLedgerRoute =
   AuthenticatedPlatformFinanceLedgerRouteImport.update({
     id: '/ledger',
     path: '/ledger',
     getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
-const AuthenticatedPlatformFinancePayoutsRoute =
-  AuthenticatedPlatformFinancePayoutsRouteImport.update({
-    id: '/payouts',
-    path: '/payouts',
-    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+const AuthenticatedPlatformTenantsAdminIdRoute =
+  AuthenticatedPlatformTenantsAdminIdRouteImport.update({
+    id: '/$adminId',
+    path: '/$adminId',
+    getParentRoute: () => AuthenticatedPlatformTenantsRoute,
   } as any)
 const AuthenticatedPlatformFinanceTaxRulesRoute =
   AuthenticatedPlatformFinanceTaxRulesRouteImport.update({
@@ -3273,6 +3343,76 @@ declare module '@tanstack/react-router' {
       path: '/insurance-policies/$policyId/documents'
       fullPath: '/insurance-policies/$policyId/documents'
       preLoaderRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/': {
+      id: '/_authenticated/manager/field-incidents/'
+      path: '/manager/field-incidents'
+      fullPath: '/manager/field-incidents/'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/all': {
+      id: '/_authenticated/manager/field-incidents/all'
+      path: '/manager/field-incidents/all'
+      fullPath: '/manager/field-incidents/all'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsAllRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/dismissed': {
+      id: '/_authenticated/manager/field-incidents/dismissed'
+      path: '/manager/field-incidents/dismissed'
+      fullPath: '/manager/field-incidents/dismissed'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsDismissedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/incoming': {
+      id: '/_authenticated/manager/field-incidents/incoming'
+      path: '/manager/field-incidents/incoming'
+      fullPath: '/manager/field-incidents/incoming'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/field-incidents/resolved': {
+      id: '/_authenticated/manager/field-incidents/resolved'
+      path: '/manager/field-incidents/resolved'
+      fullPath: '/manager/field-incidents/resolved'
+      preLoaderRoute: typeof AuthenticatedManagerFieldIncidentsResolvedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/': {
+      id: '/_authenticated/platform/field-incidents/'
+      path: '/platform/field-incidents'
+      fullPath: '/platform/field-incidents/'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/all': {
+      id: '/_authenticated/platform/field-incidents/all'
+      path: '/platform/field-incidents/all'
+      fullPath: '/platform/field-incidents/all'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsAllRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/dismissed': {
+      id: '/_authenticated/platform/field-incidents/dismissed'
+      path: '/platform/field-incidents/dismissed'
+      fullPath: '/platform/field-incidents/dismissed'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsDismissedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/incoming': {
+      id: '/_authenticated/platform/field-incidents/incoming'
+      path: '/platform/field-incidents/incoming'
+      fullPath: '/platform/field-incidents/incoming'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsIncomingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/platform/field-incidents/resolved': {
+      id: '/_authenticated/platform/field-incidents/resolved'
+      path: '/platform/field-incidents/resolved'
+      fullPath: '/platform/field-incidents/resolved'
+      preLoaderRoute: typeof AuthenticatedPlatformFieldIncidentsResolvedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/platform/finance/ledger': {
