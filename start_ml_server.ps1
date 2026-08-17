@@ -52,6 +52,9 @@ Write-Host ""
 
 # ── Launch FastAPI inference server (foreground) ──────────────────────────────
 Write-Host "🚀 Starting FastAPI Inference Server..." -ForegroundColor Yellow
+if (Test-Path "..\.venv\Scripts\Activate.ps1") {
+    . "..\.venv\Scripts\Activate.ps1"
+}
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 # ── Cleanup jobs when server exits ─────────────────────────────────────────
