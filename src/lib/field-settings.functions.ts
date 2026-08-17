@@ -405,7 +405,7 @@ export const addIncidentComment = createServerFn({ method: "POST" })
             severity: "info",
             title: `New Comment on Ticket: ${incident.category}`,
             body: `${authorName} (${role}): "${data.message.trim().slice(0, 100)}"`,
-            link: "/platform/field-incidents",
+            link: "/monitoring",
             entityType: "field_incident",
             entityId: data.incident_id,
           });

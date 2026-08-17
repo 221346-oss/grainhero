@@ -132,7 +132,7 @@ const PAGE_SKELETONS: Record<string, React.ComponentType> = {
   "/platform/mobile-deep-links": FormPageSkeleton,
   "/platform/mobile-push-diagnostics": CommandConsoleSkeleton,
   "/platform/field-settings": FormPageSkeleton,
-  "/platform/field-incidents": TableHubSkeleton,
+  "/monitoring": TableHubSkeleton,
   "/platform/marketplace-mobile": FormPageSkeleton,
   "/platform/mobile-sync-monitor": CommandConsoleSkeleton,
   "/platform/commerce-mobile": FormPageSkeleton,
