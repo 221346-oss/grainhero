@@ -48,6 +48,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       alertsRes,
       qcRes,
       dispatchReadyRes,
+      dispatchesRes,
       actuatorsRes,
       buyersRes,
       techsRes,
@@ -60,7 +61,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       context.supabase
         .from("silos")
         .select(
-          "id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_conditions, warehouse_id",
+          "id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_conditions, warehouse_id, created_at",
         )
         .order("current_occupancy_kg", { ascending: false })
         .limit(12),
@@ -88,6 +89,14 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .from("grain_batches")
         .select("id, batch_id, grain_type, quantity_kg, status, silo_id, purchase_price_per_kg")
         .in("status", ["ready", "stored"] as never)
+        .order("created_at", { ascending: false })
+        .limit(10),
+      // Fetch actual grain dispatches with batch and buyer info
+      context.supabase
+        .from("grain_dispatches")
+        .select("id, grain_type, total_qty_kg, status, dispatched_at, created_at, silo_id")
+        .in("status", ["staged", "in_transit", "delivered"] as never)
+        .order("dispatched_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
         .limit(10),
       context.supabase
@@ -208,7 +217,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         alertsCritical: (alertsRes.data ?? []).filter((a) => String(a.priority) === "critical")
           .length,
         qcPending: (qcRes.data ?? []).length,
-        dispatchReady: (dispatchReadyRes.data ?? []).length,
+        dispatchReady: (dispatchesRes.data ?? []).length,
         actuatorsOn: actuators.filter((a) => a.is_on).length,
         actuatorsTotal: actuators.length,
         ordersOpen: (buyersRes.data ?? []).length,
@@ -219,7 +228,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       silos,
       alerts: alertsRes.data ?? [],
       qcQueue: qcRes.data ?? [],
-      dispatchQueue: dispatchReadyRes.data ?? [],
+      dispatchQueue: dispatchesRes.data ?? [],
       actuators,
       buyers: buyersRes.data ?? [],
       technicians,
