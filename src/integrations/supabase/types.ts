@@ -9157,6 +9157,9 @@ export type Database = {
         | "resolved"
         | "escalated"
         | "closed"
+        | "open"
+        | "investigating"
+        | "dismissed"
       app_role:
         | "super_admin"
         | "admin"
@@ -9202,6 +9205,16 @@ export type Database = {
       device_status: "active" | "offline" | "error" | "maintenance"
       dispute_status: "open" | "under_review" | "resolved" | "rejected"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
+      hardware_order_status:
+        | "pending_payment"
+        | "new"
+        | "approved"
+        | "tech_assigned"
+        | "installed"
+        | "live"
+        | "cancelled"
+        | "completed"
+        | "paid"
       invitation_status: "pending" | "accepted" | "declined"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
@@ -9384,6 +9397,9 @@ export const Constants = {
         "resolved",
         "escalated",
         "closed",
+        "open",
+        "investigating",
+        "dismissed",
       ],
       app_role: [
         "super_admin",
@@ -9434,6 +9450,17 @@ export const Constants = {
       device_status: ["active", "offline", "error", "maintenance"],
       dispute_status: ["open", "under_review", "resolved", "rejected"],
       grain_type: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
+      hardware_order_status: [
+        "pending_payment",
+        "new",
+        "approved",
+        "tech_assigned",
+        "installed",
+        "live",
+        "cancelled",
+        "completed",
+        "paid",
+      ],
       invitation_status: ["pending", "accepted", "declined"],
       listing_status: ["draft", "active", "paused", "sold_out", "archived"],
       listing_visibility: ["private", "buyer_network", "public"],
