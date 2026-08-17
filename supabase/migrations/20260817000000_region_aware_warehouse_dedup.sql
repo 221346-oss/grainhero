@@ -60,19 +60,33 @@ BEGIN
   _addr_norm := lower(trim(coalesce(_order.install_address, '')));
 
   -- ── Provision warehouse ──────────────────────────────────────────────────
-  -- Reuse an existing warehouse in the same region (city). Matches whichever
-  -- location format a previous trigger wrote: description (auto_provision) or
-  -- city/address (hardware_order_provision_silo), plus the "City — …" name
-  -- prefix used for auto-generated warehouses.
+  -- Reuse an existing warehouse ONLY if BOTH city AND address match.
+  -- This prevents merging silos from "abc123" with silos from "125 farm road"
+  -- even though both are in "sialkot".
+  --
+  -- Match logic:
+  --   * Must be same admin
+  --   * Must match BOTH city AND address (or no match at all)
+  --   * Normalize: case-insensitive, trim whitespace
+  --   * Never match if city or address is blank
   SELECT id INTO _wh_id
   FROM public.warehouses
   WHERE admin_id = _order.admin_id
     AND deleted_at IS NULL
+    AND _city_norm <> ''
+    AND _addr_norm <> ''
     AND (
-      (_city_norm <> '' AND lower(trim(coalesce(location->>'description', ''))) = _city_norm)
-      OR (_city_norm <> '' AND lower(trim(coalesce(location->>'city', ''))) = _city_norm)
-      OR (_addr_norm <> '' AND lower(trim(coalesce(location->>'address', ''))) = _addr_norm)
-      OR (_city_norm <> '' AND _city_norm = lower(trim(split_part(coalesce(name, ''), ' — ', 1))))
+      -- Match: location has both city and address as JSON keys
+      (
+        lower(trim(coalesce(location->>'city', ''))) = _city_norm
+        AND lower(trim(coalesce(location->>'address', ''))) = _addr_norm
+      )
+      OR
+      -- Also match on location_city/location_address convenience columns
+      (
+        lower(trim(coalesce(location_city, ''))) = _city_norm
+        AND lower(trim(coalesce(location_address, ''))) = _addr_norm
+      )
     )
   ORDER BY updated_at DESC
   LIMIT 1;
