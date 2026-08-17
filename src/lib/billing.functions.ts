@@ -133,11 +133,11 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
 
     let invQuery = context.supabase
       .from("buyer_invoices")
-      .select("id, invoice_number, buyer_name, buyer_company, batch_ref, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at, dispatch_id, grain_dispatches:dispatch_id(dispatch_number, total_qty_kg, vehicle_number, driver_name)");
+      .select("id, invoice_number, buyer_name, buyer_company, batch_ref, items, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at, dispatch_id, grain_dispatches:dispatch_id(dispatch_number, total_qty_kg, vehicle_number, driver_name, grain_type), grain_batches:batch_id(grain_type)");
 
     let payQuery = context.supabase
       .from("buyer_payments")
-      .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, dispatch_id, receipt_url, created_at, grain_dispatches:dispatch_id(dispatch_number)");
+      .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, dispatch_id, receipt_url, created_at, grain_dispatches:dispatch_id(dispatch_number, grain_type)");
 
     // Approved-and-beyond dispatches — regardless of whether they ever went
     // through the invoice step (the wizard's "Skip invoice -> Dispatch" path
@@ -147,7 +147,7 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
     // wizard before finishing the payment step has nowhere else to surface.
     let dispQuery = context.supabase
       .from("grain_dispatches")
-      .select("id, dispatch_number, total_amount, currency, status, dispatched_at, created_at, buyers:buyer_id(name, company_name)")
+      .select("id, dispatch_number, grain_type, total_amount, currency, status, dispatched_at, created_at, buyers:buyer_id(name, company_name)")
       .in("status", ["confirmed", "in_transit", "delivered"]);
 
     if (adminId) {

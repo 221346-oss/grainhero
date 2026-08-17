@@ -10,7 +10,7 @@ import { SilosSection } from "@/components/grain-operations/SilosSection";
 import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
 import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { PendingApprovalsSection } from "@/components/grain-operations/PendingApprovalsSection";
-import { Package, Warehouse, Building2, Users, TrendingUp, TrendingDown } from "lucide-react";
+import { Package, Warehouse, Building2, Users, TrendingUp, TrendingDown, Maximize2, Truck } from "lucide-react";
 import {
   listGrainBatches,
   listSilos,
@@ -210,30 +210,78 @@ function GrainOperationsWorkspace() {
             </div>
           </div>
 
-          {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-              Key Metrics
-            </p>
-            <div className="space-y-0 divide-y divide-border flex-1">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
-                    <span className="text-muted-foreground/60">◇</span>
-                    <span className="truncate max-w-[120px]">{s.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-base font-mono">
-                      {s.value}
-                    </span>
-                    {s.up ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-rose-400" />
-                    ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
-                    )}
+          {/* Key Metrics Panel */}
+          <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+            <div className="flex justify-between items-start mb-6">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                Key Metrics
+              </p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-md">
+                Last 12 Cycles
+              </p>
+            </div>
+            
+            <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
+              {/* Metric 1: Total Grain */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Total Grain</p>
+                    <p className="text-base font-black text-foreground truncate">{totalKg.toLocaleString()} kg</p>
                   </div>
                 </div>
-              ))}
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    {/* Placeholder static progress for demo */}
+                    <div className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
+              
+              {/* Divider */}
+              <div className="h-px w-full bg-border" />
+
+              {/* Metric 2: Active Silos */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Active Silos</p>
+                    <p className="text-base font-black text-foreground truncate">{activeSilos} online</p>
+                  </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px w-full bg-border" />
+
+              {/* Metric 3: Dispatched */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Dispatched</p>
+                    <p className="text-base font-black text-foreground truncate">{dispatchedKg.toLocaleString()} kg</p>
+                  </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Plus, Truck, RotateCcw } from "lucide-react";
+import { AlertCircle, Search, Plus, Truck, RotateCcw } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
@@ -157,10 +157,10 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div><div className="text-xs text-slate-500 mt-1">invoiced − collected</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div><div className="text-xs text-slate-500 mt-1">invoiced − collected</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div></CardContent></Card>
       </div>
 
       <DispatchSaleWizard
@@ -206,16 +206,6 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm">By status</CardTitle></CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {Object.entries(byStatus).map(([k, v]) => (
-            <Badge key={k} className={payBadge(k)}>{k}: {String(v)}</Badge>
-          ))}
-          {Object.keys(byStatus).length === 0 && <span className="text-sm text-slate-500">No invoices yet.</span>}
-        </CardContent>
-      </Card>
 
       <Tabs defaultValue="invoices">
         <TabsList>

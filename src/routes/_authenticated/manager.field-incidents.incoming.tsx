@@ -5,12 +5,13 @@ import { useMemo, useState } from "react";
 import { listFieldIncidents } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, User } from "lucide-react";
+import { Search, X, User, Plus } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
 import {
   IncidentTabNav, DetailPanel,
   safeRows, extractReporterName, extractReporterRole, isIncomingIncident,
@@ -59,6 +60,7 @@ function IncomingIncidentsPage() {
   const [search,        setSearch]        = useState("");
   const [roleFilter,    setRoleFilter]    = useState("all"); // reporter role filter: all/admin/manager/technician
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [newTicketOpen, setNewTicketOpen] = useState(false);
 
   const allRows = useMemo(() => safeRows(data), [data]);
 
@@ -77,6 +79,7 @@ function IncomingIncidentsPage() {
       const t = search.trim().toLowerCase();
       src = src.filter((r) =>
         r.category?.toLowerCase().includes(t) ||
+        r.notes?.toLowerCase().includes(t) ||
         extractReporterName(r)?.toLowerCase().includes(t)
       );
     }
@@ -126,6 +129,12 @@ function IncomingIncidentsPage() {
             <SelectItem value="technician" className="text-xs">Technician</SelectItem>
           </SelectContent>
         </Select>
+
+        <div className="ml-auto">
+          <Button size="sm" className="h-8 text-xs gap-1.5 bg-amber-600 hover:bg-amber-700 text-white" onClick={() => setNewTicketOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> New ticket
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -142,40 +151,36 @@ function IncomingIncidentsPage() {
             {groups.map((g) => {
               const isExpanded = expandedGroup === g.key;
               return (
-                <div key={g.key} className="rounded-xl border border-border overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow">
-                  {/* Group header */}
+                <div key={g.key} className="rounded-xl border border-border overflow-hidden">
                   <button
+                    type="button"
                     onClick={() => setExpandedGroup(isExpanded ? null : g.key)}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center justify-between p-3.5 bg-card hover:bg-muted/40 transition-colors text-left"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <User className="h-4 w-4 text-primary" />
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <User className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm leading-tight">{g.name}</p>
-                        {g.role && (
-                          <p className="text-[10px] text-muted-foreground capitalize mt-0.5">{g.role}</p>
-                        )}
+                        <p className="text-xs font-semibold text-foreground truncate">{g.name}</p>
+                        {g.role && <p className="text-[10px] text-muted-foreground capitalize">{g.role}</p>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant="outline" className="text-[10px] font-mono px-2 py-0.5">
-                        {g.incidents.length} {g.incidents.length === 1 ? "incident" : "incidents"}
-                      </Badge>
-                      <span className="text-muted-foreground text-xs">{isExpanded ? "▲" : "▼"}</span>
-                    </div>
+                    <span className="text-[10px] font-semibold bg-muted text-muted-foreground px-2 py-0.5 rounded-full shrink-0">
+                      {g.incidents.length} incident{g.incidents.length === 1 ? "" : "s"}
+                    </span>
                   </button>
 
-                  {/* Incident cards for this reporter */}
+                  {/* Expanded incident list */}
                   {isExpanded && (
-                    <div className="divide-y divide-border bg-card/50">
+                    <div className="divide-y divide-border border-t border-border bg-muted/10">
                       {g.incidents.map((r) => (
                         <button
                           key={r.id}
-                          onClick={() => active?.id === r.id ? setActive(null) : setActive(r)}
-                          className={`w-full text-left px-4 py-3 hover:bg-muted/40 transition-colors ${
-                            active?.id === r.id ? "bg-primary/5 border-l-2 border-l-primary" : ""
+                          type="button"
+                          onClick={() => setActive(active?.id === r.id ? null : r)}
+                          className={`w-full text-left p-3 hover:bg-muted/40 transition-colors ${
+                            active?.id === r.id ? "bg-muted/60 border-l-2 border-primary" : ""
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3">
@@ -207,6 +212,8 @@ function IncomingIncidentsPage() {
           )}
         </div>
       )}
+
+      <ReportTicketDialog open={newTicketOpen} onOpenChange={setNewTicketOpen} extraInvalidate={[["field-incidents"]]} />
     </AdminPageShell>
   );
 }

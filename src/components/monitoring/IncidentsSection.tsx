@@ -215,16 +215,6 @@ export function IncidentsSection() {
       {/* Header row */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          {systemCount > 0 && (
-            <span className="flex items-center gap-1 text-xs text-rose-500 font-medium">
-              <AlertOctagon className="w-3.5 h-3.5" /> {systemCount} system alert{systemCount !== 1 ? "s" : ""}
-            </span>
-          )}
-          {fieldCount > 0 && (
-            <span className="flex items-center gap-1 text-xs text-amber-500 font-medium">
-              <Flag className="w-3.5 h-3.5" /> {fieldCount} field incident{fieldCount !== 1 ? "s" : ""}
-            </span>
-          )}
           {incidents.length === 0 && !isLoading && (
             <p className="text-xs text-muted-foreground">No incidents reported yet.</p>
           )}
@@ -261,28 +251,29 @@ export function IncidentsSection() {
           {(incidents as any[]).map((i) => (
             <div
               key={i.id}
-              className={`border rounded-lg p-4 transition-colors ${
-                i.isFieldIncident
-                  ? "bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10"
-                  : "bg-muted/30 border-border hover:bg-muted/50"
-              }`}
+              className="border border-border rounded-lg p-4 transition-colors bg-card hover:bg-muted/50"
             >
-              <div className="flex items-start gap-3">
-                {i.isFieldIncident
-                  ? <Flag className="w-5 h-5 mt-0.5 shrink-0 text-amber-500" />
-                  : <AlertOctagon className="w-5 h-5 mt-0.5 shrink-0 text-rose-400" />
-                }
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm font-semibold text-foreground">{i.title}</h3>
-                    {/* Type badge */}
+              <div className="flex justify-between items-start gap-4">
+                {/* Left side: Title and Time/Date */}
+                <div className="flex flex-col gap-1 w-1/2 shrink-0">
+                  <h3 className="text-sm font-semibold text-foreground">{i.title}</h3>
+                  <p className="text-xs text-muted-foreground break-words">{i.message}</p>
+                  {i.triggered_at && (
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {new Date(i.triggered_at).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+
+                {/* Right side: Remaining details */}
+                <div className="flex flex-col items-end text-right gap-2 flex-1 min-w-0">
+                  <div className="flex items-center justify-end gap-2 flex-wrap">
                     <Badge className={i.isFieldIncident
                       ? "bg-amber-500/15 text-amber-600 border-0 text-[10px]"
                       : "bg-rose-500/15 text-rose-500 border-0 text-[10px]"
                     }>
                       {i.isFieldIncident ? "Field" : i.priority}
                     </Badge>
-                    {/* Status badge */}
                     <Badge className={
                       i.status === "resolved" || i.status === "closed"
                         ? "bg-emerald-500/20 text-emerald-500 border-0"
@@ -299,10 +290,7 @@ export function IncidentsSection() {
                     )}
                   </div>
 
-                  <p className="text-xs text-muted-foreground mt-1">{i.message}</p>
-
-                  <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3">
-                    {i.triggered_at && <span>{new Date(i.triggered_at).toLocaleString()}</span>}
+                  <div className="text-xs text-muted-foreground flex flex-wrap justify-end gap-x-3">
                     {i.reportedByName && <span>From {i.reportedByName}</span>}
                     {i.isFieldIncident && i.recipientName && <span>To {i.recipientName}</span>}
                     {!i.isFieldIncident && i.assignedToName && <span>Assigned to {i.assignedToName}</span>}
@@ -310,7 +298,7 @@ export function IncidentsSection() {
 
                   {/* Actions for system alerts — manager/admin */}
                   {!i.isFieldIncident && canManage && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2 mt-1">
                       <Select
                         value={i.assigned_to ?? "unassigned"}
                         onValueChange={(v) => assignMut.mutate({ id: i.id, technicianId: v === "unassigned" ? null : v })}
@@ -340,7 +328,7 @@ export function IncidentsSection() {
 
                   {/* Actions for field incidents — reporter or recipient can close */}
                   {i.isFieldIncident && i.status !== "closed" && i.status !== "resolved" && (i.isMine || i.isForMe) && (
-                    <div className="mt-3">
+                    <div className="mt-1">
                       <Button
                         size="sm" variant="outline"
                         className="h-7 text-xs gap-1"

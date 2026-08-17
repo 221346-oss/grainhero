@@ -5,10 +5,12 @@ import { useMemo, useState } from "react";
 import { listFieldIncidents } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Plus } from "lucide-react";
+import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
 import {
   IncidentTabNav, SearchCombobox, FilterChips, IncidentCard, DetailPanel,
   safeRows, extractTargetRole, extractReporterRole, isIncomingIncident,
@@ -28,6 +30,7 @@ function ResolvedIncidentsPage() {
   const [search,         setSearch]         = useState("");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [roleFilter,     setRoleFilter]     = useState("all");
+  const [newTicketOpen,  setNewTicketOpen]  = useState(false);
 
   const allRows       = useMemo(() => safeRows(data), [data]);
   const resolvedRows  = useMemo(() => allRows.filter((r) => r.status === "resolved"), [allRows]);
@@ -88,6 +91,12 @@ function ResolvedIncidentsPage() {
             <SelectItem value="technician" className="text-xs">→ Technician</SelectItem>
           </SelectContent>
         </Select>
+
+        <div className="ml-auto">
+          <Button size="sm" className="h-8 text-xs gap-1.5 bg-amber-600 hover:bg-amber-700 text-white" onClick={() => setNewTicketOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> New ticket
+          </Button>
+        </div>
       </div>
 
       <FilterChips
@@ -121,6 +130,8 @@ function ResolvedIncidentsPage() {
           )}
         </div>
       )}
+
+      <ReportTicketDialog open={newTicketOpen} onOpenChange={setNewTicketOpen} extraInvalidate={[["field-incidents"]]} />
     </AdminPageShell>
   );
 }
