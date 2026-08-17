@@ -61,7 +61,12 @@ class _GrainModel:
         self.version = version
 
         # Cache these once at load-time (cheap)
-        self._input_name: str = session.get_inputs()[0].name
+        inp = session.get_inputs()[0]
+        self._input_name: str = inp.name
+        shape = inp.shape
+        self.input_dim: int = int(shape[1]) if (len(shape) > 1 and shape[1] is not None) else 9
+        self.window_size: int = max(1, self.input_dim // N_FEATURES)
+
         # ONNX classifiers expose two outputs: label + probabilities map
         self._output_names = [o.name for o in session.get_outputs()]
 
@@ -74,6 +79,12 @@ class _GrainModel:
         """
         # Ensure float32 — ort requires it
         X_f32 = X.astype(np.float32)
+
+        if X_f32.shape[1] != self.input_dim:
+            raise ValueError(
+                f"Input shape mismatch for '{self.grain_type}': expected {self.input_dim} "
+                f"features (W={self.window_size} x 9), but got {X_f32.shape[1]} features."
+            )
 
         outputs = self.session.run(self._output_names, {self._input_name: X_f32})
 

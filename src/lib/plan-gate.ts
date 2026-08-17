@@ -165,7 +165,7 @@ export async function computePlanGate(
  */
 export const getPlanGate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { feature: PlanFeature; currentUsage?: number }) =>
+  .validator((d: { feature: PlanFeature; currentUsage?: number }) =>
     z
       .object({
         feature: z.string() as unknown as z.ZodType<PlanFeature>,

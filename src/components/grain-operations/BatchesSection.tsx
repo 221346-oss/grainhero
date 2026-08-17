@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   Package, Plus, Search, Edit2, Trash2, Eye, Loader2, QrCode,
   Truck, AlertTriangle, User, Calendar, Wheat, FlaskConical, ShieldCheck, Undo2,
+  CheckCircle2, XCircle, BadgeCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ import { StatusBadge } from "@/components/app/DataListPage";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listGrainBatches, upsertGrainBatch, deleteGrainBatch,
-  logSpoilageEvent, listSilos,
+  logSpoilageEvent, listSilos, markOutcome,
 } from "@/lib/operations.functions";
 import { listSuppliers } from "@/lib/suppliers.functions";
 import { getMyRole } from "@/lib/roles.functions";
@@ -73,6 +74,12 @@ type Batch = {
   spoilage_events: Array<Record<string, unknown>> | null;
   notes: string | null;
   assigned_technician_id: string | null;
+  // Task 5.1 — ground-truth ML label written by the Mark Outcome panel.
+  // Not yet in generated Supabase types; add via migration:
+  //   ALTER TABLE grain_batches
+  //     ADD COLUMN IF NOT EXISTS validation_status TEXT
+  //     CHECK (validation_status IN ('safe', 'spoiled'));
+  validation_status?: "safe" | "spoiled" | null;
   silos?: { id: string; silo_id: string; name: string; capacity_kg: number; warehouse_id: string } | null;
   warehouses?: { id: string; name: string; warehouse_id: string } | null;
   buyers?: { id: string; name: string; company_name: string | null; contact_phone: string | null } | null;
@@ -205,6 +212,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const upsertFn = useServerFn(upsertGrainBatch);
   const deleteFn = useServerFn(deleteGrainBatch);
   const spoilageFn = useServerFn(logSpoilageEvent);
+  const markOutcomeFn = useServerFn(markOutcome);
   const roleFn = useServerFn(getMyRole);
   const listTechFn = useServerFn(listAvailableTechnicians);
   const qc = useQueryClient();
@@ -347,6 +355,29 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       setDeleteId(null);
     },
     onError: (e: Error) => toast.error(e.message || "Delete failed"),
+  });
+
+  // Task 5.1 — Mark Outcome mutation
+  // Writes 'safe' or 'spoiled' to grain_batches.validation_status.
+  // This is the human-confirmed ground-truth label that the ML retraining
+  // pipeline (fast_retrain.py) reads to build its training dataset.
+  const outcomeMut = useMutation({
+    mutationFn: (payload: { id: string; outcome: "safe" | "spoiled" }) =>
+      markOutcomeFn({ data: payload }),
+    onSuccess: (_result, variables) => {
+      toast.success(
+        variables.outcome === "safe"
+          ? "✅ Marked as Sold Safe — AI training data updated"
+          : "❌ Marked as Found Spoiled — AI training data updated",
+      );
+      qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      // Optimistically update the selected batch in the View dialog so the
+      // panel immediately reflects the new state without a full refetch.
+      setSelected((prev) =>
+        prev ? { ...prev, validation_status: variables.outcome } : prev,
+      );
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to record outcome"),
   });
 
   const spoilageMut = useMutation({
@@ -790,6 +821,68 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                 {selected.protein_content != null && <Row label="Protein">{selected.protein_content}%</Row>}
                 {selected.notes && <Row label="Notes"><span className="whitespace-pre-wrap">{selected.notes}</span></Row>}
               </div>
+
+              {/* ── Task 5.1 — Mark Outcome Panel ──────────────────────────────
+                  Show only for completed batches (dispatched / sold) that have
+                  not yet been validated. The outcome label feeds the ML retrain
+                  pipeline as ground-truth supervised data. */}
+              {["dispatched", "sold"].includes(selected.status) && (
+                <div className="mt-2 rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <BadgeCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span className="text-sm font-semibold text-foreground">Final Quality Validation</span>
+                    {selected.validation_status && (
+                      <span
+                        className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full ${
+                          selected.validation_status === "safe"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                            : "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+                        }`}
+                      >
+                        {selected.validation_status === "safe" ? "✅ Sold Safe" : "❌ Found Spoiled"}
+                      </span>
+                    )}
+                  </div>
+                  {selected.validation_status ? (
+                    <p className="text-xs text-muted-foreground">
+                      Outcome already recorded. This label is used by the AI to improve future predictions.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        Log the actual state of this grain to improve AI accuracy. This builds real
+                        ground-truth training data for the spoilage prediction model.
+                      </p>
+                      <div className="flex gap-3">
+                        <Button
+                          size="sm"
+                          className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          disabled={outcomeMut.isPending}
+                          onClick={() => outcomeMut.mutate({ id: selected.id, outcome: "safe" })}
+                        >
+                          {outcomeMut.isPending && outcomeMut.variables?.outcome === "safe"
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <CheckCircle2 className="w-3.5 h-3.5" />}
+                          Sold Safe
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="gap-2"
+                          disabled={outcomeMut.isPending}
+                          onClick={() => outcomeMut.mutate({ id: selected.id, outcome: "spoiled" })}
+                        >
+                          {outcomeMut.isPending && outcomeMut.variables?.outcome === "spoiled"
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <XCircle className="w-3.5 h-3.5" />}
+                          Found Spoiled
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               <DialogFooter className="gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={() => { setSelected(b => b); setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
                 {/* Dispatch happens from the silo's mixed stock, not a single batch — see dispatchFromSilo/createDispatchFromSilo. */}

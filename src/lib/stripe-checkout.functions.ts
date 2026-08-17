@@ -30,7 +30,7 @@ const checkoutInput = z.object({
  * Returns the Checkout URL to redirect the browser to.
  */
 export const createStripeCheckoutSession = createServerFn({ method: "POST" })
-  .inputValidator((d) => checkoutInput.parse(d))
+  .validator((d) => checkoutInput.parse(d))
   .handler(async ({ data }) => {
     const plan = pricingData.find((p: { id: string }) => p.id === data.planId);
     if (!plan) throw new Error("Unknown plan");
@@ -251,7 +251,7 @@ const siloAddonInput = z.object({
  */
 export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => siloAddonInput.parse(d))
+  .validator((d) => siloAddonInput.parse(d))
   .handler(async ({ data, context }) => {
     const { data: profileRow } = await context.supabase
       .from("profiles")
@@ -341,7 +341,7 @@ export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
 const checkoutSummaryInput = z.object({ sessionId: z.string().trim().min(5).max(200) });
 
 export const getCheckoutSessionSummary = createServerFn({ method: "GET" })
-  .inputValidator((d) => checkoutSummaryInput.parse(d))
+  .validator((d) => checkoutSummaryInput.parse(d))
   .handler(async ({ data }) => {
     const { stripeFetch } = await import("@/lib/stripe-api.server");
     const session = await stripeFetch(`/checkout/sessions/${encodeURIComponent(data.sessionId)}`, null, "GET") as {
@@ -373,7 +373,7 @@ const claimInput = z.object({ sessionId: z.string().trim().min(5).max(200).optio
 
 export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => claimInput.parse(d ?? {}))
+  .validator((d) => claimInput.parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const { stripeFetch } = await import("@/lib/stripe-api.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

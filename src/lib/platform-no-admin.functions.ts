@@ -118,7 +118,7 @@ export const listAllTenants = createServerFn({ method: "GET" })
 
 export const toggleUserBlocked = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; blocked: boolean }) => d)
+  .validator((d: { id: string; blocked: boolean }) => d)
   .handler(async ({ data, context }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
@@ -135,7 +135,7 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
 
 export const getPlatformLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { limit?: number; severity?: string } = {}) => d)
+  .validator((d: { limit?: number; severity?: string } = {}) => d)
   .handler(async ({ data, context }) => {
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
@@ -479,7 +479,7 @@ export const getPlatformReportingDetails = createServerFn({ method: "GET" })
 
 export const submitPlatformQuery = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { subject: string; message: string }) => d)
+  .validator((d: { subject: string; message: string }) => d)
   .handler(async ({ data, context }) => {
     const { data: roleRow } = await context.supabase
       .from("user_roles")

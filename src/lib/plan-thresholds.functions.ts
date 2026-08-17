@@ -61,7 +61,7 @@ const updatePlanInput = z.object({
 
 export const updatePlanThreshold = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(updatePlanInput, d))
+  .validator((d: unknown) => parseOrThrow(updatePlanInput, d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
     const { plan_id, ...patch } = data;
@@ -82,7 +82,7 @@ const requestChangeInput = z.object({
 
 export const requestPlanChange = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(requestChangeInput, d))
+  .validator((d: unknown) => parseOrThrow(requestChangeInput, d))
   .handler(async ({ data, context }) => {
     // Phase 2 — verify identity (JWT still valid) + soft rate-limit
     const { getVerifiedUser } = await import("@/lib/session.server");
@@ -178,7 +178,7 @@ export const requestPlanChange = createServerFn({ method: "POST" })
 
 export const cancelPlanChangeRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
+  .validator((d: unknown) => parseOrThrow(z.object({ id: z.string().uuid() }), d))
   .handler(async ({ data, context }) => {
     await verifyAndLimit(context, "plan-change-cancel");
     const { error } = await context.supabase
@@ -210,7 +210,7 @@ const decideInput = z.object({
 
 export const decidePlanChangeRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(decideInput, d))
+  .validator((d: unknown) => parseOrThrow(decideInput, d))
   .handler(async ({ data, context }) => {
     const { requireRole } = await import("@/lib/session.server");
     await requireRole(context.supabase, context.userId, ["super_admin"]);
@@ -320,7 +320,7 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
 
 export const setTenantPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     parseOrThrow(z.object({ tenant_admin_id: z.string().uuid(), plan_id: z.string().min(1) }), d),
   )
   .handler(async ({ data, context }) => {
@@ -337,7 +337,7 @@ export const setTenantPlan = createServerFn({ method: "POST" })
 
 export const listPlanChangeRequests = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     parseOrThrow(
       z.object({ status: z.enum(["all", "pending", "approved", "rejected", "auto_applied", "cancelled"]).default("all") }),
       d,
@@ -360,7 +360,7 @@ export const listPlanChangeRequests = createServerFn({ method: "POST" })
 
 export const setAutoUpgrade = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => parseOrThrow(z.object({ enabled: z.boolean() }), d))
+  .validator((d: unknown) => parseOrThrow(z.object({ enabled: z.boolean() }), d))
   .handler(async ({ data, context }) => {
     const { data: prof } = await context.supabase
       .from("profiles")

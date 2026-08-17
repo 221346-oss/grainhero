@@ -54,7 +54,7 @@ const schema: z.ZodType<MobileSettingsShape> = z.object({
 
 export const updateMobileSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => schema.parse(v))
+  .validator((v) => schema.parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");

@@ -39,7 +39,7 @@ function rangeToWindow(range: Range) {
 
 export const getDashboardExtras = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({ range: z.enum(["today", "7d", "30d", "mtd", "ytd"]).default("30d") })
       .parse(data ?? {}),

@@ -97,7 +97,7 @@ export const listAllTenants = createServerFn({ method: "GET" })
 
 export const toggleUserBlocked = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; blocked: boolean }) => d)
+  .validator((d: { id: string; blocked: boolean }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
     if (data.id === context.userId) throw new Error("Cannot block yourself");
@@ -120,7 +120,7 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
 
 export const getPlatformLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { limit?: number; severity?: string } = {}) => d)
+  .validator((d: { limit?: number; severity?: string } = {}) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

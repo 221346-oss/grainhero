@@ -24,7 +24,7 @@ const upsertSchema = z.object({
 
 export const upsertDeepLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => upsertSchema.parse(v))
+  .validator((v) => upsertSchema.parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
@@ -37,7 +37,7 @@ export const upsertDeepLink = createServerFn({ method: "POST" })
 
 export const deleteDeepLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v: { id: string }) => v)
+  .validator((v: { id: string }) => v)
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");

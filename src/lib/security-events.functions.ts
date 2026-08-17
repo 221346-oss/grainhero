@@ -9,7 +9,7 @@ type LogInput = {
 
 export const logSecurityEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: LogInput) => data)
+  .validator((data: LogInput) => data)
   .handler(async ({ data, context }) => {
     const ip =
       getRequestHeader("cf-connecting-ip") ||

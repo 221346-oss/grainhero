@@ -124,7 +124,7 @@ function buildSafetyGuardrail(
 
 export const runMLPrediction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ siloId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ siloId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 

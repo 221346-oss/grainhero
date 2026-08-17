@@ -24,7 +24,7 @@ type OrderRow = {
  * De-dupes by writing `confirmation_email_sent_at` on the hardware_orders row.
  */
 export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
-  .inputValidator((d) => input.parse(d))
+  .validator((d) => input.parse(d))
   .handler(async ({ data }) => {
     const { stripeFetch } = await import("@/lib/stripe-api.server");
 

@@ -15,9 +15,9 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 # Inference server uses service_role key so it can insert sensor readings.
-SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
 _HEADERS = {
     "apikey": SUPABASE_SERVICE_KEY,

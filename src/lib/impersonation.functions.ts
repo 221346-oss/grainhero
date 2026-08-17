@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const startImpersonation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { adminId: string }) => d)
+  .validator((d: { adminId: string }) => d)
   .handler(async ({ data, context }) => {
     console.log("Starting impersonation for userId:", context.userId, "adminId:", data.adminId);
 

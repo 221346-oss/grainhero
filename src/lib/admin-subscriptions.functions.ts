@@ -16,7 +16,7 @@ async function loadSub(supabase: any, subscriptionId: string) {
 
 export const adminChangeUserPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ subscriptionId: z.string(), planId: z.enum(["basic", "intermediate", "pro"]) }).parse(d))
+  .validator((d) => z.object({ subscriptionId: z.string(), planId: z.enum(["basic", "intermediate", "pro"]) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const sub = await loadSub(context.supabase, data.subscriptionId);
@@ -34,7 +34,7 @@ export const adminChangeUserPlan = createServerFn({ method: "POST" })
 
 export const adminCancelSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ subscriptionId: z.string(), immediate: z.boolean().optional() }).parse(d))
+  .validator((d) => z.object({ subscriptionId: z.string(), immediate: z.boolean().optional() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const sub = await loadSub(context.supabase, data.subscriptionId);
@@ -60,7 +60,7 @@ export const adminCancelSubscription = createServerFn({ method: "POST" })
 
 export const adminResumeSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ subscriptionId: z.string() }).parse(d))
+  .validator((d) => z.object({ subscriptionId: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const sub = await loadSub(context.supabase, data.subscriptionId);
@@ -73,7 +73,7 @@ export const adminResumeSubscription = createServerFn({ method: "POST" })
 
 export const adminSyncSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ subscriptionId: z.string() }).parse(d))
+  .validator((d) => z.object({ subscriptionId: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const sub = await loadSub(context.supabase, data.subscriptionId);

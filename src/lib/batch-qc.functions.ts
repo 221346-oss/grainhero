@@ -73,7 +73,7 @@ const submitInput = z.object({
 /** The assigned technician submits QC values. pending_qc/qc_failed -> qc_submitted. */
 export const submitBatchQC = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => submitInput.parse(d))
+  .validator((d) => submitInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["technician"]);
     const b = await loadBatchForTransition(context.supabase, data.batchId);
@@ -120,7 +120,7 @@ const reviewInput = z.object({
 /** Manager (or admin) reviews a qc_submitted batch. */
 export const reviewBatchQC = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => reviewInput.parse(d))
+  .validator((d) => reviewInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["manager", "admin"]);
     const b = await loadBatchForTransition(context.supabase, data.batchId);
@@ -152,7 +152,7 @@ const adminReviewInput = z.object({
 /** Admin gives final review to a qc_passed batch. approve -> stored, reject -> admin_rejected. */
 export const adminReviewBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => adminReviewInput.parse(d))
+  .validator((d) => adminReviewInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["admin"]);
     const b = await loadBatchForTransition(context.supabase, data.batchId);
@@ -186,7 +186,7 @@ const resolveInput = z.object({
 /** Admin explicitly resolves an admin_rejected batch — never auto-discarded. */
 export const resolveRejectedBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => resolveInput.parse(d))
+  .validator((d) => resolveInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["admin"]);
     const b = await loadBatchForTransition(context.supabase, data.batchId);

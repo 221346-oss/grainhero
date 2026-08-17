@@ -11,7 +11,7 @@ async function assertSuperAdmin(ctx: { supabase: any; userId: string }) {
 
 export const getAdminProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { adminId: string }) => d)
+  .validator((d: { adminId: string }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const supa = context.supabase;
@@ -47,7 +47,7 @@ export const getAdminProfile = createServerFn({ method: "GET" })
 
 export const updateAdminContact = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { adminId: string; patch: { name?: string; phone?: string; notes?: string } }) => d)
+  .validator((d: { adminId: string; patch: { name?: string; phone?: string; notes?: string } }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const supabaseAdmin = context.supabase;
@@ -58,7 +58,7 @@ export const updateAdminContact = createServerFn({ method: "POST" })
 
 export const setAdminSuspended = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { adminId: string; suspended: boolean }) => d)
+  .validator((d: { adminId: string; suspended: boolean }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const supabaseAdmin = context.supabase;
@@ -69,7 +69,7 @@ export const setAdminSuspended = createServerFn({ method: "POST" })
 
 export const getAdminOrderFrequency = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { adminId: string; source?: "batches" | "orders" }) => d)
+  .validator((d: { adminId: string; source?: "batches" | "orders" }) => d)
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const supa = context.supabase;

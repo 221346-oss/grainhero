@@ -30,7 +30,7 @@ const reportInput = z.object({
 
 export const reportFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => reportInput.parse(d))
+  .validator((d) => reportInput.parse(d))
   .handler(async ({ data, context }) => {
     const role = await getEffectiveRole(context.supabase, context.userId);
     if (!TENANT_ROLES.includes(role)) throw new Error("Forbidden");
@@ -123,7 +123,7 @@ const closeInput = z.object({ id: z.string().uuid() });
 /** Reporter or recipient can close. Nobody else. */
 export const closeFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => closeInput.parse(d))
+  .validator((d) => closeInput.parse(d))
   .handler(async ({ data, context }) => {
     const role = await getEffectiveRole(context.supabase, context.userId);
     if (!TENANT_ROLES.includes(role)) throw new Error("Forbidden");
