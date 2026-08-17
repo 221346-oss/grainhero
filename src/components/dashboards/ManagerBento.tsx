@@ -169,7 +169,6 @@ export function ManagerBento({
     capacity_kg: number;
     current_occupancy_kg: number | null;
     status: string | null;
-    created_at?: string | null;
   }>;
   alerts: Array<{
     id: string;
@@ -185,15 +184,7 @@ export function ManagerBento({
     quantity_kg: number;
     risk_score: number | null;
   }>;
-  dispatchQueue: Array<{ 
-    id: string; 
-    grain_type: string; 
-    total_qty_kg: number; 
-    status: string;
-    dispatched_at: string | null;
-    created_at: string;
-    silo_id: string | null;
-  }>;
+  dispatchQueue: Array<{ id: string; batch_id: string; grain_type: string; quantity_kg: number }>;
   actuators: Array<{
     id: string;
     name: string;
@@ -242,7 +233,7 @@ export function ManagerBento({
     return {
       id: s.id,
       primary: s.name,
-      secondary: `${s.silo_id} · ${pct}% full · ${s.created_at ? new Date(s.created_at).toLocaleString() : "—"}`,
+      secondary: `${s.silo_id} · ${pct}% full`,
       badge: (
         <div className="w-16">
           <div className="h-1.5 rounded-full bg-emerald-500/10 overflow-hidden">
@@ -311,8 +302,8 @@ export function ManagerBento({
 
   const dispatchRows: Row[] = dispatchQueue.map((b) => ({
     id: b.id,
-    primary: `${b.grain_type}`,
-    secondary: `${Number(b.total_qty_kg).toLocaleString()} kg · ${b.status} · ${new Date(b.dispatched_at || b.created_at).toLocaleString()}`,
+    primary: b.batch_id,
+    secondary: `${b.grain_type} · ${Number(b.quantity_kg).toLocaleString()} kg`,
     to: "/grain-operations",
     search: { tab: "silos" },
   }));
@@ -334,7 +325,10 @@ export function ManagerBento({
   const buyerRows: Row[] = buyers.map((b) => ({
     id: b.id,
     primary: b.name,
-    secondary: `${b.created_at ? new Date(b.created_at).toLocaleString() : "—"}`,
+    secondary: `${b.company_name ?? b.contact_name ?? "No details"} · ${b.status ?? "—"}`,
+    badge: b.created_at ? (
+      <span className="text-[9px] text-muted-foreground">{formatRelativeTime(b.created_at)}</span>
+    ) : undefined,
     to: "/grain-operations",
     search: { tab: "buyers" },
   }));

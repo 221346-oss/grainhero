@@ -27,7 +27,7 @@ export const getFieldSettings = createServerFn({ method: "GET" })
 
 export const updateFieldSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((v) => schema.parse(v))
+  .inputValidator((v) => schema.parse(v))
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
@@ -57,7 +57,7 @@ export const listFieldIncidents = createServerFn({ method: "GET" })
 
 export const assignFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((v) => z.object({
+  .inputValidator((v) => z.object({
     id: z.string().uuid(),
     assigned_to: z.string().uuid(),
   }).parse(v))
@@ -93,7 +93,7 @@ export const assignFieldIncident = createServerFn({ method: "POST" })
         assigned_to: data.assigned_to,
         assigned_at: new Date().toISOString(),
         status: "investigating",
-      })
+      } as never)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -115,7 +115,7 @@ export const getMyAssignedIncidents = createServerFn({ method: "GET" })
 
 export const resolveFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((v) => z.object({
+  .inputValidator((v) => z.object({
     id: z.string().uuid(),
     status: z.enum(["open","investigating","resolved","dismissed"]),
     resolution_notes: z.string().max(2000).optional(),
@@ -159,7 +159,7 @@ export const resolveFieldIncident = createServerFn({ method: "POST" })
  */
 export const reportMobileFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((v) => z.object({
+  .inputValidator((v) => z.object({
     title: z.string().min(1).max(200).optional(),
     category: z.string().min(1).max(100).optional(),
     severity: z.enum(["low", "medium", "high", "critical"]),
@@ -189,22 +189,13 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
     if (targetRole !== "admin") {
       // Find a user with the target role in the same tenant
       const { data: targetUsers } = await context.supabase
-        .from("user_roles")
-        .select("user_id")
+        .from("profiles")
+        .select("id")
+        .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
         .eq("role", targetRole)
         .limit(1)
         .maybeSingle();
-      
-      if (targetUsers?.user_id) {
-        // Verify the user belongs to the same tenant
-        const { data: profile } = await context.supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", targetUsers.user_id)
-          .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
-          .maybeSingle();
-        recipientId = profile?.id ?? null;
-      }
+      recipientId = targetUsers?.id ?? null;
     }
 
     // Insert into grain_alerts with source='field_incident' to be visible in monitoring page
@@ -285,7 +276,7 @@ export const listOpenFieldIncidents = createServerFn({ method: "GET" })
 // ─── List Comments / Discussion for an Incident Ticket ────────────────────────
 export const listIncidentComments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((v) => z.object({ incident_id: z.string().uuid() }).parse(v))
+  .inputValidator((v) => z.object({ incident_id: z.string().uuid() }).parse(v))
   .handler(async ({ data, context }) => {
     // Check if the caller is a participant (reporter or assignee)
     const { data: incident } = await context.supabase
@@ -331,7 +322,7 @@ export const listIncidentComments = createServerFn({ method: "GET" })
 // ─── Add Comment / Discussion Message to an Incident Ticket ─────────────────
 export const addIncidentComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((v) => z.object({
+  .inputValidator((v) => z.object({
     incident_id: z.string().uuid(),
     message: z.string().min(1).max(2000),
   }).parse(v))

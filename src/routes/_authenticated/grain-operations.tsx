@@ -10,7 +10,7 @@ import { SilosSection } from "@/components/grain-operations/SilosSection";
 
 import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { PendingApprovalsSection } from "@/components/grain-operations/PendingApprovalsSection";
-import { Package, Warehouse, Users, TrendingUp, TrendingDown, Maximize2, Truck, X } from "lucide-react";
+import { Package, Warehouse, Users, TrendingUp, TrendingDown, Maximize2, Truck } from "lucide-react";
 import {
   listGrainBatches,
   listSilos,
@@ -22,13 +22,6 @@ import { type FlowGroup } from "@/components/grain-operations/SiloFlowDiagram";
 import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 type Tab = "batches" | "silos" | "buyers";
 
@@ -68,7 +61,6 @@ function GrainOperationsWorkspace() {
   const { tab, status } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTabState] = useState<Tab>(tab);
-  const [selectedSilo, setSelectedSilo] = useState<string | null>(null);
 
   // Fetch user role to determine which tabs to show
   const roleFn = useServerFn(getMyRole);
@@ -212,133 +204,76 @@ function GrainOperationsWorkspace() {
 
           {/* Key Metrics Panel */}
           <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
-            <div className="flex justify-between items-start mb-6 gap-4">
-              <div className="flex-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                  Silo Capacity
-                </p>
-                {Array.isArray(silos) && silos.length > 0 && (
-                  <div className="mt-2">
-                    <Select value={selectedSilo || ""} onValueChange={(val) => setSelectedSilo(val || null)}>
-                      <SelectTrigger className="w-full h-9 text-xs">
-                        <SelectValue placeholder="Select a silo to view capacity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">View All Silos</SelectItem>
-                        {silos.map((s: any) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.name} ({s.silo_id})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
+            <div className="flex justify-between items-start mb-6">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                Key Metrics
+              </p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-md">
+                Last 12 Cycles
+              </p>
             </div>
             
             <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
-              {selectedSilo ? (
-                // Show metrics for selected silo
-                (() => {
-                  const selectedSiloData = Array.isArray(silos) ? silos.find((s: any) => s.id === selectedSilo) : null;
-                  if (!selectedSiloData) return null;
-                  const cap = Number(selectedSiloData.capacity_kg ?? 0);
-                  const occ = Number(selectedSiloData.current_occupancy_kg ?? 0);
-                  const pct = cap ? Math.round((occ / cap) * 100) : 0;
-                  return (
-                    <div className="w-full">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center w-[45%] min-w-[120px]">
-                          <div className="truncate">
-                            <p className="text-xs font-medium text-muted-foreground">{selectedSiloData.name}</p>
-                            <p className="text-base font-black text-foreground truncate">{occ.toLocaleString()} / {cap.toLocaleString()} kg</p>
-                          </div>
-                        </div>
-                        <div className="flex-1 flex items-center justify-center px-2">
-                          <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                            <div 
-                              className={`absolute left-0 top-0 bottom-0 rounded-full transition-all duration-700 ${
-                                pct > 85 ? 'bg-red-500' : pct > 70 ? 'bg-amber-500' : 'bg-emerald-500'
-                              }`} 
-                              style={{ width: `${Math.min(100, pct)}%` }} 
-                            />
-                          </div>
-                        </div>
-                        <div className="text-right w-12 shrink-0">
-                          <span className="text-sm font-bold text-muted-foreground">
-                            {pct}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()
-              ) : (
-                // Show overall metrics
-                <>
-                  {/* Metric 1: Total Grain */}
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center w-[45%] min-w-[120px]">
-                      <div className="truncate">
-                        <p className="text-xs font-medium text-muted-foreground">Total Grain</p>
-                        <p className="text-base font-black text-foreground truncate">{totalKg.toLocaleString()} kg</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center px-2">
-                      <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                        {/* Placeholder static progress for demo */}
-                        <div className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full" style={{ width: '0%' }} />
-                      </div>
-                    </div>
-                    <div className="text-right w-12 shrink-0">
-                      <span className="text-sm font-bold text-muted-foreground">0.0%</span>
-                    </div>
+              {/* Metric 1: Total Grain */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Total Grain</p>
+                    <p className="text-base font-black text-foreground truncate">{totalKg.toLocaleString()} kg</p>
                   </div>
-                  
-                  {/* Divider */}
-                  <div className="h-px w-full bg-border" />
-
-                  {/* Metric 2: Active Silos */}
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center w-[45%] min-w-[120px]">
-                      <div className="truncate">
-                        <p className="text-xs font-medium text-muted-foreground">Active Silos</p>
-                        <p className="text-base font-black text-foreground truncate">{activeSilos} online</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center px-2">
-                      <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full" style={{ width: '0%' }} />
-                      </div>
-                    </div>
-                    <div className="text-right w-12 shrink-0">
-                      <span className="text-sm font-bold text-muted-foreground">0.0%</span>
-                    </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    {/* Placeholder static progress for demo */}
+                    <div className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full" style={{ width: '0%' }} />
                   </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
+              
+              {/* Divider */}
+              <div className="h-px w-full bg-border" />
 
-                  {/* Divider */}
-                  <div className="h-px w-full bg-border" />
-
-                  {/* Metric 3: Dispatched */}
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center w-[45%] min-w-[120px]">
-                      <div className="truncate">
-                        <p className="text-xs font-medium text-muted-foreground">Dispatched</p>
-                        <p className="text-base font-black text-foreground truncate">{dispatchedKg.toLocaleString()} kg</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center px-2">
-                      <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full" style={{ width: '0%' }} />
-                      </div>
-                    </div>
-                    <div className="text-right w-12 shrink-0">
-                      <span className="text-sm font-bold text-muted-foreground">0.0%</span>
-                    </div>
+              {/* Metric 2: Active Silos */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Active Silos</p>
+                    <p className="text-base font-black text-foreground truncate">{activeSilos} online</p>
                   </div>
-                </>
-              )}
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px w-full bg-border" />
+
+              {/* Metric 3: Dispatched */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Dispatched</p>
+                    <p className="text-base font-black text-foreground truncate">{dispatchedKg.toLocaleString()} kg</p>
+                  </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
