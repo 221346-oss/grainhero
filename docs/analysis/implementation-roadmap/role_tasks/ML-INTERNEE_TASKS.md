@@ -1,99 +1,285 @@
-# ML-INTERNEE Tasks
+# GrainHero — ML Internee Complete Guide & Tasks
+**Prepared by:** Atif Nazir (Owner) | **Last Updated:** 2026-08-17
+**Your Branch:** `Ai/Ml-Branch` | **Your Scope:** `ml-deploy/rag/`, `scripts/`, `ml-deploy/fast_retrain.py`
 
-### ✅ Task 1.3 — Clean Git: Remove ML Models from Tracking [ML-INTERNEE]
+---
 
-**Why:** `.onnx` and `.pkl` files are 11–20MB each. GitHub's hard limit is 100MB per file.
-They will live in Supabase Storage instead of Git.
+## 📌 SECTION 1: PROJECT STATE — WHERE WE ARE RIGHT NOW
 
+This document tells you exactly what has been built, what has been merged, what the current structure looks like, and what you need to do next.
+
+### What's Live in the Codebase Now
+
+```
+GrainHero_latest/
+├── ml-deploy/
+│   ├── app.py                  ← Owner-managed. Core FastAPI inference server.
+│   │                             DO NOT touch lines 1–100 (startup logic).
+│   │                             Add new endpoints ONLY at the bottom of the file.
+│   ├── hot_swap.py             ← Owner-managed. Polls Supabase for new models every 30s.
+│   ├── model_registry.py       ← Owner-managed. Manages 5 ONNX model slots.
+│   ├── safety_loop.py          ← Owner-managed. Sanity-checks new models before deploying.
+│   ├── fast_retrain.py         ← YOUR TERRITORY. Retraining pipeline (needs TimeSeriesSplit fix).
+│   ├── nightly_retrain.py      ← YOUR TERRITORY. Nightly retrain cron.
+│   ├── requirements.txt        ← Updated. joblib, shap, scikit-learn now enabled.
+│   ├── supabase_client.py      ← Shared. Do not refactor.
+│   ├── upload_initial_models.py← Owner-managed. Credentials fixed. Do NOT revert.
+│   ├── rag/
+│   │   ├── rag_agent.py        ← YOUR TERRITORY (built by you). Credentials fixed by owner.
+│   │   ├── rag_harvester.py    ← YOUR TERRITORY (upgraded by owner with Gemini filter).
+│   │   ├── rag_ingest.py       ← YOUR TERRITORY (upgraded by owner with batch embedding).
+│   │   ├── rag_schema.sql      ← DATABASE SCHEMA. Must be run in Supabase.
+│   │   └── rag_retrieval.py    ← YOUR TERRITORY.
+│   └── Dockerfile              ← Owner-managed. Do not touch.
+├── research papers/doc/        ← 26 valid grain-science papers (16 irrelevant ones deleted).
+├── src/
+│   ├── components/AIAssistant.tsx ← YOUR TERRITORY (you built this). NOT YET wired to backend.
+│   └── lib/                    ← Owner/fullstack territory. Do not refactor.
+└── docs/analysis/              ← Documentation. Keep updated.
+```
+
+---
+
+## 📌 SECTION 2: CHANGES MERGED — WHAT CAME FROM YOU vs. WHAT CAME FROM OWNER
+
+### ✅ YOUR Changes That Were KEPT (from your branch)
+
+| File | What You Did | Status |
+|---|---|---|
+| `ml-deploy/rag/rag_agent.py` | Built full agentic RAG with intent classification, Gemini, Supabase retrieval | ✅ KEPT |
+| `ml-deploy/rag/rag_harvester.py` | Built web harvesting from Semantic Scholar | ✅ KEPT (upgraded) |
+| `ml-deploy/rag/rag_ingest.py` | Built PDF ingestion pipeline | ✅ KEPT (upgraded) |
+| `ml-deploy/rag/rag_schema.sql` | Designed the Supabase schema for RAG | ✅ KEPT |
+| `ml-deploy/rag/rag_retrieval.py` | Built hybrid search (vector + keyword) | ✅ KEPT |
+| `ml-deploy/rag/test_rag_query.py` | Test script for RAG queries | ✅ KEPT |
+| `src/components/AIAssistant.tsx` | Built the frontend AI chat component | ✅ KEPT |
+| `ml-deploy/window_utils.py` | Sliding window utilities | ✅ KEPT |
+| `ml-deploy/test_windowing.py` | Tests for windowing | ✅ KEPT |
+| `ml-deploy/fast_retrain.py` | Retraining pipeline | ✅ KEPT |
+| `supabase/migrations/20260804_add_best_window_size.sql` | DB migration | ✅ KEPT |
+| `src/lib/alert-engine.functions.ts` | Alert engine frontend functions | ✅ KEPT |
+| Multiple `src/lib/*.functions.ts` | Various frontend lib updates | ✅ KEPT |
+
+### ⚠️ YOUR Changes That Were MODIFIED by Owner (Fixes Applied)
+
+| File | What Changed | Why |
+|---|---|---|
+| `ml-deploy/rag/rag_agent.py` | Hardcoded Supabase service key removed | **SECURITY** — keys must never be hardcoded |
+| `ml-deploy/rag/rag_harvester.py` | Added Gemini-based relevance filter | Prevents irrelevant papers from downloading |
+| `ml-deploy/rag/rag_ingest.py` | Added 500-word Gemini chunking + batch embedding | Better RAG quality, less token waste |
+| `ml-deploy/requirements.txt` | `sentence-transformers` disabled, `shap`+`joblib`+`scikit-learn` added | OOM prevention on Render; SHAP re-enabled |
+
+### ❌ YOUR Files That Were DISCARDED
+
+| File | Why |
+|---|---|
+| `again/` (entire Python venv) | Accidentally committed — virtual environments NEVER go in git |
+| `curl_models.json`, `curl_output.json`, `curl_test_dim.json` | Scratch test files — not part of production |
+| `gemini_test.txt` | Scratch test file |
+| `ml-deploy/rag/doc/*.pdf` (11 files) | Intern's RAG doc folder duplicated papers already in `research papers/doc/`. Owner's folder is the canonical location. |
+
+### ✅ OWNER Changes That Are Preserved (Do Not Revert)
+
+| What | Where | Note |
+|---|---|---|
+| Upgraded `_spoilage_trend()` with rate + projection | `app.py` L178–267 | Core proactive intelligence |
+| Added `DANGER_THRESHOLDS` dict (5 grains) | `app.py` L180–186 | FAO-sourced thresholds |
+| Added `_analyze_sensor_trend()` per sensor | `app.py` L188–216 | Rate-of-change engine |
+| SHAP re-enabled (joblib + shap imports) | `app.py` L55–57 | Fixed crash from commented-out imports |
+| Security fix: no hardcoded credentials | `rag_agent.py`, `upload_initial_models.py` | Critical security fix |
+| Removed `again/` venv from git | `.gitignore` + `git rm --cached` | Removed ~100MB of junk from repo |
+| Deleted 16 irrelevant PDFs | `research papers/doc/` | RAG quality fix |
+
+---
+
+## 📌 SECTION 3: HOW WE COLLABORATE (READ THIS CAREFULLY)
+
+### The Golden Rule: Role Separation
+
+| Zone | Owner (Atif) | You (ML Intern) |
+|---|---|---|
+| `ml-deploy/app.py` lines 1–100 | ✅ Owner only | ❌ Never touch |
+| `ml-deploy/app.py` new endpoints | ✅ Owner reviews | ✅ You can add at the BOTTOM only |
+| `ml-deploy/rag/` | Owner reviews | ✅ Your primary territory |
+| `ml-deploy/fast_retrain.py` | Owner reviews | ✅ Your primary territory |
+| `ml-deploy/scripts/` | Owner reviews | ✅ Your primary territory |
+| `src/lib/*.functions.ts` | ✅ Owner | ❌ Ask before changing |
+| `.gitignore`, `Dockerfile`, `render.yaml` | ✅ Owner only | ❌ Never touch |
+
+### Daily Git Workflow (Follow This Every Time)
+
+**BEFORE you start coding each day:**
 ```powershell
-cd C:\Users\Nexgen\Projects\GrainHero_latest
-
-# Remove from git tracking (files stay on disk, just removed from git history)
-git rm --cached ml-deploy/*.onnx
-git rm --cached ml-deploy/*.pkl
+cd C:\Users\YourName\Projects\GrainHero_latest
+git pull origin Ai/Ml-Branch --rebase
 ```
+This gets the owner's latest changes and stacks YOUR commits cleanly on top. Never skip this.
 
-Open `.gitignore` and add at the bottom:
-```
-# ML Model binaries - stored in Supabase Storage, not Git
-ml-deploy/*.onnx
-ml-deploy/*.pkl
-ml-deploy/*.onnx.bak
-```
-
-Commit and push:
+**When you commit your work:**
 ```powershell
-git add .gitignore
-git commit -m "chore: remove ML binaries from git tracking"
-git push
+git add ml-deploy/rag/rag_agent.py     # Only stage YOUR files
+git add ml-deploy/fast_retrain.py      # Stage what you changed
+git commit -m "feat(rag): add /chat endpoint to app.py"
+git push origin Ai/Ml-Branch
 ```
 
-**Verify:** Go to GitHub repo → `ml-deploy/` folder. The `.onnx` files should be gone.
+**NEVER DO:**
+```powershell
+git push -f              # NEVER force push — you will destroy Lovable history
+git add .                # NEVER do this — you will stage AI_CHAT_LOG.md and other local files
+git checkout -b new-branch  # Don't create new branches without asking owner
+```
 
+### Why AI_CHAT_LOG.md Stays Local
 
-</details>
+Each team member has their own `AI_CHAT_LOG.md` on their local machine. This is intentional:
+- **Owner** has context about business strategy, Render, and IoT.
+- **You** have context about your ML experiments.
+- **If we merged them** into one file, every pull would cause conflicts.
 
+The `.gitignore` already blocks it from being pushed. **Do not remove it from `.gitignore`.**
 
+### Why We Are NOT Merging to `main` Yet
 
-### 🟢 Task 2.3E — Create Research Intelligence Table [ML-INTERNEE]
+The `main` branch is connected to Lovable (production). We will only merge when:
+1. The pilot phase checklist is 100% complete.
+2. ONNX models are uploaded to Supabase Storage.
+3. ML service is deployed and confirmed live on Render.
+4. At least one ESP32 is sending live sensor data.
 
-**What this does:** Prepares Supabase to store scraped research papers and AI models.
+Until then, **all work stays on `Ai/Ml-Branch`.**
+
+---
+
+## 📌 SECTION 4: TASKS (Priority Order)
+
+---
+
+### 🔴 TASK 1 — Apply RAG Schema to Supabase (DO THIS FIRST)
+
+Nothing in the RAG pipeline works until the database tables exist.
 
 **Steps:**
-Run this in Supabase SQL Editor:
-```sql
-CREATE TABLE IF NOT EXISTS research_intelligence (
-  id BIGSERIAL PRIMARY KEY,
-  title TEXT NOT NULL,
-  source TEXT NOT NULL, -- arxiv, semantic_scholar, huggingface
-  url TEXT NOT NULL,
-  abstract TEXT NOT NULL,
-  embedding VECTOR(768),
-  category TEXT, -- ML Models, Datasets, Grain Science, IoT
-  relevance_score FLOAT,
-  admin_status TEXT DEFAULT 'unread', -- unread, reviewed, implemented
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS research_intel_embedding_idx ON research_intelligence USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+1. Go to [supabase.com/dashboard](https://supabase.com/dashboard) → GrainHero project.
+2. **SQL Editor** → **New Query**.
+3. Open `ml-deploy/rag/rag_schema.sql`, copy ALL contents, paste and click **Run**.
+4. Verify in **Table Editor** that you see:
+   - `rag_knowledge_base`
+   - `rag_ingestion_log`
+   - `rag_chat_sessions`
+
+**✅ Done when:** All 3 tables appear in the Supabase Table Editor.
+
+---
+
+### 🔴 TASK 2 — Ingest Research Papers Into RAG, Then Delete Raw PDFs
+
+The 26 grain-science PDFs in `research papers/doc/` need to be chunked and embedded into Supabase. After that, the raw PDF files should be deleted from the repo (we keep the knowledge, not the files).
+
+**Step 1 — Create a `.env` file if you don't have one:**
+```
+# ml-deploy/.env
+SUPABASE_URL=https://frfgmbgzildtfchtmchr.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<get from owner>
+GEMINI_API_KEY=<get from owner>
+DEFAULT_TENANT_ID=8f58c2d3-e610-4540-bc99-c946b3659b51
 ```
 
+**Step 2 — Run the ingestor:**
+```powershell
+cd C:\Users\YourName\Projects\GrainHero_latest
+pip install pymupdf supabase httpx python-dotenv  # if not already installed
+python ml-deploy/rag/rag_ingest.py --dir "research papers/doc" --category "research_paper" --tenant-id 8f58c2d3-e610-4540-bc99-c946b3659b51
+```
 
+**Step 3 — Verify in Supabase:**
+- Table Editor → `rag_knowledge_base` → should have 200+ rows (each PDF = many 500-word chunks).
 
-### 🟢 Task 2.3F — Write Research Intel Scraper (`research_intel_scraper.py`) [ML-INTERNEE]
+**Step 4 — Delete the raw PDF files:**
+```powershell
+Remove-Item "research papers\doc\*.pdf" -Force
+git add "research papers/"
+git commit -m "chore: ingest PDFs into RAG, delete raw files to save repo space"
+git push origin Ai/Ml-Branch
+```
 
-**What this does:** A Python script that hits the APIs for arxiv, Semantic Scholar, and HuggingFace, looking for keywords like "grain storage IoT", "edge AI time-series", "ONNX microcontroller", etc. It uses Gemini to create embeddings and pushes them to the `research_intelligence` table.
+**✅ Done when:** 200+ rows in `rag_knowledge_base` AND no `.pdf` files left in `research papers/doc/`.
 
+---
 
+### 🔴 TASK 3 — Add `/chat` HTTP Endpoint to `app.py`
 
-### 🟢 Task 2.3G — Automate Research Intel via GitHub Actions [ML-INTERNEE]
+The frontend `AIAssistant.tsx` calls an API endpoint that doesn't exist yet. You need to wire it to the RAG agent.
 
-**What this does:** Updates `.github/workflows/rag-update.yml` to run `research_intel_scraper.py` automatically every Monday at 8:00 AM PKT. Zero maintenance required.
-
-
-
-
-### 🟢 Task 2.4 — Trend History Injection Middleware [ML-INTERNEE]
-
-**Why this is the highest-priority task after Render deploy:** The existing `_spoilage_trend()` function accepts history arrays, but the firmware only sends the current reading — so trend analysis has been blind since day one. This task fixes that automatically: the ML service queries Supabase for the last 24 readings on every prediction call. **Zero firmware changes. Zero model changes.**
-
-**Time estimate:** 2–3 hours.
-
-**File: `ml-deploy/app.py`**
-
-#### Step 1: Add `silo_id` to `PredictionRequest` (around line 256)
+**Add these at the BOTTOM of `ml-deploy/app.py` (after line 860, before the last few lines):**
 
 ```python
-silo_id: Optional[str] = Field(None, description="Silo ID — auto-fetches last 24 sensor readings from Supabase for trend analysis")
+# ─────────────────────────────────────────────────────────────────────────────
+# /chat — RAG AI Assistant endpoint
+# Add your imports at the TOP of the file if not already present:
+#   import uuid as _uuid
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
+    query:      str   = Field(..., description="User's question in plain English")
+    session_id: Optional[str] = Field(None, description="UUID for conversation memory — omit for new session")
+    tenant_id:  Optional[str] = Field(None, description="Tenant UUID for data isolation")
+
+class ChatResponse(BaseModel):
+    answer:     str
+    session_id: str
+
+
+@app.post("/chat", response_model=ChatResponse,
+          summary="GrainHero AI Assistant — RAG-powered grain science Q&A")
+async def chat_endpoint(req: ChatRequest):
+    """
+    Routes user questions to the GrainHero RAG agent.
+    Answers are grounded in research papers and live sensor data.
+    Pass session_id on follow-up questions to maintain conversation memory.
+    """
+    import uuid as _uuid
+    session_id = req.session_id or str(_uuid.uuid4())
+    tenant_id  = req.tenant_id  or os.environ.get("DEFAULT_TENANT_ID", "")
+    try:
+        agent  = GrainHeroAgent(tenant_id=tenant_id, session_id=session_id)
+        answer = agent.run(req.query)
+        return ChatResponse(answer=answer, session_id=session_id)
+    except Exception as exc:
+        logger.error("RAG chat failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"AI assistant error: {str(exc)}")
 ```
 
-#### Step 2: Add the history-fetch helper (add after `_fetch_rainfall()`, around line 407)
+**Test in Swagger UI (`http://localhost:8001/docs`):**
+```json
+POST /chat
+{
+  "query": "What humidity level is dangerous for wheat?",
+  "session_id": "test-001"
+}
+```
+Expected: A detailed answer citing FAO wheat humidity thresholds (≤65% RH).
 
+**✅ Done when:** `/chat` appears in Swagger and returns a factual grain-science answer.
+
+---
+
+### 🟠 TASK 4 — Add `silo_id` + History Auto-Injection to `/predict`
+
+Without this, `spoilage_trend` always returns "insufficient_data" because there's no history.
+
+**Step 1 — Add `silo_id` to `PredictionRequest` (find the class around line 320):**
+```python
+silo_id: Optional[str] = Field(
+    None,
+    description="Silo UUID — if provided, auto-fetches last 24 readings from Supabase"
+)
+```
+
+**Step 2 — Add this helper function (add it just before `_bootstrap_local_models`):**
 ```python
 async def _fetch_sensor_history(silo_id: str, limit: int = 24) -> dict:
-    """
-    Fetch the last `limit` sensor readings for a silo from Supabase.
-    Returns arrays ordered oldest → newest, ready for trend analysis.
-    """
+    """Fetch last N sensor readings from Supabase for a given silo."""
     from supabase_client import get_supabase_client
     try:
         client = get_supabase_client()
@@ -107,19 +293,16 @@ async def _fetch_sensor_history(silo_id: str, limit: int = 24) -> dict:
         )
         rows = sorted(resp.data, key=lambda x: x["recorded_at"])  # oldest → newest
         return {
-            "temperature_history": [r["temperature"]    for r in rows],
-            "humidity_history":    [r["humidity"]       for r in rows],
-            "moisture_history":    [r["grain_moisture"] for r in rows],
+            "temperature_history": [r["temperature"]             for r in rows],
+            "humidity_history":    [r["humidity"]                for r in rows],
+            "moisture_history":    [r.get("grain_moisture", 0.0) for r in rows],
         }
     except Exception as exc:
         logger.warning("History fetch failed for silo '%s': %s", silo_id, exc)
         return {"temperature_history": [], "humidity_history": [], "moisture_history": []}
 ```
 
-#### Step 3: Enrich the `predict` endpoint (around line 504)
-
-At the top of the `predict` function, before `_run_inference`, add:
-
+**Step 3 — In the `/predict` endpoint, add before inference:**
 ```python
 # Auto-inject history from Supabase if silo_id provided and arrays not manually passed
 if req.silo_id and not req.temperature_history:
@@ -129,169 +312,30 @@ if req.silo_id and not req.temperature_history:
     req.moisture_history    = history["moisture_history"]
 ```
 
-#### Step 4: Confirm Supabase table structure
+**✅ Done when:** Calling `/predict` with only a `silo_id` returns `spoilage_trend` with actual `rate_per_hour` values (not `"insufficient_data"`).
 
-The `sensor_readings` table must have these columns (should already exist from `supabase_client.py` logging):
-```sql
-silo_id        TEXT
-temperature    FLOAT
-humidity       FLOAT
-grain_moisture FLOAT
-recorded_at    TIMESTAMPTZ
-```
-If the table uses different column names, adjust the `.select()` call to match.
+---
 
-#### Step 5: Verify
+### 🟠 TASK 5 — Add Lightweight `/trend` Endpoint
 
-1. Ensure Supabase has at least 3 rows in `sensor_readings` for a known silo.
-2. Call `POST /predict` with `"silo_id": "<your-silo-uuid>"` and no history arrays.
-3. The `spoilage_trend` in the response should now show trend values (not all `"insufficient_data"`).
+This is a cheap polling endpoint the frontend calls every 5 minutes to check sensor trajectories.
 
-**✅ Task 2.4 Complete when:** A `/predict` request with only `silo_id` (no history arrays) returns `spoilage_trend` with non-trivial trend values reflecting the last 24 Supabase readings.
-
-
-
-### 🟢 Task 2.5 — Upgrade Spoilage Trend Engine: Rate + Projection [ML-INTERNEE]
-
-**Why:** The current `_spoilage_trend()` only says *direction* (rising/stable/falling). This upgrade adds:
-- `rate_per_hour` — how fast each sensor is changing
-- `projected_hours_to_danger` — estimated time until the safe threshold is crossed
-- Grain-specific danger thresholds (not hardcoded universals)
-- A lightweight `/trend` endpoint for fast 5-minute polling without ONNX inference
-
-This is what makes the dashboard say: *"Danger in ~8 hours. Intervene now."* — the core of our predictive mandate.
-
-**Time estimate:** 3–4 hours.
-
-**File: `ml-deploy/app.py`**
-
-#### Step 1: Add grain-specific danger thresholds (add immediately before `_spoilage_trend`, around line 162)
-
-```python
-# FAO/IRRI-based safe upper limits per grain type
-DANGER_THRESHOLDS = {
-    "rice":    {"temperature": 25.0, "humidity": 70.0, "moisture": 14.0},
-    "wheat":   {"temperature": 20.0, "humidity": 65.0, "moisture": 13.0},
-    "maize":   {"temperature": 25.0, "humidity": 70.0, "moisture": 14.0},
-    "sorghum": {"temperature": 28.0, "humidity": 70.0, "moisture": 13.0},
-    "barley":  {"temperature": 20.0, "humidity": 65.0, "moisture": 13.0},
-}
-
-def _analyze_sensor_trend(history: List[float], danger_threshold: float) -> dict:
-    """Rate-of-change + projection for a single sensor stream."""
-    if len(history) < 3:
-        return {
-            "trend": "insufficient_data",
-            "rate_per_hour": 0.0,
-            "current_value": round(history[-1], 2) if history else 0.0,
-            "ema": round(history[-1], 2) if history else 0.0,
-            "projected_hours_to_danger": None,
-        }
-    alpha, ema = 0.4, history[0]
-    for v in history[1:]:
-        ema = alpha * v + (1 - alpha) * ema
-    recent = history[-6:] if len(history) >= 6 else history
-    rate   = (recent[-1] - recent[0]) / max(len(recent) - 1, 1)
-    direction = "rising" if rate > 0.1 else ("falling" if rate < -0.1 else "stable")
-    current = history[-1]
-    hours_to_danger = None
-    if rate > 0 and current < danger_threshold:
-        hours_to_danger = round((danger_threshold - current) / rate, 1)
-    elif current >= danger_threshold:
-        hours_to_danger = 0.0  # already at or past danger
-    return {
-        "trend": direction,
-        "rate_per_hour": round(rate, 3),
-        "current_value": round(current, 2),
-        "ema": round(ema, 2),
-        "projected_hours_to_danger": hours_to_danger,
-    }
-```
-
-#### Step 2: Replace `_spoilage_trend()` entirely (lines 162–187 in current app.py)
-
-```python
-def _spoilage_trend(
-    temp_h: List[float],
-    hum_h:  List[float],
-    mc_h:   List[float],
-    grain_type: str = "wheat",
-) -> dict:
-    """
-    Full trend analysis: direction + rate + projection.
-    Core of GrainHero's predictive spoilage prevention mandate.
-    """
-    th = DANGER_THRESHOLDS.get(grain_type, DANGER_THRESHOLDS["wheat"])
-    t  = _analyze_sensor_trend(temp_h, th["temperature"])
-    h  = _analyze_sensor_trend(hum_h,  th["humidity"])
-    m  = _analyze_sensor_trend(mc_h,   th["moisture"])
-
-    bads        = sum(x["trend"] == "rising" for x in [t, h, m])
-    projections = [x["projected_hours_to_danger"] for x in [t, h, m]
-                   if x["projected_hours_to_danger"] is not None]
-    min_hours   = round(min(projections), 1) if projections else None
-
-    if bads >= 2 and min_hours is not None and min_hours <= 6:
-        urgency = "CRITICAL"
-        msg = f"🚨 {bads} sensors rising fast. Danger in ~{min_hours}h. START AERATION NOW."
-    elif bads >= 2:
-        urgency = "WORSENING"
-        msg = f"⚠️ {bads} sensors rising. Danger in ~{min_hours}h. Prepare intervention."
-    elif bads == 1:
-        urgency = "CAUTION"
-        msg = "📈 One sensor rising. Monitor closely. Check aeration."
-    else:
-        urgency = "STABLE"
-        msg = "✅ All conditions stable."
-
-    return {
-        "temperature_analysis":     t,
-        "humidity_analysis":        h,
-        "moisture_analysis":        m,
-        "overall_trend":            urgency,
-        "trend_alert":              bads >= 2,
-        "earliest_danger_in_hours": min_hours,
-        "urgency":                  urgency,
-        "action_message":           msg,
-        # Legacy backward-compat fields (keep for existing frontend consumers)
-        "temperature_trend":        t["trend"],
-        "humidity_trend":           h["trend"],
-        "moisture_trend":           m["trend"],
-        "trend_message":            msg,
-    }
-```
-
-#### Step 3: Update the `_run_inference` call to pass `grain_type`
-
-In `_run_inference` (around line 475), change:
-```python
-# BEFORE:
-spoilage_trend = _spoilage_trend(
-    req.temperature_history, req.humidity_history, req.moisture_history
-),
-# AFTER:
-spoilage_trend = _spoilage_trend(
-    req.temperature_history, req.humidity_history, req.moisture_history,
-    grain_type=req.grain_type,  # ← ADD THIS
-),
-```
-
-#### Step 4: Add the lightweight `/trend` endpoint (add before `/model-info` route)
+**Add at the BOTTOM of `app.py` (same area as `/chat`):**
 
 ```python
 class TrendRequest(BaseModel):
-    grain_type:          str           = Field("wheat")
+    grain_type:          str         = Field("wheat")
     silo_id:             Optional[str] = None
-    temperature_history: List[float]   = Field(default_factory=list)
-    humidity_history:    List[float]   = Field(default_factory=list)
-    moisture_history:    List[float]   = Field(default_factory=list)
+    temperature_history: List[float] = Field(default_factory=list)
+    humidity_history:    List[float] = Field(default_factory=list)
+    moisture_history:    List[float] = Field(default_factory=list)
 
 
-@app.post("/trend", summary="Trend-only analysis — no ONNX inference (< 5ms, call every 5 min)")
+@app.post("/trend", summary="Trend-only analysis — no ONNX inference (<5ms)")
 async def trend_only(req: TrendRequest):
     """
     Lightweight proactive monitoring endpoint.
-    Skips ONNX entirely. Use for frequent polling (every 5 minutes).
+    Skips ONNX entirely. Use for frequent dashboard polling (every 5 minutes).
     Returns: rate_per_hour, urgency, projected_hours_to_danger per sensor.
     """
     temp_h, hum_h, mc_h = req.temperature_history, req.humidity_history, req.moisture_history
@@ -303,9 +347,7 @@ async def trend_only(req: TrendRequest):
     return _spoilage_trend(temp_h, hum_h, mc_h, grain_type=req.grain_type)
 ```
 
-#### Step 5: Verify via Swagger UI at `/docs`
-
-Test with a rising scenario (wheat approaching danger thresholds):
+**Test in Swagger:**
 ```json
 POST /trend
 {
@@ -315,568 +357,127 @@ POST /trend
   "moisture_history":    [12.0, 12.2, 12.4, 12.6, 12.8, 13.0]
 }
 ```
-Expected response:
-```json
-{
-  "urgency": "WORSENING",
-  "earliest_danger_in_hours": 0.2,
-  "action_message": "⚠️ 2 sensors rising. Danger in ~0.2h. Prepare intervention.",
-  "temperature_analysis": { "rate_per_hour": 0.64, "projected_hours_to_danger": 0.3 },
-  "humidity_analysis":    { "rate_per_hour": 1.0,  "projected_hours_to_danger": 0.0 }
-}
-```
+Expected: `"urgency": "WORSENING"`, `"earliest_danger_in_hours": <1.0`
 
-**✅ Task 2.5 Complete when:** `/trend` returns `rate_per_hour` and `projected_hours_to_danger` per sensor. The `/predict` response also carries the richer trend data with `urgency` and `action_message`.
+**✅ Done when:** `/trend` returns `rate_per_hour` and `projected_hours_to_danger` for each sensor.
 
+---
 
+### 🟠 TASK 6 — Create GitHub Actions for RAG Auto-Refresh
 
-### 🟢 Task 2.3 — Build the RAG Pipeline [ML-INTERNEE]
+The RAG knowledge base should update itself every Sunday automatically.
 
-**What this does:** Connects the AI assistant to real grain science research papers via pgvector.
-When users ask "why is my grain risky?", the AI cites actual published science.
-
-#### Step A: Enable pgvector in Supabase
-1. Supabase Dashboard → **SQL Editor** → **New Query**.
-2. Paste and run:
-
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE IF NOT EXISTS research_embeddings (
-  id          BIGSERIAL PRIMARY KEY,
-  title       TEXT NOT NULL,
-  source_url  TEXT,
-  chunk_text  TEXT NOT NULL,
-  embedding   VECTOR(768),
-  created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS research_embeddings_embedding_idx
-  ON research_embeddings
-  USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
-```
-
-Click **Run**. Confirm: `Success. No rows returned.`
-
-#### Step B: Create `scripts/source_papers.py`
-
-```python
-import os, httpx
-from supabase import create_client
-
-supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
-GOOGLE_API_KEY = os.environ["GOOGLE_API_KEY"]
-
-def fetch_papers(query, limit=20):
-    r = httpx.get("https://api.semanticscholar.org/graph/v1/paper/search",
-                  params={"query": query, "limit": limit, "fields": "title,abstract,url"}, timeout=30)
-    return r.json().get("data", [])
-
-def chunk_text(text, size=500):
-    words = text.split()
-    return [" ".join(words[i:i+size]) for i in range(0, len(words), size)]
-
-def get_embedding(text):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={GOOGLE_API_KEY}"
-    r = httpx.post(url, json={"model": "models/text-embedding-004",
-                               "content": {"parts": [{"text": text}]}}, timeout=30)
-    return r.json()["embedding"]["values"]
-
-for query in ["grain storage spoilage", "aflatoxin wheat humidity", "post harvest loss Pakistan"]:
-    for paper in fetch_papers(query):
-        text = paper.get("abstract") or ""
-        if len(text) < 100:
-            continue
-        for chunk in chunk_text(text):
-            supabase.table("research_embeddings").insert({
-                "title": paper.get("title", "Unknown"),
-                "source_url": paper.get("url", ""),
-                "chunk_text": chunk,
-                "embedding": get_embedding(chunk)
-            }).execute()
-            print(f"Inserted: {paper.get('title', 'Unknown')[:60]}")
-```
-
-#### Step C: Create `.github/workflows/rag-update.yml`
+**Create this file:** `.github/workflows/rag-update.yml`
 
 ```yaml
-name: RAG Research Paper Update
+name: Weekly RAG Knowledge Base Refresh
 on:
   schedule:
-    - cron: '0 2 * * 0'  # Every Sunday at 2 AM UTC
-  workflow_dispatch:
+    - cron: '0 3 * * 0'   # Every Sunday at 3 AM UTC = 8 AM Pakistan time
+  workflow_dispatch:        # Also allows manual trigger from GitHub Actions tab
+
 jobs:
-  update-rag:
+  refresh-rag:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
-      - run: pip install supabase httpx
-      - run: python scripts/source_papers.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install httpx supabase pymupdf python-dotenv
+
+      - name: Run RAG Harvester
+        run: python ml-deploy/rag/rag_harvester.py --ingest --limit 3
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          GEMINI_API_KEY:            ${{ secrets.GOOGLE_API_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          DEFAULT_TENANT_ID:         ${{ secrets.DEFAULT_TENANT_ID }}
 ```
 
-#### Step D: Seed the Database Manually (First Time)
-```powershell
-cd C:\Users\Nexgen\Projects\GrainHero_latest
-pip install supabase httpx
-python scripts/source_papers.py
-```
+**Verify:**
+1. GitHub repo → **Actions** tab → find "Weekly RAG Knowledge Base Refresh".
+2. Click **Run workflow** → watch the logs.
+3. Check Supabase `rag_knowledge_base` for new rows.
 
-Verify in **Supabase → Table Editor → research_embeddings**. Expect 50–100+ rows.
+**✅ Done when:** The GitHub Action runs without errors and adds rows to `rag_knowledge_base`.
 
+---
 
+### 🟠 TASK 7 — Fix `TimeSeriesSplit` in `fast_retrain.py`
 
-### 🟢 Task 3.1 — Expand ActivityLog Enums & LoggingService [ML-INTERNEE]
+Using random train/test split on time-series data causes data leakage (future data bleeds into training).
 
-**File: `models/ActivityLog.js`** — add to the `action` enum:
-```javascript
-'insurance_policy_renewed', 'insurance_policy_cancelled', 'insurance_policy_deleted',
-'insurance_claim_reviewed', 'insurance_claim_approved', 'insurance_claim_rejected',
-'insurance_claim_payment_processed', 'insurance_claim_document_uploaded',
-'insurance_claim_escalated', 'insurance_claim_closed',
-'silo_created', 'silo_updated', 'silo_deleted',
-'sensor_configured', 'sensor_calibrated',
-'user_created', 'user_updated', 'user_deleted', 'user_role_changed',
-'subscription_created', 'subscription_renewed', 'subscription_expired', 'subscription_cancelled',
-'threshold_updated', 'actuator_triggered',
-'alert_acknowledged', 'alert_resolved', 'alert_escalated',
-'report_exported', 'data_exported'
-```
-
-Add to `category` enum:
-```javascript
-'silo', 'sensor', 'user', 'subscription', 'threshold', 'actuator', 'alert', 'export'
-```
-
-Add to `entity_type` enum:
-```javascript
-'Silo', 'SensorDevice', 'Tenant', 'Subscription', 'Threshold', 'Actuator', 'GrainAlert'
-```
-
-**File: `services/loggingService.js`** — add static helpers:
-```javascript
-static async logInsurancePolicyCreated(user, policy, ip) { ... }
-static async logInsurancePolicyRenewed(user, policy, ip) { ... }
-static async logInsuranceClaimApproved(user, claim, amount, ip) { ... }
-static async logInsuranceClaimRejected(user, claim, reason, ip) { ... }
-static async logInsuranceClaimPaymentProcessed(user, claim, payment, ip) { ... }
-static async logAlertAcknowledged(user, alert, ip) { ... }
-static async logAlertResolved(user, alert, ip) { ... }
-static async logAlertEscalated(user, alert, escalatedTo, ip) { ... }
-static async logSubscriptionEvent(user, event, tenantId, ip) { ... }
-static async logUserManagement(user, action, targetUser, ip) { ... }
-```
-
-
-
-### 🟢 Task 3.2 — Build the AlertEngine Service [ML-INTERNEE]
-
-**File to create: `services/alertEngine.js`**
-
-This service is called by LoggingService on every log entry.
-It checks if the action matches any alert rule, and if so, creates a `GrainAlert` record.
-
-**Alert Trigger Table:**
-
-| Trigger | Priority | Roles Notified |
-|---|---|---|
-| Batch deleted | 🔴 Critical | Admin, Super Admin |
-| Batch quantity modified | 🟠 High | Admin, Manager |
-| Spoilage detected (critical) | 🔴 Critical | Admin, Manager |
-| Insurance claim filed | 🟠 High | Super Admin |
-| Insurance claim approved | 🟡 Medium | Admin, Manager |
-| Insurance claim rejected | 🟠 High | Admin, Manager |
-| Policy expiring in 30 days | 🟠 High | Admin |
-| Policy expiring in 7 days | 🔴 Critical | Admin, Super Admin |
-| Subscription expiring in 7 days | 🔴 Critical | Admin |
-| Subscription expired | 🔴 Critical | Admin, Super Admin |
-| Payment overdue > 30 days | 🟠 High | Admin |
-| Sensor offline > 1 hour | 🟠 High | Technician, Manager |
-| Batch ML risk score > 80% | 🔴 Critical | Admin, Manager |
-
-**Cron-based scheduled checks in this service:**
-- `checkSubscriptionExpirations()` — runs daily at midnight
-- `checkInsuranceRenewals()` — runs daily
-- `checkBatchQualityDegradation()` — runs daily
-- `checkSensorOffline()` — runs every hour
-
-
-
-### 🟢 Task 3.2.5 — Trend-Based Alert Triggers in AlertEngine [ML-INTERNEE]
-
-**Why:** AlertEngine (Task 3.2) fires on events like "spoilage detected" or "sensor offline". This task adds an entirely new category: **trajectory-based pre-spoilage alerts** that fire when conditions are *heading toward* danger — not when they arrive. This is what makes GrainHero proactive, not reactive.
-
-**Dependency:** Complete Task 2.5 first. This task consumes the `urgency` and `earliest_danger_in_hours` fields from the upgraded `_spoilage_trend()` output.
-
-**Time estimate:** 2–3 hours.
-
-**File: `services/alertEngine.js`**
-
-#### Step 1: Add `evaluateTrend()` method to the AlertEngine class
-
-```javascript
-/**
- * Called after every ML prediction that returns spoilage_trend data.
- * Fires GrainAlert records BEFORE spoilage occurs, based on trajectory.
- */
-static async evaluateTrend(siloId, tenantId, trendResult) {
-  const { urgency, earliest_danger_in_hours, action_message } = trendResult;
-
-  if (urgency === 'CRITICAL') {
-    await AlertEngine.createAlert({
-      silo_id:              siloId,
-      tenant_id:            tenantId,
-      type:                 'spoilage_trend',
-      priority:             'critical',
-      title:                '🚨 Spoilage Trend: Critical — Immediate Action Required',
-      message:              action_message,
-      metadata:             { urgency, earliest_danger_in_hours, trend: trendResult },
-      auto_trigger_actuator: 'aeration',  // signal aeration system immediately
-    });
-
-  } else if (urgency === 'WORSENING') {
-    await AlertEngine.createAlert({
-      silo_id:   siloId,
-      tenant_id: tenantId,
-      type:      'spoilage_trend',
-      priority:  'high',
-      title:     '⚠️ Spoilage Trend: Worsening — Prepare Intervention',
-      message:   action_message,
-      metadata:  { urgency, earliest_danger_in_hours, trend: trendResult },
-    });
-
-  } else if (urgency === 'CAUTION') {
-    // Suppress duplicate caution alerts — max 1 per 4 hours per silo
-    const recent = await AlertEngine.findRecentTrendAlert(siloId, 240);
-    if (!recent) {
-      await AlertEngine.createAlert({
-        silo_id:   siloId,
-        tenant_id: tenantId,
-        type:      'spoilage_trend',
-        priority:  'medium',
-        title:     '📈 Spoilage Trend: Caution — Monitor Closely',
-        message:   action_message,
-        metadata:  { urgency, trend: trendResult },
-      });
-    }
-  }
-  // STABLE → no alert
-}
-
-/** Deduplication helper — find an unresolved trend alert within N minutes. */
-static async findRecentTrendAlert(siloId, withinMinutes = 60) {
-  const since = new Date(Date.now() - withinMinutes * 60 * 1000);
-  return await GrainAlert.findOne({
-    silo_id:    siloId,
-    type:       'spoilage_trend',
-    created_at: { $gte: since },
-    status:     { $ne: 'resolved' },
-  });
-}
-```
-
-#### Step 2: Wire into the backend ML prediction call
-
-In whichever backend service/route calls the ML `/predict` endpoint, add after receiving the response:
-
-```javascript
-const mlResponse = await callMLService(predictionPayload);
-
-// Proactive trend evaluation — fires alert BEFORE spoilage
-if (mlResponse.spoilage_trend) {
-  await AlertEngine.evaluateTrend(
-    silo.id,
-    silo.tenant_id,
-    mlResponse.spoilage_trend
-  );
-}
-```
-
-#### Step 3: Expand the Alert Trigger Table (add to Task 3.2 table)
-
-| Trigger | Priority | Roles Notified |
-|---|---|---|
-| Spoilage trend CRITICAL (danger ≤ 6h) | 🔴 Critical + auto-aeration | Admin, Manager, Technician |
-| Spoilage trend WORSENING (2+ sensors rising) | 🟠 High | Admin, Manager |
-| Spoilage trend CAUTION (1 sensor rising) | 🟡 Medium (deduplicated, max 1/4hr/silo) | Manager, Technician |
-
-#### Step 4: Verify
-
-1. Call `POST /predict` with rising history arrays and a known `silo_id`.
-2. Check `GrainAlert` collection in MongoDB.
-3. A document with `type: 'spoilage_trend'` and `priority: 'high'` or `'critical'` must appear.
-
-**✅ Task 3.2.5 Complete when:** A test prediction with rising temperature + humidity history automatically creates a `GrainAlert` of type `spoilage_trend` in the database, with no manual intervention.
-
-
-
-### 🟢 Task 3.3 — Add Missing API Endpoints [ML-INTERNEE]
-
-**File: `routes/insurance.js`** — add 9 missing endpoints:
-
-```javascript
-POST   /claims/:id/review          // Super admin starts investigation
-PUT    /claims/:id/status           // Approve, reject, or close a claim
-POST   /claims/:id/documents        // Upload supporting documents
-PUT    /claims/:id/investigation    // Update investigation findings
-PUT    /claims/:id/assessment       // Update damage assessment and settlement
-POST   /claims/:id/payment          // Record payment processing
-POST   /claims/:id/notes            // Add internal notes / communication log
-DELETE /policies/:id                // Soft-delete a policy
-PUT    /policies/:id/renew          // Renew an expired policy
-```
-
-**File: `routes/alerts.js`** — add 3 missing endpoints:
-
-```javascript
-POST   /grain-alerts/:id/acknowledge  // Mark alert as seen
-POST   /grain-alerts/:id/resolve       // Mark alert as resolved
-POST   /grain-alerts/:id/escalate      // Escalate to a higher role
-```
-
-**Each endpoint MUST:**
-1. Validate caller role using existing auth middleware.
-2. Perform the database operation.
-3. Call `LoggingService` to create an audit log entry.
-4. Call `AlertEngine.createAlert()` if the action warrants a new alert.
-5. Return structured JSON: `{ success: true, data: updatedEntity }`.
-
-
-
-### 🟢 Task 4.1 — Install Shadcn UI Components [ML-INTERNEE]
-
-Run in the **frontend** project directory:
-```powershell
-npx shadcn-ui@latest add dialog
-npx shadcn-ui@latest add badge
-npx shadcn-ui@latest add tabs
-npx shadcn-ui@latest add card
-npx shadcn-ui@latest add table
-npx shadcn-ui@latest add scroll-area
-npx shadcn-ui@latest add select
-npx shadcn-ui@latest add textarea
-npx shadcn-ui@latest add separator
-```
-
-
-
-### 🟢 Task 4.2 — Insurance Claim Stepper Modal [ML-INTERNEE]
-
-**File:** `src/components/insurance/ClaimDetailModal.tsx`
-
-Build a 7-step visual progress indicator:
-```
-Filed → Under Review → Investigation → Assessment → Decision → Payment → Closed
-```
-
-Visual design spec:
-- Completed steps: filled blue circle with a white checkmark.
-- Current step: blue circle with an animated CSS pulse ring.
-- Future steps: grey empty circle.
-- Connecting lines: blue when done, grey when upcoming.
-
-Role-based content:
-- **Super Admin** sees action forms at the current step (investigation, assessment, payment, rejection).
-- **Admin / Manager** sees read-only status with a timestamped history of all actions.
-
-
-
-### 🟢 Task 4.3 — Activity Logs Visual Timeline [ML-INTERNEE]
-
-**File:** `src/pages/ActivityLogsPage.tsx`
-
-1. Add a toggle at the top: **List View | Timeline View**.
-2. In Timeline View, render a vertical grey line on the left side.
-   Each log is a node with a severity-colored dot:
-   - 🔴 Red = Critical
-   - 🟠 Orange = High
-   - 🟡 Yellow = Medium
-   - 🟢 Green = Normal/Info
-3. Each node shows: timestamp, actor name, action description.
-   Click to expand and show full metadata.
-4. Role-aware filters:
-   - Technician: batch and spoilage logs only
-   - Manager: all grain-related logs
-   - Admin: everything for their tenant
-   - Super Admin: all tenants + tenant selector dropdown at top
-
-
-
-### 🟢 Task 4.4 — Alert Management Center [ML-INTERNEE]
-
-**File:** `src/pages/AlertsPage.tsx`
-
-**Top row:** 4 KPI Cards (clickable to filter):
-```
-[🔴 CRITICAL: 3]  [🟠 HIGH: 7]  [🟡 MEDIUM: 12]  [🔵 LOW: 4]
-```
-
-**Alert feed** — each card shows:
-- Colored left border (red/orange/yellow/blue)
-- Priority badge
-- Source icon (🌡️ sensor | 🤖 AI | 📈 trend | 🛡️ insurance | 📦 batch | 💰 payment | 🔑 subscription | ⚙️ system)
-- Title and message
-- Time since triggered (e.g., `3 minutes ago`)
-- Quick action buttons:
-  - Active → `Acknowledge` button
-  - Acknowledged → `Mark Resolved` button
-
-**Trend Alert Card (special design — type: `spoilage_trend`):**
-Trend alerts are visually distinct because they predict future risk, not current state.
-- Left border: animated orange→red gradient (pulsing when CRITICAL)
-- **Urgency badge**: `CRITICAL` / `WORSENING` / `CAUTION` with color fill
-- **Danger countdown chip**: `⏱️ ~8h to threshold` — shown prominently below the title
-- **Per-sensor sparkline row**: three mini trend arrows (↑ ↓ →) with rate label:
-  e.g., `🌡️ +0.6°C/hr  💧 +1.2%/hr  🌾 +0.1%/hr`
-- **Action button for CRITICAL**: `⚡ Start Aeration Now` (calls actuator endpoint directly)
-- **Action button for WORSENING**: `👁️ Monitor` (opens side panel, no auto-action)
-
-**Side panel** (opens on alert click):
-- Full alert details and the trigger condition
-- Action history (who acknowledged, when, who resolved)
-- Escalation chain (if escalated)
-- Linked entity with a click-to-navigate link (e.g., `View Batch WB-001-2026`)
-- **For trend alerts:** Per-sensor breakdown table showing `current_value`, `rate_per_hour`, `projected_hours_to_danger`
-
-
-
-### 🟢 Task 4.5 — Sidebar Live Badge Counts [ML-INTERNEE]
-
-**File:** `src/components/sidebar.tsx`
-
-- **Activity Logs** nav item: grey badge with unread log count.
-- **Grain Alerts** nav item: red badge with unresolved alert count. Pulses when 1+ CRITICAL alert is unresolved.
-- **Insurance** nav item: badge with pending claims count.
-
-**Add these 3 lightweight backend endpoints:**
-```javascript
-GET /grain-alerts/unread-count       -> { count: 3 }
-GET /activity-logs/unread-count      -> { count: 47 }
-GET /insurance/claims/pending-count  -> { count: 2 }
-```
-
-
-
-### 🟢 Task 5.1 — "Mark Outcome" Validation Button [ML-INTERNEE]
-
-**File:** `src/pages/GrainBatchDetailPage.tsx`
-
-When a batch is dispatched/completed, show a mandatory validation panel:
-```tsx
-<div className="mt-8 p-4 bg-gray-50 rounded-lg border">
-  <h3 className="font-bold mb-2">Final Quality Validation (Required)</h3>
-  <p className="text-sm text-gray-600 mb-4">
-    Log the actual state of this grain to improve AI accuracy.
-  </p>
-  <div className="flex gap-4">
-    <Button className="bg-green-600" onClick={() => markOutcome('safe')}>
-      ✅ Sold Safe
-    </Button>
-    <Button className="bg-red-600" onClick={() => markOutcome('spoiled')}>
-      ❌ Found Spoiled
-    </Button>
-  </div>
-</div>
-```
-
-Writes to `validation_status` column in `grain_batches`. Builds real ground-truth training data.
-
-
-
-### 🟢 Task 5.2 — Implement TimeSeriesSplit [ML-INTERNEE]
-
-**File:** `ml-deploy/fast_retrain.py`
-
+**Find in `ml-deploy/fast_retrain.py`:**
 ```python
-# BEFORE (wrong - allows data leakage):
+# REPLACE THIS:
 from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# AFTER (correct for time-series data):
+# WITH THIS:
 from sklearn.model_selection import TimeSeriesSplit
 tscv = TimeSeriesSplit(n_splits=5)
-for train_index, test_index in tscv.split(X):
-    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-    y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+for train_idx, test_idx in tscv.split(X):
+    X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+    y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+# After the loop, X_train/X_test hold the last (most recent) fold — use these for eval
 ```
 
+**✅ Done when:** No `train_test_split` call remains in `fast_retrain.py`.
 
+---
 
-### 🟢 Task 5.3 — Build Sliding Window Dataset Generator [ML-INTERNEE]
+### 🟡 TASK 8 — Wire `AIAssistant.tsx` to the `/chat` Backend
 
-**File:** `scripts/generate_sliding_window.py`
+After Task 3 adds `/chat` to `app.py`, wire the frontend component to call it.
 
-Converts flat sensor rows into 24-hour rolling sequence blocks.
-Mandatory prep before any Mamba/Transformer upgrade.
+**In `src/components/AIAssistant.tsx`, find the `sendMessage` or `handleSubmit` function and ensure it calls:**
 
-```python
-import pandas as pd, numpy as np
+```typescript
+const ML_SERVICE_URL = import.meta.env.VITE_ML_SERVICE_URL ?? 'https://grainhero-ml-service.onrender.com';
 
-FEATURE_COLS = ['temperature', 'humidity', 'storage_days', 'airflow',
-                'dew_point', 'ambient_light', 'pest_presence', 'grain_moisture', 'rainfall']
-
-def create_sequences(df: pd.DataFrame, window_size: int = 24):
-    sequences, labels = [], []
-    for i in range(len(df) - window_size):
-        seq = df.iloc[i : i + window_size][FEATURE_COLS].values
-        label = df.iloc[i + window_size]['spoilage_label']
-        sequences.append(seq)
-        labels.append(label)
-    return np.array(sequences), np.array(labels)
+const response = await fetch(`${ML_SERVICE_URL}/chat`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    query: userMessage,
+    session_id: sessionId,              // maintain session across messages
+    tenant_id: currentUser?.tenant_id,  // pass tenant for data isolation
+  }),
+});
+const data = await response.json();
+setSessionId(data.session_id);  // persist session_id in state for follow-up messages
+setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
 ```
 
+**✅ Done when:** Typing a question in the AI Assistant chat box returns a grain-science answer from the backend.
 
+---
 
-### 🟢 Task 8.1 — Train Mamba Sequence Model [ML-INTERNEE]
-**What this does:** After 3+ months of real data is collected, write `scripts/train_mamba.py` to train a Mamba architecture on the sliding window dataset. Export it to ONNX format.
+## 📌 SECTION 5: DEFINITION OF DONE (FOR ALL TASKS)
 
+Before pushing ANY code:
 
+1. **Test locally:** `uvicorn app:app --port 8001` — must reach `Application startup complete.` with NO errors.
+2. **Check Swagger:** Open `http://localhost:8001/docs` — verify your endpoint appears and returns correct data.
+3. **No secrets in code:** Run `git diff` before committing. If you see any `eyJ...` or `sk-...` strings, stop and remove them.
+4. **Pull before push:** `git pull origin Ai/Ml-Branch --rebase` — do this immediately before `git push`.
+5. **Commit message format:** `feat(rag): add /chat endpoint` or `fix(retrain): replace train_test_split with TimeSeriesSplit`.
+6. **Never use `git push -f`** — this will break Lovable and the entire project history.
 
-### 🟢 Task 8.2 — A/B Test Mamba vs XGBoost [ML-INTERNEE]
-**What this does:** Upload the `mamba_v1.onnx` to Supabase Storage. Render hot-swaps it in. Monitor the early warning rate and false positive rate for 2 weeks compared to the XGBoost baseline. If Mamba wins, it becomes the permanent default.
+---
 
+## 📌 SECTION 6: WHO TO CONTACT FOR WHAT
 
-## FINAL MASTER CHECKLISTS
-
-### 🔴 OWNER Checklist
-
-- [ ] **0.3** Set up EMQX Serverless (Mumbai). Add credentials to firmware. Confirm live data in MQTTX.
-- [ ] **0.4** Test OTA flashing locally via Python HTTP server. Confirm ESP32 flashes itself.
-- [ ] **1.1** Create private `firmware-updates` bucket in Supabase with correct policies.
-- [ ] **1.2** Add 3 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_API_KEY`.
-- [ ] **2.1** Run `upload_initial_models.py` — push all 5 ONNX models to Supabase Storage.
-- [ ] **2.2** Deploy ML service to Render (Docker). Confirm Swagger UI is live. Add URL to frontend env.
-- [ ] **PILOT** Flash ESP32 boards. Install at flour mill. Confirm live data in dashboard.
-
-### 🟢 INTERNEE Checklist
-
-- [x] **0.1** WiFiManager integrated into firmware. ~~DONE~~.
-- [ ] **0.2** Verify `computePestMoldRisk()` output in Serial Monitor. Confirm `pest_presence` is in MQTT payload.
-- [ ] **1.3** Run `git rm --cached` on `.onnx`/`.pkl` files. Add to `.gitignore`. Push.
-- [ ] **2.3A** Enable pgvector in Supabase SQL Editor. Create `research_embeddings` table + ivfflat index.
-- [ ] **2.3B** Write `scripts/source_papers.py` (Semantic Scholar + Gemini embedding pipeline).
-- [ ] **2.3C** Create `.github/workflows/rag-update.yml` for weekly auto-refresh.
-- [ ] **2.3D** Run `source_papers.py` manually once. Verify 50+ rows in Supabase.
-- [ ] **2.4** Add `silo_id` to `PredictionRequest`. Write `_fetch_sensor_history()`. Enrich `/predict` endpoint to auto-pull last 24 Supabase readings. Verify `spoilage_trend` shows real historical context.
-- [ ] **2.5** Add `DANGER_THRESHOLDS` dict + `_analyze_sensor_trend()`. Replace `_spoilage_trend()` with rate+projection version. Update `_run_inference` to pass `grain_type`. Add `/trend` endpoint. Test with rising-sensor JSON fixture in Swagger `/docs`.
-- [ ] **3.1** Expand `ActivityLog.js` enums. Add helper methods to `loggingService.js`.
-- [ ] **3.2** Create `services/alertEngine.js` with full trigger table + scheduled cron checks.
-- [ ] **3.2.5** Add `evaluateTrend()` + `findRecentTrendAlert()` to `alertEngine.js`. Wire into ML prediction pipeline call. Add 3 trend trigger rows to trigger table. Verify `GrainAlert` with `type: 'spoilage_trend'` is created on rising-trend test.
-- [ ] **3.3** Add 9 missing insurance endpoints + 3 missing alert endpoints to backend routes.
-- [ ] **4.1** Install Shadcn UI components via CLI.
-- [ ] **4.2** Build Insurance Claim Stepper modal (7 steps, role-aware action panels).
-- [ ] **4.3** Build Activity Logs vertical timeline (severity colors, role-aware filters).
-- [ ] **4.4** Build Alert Management Center: KPI cards, alert feed, side-panel detail. Include 📈 trend source icon. Implement Trend Alert Card with urgency badge, danger countdown chip, per-sensor sparkline row (`🌡️ +0.6°C/hr`), and ⚡ aeration quick-action button for CRITICAL trend alerts.
-- [ ] **4.5** Add live badge counts to sidebar nav. Add 3 count endpoints to backend.
-- [ ] **5.1** Add Mark Outcome buttons to Grain Batch Detail page.
-- [ ] **5.2** Replace random split with `TimeSeriesSplit` in `fast_retrain.py`.
-- [ ] **5.3** Write `scripts/generate_sliding_window.py` dataset prep script.
-
-
-
+| Question | Ask |
+|---|---|
+| Supabase credentials / env vars | Owner (Atif) |
+| Render deployment URL | Owner (Atif) |
+| Frontend changes outside `AIAssistant.tsx` | Ask owner first |
+| Changes to `app.py` core logic (lines 1–300) | Ask owner first |
+| RAG pipeline behavior, rag_agent.py | Your territory — proceed |
+| fast_retrain.py, scripts/ | Your territory — proceed |
