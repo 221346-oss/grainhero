@@ -7,16 +7,15 @@ import { motion } from "framer-motion";
 import { TeamSection } from "@/components/administration/TeamSection";
 import { SecuritySection } from "@/components/administration/SecuritySection";
 import { ActivityLogsSection } from "@/components/administration/ActivityLogsSection";
-import { FieldIncidentsSection } from "@/components/administration/FieldIncidentsSection";
 import { ReportsSection } from "@/components/administration/ReportsSection";
-import { Users, ShieldCheck, ClipboardList, Flag, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
+import { KeyMetricsPanel, type KeyMetricsStats } from "@/components/administration/KeyMetricsPanel";
+import { Users, ShieldCheck, ClipboardList, FileBarChart } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
-import { listFieldIncidents } from "@/lib/field-incidents.functions";
 
-type Tab = "team" | "security" | "activity" | "field" | "reports";
-const TAB_KEYS: Tab[] = ["team", "security", "activity", "field", "reports"];
+type Tab = "team" | "security" | "activity" | "reports";
+const TAB_KEYS: Tab[] = ["team", "security", "activity", "reports"];
 
 export const Route = createFileRoute("/_authenticated/administration")({
   // Lets other pages deep-link straight to a tab (e.g. the dashboard's
@@ -32,7 +31,6 @@ const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "team", label: "Team Management", icon: Users },
   { key: "security", label: "Security Center", icon: ShieldCheck },
   { key: "activity", label: "Activity Logs", icon: ClipboardList },
-  { key: "field", label: "Field Incidents", icon: Flag },
   { key: "reports", label: "Reports", icon: FileBarChart },
 ];
 
@@ -54,9 +52,9 @@ function AdministrationWorkspace() {
   const isSuperAdmin = role === "super_admin";
   const isAdmin = ["super_admin", "admin"].includes(role);
 
-  // Managers only see Activity Logs
+  // Managers only see Activity Logs and Reports
   const visibleTabs =
-    role === "manager" ? TABS.filter((t) => ["activity", "field", "reports"].includes(t.key)) : TABS;
+    role === "manager" ? TABS.filter((t) => ["activity", "reports"].includes(t.key)) : TABS;
 
   // Reset to activity tab if manager lands on a restricted tab
   useEffect(() => {
@@ -67,7 +65,6 @@ function AdministrationWorkspace() {
 
   const fetchMembers = useServerFn(listTeamMembers);
   const fetchSecurity = useServerFn(getSecurityOverview);
-  const fetchFieldIncidents = useServerFn(listFieldIncidents);
 
   const { data: members } = useQuery({
     queryKey: ["team-members"],
@@ -79,21 +76,15 @@ function AdministrationWorkspace() {
     queryFn: () => fetchSecurity(),
     enabled: isAdmin,
   });
-  const { data: fieldIncidentsData } = useQuery({
-    queryKey: ["field-incidents"],
-    queryFn: () => fetchFieldIncidents(),
-  });
 
   const memberList = (members ?? []) as any[];
   const pendingMembers = memberList.filter((m) => m.role === "pending").length;
   const securityEvents = security?.logs?.length ?? 0;
-  const fieldIncidentList = (fieldIncidentsData?.incidents ?? []) as any[];
 
   const counts = {
     team:     memberList.length,
     security: securityEvents,
     activity: 0,
-    field: fieldIncidentList.length,
     reports: 0,
   };
 
@@ -162,31 +153,7 @@ function AdministrationWorkspace() {
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-              Key Metrics
-            </p>
-            <div className="space-y-0 divide-y divide-border flex-1">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-center justify-between py-3">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
-                    <span className="text-muted-foreground/60">◇</span>
-                    <span className="truncate max-w-[120px]">{s.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-base font-mono">
-                      {s.value}
-                    </span>
-                    {s.up ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <KeyMetricsPanel stats={stats} />
         </div>
 
         {/* Tabbed Sections */}
@@ -235,7 +202,6 @@ function AdministrationWorkspace() {
             {activeTab === "team"     && <TeamSection />}
             {activeTab === "security" && <SecuritySection />}
             {activeTab === "activity" && <ActivityLogsSection />}
-            {activeTab === "field" && <FieldIncidentsSection />}
             {activeTab === "reports" && <ReportsSection />}
           </div>
         </div>

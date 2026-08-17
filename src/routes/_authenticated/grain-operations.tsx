@@ -7,14 +7,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ComponentType } from "react";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
-import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
+
 import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { PendingApprovalsSection } from "@/components/grain-operations/PendingApprovalsSection";
-import { Package, Warehouse, Building2, Users, TrendingUp, TrendingDown } from "lucide-react";
+import { Package, Warehouse, Users, TrendingUp, TrendingDown, Maximize2, Truck } from "lucide-react";
 import {
   listGrainBatches,
   listSilos,
-  listWarehouses,
   listBuyers,
 } from "@/lib/operations.functions";
 import { getMyRole } from "@/lib/roles.functions";
@@ -24,9 +23,9 @@ import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
-type Tab = "batches" | "silos" | "warehouses" | "buyers";
+type Tab = "batches" | "silos" | "buyers";
 
-const TAB_KEYS: Tab[] = ["batches", "silos", "warehouses", "buyers"];
+const TAB_KEYS: Tab[] = ["batches", "silos", "buyers"];
 
 // `status` is genuinely optional here (not just runtime-undefined) so every
 // other page that links to /grain-operations?tab=... without a status
@@ -55,7 +54,6 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
 const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "batches", label: "Grain Batches", icon: Package },
   { key: "silos", label: "Silos", icon: Warehouse },
-  { key: "warehouses", label: "Warehouses", icon: Building2 },
   { key: "buyers", label: "Buyers", icon: Users },
 ];
 
@@ -86,7 +84,6 @@ function GrainOperationsWorkspace() {
 
   const listBatchesFn = useServerFn(listGrainBatches);
   const listSilosFn = useServerFn(listSilos);
-  const listWarehousesFn = useServerFn(listWarehouses);
   const listBuyersFn = useServerFn(listBuyers);
   const listPendingApprovalsFn = useServerFn(listPendingApprovalBatches);
 
@@ -95,10 +92,6 @@ function GrainOperationsWorkspace() {
     queryFn: () => listBatchesFn(),
   });
   const { data: silos } = useQuery({ queryKey: ["silos"], queryFn: () => listSilosFn() });
-  const { data: warehouses } = useQuery({
-    queryKey: ["warehouses"],
-    queryFn: () => listWarehousesFn(),
-  });
   const { data: buyers } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyersFn() });
 
   // Fetch pending approvals for admins
@@ -115,7 +108,6 @@ function GrainOperationsWorkspace() {
   const counts = {
     batches: Array.isArray(batches) ? batches.length : 0,
     silos: Array.isArray(silos) ? silos.length : 0,
-    warehouses: Array.isArray(warehouses) ? warehouses.length : 0,
     buyers: Array.isArray(buyers) ? buyers.length : 0,
   };
 
@@ -176,7 +168,7 @@ function GrainOperationsWorkspace() {
             <VariableFontText text="Grain Operations" base={650} hover={900} staggerMs={20} />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage batches, silos, warehouses, and buyers from one workspace
+            Manage batches, silos, and buyers from one workspace
           </p>
         </div>
 
@@ -210,30 +202,78 @@ function GrainOperationsWorkspace() {
             </div>
           </div>
 
-          {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-              Key Metrics
-            </p>
-            <div className="space-y-0 divide-y divide-border flex-1">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
-                    <span className="text-muted-foreground/60">◇</span>
-                    <span className="truncate max-w-[120px]">{s.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-base font-mono">
-                      {s.value}
-                    </span>
-                    {s.up ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-rose-400" />
-                    ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
-                    )}
+          {/* Key Metrics Panel */}
+          <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+            <div className="flex justify-between items-start mb-6">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                Key Metrics
+              </p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-md">
+                Last 12 Cycles
+              </p>
+            </div>
+            
+            <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
+              {/* Metric 1: Total Grain */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Total Grain</p>
+                    <p className="text-base font-black text-foreground truncate">{totalKg.toLocaleString()} kg</p>
                   </div>
                 </div>
-              ))}
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    {/* Placeholder static progress for demo */}
+                    <div className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
+              
+              {/* Divider */}
+              <div className="h-px w-full bg-border" />
+
+              {/* Metric 2: Active Silos */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Active Silos</p>
+                    <p className="text-base font-black text-foreground truncate">{activeSilos} online</p>
+                  </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px w-full bg-border" />
+
+              {/* Metric 3: Dispatched */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center w-[45%] min-w-[120px]">
+                  <div className="truncate">
+                    <p className="text-xs font-medium text-muted-foreground">Dispatched</p>
+                    <p className="text-base font-black text-foreground truncate">{dispatchedKg.toLocaleString()} kg</p>
+                  </div>
+                </div>
+                <div className="flex-1 flex items-center justify-center px-2">
+                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+                <div className="text-right w-12 shrink-0">
+                  <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -285,7 +325,6 @@ function GrainOperationsWorkspace() {
           <div className="p-4 md:p-6">
             {activeTab === "batches" && <BatchesSection initialStatus={status} />}
             {activeTab === "silos" && <SilosSection />}
-            {activeTab === "warehouses" && <WarehousesSection />}
             {activeTab === "buyers" && <BuyersSection />}
           </div>
         </div>

@@ -282,6 +282,24 @@ export const reportIncident = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw error;
+
+    // Notify managers when technician reports an incident
+    try {
+      const { emitToRole } = await import("./notify");
+      const notifSeverity = data.priority === "critical" ? "warning" : "info";
+      await emitToRole(context.supabase, tenantAdminId, "manager", {
+        category: "ops",
+        severity: notifSeverity,
+        title: `New Incident Reported: ${data.title}`,
+        body: `A technician reported a ${data.priority} priority incident: "${data.title}" - ${data.message.slice(0, 100)}`,
+        link: "/monitoring",
+        entityType: "grain_alert",
+        entityId: (row as { id: string }).id,
+      });
+    } catch (e) {
+      console.warn("[reportIncident] Failed to emit notification to managers:", e);
+    }
+
     return { id: (row as { id: string }).id };
   });
 
@@ -336,6 +354,211 @@ export const escalateIncident = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---------- Monitoring Incident Comments/Discussion ----------
+
+export const listMonitoringIncidentComments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v) => z.object({ incident_id: z.string().uuid() }).parse(v))
+  .handler(async ({ data, context }) => {
+    const r = await role(context.supabase, context.userId);
+    requireAny(r, ["super_admin", "admin", "manager", "technician"]);
+
+    // Check if the caller can access this incident
+    const { data: incident } = await context.supabase
+      .from("grain_alerts")
+      .select("created_by, assigned_to, admin_id, source, recipient_id")
+      .eq("id", data.incident_id)
+      .maybeSingle();
+
+    if (!incident) {
+      throw new Error("Incident not found");
+    }
+
+    const inc = incident as { 
+      created_by: string | null; 
+      assigned_to: string | null; 
+      admin_id: string | null; 
+      source: string | null;
+      recipient_id: string | null;
+    };
+
+    // Role-based access control for monitoring incidents
+    let isParticipant = false;
+
+    if (inc.source === "field_incident") {
+      // Field incidents: only reporter and recipient can discuss
+      isParticipant = inc.created_by === context.userId || inc.recipient_id === context.userId;
+    } else {
+      // System incidents: reporter, assignee, and managers/admins can discuss
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      
+      const userTenantId = (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
+      
+      isParticipant = 
+        inc.created_by === context.userId ||
+        inc.assigned_to === context.userId ||
+        inc.admin_id === userTenantId ||
+        ["admin", "manager", "super_admin"].includes(r);
+    }
+
+    if (!isParticipant) {
+      return { comments: [], isParticipant: false };
+    }
+
+    // Try to select from grain_alert_comments table
+    const { data: comments, error } = await (context.supabase
+      .from("grain_alert_comments" as any) as any)
+      .select("id, incident_id, user_id, author_name, author_role, message, created_at")
+      .eq("incident_id", data.incident_id)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.warn("[listMonitoringIncidentComments] error fetching comments:", error.message);
+      return { comments: [], isParticipant: true };
+    }
+
+    return {
+      isParticipant: true,
+      comments: (comments ?? []) as Array<{
+        id: string;
+        incident_id: string;
+        user_id: string;
+        author_name: string;
+        author_role: string;
+        message: string;
+        created_at: string;
+      }>,
+    };
+  });
+
+export const addMonitoringIncidentComment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v) => z.object({
+    incident_id: z.string().uuid(),
+    message: z.string().min(1).max(2000),
+  }).parse(v))
+  .handler(async ({ data, context }) => {
+    const r = await role(context.supabase, context.userId);
+    requireAny(r, ["super_admin", "admin", "manager", "technician"]);
+
+    // Check participant access
+    const { data: incident } = await context.supabase
+      .from("grain_alerts")
+      .select("created_by, assigned_to, admin_id, source, recipient_id, status")
+      .eq("id", data.incident_id)
+      .maybeSingle();
+
+    if (!incident) {
+      throw new Error("Incident not found");
+    }
+
+    const inc = incident as { 
+      created_by: string | null; 
+      assigned_to: string | null; 
+      admin_id: string | null; 
+      source: string | null;
+      recipient_id: string | null;
+      status: string;
+    };
+
+    // Role-based access control
+    let isParticipant = false;
+
+    if (inc.source === "field_incident") {
+      // Field incidents: only reporter and recipient can discuss
+      isParticipant = inc.created_by === context.userId || inc.recipient_id === context.userId;
+    } else {
+      // System incidents: reporter, assignee, and managers/admins can discuss
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      
+      const userTenantId = (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
+      
+      isParticipant = 
+        inc.created_by === context.userId ||
+        inc.assigned_to === context.userId ||
+        inc.admin_id === userTenantId ||
+        ["admin", "manager", "super_admin"].includes(r);
+    }
+
+    if (!isParticipant) {
+      throw new Error("Not authorised to discuss this incident.");
+    }
+
+    if (inc.status === "resolved") {
+      throw new Error("Discussion is closed — this incident has been resolved.");
+    }
+
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("id, name, email, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const authorName = profile?.name || profile?.email || "User";
+    const tenantId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
+
+    const { error } = await (context.supabase.from("grain_alert_comments" as any) as any).insert({
+      incident_id: data.incident_id,
+      user_id: context.userId,
+      author_name: authorName,
+      author_role: r,
+      message: data.message.trim(),
+    });
+
+    if (error) throw new Error(error.message);
+
+    // Notify participants
+    try {
+      const { emitNotification } = await import("./notify");
+      
+      if (inc.source === "field_incident") {
+        // Notify the other participant in field incident
+        const recipientId = context.userId === inc.created_by ? inc.recipient_id : inc.created_by;
+        if (recipientId && recipientId !== context.userId) {
+          await emitNotification(context.supabase, {
+            recipientId,
+            tenantAdminId: tenantId,
+            category: "ops",
+            severity: "info",
+            title: `New Comment on Incident`,
+            body: `${authorName} (${r}): "${data.message.trim().slice(0, 100)}"`,
+            link: "/monitoring",
+            entityType: "grain_alert",
+            entityId: data.incident_id,
+          });
+        }
+      } else {
+        // For system incidents, notify assignee or reporter
+        const recipientId = context.userId === inc.created_by ? inc.assigned_to : inc.created_by;
+        if (recipientId && recipientId !== context.userId) {
+          await emitNotification(context.supabase, {
+            recipientId,
+            tenantAdminId: tenantId,
+            category: "ops",
+            severity: "info",
+            title: `New Comment on System Incident`,
+            body: `${authorName} (${r}): "${data.message.trim().slice(0, 100)}"`,
+            link: "/monitoring",
+            entityType: "grain_alert",
+            entityId: data.incident_id,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("[addMonitoringIncidentComment] Failed to emit notification:", e);
+    }
+
+    return { ok: true };
+  });
+
 // ---------- Reports ----------
 
 export const getReportsData = createServerFn({ method: "GET" })
@@ -363,4 +586,48 @@ export const getReportsData = createServerFn({ method: "GET" })
       invoices: invoices.data ?? [],
       silos: silos.data ?? [],
     };
+  });
+
+// ---------- Resolve/Dismiss Incidents ----------
+
+const updateIncidentStatusInput = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["resolved", "dismissed"]),
+});
+
+/** Manager: mark an incident as resolved or dismissed */
+export const updateIncidentStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => updateIncidentStatusInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const r = await role(context.supabase, context.userId);
+    requireAny(r, ["manager", "admin", "super_admin"]);
+
+    const patch: any = {
+      status: data.status,
+      resolved_at: new Date().toISOString(),
+      resolved_by: context.userId,
+    };
+
+    const { error } = await context.supabase
+      .from("grain_alerts")
+      .update(patch)
+      .eq("id", data.id);
+
+    if (error) throw error;
+
+    // Optional: Clear discussion history when incident is closed
+    // Uncomment if you want to clear comments when resolved/dismissed
+    /*
+    try {
+      await (context.supabase
+        .from("grain_alert_comments" as any) as any)
+        .delete()
+        .eq("incident_id", data.id);
+    } catch (e) {
+      console.warn("[updateIncidentStatus] Failed to clear discussion comments:", e);
+    }
+    */
+
+    return { ok: true };
   });

@@ -674,10 +674,10 @@ const AuthenticatedPlatformLogsRoute =
     path: '/platform/logs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPlatformMarketplaceHealthRoute =
-  AuthenticatedPlatformMarketplaceHealthRouteImport.update({
-    id: '/platform/marketplace-health',
-    path: '/platform/marketplace-health',
+const AuthenticatedPlatformMarketplaceSettingsRoute =
+  AuthenticatedPlatformMarketplaceSettingsRouteImport.update({
+    id: '/platform/marketplace-settings',
+    path: '/platform/marketplace-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlatformMarketplaceMobileRoute =
@@ -935,11 +935,11 @@ const AuthenticatedPlatformFinanceLedgerRoute =
     path: '/ledger',
     getParentRoute: () => AuthenticatedPlatformFinanceRoute,
   } as any)
-const AuthenticatedPlatformFinancePayoutsRoute =
-  AuthenticatedPlatformFinancePayoutsRouteImport.update({
-    id: '/payouts',
-    path: '/payouts',
-    getParentRoute: () => AuthenticatedPlatformFinanceRoute,
+const AuthenticatedPlatformTenantsAdminIdRoute =
+  AuthenticatedPlatformTenantsAdminIdRouteImport.update({
+    id: '/$adminId',
+    path: '/$adminId',
+    getParentRoute: () => AuthenticatedPlatformTenantsRoute,
   } as any)
 const AuthenticatedPlatformFinanceTaxRulesRoute =
   AuthenticatedPlatformFinanceTaxRulesRouteImport.update({
@@ -1434,14 +1434,6 @@ export interface FileRoutesByFullPath {
   '/platform/': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
-  '/manager/field-incidents/all': typeof AuthenticatedManagerFieldIncidentsAllRoute
-  '/manager/field-incidents/dismissed': typeof AuthenticatedManagerFieldIncidentsDismissedRoute
-  '/manager/field-incidents/incoming': typeof AuthenticatedManagerFieldIncidentsIncomingRoute
-  '/manager/field-incidents/resolved': typeof AuthenticatedManagerFieldIncidentsResolvedRoute
-  '/platform/field-incidents/all': typeof AuthenticatedPlatformFieldIncidentsAllRoute
-  '/platform/field-incidents/dismissed': typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
-  '/platform/field-incidents/incoming': typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
-  '/platform/field-incidents/resolved': typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1470,8 +1462,6 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
-  '/manager/field-incidents/': typeof AuthenticatedManagerFieldIncidentsIndexRoute
-  '/platform/field-incidents/': typeof AuthenticatedPlatformFieldIncidentsIndexRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
@@ -1628,14 +1618,6 @@ export interface FileRoutesByTo {
   '/platform': typeof AuthenticatedPlatformIndexRoute
   '/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
-  '/manager/field-incidents/all': typeof AuthenticatedManagerFieldIncidentsAllRoute
-  '/manager/field-incidents/dismissed': typeof AuthenticatedManagerFieldIncidentsDismissedRoute
-  '/manager/field-incidents/incoming': typeof AuthenticatedManagerFieldIncidentsIncomingRoute
-  '/manager/field-incidents/resolved': typeof AuthenticatedManagerFieldIncidentsResolvedRoute
-  '/platform/field-incidents/all': typeof AuthenticatedPlatformFieldIncidentsAllRoute
-  '/platform/field-incidents/dismissed': typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
-  '/platform/field-incidents/incoming': typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
-  '/platform/field-incidents/resolved': typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   '/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1664,8 +1646,6 @@ export interface FileRoutesByTo {
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
-  '/manager/field-incidents': typeof AuthenticatedManagerFieldIncidentsIndexRoute
-  '/platform/field-incidents': typeof AuthenticatedPlatformFieldIncidentsIndexRoute
   '/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
@@ -1826,14 +1806,6 @@ export interface FileRoutesById {
   '/_authenticated/platform/': typeof AuthenticatedPlatformIndexRoute
   '/_authenticated/buyer/orders/$orderId': typeof AuthenticatedBuyerOrdersOrderIdRoute
   '/_authenticated/insurance-policies/$policyId/documents': typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
-  '/_authenticated/manager/field-incidents/all': typeof AuthenticatedManagerFieldIncidentsAllRoute
-  '/_authenticated/manager/field-incidents/dismissed': typeof AuthenticatedManagerFieldIncidentsDismissedRoute
-  '/_authenticated/manager/field-incidents/incoming': typeof AuthenticatedManagerFieldIncidentsIncomingRoute
-  '/_authenticated/manager/field-incidents/resolved': typeof AuthenticatedManagerFieldIncidentsResolvedRoute
-  '/_authenticated/platform/field-incidents/all': typeof AuthenticatedPlatformFieldIncidentsAllRoute
-  '/_authenticated/platform/field-incidents/dismissed': typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
-  '/_authenticated/platform/field-incidents/incoming': typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
-  '/_authenticated/platform/field-incidents/resolved': typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   '/_authenticated/platform/finance/ledger': typeof AuthenticatedPlatformFinanceLedgerRoute
   '/_authenticated/platform/finance/payouts': typeof AuthenticatedPlatformFinancePayoutsRoute
   '/_authenticated/platform/finance/tax-rules': typeof AuthenticatedPlatformFinanceTaxRulesRoute
@@ -1862,8 +1834,6 @@ export interface FileRoutesById {
   '/api/public/v1/meta': typeof ApiPublicV1MetaRoute
   '/api/public/v1/status': typeof ApiPublicV1StatusRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
-  '/_authenticated/manager/field-incidents/': typeof AuthenticatedManagerFieldIncidentsIndexRoute
-  '/_authenticated/platform/field-incidents/': typeof AuthenticatedPlatformFieldIncidentsIndexRoute
   '/_authenticated/platform/insurance/claims/$claimId': typeof AuthenticatedPlatformInsuranceClaimsClaimIdRoute
   '/_authenticated/platform/orders/$orderId/audit': typeof AuthenticatedPlatformOrdersOrderIdAuditRoute
   '/api/public/v1/actions/ack-alert': typeof ApiPublicV1ActionsAckAlertRoute
@@ -2024,14 +1994,6 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/buyer/orders/$orderId'
     | '/insurance-policies/$policyId/documents'
-    | '/manager/field-incidents/all'
-    | '/manager/field-incidents/dismissed'
-    | '/manager/field-incidents/incoming'
-    | '/manager/field-incidents/resolved'
-    | '/platform/field-incidents/all'
-    | '/platform/field-incidents/dismissed'
-    | '/platform/field-incidents/incoming'
-    | '/platform/field-incidents/resolved'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
@@ -2060,8 +2022,6 @@ export interface FileRouteTypes {
     | '/api/public/v1/meta'
     | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
-    | '/manager/field-incidents/'
-    | '/platform/field-incidents/'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/v1/actions/ack-alert'
@@ -2218,14 +2178,6 @@ export interface FileRouteTypes {
     | '/platform'
     | '/buyer/orders/$orderId'
     | '/insurance-policies/$policyId/documents'
-    | '/manager/field-incidents/all'
-    | '/manager/field-incidents/dismissed'
-    | '/manager/field-incidents/incoming'
-    | '/manager/field-incidents/resolved'
-    | '/platform/field-incidents/all'
-    | '/platform/field-incidents/dismissed'
-    | '/platform/field-incidents/incoming'
-    | '/platform/field-incidents/resolved'
     | '/platform/finance/ledger'
     | '/platform/finance/payouts'
     | '/platform/finance/tax-rules'
@@ -2254,8 +2206,6 @@ export interface FileRouteTypes {
     | '/api/public/v1/meta'
     | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
-    | '/manager/field-incidents'
-    | '/platform/field-incidents'
     | '/platform/insurance/claims/$claimId'
     | '/platform/orders/$orderId/audit'
     | '/api/public/v1/actions/ack-alert'
@@ -2415,14 +2365,6 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/'
     | '/_authenticated/buyer/orders/$orderId'
     | '/_authenticated/insurance-policies/$policyId/documents'
-    | '/_authenticated/manager/field-incidents/all'
-    | '/_authenticated/manager/field-incidents/dismissed'
-    | '/_authenticated/manager/field-incidents/incoming'
-    | '/_authenticated/manager/field-incidents/resolved'
-    | '/_authenticated/platform/field-incidents/all'
-    | '/_authenticated/platform/field-incidents/dismissed'
-    | '/_authenticated/platform/field-incidents/incoming'
-    | '/_authenticated/platform/field-incidents/resolved'
     | '/_authenticated/platform/finance/ledger'
     | '/_authenticated/platform/finance/payouts'
     | '/_authenticated/platform/finance/tax-rules'
@@ -2451,8 +2393,6 @@ export interface FileRouteTypes {
     | '/api/public/v1/meta'
     | '/api/public/v1/status'
     | '/api/public/webhooks/stripe'
-    | '/_authenticated/manager/field-incidents/'
-    | '/_authenticated/platform/field-incidents/'
     | '/_authenticated/platform/insurance/claims/$claimId'
     | '/_authenticated/platform/orders/$orderId/audit'
     | '/api/public/v1/actions/ack-alert'
@@ -4169,19 +4109,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTechnicianInstallsRoute: typeof AuthenticatedTechnicianInstallsRouteWithChildren
   AuthenticatedPlatformIndexRoute: typeof AuthenticatedPlatformIndexRoute
   AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute: typeof AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute
-  AuthenticatedManagerFieldIncidentsAllRoute: typeof AuthenticatedManagerFieldIncidentsAllRoute
-  AuthenticatedManagerFieldIncidentsDismissedRoute: typeof AuthenticatedManagerFieldIncidentsDismissedRoute
-  AuthenticatedManagerFieldIncidentsIncomingRoute: typeof AuthenticatedManagerFieldIncidentsIncomingRoute
-  AuthenticatedManagerFieldIncidentsResolvedRoute: typeof AuthenticatedManagerFieldIncidentsResolvedRoute
-  AuthenticatedPlatformFieldIncidentsAllRoute: typeof AuthenticatedPlatformFieldIncidentsAllRoute
-  AuthenticatedPlatformFieldIncidentsDismissedRoute: typeof AuthenticatedPlatformFieldIncidentsDismissedRoute
-  AuthenticatedPlatformFieldIncidentsIncomingRoute: typeof AuthenticatedPlatformFieldIncidentsIncomingRoute
-  AuthenticatedPlatformFieldIncidentsResolvedRoute: typeof AuthenticatedPlatformFieldIncidentsResolvedRoute
   AuthenticatedPlatformLogisticsCarriersRoute: typeof AuthenticatedPlatformLogisticsCarriersRoute
   AuthenticatedPlatformLogisticsCommandCenterRoute: typeof AuthenticatedPlatformLogisticsCommandCenterRoute
   AuthenticatedPlatformLogisticsFleetRoute: typeof AuthenticatedPlatformLogisticsFleetRoute
-  AuthenticatedManagerFieldIncidentsIndexRoute: typeof AuthenticatedManagerFieldIncidentsIndexRoute
-  AuthenticatedPlatformFieldIncidentsIndexRoute: typeof AuthenticatedPlatformFieldIncidentsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -4291,32 +4221,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformIndexRoute: AuthenticatedPlatformIndexRoute,
   AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute:
     AuthenticatedInsurancePoliciesPolicyIdDocumentsRoute,
-  AuthenticatedManagerFieldIncidentsAllRoute:
-    AuthenticatedManagerFieldIncidentsAllRoute,
-  AuthenticatedManagerFieldIncidentsDismissedRoute:
-    AuthenticatedManagerFieldIncidentsDismissedRoute,
-  AuthenticatedManagerFieldIncidentsIncomingRoute:
-    AuthenticatedManagerFieldIncidentsIncomingRoute,
-  AuthenticatedManagerFieldIncidentsResolvedRoute:
-    AuthenticatedManagerFieldIncidentsResolvedRoute,
-  AuthenticatedPlatformFieldIncidentsAllRoute:
-    AuthenticatedPlatformFieldIncidentsAllRoute,
-  AuthenticatedPlatformFieldIncidentsDismissedRoute:
-    AuthenticatedPlatformFieldIncidentsDismissedRoute,
-  AuthenticatedPlatformFieldIncidentsIncomingRoute:
-    AuthenticatedPlatformFieldIncidentsIncomingRoute,
-  AuthenticatedPlatformFieldIncidentsResolvedRoute:
-    AuthenticatedPlatformFieldIncidentsResolvedRoute,
   AuthenticatedPlatformLogisticsCarriersRoute:
     AuthenticatedPlatformLogisticsCarriersRoute,
   AuthenticatedPlatformLogisticsCommandCenterRoute:
     AuthenticatedPlatformLogisticsCommandCenterRoute,
   AuthenticatedPlatformLogisticsFleetRoute:
     AuthenticatedPlatformLogisticsFleetRoute,
-  AuthenticatedManagerFieldIncidentsIndexRoute:
-    AuthenticatedManagerFieldIncidentsIndexRoute,
-  AuthenticatedPlatformFieldIncidentsIndexRoute:
-    AuthenticatedPlatformFieldIncidentsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
