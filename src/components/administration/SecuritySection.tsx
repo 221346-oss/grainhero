@@ -57,7 +57,7 @@ export function SecuritySection() {
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin"].includes(role);
 
-  const { data } = useQuery({
+  const { data, error: overviewError } = useQuery({
     queryKey: ["security-center"],
     queryFn: () => fnOverview(),
     enabled: allowed,
@@ -182,6 +182,11 @@ export function SecuritySection() {
         <Card>
           <CardHeader><CardTitle>User access</CardTitle><CardDescription>Roles and blocked accounts - manage user access</CardDescription></CardHeader>
           <CardContent className="p-0">
+            {overviewError && (
+              <div className="p-3 m-3 rounded-md bg-red-50 border border-red-200 text-xs text-red-700">
+                Couldn't load users: {(overviewError as Error).message}
+              </div>
+            )}
             <div className="divide-y max-h-[500px] overflow-y-auto">
               {users.map((u) => (
                 <div key={u.id} className="p-3 flex items-center justify-between text-sm gap-3">
