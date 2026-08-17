@@ -100,9 +100,8 @@ function VerifyOtpPage() {
     // destination right after OTP verification, one of them firing before
     // those side effects had a chance to run.
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user && event === "TOKEN_REFRESHED") {
-        navigate({ to: "/dashboard", replace: true });
-      }
+      // Do NOT navigate on any auth event - verify() handles all navigation
+      // This prevents double navigation/verification prompts
     });
 
     return () => {

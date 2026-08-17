@@ -298,12 +298,26 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   } as never)
                   .eq("id", hardwareOrderId);
 
-                console.log("🔍 [STRIPE WEBHOOK] Hardware order update result:", updateResult);
-                
-                if (updateResult.error) {
-                  console.error("❌ [STRIPE WEBHOOK] Hardware order update failed:", updateResult.error);
-                } else {
-                  console.log("✅ [STRIPE WEBHOOK] Hardware order updated successfully to status: new (paid)");
+                  const { data: orderAfter, error: updateError } = await supabaseAdmin
+                    .from("hardware_orders" as never)
+                    .update({
+                      status: "paid",
+                      stripe_customer_id: s.customer ?? null,
+                      stripe_subscription_id: s.subscription ?? null,
+                      stripe_payment_intent: s.payment_intent ?? null,
+                      ...(userId ? { admin_id: userId } : {}),
+                    } as never)
+                    .eq("id", hardwareOrderId)
+                    .select();
+
+                  if (updateError) {
+                    console.error("❌ [STRIPE WEBHOOK] Hardware order update FAILED:", updateError);
+                  } else {
+                    console.log("✅ [STRIPE WEBHOOK] Hardware order updated successfully");
+                    console.log("✅ [STRIPE WEBHOOK] Updated order data:", orderAfter);
+                  }
+                } catch (e) {
+                  console.error("❌ [STRIPE WEBHOOK] Exception while updating order:", e);
                 }
 
                 // Ensure the buyer has an active subscription row so revenue analytics
