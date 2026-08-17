@@ -287,17 +287,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10 && !hardwareOrderAlreadyFulfilled) {
                 console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
 
-                const updateResult = await supabaseAdmin
-                  .from("hardware_orders" as never)
-                  .update({
-                    status: "new",
-                    stripe_customer_id: s.customer ?? null,
-                    stripe_subscription_id: s.subscription ?? null,
-                    stripe_payment_intent: s.payment_intent ?? null,
-                    ...(userId ? { admin_id: userId } : {}),
-                  } as never)
-                  .eq("id", hardwareOrderId);
-
+                try {
                   const { data: orderAfter, error: updateError } = await supabaseAdmin
                     .from("hardware_orders" as never)
                     .update({
@@ -399,7 +389,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     const o = (order as Record<string, unknown> | null) ?? {};
                     
                     // Get the admin's email from profiles table
-                    const adminId = o.admin_id;
+                    const adminId = (o.admin_id as string | undefined) ?? null;
                     let adminEmail: string | null = null;
                     if (adminId) {
                       const { data: admin } = await supabaseAdmin
