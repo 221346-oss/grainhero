@@ -10,22 +10,27 @@ supabase>=2.5.0               # Supabase Python client (storage + DB)
 
 # ── Shared utilities ──────────────────────────────────────────────────────────
 numpy>=1.26.0
+python-dotenv>=1.0.0          # .env loading (MUST be before supabase/rag imports)
+joblib>=1.4.0                 # required for SHAP pkl loading
 # pandas>=2.2.0
-# joblib>=1.4.0
 # scipy>=1.13.0
 
+# ── SHAP explainability ────────────────────────────────────────────────────────
+shap>=0.45.0                  # SHAP values for model explainability
+scikit-learn>=1.4.0           # required by SHAP TreeExplainer + pkl VotingClassifier
+
 # ── ONNX export / retraining (Processes 2 & 3 only) ──────────────────────────
-# scikit-learn>=1.4.0
 # xgboost>=2.0.0
 # lightgbm>=4.3.0
 # skl2onnx>=1.17.0              # convert sklearn VotingClassifier → ONNX
 # onnxmltools>=1.12.0           # adapters for XGBoost/LightGBM → ONNX
 # optuna>=3.6.0                 # hyperparameter search (nightly_retrain.py only)
 # imbalanced-learn>=0.12.0
-# shap>=0.45.0                  # still used in retrain evaluation
 
 # ── RAG Pipeline (rag/ directory) ─────────────────────────────────────────────
 pymupdf>=1.24.0               # PDF parsing (fitz) — used by rag_ingest.py
-sentence-transformers>=3.0.0  # HuggingFace local embeddings (private/on-premise mode)
+# sentence-transformers>=3.0.0  # DISABLED on Render — OOM on free tier (needs ~2GB RAM)
+#                               # We use EMBEDDING_MODEL=gemini (default). Enable only for
+#                               # private/on-premise deployment with 4GB+ RAM.
 # Note: openai package not pinned here — use OPENAI_API_KEY + httpx (already listed above)
 #       If you prefer the official SDK: pip install openai>=1.35.0

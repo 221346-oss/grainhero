@@ -7,11 +7,13 @@ import httpx
 
 # These are used for the ONE-TIME initial upload only.
 # Passed as env vars: $env:SUPABASE_URL="..." ; python upload_initial_models.py
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://frfgmbgzildtfchtmchr.supabase.co")
-SUPABASE_KEY = os.environ.get(
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyZmdtYmd6aWxkdGZjaHRtY2hyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzY3ODg3MSwiZXhwIjoyMDkzMjU0ODcxfQ.e4xUbm3sXmKwUtYSvgS5GzxItpH3WE5O0JZoaSQdKQQ"
-)
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError(
+        "ERROR: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set as environment variables.\n"
+        "Run: $env:SUPABASE_URL='https://xxx.supabase.co' ; $env:SUPABASE_SERVICE_ROLE_KEY='eyJ...'"
+    )
 
 print(f"Connecting to: {SUPABASE_URL}")
 

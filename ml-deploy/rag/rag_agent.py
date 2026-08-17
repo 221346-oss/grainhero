@@ -43,12 +43,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger("rag_agent")
 
-# ── Credentials (hardcoded fallbacks for development) ─────────────────────────
-SUPABASE_URL     = os.getenv("SUPABASE_URL",     "https://frfgmbgzildtfchtmchr.supabase.co")
-SUPABASE_KEY     = os.getenv("SUPABASE_SERVICE_ROLE_KEY",
-                   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyZmdtYmd6aWxkdGZjaHRtY2hyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzY3ODg3MSwiZXhwIjoyMDkzMjU0ODcxfQ.e4xUbm3sXmKwUtYSvgS5GzxItpH3WE5O0JZoaSQdKQQ")
-GEMINI_API_KEY   = os.getenv("GEMINI_API_KEY",   "YOUR_GEMINI_API_KEY")
-DEFAULT_TENANT   = os.getenv("DEFAULT_TENANT_ID","8f58c2d3-e610-4540-bc99-c946b3659b51")
+# ── Credentials (env vars ONLY — no hardcoded fallbacks) ──────────────────────
+SUPABASE_URL     = os.getenv("SUPABASE_URL")
+SUPABASE_KEY     = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+GEMINI_API_KEY   = os.getenv("GEMINI_API_KEY",   "")
+DEFAULT_TENANT   = os.getenv("DEFAULT_TENANT_ID", "")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    logger.warning(
+        "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set. "
+        "RAG retrieval from Supabase will be disabled. "
+        "Set these in your .env file or Render environment variables."
+    )
 
 GEMINI_GEN_URL   = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -109,12 +115,13 @@ class IntentClassifier:
 # Tool: Knowledge Base Query
 # =============================================================================
 
-def tool_query_knowledge_base(query: str, tenant_id: str, top_k: int = 4) -> List[Dict]:
+def tool_query_knowledge_base(query: str, tenant_id: str, top_k: int = 4, retriever=None) -> List[Dict]:
     """Runs the full Hybrid Search + RRF + Re-ranking pipeline from Phase 3."""
     try:
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        from rag_retrieval import HybridRetriever
-        retriever = HybridRetriever()
+        if retriever is None:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from rag_retrieval import HybridRetriever
+            retriever = HybridRetriever()
         results = retriever.retrieve(query, tenant_id=tenant_id, top_k=top_k)
         return results
     except Exception as e:
@@ -126,13 +133,14 @@ def tool_query_knowledge_base(query: str, tenant_id: str, top_k: int = 4) -> Lis
 # Tool: Live Telemetry
 # =============================================================================
 
-def tool_get_live_telemetry(tenant_id: str, silo_name: Optional[str] = None) -> List[Dict]:
+def tool_get_live_telemetry(tenant_id: str, supabase: Client = None, silo_name: Optional[str] = None) -> List[Dict]:
     """
     Fetches the latest sensor readings from Supabase.
     Queries sensor_readings table for the most recent entries per silo.
     """
     try:
-        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        if supabase is None:
+            supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
         # Try sensor_readings first, then live_sensor_readings as fallback
         for table in ["sensor_readings", "live_sensor_readings"]:
@@ -161,10 +169,11 @@ def tool_get_live_telemetry(tenant_id: str, silo_name: Optional[str] = None) -> 
 # Tool: Actuator Status
 # =============================================================================
 
-def tool_get_actuator_status(tenant_id: str) -> List[Dict]:
+def tool_get_actuator_status(tenant_id: str, supabase: Client = None) -> List[Dict]:
     """Fetches current actuator (fan/valve) states from Supabase."""
     try:
-        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        if supabase is None:
+            supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
         for table in ["actuator_commands", "actuators", "actuator_states"]:
             try:
@@ -266,8 +275,15 @@ STRICT RULES YOU MUST FOLLOW:
 6. Keep responses concise and structured. Use bullet points for action items."""
 
 
-def build_prompt(query: str, context: str) -> List[Dict]:
+def build_prompt(query: str, context: str, history: List[Dict] = None) -> List[Dict]:
     """Builds the message list for the Gemini API."""
+    messages = [{"role": "user", "parts": [{"text": SYSTEM_PROMPT}]}]
+    
+    if history:
+        for msg in history:
+            role = "model" if msg.get("role") == "assistant" else "user"
+            messages.append({"role": role, "parts": [{"text": msg.get("content", "")}]})
+            
     user_message = f"""CONTEXT:
 {context}
 
@@ -276,9 +292,8 @@ USER QUERY:
 
 Please provide a precise, grounded operational response based solely on the context above."""
 
-    return [
-        {"role": "user", "parts": [{"text": SYSTEM_PROMPT + "\n\n" + user_message}]}
-    ]
+    messages.append({"role": "user", "parts": [{"text": user_message}]})
+    return messages
 
 
 # =============================================================================
@@ -364,14 +379,38 @@ def call_llm_with_failover(messages: List[Dict]) -> str:
 # =============================================================================
 
 class GrainHeroAgent:
-    def __init__(self, tenant_id: str = DEFAULT_TENANT):
+    def __init__(self, tenant_id: str = DEFAULT_TENANT, session_id: str = None):
         self.tenant_id  = tenant_id
+        self.session_id = session_id
         self.classifier = IntentClassifier()
+        self.supabase   = create_client(SUPABASE_URL, SUPABASE_KEY)
+        
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from rag_retrieval import HybridRetriever
+        self.retriever  = HybridRetriever(supabase=self.supabase)
+        
         logger.info("GrainHero Agent initialized. Tenant: %s", tenant_id)
 
     def run(self, query: str) -> str:
         """Full pipeline: intent -> tools -> context fusion -> LLM -> answer."""
         logger.info("Processing query: '%s'", query)
+
+        # Step 0: Fetch Conversation History
+        history = []
+        if self.session_id:
+            try:
+                res = self.supabase.table("rag_chat_sessions").select("role, content").eq("session_id", self.session_id).order("created_at", desc=False).limit(10).execute()
+                history = res.data
+                
+                # Save the new user query to DB
+                self.supabase.table("rag_chat_sessions").insert({
+                    "session_id": self.session_id,
+                    "tenant_id": self.tenant_id,
+                    "role": "user",
+                    "content": query
+                }).execute()
+            except Exception as e:
+                logger.error("Failed to fetch/save chat history: %s", e)
 
         # Step 1: Classify intent
         intent = self.classifier.classify(query)
@@ -383,24 +422,37 @@ class GrainHeroAgent:
 
         if intent["query_knowledge_base"]:
             logger.info("Executing tool: query_knowledge_base")
-            knowledge_chunks = tool_query_knowledge_base(query, self.tenant_id, top_k=4)
+            knowledge_chunks = tool_query_knowledge_base(query, self.tenant_id, top_k=4, retriever=self.retriever)
+            logger.info("Retrieved chunks: %s", [c.get('document_title') for c in knowledge_chunks])
 
         if intent["get_live_telemetry"]:
             logger.info("Executing tool: get_live_telemetry")
-            telemetry = tool_get_live_telemetry(self.tenant_id)
+            telemetry = tool_get_live_telemetry(self.tenant_id, supabase=self.supabase)
 
         if intent["get_actuator_status"] and telemetry:
             logger.info("Executing tool: get_actuator_status")
-            actuators = tool_get_actuator_status(self.tenant_id)
+            actuators = tool_get_actuator_status(self.tenant_id, supabase=self.supabase)
 
         # Step 3: Assemble context
         context = assemble_context(knowledge_chunks, telemetry, actuators)
 
         # Step 4: Build prompt
-        messages = build_prompt(query, context)
+        messages = build_prompt(query, context, history=history)
 
         # Step 5: Generate answer with failover
         answer = call_llm_with_failover(messages)
+
+        # Step 6: Save answer to history
+        if self.session_id and answer:
+            try:
+                self.supabase.table("rag_chat_sessions").insert({
+                    "session_id": self.session_id,
+                    "tenant_id": self.tenant_id,
+                    "role": "assistant",
+                    "content": answer
+                }).execute()
+            except Exception as e:
+                logger.error("Failed to save assistant answer to DB: %s", e)
 
         return answer
 

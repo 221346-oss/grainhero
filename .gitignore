@@ -1,4 +1,4 @@
-﻿# Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -84,6 +84,19 @@ ml-deploy/*.onnx.bak
 *.pkl
 *.onnx
 secrets.h
-# Local AI chat context - do not push
+# Local AI chat context - NEVER push to GitHub - each person keeps their own copy locally
 AI_CHAT_LOG.md
+CLAUDE_FULL_CONTEXT_DUMP.md
+CHANGES_AND_IMPLEMENTATION_SUMMARY.md
 
+# Python virtual environments - committed accidentally, must never be tracked
+again/
+venv/
+.venv/
+env/
+
+# Scratch/test files
+curl_models.json
+curl_output.json
+curl_test_dim.json
+gemini_test.txt

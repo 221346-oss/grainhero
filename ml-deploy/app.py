@@ -52,9 +52,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# import joblib
+import joblib
 import numpy as np
-# import shap
+import shap
 from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
@@ -107,15 +107,27 @@ def _load_pkl_for_shap(grain: str):
     Returns (model, encoder, explainer) or (None, None, None) if unavailable.
     """
     grain_l = grain.lower()
+    # Try grain-prefixed names first, then fall back to generic names
+    # NOTE: actual files on disk are named {grain}_label_encoder.pkl
+    # The VotingClassifier pkl is used ONLY for SHAP — ONNX handles inference.
     ensemble_path = ML_DIR / f"{grain_l}_ensemble_model.pkl"
     encoder_path  = ML_DIR / f"{grain_l}_label_encoder.pkl"
 
+    # Fallback: some grains may only have a generic ensemble_model.pkl
     if not ensemble_path.exists():
         ensemble_path = ML_DIR / "ensemble_model.pkl"
     if not encoder_path.exists():
         encoder_path = ML_DIR / "label_encoder.pkl"
 
+    # If still no ensemble pkl, try using the label_encoder pkl itself as a
+    # VotingClassifier proxy (intern may have named it differently)
+    if not ensemble_path.exists() and (ML_DIR / f"{grain_l}_label_encoder.pkl").exists():
+        # Last resort: use label encoder path as the model path to at least load
+        # The try/except below will handle graceful failure
+        ensemble_path = ML_DIR / f"{grain_l}_label_encoder.pkl"
+
     if not ensemble_path.exists():
+        logger.debug("No SHAP pkl found for '%s' — SHAP disabled for this grain.", grain_l)
         return None, None, None
 
     try:
