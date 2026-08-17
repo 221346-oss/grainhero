@@ -689,7 +689,7 @@ export function IncidentsSection() {
                       priority: active.isFieldIncident ? "field" : active.priority,
                       status: active.status,
                       message: active.message,
-                      triggered_at: active.triggered_at,
+                      triggered_at: active.triggered_at ?? undefined,
                       created_by: active.created_by,
                       assigned_to: active.assigned_to,
                       source: active.source,
