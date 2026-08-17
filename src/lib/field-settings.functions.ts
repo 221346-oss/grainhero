@@ -171,7 +171,7 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
     silo_id: z.string().uuid().nullable().optional(),
   }).parse(v))
   .handler(async ({ data, context }) => {
-    const { requireRole } = await import("./rbac.server");
+    const { requireRole, getEffectiveRole } = await import("./rbac.server");
     await requireRole(context.supabase, context.userId, ["admin", "manager", "technician", "super_admin"]);
 
     // Resolve tenant id via existing helper
@@ -185,17 +185,30 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
     const reporterName = data.reporter_name?.trim() || profile?.name || profile?.email;
 
     // Determine recipient_id based on target_role
+    // Note: Role is computed via RPC, so we fetch candidate users and check their role
     let recipientId: string | null = null;
     if (targetRole !== "admin") {
-      // Find a user with the target role in the same tenant
-      const { data: targetUsers } = await context.supabase
+      // Find users in the same tenant
+      const { data: tenantUsers } = await context.supabase
         .from("profiles")
         .select("id")
         .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
-        .eq("role", targetRole)
-        .limit(1)
-        .maybeSingle();
-      recipientId = targetUsers?.id ?? null;
+        .limit(10);
+      
+      // Check each user's role via RPC until we find a match
+      if (tenantUsers && tenantUsers.length > 0) {
+        for (const user of tenantUsers) {
+          try {
+            const role = await getEffectiveRole(context.supabase, user.id);
+            if (role === targetRole) {
+              recipientId = user.id;
+              break;
+            }
+          } catch (e) {
+            console.warn(`[reportMobileFieldIncident] Failed to get role for user ${user.id}:`, e);
+          }
+        }
+      }
     }
 
     // Insert into grain_alerts with source='field_incident' to be visible in monitoring page
