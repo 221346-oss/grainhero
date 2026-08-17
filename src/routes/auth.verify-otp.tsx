@@ -13,11 +13,14 @@ import { claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
 const PENDING_SESSION_KEY = "grainhero.pendingCheckoutSession";
 
 const search = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
 });
 
 export const Route = createFileRoute("/auth/verify-otp")({
   validateSearch: (s) => search.parse(s),
+  beforeLoad: ({ search: s }) => {
+    if (!s.email) throw redirect({ to: "/auth/login" });
+  },
   head: () => ({
     meta: [
       { title: "Enter your code — GrainHero" },
