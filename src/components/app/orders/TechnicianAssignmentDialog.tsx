@@ -1,17 +1,18 @@
 /**
- * Technician Assignment Dialog with Warehouse and Availability Tracking
+ * Technician Assignment Sheet with Warehouse and Availability Tracking
+ * Opens from the right side instead of as a modal popup
  */
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -134,22 +135,25 @@ export function TechnicianAssignmentDialog({
   const selectedTech = technicians.find((t: any) => t.id === selectedTechnician);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Assign Technician</DialogTitle>
-          <DialogDescription>
-            Order: {order.plan_name} · {order.id.slice(0, 8)}
-            {order.install_city && (
-              <span className="flex items-center gap-1 mt-1 text-xs">
-                <MapPin className="h-3 w-3" />
-                {order.install_city}
-              </span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:w-[450px] sm:max-w-[450px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Assign Technician to Installation</SheetTitle>
+          <SheetDescription>
+            <div className="mt-2 space-y-1">
+              <div className="font-mono text-xs">{order.id.slice(0, 8)}</div>
+              <div className="text-sm">{order.plan_name}</div>
+              {order.install_city && (
+                <div className="flex items-center gap-1 text-xs">
+                  <MapPin className="h-3 w-3" />
+                  {order.install_city}
+                </div>
+              )}
+            </div>
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-5 py-6">
           {/* Warehouse Selection */}
           {warehouses.length > 1 && (
             <div className="space-y-2">
@@ -160,8 +164,8 @@ export function TechnicianAssignmentDialog({
                   Loading warehouses...
                 </div>
               ) : warehouses.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No warehouses found for this customer. They may need to set up a warehouse first.
+                <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                  No warehouses found for this customer.
                 </div>
               ) : (
                 <Select
@@ -190,10 +194,10 @@ export function TechnicianAssignmentDialog({
           )}
 
           {/* Technician Selection */}
-          <div className="space-y-2">
-            <Label>Technician</Label>
+          <div className="space-y-3">
+            <Label>Select Technician</Label>
             {loadingTechnicians ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading technicians...
               </div>
@@ -204,7 +208,7 @@ export function TechnicianAssignmentDialog({
                   : "No technicians available in the system."}
               </div>
             ) : (
-              <div className="space-y-2 max-h-[300px] overflow-y-auto border rounded-lg p-2">
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {technicians.map((tech: any) => {
                   const statusConfig = TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] || TECH_STATUS_CONFIG.available;
                   const StatusIcon = statusConfig.icon;
@@ -220,29 +224,24 @@ export function TechnicianAssignmentDialog({
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                           <User className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                          <div>
+                          <div className="min-w-0">
                             <div className="font-medium text-sm">{tech.name}</div>
-                            <div className="text-xs text-muted-foreground">{tech.email}</div>
+                            <div className="text-xs text-muted-foreground truncate">{tech.email}</div>
                             {tech.phone && (
                               <div className="text-xs text-muted-foreground">{tech.phone}</div>
                             )}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
-                          <Badge variant="outline" className={`text-xs ${statusConfig.color}`}>
+                          <Badge variant="outline" className={`text-xs whitespace-nowrap ${statusConfig.color}`}>
                             <StatusIcon className="h-3 w-3 mr-1" />
                             {statusConfig.label}
                           </Badge>
-                          {tech.is_primary && (
-                            <Badge variant="secondary" className="text-xs">
-                              Primary
-                            </Badge>
-                          )}
                           {(tech.current_job_count !== undefined && tech.max_concurrent_jobs !== undefined) && (
                             <span className="text-xs text-muted-foreground">
-                              {tech.current_job_count}/{tech.max_concurrent_jobs} jobs
+                              {tech.current_job_count}/{tech.max_concurrent_jobs}
                             </span>
                           )}
                         </div>
@@ -256,16 +255,18 @@ export function TechnicianAssignmentDialog({
 
           {/* Selected Technician Summary */}
           {selectedTech && (
-            <div className="p-3 bg-muted/50 rounded-lg border">
-              <div className="text-sm font-medium mb-2">Selected: {selectedTech.name}</div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>Status: {TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.label || "Unknown"}</span>
-                <span>Current jobs: {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}</span>
-                {!selectedTech.is_available && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
-                    At capacity
+            <div className="p-3 bg-muted/50 rounded-lg border border-border space-y-2">
+              <div className="text-sm font-medium">Selected Technician</div>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <div><span className="font-medium">Name:</span> {selectedTech.name}</div>
+                <div><span className="font-medium">Email:</span> {selectedTech.email}</div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">Status:</span>
+                  <Badge variant="outline" className={`text-xs ${TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.color || ''}`}>
+                    {TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.label || "Unknown"}
                   </Badge>
-                )}
+                </div>
+                <div><span className="font-medium">Current jobs:</span> {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}</div>
               </div>
             </div>
           )}
@@ -278,6 +279,7 @@ export function TechnicianAssignmentDialog({
               value={scheduledFor}
               onChange={(e) => setScheduledFor(e.target.value)}
               min={new Date().toISOString().slice(0, 16)}
+              className="h-9"
             />
             <p className="text-xs text-muted-foreground">
               Leave empty to schedule later. Customer will be notified once scheduled.
@@ -285,7 +287,7 @@ export function TechnicianAssignmentDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <SheetFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
@@ -302,8 +304,8 @@ export function TechnicianAssignmentDialog({
               "Assign Technician"
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

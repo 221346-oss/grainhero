@@ -6,13 +6,14 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 import { sendExpiryReminder } from "@/lib/platform-no-admin.functions";
 import { ExportMenu } from "@/components/app/ExportMenu";
+import { InfoDot } from "@/components/ui/InfoDot";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
-import { RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
+import { RefreshCw, AlertCircle, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 import {
   NEON, NeonPatternDefs, useNeonCharts, neonFill, neonGrid, neonAxis,
   neonTooltipStyle, HairlineGrid, NeonPanel, NeonLegend, ChartEmpty,
@@ -70,7 +71,7 @@ function Tile({ label, value, sub, accent }: {
   label: string; value: string | number; sub?: string; accent?: string;
 }) {
   return (
-    <div className="bg-background px-3 py-3">
+    <div className="bg-white dark:bg-slate-950 border border-border px-3 py-3">
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 truncate">{label}</div>
       <div className={`text-[17px] font-semibold tabular-nums leading-tight ${accent ?? "text-foreground"}`}>{value}</div>
       {sub && <div className="text-[10px] text-muted-foreground/70 mt-0.5 truncate">{sub}</div>}
@@ -331,7 +332,7 @@ function PlatformBusinessPage() {
       <NeonPatternDefs />
       {revenueQ.isLoading ? <BusinessSkeleton /> : (<>
       {/* ── Flat stat strip — neon hairline grid ─────────────────── */}
-      <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
+      <div className="grid rounded-md overflow-hidden grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
         <Tile label="MRR"          value={`PKR ${fmt(kpis?.mrr ?? 0)}`} />
         <Tile label="ARR"          value={`PKR ${fmt(kpis?.arr ?? 0)}`} />
         <Tile label="Active subs"  value={kpis?.activeCount ?? 0} sub={`${kpis?.totalAdmins ?? 0} total admins`} />
@@ -350,10 +351,7 @@ function PlatformBusinessPage() {
             <div className="flex items-center gap-2">
               <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Hardware / IoT Revenue</span>
-              <span title="Revenue from silo hardware orders, tracked separately from subscription MRR"
-                className="text-muted-foreground hover:text-muted-foreground cursor-default">
-                <Info className="w-3.5 h-3.5" />
-              </span>
+              <InfoDot text="Revenue from silo hardware orders, tracked separately from subscription MRR" />
             </div>
             <ExportRow
               data={[{
@@ -650,10 +648,7 @@ function PlatformBusinessPage() {
         <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-medium text-foreground">Plan Breakdown</span>
-            <span title="Click a plan row to filter and show its subscribers below"
-              className="text-muted-foreground hover:text-foreground cursor-default">
-              <Info className="w-3.5 h-3.5" />
-            </span>
+            <InfoDot text="Click a plan row to filter and show its subscribers below" />
           </div>
           <ExportRow data={planExport} filename="plan-breakdown" title="Plan Breakdown — GrainHero" />
         </div>

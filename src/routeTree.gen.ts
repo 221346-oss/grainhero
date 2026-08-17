@@ -116,6 +116,7 @@ import { Route as AuthenticatedPlatformSellersRouteImport } from './routes/_auth
 import { Route as AuthenticatedPlatformSiloRequestsRouteImport } from './routes/_authenticated/platform.silo-requests'
 import { Route as AuthenticatedPlatformSlaAlertsRouteImport } from './routes/_authenticated/platform.sla-alerts'
 import { Route as AuthenticatedPlatformSubscriptionsRouteImport } from './routes/_authenticated/platform.subscriptions'
+import { Route as AuthenticatedPlatformTechniciansRouteImport } from './routes/_authenticated/platform.technicians'
 import { Route as AuthenticatedPlatformTenantsRouteImport } from './routes/_authenticated/platform.tenants'
 import { Route as AuthenticatedPlatformUsersRouteImport } from './routes/_authenticated/platform.users'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
@@ -800,6 +801,12 @@ const AuthenticatedPlatformSubscriptionsRoute =
     path: '/platform/subscriptions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformTechniciansRoute =
+  AuthenticatedPlatformTechniciansRouteImport.update({
+    id: '/platform/technicians',
+    path: '/platform/technicians',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPlatformTenantsRoute =
   AuthenticatedPlatformTenantsRouteImport.update({
     id: '/platform/tenants',
@@ -1421,6 +1428,7 @@ export interface FileRoutesByFullPath {
   '/platform/silo-requests': typeof AuthenticatedPlatformSiloRequestsRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/subscriptions': typeof AuthenticatedPlatformSubscriptionsRoute
+  '/platform/technicians': typeof AuthenticatedPlatformTechniciansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -1615,6 +1623,7 @@ export interface FileRoutesByTo {
   '/platform/silo-requests': typeof AuthenticatedPlatformSiloRequestsRoute
   '/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/platform/subscriptions': typeof AuthenticatedPlatformSubscriptionsRoute
+  '/platform/technicians': typeof AuthenticatedPlatformTechniciansRoute
   '/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -1813,6 +1822,7 @@ export interface FileRoutesById {
   '/_authenticated/platform/silo-requests': typeof AuthenticatedPlatformSiloRequestsRoute
   '/_authenticated/platform/sla-alerts': typeof AuthenticatedPlatformSlaAlertsRoute
   '/_authenticated/platform/subscriptions': typeof AuthenticatedPlatformSubscriptionsRoute
+  '/_authenticated/platform/technicians': typeof AuthenticatedPlatformTechniciansRoute
   '/_authenticated/platform/tenants': typeof AuthenticatedPlatformTenantsRouteWithChildren
   '/_authenticated/platform/users': typeof AuthenticatedPlatformUsersRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
@@ -2011,6 +2021,7 @@ export interface FileRouteTypes {
     | '/platform/silo-requests'
     | '/platform/sla-alerts'
     | '/platform/subscriptions'
+    | '/platform/technicians'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -2205,6 +2216,7 @@ export interface FileRouteTypes {
     | '/platform/silo-requests'
     | '/platform/sla-alerts'
     | '/platform/subscriptions'
+    | '/platform/technicians'
     | '/platform/tenants'
     | '/platform/users'
     | '/settings/notifications'
@@ -2402,6 +2414,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform/silo-requests'
     | '/_authenticated/platform/sla-alerts'
     | '/_authenticated/platform/subscriptions'
+    | '/_authenticated/platform/technicians'
     | '/_authenticated/platform/tenants'
     | '/_authenticated/platform/users'
     | '/_authenticated/settings/notifications'
@@ -3321,6 +3334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlatformSubscriptionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform/technicians': {
+      id: '/_authenticated/platform/technicians'
+      path: '/platform/technicians'
+      fullPath: '/platform/technicians'
+      preLoaderRoute: typeof AuthenticatedPlatformTechniciansRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/platform/tenants': {
       id: '/_authenticated/platform/tenants'
       path: '/platform/tenants'
@@ -4163,6 +4183,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformSiloRequestsRoute: typeof AuthenticatedPlatformSiloRequestsRoute
   AuthenticatedPlatformSlaAlertsRoute: typeof AuthenticatedPlatformSlaAlertsRoute
   AuthenticatedPlatformSubscriptionsRoute: typeof AuthenticatedPlatformSubscriptionsRoute
+  AuthenticatedPlatformTechniciansRoute: typeof AuthenticatedPlatformTechniciansRoute
   AuthenticatedPlatformTenantsRoute: typeof AuthenticatedPlatformTenantsRouteWithChildren
   AuthenticatedPlatformUsersRoute: typeof AuthenticatedPlatformUsersRoute
   AuthenticatedSilosSiloIdRoute: typeof AuthenticatedSilosSiloIdRoute
@@ -4282,6 +4303,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformSlaAlertsRoute: AuthenticatedPlatformSlaAlertsRoute,
   AuthenticatedPlatformSubscriptionsRoute:
     AuthenticatedPlatformSubscriptionsRoute,
+  AuthenticatedPlatformTechniciansRoute: AuthenticatedPlatformTechniciansRoute,
   AuthenticatedPlatformTenantsRoute:
     AuthenticatedPlatformTenantsRouteWithChildren,
   AuthenticatedPlatformUsersRoute: AuthenticatedPlatformUsersRoute,

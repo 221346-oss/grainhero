@@ -88,32 +88,38 @@ export const getTechniciansForWarehouse = createServerFn({ method: "GET" })
       };
     }
     
-    // Otherwise, get all technicians (fallback for orders without warehouse)
-    const { data: techIds } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "technician");
-      
-    const ids = (techIds ?? []).map((r) => (r as Row).user_id as string);
-    if (ids.length === 0) {
+    // Otherwise, get GLOBAL company technicians only (not admin-managed)
+    // Filter to technicians with admin_id IS NULL (not tied to any specific admin)
+    const { data: globalTechs } = await supabaseAdmin
+      .from("profiles")
+      .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs")
+      .is("admin_id", null);  // Global technicians only
+    
+    if (!globalTechs || globalTechs.length === 0) {
       return { 
         technicians: [] as Row[], 
         filtered_by_warehouse: false,
       };
     }
     
-    const { data: profiles } = await supabaseAdmin
-      .from("profiles")
-      .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, service_areas")
-      .in("id", ids);
+    // Verify they have technician role
+    const { data: techRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "technician")
+      .in("user_id", globalTechs.map((t: any) => t.id));
     
-    const technicians = (profiles ?? []).map((p: any) => ({
-      ...p,
-      is_available: 
-        p.technician_status === 'available' || 
-        (p.current_job_count ?? 0) < (p.max_concurrent_jobs ?? 3),
-      is_primary: false,
-    }));
+    const validTechIds = new Set((techRoles ?? []).map((r: any) => r.user_id));
+    
+    const technicians = (globalTechs ?? [])
+      .filter((p: any) => validTechIds.has(p.id))
+      .map((p: any) => ({
+        ...p,
+        is_available: 
+          p.technician_status === 'available' || 
+          (p.current_job_count ?? 0) < (p.max_concurrent_jobs ?? 3),
+        is_primary: false,
+      }));
     
     return { 
       technicians, 

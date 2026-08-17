@@ -16,6 +16,7 @@ import {
   ChevronRight,
   CreditCard,
   Inbox,
+  Users,
 } from "lucide-react";
 // QrCode import retained — used by Traceability nav item when re-enabled
 // import { QrCode } from "lucide-react";
@@ -48,17 +49,20 @@ const workspaceNav: NavItem[] = [
   { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", icon: Wheat, roles: ["admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
   { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["admin", "manager", "technician"], marqueeItems: ["Incidents"] },
   { name: "intelligence", label: "Intelligence", to: "/intelligence", icon: Sparkles, roles: ["admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
+  { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["admin", "manager"], marqueeItems: ["My Plan", "Usage", "Billing", "Upgrade"] },
   // /business is tenant-scoped (invoices, own subscription) — admin and manager only.
   // Insurance tab hidden until bank partnership confirmed.
   // super_admin uses /platform/business instead.
   { name: "business", label: "Business", to: "/business", icon: Briefcase, roles: ["admin", "manager"], marqueeItems: ["Revenue", "Subscription"] },
   // super_admin has no tenant team/security/logs — those tabs are all disabled for them.
   { name: "administration", label: "Administration", to: "/administration", icon: ShieldCheck, roles: ["admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
+  { name: "technicians", label: "Technicians", to: "/technicians", icon: Users, roles: ["admin", "manager"], marqueeItems: ["Warehouse Assignment", "Activity", "Status"] },
   // { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
 ];
 
 // Group 3 — super-admin-only platform entries (5 items consolidated).
 // Install Orders merged into Business since both are revenue-related.
+// Technicians moved to DashboardQuickTabs dropdown menu (top navigation).
 const utilityNav: NavItem[] = [
   { name: "platform-plans",         label: "Plans",          to: "/platform/plans",         icon: CreditCard, roles: ["super_admin"], marqueeItems: ["Edit limits", "Active/inactive", "Popular badge", "Change requests"] },
   { name: "platform-business",      label: "Business",       to: "/platform/business",      icon: Briefcase,  roles: ["super_admin"], marqueeItems: ["Revenue", "Subscriptions", "Hardware", "Install Orders"] },

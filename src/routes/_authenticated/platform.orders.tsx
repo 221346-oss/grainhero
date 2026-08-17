@@ -617,10 +617,7 @@ function OrderRow({
               <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "completed" })}>
-              Mark completed
-            </DropdownMenuItem>
-            {order.status !== "cancelled" && (
+              {order.status !== "cancelled" && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>

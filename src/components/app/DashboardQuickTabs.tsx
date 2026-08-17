@@ -23,7 +23,7 @@ type SuperTabKey =
   | "overview" | "orders" | "financials" | "users" | "plans"
   | "reporting" | "health" | "audit-logs" | "system-logs"
   | "pipeline" | "leads" | "insurance" | "subscription"
-  | "security" | "launch";
+  | "security" | "launch" | "technicians";
 
 type TabKey = AdminTabKey | SuperTabKey | ManagerTabKey;
 
@@ -71,6 +71,7 @@ const CATALOG_SUPER: Def<SuperTabKey>[] = [
   { key: "subscription", label: "Subscriptions", icon: CreditCard, to: "/subscription" },
   { key: "security", label: "Security", icon: ShieldCheck, to: "/security-center" },
   { key: "launch", label: "Launch readiness", icon: Rocket, to: "/platform/launch-readiness" },
+  { key: "technicians", label: "Technicians", icon: Users, to: "/platform/technicians" },
 ];
 
 const STORAGE_ADMIN = "gh_admin_tabs_v3";
