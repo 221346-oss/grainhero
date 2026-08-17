@@ -445,7 +445,7 @@ export function ManagerBento({
                 <Plus className="h-3 w-3" /> New Ticket
               </button>
               <Link
-                to="/platform/field-incidents"
+                to="/monitoring"
                 search={{} as never}
                 className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
               >

@@ -7,14 +7,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ComponentType } from "react";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
-import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
+
 import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { PendingApprovalsSection } from "@/components/grain-operations/PendingApprovalsSection";
-import { Package, Warehouse, Building2, Users, TrendingUp, TrendingDown, Maximize2, Truck } from "lucide-react";
+import { Package, Warehouse, Users, TrendingUp, TrendingDown, Maximize2, Truck } from "lucide-react";
 import {
   listGrainBatches,
   listSilos,
-  listWarehouses,
   listBuyers,
 } from "@/lib/operations.functions";
 import { getMyRole } from "@/lib/roles.functions";
@@ -24,9 +23,9 @@ import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
-type Tab = "batches" | "silos" | "warehouses" | "buyers";
+type Tab = "batches" | "silos" | "buyers";
 
-const TAB_KEYS: Tab[] = ["batches", "silos", "warehouses", "buyers"];
+const TAB_KEYS: Tab[] = ["batches", "silos", "buyers"];
 
 // `status` is genuinely optional here (not just runtime-undefined) so every
 // other page that links to /grain-operations?tab=... without a status
@@ -55,7 +54,6 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
 const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "batches", label: "Grain Batches", icon: Package },
   { key: "silos", label: "Silos", icon: Warehouse },
-  { key: "warehouses", label: "Warehouses", icon: Building2 },
   { key: "buyers", label: "Buyers", icon: Users },
 ];
 
@@ -86,7 +84,6 @@ function GrainOperationsWorkspace() {
 
   const listBatchesFn = useServerFn(listGrainBatches);
   const listSilosFn = useServerFn(listSilos);
-  const listWarehousesFn = useServerFn(listWarehouses);
   const listBuyersFn = useServerFn(listBuyers);
   const listPendingApprovalsFn = useServerFn(listPendingApprovalBatches);
 
@@ -95,10 +92,6 @@ function GrainOperationsWorkspace() {
     queryFn: () => listBatchesFn(),
   });
   const { data: silos } = useQuery({ queryKey: ["silos"], queryFn: () => listSilosFn() });
-  const { data: warehouses } = useQuery({
-    queryKey: ["warehouses"],
-    queryFn: () => listWarehousesFn(),
-  });
   const { data: buyers } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyersFn() });
 
   // Fetch pending approvals for admins
@@ -115,7 +108,6 @@ function GrainOperationsWorkspace() {
   const counts = {
     batches: Array.isArray(batches) ? batches.length : 0,
     silos: Array.isArray(silos) ? silos.length : 0,
-    warehouses: Array.isArray(warehouses) ? warehouses.length : 0,
     buyers: Array.isArray(buyers) ? buyers.length : 0,
   };
 
@@ -176,7 +168,7 @@ function GrainOperationsWorkspace() {
             <VariableFontText text="Grain Operations" base={650} hover={900} staggerMs={20} />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage batches, silos, warehouses, and buyers from one workspace
+            Manage batches, silos, and buyers from one workspace
           </p>
         </div>
 
@@ -333,7 +325,6 @@ function GrainOperationsWorkspace() {
           <div className="p-4 md:p-6">
             {activeTab === "batches" && <BatchesSection initialStatus={status} />}
             {activeTab === "silos" && <SilosSection />}
-            {activeTab === "warehouses" && <WarehousesSection />}
             {activeTab === "buyers" && <BuyersSection />}
           </div>
         </div>
