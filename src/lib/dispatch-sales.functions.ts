@@ -11,6 +11,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 import { getEffectiveRole } from "./rbac.server";
+import { insertInvoiceWithUniqueNumber } from "./invoice-number";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -20,15 +21,6 @@ async function tenantAdminId(supabase: unknown, userId: string): Promise<string>
   const { data } = await (supabase as any).rpc("get_tenant_admin_id", { _user_id: userId });
   if (!data) throw new Error("No tenant admin");
   return data as string;
-}
-
-async function nextInvoiceNumber(sb: unknown, adminId: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const c = sb as any;
-  const { count } = await c.from("buyer_invoices")
-    .select("id", { count: "exact", head: true }).eq("admin_id", adminId);
-  const seq = ((count ?? 0) + 1).toString().padStart(5, "0");
-  return `INV-${new Date().getFullYear()}-${seq}`;
 }
 
 /**
@@ -90,7 +82,6 @@ export const createDispatchInvoice = createServerFn({ method: "POST" })
     if (!buyerId) throw new Error("Buyer required");
 
     const totalAmount = Number((data.pricePerKg * data.qtyKg).toFixed(2));
-    const invoiceNumber = await nextInvoiceNumber(sb, adminId);
     const items = [{
       description: `${data.grainType} (dispatch quote)`,
       quantity_kg: data.qtyKg,
@@ -98,26 +89,26 @@ export const createDispatchInvoice = createServerFn({ method: "POST" })
       total: totalAmount,
     }];
 
-    const { data: inv, error } = await sb.from("buyer_invoices").insert({
-      admin_id: adminId,
-      invoice_number: invoiceNumber,
-      buyer_id: buyerId,
-      batch_id: null,
-      dispatch_id: null,
-      buyer_name: buyerRow?.name ?? null,
-      buyer_company: buyerRow?.company_name ?? null,
-      buyer_contact: buyerRow ? { phone: buyerRow.contact_phone, email: buyerRow.contact_email } : null,
-      items,
-      subtotal: totalAmount,
-      total_amount: totalAmount,
-      currency: data.currency,
-      payment_status: "unpaid",
-      due_date: data.dueDate ?? null,
-      notes: data.notes ?? null,
-      created_by: context.userId,
-    } as never).select("id, invoice_number").single();
-    if (error) throw error;
-    const invRow = inv as Row;
+    const invRow = await insertInvoiceWithUniqueNumber<Row>(sb, adminId, (invoiceNumber) =>
+      sb.from("buyer_invoices").insert({
+        admin_id: adminId,
+        invoice_number: invoiceNumber,
+        buyer_id: buyerId,
+        batch_id: null,
+        dispatch_id: null,
+        buyer_name: buyerRow?.name ?? null,
+        buyer_company: buyerRow?.company_name ?? null,
+        buyer_contact: buyerRow ? { phone: buyerRow.contact_phone, email: buyerRow.contact_email } : null,
+        items,
+        subtotal: totalAmount,
+        total_amount: totalAmount,
+        currency: data.currency,
+        payment_status: "unpaid",
+        due_date: data.dueDate ?? null,
+        notes: data.notes ?? null,
+        created_by: context.userId,
+      } as never).select("id, invoice_number").single(),
+    );
 
     await logActivity({
       actorId: context.userId,

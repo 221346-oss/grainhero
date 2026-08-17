@@ -273,18 +273,30 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
 
               // Fulfil the pending hardware/install order and notify super admins.
-              // Only process if hardwareOrderId is a valid, non-empty UUID string
-              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10) {
+              // Only process if hardwareOrderId is a valid, non-empty UUID string.
+              // Gated on the order still being pending_payment — same idempotency
+              // pattern as the buyer-order block above — so a Stripe webhook
+              // retry/redelivery for an already-fulfilled order doesn't
+              // re-notify super admins about an order they already saw.
+              const { data: existingHardwareOrder } = hardwareOrderId
+                ? await supabaseAdmin.from("hardware_orders" as never).select("status").eq("id", hardwareOrderId).maybeSingle()
+                : { data: null };
+              const hardwareOrderAlreadyFulfilled =
+                !!existingHardwareOrder && (existingHardwareOrder as { status?: string }).status !== "pending_payment";
+
+              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10 && !hardwareOrderAlreadyFulfilled) {
                 console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
-                console.log("🔍 [STRIPE WEBHOOK] Will update: status=paid, stripe_payment_intent=", s.payment_intent);
-                
-                try {
-                  const { data: orderBefore } = await supabaseAdmin
-                    .from("hardware_orders" as never)
-                    .select("id, status, admin_id")
-                    .eq("id", hardwareOrderId)
-                    .maybeSingle();
-                  console.log("🔍 [STRIPE WEBHOOK] Order before update:", orderBefore);
+
+                const updateResult = await supabaseAdmin
+                  .from("hardware_orders" as never)
+                  .update({
+                    status: "new",
+                    stripe_customer_id: s.customer ?? null,
+                    stripe_subscription_id: s.subscription ?? null,
+                    stripe_payment_intent: s.payment_intent ?? null,
+                    ...(userId ? { admin_id: userId } : {}),
+                  } as never)
+                  .eq("id", hardwareOrderId);
 
                   const { data: orderAfter, error: updateError } = await supabaseAdmin
                     .from("hardware_orders" as never)

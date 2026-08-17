@@ -93,6 +93,12 @@ export async function emitBulk(
 /**
  * Fan-out to every user with `role` inside the given tenant.
  * Uses `sb` to look up recipients (RLS applies).
+ *
+ * `profiles` and `user_roles` both independently reference `auth.users` —
+ * there's no direct FK between the two — so PostgREST can't auto-embed
+ * `user_roles(role)` under a `profiles` select (it silently returns no
+ * embedded rows rather than throwing). Query them separately and intersect
+ * in application code instead of relying on that embed.
  */
 export async function emitToRole(
   sb: SB,
@@ -100,15 +106,27 @@ export async function emitToRole(
   role: "admin" | "manager" | "technician",
   base: Omit<NotifInput, "recipientId" | "tenantAdminId">,
 ): Promise<void> {
-  const { data } = await sb
+  const { data: tenantProfiles, error: profilesErr } = await sb
     .from("profiles")
-    .select("id, admin_id, user_roles(role)")
+    .select("id")
     .or(`admin_id.eq.${tenantAdminId},id.eq.${tenantAdminId}`);
-  const ids = (data ?? [])
-    .filter((p: { user_roles?: Array<{ role: string }> }) =>
-      (p.user_roles ?? []).some((r) => r.role === role),
-    )
-    .map((p: { id: string }) => p.id);
+  if (profilesErr) {
+    console.warn("[notify] emitToRole: tenant profile lookup failed", profilesErr.message);
+    return;
+  }
+  const tenantIds = (tenantProfiles ?? []).map((p: { id: string }) => p.id);
+  if (!tenantIds.length) return;
+
+  const { data: roleRows, error: rolesErr } = await sb
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", role)
+    .in("user_id", tenantIds);
+  if (rolesErr) {
+    console.warn("[notify] emitToRole: role lookup failed", rolesErr.message);
+    return;
+  }
+  const ids = (roleRows ?? []).map((r: { user_id: string }) => r.user_id);
   await emitBulk(sb, ids, { ...base, tenantAdminId });
 }
 
