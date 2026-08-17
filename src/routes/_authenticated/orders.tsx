@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
 import { payApprovedSiloOrder, createSiloDraftRequest, checkAndUpdatePaymentStatus } from "@/lib/stripe-checkout.functions";
-import { devSimulatePayment } from "@/lib/dev-payment-bypass";
+
 import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
 import { usePlanGate } from "@/lib/plan-gate";
@@ -120,7 +120,6 @@ function MyOrdersPage() {
   const fetchFn = useServerFn(listMyHardwareOrders);
   const settingsFn = useServerFn(getPlatformSettings);
   const payFn = useServerFn(payApprovedSiloOrder);
-  const devPayFn = useServerFn(devSimulatePayment);
   const advanceFn = useServerFn(advanceInstallStage);
   const draftFn = useServerFn(createSiloDraftRequest);
   const qc = useQueryClient();
@@ -218,18 +217,6 @@ function MyOrdersPage() {
     },
     onError: (e: Error) => {
       toast.error(e.message || "Could not initiate payment");
-    },
-  });
-
-  // ── DEV ONLY: Simulate payment without Stripe ────────────────────────────
-  const devPayMut = useMutation({
-    mutationFn: (orderId: string) => devPayFn({ data: { orderId } }),
-    onSuccess: () => {
-      toast.success("✅ Payment simulated! Order is now paid.");
-      qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
-    },
-    onError: (e: Error) => {
-      toast.error(e.message || "Could not simulate payment");
     },
   });
 
@@ -454,16 +441,6 @@ function MyOrdersPage() {
                     {/* DEV ONLY: Manual payment simulation when Stripe webhook isn't working */}
                     {process.env.NODE_ENV === "development" && (o.status === "approved" || o.status === "pending_payment") && (
                       <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-orange-600 border-orange-300 hover:bg-orange-50 text-xs h-7"
-                          onClick={() => devPayMut.mutate(o.id as string)}
-                          disabled={devPayMut.isPending}
-                          title="DEV ONLY: Simulate payment for testing"
-                        >
-                          {devPayMut.isPending ? "Simulating…" : "Dev: Simulate"}
-                        </Button>
                         {o.status === "pending_payment" && (
                           <Button
                             size="sm"

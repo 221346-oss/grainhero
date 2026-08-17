@@ -242,7 +242,9 @@ export const listSilos = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("silos")
       .select(
-        "*, warehouses(id, name, warehouse_id, manager_id, technician_ids), current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type)",
+        `id, silo_id, name, warehouse_id, capacity_kg, current_occupancy_kg, status, location, 
+         batch_loaded_date, batch_dispatched_date, current_conditions, notes, created_at, updated_at,
+         warehouses(id, name, warehouse_id, location, manager_id, technician_ids)`,
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -274,6 +276,32 @@ export const listSilos = createServerFn({ method: "GET" })
 
     const { data, error } = await query;
     if (error) throw error;
+
+    // Fetch current batch data separately to avoid join issues
+    if (data && data.length > 0) {
+      const siloIds = data.map((s: any) => s.id);
+      const { data: batches } = await context.supabase
+        .from("grain_batches")
+        .select("id, batch_id, grain_type, silo_id")
+        .in("silo_id", siloIds)
+        .eq("status", "stored")
+        .limit(500);
+
+      // Create a map of silo_id -> batch
+      const batchMap = new Map();
+      (batches ?? []).forEach((b: any) => {
+        if (!batchMap.has(b.silo_id)) {
+          batchMap.set(b.silo_id, b);
+        }
+      });
+
+      // Attach batch data to silos
+      return data.map((silo: any) => ({
+        ...silo,
+        current_batch: batchMap.get(silo.id) || null,
+      }));
+    }
+
     return data ?? [];
   });
 
@@ -292,6 +320,8 @@ export const upsertSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
+    console.log("[upsertSilo] Starting - isUpdate:", !!data.id, "warehouse:", data.warehouse_id);
+    try {
     if (!data.id) {
       // Direct creation is super_admin-only — admin/manager go through the
       // Request Silo → hardware order → payment flow instead, which
@@ -396,6 +426,10 @@ export const upsertSilo = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
     return row;
+    } catch (e) {
+      console.error("[upsertSilo] Error:", e);
+      throw e;
+    }
   });
 
 // Dedicated, minimal rename endpoint for the pencil-icon inline rename UI —
