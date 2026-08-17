@@ -389,7 +389,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     const o = (order as Record<string, unknown> | null) ?? {};
                     
                     // Get the admin's email from profiles table
-                    const adminId = o.admin_id;
+                    const adminId = (o.admin_id as string | undefined) ?? null;
                     let adminEmail: string | null = null;
                     if (adminId) {
                       const { data: admin } = await supabaseAdmin
