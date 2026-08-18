@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAppOrigin } from "@/lib/app-url";
 import {
   welcomeEmailHTML,
   day3EmailHTML,
@@ -12,15 +13,6 @@ function firstNameOf(name?: string | null, email?: string | null) {
   if (name) return name.trim().split(/\s+/)[0];
   if (email) return email.split("@")[0];
   return "there";
-}
-
-function appOrigin() {
-  return (
-    process.env.APP_ORIGIN ??
-    process.env.PUBLIC_APP_URL ??
-    process.env.VITE_APP_URL ??
-    "https://grainhero.app"
-  );
 }
 
 /** Send the welcome email immediately on signup. */
@@ -46,7 +38,7 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
       const res = await sendEmailViaResend({
         to: profile.email,
         subject: "Welcome to GrainHero 🌾",
-        html: welcomeEmailHTML(firstNameOf(profile.name, profile.email), `${appOrigin()}/dashboard`),
+        html: welcomeEmailHTML(firstNameOf(profile.name, profile.email), `${requireAppOrigin()}/dashboard`),
       });
       await supabaseAdmin.from("email_send_log").insert({
         user_id: context.userId,
@@ -83,7 +75,7 @@ export async function sendLifecycleEmail(userId: string, stage: LifecycleStage) 
   if (existing) return { skipped: true };
 
   const firstName = firstNameOf(profile.name, profile.email);
-  const origin = appOrigin();
+  const origin = requireAppOrigin();
 
   // Silo count (best-effort).
   const { count: siloCountRaw } = await supabaseAdmin

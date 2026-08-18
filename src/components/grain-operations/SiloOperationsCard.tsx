@@ -46,15 +46,15 @@ export const BATCH_TONE: Record<string, FlowGroup["tone"]> = {
   dispatched: "purple", sold: "purple",
   qc_failed: "red", admin_rejected: "red", damaged: "red", expired: "red", rejected: "red",
 };
-const BATCH_TONE_LABELS: Record<FlowGroup["tone"], string> = {
+export const BATCH_TONE_LABELS: Record<FlowGroup["tone"], string> = {
   yellow: "Pending", orange: "QC", green: "Stored", blue: "Processing", purple: "Dispatched", red: "Issue",
 };
-const DISPATCH_TONE: Record<string, FlowGroup["tone"]> = {
+export const DISPATCH_TONE: Record<string, FlowGroup["tone"]> = {
   draft: "yellow", staged: "yellow", in_transit: "blue",
   confirmed: "green", delivered: "purple",
   cancelled: "red",
 };
-const DISPATCH_TONE_LABELS: Record<FlowGroup["tone"], string> = {
+export const DISPATCH_TONE_LABELS: Record<FlowGroup["tone"], string> = {
   yellow: "Pending", orange: "QC", green: "Confirmed", blue: "In transit", purple: "Delivered", red: "Cancelled",
 };
 
@@ -70,7 +70,7 @@ export function siloStatusBadge(pct: number, status: string | null): { label: st
   return { label: "Active", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" };
 }
 
-function groupByTone<T extends { status: string | null }>(
+export function groupByTone<T extends { status: string | null }>(
   rows: T[],
   toneMap: Record<string, FlowGroup["tone"]>,
   qtyOf: (r: T) => number,
@@ -192,14 +192,14 @@ export function SiloOperationsCard({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Button size="sm" className="h-7 flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs" onClick={() => onSell(silo)}>
+          <Button size="sm" className="h-9 flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs" onClick={() => onSell(silo)}>
             <ShoppingCart className="h-3 w-3" /> Sell
           </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onView(silo)} title="View"><Eye className="h-3.5 w-3.5" /></Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onEdit(silo)} title="Edit"><Edit2 className="h-3.5 w-3.5" /></Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700" onClick={() => onDelete(silo.id)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
+          <Button size="sm" variant="ghost" className="h-9 w-9 p-0" onClick={() => onView(silo)} title="View"><Eye className="h-3.5 w-3.5" /></Button>
+          <Button size="sm" variant="ghost" className="h-9 w-9 p-0" onClick={() => onEdit(silo)} title="Edit"><Edit2 className="h-3.5 w-3.5" /></Button>
+          <Button size="sm" variant="ghost" className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700" onClick={() => onDelete(silo.id)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
           <Button
-            size="sm" variant="ghost" className="h-7 w-7 p-0"
+            size="sm" variant="ghost" className="h-9 w-9 p-0"
             onClick={() => setExpanded((v) => !v)}
             aria-label={expanded ? "Collapse" : "Expand — flow diagram, breakdown, sales"}
           >

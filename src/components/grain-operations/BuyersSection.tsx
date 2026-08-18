@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Users, Plus, Search, Edit2, Trash2, Eye, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -205,38 +206,72 @@ export function BuyersSection() {
             <p className="text-sm">No buyers yet.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Buyer</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Contact</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Company</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rows.map((b) => (
-                  <tr key={b.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
-                    <td className="px-3 py-2 text-foreground font-medium">{b.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.contact_phone ?? b.contact_email ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.company_name ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.buyer_type?.replace("_", " ") ?? "—"}</td>
-                    <td className="px-3 py-2"><StatusBadgeCustom value={b.status} /></td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setSelected(b); setViewOpen(true); }} className="h-7 w-7 p-0"><Eye className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(b)} className="h-7 w-7 p-0"><Edit2 className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteId(b.id)} className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop / tablet: full table, unchanged */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 border-b border-border">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Buyer</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Contact</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Company</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
+                    <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                    <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {rows.map((b) => (
+                    <tr key={b.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
+                      <td className="px-3 py-2 text-foreground font-medium max-w-[160px] truncate" title={b.name}>{b.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground text-xs max-w-[140px] truncate" title={b.contact_phone ?? b.contact_email ?? "—"}>{b.contact_phone ?? b.contact_email ?? "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground text-xs max-w-[140px] truncate" title={b.company_name ?? "—"}>{b.company_name ?? "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground text-xs">{b.buyer_type?.replace("_", " ") ?? "—"}</td>
+                      <td className="px-3 py-2"><StatusBadgeCustom value={b.status} /></td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => { setSelected(b); setViewOpen(true); }} className="h-9 w-9 p-0"><Eye className="w-3.5 h-3.5" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(b)} className="h-9 w-9 p-0"><Edit2 className="w-3.5 h-3.5" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteId(b.id)} className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile: stacked cards — same rows, tap through to the View dialog */}
+            <div className="md:hidden space-y-2">
+              {rows.map((b) => (
+                <Card
+                  key={b.id}
+                  className="cursor-pointer active:bg-emerald-50/40 dark:active:bg-emerald-500/5 transition"
+                  onClick={() => { setSelected(b); setViewOpen(true); }}
+                >
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{b.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{b.company_name ?? "No company on file"}</p>
+                      </div>
+                      <div className="shrink-0"><StatusBadgeCustom value={b.status} /></div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground truncate">{b.contact_phone ?? b.contact_email ?? "No contact on file"}</p>
+                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(b)} className="h-9 w-9 p-0"><Edit2 className="w-3.5 h-3.5" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteId(b.id)} className="h-9 w-9 p-0 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <p className="text-center text-[11px] text-muted-foreground py-1">
+                {rows.length} buyer{rows.length === 1 ? "" : "s"} · tap a card for full details
+              </p>
+            </div>
+          </>
         )}
 
       {/* Edit Dialog */}

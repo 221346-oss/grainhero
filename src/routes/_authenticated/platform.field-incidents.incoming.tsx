@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listFieldIncidents } from "@/lib/field-settings.functions";
+import { listMobileFieldIncidents } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -52,8 +52,8 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 function IncomingIncidentsPage() {
-  const loadFn = useServerFn(listFieldIncidents);
-  const { data, isLoading } = useQuery({ queryKey: ["field-incidents"], queryFn: () => loadFn() });
+  const loadFn = useServerFn(listMobileFieldIncidents);
+  const { data, isLoading } = useQuery({ queryKey: ["mobile-field-incidents"], queryFn: () => loadFn() });
 
   const [active,        setActive]        = useState<IncidentRow | null>(null);
   const [search,        setSearch]        = useState("");

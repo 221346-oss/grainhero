@@ -448,6 +448,87 @@ export const rejectDispatch = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Admin-only: cancels a dispatch that already deducted stock (confirmed /
+ * in_transit / delivered) — used for the Outstanding Payments "Cancel"
+ * action when a sale was started then never finished (e.g. buyer backed
+ * out before paying). Unlike rejectDispatch (draft, no stock ever moved),
+ * this has to reverse what approveDispatch did:
+ *   1. Delete this dispatch's grain_dispatch_allocations rows — the
+ *      existing trg_alloc_recalc trigger (20260719130338_...sql) recomputes
+ *      each affected batch's remaining_kg/dispatched_quantity_kg/status
+ *      automatically from the remaining allocation rows, so batches don't
+ *      need to be touched directly here.
+ *   2. Add total_qty_kg back onto the silo's current_occupancy_kg (the one
+ *      side effect approveDispatch applies outside the allocations table).
+ * Blocked if the dispatch is already fully paid — that's a completed sale,
+ * not an unfinished one, and unwinding it needs a real refund/credit-note
+ * flow this isn't meant to replace.
+ */
+export const cancelDispatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ id: z.string().uuid(), reason: z.string().trim().max(500).optional().nullable() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireRole(context.supabase, context.userId, ["admin"]);
+    const sb = context.supabase;
+
+    const { data: disp, error: dErr } = await sb
+      .from("grain_dispatches")
+      .select("id, admin_id, silo_id, total_qty_kg, total_amount, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (dErr) throw dErr;
+    if (!disp) throw new Error("Dispatch not found");
+    const d = disp as Row;
+    if (!["confirmed", "in_transit", "delivered"].includes(d.status)) {
+      throw new Error(`Only an approved-and-not-yet-cancelled dispatch can be cancelled this way (currently ${d.status}).`);
+    }
+
+    const { data: payments, error: pErr } = await sb
+      .from("buyer_payments")
+      .select("amount")
+      .eq("dispatch_id", data.id)
+      .eq("status", "completed");
+    if (pErr) throw pErr;
+    const paid = ((payments ?? []) as Row[]).reduce((s, p) => s + Number(p.amount ?? 0), 0);
+    if (paid >= Number(d.total_amount) - 0.01) {
+      throw new Error("This dispatch is already fully paid — cancelling a completed sale isn't supported here.");
+    }
+
+    const { error: allocErr } = await sb
+      .from("grain_dispatch_allocations")
+      .delete()
+      .eq("dispatch_id", data.id);
+    if (allocErr) throw allocErr;
+
+    const { data: silo, error: sErr } = await sb
+      .from("silos")
+      .select("current_occupancy_kg")
+      .eq("id", d.silo_id)
+      .single();
+    if (sErr || !silo) throw new Error("Silo not found");
+    const restoredOcc = Number((silo as Row).current_occupancy_kg ?? 0) + Number(d.total_qty_kg);
+    const { error: occErr } = await sb.from("silos")
+      .update({ current_occupancy_kg: restoredOcc, updated_by: context.userId } as never)
+      .eq("id", d.silo_id);
+    if (occErr) throw occErr;
+
+    const { error: updErr } = await sb.from("grain_dispatches")
+      .update({ status: "cancelled", notes: data.reason ?? null } as never)
+      .eq("id", data.id);
+    if (updErr) throw updErr;
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: d.admin_id,
+      action: "dispatch.cancelled",
+      targetType: "grain_dispatch",
+      targetId: data.id,
+      meta: { reason: data.reason ?? null, qtyRestoredKg: d.total_qty_kg, paidBeforeCancel: paid },
+    });
+    return { ok: true };
+  });
+
 export const listDispatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>

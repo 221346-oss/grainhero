@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -54,6 +54,11 @@ export function ProfileMenu() {
         <DropdownMenuItem asChild>
           <Link to="/settings" className="cursor-pointer">
             <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/settings/notifications" className="cursor-pointer">
+            <Bell className="mr-2 h-4 w-4" /> Notifications
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

@@ -17,7 +17,7 @@ import { InlineRename } from "@/components/app/InlineRename";
 import { listSilos, listGrainBatches, renameSilo } from "@/lib/operations.functions";
 import { listDispatches } from "@/lib/dispatches.functions";
 import { getMyRole } from "@/lib/roles.functions";
-import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
+import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
 
 // Same allow-list used for team invite/manage — technicians can't rename.
 const RENAME_ROLES = ["super_admin", "admin", "manager"];
@@ -228,7 +228,7 @@ function SiloDetailPage() {
             )}
             <div className="flex gap-2 pt-2">
               <Button size="sm" className="gap-1" onClick={() => setDispatchOpen(true)}>
-                <Truck className="w-3.5 h-3.5" /> Dispatch
+                <Truck className="w-3.5 h-3.5" /> Sell
               </Button>
               <Button size="sm" variant="outline" className="gap-1" asChild>
                 <Link to="/grain-operations" search={{ tab: "batches" }}>
@@ -448,11 +448,17 @@ function SiloDetailPage() {
         </Card>
       </div>
 
-      <DispatchDialog
+      <DispatchSaleWizard
         open={dispatchOpen}
         onOpenChange={setDispatchOpen}
-        siloId={silo.id}
-        siloName={silo.name}
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ["silos"] });
+          qc.invalidateQueries({ queryKey: ["grain-batches"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+          qc.invalidateQueries({ queryKey: ["revenue"] });
+        }}
+        presetSilo={{ id: silo.id, name: silo.name }}
       />
     </div>
   );

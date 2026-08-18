@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { listFieldIncidents, resolveFieldIncident } from "@/lib/field-settings.functions";
+import { listMobileFieldIncidents, resolveFieldIncident } from "@/lib/field-settings.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,11 +26,11 @@ export const Route = createFileRoute("/_authenticated/platform/field-incidents/"
 });
 
 function FieldIncidentsPage() {
-  const loadFn    = useServerFn(listFieldIncidents);
+  const loadFn    = useServerFn(listMobileFieldIncidents);
   const resolveFn = useServerFn(resolveFieldIncident);
   const qc        = useQueryClient();
 
-  const { data, isLoading } = useQuery({ queryKey: ["field-incidents"], queryFn: () => loadFn() });
+  const { data, isLoading } = useQuery({ queryKey: ["mobile-field-incidents"], queryFn: () => loadFn() });
 
   const [active,         setActive]         = useState<IncidentRow | null>(null);
   const [note,           setNote]           = useState("");
@@ -68,7 +68,7 @@ function FieldIncidentsPage() {
     onSuccess: () => {
       toast.success("Incident updated");
       setActive(null); setNote("");
-      qc.invalidateQueries({ queryKey: ["field-incidents"] });
+      qc.invalidateQueries({ queryKey: ["mobile-field-incidents"] });
     },
     onError: (e) => toast.error((e as Error).message),
   });
@@ -171,7 +171,7 @@ function FieldIncidentsPage() {
       )}
 
       <TicketDiscussionDialog open={discussionOpen} onOpenChange={setDiscussionOpen} incident={activeDiscussion} />
-      <ReportTicketDialog open={newTicketOpen} onOpenChange={setNewTicketOpen} extraInvalidate={[["field-incidents"]]} />
+      <ReportTicketDialog open={newTicketOpen} onOpenChange={setNewTicketOpen} extraInvalidate={[["mobile-field-incidents"]]} />
     </AdminPageShell>
   );
 }

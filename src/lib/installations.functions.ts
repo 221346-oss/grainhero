@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAppOrigin } from "@/lib/app-url";
 
 async function isSuperAdmin(ctx: { supabase: any; userId: string }) {
   const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" });
@@ -184,7 +185,7 @@ function escapeHtml(s: string) {
 }
 
 function absUrl(path: string) {
-  const base = process.env.PUBLIC_APP_URL ?? process.env.APP_ORIGIN ?? "https://grainhero.app";
+  const base = requireAppOrigin();
   return `${base.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
 

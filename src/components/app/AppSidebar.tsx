@@ -259,7 +259,7 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
             type="button"
             onClick={() => onModeChange("collapsed")}
             aria-label="Show sidebar"
-            className="group fixed left-0 top-1/2 z-40 flex h-16 w-5 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-sidebar-border/60 bg-sidebar shadow-md transition-all duration-200 hover:w-7"
+            className="group fixed left-0 top-1/2 z-40 hidden h-16 w-5 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-sidebar-border/60 bg-sidebar shadow-md transition-all duration-200 hover:w-7 md:flex"
           >
             <ChevronRight className="h-4 w-4 text-sidebar-foreground/70 transition-transform duration-200 group-hover:translate-x-0.5" />
           </button>

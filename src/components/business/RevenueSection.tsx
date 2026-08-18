@@ -7,10 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Plus, Truck, RotateCcw } from "lucide-react";
+import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Truck, RotateCcw, Ban, Trash2 } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
+import { deleteDispatchQuote } from "@/lib/dispatch-sales.functions";
+import { cancelDispatch } from "@/lib/dispatches.functions";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 import type { AppRole } from "@/lib/roles.functions";
@@ -26,6 +32,7 @@ type Invoice = {
   currency: string | null;
   payment_status: string | null;
   due_date: string | null;
+  dispatch_id: string | null;
   grain_dispatches: { dispatch_number: string } | null;
 };
 
@@ -105,23 +112,54 @@ function money(n: number, ccy: string | null | undefined) {
 export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
+  const cancelFn = useServerFn(cancelDispatch);
+  const deleteQuoteFn = useServerFn(deleteDispatchQuote);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["revenue"], queryFn: () => fn() });
 
   const [q, setQ] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
   const [resumeDispatch, setResumeDispatch] = useState<{ id: string; dispatchNumber: string } | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<OutstandingDispatch | null>(null);
+  const [deleteQuoteTarget, setDeleteQuoteTarget] = useState<Invoice | null>(null);
 
-  function openNewSale() { setResumeDispatch(null); setWizardOpen(true); }
+  // Starting a new sale now only happens from Grain Operations (Silo card
+  // "Sell") or the Dashboard — this page is reporting/reopen-only. The
+  // wizard instance stays: Reopen still needs it to resume payment on an
+  // already-approved dispatch that was closed before a receipt was added.
   function openReopen(d: OutstandingDispatch) { setResumeDispatch({ id: d.id, dispatchNumber: d.dispatch_number }); setWizardOpen(true); }
 
-  // Managers see revenue read-only: no outgoing sale creation, no mark-paid action
+  // Managers see revenue read-only: no mark-paid action
   const canWrite = role === "admin" || role === "super_admin";
 
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
     onSuccess: () => { toast.success("Invoice marked paid"); qc.invalidateQueries({ queryKey: ["revenue"] }); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
+  const cancelM = useMutation({
+    mutationFn: (id: string) => cancelFn({ data: { id, reason: "Cancelled from Outstanding payments" } }),
+    onSuccess: () => {
+      toast.success("Dispatch cancelled — stock restored");
+      setCancelTarget(null);
+      qc.invalidateQueries({ queryKey: ["revenue"] });
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Could not cancel"),
+  });
+
+  const deleteQuoteM = useMutation({
+    mutationFn: (invoiceId: string) => deleteQuoteFn({ data: { invoiceId } }),
+    onSuccess: () => {
+      toast.success("Quote deleted");
+      setDeleteQuoteTarget(null);
+      qc.invalidateQueries({ queryKey: ["revenue"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Could not delete"),
   });
 
   const invoices = data?.invoices ?? [];
@@ -143,19 +181,6 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
   return (
     <div className="space-y-6">
-      {canWrite && (
-        <div className="flex justify-end">
-          <Button onClick={openNewSale} className="gap-1.5">
-            <Plus className="h-4 w-4" /> New sale (Invoice → Dispatch → Payment)
-          </Button>
-        </div>
-      )}
-      {!canWrite && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-2">
-          <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is restricted to admin.
-        </div>
-      )}
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
@@ -196,9 +221,14 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                     <div className="text-xs text-amber-600 font-semibold">{money(d.remaining, d.currency)} due</div>
                   </div>
                   {canWrite && (
-                    <Button size="sm" variant="outline" onClick={() => openReopen(d)} className="gap-1.5">
-                      <RotateCcw className="h-3.5 w-3.5" /> Reopen
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button size="sm" variant="outline" onClick={() => openReopen(d)} className="gap-1.5">
+                        <RotateCcw className="h-3.5 w-3.5" /> Reopen
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setCancelTarget(d)} className="gap-1.5 text-rose-600 hover:text-rose-700 border-rose-200 hover:bg-rose-50">
+                        <Ban className="h-3.5 w-3.5" /> Cancel
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -206,6 +236,29 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel dispatch {cancelTarget?.dispatch_number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This reverses the sale: the {cancelTarget ? money(cancelTarget.total_amount, cancelTarget.currency) : ""} worth of stock
+              already deducted from the silo will be restored, and the dispatch is marked cancelled. Only use this for a sale that fell
+              through before payment completed — it's blocked if the dispatch is already fully paid.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700"
+              disabled={cancelM.isPending}
+              onClick={() => cancelTarget && cancelM.mutate(cancelTarget.id)}
+            >
+              {cancelM.isPending ? "Cancelling…" : "Cancel dispatch"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Card>
         <CardHeader><CardTitle className="text-sm">By status</CardTitle></CardHeader>
@@ -261,6 +314,12 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                           <DollarSign className="h-3.5 w-3.5 mr-1" /> Mark paid
                         </Button>
                       )}
+                      {/* Only a quote that never became a real dispatch and never got paid — a real sale gets cancelled (Outstanding payments), not deleted */}
+                      {canWrite && !i.dispatch_id && !dispatch && Number(i.amount_paid ?? 0) === 0 && (
+                        <Button size="sm" variant="outline" onClick={() => setDeleteQuoteTarget(i)} className="text-rose-600 hover:text-rose-700 border-rose-200 hover:bg-rose-50">
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
@@ -300,6 +359,28 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={!!deleteQuoteTarget} onOpenChange={(o) => !o && setDeleteQuoteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete quote {deleteQuoteTarget?.invoice_number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This quote never turned into an actual dispatch and has no payment against it — deleting it removes the record entirely
+              (unlike a real sale, which gets cancelled instead of deleted). This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700"
+              disabled={deleteQuoteM.isPending}
+              onClick={() => deleteQuoteTarget && deleteQuoteM.mutate(deleteQuoteTarget.id)}
+            >
+              {deleteQuoteM.isPending ? "Deleting…" : "Delete quote"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

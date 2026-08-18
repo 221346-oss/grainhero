@@ -25,12 +25,14 @@ function money(n: number, ccy: string) {
   return `${ccy} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch }: {
+export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch, presetSilo }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onDone?: () => void;
   /** Reopen straight at the payment step for an already-approved dispatch that was closed before a receipt was recorded — see the Outstanding payments table in RevenueSection. */
   resumeDispatch?: { id: string; dispatchNumber: string } | null;
+  /** Launched from a specific silo's card (Grain Operations / Dashboard) — pre-select and lock the silo instead of asking the admin to pick one. */
+  presetSilo?: { id: string; name: string } | null;
 }) {
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>("details");
@@ -76,7 +78,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
 
   useEffect(() => {
     if (open) {
-      setSiloId(""); setGrainType(""); setBuyerId(""); setNewBuyer("");
+      setSiloId(presetSilo?.id ?? ""); setGrainType(""); setBuyerId(""); setNewBuyer("");
       setQty(""); setPrice(""); setVehicle(""); setDriverName(""); setDriverContact(""); setDriverCnic("");
       setDestination(""); setExpected(""); setNotes("");
       setDispatchPhotoFile(null); setDispatchPhotoPath(null);
@@ -95,7 +97,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
         setStep("details");
       }
     }
-  }, [open, resumeDispatch]);
+  }, [open, resumeDispatch, presetSilo?.id]);
 
   const listSilosFn = useServerFn(listSilos);
   const listBatchesFn = useServerFn(listSiloAvailableBatches);
@@ -310,19 +312,25 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Silo</Label>
-                <Select value={siloId} onValueChange={setSiloId}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Select silo" /></SelectTrigger>
-                  <SelectContent>
-                    {silos.map((s) => {
-                      const pending = activeBySilo.get(s.id);
-                      return (
-                        <SelectItem key={s.id} value={s.id} disabled={!!pending}>
-                          {s.name} ({s.silo_id}){pending ? " — dispatch pending" : ""}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                {presetSilo ? (
+                  <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">
+                    {presetSilo.name}
+                  </div>
+                ) : (
+                  <Select value={siloId} onValueChange={setSiloId}>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="Select silo" /></SelectTrigger>
+                    <SelectContent>
+                      {silos.map((s) => {
+                        const pending = activeBySilo.get(s.id);
+                        return (
+                          <SelectItem key={s.id} value={s.id} disabled={!!pending}>
+                            {s.name} ({s.silo_id}){pending ? " — dispatch pending" : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
                 {siloPending && (
                   <p className="text-[10px] text-amber-600 mt-1">
                     {siloPending.dispatch_number} is already {siloPending.status} against this silo — resolve it first.

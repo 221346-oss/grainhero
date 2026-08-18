@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { assertPlanAllows } from "@/lib/plan-gate";
+import { requireAppOrigin } from "@/lib/app-url";
 
 // Excludes visually ambiguous characters (0/O, 1/I/L).
 const INVITE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -185,8 +186,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     //    acceptance flows via /api/public/v1/auth/validate-invitation + accept-invite.
     const invitationCode = generateInvitationCode();
     const invitationExpires = new Date(Date.now() + INVITE_CODE_TTL_MS).toISOString();
-    const appBase = process.env.APP_ORIGIN ?? "https://grainhero.app";
-    const acceptUrl = `${appBase.replace(/\/$/, "")}/auth/accept-invite?email=${encodeURIComponent(email)}`;
+    const acceptUrl = `${requireAppOrigin().replace(/\/$/, "")}/auth/accept-invite?email=${encodeURIComponent(email)}`;
 
     // 3) Send the invitation email via Resend (already configured in this project).
     try {

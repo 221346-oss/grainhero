@@ -25,10 +25,11 @@ export const Route = createFileRoute("/_authenticated/business")({
   component: BusinessWorkspace,
 });
 
-type Tab = "revenue";
+type Tab = "revenue" | "subscription";
 
 const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "revenue", label: "Revenue", icon: Wallet },
+  { key: "subscription", label: "Subscription", icon: CreditCard },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
@@ -50,10 +51,10 @@ function BusinessWorkspace() {
   const role = roleData?.role ?? "pending";
 
   const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
-  const sub = mySub?.subscription;
 
   const counts = {
     revenue: totals.countInvoices ?? 0,
+    subscription: mySub?.invoices?.length ?? 0,
   } satisfies Record<Tab, number>;
 
   const maxCount = Math.max(...Object.values(counts), 1);
@@ -169,6 +170,7 @@ function BusinessWorkspace() {
           {/* Content */}
           <div className="p-4 md:p-6">
             {activeTab === "revenue" && <RevenueSection role={role} />}
+            {activeTab === "subscription" && <SubscriptionSection />}
           </div>
         </div>
 

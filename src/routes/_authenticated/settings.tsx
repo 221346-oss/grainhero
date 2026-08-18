@@ -1,5 +1,5 @@
 import { SettingsSkeleton, FormSkeleton } from "@/components/app/skeletons";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -163,9 +163,24 @@ function SettingsPage() {
               { value: "profile", label: "Profile" },
               { value: "location", label: "Location" },
               { value: "appearance", label: "Appearance" },
+              { value: "notifications", label: "Notifications", href: "/settings/notifications" },
               ...(isSuperAdmin ? [{ value: "platform", label: "Platform" }] : []),
-            ] as { value: string; label: string }[]).map((t) => {
+            ] as { value: string; label: string; href?: string }[]).map((t) => {
               const isActive = tab === t.value;
+              // Notifications lives on its own route (own AdminPageShell,
+              // channel/category management) rather than as inline tab
+              // content — nav there instead of switching the local tab state.
+              if (t.href) {
+                return (
+                  <Link
+                    key={t.value}
+                    to={t.href}
+                    className="relative py-3 text-sm uppercase tracking-[0.15em] whitespace-nowrap transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <VariableFontText text={t.label} base={350} hover={850} staggerMs={30} />
+                  </Link>
+                );
+              }
               return (
                 <button
                   key={t.value}
