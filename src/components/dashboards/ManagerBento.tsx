@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listOpenFieldIncidents } from "@/lib/field-settings.functions";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
-import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
+import { MonitoringDiscussionDialog, type MonitoringIncidentItem } from "@/components/app/MonitoringDiscussionDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
@@ -218,7 +218,7 @@ export function ManagerBento({
 }) {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
-  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<MonitoringIncidentItem | null>(null);
   const [currentUserId, setCurrentUserId] = useState("");
 
   // Get current user ID
@@ -255,7 +255,7 @@ export function ManagerBento({
       primary: a.title,
       secondary: a.alert_type ?? "alert",
       badge: <PriorityPill p={a.priority} />,
-      to: "/grain-alerts" as const,
+      to: "/dashboard" as const,
       type: "alert" as const,
     })),
     ...spoiledBatches.map((b) => ({
@@ -375,7 +375,7 @@ export function ManagerBento({
         <BentoCard
           title="Alert triage"
           count={combinedAlerts.length}
-          to="/grain-alerts"
+          to="/dashboard"
           tooltip="Open alerts and spoiled/damaged batches requiring attention."
           rows={alertRows}
           empty="All clear — no open alerts or spoilage."
@@ -483,11 +483,12 @@ export function ManagerBento({
                         onClick={() => {
                           setActiveDiscussionTicket({
                             id: inc.id,
-                            category: inc.category,
-                            severity: inc.severity,
+                            title: inc.category,
+                            priority: inc.severity,
                             status: inc.status,
-                            notes: inc.notes,
-                            created_at: inc.created_at,
+                            message: inc.notes ?? null,
+                            triggered_at: inc.created_at,
+                            source: "field_incident",
                           });
                           setDiscussionOpen(true);
                           markRead(inc.id);
@@ -520,7 +521,7 @@ export function ManagerBento({
         onOpenChange={setTicketDialogOpen}
         silos={silos}
       />
-      <TicketDiscussionDialog
+      <MonitoringDiscussionDialog
         open={discussionOpen}
         onOpenChange={setDiscussionOpen}
         incident={activeDiscussionTicket}

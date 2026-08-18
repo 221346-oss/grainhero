@@ -12,11 +12,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
 type AdminTabKey =
-  | "overview" | "silos" | "batches" | "alerts" | "marketplace"
+  | "overview" | "silos" | "batches" | "marketplace"
   | "sensors" | "actuators" | "buyers" | "orders" | "team";
 
 type ManagerTabKey =
-  | "overview" | "silos" | "batches" | "alerts" | "dispatch"
+  | "overview" | "silos" | "batches" | "dispatch"
   | "qc" | "actuators" | "orders" | "team" | "sensors";
 
 type SuperTabKey =
@@ -33,7 +33,6 @@ const CATALOG_ADMIN: Def<AdminTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
   { key: "silos", label: "Silos", icon: Container, to: "/grain-operations", search: { tab: "silos" } },
   { key: "batches", label: "Batches", icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
-  { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
   { key: "marketplace", label: "Marketplace", icon: Store, to: "/business" },
   { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
   { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
@@ -46,7 +45,6 @@ const CATALOG_MANAGER: Def<ManagerTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
   { key: "silos", label: "Silos", icon: Container, to: "/grain-operations", search: { tab: "silos" } },
   { key: "batches", label: "Batches", icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
-  { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
   { key: "dispatch", label: "Dispatch", icon: Truck, to: "/grain-operations", search: { tab: "silos" } },
   { key: "qc", label: "QC", icon: ClipboardCheck, to: "/grain-operations", search: { tab: "batches" } },
   { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },

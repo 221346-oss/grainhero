@@ -337,8 +337,8 @@ export const escalateIncident = createServerFn({ method: "POST" })
     requireAny(r, ["manager", "admin"]);
 
     const { data: current } = await context.supabase
-      .from("grain_alerts").select("escalation_level, escalation_history").eq("id", data.id).maybeSingle();
-    const c = current as { escalation_level?: number | null; escalation_history?: unknown[] | null } | null;
+      .from("grain_alerts").select("escalation_level, escalation_history, title, message, priority, admin_id").eq("id", data.id).maybeSingle();
+    const c = current as { escalation_level?: number | null; escalation_history?: unknown[] | null; title?: string; message?: string; priority?: string; admin_id?: string | null } | null;
     const history = Array.isArray(c?.escalation_history) ? c.escalation_history : [];
     history.push({ at: new Date().toISOString(), by: context.userId, reason: data.reason ?? null, manual: true });
 
@@ -351,6 +351,32 @@ export const escalateIncident = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw error;
+
+    // Notify admins about escalation
+    try {
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("name, email")
+        .eq("id", context.userId)
+        .maybeSingle();
+
+      const managerName = profile?.name || profile?.email || "Manager";
+      const tenantAdminId = c?.admin_id ?? context.userId;
+      
+      const { emitToRole } = await import("./notify");
+      await emitToRole(context.supabase, tenantAdminId, "admin", {
+        category: "ops",
+        severity: "warning",
+        title: `Incident Escalated: ${c?.title || "Untitled"}`,
+        body: `${managerName} escalated a ${c?.priority || "high"} priority incident${data.reason ? ` - Reason: ${data.reason}` : ""}`,
+        link: "/monitoring",
+        entityType: "grain_alert",
+        entityId: data.id,
+      });
+    } catch (e) {
+      console.warn("[escalateIncident] Failed to emit notification to admins:", e);
+    }
+
     return { ok: true };
   });
 
@@ -492,8 +518,8 @@ export const addMonitoringIncidentComment = createServerFn({ method: "POST" })
       throw new Error("Not authorised to discuss this incident.");
     }
 
-    if (inc.status === "resolved") {
-      throw new Error("Discussion is closed — this incident has been resolved.");
+    if (inc.status === "resolved" || inc.status === "dismissed") {
+      throw new Error("Discussion is closed — this incident has been resolved or dismissed.");
     }
 
     const { data: profile } = await context.supabase
