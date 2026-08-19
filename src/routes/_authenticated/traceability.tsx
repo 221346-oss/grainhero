@@ -26,6 +26,7 @@ import { getMyRole } from "@/lib/roles.functions";
 import { getBatchTraceability } from "@/lib/traceability.functions";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { getBatchStageLabel } from "@/lib/batch-stage.utils";
 
 export const Route = createFileRoute("/_authenticated/traceability")({
   head: () => ({
@@ -42,7 +43,22 @@ export const Route = createFileRoute("/_authenticated/traceability")({
 
 type Batch = Awaited<ReturnType<typeof listGrainBatches>>[number];
 
-function statusBadge(s: string | null) {
+function statusBadge(s: string | null, qcPassedAt?: string | null) {
+  // Map QC workflow statuses
+  const qcStatuses: Record<string, string> = {
+    pending_qc: "bg-slate-100 text-slate-700 border-slate-200",
+    qc_submitted: "bg-slate-100 text-slate-700 border-slate-200",
+    qc_passed: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    qc_failed: "bg-red-100 text-red-800 border-red-200",
+    admin_rejected: "bg-red-100 text-red-800 border-red-200",
+    pending_approval: "bg-amber-100 text-amber-800 border-amber-200",
+  };
+  
+  if (s && qcStatuses[s]) {
+    return qcStatuses[s];
+  }
+  
+  // Original statuses
   switch (s) {
     case "stored": return "bg-emerald-100 text-emerald-800 border-emerald-200";
     case "dispatched": return "bg-blue-100 text-blue-800 border-blue-200";
@@ -184,8 +200,8 @@ function TraceabilityPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-base truncate">{batch.batch_id}</CardTitle>
-                    <Badge className={statusBadge(batch.status)}>
-                      {(batch.status ?? "").charAt(0).toUpperCase() + (batch.status ?? "").slice(1)}
+                    <Badge className={statusBadge(batch.status, (batch as any).qc_passed_at)}>
+                      {getBatchStageLabel(batch.status ?? "", (batch as any).qc_passed_at)}
                     </Badge>
                   </div>
                   <CardDescription>{batch.grain_type}</CardDescription>
@@ -281,8 +297,8 @@ function TimelineBody({ batch }: { batch: Batch }) {
               Grade: {batch.grade ?? "N/A"} • Variety: {batch.variety ?? "N/A"}
             </p>
           </div>
-          <Badge className={statusBadge(batch.status)}>
-            {(batch.status ?? "").charAt(0).toUpperCase() + (batch.status ?? "").slice(1)}
+          <Badge className={statusBadge(batch.status, (batch as any).qc_passed_at)}>
+            {getBatchStageLabel(batch.status ?? "", (batch as any).qc_passed_at)}
           </Badge>
         </CardContent>
       </Card>

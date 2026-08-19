@@ -587,7 +587,8 @@ export function IncidentsSection() {
         </Card>
       ) : (
         <div className={splitView ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start" : "space-y-2"}>
-          <div className="space-y-2">
+          {/* Fixed height container for 4 entries with vertical scroll */}
+          <div className={splitView ? "space-y-2" : "space-y-2 h-[320px] overflow-y-auto"}>
             {filtered.map((i) => (
               <IncidentCard
                 key={i.id}

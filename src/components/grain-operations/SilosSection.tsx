@@ -361,20 +361,23 @@ export function SilosSection() {
             <p className="text-sm">No silos yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {rows.map((s) => (
-              <SiloOperationsCard
-                key={s.id}
-                silo={s}
-                batches={batches}
-                isAdmin={isAdmin}
-                onView={(silo) => { setSelected(silo as Silo); setViewOpen(true); }}
-                onEdit={(silo) => openEdit(silo as Silo)}
-                onDelete={(id) => setDeleteId(id)}
-                onSell={(silo) => setSellSilo(silo as Silo)}
-                onRequestMore={handleRequestSilo}
-              />
-            ))}
+          // Fixed height container for 4 entries (4 columns x 1 row) with vertical scroll
+          <div className="h-[320px] overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {rows.map((s) => (
+                <SiloOperationsCard
+                  key={s.id}
+                  silo={s}
+                  batches={batches}
+                  isAdmin={isAdmin}
+                  onView={(silo) => { setSelected(silo as Silo); setViewOpen(true); }}
+                  onEdit={(silo) => openEdit(silo as Silo)}
+                  onDelete={(id) => setDeleteId(id)}
+                  onSell={(silo) => setSellSilo(silo as Silo)}
+                  onRequestMore={handleRequestSilo}
+                />
+              ))}
+            </div>
           </div>
         )}
       {/* Edit Dialog */}

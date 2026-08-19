@@ -125,23 +125,6 @@ function BentoCard({
   );
 }
 
-function PriorityPill({ p }: { p?: string | null }) {
-  const map: Record<string, string> = {
-    critical: "bg-red-500/10 text-red-600",
-    high: "bg-amber-500/10 text-amber-600",
-    medium: "bg-sky-500/10 text-sky-600",
-    low: "bg-slate-500/10 text-slate-600",
-  };
-  const key = String(p ?? "medium").toLowerCase();
-  return (
-    <span
-      className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${map[key] ?? map.medium}`}
-    >
-      {key}
-    </span>
-  );
-}
-
 function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
   const displayCount = count > 99 ? "99+" : count.toString();
@@ -154,12 +137,10 @@ function UnreadBadge({ count }: { count: number }) {
 
 export function ManagerBento({
   silos,
-  alerts,
   qcQueue,
   dispatchQueue,
   actuators,
   buyers,
-  spoiledBatches,
   technicians,
 }: {
   silos: Array<{
@@ -169,13 +150,6 @@ export function ManagerBento({
     capacity_kg: number;
     current_occupancy_kg: number | null;
     status: string | null;
-  }>;
-  alerts: Array<{
-    id: string;
-    title: string;
-    priority: string | null;
-    alert_type: string | null;
-    triggered_at: string | null;
   }>;
   qcQueue: Array<{
     id: string;
@@ -199,14 +173,6 @@ export function ManagerBento({
     status?: string | null;
     contact_name?: string | null;
     created_at?: string | null;
-  }>;
-  spoiledBatches: Array<{
-    id: string;
-    batch_id: string;
-    grain_type: string;
-    quantity_kg: number;
-    status: string;
-    created_at: string;
   }>;
   technicians: Array<{
     id: string;
@@ -247,40 +213,6 @@ export function ManagerBento({
       to: `/silos/${s.id}`,
     };
   });
-
-  // Combine regular alerts and spoiled batches for the alert triage card
-  const combinedAlerts = [
-    ...alerts.map((a) => ({
-      id: a.id,
-      primary: a.title,
-      secondary: a.alert_type ?? "alert",
-      badge: <PriorityPill p={a.priority} />,
-      to: "/dashboard" as const,
-      type: "alert" as const,
-    })),
-    ...spoiledBatches.map((b) => ({
-      id: b.id,
-      primary: `Spoiled: ${b.batch_id}`,
-      secondary: `${b.grain_type} · ${Number(b.quantity_kg).toLocaleString()} kg`,
-      badge: (
-        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600">
-          {b.status}
-        </span>
-      ),
-      to: "/grain-operations" as const,
-      search: { tab: "batches" as const, status: "damaged" as const },
-      type: "spoilage" as const,
-    })),
-  ];
-
-  const alertRows: Row[] = combinedAlerts.map((item) => ({
-    id: item.id,
-    primary: item.primary,
-    secondary: item.secondary,
-    badge: item.badge,
-    to: item.to,
-    search: "search" in item ? item.search : undefined,
-  }));
 
   const qcRows: Row[] = qcQueue.map((b) => ({
     id: b.id,
@@ -361,8 +293,8 @@ export function ManagerBento({
 
   return (
     <div className="space-y-4">
-      {/* ── Top Row: Key Metrics ── */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* ── Top Row: Key Metrics (Silos and QC Queue) ── */}
+      <div className="grid gap-4 md:grid-cols-2">
         <BentoCard
           title="Silos"
           count={silos.length}
@@ -371,14 +303,6 @@ export function ManagerBento({
           tooltip="Silo utilisation, sorted by fill. Click any silo for full detail."
           rows={siloRows}
           empty="No silos yet — provision from install orders."
-        />
-        <BentoCard
-          title="Alert triage"
-          count={combinedAlerts.length}
-          to="/dashboard"
-          tooltip="Open alerts and spoiled/damaged batches requiring attention."
-          rows={alertRows}
-          empty="All clear — no open alerts or spoilage."
         />
         <BentoCard
           title="QC queue"

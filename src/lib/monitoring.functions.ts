@@ -593,9 +593,9 @@ export const getReportsData = createServerFn({ method: "GET" })
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager"]);
 
-    const [batches, alerts, invoices, silos] = await Promise.all([
+    const [batches, alerts, invoices, silos, batchesInSilos] = await Promise.all([
       context.supabase.from("grain_batches")
-        .select("id, batch_id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, spoilage_label, risk_score, intake_date, created_at")
+        .select("id, batch_id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, spoilage_label, risk_score, intake_date, created_at, silo_id")
         .is("deleted_at", null).order("created_at", { ascending: false }).limit(1000),
       context.supabase.from("grain_alerts")
         .select("id, priority, status, alert_type, created_at, resolved_at")
@@ -603,14 +603,35 @@ export const getReportsData = createServerFn({ method: "GET" })
       context.supabase.from("buyer_invoices")
         .select("id, invoice_number, buyer_name, total_amount, amount_paid, payment_status, currency, created_at")
         .order("created_at", { ascending: false }).limit(1000),
-      context.supabase.from("silos").select("id, name, capacity_kg, current_occupancy_kg, status").limit(500),
+      context.supabase.from("silos").select("id, name, silo_id, capacity_kg, current_occupancy_kg, status").limit(500),
+      context.supabase.from("grain_batches")
+        .select("id, batch_id, grain_type, silo_id, quantity_kg, status")
+        .in("status", ["stored", "active", "ready"] as never)
+        .is("deleted_at", null),
     ]);
+
+    // Group batches by silo
+    const batchesBySilo = new Map<string, any[]>();
+    (batchesInSilos.data ?? []).forEach((batch: any) => {
+      if (batch.silo_id) {
+        if (!batchesBySilo.has(batch.silo_id)) {
+          batchesBySilo.set(batch.silo_id, []);
+        }
+        batchesBySilo.get(batch.silo_id)!.push(batch);
+      }
+    });
+
+    // Enhance silos with batch information
+    const enhancedSilos = (silos.data ?? []).map((silo: any) => ({
+      ...silo,
+      batches: batchesBySilo.get(silo.id) ?? [],
+    }));
 
     return {
       batches: batches.data ?? [],
       alerts: alerts.data ?? [],
       invoices: invoices.data ?? [],
-      silos: silos.data ?? [],
+      silos: enhancedSilos,
     };
   });
 

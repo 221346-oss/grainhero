@@ -3,6 +3,7 @@ import { Loader2, Inbox } from "lucide-react";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getBatchStageLabel } from "@/lib/batch-stage.utils";
 
 export type Column<T> = {
   key: string;
@@ -76,9 +77,22 @@ export function DataListPage<T extends Record<string, unknown>>({
   );
 }
 
-export function StatusBadge({ value }: { value: string | null | undefined }) {
+export function StatusBadge({ value, qcPassedAt }: { value: string | null | undefined; qcPassedAt?: string | null }) {
   if (!value) return <span className="text-slate-400">—</span>;
+  
+  // Get user-friendly stage label
+  const stageLabel = getBatchStageLabel(value, qcPassedAt);
+  
   const colors: Record<string, string> = {
+    // QC Workflow stages
+    pending_qc: "bg-slate-100 text-slate-700",
+    qc_submitted: "bg-slate-100 text-slate-700",
+    qc_passed: "bg-emerald-100 text-emerald-700",
+    qc_failed: "bg-rose-100 text-rose-700",
+    admin_rejected: "bg-rose-100 text-rose-700",
+    pending_approval: "bg-amber-100 text-amber-700",
+    
+    // General statuses
     active: "bg-emerald-100 text-emerald-700",
     online: "bg-emerald-100 text-emerald-700",
     stored: "bg-emerald-100 text-emerald-700",
@@ -92,5 +106,5 @@ export function StatusBadge({ value }: { value: string | null | undefined }) {
     sold: "bg-violet-100 text-violet-700",
   };
   const cls = colors[value.toLowerCase()] ?? "bg-slate-100 text-slate-700";
-  return <Badge className={`${cls} hover:${cls}`}>{value}</Badge>;
+  return <Badge className={`${cls} hover:${cls}`}>{stageLabel}</Badge>;
 }

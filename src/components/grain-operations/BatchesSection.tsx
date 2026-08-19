@@ -655,7 +655,8 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
         </Card>
       ) : (
         <div className="rounded-xl border bg-card/60 overflow-hidden">
-          <div className="max-h-[70vh] overflow-auto">
+          {/* Fixed height container for 4 entries with vertical scroll */}
+          <div className="h-[280px] overflow-y-auto">
             <Table className="text-xs">
               <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
                 <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
@@ -689,7 +690,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                       <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
                       <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
                       <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell><StatusBadge value={b.status} /></TableCell>
+                      <TableCell><StatusBadge value={b.status} qcPassedAt={(b as any).qc_passed_at} /></TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <RowActions
                           actions={[

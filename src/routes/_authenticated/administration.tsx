@@ -9,10 +9,13 @@ import { SecuritySection } from "@/components/administration/SecuritySection";
 import { ActivityLogsSection } from "@/components/administration/ActivityLogsSection";
 import { ReportsSection } from "@/components/administration/ReportsSection";
 import { KeyMetricsPanel, type KeyMetricsStats } from "@/components/administration/KeyMetricsPanel";
+import { AdministrationOverviewChart } from "@/components/administration/AdministrationOverviewChart";
 import { Users, ShieldCheck, ClipboardList, FileBarChart } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
+import { getReportsData } from "@/lib/monitoring.functions";
+import { listActivityLogs } from "@/lib/notifications-audit.functions";
 
 type Tab = "team" | "security" | "activity" | "reports";
 const TAB_KEYS: Tab[] = ["team", "security", "activity", "reports"];
@@ -65,6 +68,8 @@ function AdministrationWorkspace() {
 
   const fetchMembers = useServerFn(listTeamMembers);
   const fetchSecurity = useServerFn(getSecurityOverview);
+  const fetchReports = useServerFn(getReportsData);
+  const fetchActivityLogs = useServerFn(listActivityLogs);
 
   const { data: members } = useQuery({
     queryKey: ["team-members"],
@@ -75,6 +80,14 @@ function AdministrationWorkspace() {
     queryKey: ["security-center"],
     queryFn: () => fetchSecurity(),
     enabled: isAdmin,
+  });
+  const { data: reportsData } = useQuery({
+    queryKey: ["reports"],
+    queryFn: () => fetchReports(),
+  });
+  const { data: activityData } = useQuery({
+    queryKey: ["activity-logs-overview"],
+    queryFn: () => fetchActivityLogs({ page: 1, perPage: 1000, search: "", category: null, severity: null }),
   });
 
   const memberList = (members ?? []) as any[];
@@ -116,39 +129,20 @@ function AdministrationWorkspace() {
 
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Bar Chart Panel */}
+          {/* Area Chart Panel */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
-              Administration Overview
-            </p>
-            <div className="space-y-4">
-              {visibleTabs.map((tab, i) => {
-                const count = counts[tab.key];
-                const pct = Math.max((count / maxCount) * 100, count > 0 ? 4 : 0);
-                return (
-                  <div key={tab.key} className="flex items-center gap-4">
-                    <span className="w-24 text-xs text-muted-foreground font-mono truncate text-right shrink-0">
-                      {tab.label.split(" ")[0]}…
-                    </span>
-                    <div className="flex-1 h-8 bg-muted rounded-md overflow-hidden relative">
-                      <div
-                        className={`h-full rounded-md bg-gradient-to-r ${BAR_COLORS[i]} transition-all duration-700`}
-                        style={{ width: `${pct}%`, boxShadow: "0 0 12px rgba(99,102,241,0.3)" }}
-                      />
-                      <div
-                        className="absolute inset-0 pointer-events-none opacity-10"
-                        style={{
-                          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-                          backgroundSize: "8px 8px",
-                        }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-xs text-muted-foreground font-mono shrink-0">
-                      {count}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="flex items-start justify-between mb-5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                Administration Overview
+              </p>
+            </div>
+            <div className="h-[240px]">
+              <AdministrationOverviewChart
+                activityLogs={activityData?.logs ?? []}
+                batches={reportsData?.batches ?? []}
+                alerts={reportsData?.alerts ?? []}
+                invoices={reportsData?.invoices ?? []}
+              />
             </div>
           </div>
 
