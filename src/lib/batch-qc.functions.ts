@@ -310,6 +310,7 @@ export const managerOverrideApproval = createServerFn({ method: "POST" })
     if (error) throw error;
 
     await logManagerAction({
+      actorId: context.userId,
       managerId: context.userId,
       tenantAdminId: b.admin_id,
       action: "batch.manager_override_approval",

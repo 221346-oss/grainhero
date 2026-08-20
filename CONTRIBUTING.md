@@ -1,51 +1,48 @@
 # Contributing to GrainHero
 
-Thanks for helping improve GrainHero. This guide covers everything you need to
-get a change merged.
+We're excited to have you join our mission to reduce post-harvest loss through technology! Whether you're fixing a bug, improving docs, or adding a new feature, your help is appreciated.
 
-## Setup
+## Quick Start (5 Minutes)
 
-```bash
-bun install
-bun run dev
-```
+1.  **Fork & Clone**:
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/grainhero.git
+    cd grainhero
+    ```
+2.  **Install Dependencies**:
+    ```bash
+    bun install
+    ```
+3.  **Environment Setup**:
+    ```bash
+    cp .env.example .env.local
+    ```
+    *Note: You can run the UI without real keys by using the provided mock data.*
+4.  **Run Dev Server**:
+    ```bash
+    bun run dev
+    ```
 
-You need your own Supabase project, Stripe test keys and (optionally) a
-Firebase Realtime Database for telemetry. Put them in `.env.local` — never
-commit real credentials.
+## Finding a Task
 
-## Before opening a pull request
+Check our [Good First Issues](docs/GOOD_FIRST_ISSUES.md) list. We've curated 20+ independent tasks specifically for new contributors to help us reach our Community Builder milestone.
 
-```bash
-bun run lint
-bunx tsgo --noEmit
-bun run test:integration
-```
+## Development Workflow
 
-All three must pass. Run `bun run format` to apply Prettier.
+- **Branching**: `feat/description` or `fix/description`.
+- **Commits**: We follow [Conventional Commits](https://www.conventionalcommits.org/).
+  - `feat: add real-time temperature graph`
+  - `fix: correct z-index on mobile nav`
+  - `docs: update deployment instructions`
+- **Quality**: Ensure `bun run lint` passes before submitting.
 
-## Conventions
+## Pull Request Process
 
-- **Routing** — file-based routes in `src/routes/`. Never edit
-  `src/routeTree.gen.ts`; it is generated.
-- **Server logic** — `createServerFn` in `src/lib/*.functions.ts`. Raw HTTP
-  endpoints (webhooks, cron) live under `src/routes/api/public/` and must
-  verify their caller.
-- **Database** — every new `public` table needs `GRANT`s, RLS enabled and
-  explicit policies in the same migration.
-- **Styling** — semantic design tokens only. No hardcoded colour utilities.
-- **New routes** — add a row to
-  [`docs/architecture/route-matrix.md`](docs/architecture/route-matrix.md) in
-  the same change.
+1.  Open a PR targeting the `main` branch.
+2.  Fill out the PR template (automatically loaded).
+3.  Ensure CI checks pass.
+4.  A maintainer will review within 24-48 hours.
 
-## Commit and PR style
+## Need Help?
 
-- One logical change per pull request.
-- Describe the user-visible effect, not just the diff.
-- Include screenshots for UI changes.
-
-## Reporting bugs
-
-Open an issue with reproduction steps, expected vs actual behaviour, and the
-relevant console or server log output. For security issues follow
-[SECURITY.md](SECURITY.md) instead.
+Join our community chat or open a "Question" issue. We're here to support you!

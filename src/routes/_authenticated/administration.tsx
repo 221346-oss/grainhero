@@ -87,7 +87,7 @@ function AdministrationWorkspace() {
   });
   const { data: activityData } = useQuery({
     queryKey: ["activity-logs-overview"],
-    queryFn: () => fetchActivityLogs({ page: 1, perPage: 1000, search: "", category: null, severity: null }),
+    queryFn: () => fetchActivityLogs({ page: 1, limit: 1000, search: "", category: null, severity: null } as any),
   });
 
   const memberList = (members ?? []) as any[];
@@ -138,10 +138,10 @@ function AdministrationWorkspace() {
             </div>
             <div className="h-[240px]">
               <AdministrationOverviewChart
-                activityLogs={activityData?.logs ?? []}
-                batches={reportsData?.batches ?? []}
-                alerts={reportsData?.alerts ?? []}
-                invoices={reportsData?.invoices ?? []}
+                activityLogs={(activityData?.logs ?? []) as any}
+                batches={(reportsData?.batches ?? []) as any}
+                alerts={(reportsData?.alerts ?? []) as any}
+                invoices={(reportsData?.invoices ?? []) as any}
               />
             </div>
           </div>

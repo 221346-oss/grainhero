@@ -1,32 +1,10 @@
 # Security Policy
 
-## Reporting a vulnerability
+## Supported Versions
 
-Please do **not** open a public issue for security problems. Email
-**security@grainhero.app** with:
+We currently only support the latest version of GrainHero.
 
-- a description of the issue and its impact,
-- steps to reproduce (proof of concept if possible),
-- affected routes, endpoints or tables.
+## Reporting a Vulnerability
 
-You will get an acknowledgement within 72 hours and a status update at least
-every 7 days until the issue is resolved.
-
-## Scope
-
-In scope: this repository's web application, server functions, public API
-routes under `/api/public/*`, Supabase policies and migrations, and the ML
-service in `ml-deploy/`.
-
-Out of scope: third-party services (Supabase, Stripe, Firebase, Cloudflare)
-themselves, and findings that require physical access to a customer's hardware.
-
-## Handling credentials
-
-- Never commit service-account JSON, private keys or API secrets. Files
-  matching `*service-account*.json`, `*firebase-adminsdk*.json`, `*.pem` and
-  `*.key` are gitignored.
-- Secrets are provided to the runtime as environment variables and read only
-  inside server-function handlers.
-- If a credential is ever committed, rotate it at the provider first, then
-  purge it from history.
+Please do not report security vulnerabilities through public GitHub issues. 
+Instead, send a private report to security@grainhero.app.
