@@ -1,14 +1,12 @@
 # Claude for Open Source application: repo hardening + application copy
 
-## What the program actually looks for
+## Track: Community builders (20+ external contributors)
 
-From the program page and accepted-applicant write-ups (Daniel Avila, Simon Willison's notes, July 2026 expansion):
+You're applying under the **Community builders** criterion: one repo with 20 or more unique external contributors whose PRs were merged in the last 12 months. You have 11 and will arrange 9 more. That changes the goal of this work: the repo must be genuinely easy for a newcomer to clone, run, pick a scoped task and land a merged PR — fast, and 9 times over.
 
-- Formal bars are download/dependent/PR-count based (500+ dependent repos, 100+ PRs into other repos, 20+ external contributors, OpenSSF criticality 0.4+). GrainHero meets none of these today — it is a young, single-owner application repo, not a library.
-- The escape hatch is explicit and is what most non-library winners used: "If you maintain something the ecosystem quietly depends on, apply anyway and tell us about it." Reviews are rolling, up to 10,000 accepted, so a credible narrative + a repo that visibly looks maintained matters more than stars.
-- Accepted write-ups repeatedly cite: a real README with screenshots, clear install path, license, contribution docs, CI that passes, issues/PRs open to outsiders, and a concrete statement of who depends on the project and what the free Max would unlock.
+From the program page and accepted-applicant write-ups (Daniel Avila, Simon Willison's notes, July 2026 expansion): reviews are rolling, up to 10,000 accepted, and reviewers look at README quality, working install path, license, contribution docs, green CI, and visible issue/PR activity from people other than the owner.
 
-So the strategy: position GrainHero as **critical-infrastructure-adjacent open source for post-harvest food loss in emerging markets** — a domain with essentially no open reference implementation — and make the repo look unmistakably maintained and contributable.
+So everything below is optimized for one outcome: **9 more external contributors with merged PRs, and a repo that visibly supports them.**
 
 ## Part 1 — Repo cleanup (make it read as a maintained OSS project)
 
