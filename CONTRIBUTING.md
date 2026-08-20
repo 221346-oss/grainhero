@@ -1,38 +1,48 @@
 # Contributing to GrainHero
 
-First off, thank you for considering contributing to GrainHero! It's people like you that make GrainHero such a great tool for fighting food loss.
+We're excited to have you join our mission to reduce post-harvest loss through technology! Whether you're fixing a bug, improving docs, or adding a new feature, your help is appreciated.
 
 ## Quick Start (5 Minutes)
 
-1. **Fork and Clone**: Fork the repo and clone it locally.
-2. **Install Dependencies**: 
-   ```bash
-   bun install
-   ```
-3. **Setup Environment**:
-   ```bash
-   cp .env.example .env.local
-   ```
-   (You don't need real keys for UI work! The app will boot with defaults.)
-4. **Run Dev**:
-   ```bash
-   bun run dev
-   ```
-   Open [http://localhost:8080](http://localhost:8080).
+1.  **Fork & Clone**:
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/grainhero.git
+    cd grainhero
+    ```
+2.  **Install Dependencies**:
+    ```bash
+    bun install
+    ```
+3.  **Environment Setup**:
+    ```bash
+    cp .env.example .env.local
+    ```
+    *Note: You can run the UI without real keys by using the provided mock data.*
+4.  **Run Dev Server**:
+    ```bash
+    bun run dev
+    ```
 
-## How to Contribute
+## Finding a Task
 
-1. **Pick an Issue**: Look for issues labeled `good first issue` or `help wanted`.
-2. **Create a Branch**: `git checkout -b feat/your-feature-name`.
-3. **Commit Changes**: Follow [Conventional Commits](https://www.conventionalcommits.org/).
-4. **Open a PR**: Describe your changes clearly. We review all PRs within 48 hours.
+Check our [Good First Issues](docs/GOOD_FIRST_ISSUES.md) list. We've curated 20+ independent tasks specifically for new contributors to help us reach our Community Builder milestone.
 
-## Local Development Tips
+## Development Workflow
 
-- **Supabase**: If you aren't changing the database, you don't need a local Supabase setup.
-- **ML**: ONNX models run in `ml-deploy/`. Check the README there for setup.
-- **UI**: We use Tailwind v4 and shadcn/ui.
+- **Branching**: `feat/description` or `fix/description`.
+- **Commits**: We follow [Conventional Commits](https://www.conventionalcommits.org/).
+  - `feat: add real-time temperature graph`
+  - `fix: correct z-index on mobile nav`
+  - `docs: update deployment instructions`
+- **Quality**: Ensure `bun run lint` passes before submitting.
 
-## Community
+## Pull Request Process
 
-Join our [Discussions](https://github.com/221346-oss/grainhero/discussions) to ask questions or propose new features!
+1.  Open a PR targeting the `main` branch.
+2.  Fill out the PR template (automatically loaded).
+3.  Ensure CI checks pass.
+4.  A maintainer will review within 24-48 hours.
+
+## Need Help?
+
+Join our community chat or open a "Question" issue. We're here to support you!
