@@ -30,21 +30,24 @@ Root today has leftovers that read as private working notes: `IMPLEMENTATION_SUM
 - `README.md` upgrade: badges (CI, license, stack), one-screenshot hero, 60-second quickstart, architecture diagram, "who this is for", "good first issues" link, contributor section.
 - `SECURITY.md` review: private reporting instructions + supported versions.
 
-## Part 3 — Contributor-readiness signals
+## Part 3 — Contributor onboarding (the part that gets you to 20)
 
-- Seed `docs/GOOD_FIRST_ISSUES.md` with 8–12 concrete, scoped tasks so the maintainer can open them as GitHub issues labelled `good first issue` / `help wanted` right after this lands.
-- Add `.env.example` with every required key name (no values) so a stranger can actually boot the app — currently onboarding depends on a private `.env`.
-- Verify `bun run lint`, typecheck and build pass so the new CI workflow is green on first run.
+- `docs/GOOD_FIRST_ISSUES.md` — 20+ concrete, scoped, independent tasks written so each is one small PR by one person (no two tasks touching the same file, so 9 people can work in parallel without conflicts). Mix of: single-page a11y fixes, missing `alt`/aria labels, Urdu/i18n string extraction, one unit test per util, docs pages, a crop-model README, small landing-page polish, `.env.example` key docs. Each entry gets: title, files to touch, acceptance criteria, difficulty — copy-pasteable straight into GitHub issues.
+- `CONTRIBUTING.md` rewrite: 5-minute setup, how to run without real Supabase/Stripe keys, branch/commit/PR conventions, review turnaround promise, first-PR walkthrough.
+- `.env.example` with every required key name (no values) so a stranger can actually boot the app.
+- `docs/DEVELOPMENT.md` — local dev troubleshooting so a newcomer doesn't stall and abandon the PR.
+- Verify `bun run lint`, typecheck and build pass so CI is green on first run and contributor PRs aren't blocked by pre-existing failures.
 
 ## Part 4 — Application copy (delivered as `docs/CLAUDE_OSS_APPLICATION.md`, plus pasted in chat)
 
-Three fields to fill:
+Written for the Community-builders angle, and honest about the count (written so it holds up whether you land at 20 or narrowly under).
 
-1. **Project reach and impact** — leads with the gap-it-fills angle: post-harvest grain loss is a $1.3T/yr global problem and there is no open, end-to-end reference stack (firmware + ingest + ML + multi-tenant ops) for it; GrainHero publishes the whole chain under MIT — ESP32 firmware, 5-crop ONNX spoilage models, telemetry pipeline, RLS multi-tenant schema. States real, verifiable numbers only (commit count, live deployment at grainhero.app, pilot context, dataset size), and is honest that it does not meet the download-count bars while making the "quietly depended on / fills a gap" case.
-2. **How the subscription will be used** — specific and verifiable: getting the ONNX inference path and firmware to a documented, forkable reference implementation; writing contributor-facing docs and tests to raise the bus factor above one; Urdu/regional localization; reviewing incoming PRs once `good first issue` labels go live. Not "it will help me code faster".
-3. **Other info** — repo URL, live URL, license, that the repo was cleaned and CI-gated specifically for public contribution, and the honest borderline-applicant note invoking the "don't quite fit? apply anyway" line.
+1. **Project reach and impact** — GrainHero as the open reference stack for post-harvest grain loss (a $1.3T/yr global problem) with no existing end-to-end open implementation: ESP32 firmware, 5-crop ONNX spoilage models, telemetry pipeline, RLS multi-tenant ops — all MIT. Then the community angle: external contributors merged in the last 12 months, active issue queue, contributors drawn from the agritech/emerging-markets space, live deployment at grainhero.app.
+2. **How the subscription will be used** — reviewing and unblocking the growing contributor queue, expanding the `good first issue` pipeline, raising the bus factor above one via docs and tests, Urdu/regional localization, hardening the firmware + ONNX path into a forkable reference. Not "it will help me code faster".
+3. **Other info** — repo URL, live URL, MIT license, contributor count, CI status, and the honest note invoking "don't quite fit? apply anyway".
 
-Every claim in the copy will be cross-checked against the repo before writing — no invented star counts, downloads, users, or partnerships.
+Every claim cross-checked against the repo — no invented stars, downloads, users or partnerships.
+
 
 ## Technical notes
 
