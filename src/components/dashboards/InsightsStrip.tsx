@@ -71,7 +71,7 @@ export function InsightsStrip({
       label: "Storage Risk",
       value: String(i.atRisk),
       hint: `${alertsOpen ?? 0} open alerts`,
-      to: "/grain-alerts",
+      to: "/dashboard",
       info: "Batches with risk score ≥ 70, cross-checked with open alerts.",
       icon: AlertTriangle,
       tone: i.atRisk > 0 ? "amber" : "emerald",

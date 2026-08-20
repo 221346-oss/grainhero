@@ -10,8 +10,8 @@ import { ReportsSkeleton } from "@/components/app/skeletons";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 
-type Period = "day" | "week" | "month" | "year" | "all";
-const PERIOD_DAYS: Record<Period, number | null> = { day: 1, week: 7, month: 30, year: 365, all: null };
+type Period = "day" | "week" | "month" | "year";
+const PERIOD_DAYS: Record<Period, number> = { day: 1, week: 7, month: 30, year: 365 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -58,7 +58,6 @@ export function ReportsSection() {
   const filtered = useMemo(() => {
     if (!data) return { batches: [], alerts: [], invoices: [], silos: [] };
     const days = PERIOD_DAYS[period];
-    if (days == null) return data;
     const cutoff = Date.now() - days * 24 * 3600 * 1000;
     const inRange = (t: string | null) => (t ? new Date(t).getTime() >= cutoff : false);
     return {
@@ -79,10 +78,8 @@ export function ReportsSection() {
   const collected = filtered.invoices.reduce((s: number, i: Row) => s + Number(i.amount_paid ?? 0), 0);
 
   const reports: { title: string; desc: string; rows: Row[]; filename: string; columns: ExportColumn<Row>[] }[] = [
-    { title: "Batches report", desc: "Grain batch inventory, quality and financials", rows: filtered.batches, filename: "batches-report", columns: batchColumns },
-    { title: "Alerts report", desc: "Alerts triggered in the selected period", rows: filtered.alerts, filename: "alerts-report", columns: alertColumns },
-    { title: "Invoices report", desc: "Buyer invoices and payment status", rows: filtered.invoices, filename: "invoices-report", columns: invoiceColumns },
-    { title: "Silo utilization", desc: "Current capacity and stock across silos", rows: filtered.silos, filename: "silos-report", columns: siloColumns },
+    { title: "Batches report", desc: "All incoming and outgoing grain batches", rows: filtered.batches, filename: "batches-report", columns: batchColumns },
+    { title: "Silo utilization", desc: "Silo details with batches and capacity information", rows: filtered.silos, filename: "silos-report", columns: siloColumns },
   ];
 
   return (
@@ -95,20 +92,17 @@ export function ReportsSection() {
         <Select value={period} onValueChange={(v: Period) => setPeriod(v)}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="day">Day</SelectItem>
-            <SelectItem value="week">Week</SelectItem>
-            <SelectItem value="month">Month</SelectItem>
-            <SelectItem value="year">Year</SelectItem>
-            <SelectItem value="all">All time</SelectItem>
+            <SelectItem value="day">Daily</SelectItem>
+            <SelectItem value="week">Weekly</SelectItem>
+            <SelectItem value="month">Monthly</SelectItem>
+            <SelectItem value="year">Yearly</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Batches</div><div className="text-2xl font-bold">{filtered.batches.length}</div><div className="text-xs text-slate-500">{(totalKg / 1000).toFixed(1)}t inventory</div></div></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Revenue</div><div className="text-2xl font-bold">${totalRev.toLocaleString()}</div><div className="text-xs text-emerald-600">${totalProfit.toLocaleString()} profit</div></div><DollarSign className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold">${collected.toLocaleString()}</div><div className="text-xs text-slate-500">{filtered.invoices.length} invoices</div></div><TrendingUp className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Alerts</div><div className="text-2xl font-bold">{filtered.alerts.length}</div><div className="text-xs text-slate-500">{alertsResolved} resolved · {spoiled} spoiled</div></div><AlertTriangle className="h-6 w-6 text-red-600" /></CardContent></Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -119,13 +113,123 @@ export function ReportsSection() {
                 <CardTitle className="text-base">{r.title}</CardTitle>
                 <CardDescription>{r.desc}</CardDescription>
               </div>
-              <Badge variant="outline">{r.rows.length} rows</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{r.rows.length} {r.title === "Batches report" ? "batches" : "silos"}</Badge>
+                {r.rows.length > 0 && (
+                  <ExportMenu filename={r.filename} title={r.title} rows={r.rows} columns={r.columns} />
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {r.rows.length > 0 ? (
-                <ExportMenu filename={r.filename} title={r.title} rows={r.rows} columns={r.columns} />
+                <div className="space-y-2">
+                  {/* Scrollable data preview - 4 entries visible */}
+                  <div className="h-[280px] overflow-y-auto border border-border rounded-lg">
+                    <div className="divide-y">
+                      {r.title === "Batches report" && r.rows.map((batch: Row) => {
+                        const isOutgoing = batch.status === "dispatched" || batch.status === "completed";
+                        const isIncoming = batch.status === "intake" || batch.status === "stored" || batch.status === "active" || batch.status === "ready";
+                        return (
+                          <div key={batch.id} className="p-3 hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold text-sm">{batch.batch_id}</span>
+                                  <Badge variant="outline" className="text-xs">{batch.grain_type}</Badge>
+                                  <Badge className="text-xs" variant={
+                                    isOutgoing ? "destructive" : 
+                                    isIncoming ? "default" : "secondary"
+                                  }>
+                                    {isOutgoing ? "Outgoing" : isIncoming ? "Incoming" : batch.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {Number(batch.quantity_kg ?? 0).toLocaleString()} kg
+                                  {batch.revenue ? ` · $${Number(batch.revenue).toLocaleString()} revenue` : ""}
+                                  {batch.profit ? ` · $${Number(batch.profit).toLocaleString()} profit` : ""}
+                                </div>
+                                {batch.spoilage_label && (
+                                  <div className="text-xs text-amber-600 mt-0.5">
+                                    Spoilage: {batch.spoilage_label}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {r.title === "Silo utilization" && r.rows.map((silo: Row) => {
+                        const batchesInSilo = (silo.batches ?? []) as Row[];
+                        const capacityUsed = Number(silo.current_occupancy_kg ?? 0);
+                        const capacityTotal = Number(silo.capacity_kg ?? 1);
+                        const capacityRemaining = Math.max(0, capacityTotal - capacityUsed);
+                        const fillPercentage = (capacityUsed / capacityTotal) * 100;
+                        
+                        return (
+                          <div key={silo.id} className="p-3 hover:bg-muted/50 transition-colors">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-semibold text-sm">{silo.name}</span>
+                                  {silo.silo_id && <Badge variant="outline" className="text-xs font-mono">{silo.silo_id}</Badge>}
+                                  <Badge className="text-xs" variant={
+                                    silo.status === "active" ? "default" : 
+                                    silo.status === "maintenance" ? "secondary" : "outline"
+                                  }>{silo.status ?? "inactive"}</Badge>
+                                </div>
+                                
+                                {/* Number of batches */}
+                                <div className="text-xs text-muted-foreground mt-1.5">
+                                  <span className="font-semibold">{batchesInSilo.length} batch{batchesInSilo.length !== 1 ? "es" : ""}</span> stored
+                                </div>
+                                
+                                {/* Grain types in batches */}
+                                {batchesInSilo.length > 0 && (
+                                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    {Array.from(new Set(batchesInSilo.map(b => b.grain_type))).map((grainType, idx) => (
+                                      <Badge key={idx} variant="secondary" className="text-[10px] py-0 px-1.5">
+                                        {grainType}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                {/* Capacity information */}
+                                <div className="text-xs text-muted-foreground mt-1.5">
+                                  Capacity: <span className="font-semibold">{capacityUsed.toLocaleString()} kg</span> used
+                                  {" · "}
+                                  <span className="font-semibold text-emerald-600">{capacityRemaining.toLocaleString()} kg</span> remaining
+                                </div>
+                                
+                                {/* Capacity bar */}
+                                <div className="mt-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full transition-all ${
+                                          fillPercentage > 90 ? 'bg-red-600' : 
+                                          fillPercentage > 75 ? 'bg-amber-600' : 'bg-emerald-600'
+                                        }`}
+                                        style={{ width: `${Math.min(100, fillPercentage)}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs text-muted-foreground font-mono w-10 text-right">
+                                      {fillPercentage.toFixed(0)}%
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               ) : (
-                <span className="text-xs text-muted-foreground">Nothing to export for this period.</span>
+                <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                  Nothing to show for this period.
+                </div>
               )}
             </CardContent>
           </Card>

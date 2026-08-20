@@ -62,6 +62,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         .select(
           "id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_conditions, warehouse_id",
         )
+        .eq("admin_id", adminId)
         .order("current_occupancy_kg", { ascending: false })
         .limit(12),
       context.supabase

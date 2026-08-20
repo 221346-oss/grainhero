@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Plus, Truck, RotateCcw } from "lucide-react";
+import { AlertCircle, Search, Plus, Truck, RotateCcw, DollarSign } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
@@ -18,6 +18,7 @@ import type { AppRole } from "@/lib/roles.functions";
 type Invoice = {
   id: string;
   invoice_number: string;
+  title?: string | null; // Added optional title field
   buyer_name: string | null;
   buyer_company: string | null;
   batch_ref: string | null;
@@ -137,7 +138,10 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
       i.invoice_number?.toLowerCase().includes(term) ||
       i.buyer_name?.toLowerCase().includes(term) ||
       i.buyer_company?.toLowerCase().includes(term) ||
-      i.batch_ref?.toLowerCase().includes(term)
+      i.batch_ref?.toLowerCase().includes(term) ||
+      i.title?.toLowerCase().includes(term) || // Added title field if it exists
+      // Also search in dispatch information
+      i.grain_dispatches?.dispatch_number?.toLowerCase().includes(term)
     );
   }, [invoices, q]);
 
@@ -155,13 +159,6 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is restricted to admin.
         </div>
       )}
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div><div className="text-xs text-slate-500 mt-1">invoiced − collected</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
-      </div>
 
       <DispatchSaleWizard
         open={wizardOpen}
@@ -207,16 +204,6 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         </Card>
       )}
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">By status</CardTitle></CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {Object.entries(byStatus).map(([k, v]) => (
-            <Badge key={k} className={payBadge(k)}>{k}: {String(v)}</Badge>
-          ))}
-          {Object.keys(byStatus).length === 0 && <span className="text-sm text-slate-500">No invoices yet.</span>}
-        </CardContent>
-      </Card>
-
       <Tabs defaultValue="invoices">
         <TabsList>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
@@ -228,12 +215,13 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
             <CardHeader className="flex flex-row justify-between items-center gap-3">
               <div><CardTitle>Buyer invoices</CardTitle><CardDescription>{filteredInv.length} of {invoices.length}</CardDescription></div>
               <div className="flex items-center gap-2">
-                <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 w-64" /></div>
+                <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search invoices, buyers, batches..." className="pl-8 w-64" /></div>
                 <ExportMenu filename="invoices" title="Buyer Invoices" rows={filteredInv} columns={invoiceExportColumns} />
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y">
+              {/* Fixed height container for 4 entries with vertical scroll */}
+              <div className="divide-y h-[320px] overflow-y-auto">
                 {filteredInv.map((i: any) => {
                   const remaining = Math.max(0, Number(i.total_amount) - Number(i.amount_paid ?? 0));
                   const dispatch = i.grain_dispatches;
@@ -277,7 +265,8 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
               <ExportMenu filename="payments" title="Payments" rows={payments} columns={paymentExportColumns} />
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y">
+              {/* Fixed height container for 4 entries with vertical scroll */}
+              <div className="divide-y h-[320px] overflow-y-auto">
                 {payments.map((p: any) => (
                   <div key={p.id} className="p-3 flex items-center justify-between text-sm">
                     <div>

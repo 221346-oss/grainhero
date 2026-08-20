@@ -207,6 +207,11 @@ export function ManagerKpiSummary({
 }) {
   const [selectedSilo, setSelectedSilo] = useState<string>("");
   const [factorPeriod, setFactorPeriod] = useState<"weekly" | "monthly" | "yearly">("monthly");
+  
+  // Debug: Log silos data
+  console.log('ManagerKpiSummary - Silos:', silos?.length || 0, 'silos available');
+  console.log('ManagerKpiSummary - Full data:', { silos, kpis, fillSpark });
+  
   const k = kpis;
   const fill = k?.fillPct ?? 0;
   const fmtKg = (n: number) => `${Math.round(n / 1000).toLocaleString()}t`;
@@ -232,19 +237,20 @@ export function ManagerKpiSummary({
           <InfoDot text="Live silo utilisation and operational queues. Use the dropdown to view individual silo details." />
         </div>
         <div className="flex items-center gap-2">
-          {silos && silos.length > 0 && (
-            <Select
-              value={selectedSilo || "__all__"}
-              onValueChange={(v) => setSelectedSilo(v === "__all__" ? "" : v)}
-            >
-              <SelectTrigger className="w-48 h-8 text-xs">
-                <SelectValue placeholder="Select silo to analyze..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">
-                  <span className="font-medium">Average Capacity</span>
-                </SelectItem>
-                {silos.map((silo) => {
+          {/* Always show dropdown - for debugging */}
+          <Select
+            value={selectedSilo || "__all__"}
+            onValueChange={(v) => setSelectedSilo(v === "__all__" ? "" : v)}
+          >
+            <SelectTrigger className="w-48 h-8 text-xs">
+              <SelectValue placeholder="Select silo to analyze..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">
+                <span className="font-medium">Average Capacity</span>
+              </SelectItem>
+              {silos && silos.length > 0 ? (
+                silos.map((silo) => {
                   return (
                     <SelectItem key={silo.id} value={silo.id}>
                       <div className="flex flex-col items-start">
@@ -253,10 +259,14 @@ export function ManagerKpiSummary({
                       </div>
                     </SelectItem>
                   );
-                })}
-              </SelectContent>
-            </Select>
-          )}
+                })
+              ) : (
+                <SelectItem value="no-data" disabled>
+                  <span className="text-muted-foreground">No silos available ({silos ? silos.length : 'loading'})</span>
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
