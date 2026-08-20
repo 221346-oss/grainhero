@@ -1780,16 +1780,16 @@ export const upsertBuyer = createServerFn({ method: "POST" })
       if (userRole === "manager") {
         const { data: existingBuyer } = await context.supabase
           .from("buyers")
-          .select("status, created_by")
+          .select("*")
           .eq("id", data.id)
           .maybeSingle();
 
         if (existingBuyer) {
-          if (existingBuyer.created_by !== context.userId) {
+          if ((existingBuyer as any).created_by !== context.userId) {
             throw new Error("You can only edit buyers you created");
           }
-          if (!["pending_approval", "rejected"].includes(existingBuyer.status)) {
-            throw new Error("You can only edit buyers that are pending or rejected");
+          if (!["active", "rejected"].includes((existingBuyer as any).status)) {
+            throw new Error("You can only edit buyers that are active or rejected");
           }
         }
       }

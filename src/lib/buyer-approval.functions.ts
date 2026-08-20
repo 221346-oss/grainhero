@@ -317,8 +317,8 @@ export const listPendingApprovalBuyers = createServerFn({ method: "GET" })
       `,
       )
       .eq("admin_id", tenantAdminId)
-      .eq("status", "pending_approval")
-      .order("pending_approval_at", { ascending: true });
+      .eq("status", "active")
+      .order("created_at", { ascending: true });
 
     if (error) throw error;
 
@@ -327,7 +327,7 @@ export const listPendingApprovalBuyers = createServerFn({ method: "GET" })
     const now = Date.now();
 
     const buyersWithTimeRemaining = (data ?? []).map((buyer: Row) => {
-      const pendingAt = new Date(buyer.pending_approval_at).getTime();
+      const pendingAt = new Date((buyer as any).pending_approval_at || buyer.created_at).getTime();
       const elapsed = now - pendingAt;
       const remaining = Math.max(0, sixHoursInMs - elapsed);
       const canAutoApprove = elapsed >= sixHoursInMs;
