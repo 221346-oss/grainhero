@@ -63,7 +63,6 @@ import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authent
 import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
 import { Route as AuthenticatedIncidentsRouteImport } from './routes/_authenticated/incidents'
 import { Route as AuthenticatedGrainOperationsRouteImport } from './routes/_authenticated/grain-operations'
-import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
 import { Route as AuthenticatedEnvironmentalRouteImport } from './routes/_authenticated/environmental'
 import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -476,12 +475,6 @@ const AuthenticatedGrainOperationsRoute =
   AuthenticatedGrainOperationsRouteImport.update({
     id: '/grain-operations',
     path: '/grain-operations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedGrainAlertsRoute =
-  AuthenticatedGrainAlertsRouteImport.update({
-    id: '/grain-alerts',
-    path: '/grain-alerts',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEnvironmentalRoute =
@@ -1269,7 +1262,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
-  '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
@@ -1453,7 +1445,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/environmental': typeof AuthenticatedEnvironmentalRoute
-  '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
@@ -1641,7 +1632,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/environmental': typeof AuthenticatedEnvironmentalRoute
-  '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
   '/_authenticated/grain-operations': typeof AuthenticatedGrainOperationsRoute
   '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
@@ -1829,7 +1819,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/earnings'
     | '/environmental'
-    | '/grain-alerts'
     | '/grain-operations'
     | '/incidents'
     | '/insurance'
@@ -2013,7 +2002,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/earnings'
     | '/environmental'
-    | '/grain-alerts'
     | '/grain-operations'
     | '/incidents'
     | '/insurance'
@@ -2200,7 +2188,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/earnings'
     | '/_authenticated/environmental'
-    | '/_authenticated/grain-alerts'
     | '/_authenticated/grain-operations'
     | '/_authenticated/incidents'
     | '/_authenticated/insurance'
@@ -2818,13 +2805,6 @@ declare module '@tanstack/react-router' {
       path: '/grain-operations'
       fullPath: '/grain-operations'
       preLoaderRoute: typeof AuthenticatedGrainOperationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/grain-alerts': {
-      id: '/_authenticated/grain-alerts'
-      path: '/grain-alerts'
-      fullPath: '/grain-alerts'
-      preLoaderRoute: typeof AuthenticatedGrainAlertsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/environmental': {
@@ -3895,7 +3875,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
   AuthenticatedEnvironmentalRoute: typeof AuthenticatedEnvironmentalRoute
-  AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
   AuthenticatedGrainOperationsRoute: typeof AuthenticatedGrainOperationsRoute
   AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
@@ -3984,7 +3963,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
   AuthenticatedEnvironmentalRoute: AuthenticatedEnvironmentalRoute,
-  AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
   AuthenticatedGrainOperationsRoute: AuthenticatedGrainOperationsRoute,
   AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
