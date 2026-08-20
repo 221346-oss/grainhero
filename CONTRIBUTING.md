@@ -1,51 +1,38 @@
 # Contributing to GrainHero
 
-Thanks for helping improve GrainHero. This guide covers everything you need to
-get a change merged.
+First off, thank you for considering contributing to GrainHero! It's people like you that make GrainHero such a great tool for fighting food loss.
 
-## Setup
+## Quick Start (5 Minutes)
 
-```bash
-bun install
-bun run dev
-```
+1. **Fork and Clone**: Fork the repo and clone it locally.
+2. **Install Dependencies**: 
+   ```bash
+   bun install
+   ```
+3. **Setup Environment**:
+   ```bash
+   cp .env.example .env.local
+   ```
+   (You don't need real keys for UI work! The app will boot with defaults.)
+4. **Run Dev**:
+   ```bash
+   bun run dev
+   ```
+   Open [http://localhost:8080](http://localhost:8080).
 
-You need your own Supabase project, Stripe test keys and (optionally) a
-Firebase Realtime Database for telemetry. Put them in `.env.local` — never
-commit real credentials.
+## How to Contribute
 
-## Before opening a pull request
+1. **Pick an Issue**: Look for issues labeled `good first issue` or `help wanted`.
+2. **Create a Branch**: `git checkout -b feat/your-feature-name`.
+3. **Commit Changes**: Follow [Conventional Commits](https://www.conventionalcommits.org/).
+4. **Open a PR**: Describe your changes clearly. We review all PRs within 48 hours.
 
-```bash
-bun run lint
-bunx tsgo --noEmit
-bun run test:integration
-```
+## Local Development Tips
 
-All three must pass. Run `bun run format` to apply Prettier.
+- **Supabase**: If you aren't changing the database, you don't need a local Supabase setup.
+- **ML**: ONNX models run in `ml-deploy/`. Check the README there for setup.
+- **UI**: We use Tailwind v4 and shadcn/ui.
 
-## Conventions
+## Community
 
-- **Routing** — file-based routes in `src/routes/`. Never edit
-  `src/routeTree.gen.ts`; it is generated.
-- **Server logic** — `createServerFn` in `src/lib/*.functions.ts`. Raw HTTP
-  endpoints (webhooks, cron) live under `src/routes/api/public/` and must
-  verify their caller.
-- **Database** — every new `public` table needs `GRANT`s, RLS enabled and
-  explicit policies in the same migration.
-- **Styling** — semantic design tokens only. No hardcoded colour utilities.
-- **New routes** — add a row to
-  [`docs/architecture/route-matrix.md`](docs/architecture/route-matrix.md) in
-  the same change.
-
-## Commit and PR style
-
-- One logical change per pull request.
-- Describe the user-visible effect, not just the diff.
-- Include screenshots for UI changes.
-
-## Reporting bugs
-
-Open an issue with reproduction steps, expected vs actual behaviour, and the
-relevant console or server log output. For security issues follow
-[SECURITY.md](SECURITY.md) instead.
+Join our [Discussions](https://github.com/221346-oss/grainhero/discussions) to ask questions or propose new features!
