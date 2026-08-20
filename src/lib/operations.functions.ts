@@ -1865,7 +1865,7 @@ export const upsertBuyer = createServerFn({ method: "POST" })
     // Admins create buyers directly (no approval needed)
     const { data: row, error } = await context.supabase
       .from("buyers")
-      .insert({ ...payload, admin_id: tenantAdminId, created_by: context.userId })
+      .insert({ ...payload, admin_id: tenantAdminId, created_by: context.userId } as any)
       .select("*")
       .single();
 
