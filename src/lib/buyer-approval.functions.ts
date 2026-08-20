@@ -263,9 +263,9 @@ export const checkAndAutoApproveBuyers = createServerFn({ method: "POST" })
       } as never);
 
       // Notify the manager who created the buyer
-      if (buyer.created_by) {
+      if ((buyer as any).created_by) {
         await context.supabase.from("notifications").insert({
-          user_id: buyer.created_by,
+          user_id: (buyer as any).created_by,
           title: "Buyer Auto-Approved",
           message: `Your buyer "${buyer.name}" has been automatically approved (admin approval timeout).`,
           category: "buyer",
@@ -285,7 +285,7 @@ export const checkAndAutoApproveBuyers = createServerFn({ method: "POST" })
         meta: {
           buyerName: buyer.name,
           reason: "Admin approval timeout exceeded (6 hours)",
-          pendingSince: buyer.pending_approval_at,
+          pendingSince: (buyer as any).pending_approval_at,
         },
       });
 
