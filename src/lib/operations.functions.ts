@@ -1822,12 +1822,12 @@ export const upsertBuyer = createServerFn({ method: "POST" })
         status: "active" as const, // Temporarily use active to fix type error if status column is missing 'pending_approval' in DB schema
         admin_id: tenantAdminId,
         created_by: context.userId,
-        pending_approval_at: new Date().toISOString(),
+        pending_approval_at: new Date().toISOString() as any,
       };
 
       const { data: row, error } = await context.supabase
         .from("buyers")
-        .insert(buyerPayload)
+        .insert(buyerPayload as any)
         .select("*")
         .single();
 

@@ -106,7 +106,7 @@ export const createBuyerForApproval = createServerFn({ method: "POST" })
 
     const { data: buyer, error } = await context.supabase
       .from("buyers")
-      .insert(payload)
+      .insert(payload as any)
       .select("*")
       .single();
 
