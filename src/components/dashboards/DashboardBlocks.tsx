@@ -18,7 +18,6 @@ import { listGrainBatches, listSilos } from "@/lib/operations.functions";
 import { listFieldIncidents } from "@/lib/field-incidents.functions";
 import { listActivityLogs } from "@/lib/notifications-audit.functions";
 import { usePlanGate } from "@/lib/plan-gate";
-import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
 import {
   siloStatusBadge, BATCH_TONE, BATCH_TONE_LABELS, DISPATCH_TONE, DISPATCH_TONE_LABELS, groupByTone,
 } from "@/components/grain-operations/SiloOperationsCard";
@@ -322,7 +321,6 @@ type DashSilo = {
 
 export function DashboardSiloCards({ range }: { range?: string } = {}) {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const listSilosFn = useServerFn(listSilos);
   const listBatchesFn = useServerFn(listGrainBatches);
   const { data: extras } = useExtras(range);
@@ -335,7 +333,6 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
     queryFn: () => listBatchesFn() as Promise<Array<{ quantity_kg: number; silos?: { id: string } | null }>>,
   });
   const siloGate = usePlanGate("max_silos");
-  const [dispatchSilo, setDispatchSilo] = useState<DashSilo | null>(null);
 
   const incomingBySilo = useMemo(() => {
     const map: Record<string, number> = {};
@@ -393,9 +390,6 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                   </div>
                 </Link>
                 <div className="flex items-center gap-1 shrink-0">
-                  <Button size="sm" className="h-8 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setDispatchSilo(s)}>
-                    Sell
-                  </Button>
                   <Button size="sm" variant="outline" className="h-8 px-2.5 text-[11px]" asChild>
                     <Link to="/silos/$siloId" params={{ siloId: s.id }}>View</Link>
                   </Button>
@@ -412,18 +406,6 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
           );
         })}
       </CardContent>
-      <DispatchSaleWizard
-        open={!!dispatchSilo}
-        onOpenChange={(o) => !o && setDispatchSilo(null)}
-        onDone={() => {
-          qc.invalidateQueries({ queryKey: ["silos"] });
-          qc.invalidateQueries({ queryKey: ["grain-batches"] });
-          qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-          qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
-          qc.invalidateQueries({ queryKey: ["revenue"] });
-        }}
-        presetSilo={dispatchSilo ? { id: dispatchSilo.id, name: dispatchSilo.name } : null}
-      />
     </Card>
   );
 }
