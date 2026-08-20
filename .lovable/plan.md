@@ -55,6 +55,6 @@ Every claim cross-checked against the repo — no invented stars, downloads, use
 - CI workflow uses `oven-sh/setup-bun`, runs `bun install --frozen-lockfile`, `bun run lint`, `bunx tsgo --noEmit`, `bun run build`, `bun run test:integration`.
 - File deletions via `git rm`-equivalent shell removal; `.gitignore` updated for `.kiro/`, `.lovable/`, `.agents/`, `.workspace/`.
 
-## Open question
+## Note on the 20-contributor rule
 
-If you have real traction numbers I can't see from the repo (GitHub stars, pilot deployments in tonnes monitored, named mills/customers, university or NICAT affiliation you want cited), send them and I'll fold them into the impact answer — those are the strongest part of a borderline application.
+The criterion counts **unique external contributors with merged pull requests in the last 12 months** — external meaning not you, on a repo you own. Contributions must be real merged PRs; the good-first-issues list is designed so nine more people can each land one genuine, reviewable change. If you send me any traction numbers I can't read from the repo (stars, pilot tonnage, named mills, NICAT affiliation), I'll fold them into the impact answer.
