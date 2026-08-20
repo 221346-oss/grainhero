@@ -46,3 +46,13 @@ dist-ssr
 *firebase-adminsdk*.json
 *.pem
 *.key
+
+# Markdown files — notes, session records and internal docs stay local.
+# Already-tracked .md files (README.md, docs/**, AGENTS.md) keep tracking;
+# use `git add -f` if a specific new doc should ever be committed.
+*.md
+.freebuff
+desktop-v2.db
+desktop-v2.db-shm
+desktop-v2.db-wal
+project-id
