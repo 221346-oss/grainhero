@@ -7,10 +7,8 @@ import { motion } from "framer-motion";
 import { PredictionsSection } from "@/components/intelligence/PredictionsSection";
 import { AnalyticsSection } from "@/components/intelligence/AnalyticsSection";
 import { MLModelsSection } from "@/components/intelligence/MLModelsSection";
-import { ReportsSection } from "@/components/intelligence/ReportsSection";
-import { Brain, BarChart3, Cpu, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
+import { Brain, BarChart3, Cpu, TrendingUp, TrendingDown } from "lucide-react";
 import { getSiloPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
-import { getReportsData } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
@@ -27,13 +25,12 @@ export const Route = createFileRoute("/_authenticated/intelligence")({
   component: IntelligenceWorkspace,
 });
 
-type Tab = "predictions" | "analytics" | "ml-models" | "reports";
+type Tab = "predictions" | "analytics" | "ml-models";
 
 const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "predictions", label: "AI Predictions", icon: Brain },
   { key: "analytics",   label: "Analytics",      icon: BarChart3 },
   { key: "ml-models",   label: "ML Models",      icon: Cpu },
-  { key: "reports",     label: "Reports",        icon: FileBarChart },
 ];
 
 function IntelligenceWorkspace() {
@@ -51,7 +48,6 @@ function IntelligenceWorkspace() {
   const fetchPredictions = useServerFn(getSiloPredictions);
   const fetchOverview = useServerFn(getAnalyticsOverview);
   const fetchModels = useServerFn(getMLModels);
-  const fetchReports = useServerFn(getReportsData);
 
   const { data: predictions } = useQuery({
     queryKey: ["ai-predictions"],
@@ -70,7 +66,6 @@ function IntelligenceWorkspace() {
     queryFn: () => fetchModels(),
     enabled: allowedModels,
   });
-  const { data: reports } = useQuery({ queryKey: ["reports"], queryFn: () => fetchReports() });
 
   const preds = predictions?.predictions ?? [];
   const atRisk = preds.filter((p: any) => p.level === "critical" || p.level === "high").length;
@@ -82,7 +77,6 @@ function IntelligenceWorkspace() {
     predictions: preds.length,
     analytics: analytics?.totals?.batches ?? 0,
     "ml-models": models.length,
-    reports: reports?.batches?.length ?? 0,
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
@@ -111,7 +105,7 @@ function IntelligenceWorkspace() {
             <VariableFontText text="Intelligence" base={650} hover={900} staggerMs={20} />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            AI predictions, analytics, model performance and reports
+            AI predictions, analytics and model performance
           </p>
         </div>
 
@@ -225,7 +219,6 @@ function IntelligenceWorkspace() {
             {activeTab === "predictions" && <PredictionsSection />}
             {activeTab === "analytics" && <AnalyticsSection />}
             {activeTab === "ml-models" && <MLModelsSection />}
-            {activeTab === "reports" && <ReportsSection />}
           </div>
         </div>
 

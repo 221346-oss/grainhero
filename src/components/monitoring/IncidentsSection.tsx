@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "@tanstack/react-router";
 
-type TabKey = "all" | "active" | "resolved" | "dismissed" | "incoming";
+type TabKey = "all" | "active" | "resolved" | "dismissed" | "incoming" | "escalated";
 
 type IncidentRow = {
   id: string;
@@ -54,6 +54,7 @@ type IncidentRow = {
 const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "all", label: "All", icon: Layers },
   { key: "active", label: "Active", icon: Clock },
+  { key: "escalated", label: "Escalated", icon: ArrowUpCircle },
   { key: "resolved", label: "Resolved", icon: CheckCircle2 },
   { key: "dismissed", label: "Dismissed", icon: Ban },
   { key: "incoming", label: "Incoming", icon: Users },
@@ -297,7 +298,7 @@ export function IncidentsSection() {
   const escalateMut = useMutation({
     mutationFn: (id: string) => escalateFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Escalated to Super Admin");
+      toast.success("Escalated to Admin");
       qc.invalidateQueries({ queryKey: ["incidents"] });
     },
     onError: (e: Error) => toast.error(e.message || "Could not escalate"),
@@ -337,6 +338,8 @@ export function IncidentsSection() {
           i.status === "investigating" || 
           i.status === "acknowledged"
         );
+      case "escalated":
+        return allIncidents.filter((i) => i.status === "escalated");
       case "resolved":
         return allIncidents.filter((i) => i.status === "resolved" || i.status === "closed");
       case "dismissed":
@@ -359,6 +362,7 @@ export function IncidentsSection() {
         i.status === "investigating" || 
         i.status === "acknowledged"
       ).length,
+      escalated: allIncidents.filter((i) => i.status === "escalated").length,
       resolved: allIncidents.filter((i) => i.status === "resolved" || i.status === "closed").length,
       dismissed: allIncidents.filter((i) => i.status === "dismissed").length,
       incoming: allIncidents.filter((i) => i.isForMe && !i.isMine).length,
@@ -384,6 +388,8 @@ export function IncidentsSection() {
           if (i.status !== "resolved" && i.status !== "closed") return false;
         } else if (statusFilter === "dismissed") {
           if (i.status !== "dismissed") return false;
+        } else if (statusFilter === "escalated") {
+          if (i.status !== "escalated") return false;
         } else if (statusFilter === "incoming") {
           if (!i.isForMe || i.isMine) return false;
         }
@@ -483,6 +489,7 @@ export function IncidentsSection() {
           <SelectContent>
             <SelectItem value="all" className="text-xs">All statuses</SelectItem>
             <SelectItem value="active" className="text-xs">Active</SelectItem>
+            <SelectItem value="escalated" className="text-xs">Escalated</SelectItem>
             <SelectItem value="resolved" className="text-xs">Resolved</SelectItem>
             <SelectItem value="dismissed" className="text-xs">Dismissed</SelectItem>
             <SelectItem value="incoming" className="text-xs">Incoming</SelectItem>
@@ -580,7 +587,8 @@ export function IncidentsSection() {
         </Card>
       ) : (
         <div className={splitView ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start" : "space-y-2"}>
-          <div className="space-y-2">
+          {/* Fixed height container for 4 entries with vertical scroll */}
+          <div className={splitView ? "space-y-2" : "space-y-2 h-[320px] overflow-y-auto"}>
             {filtered.map((i) => (
               <IncidentCard
                 key={i.id}
@@ -638,6 +646,29 @@ export function IncidentsSection() {
                 </div>
               )}
 
+              {/* Actions for field incidents - show escalate option only if not resolved/dismissed */}
+              {active.isFieldIncident && canManage && active.status !== "escalated" && active.status !== "resolved" && active.status !== "dismissed" && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Actions
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => escalateMut.mutate(active.id)}
+                    disabled={escalateMut.isPending}
+                    className="gap-1.5 w-full"
+                  >
+                    {escalateMut.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ArrowUpCircle className="h-3.5 w-3.5" />
+                    )}
+                    Escalate to Admin
+                  </Button>
+                </div>
+              )}
+
               {/* Resolve and Dismiss actions for all incidents (when manager and not already resolved/dismissed) */}
               {canManage && active.status !== "resolved" && active.status !== "dismissed" && (
                 <div className="space-y-2">
@@ -676,31 +707,33 @@ export function IncidentsSection() {
                 </div>
               )}
 
-              {/* Discussion button for all incidents */}
-              <div className="pt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 border-amber-300 text-amber-700 bg-amber-50/50 hover:bg-amber-100 w-full"
-                  onClick={() => {
-                    setActiveDiscussion({
-                      id: active.id,
-                      title: active.title,
-                      priority: active.isFieldIncident ? "field" : active.priority,
-                      status: active.status,
-                      message: active.message,
-                      triggered_at: active.triggered_at ?? undefined,
-                      created_by: active.created_by,
-                      assigned_to: active.assigned_to,
-                      source: active.source,
-                      recipient_id: active.recipient_id,
-                    });
-                    setDiscussionOpen(true);
-                  }}
-                >
-                  <MessageSquare className="h-3.5 w-3.5" /> Discussion
-                </Button>
-              </div>
+              {/* Discussion button for all incidents - only if not resolved/dismissed */}
+              {active.status !== "resolved" && active.status !== "dismissed" && (
+                <div className="pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 border-amber-300 text-amber-700 bg-amber-50/50 hover:bg-amber-100 w-full"
+                    onClick={() => {
+                      setActiveDiscussion({
+                        id: active.id,
+                        title: active.title,
+                        priority: active.isFieldIncident ? "field" : active.priority,
+                        status: active.status,
+                        message: active.message,
+                        triggered_at: active.triggered_at ?? undefined,
+                        created_by: active.created_by,
+                        assigned_to: active.assigned_to,
+                        source: active.source,
+                        recipient_id: active.recipient_id,
+                      });
+                      setDiscussionOpen(true);
+                    }}
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" /> Discussion
+                  </Button>
+                </div>
+              )}
             </DetailPanel>
           )}
         </div>

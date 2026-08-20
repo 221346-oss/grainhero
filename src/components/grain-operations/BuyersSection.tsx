@@ -205,7 +205,8 @@ export function BuyersSection() {
             <p className="text-sm">No buyers yet.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          // Fixed height container for 4 entries with vertical scroll
+          <div className="h-[280px] overflow-y-auto overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>

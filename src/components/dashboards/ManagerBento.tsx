@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listOpenFieldIncidents } from "@/lib/field-settings.functions";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
-import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
+import { MonitoringDiscussionDialog, type MonitoringIncidentItem } from "@/components/app/MonitoringDiscussionDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
@@ -125,23 +125,6 @@ function BentoCard({
   );
 }
 
-function PriorityPill({ p }: { p?: string | null }) {
-  const map: Record<string, string> = {
-    critical: "bg-red-500/10 text-red-600",
-    high: "bg-amber-500/10 text-amber-600",
-    medium: "bg-sky-500/10 text-sky-600",
-    low: "bg-slate-500/10 text-slate-600",
-  };
-  const key = String(p ?? "medium").toLowerCase();
-  return (
-    <span
-      className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${map[key] ?? map.medium}`}
-    >
-      {key}
-    </span>
-  );
-}
-
 function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
   const displayCount = count > 99 ? "99+" : count.toString();
@@ -154,12 +137,10 @@ function UnreadBadge({ count }: { count: number }) {
 
 export function ManagerBento({
   silos,
-  alerts,
   qcQueue,
   dispatchQueue,
   actuators,
   buyers,
-  spoiledBatches,
   technicians,
 }: {
   silos: Array<{
@@ -169,13 +150,6 @@ export function ManagerBento({
     capacity_kg: number;
     current_occupancy_kg: number | null;
     status: string | null;
-  }>;
-  alerts: Array<{
-    id: string;
-    title: string;
-    priority: string | null;
-    alert_type: string | null;
-    triggered_at: string | null;
   }>;
   qcQueue: Array<{
     id: string;
@@ -200,14 +174,6 @@ export function ManagerBento({
     contact_name?: string | null;
     created_at?: string | null;
   }>;
-  spoiledBatches: Array<{
-    id: string;
-    batch_id: string;
-    grain_type: string;
-    quantity_kg: number;
-    status: string;
-    created_at: string;
-  }>;
   technicians: Array<{
     id: string;
     name: string | null;
@@ -218,7 +184,7 @@ export function ManagerBento({
 }) {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
-  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<MonitoringIncidentItem | null>(null);
   const [currentUserId, setCurrentUserId] = useState("");
 
   // Get current user ID
@@ -247,40 +213,6 @@ export function ManagerBento({
       to: `/silos/${s.id}`,
     };
   });
-
-  // Combine regular alerts and spoiled batches for the alert triage card
-  const combinedAlerts = [
-    ...alerts.map((a) => ({
-      id: a.id,
-      primary: a.title,
-      secondary: a.alert_type ?? "alert",
-      badge: <PriorityPill p={a.priority} />,
-      to: "/grain-alerts" as const,
-      type: "alert" as const,
-    })),
-    ...spoiledBatches.map((b) => ({
-      id: b.id,
-      primary: `Spoiled: ${b.batch_id}`,
-      secondary: `${b.grain_type} · ${Number(b.quantity_kg).toLocaleString()} kg`,
-      badge: (
-        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600">
-          {b.status}
-        </span>
-      ),
-      to: "/grain-operations" as const,
-      search: { tab: "batches" as const, status: "damaged" as const },
-      type: "spoilage" as const,
-    })),
-  ];
-
-  const alertRows: Row[] = combinedAlerts.map((item) => ({
-    id: item.id,
-    primary: item.primary,
-    secondary: item.secondary,
-    badge: item.badge,
-    to: item.to,
-    search: "search" in item ? item.search : undefined,
-  }));
 
   const qcRows: Row[] = qcQueue.map((b) => ({
     id: b.id,
@@ -361,8 +293,8 @@ export function ManagerBento({
 
   return (
     <div className="space-y-4">
-      {/* ── Top Row: Key Metrics ── */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* ── Top Row: Key Metrics (Silos and QC Queue) ── */}
+      <div className="grid gap-4 md:grid-cols-2">
         <BentoCard
           title="Silos"
           count={silos.length}
@@ -371,14 +303,6 @@ export function ManagerBento({
           tooltip="Silo utilisation, sorted by fill. Click any silo for full detail."
           rows={siloRows}
           empty="No silos yet — provision from install orders."
-        />
-        <BentoCard
-          title="Alert triage"
-          count={combinedAlerts.length}
-          to="/grain-alerts"
-          tooltip="Open alerts and spoiled/damaged batches requiring attention."
-          rows={alertRows}
-          empty="All clear — no open alerts or spoilage."
         />
         <BentoCard
           title="QC queue"
@@ -483,11 +407,12 @@ export function ManagerBento({
                         onClick={() => {
                           setActiveDiscussionTicket({
                             id: inc.id,
-                            category: inc.category,
-                            severity: inc.severity,
+                            title: inc.category,
+                            priority: inc.severity,
                             status: inc.status,
-                            notes: inc.notes,
-                            created_at: inc.created_at,
+                            message: inc.notes ?? null,
+                            triggered_at: inc.created_at,
+                            source: "field_incident",
                           });
                           setDiscussionOpen(true);
                           markRead(inc.id);
@@ -520,7 +445,7 @@ export function ManagerBento({
         onOpenChange={setTicketDialogOpen}
         silos={silos}
       />
-      <TicketDiscussionDialog
+      <MonitoringDiscussionDialog
         open={discussionOpen}
         onOpenChange={setDiscussionOpen}
         incident={activeDiscussionTicket}
