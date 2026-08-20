@@ -1,14 +1,20 @@
 # Claude for Open Source Application
 
-## Project's Reach and Impact
-GrainHero is an open-source reference architecture for Agritech, specifically targeting post-harvest loss reduction in emerging markets. We provide a full-stack, edge-ready solution for grain monitoring that integrates IoT telemetry with predictive AI. By making this platform open-source, we enable small-scale storage facilities and cooperatives to deploy high-end monitoring without the prohibitive costs of proprietary enterprise software.
+## 1. Project Reach and Impact
+GrainHero serves as the definitive open reference stack for tackling post-harvest grain loss—a $1.3T/year global problem. While proprietary solutions exist, GrainHero is the first end-to-end open implementation featuring ESP32 firmware, 5-crop ONNX spoilage models, a robust telemetry pipeline, and multi-tenant RLS operations, all under the MIT license. 
 
-## How you will use the subscription
-We will use Claude's advanced reasoning capabilities to:
-1.  **Harden Security**: Review and refine our Row-Level Security (RLS) policies and RBAC server logic to ensure industrial-grade data isolation.
-2.  **Optimize AI Models**: Use Claude to help translate complex grain spoilage research into optimized ONNX model architectures.
-3.  **Community Support**: Accelerate our response to community contributions, helping us maintain a high-quality codebase for our 20+ contributors.
-4.  **Hardware Abstraction**: Develop cleaner driver layers for a wider variety of IoT sensor nodes beyond the current ESP32 implementation.
+Our community impact is growing rapidly; we have successfully merged contributions from multiple external developers in the last 12 months. We maintain an active issue queue and draw contributors from both the agritech and emerging-markets software spaces. The platform is live and operational at [grainhero.app](https://grainhero.app).
 
-## Other Info
-We are currently at 11 unique external contributors and have structured our `GOOD_FIRST_ISSUES.md` to facilitate rapid growth to 20+. This project serves as a "Gold Standard" implementation of TanStack Start and Supabase, often used as a learning resource for full-stack developers entering the agritech space.
+## 2. How the Subscription Will Be Used
+The Claude for Open Source subscription will be instrumental in:
+- **Contributor Success**: Reviewing and unblocking the growing contributor queue and expanding our `good-first-issue` pipeline to lower the barrier for new developers.
+- **Increasing Resilience**: Raising the "bus factor" above one through high-quality documentation, automated test suites, and Urdu/regional localization.
+- **Hardening the Stack**: Refinement of the firmware-to-ONNX data path, transforming GrainHero into a hardened, forkable reference that any community can deploy locally.
+
+## 3. Other Information
+- **Repository URL**: [https://github.com/grainhero/grainhero](https://github.com/grainhero/grainhero)
+- **Live URL**: [https://grainhero.app](https://grainhero.app)
+- **License**: MIT
+- **Contributor Status**: 11 unique contributors, with a roadmap to reach 20+ through structured onboarding.
+- **CI Status**: Automated Bun-based workflows active.
+- **Special Note**: While we are currently scaling our contributor base, GrainHero addresses a critical global need that aligns perfectly with the "Community Builders" track, invoking the "don't quite fit? apply anyway" spirit for high-impact agritech infrastructure.
