@@ -153,7 +153,7 @@ function VerifyOtpPage() {
 
     // Supabase signInWithOtp sends type "email" OTP
     const { error } = await supabase.auth.verifyOtp({
-      email,
+      email: email!,
       token,
       type: "email",
     });
@@ -169,7 +169,7 @@ function VerifyOtpPage() {
       }
 
       const isExpiredOrInvalid = error.message.toLowerCase().includes("expired") || error.message.toLowerCase().includes("invalid");
-      void logFailedSignIn({ data: { email, reason: error.message } }).catch(() => {});
+      void logFailedSignIn({ data: { email: email!, reason: error.message } }).catch(() => {});
       setMsg({
         type: "error",
         text: isExpiredOrInvalid
@@ -190,7 +190,7 @@ function VerifyOtpPage() {
     setMsg(null);
 
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email!,
       options: { shouldCreateUser: false },
     });
 
