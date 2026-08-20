@@ -36,6 +36,7 @@ export const Route = createFileRoute("/auth/verify-otp")({
 function VerifyOtpPage() {
   const navigate = useNavigate();
   const { email } = Route.useSearch();
+  if (!email) return null;
   const claimFn = useServerFn(claimPaidCheckoutForUser);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
