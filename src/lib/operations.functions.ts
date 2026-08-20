@@ -1846,6 +1846,7 @@ export const upsertBuyer = createServerFn({ method: "POST" })
       } as never);
 
       await logManagerAction({
+        actorId: context.userId,
         managerId: context.userId,
         tenantAdminId,
         action: "buyer.created_pending_approval",
