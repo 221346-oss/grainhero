@@ -16,6 +16,7 @@ import { Link } from "@tanstack/react-router";
 import { InstallStageTracker, deriveStage } from "./InstallStageTracker";
 import { useMyProfile } from "@/hooks/useMyProfile";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
 
 interface Props { orderId: string | null; open: boolean; onOpenChange: (v: boolean) => void; canEdit: boolean }
 
@@ -30,6 +31,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const advanceFn = useServerFn(advanceInstallStage);
   const myProfile = useMyProfile();
   const isSuper = useIsSuperAdmin();
+  const { isTechnician } = useIsGlobalTechnician();
   // Force-refetch role when drawer opens — ensures canAdvanceAs.superAdmin is accurate
   useEffect(() => {
     if (open) {
@@ -54,10 +56,12 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const adminId = order?.admin_id as string | undefined;
   const events = ((q.data as any)?.events ?? []) as Array<Record<string, unknown>>;
   const { stage, blocked, blockerNote, history } = deriveStage(order, install, events);
+  const isAssignedTech = isTechnician && !!(myProfile.data as any)?.id && (myProfile.data as any)?.id === install?.technician_id;
   const canAdvanceAs = {
     superAdmin: !!isSuper.isSuperAdmin,
     // getMySettings returns the profile row directly (not wrapped in .profile)
     admin: !!(myProfile.data as any)?.id && (myProfile.data as any)?.id === adminId,
+    technician: !!isAssignedTech,
   };
 
   // form state

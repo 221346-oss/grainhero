@@ -101,12 +101,13 @@ function GrainOperationsWorkspace() {
   });
   const { data: buyers } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyersFn() });
 
-  // Fetch pending approvals for admins
+  // Fetch pending approvals for admins and managers/technicians with QC responsibilities
   const isAdmin = ["super_admin", "admin"].includes(userRole);
+  const isManagerOrTech = ["manager", "technician"].includes(userRole);
   const { data: pendingApprovals } = useQuery({
     queryKey: ["pending-approval-batches"],
     queryFn: () => listPendingApprovalsFn(),
-    enabled: isAdmin,
+    enabled: isAdmin || isManagerOrTech,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
@@ -180,8 +181,8 @@ function GrainOperationsWorkspace() {
           </p>
         </div>
 
-        {/* Pending Approvals Section - Only for Admins */}
-        {isAdmin && pendingCount > 0 && (
+        {/* Pending Approvals Section - For Admins, Managers, and Technicians */}
+        {(isAdmin || isManagerOrTech) && pendingCount > 0 && (
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl p-6">
             <PendingApprovalsSection />
           </div>

@@ -83,7 +83,7 @@ export function TechnicianAssignmentDialog({
   });
 
   // Fetch technicians for selected warehouse
-  const { data: techniciansData, isLoading: loadingTechnicians } = useQuery({
+  const { data: techniciansData, isLoading: loadingTechnicians, error: techniciansError } = useQuery({
     queryKey: ["warehouse-technicians", selectedWarehouse],
     queryFn: () => getTechnicians({ data: { warehouseId: selectedWarehouse || null } }),
     enabled: open,
@@ -108,7 +108,14 @@ export function TechnicianAssignmentDialog({
   });
 
   const warehouses = warehousesData?.warehouses ?? [];
-  const technicians = techniciansData?.technicians ?? [];
+  const technicians = (techniciansData?.technicians ?? [])
+    // Available technicians first, then busy, then offline/on-leave.
+    .slice()
+    .sort((a: any, b: any) => {
+      const rank = (s: string | null | undefined) =>
+        s === "available" ? 0 : s === "busy" ? 1 : 2;
+      return rank(a.technician_status) - rank(b.technician_status);
+    });
   const isFiltered = techniciansData?.filtered_by_warehouse ?? false;
 
   // Auto-select warehouse if only one exists
@@ -128,7 +135,10 @@ export function TechnicianAssignmentDialog({
       orderId: order.id,
       technicianId: selectedTechnician,
       warehouseId: selectedWarehouse || null,
-      scheduledFor: scheduledFor || null,
+      // datetime-local gives "2026-08-31T12:43" (no seconds, no offset) which
+      // fails the server's strict ISO validation — normalize to a real ISO
+      // string so picking a date+time doesn't throw "Invalid datetime".
+      scheduledFor: scheduledFor ? new Date(scheduledFor).toISOString() : null,
     });
   };
 
@@ -154,8 +164,9 @@ export function TechnicianAssignmentDialog({
         </SheetHeader>
 
         <div className="space-y-5 py-6">
-          {/* Warehouse Selection */}
-          {warehouses.length > 1 && (
+          {/* Warehouse Selection — shown whenever the customer has a warehouse,
+              so the super admin sees where the technician will be assigned. */}
+          {warehouses.length >= 1 && (
             <div className="space-y-2">
               <Label>Warehouse</Label>
               {loadingWarehouses ? (
@@ -187,7 +198,7 @@ export function TechnicianAssignmentDialog({
               )}
               {isFiltered && selectedWarehouse && (
                 <p className="text-xs text-muted-foreground">
-                  Showing technicians assigned to this warehouse only
+                  Showing technicians assigned to this warehouse first, then other available technicians
                 </p>
               )}
             </div>
@@ -196,7 +207,11 @@ export function TechnicianAssignmentDialog({
           {/* Technician Selection */}
           <div className="space-y-3">
             <Label>Select Technician</Label>
-            {loadingTechnicians ? (
+            {techniciansError ? (
+              <div className="p-4 border border-dashed border-red-300 rounded-lg text-center text-sm text-red-600">
+                Failed to load technicians: {(techniciansError as Error).message}
+              </div>
+            ) : loadingTechnicians ? (
               <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading technicians...
@@ -244,6 +259,11 @@ export function TechnicianAssignmentDialog({
                               {tech.current_job_count}/{tech.max_concurrent_jobs}
                             </span>
                           )}
+                          {!tech.is_available && (
+                            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                              At capacity
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -268,6 +288,12 @@ export function TechnicianAssignmentDialog({
                 </div>
                 <div><span className="font-medium">Current jobs:</span> {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}</div>
               </div>
+              {!selectedTech.is_available && (
+                <p className="text-xs text-amber-700 pt-1">
+                  This technician is not available (on leave / offline or at capacity).
+                  Assigning is blocked until they free a slot or set themselves available.
+                </p>
+              )}
             </div>
           )}
 
@@ -293,7 +319,7 @@ export function TechnicianAssignmentDialog({
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={!selectedTechnician || assignMutation.isPending}
+            disabled={!selectedTechnician || !selectedTech?.is_available || assignMutation.isPending}
           >
             {assignMutation.isPending ? (
               <>

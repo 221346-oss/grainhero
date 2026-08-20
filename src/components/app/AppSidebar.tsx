@@ -16,7 +16,11 @@ import {
   ChevronRight,
   CreditCard,
   Inbox,
-  Users,
+  Wrench,
+  Radio,
+  ToggleRight,
+  Bell,
+  Shield,
 } from "lucide-react";
 // QrCode import retained — used by Traceability nav item when re-enabled
 // import { QrCode } from "lucide-react";
@@ -46,18 +50,33 @@ type NavItem = {
 // Traceability removed from sidebar — its purpose is covered by the silo-centric
 // grain operations view and activity logs. Route + code retained for future use.
 const workspaceNav: NavItem[] = [
-  { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", icon: Wheat, roles: ["admin", "manager", "technician"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
-  { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["admin", "manager", "technician"], marqueeItems: ["Incidents"] },
-  { name: "intelligence", label: "Intelligence", to: "/intelligence", icon: Sparkles, roles: ["admin", "manager", "technician"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
+  { name: "grain-operations", label: "Grain Operations", to: "/grain-operations", icon: Wheat, roles: ["admin", "manager"], marqueeItems: ["Grain Batches", "Silos", "Warehouses", "Buyers"] },
+  { name: "monitoring", label: "Monitoring", to: "/monitoring", icon: Activity, roles: ["admin", "manager"], marqueeItems: ["Incidents"] },
+  { name: "intelligence", label: "Intelligence", to: "/intelligence", icon: Sparkles, roles: ["admin", "manager"], badge: "AI", marqueeItems: ["AI Predictions", "Analytics", "ML Models", "Reports"] },
   { name: "subscription", label: "Subscription", to: "/subscription", icon: CreditCard, roles: ["admin", "manager"], marqueeItems: ["My Plan", "Usage", "Billing", "Upgrade"] },
   // /business is tenant-scoped (invoices, own subscription) — admin and manager only.
-  // Insurance tab hidden until bank partnership confirmed.
-  // super_admin uses /platform/business instead.
   { name: "business", label: "Business", to: "/business", icon: Briefcase, roles: ["admin", "manager"], marqueeItems: ["Revenue", "Subscription"] },
   // super_admin has no tenant team/security/logs — those tabs are all disabled for them.
-  { name: "administration", label: "Administration", to: "/administration", icon: ShieldCheck, roles: ["admin", "manager", "technician"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
-  { name: "technicians", label: "Technicians", to: "/technicians", icon: Users, roles: ["admin", "manager"], marqueeItems: ["Warehouse Assignment", "Activity", "Status"] },
+  { name: "administration", label: "Administration", to: "/administration", icon: ShieldCheck, roles: ["admin", "manager"], marqueeItems: ["Team Management", "Security Center", "Activity Logs"] },
+
+  // Company technicians only need installs — removed from grain/monitoring/intel/admin workspaces.
   // { name: "traceability", label: "Traceability", to: "/traceability", icon: QrCode, roles: ["admin", "manager", "technician"], marqueeItems: ["Total Batches", "Stored", "Dispatched", "High Risk"] },
+];
+
+// Group — global (superadmin) technician nav items.
+// Global technicians (admin_id IS NULL) only need My Installs — Overview tab
+// on /dashboard already serves as the overview/dashboard.
+const globalTechnicianNav: NavItem[] = [
+  { name: "installs", label: "My Installs", to: "/technician/installs", icon: Package, roles: ["technician"], marqueeItems: ["Assigned", "In Progress", "Completed"] },
+];
+
+// Group — tenant (admin) technician nav items.
+// Tenant technicians (admin_id IS NOT NULL) get Dashboard + field tools.
+const tenantTechnicianNav: NavItem[] = [
+  { name: "dashboard", label: "Dashboard", to: "/dashboard", icon: Wrench, roles: ["technician"], marqueeItems: ["Status", "Availability"] },
+  { name: "sensors", label: "Sensors", to: "/sensors", icon: Radio, roles: ["technician"], marqueeItems: ["Online", "Offline", "Readings"] },
+  { name: "actuators", label: "Actuators", to: "/actuators", icon: ToggleRight, roles: ["technician"], marqueeItems: ["Active", "Inactive"] },
+  { name: "alerts", label: "Alerts", to: "/grain-alerts", icon: Bell, roles: ["technician"], marqueeItems: ["Open", "Critical"] },
 ];
 
 // Group 3 — super-admin-only platform entries (5 items consolidated).
@@ -211,7 +230,7 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
         <div className="flex min-h-0 flex-1 flex-col justify-center py-2">
           <div className="flex w-full max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/20">
             <div className="overflow-y-auto no-scrollbar py-3">
-              <Section items={workspaceNav} role={role} currentPath={currentPath} collapsed={collapsed} />
+              <Section items={role === "technician" ? (data?.profile?.admin_id == null ? globalTechnicianNav : tenantTechnicianNav) : workspaceNav} role={role} currentPath={currentPath} collapsed={collapsed} />
 
               <div className="h-4 shrink-0" />
 

@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   listAllHardwareOrders,
   updateHardwareOrder,
 } from "@/lib/hardware-orders.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { Button } from "@/components/ui/button";
@@ -261,6 +262,22 @@ function PlatformOrdersPage() {
     staleTime: 30_000,
     refetchInterval: 60_000,
   });
+
+  // Realtime: invalidate when installs or orders change
+  useEffect(() => {
+    const channel = supabase
+      .channel("superadmin-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_installations" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-orders"] });
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
+        qc.invalidateQueries({ queryKey: ["platform-orders"] });
+        qc.invalidateQueries({ queryKey: ["platform-widgets"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
 
   const allOrders: any[] = data?.orders ?? [];
 
@@ -520,10 +537,6 @@ function OrderRow({
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onOpenInstall}>
                   <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "completed" })}>
-                  Mark completed
                 </DropdownMenuItem>
                 {order.status !== "cancelled" && (
                   <>

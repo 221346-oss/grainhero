@@ -99,6 +99,24 @@ export const advanceInstallStage = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
+    // Release the technician's job slot when install is completed.
+    if (data.next === "completed") {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: install } = await supabaseAdmin
+          .from("hardware_order_installations" as never)
+          .select("technician_id")
+          .eq("order_id", data.orderId)
+          .maybeSingle();
+        const techId = (install as { technician_id?: string } | null)?.technician_id;
+        if (techId) {
+          await supabaseAdmin.rpc("decrement_technician_jobs", { tech_id: techId } as never);
+        }
+      } catch (e) {
+        console.warn("[advanceInstallStage] job count decrement failed (non-fatal):", e);
+      }
+    }
+
     // Fire notifications + emails for the two admin-visible milestones.
     if (data.next === "installed" || data.next === "completed") {
       try {

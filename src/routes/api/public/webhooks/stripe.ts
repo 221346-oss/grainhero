@@ -281,23 +281,16 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const { data: existingHardwareOrder } = hardwareOrderId
                 ? await supabaseAdmin.from("hardware_orders" as never).select("status").eq("id", hardwareOrderId).maybeSingle()
                 : { data: null };
+              // Allow through orders that are still awaiting payment: pending_payment OR approved
+              // (approved = super-admin approved the silo request, waiting for admin to pay)
+              const payableStatuses = new Set(["pending_payment", "approved"]);
               const hardwareOrderAlreadyFulfilled =
-                !!existingHardwareOrder && (existingHardwareOrder as { status?: string }).status !== "pending_payment";
+                !!existingHardwareOrder && !payableStatuses.has((existingHardwareOrder as { status?: string }).status ?? "");
 
               if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10 && !hardwareOrderAlreadyFulfilled) {
                 console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
 
-                const updateResult = await supabaseAdmin
-                  .from("hardware_orders" as never)
-                  .update({
-                    status: "new",
-                    stripe_customer_id: s.customer ?? null,
-                    stripe_subscription_id: s.subscription ?? null,
-                    stripe_payment_intent: s.payment_intent ?? null,
-                    ...(userId ? { admin_id: userId } : {}),
-                  } as never)
-                  .eq("id", hardwareOrderId);
-
+                try {
                   const { data: orderAfter, error: updateError } = await supabaseAdmin
                     .from("hardware_orders" as never)
                     .update({

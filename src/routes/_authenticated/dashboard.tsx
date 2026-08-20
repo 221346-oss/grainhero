@@ -7,6 +7,7 @@ import { getMyRole } from "@/lib/roles.functions";
 import { SuperAdminDashboard } from "@/components/dashboards/SuperAdminDashboard";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
+import { SuperAdminTechnicianPage } from "@/components/dashboards/SuperAdminTechnicianPage";
 import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard";
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
@@ -61,7 +62,14 @@ function DashboardPage() {
   switch (role) {
     case "super_admin": return <SuperAdminDashboard name={name} />;
     case "manager": return <ManagerDashboard name={name} />;
-    case "technician": return <TechnicianDashboard name={name} />;
+    case "technician": {
+      // Global technicians (admin_id IS NULL) → Command Center
+      // Tenant technicians (admin_id IS NOT NULL) → basic dashboard
+      const isGlobalTech = data?.profile?.admin_id == null;
+      return isGlobalTech
+        ? <SuperAdminTechnicianPage name={name} />
+        : <TechnicianDashboard name={name} />;
+    }
     // "admin" and any legacy/pending role → admin dashboard by default
     default: return <AdminDashboard name={name} />;
   }

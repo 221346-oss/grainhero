@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 
 export type InstallStageKey = "paid" | "en_route" | "onsite" | "installed" | "completed";
 
-export const STAGES: { key: InstallStageKey; label: string; short: string; actor: "system" | "super_admin" | "admin" }[] = [
+export const STAGES: { key: InstallStageKey; label: string; short: string; actor: "system" | "super_admin" | "technician" | "admin" }[] = [
   { key: "paid",      label: "Paid",      short: "1", actor: "system" },
   { key: "en_route",  label: "En route",  short: "2", actor: "super_admin" },
-  { key: "onsite",    label: "On-site",   short: "3", actor: "super_admin" },
-  { key: "installed", label: "Installed", short: "4", actor: "super_admin" },
+  { key: "onsite",    label: "On-site",   short: "3", actor: "technician" },
+  { key: "installed", label: "Installed", short: "4", actor: "technician" },
   { key: "completed", label: "Completed", short: "5", actor: "admin" },
 ];
 
@@ -37,7 +37,7 @@ export function InstallStageTracker({
   blockerNote?: string | null;
   history?: StageHistoryItem[];
   variant?: "row" | "full";
-  canAdvanceAs?: { superAdmin: boolean; admin: boolean };
+  canAdvanceAs?: { superAdmin: boolean; admin: boolean; technician: boolean };
   onAdvance?: (next: "en_route" | "onsite" | "installed" | "completed" | "blocked", note?: string) => Promise<void> | void;
   order?: Record<string, unknown>;
 }) {
@@ -145,7 +145,11 @@ export function InstallStageTracker({
                 <div className="text-sm font-medium">{s.label}</div>
                 <div className="text-[11px] text-muted-foreground">
                   {at ? new Date(at).toLocaleString() : reached ? "—" : "Pending"}
-                  {s.actor !== "system" && <span className="ml-1 opacity-70">· {s.actor === "admin" ? "Admin" : "SuperAdmin"}</span>}
+                  {s.actor !== "system" && (
+                    <span className="ml-1 opacity-70">
+                      · {s.actor === "admin" ? "Admin" : s.actor === "technician" ? "Technician" : "SuperAdmin"}
+                    </span>
+                  )}
                 </div>
               </li>
             );
@@ -171,7 +175,7 @@ function AdvanceButton({
 }: {
   stage: InstallStageKey;
   blocked: boolean;
-  canAdvanceAs?: { superAdmin: boolean; admin: boolean };
+  canAdvanceAs?: { superAdmin: boolean; admin: boolean; technician: boolean };
   onAdvance?: (next: "en_route" | "onsite" | "installed" | "completed" | "blocked", note?: string) => Promise<void> | void;
 }) {
   const [blockOpen, setBlockOpen] = useState(false);
@@ -181,8 +185,16 @@ function AdvanceButton({
   const next = STAGES[cur + 1];
   if (!onAdvance || !canAdvanceAs) return null;
 
-  const canForNext = next && (next.actor === "admin" ? canAdvanceAs.admin : canAdvanceAs.superAdmin);
+  const canForNext = next && (
+    next.actor === "admin" ? canAdvanceAs.admin :
+    next.actor === "technician" ? canAdvanceAs.technician :
+    canAdvanceAs.superAdmin
+  );
   if (!next) return <span className="text-xs text-emerald-600 font-medium">All stages complete</span>;
+
+  const actorLabel = next.actor === "admin" ? "admin sign-off"
+    : next.actor === "technician" ? "technician"
+    : "SuperAdmin";
 
   const call = async (fn: () => Promise<void> | void) => {
     setBusy(true);
@@ -203,7 +215,7 @@ function AdvanceButton({
       )}
       {!canForNext && !blocked && (
         <span className="text-xs text-muted-foreground">
-          Waiting on {next.actor === "admin" ? "admin sign-off" : "SuperAdmin"}
+          Waiting on {actorLabel}
         </span>
       )}
       {canAdvanceAs.superAdmin && !blocked && cur < STAGES.length - 1 && (

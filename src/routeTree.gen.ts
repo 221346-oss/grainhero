@@ -56,9 +56,11 @@ import { Route as AuthenticatedServerMonitoringRouteImport } from './routes/_aut
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSiloRequestRouteImport } from './routes/_authenticated/silo-request'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
+import { Route as AuthenticatedSuperadminTechnicianRouteImport } from './routes/_authenticated/superadmin-technician'
 import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
 import { Route as AuthenticatedTraceabilityRouteImport } from './routes/_authenticated/traceability'
+import { Route as ApiTempRunMigrationRouteImport } from './routes/api/temp-run-migration'
 import { Route as AuthAcceptInviteRouteImport } from './routes/auth.accept-invite'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
@@ -453,6 +455,12 @@ const AuthenticatedSubscriptionRoute =
     path: '/subscription',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSuperadminTechnicianRoute =
+  AuthenticatedSuperadminTechnicianRouteImport.update({
+    id: '/superadmin-technician',
+    path: '/superadmin-technician',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
@@ -470,6 +478,11 @@ const AuthenticatedTraceabilityRoute =
     path: '/traceability',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiTempRunMigrationRoute = ApiTempRunMigrationRouteImport.update({
+  id: '/api/temp-run-migration',
+  path: '/api/temp-run-migration',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthAcceptInviteRoute = AuthAcceptInviteRouteImport.update({
   id: '/accept-invite',
   path: '/accept-invite',
@@ -1369,9 +1382,11 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/silo-request': typeof AuthenticatedSiloRequestRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/superadmin-technician': typeof AuthenticatedSuperadminTechnicianRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
+  '/api/temp-run-migration': typeof ApiTempRunMigrationRoute
   '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -1564,9 +1579,11 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/silo-request': typeof AuthenticatedSiloRequestRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/superadmin-technician': typeof AuthenticatedSuperadminTechnicianRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
   '/traceability': typeof AuthenticatedTraceabilityRoute
+  '/api/temp-run-migration': typeof ApiTempRunMigrationRoute
   '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -1763,9 +1780,11 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/silo-request': typeof AuthenticatedSiloRequestRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
+  '/_authenticated/superadmin-technician': typeof AuthenticatedSuperadminTechnicianRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
   '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
+  '/api/temp-run-migration': typeof ApiTempRunMigrationRoute
   '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -1962,9 +1981,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/silo-request'
     | '/subscription'
+    | '/superadmin-technician'
     | '/suppliers'
     | '/team-management'
     | '/traceability'
+    | '/api/temp-run-migration'
     | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -2157,9 +2178,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/silo-request'
     | '/subscription'
+    | '/superadmin-technician'
     | '/suppliers'
     | '/team-management'
     | '/traceability'
+    | '/api/temp-run-migration'
     | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -2355,9 +2378,11 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/silo-request'
     | '/_authenticated/subscription'
+    | '/_authenticated/superadmin-technician'
     | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
     | '/_authenticated/traceability'
+    | '/api/temp-run-migration'
     | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -2522,6 +2547,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  ApiTempRunMigrationRoute: typeof ApiTempRunMigrationRoute
   GuidesGrainStorageRoute: typeof GuidesGrainStorageRoute
   SolutionsGrainManagementSoftwareRoute: typeof SolutionsGrainManagementSoftwareRoute
   SolutionsGrainStorageMonitoringRoute: typeof SolutionsGrainStorageMonitoringRoute
@@ -2914,6 +2940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/superadmin-technician': {
+      id: '/_authenticated/superadmin-technician'
+      path: '/superadmin-technician'
+      fullPath: '/superadmin-technician'
+      preLoaderRoute: typeof AuthenticatedSuperadminTechnicianRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/suppliers': {
       id: '/_authenticated/suppliers'
       path: '/suppliers'
@@ -2934,6 +2967,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/traceability'
       preLoaderRoute: typeof AuthenticatedTraceabilityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/temp-run-migration': {
+      id: '/api/temp-run-migration'
+      path: '/api/temp-run-migration'
+      fullPath: '/api/temp-run-migration'
+      preLoaderRoute: typeof ApiTempRunMigrationRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/accept-invite': {
       id: '/auth/accept-invite'
@@ -4138,6 +4178,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSiloRequestRoute: typeof AuthenticatedSiloRequestRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
+  AuthenticatedSuperadminTechnicianRoute: typeof AuthenticatedSuperadminTechnicianRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRouteWithChildren
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
   AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
@@ -4238,6 +4279,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSiloRequestRoute: AuthenticatedSiloRequestRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
+  AuthenticatedSuperadminTechnicianRoute:
+    AuthenticatedSuperadminTechnicianRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRouteWithChildren,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
   AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
@@ -4425,6 +4468,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  ApiTempRunMigrationRoute: ApiTempRunMigrationRoute,
   GuidesGrainStorageRoute: GuidesGrainStorageRoute,
   SolutionsGrainManagementSoftwareRoute: SolutionsGrainManagementSoftwareRoute,
   SolutionsGrainStorageMonitoringRoute: SolutionsGrainStorageMonitoringRoute,

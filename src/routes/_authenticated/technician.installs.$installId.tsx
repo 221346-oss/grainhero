@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getInstallDetail, updateInstallStatus, logVisitEvent, commissionDevice } from "@/lib/hardware-lifecycle.functions";
@@ -10,11 +10,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, CheckCircle2, Ban, Truck, HardHat, Cpu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/technician/installs/$installId")({
   head: () => ({ meta: [{ title: "Install detail — Technician" }] }),
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw redirect({ to: "/auth/login" });
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("admin_id")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (profile?.admin_id != null) throw redirect({ to: "/dashboard" });
+  },
   component: TechnicianInstallDetailPage,
 });
 
@@ -23,6 +34,26 @@ const STATUS_STEPS = ["scheduled", "en_route", "onsite", "completed"] as const;
 function TechnicianInstallDetailPage() {
   const { installId } = Route.useParams();
   const qc = useQueryClient();
+
+  // Realtime: invalidate when this install or its order changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("tech-install-detail")
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_installations" }, () => {
+        qc.invalidateQueries({ queryKey: ["technician.install", installId] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
+        qc.invalidateQueries({ queryKey: ["technician.install", installId] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_visit_events" }, () => {
+        qc.invalidateQueries({ queryKey: ["technician.install", installId] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_devices" }, () => {
+        qc.invalidateQueries({ queryKey: ["technician.install", installId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc, installId]);
   const fetchDetail = useServerFn(getInstallDetail);
   const { data, isLoading } = useQuery({
     queryKey: ["technician.install", installId],
@@ -109,8 +140,8 @@ function TechnicianInstallDetailPage() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Address</CardTitle></CardHeader>
           <CardContent className="text-sm">
-            <div>{install.hardware_orders?.shipping_address ?? "—"}</div>
-            <div className="text-muted-foreground">{install.hardware_orders?.shipping_city ?? ""}</div>
+            <div>{install.hardware_orders?.install_address ?? "—"}</div>
+            <div className="text-muted-foreground">{install.hardware_orders?.install_city ?? ""}</div>
           </CardContent>
         </Card>
       </div>

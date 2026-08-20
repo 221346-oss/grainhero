@@ -50,6 +50,11 @@ export function AdminPageShell({
               </p>
             )}
           </div>
+          {/* Page actions (e.g. "Add Technician") must be reachable on mobile
+              too — the desktop-only header below hides them under md: */}
+          {actions && (
+            <div className="flex flex-wrap gap-2">{actions}</div>
+          )}
           <div className="w-full">
             {children}
           </div>

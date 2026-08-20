@@ -4,10 +4,12 @@ import { X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, Package, DollarSign, Users, Grid3x3, BarChart3, Activity,
-  Building2, FileText, Shield, Briefcase, HeartHandshake, Rocket, TrendingUp, Wheat
+  Building2, FileText, Shield, Briefcase, HeartHandshake, Rocket, TrendingUp, Wheat, Wrench,
+  Radio, ToggleRight, Bell
 } from "lucide-react";
 
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
 import { Sparkles, ShieldCheck, CreditCard, Inbox } from "lucide-react";
 
 type NavItem = {
@@ -25,7 +27,7 @@ type NavGroup = {
   defaultOpen?: boolean;
 };
 
-// ── Admin / Manager / Technician groups ────────────────────────────────
+// ── Admin / Manager groups ────────────────────────────────────────────
 const workspaceGroups: NavGroup[] = [
   {
     id: "main",
@@ -39,6 +41,36 @@ const workspaceGroups: NavGroup[] = [
       { id: "intelligence", label: "Intelligence", icon: Sparkles, link: "/intelligence" },
       { id: "business", label: "Business", icon: Briefcase, link: "/business" },
       { id: "administration", label: "Administration", icon: ShieldCheck, link: "/administration" },
+    ],
+  },
+];
+
+// ── Tenant (admin) technician groups — field tools, no installs ─────────
+const tenantTechnicianGroups: NavGroup[] = [
+  {
+    id: "my-work",
+    label: "My Work",
+    icon: Home,
+    defaultOpen: true,
+    items: [
+      { id: "dashboard", label: "Dashboard", icon: Home, link: "/dashboard" },
+      { id: "sensors", label: "Sensors", icon: Radio, link: "/sensors" },
+      { id: "actuators", label: "Actuators", icon: ToggleRight, link: "/actuators" },
+      { id: "alerts", label: "Alerts", icon: Bell, link: "/grain-alerts" },
+    ],
+  },
+];
+
+// ── Global (superadmin) technician groups — installs only (Overview tab on
+//    /dashboard already serves as the overview) ────────────────────────────
+const globalTechnicianGroups: NavGroup[] = [
+  {
+    id: "my-work",
+    label: "My Work",
+    icon: Home,
+    defaultOpen: true,
+    items: [
+      { id: "my-installs", label: "My Installs", icon: Wrench, link: "/technician/installs" },
     ],
   },
 ];
@@ -64,6 +96,7 @@ const superAdminGroups: NavGroup[] = [
       { id: "platform-users", label: "Users", icon: Users, link: "/platform/users" },
       { id: "platform-leads", label: "Leads", icon: Users, link: "/platform/leads" },
       { id: "platform-pipeline", label: "Pipeline", icon: TrendingUp, link: "/platform/pipeline" },
+      { id: "platform-technicians", label: "Company Technicians", icon: Wrench, link: "/platform/technicians" },
     ],
   },
   {
@@ -117,7 +150,15 @@ interface MobileAdminNavProps {
 
 export function MobileAdminNav({ isOpen, onClose }: MobileAdminNavProps) {
   const { role } = useIsSuperAdmin();
-  const groups = role === "super_admin" ? superAdminGroups : workspaceGroups;
+  // Role-aware navigation: super admins get the platform groups, technicians
+  // get their field-work group (Dashboard + My Installs), everyone else
+  // (admin / manager) gets the tenant workspace groups.
+  const { isGlobalTechnician, isTenantTechnician } = useIsGlobalTechnician();
+  const groups =
+    role === "super_admin" ? superAdminGroups :
+    isGlobalTechnician ? globalTechnicianGroups :
+    isTenantTechnician ? tenantTechnicianGroups :
+    workspaceGroups;
 
   // Build initial open state from defaultOpen flags
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {

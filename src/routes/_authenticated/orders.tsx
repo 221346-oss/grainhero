@@ -58,6 +58,7 @@ import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { HardwareOrderThread } from "@/components/app/orders/HardwareOrderThread";
 import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
 import { getMyRole } from "@/lib/roles.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({ meta: [{ title: "My install orders — GrainHero" }] }),
@@ -261,6 +262,22 @@ function MyOrdersPage() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
+
+  // Realtime: invalidate when installs or orders change (technician progress)
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_installations" }, () => {
+        qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+        qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+        qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
+        qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
   const orders      = data?.orders ?? [];
   const hasApproved = orders.some((o) => o.status === "approved" || o.status === "pending_payment");
   // Auto-poll every 3s while any approved/pending order is waiting for payment confirmation

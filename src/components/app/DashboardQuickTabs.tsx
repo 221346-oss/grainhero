@@ -10,6 +10,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
 
 type AdminTabKey =
   | "overview" | "silos" | "batches" | "alerts" | "marketplace"
@@ -25,7 +26,11 @@ type SuperTabKey =
   | "pipeline" | "leads" | "insurance" | "subscription"
   | "security" | "launch" | "technicians";
 
-type TabKey = AdminTabKey | SuperTabKey | ManagerTabKey;
+type TenantTechnicianTabKey = "overview" | "installs" | "sensors" | "actuators" | "alerts";
+type GlobalTechnicianTabKey = "overview" | "installs" | "command-center";
+type TechnicianTabKey = TenantTechnicianTabKey | GlobalTechnicianTabKey;
+
+type TabKey = AdminTabKey | SuperTabKey | ManagerTabKey | TechnicianTabKey;
 
 type Def<K extends string> = { key: K; label: string; icon: LucideIcon; to: string; search?: { tab: string } };
 
@@ -55,6 +60,22 @@ const CATALOG_MANAGER: Def<ManagerTabKey>[] = [
   { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
 ];
 
+// Tenant technicians (admin tech) — sensors, actuators, installs
+const CATALOG_TENANT_TECHNICIAN: Def<TenantTechnicianTabKey>[] = [
+  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
+  { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
+  { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
+  { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
+  { key: "installs", label: "My Installs", icon: Package, to: "/technician/installs" },
+];
+
+// Global technicians (superadmin tech) — fleet management, command center
+const CATALOG_GLOBAL_TECHNICIAN: Def<GlobalTechnicianTabKey>[] = [
+  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
+  { key: "command-center", label: "Command Center", icon: Shield, to: "/superadmin-technician" },
+  { key: "installs", label: "My Installs", icon: Package, to: "/technician/installs" },
+];
+
 const CATALOG_SUPER: Def<SuperTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
   { key: "orders", label: "Install Orders", icon: Package, to: "/platform/orders" },
@@ -80,6 +101,8 @@ const STORAGE_MANAGER = "gh_manager_tabs_v1";
 const DEFAULT_ADMIN: AdminTabKey[] = ["overview", "silos", "batches", "alerts", "marketplace"];
 const DEFAULT_SUPER: SuperTabKey[] = ["overview", "orders", "financials", "users", "plans"];
 const DEFAULT_MANAGER: ManagerTabKey[] = ["overview", "silos", "batches", "alerts", "dispatch"];
+const DEFAULT_TENANT_TECHNICIAN: TenantTechnicianTabKey[] = ["overview", "sensors", "actuators"];
+const DEFAULT_GLOBAL_TECHNICIAN: GlobalTechnicianTabKey[] = ["overview", "installs"];
 
 function readStored(storage: string, def: TabKey[], validKeys: Set<string>): TabKey[] {
   if (typeof window === "undefined") return def;
@@ -97,18 +120,19 @@ function readStored(storage: string, def: TabKey[], validKeys: Set<string>): Tab
 
 export function DashboardQuickTabs() {
   const { isSuperAdmin, role } = useIsSuperAdmin();
+  const { isGlobalTechnician, isTenantTechnician } = useIsGlobalTechnician();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const isManager = role === "manager";
-  const CATALOG = (isSuperAdmin ? CATALOG_SUPER : isManager ? CATALOG_MANAGER : CATALOG_ADMIN) as Def<TabKey>[];
-  const STORAGE = isSuperAdmin ? STORAGE_SUPER : isManager ? STORAGE_MANAGER : STORAGE_ADMIN;
-  const DEFAULT = (isSuperAdmin ? DEFAULT_SUPER : isManager ? DEFAULT_MANAGER : DEFAULT_ADMIN) as TabKey[];
+  const CATALOG = (isSuperAdmin ? CATALOG_SUPER : isManager ? CATALOG_MANAGER : isGlobalTechnician ? CATALOG_GLOBAL_TECHNICIAN : isTenantTechnician ? CATALOG_TENANT_TECHNICIAN : CATALOG_ADMIN) as Def<TabKey>[];
+  const STORAGE = isSuperAdmin ? STORAGE_SUPER : isManager ? STORAGE_MANAGER : isGlobalTechnician || isTenantTechnician ? "gh_tech_tabs_v1" : STORAGE_ADMIN;
+  const DEFAULT = (isSuperAdmin ? DEFAULT_SUPER : isManager ? DEFAULT_MANAGER : isGlobalTechnician ? DEFAULT_GLOBAL_TECHNICIAN : isTenantTechnician ? DEFAULT_TENANT_TECHNICIAN : DEFAULT_ADMIN) as TabKey[];
   const validKeys = new Set(CATALOG.map((c) => c.key));
   const [tabs, setTabs] = useState<TabKey[]>(DEFAULT);
   useEffect(() => {
     setTabs(readStored(STORAGE, DEFAULT, validKeys));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuperAdmin, isManager]);
+  }, [isSuperAdmin, isManager, isGlobalTechnician, isTenantTechnician]);
 
   function toggle(k: TabKey) {
     setTabs((cur) => {

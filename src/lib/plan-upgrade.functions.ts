@@ -412,10 +412,16 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
     // Case A: no active Stripe subscription yet → Checkout in subscription mode.
     if (!profile.stripe_subscription_id) {
       const customerId = await ensureStripeCustomer(supabaseAdmin, context.userId);
-      const originHeader = (context as any)?.request?.headers?.get?.("origin")
-        ?? (context as any)?.request?.headers?.get?.("referer")
-        ?? process.env.PUBLIC_APP_URL ?? "";
-      const origin = originHeader ? new URL(originHeader).origin : "";
+      // Try multiple sources for origin, falling back to APP_ORIGIN env var
+      let origin = "";
+      try {
+        const originHeader = (context as any)?.request?.headers?.get?.("origin")
+          ?? (context as any)?.request?.headers?.get?.("referer")
+          ?? "";
+        if (originHeader) origin = new URL(originHeader).origin;
+      } catch { /* ignore invalid URL */ }
+      if (!origin) origin = process.env.APP_ORIGIN ?? process.env.PUBLIC_APP_URL ?? "";
+      if (!origin) throw new Error("Cannot determine app origin for Stripe redirect. Set APP_ORIGIN in .env");
       const success = `${origin}/plan-management?upgrade=success`;
       const cancel = `${origin}/plan-management?upgrade=cancel`;
 
@@ -591,10 +597,15 @@ export const openBillingPortal = createServerFn({ method: "POST" })
     const { ensureStripeCustomer } = await import("@/lib/stripe-billing.server");
     const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
     const customerId = await ensureStripeCustomer(supabaseAdmin, context.userId);
-    const originHeader = (context as any)?.request?.headers?.get?.("origin")
-      ?? (context as any)?.request?.headers?.get?.("referer")
-      ?? process.env.PUBLIC_APP_URL ?? "";
-    const origin = originHeader ? new URL(originHeader).origin : "";
+    let origin = "";
+    try {
+      const originHeader = (context as any)?.request?.headers?.get?.("origin")
+        ?? (context as any)?.request?.headers?.get?.("referer")
+        ?? "";
+      if (originHeader) origin = new URL(originHeader).origin;
+    } catch { /* ignore invalid URL */ }
+    if (!origin) origin = process.env.APP_ORIGIN ?? process.env.PUBLIC_APP_URL ?? "";
+    if (!origin) throw new Error("Cannot determine app origin. Set APP_ORIGIN in .env");
     const session = await stripeFetch("/billing_portal/sessions", stripeForm({
       customer: customerId,
       return_url: `${origin}/plan-management`,

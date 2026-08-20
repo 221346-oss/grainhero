@@ -59,8 +59,8 @@ function OrderDetailPage() {
     onError: (e) => toast.error(String(e)),
   });
   const ship = useMutation({
-    mutationFn: (v: { carrier: string; trackingNumber: string; eta?: string }) =>
-      shipFn({ data: { orderId, carrier: v.carrier, trackingNumber: v.trackingNumber, expectedArrivalAt: v.eta || null } }),
+    mutationFn: (v: { carrier: string; trackingNumber: string; eta?: string; driverName?: string; driverPhone?: string; vehiclePlate?: string }) =>
+      shipFn({ data: { orderId, carrier: v.carrier, trackingNumber: v.trackingNumber, expectedArrivalAt: v.eta || null, driverName: v.driverName || null, driverPhone: v.driverPhone || null, vehiclePlate: v.vehiclePlate || null } }),
     onSuccess: () => { toast.success("Marked shipped"); invalidate(); },
     onError: (e) => toast.error(String(e)),
   });
@@ -123,6 +123,12 @@ function OrderDetailPage() {
                 <div className="font-medium">{order.tracking_carrier}</div>
                 <div className="text-muted-foreground">#{order.tracking_number}</div>
                 {order.expected_arrival_at && <div className="text-muted-foreground">ETA {new Date(order.expected_arrival_at).toLocaleDateString()}</div>}
+                {order.driver_name && (
+                  <div className="pt-1 mt-1 border-t">
+                    <div className="font-medium">🚚 {order.driver_name}{order.driver_phone ? ` · ${order.driver_phone}` : ""}</div>
+                    {order.vehicle_plate && <div className="text-xs text-muted-foreground">Vehicle: {order.vehicle_plate}</div>}
+                  </div>
+                )}
               </>
             ) : <div className="text-muted-foreground">Not shipped yet</div>}
           </CardContent>
@@ -225,11 +231,14 @@ function AssignSheet({ technicians, onSubmit }: { technicians: Array<Record<stri
   );
 }
 
-function ShipSheet({ onSubmit }: { onSubmit: (v: { carrier: string; trackingNumber: string; eta?: string }) => void }) {
+function ShipSheet({ onSubmit }: { onSubmit: (v: { carrier: string; trackingNumber: string; eta?: string; driverName?: string; driverPhone?: string; vehiclePlate?: string }) => void }) {
   const [open, setOpen] = useState(false);
   const [carrier, setCarrier] = useState("");
   const [tn, setTn] = useState("");
   const [eta, setEta] = useState("");
+  const [driverName, setDriverName] = useState("");
+  const [driverPhone, setDriverPhone] = useState("");
+  const [plate, setPlate] = useState("");
   return (
     <>
       <Button size="sm" variant="outline" onClick={() => setOpen(true)}><Truck className="h-4 w-4 mr-1" />Mark shipped</Button>
@@ -240,10 +249,16 @@ function ShipSheet({ onSubmit }: { onSubmit: (v: { carrier: string; trackingNumb
             <div className="space-y-1.5"><Label>Carrier</Label><Input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="TCS / Leopards / DHL" /></div>
             <div className="space-y-1.5"><Label>Tracking number</Label><Input value={tn} onChange={(e) => setTn(e.target.value)} /></div>
             <div className="space-y-1.5"><Label>ETA (optional)</Label><Input type="date" value={eta} onChange={(e) => setEta(e.target.value)} /></div>
+            <div className="border-t pt-3 space-y-3">
+              <p className="text-xs text-muted-foreground">Driver contact — for delivery coordination</p>
+              <div className="space-y-1.5"><Label>Driver name</Label><Input value={driverName} onChange={(e) => setDriverName(e.target.value)} placeholder="Driver's full name" /></div>
+              <div className="space-y-1.5"><Label>Driver phone</Label><Input value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} placeholder="+92 300 1234567" /></div>
+              <div className="space-y-1.5"><Label>Vehicle plate</Label><Input value={plate} onChange={(e) => setPlate(e.target.value)} placeholder="e.g. LES-1234" /></div>
+            </div>
           </div>
           <SheetFooter className="mt-6">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button disabled={!carrier || !tn} onClick={() => { onSubmit({ carrier, trackingNumber: tn, eta: eta ? new Date(eta).toISOString() : undefined }); setOpen(false); }}>Save</Button>
+            <Button disabled={!carrier || !tn} onClick={() => { onSubmit({ carrier, trackingNumber: tn, eta: eta ? new Date(eta).toISOString() : undefined, driverName: driverName.trim() || undefined, driverPhone: driverPhone.trim() || undefined, vehiclePlate: plate.trim() || undefined }); setOpen(false); }}>Save</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

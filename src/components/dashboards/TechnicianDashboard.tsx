@@ -73,12 +73,13 @@ function IncidentCard({ incident }: { incident: AssignedIncident }) {
 
   return (
     <div
-      className={`rounded-xl border bg-card/70 overflow-hidden transition-all ${incident.severity === "critical"
+      className={`rounded-xl border bg-card/70 overflow-hidden transition-all ${
+        incident.severity === "critical"
           ? "border-red-200/60 dark:border-red-800/40"
           : incident.severity === "high"
             ? "border-amber-200/60 dark:border-amber-800/40"
             : "border-border"
-        }`}
+      }`}
     >
       {/* Header row */}
       <button
@@ -86,12 +87,13 @@ function IncidentCard({ incident }: { incident: AssignedIncident }) {
         onClick={() => setExpanded((v) => !v)}
       >
         <AlertTriangle
-          className={`h-4 w-4 shrink-0 ${incident.severity === "critical"
+          className={`h-4 w-4 shrink-0 ${
+            incident.severity === "critical"
               ? "text-red-500"
               : incident.severity === "high"
                 ? "text-amber-500"
                 : "text-sky-500"
-            }`}
+          }`}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

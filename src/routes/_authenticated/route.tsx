@@ -68,11 +68,16 @@ export const Route = createFileRoute("/_authenticated")({
       "/monitoring": "/platform/monitoring",
       "/intelligence": "/platform/intelligence",
     };
+    // Every /platform/* page is super-admin only (server functions also
+    // enforce it), but block the URL up-front so technicians/admins/managers
+    // get the not-allowed page instead of a data-less shell.
+    const PLATFORM_PREFIX = "/platform";
 
     const path = location.pathname;
     const needsRoleCheck =
       OPERATIONAL_PREFIXES.some((p) => path.startsWith(p)) ||
-      Object.keys(SUPER_ADMIN_REDIRECTS).some((p) => path === p || path.startsWith(p + "/"));
+      Object.keys(SUPER_ADMIN_REDIRECTS).some((p) => path === p || path.startsWith(p + "/")) ||
+      path === PLATFORM_PREFIX || path.startsWith(PLATFORM_PREFIX + "/");
 
     if (needsRoleCheck) {
       const { data: roles } = await supabase
@@ -82,6 +87,11 @@ export const Route = createFileRoute("/_authenticated")({
       const rs = (roles ?? []).map((r) => r.role as string);
       const isSuperAdmin = rs.includes("super_admin");
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
+      // Platform pages: super-admin only.
+      if ((path === PLATFORM_PREFIX || path.startsWith(PLATFORM_PREFIX + "/")) && !isSuperAdmin) {
+        void logSecurityEvent({ data: { event: "unauthorized_access", meta: { page: path } } }).catch(() => {});
+        throw redirect({ to: "/not-allowed" });
+      }
       if (isSuperAdmin && !alsoOperational) {
         if (OPERATIONAL_PREFIXES.some((p) => path.startsWith(p))) {
           void logSecurityEvent({ data: { event: "unauthorized_access", meta: { page: path } } }).catch(() => {});
