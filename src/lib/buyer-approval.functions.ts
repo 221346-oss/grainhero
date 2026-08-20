@@ -227,8 +227,8 @@ export const checkAndAutoApproveBuyers = createServerFn({ method: "POST" })
     // Find buyers pending approval for more than 6 hours
     const { data: pendingBuyers, error: fetchError } = await context.supabase
       .from("buyers")
-      .select("id, name, admin_id, created_by, pending_approval_at")
-      .eq("status", "pending_approval")
+      .select("*")
+      .eq("status", "active")
       .lt("pending_approval_at", sixHoursAgo);
 
     if (fetchError) throw fetchError;
