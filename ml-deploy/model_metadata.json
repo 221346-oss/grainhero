@@ -13,11 +13,7 @@
     "Grain_Moisture",
     "Rainfall"
   ],
-  "label_classes": [
-    "Risky",
-    "Safe",
-    "Spoiled"
-  ],
+  "label_classes": ["Risky", "Safe", "Spoiled"],
   "best_params": {
     "XGBoost": {
       "max_depth": 5,
@@ -82,42 +78,15 @@
     }
   },
   "feature_importance": [
-    [
-      "Grain_Moisture",
-      500.1394252998346
-    ],
-    [
-      "Storage_Days",
-      470.47442187915834
-    ],
-    [
-      "Temperature",
-      400.74389100067515
-    ],
-    [
-      "Humidity",
-      388.7350860783997
-    ],
-    [
-      "Dew_Point",
-      356.48213016511545
-    ],
-    [
-      "Ambient_Light",
-      256.011943016834
-    ],
-    [
-      "Airflow",
-      240.01699939966522
-    ],
-    [
-      "Rainfall",
-      178.00895781181325
-    ],
-    [
-      "Pest_Presence",
-      138.72047865669194
-    ]
+    ["Grain_Moisture", 500.1394252998346],
+    ["Storage_Days", 470.47442187915834],
+    ["Temperature", 400.74389100067515],
+    ["Humidity", 388.7350860783997],
+    ["Dew_Point", 356.48213016511545],
+    ["Ambient_Light", 256.011943016834],
+    ["Airflow", 240.01699939966522],
+    ["Rainfall", 178.00895781181325],
+    ["Pest_Presence", 138.72047865669194]
   ],
   "training_date": "2026-07-15T12:46:43.154481",
   "dataset": "F:\\grainhero\\Grainhero-sharjeel_working\\farmHomeBackend-main\\ml\\rice_spoilage_10k.csv",

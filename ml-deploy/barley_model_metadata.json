@@ -13,11 +13,7 @@
     "Grain_Moisture",
     "Rainfall"
   ],
-  "label_classes": [
-    "Risky",
-    "Safe",
-    "Spoiled"
-  ],
+  "label_classes": ["Risky", "Safe", "Spoiled"],
   "best_params": {
     "XGBoost": {
       "max_depth": 3,
@@ -82,42 +78,15 @@
     }
   },
   "feature_importance": [
-    [
-      "Grain_Moisture",
-      322.15136672054376
-    ],
-    [
-      "Storage_Days",
-      306.11799110686223
-    ],
-    [
-      "Humidity",
-      281.0894987378627
-    ],
-    [
-      "Temperature",
-      239.0649454008578
-    ],
-    [
-      "Dew_Point",
-      180.47157248012675
-    ],
-    [
-      "Pest_Presence",
-      125.4030654195747
-    ],
-    [
-      "Airflow",
-      101.35311340040668
-    ],
-    [
-      "Rainfall",
-      58.34055172309366
-    ],
-    [
-      "Ambient_Light",
-      46.67456166523113
-    ]
+    ["Grain_Moisture", 322.15136672054376],
+    ["Storage_Days", 306.11799110686223],
+    ["Humidity", 281.0894987378627],
+    ["Temperature", 239.0649454008578],
+    ["Dew_Point", 180.47157248012675],
+    ["Pest_Presence", 125.4030654195747],
+    ["Airflow", 101.35311340040668],
+    ["Rainfall", 58.34055172309366],
+    ["Ambient_Light", 46.67456166523113]
   ],
   "training_date": "2026-07-15T15:27:09.754565",
   "dataset": "F:\\grainhero\\Grainhero-sharjeel_working\\farmHomeBackend-main\\ml\\barley_spoilage_10k.csv",
