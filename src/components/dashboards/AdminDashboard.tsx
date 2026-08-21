@@ -28,7 +28,8 @@ export function AdminDashboard({ name }: { name?: string }) {
       <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
         <WelcomeBanner name={name} />
 
-        <div className="space-y-3 mt-1">
+        <div className="space-y-4 mt-2">
+          <DashboardFlowDiagram />
           <KpiSummary
             range={range}
             onRange={setRange}
@@ -45,7 +46,6 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
-          <DashboardFlowDiagram />
           <DashboardSiloCards range={range} />
           <div className="grid gap-3 lg:grid-cols-3">
             <IncomingQueueCard range={range} />
