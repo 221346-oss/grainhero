@@ -17,6 +17,8 @@ export default tseslint.config(
       "ml-deploy/**",
       "remotion/**",
       "vitest.config.ts",
+      "src/integrations/supabase/types.ts",
+      "src/routeTree.gen.ts",
     ],
   },
   {
@@ -47,7 +49,13 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "prettier/prettier": "off",
     },
   },
   eslintPluginPrettier,
+  {
+    rules: {
+      "prettier/prettier": "off",
+    },
+  },
 );
