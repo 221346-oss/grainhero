@@ -34,21 +34,43 @@ export const getMySubscription = createServerFn({ method: "GET" })
     // always reflects super admin's latest values even when max_* cols are null.
     let mergedSub = sub;
     if (sub?.plan_name) {
+      // Map subscription plan_name (e.g. "Grain Enterprise") to plan_thresholds plan_id (e.g. "enterprise")
+      const planNameToId: Record<string, string> = {
+        "grain starter": "basic",
+        "starter": "basic",
+        "basic": "basic",
+        "grain professional": "intermediate",
+        "professional": "intermediate",
+        "intermediate": "intermediate",
+        "growth": "intermediate",
+        "grain enterprise": "pro",
+        "enterprise": "pro",
+        "pro": "pro",
+        "scale": "pro",
+      };
+      const planKey = planNameToId[sub.plan_name.toLowerCase()] ?? sub.plan_name.toLowerCase();
+      console.log("[getMySubscription] plan_name:", sub.plan_name, "→ planKey:", planKey);
+      console.log("[getMySubscription] Querying plan_thresholds with plan_id:", planKey);
       const { data: threshold } = await context.supabase
         .from("plan_thresholds")
         .select("max_silos, max_warehouses, max_users, max_batches, max_sensors, max_actuators")
-        .eq("plan_id", sub.plan_name)
+        .eq("plan_id", planKey)
         .maybeSingle();
       if (threshold) {
+        // Always prefer threshold values — subscription row may have stale 999999 defaults
         mergedSub = {
           ...sub,
-          max_silos:       sub.max_silos       ?? threshold.max_silos,
-          max_warehouses:  sub.max_warehouses   ?? threshold.max_warehouses,
-          max_users:       sub.max_users        ?? threshold.max_users,
-          max_batches:     sub.max_batches      ?? threshold.max_batches,
-          max_sensors:     sub.max_sensors      ?? threshold.max_sensors,
-          max_actuators:   sub.max_actuators    ?? threshold.max_actuators,
+          max_silos:       threshold.max_silos       ?? sub.max_silos,
+          max_warehouses:  threshold.max_warehouses  ?? sub.max_warehouses,
+          max_users:       threshold.max_users       ?? sub.max_users,
+          max_batches:     threshold.max_batches     ?? sub.max_batches,
+          max_sensors:     threshold.max_sensors     ?? sub.max_sensors,
+          max_actuators:   threshold.max_actuators   ?? sub.max_actuators,
         };
+        console.log("[getMySubscription] Merged threshold:", JSON.stringify(threshold));
+        console.log("[getMySubscription] Final max_batches:", mergedSub.max_batches, "max_users:", mergedSub.max_users);
+      } else {
+        console.log("[getMySubscription] No threshold found for planKey:", planKey);
       }
     }
 
