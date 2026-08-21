@@ -38,10 +38,29 @@ export const recountMyActiveJobs = createServerFn({ method: "POST" })
 
     const totalActive = (activeCount ?? 0) + extraOrderCount;
 
-    // Update the profile
+    // Update the profile — also auto-correct technician_status: if job count
+    // is 0 but status is still "busy", reset to "available".
+    const patch: Record<string, unknown> = {
+      current_job_count: totalActive,
+      updated_at: new Date().toISOString(),
+    };
+    if (totalActive === 0) {
+      // Reset busy technicians to available when they have no active jobs.
+      // Only reset 'busy' — don't touch 'offline' or 'on_leave' which are
+      // self-declared by the technician.
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("technician_status")
+        .eq("id", context.userId)
+        .maybeSingle();
+      if (prof && (prof as any).technician_status === "busy") {
+        patch.technician_status = "available";
+      }
+    }
+
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({ current_job_count: totalActive, updated_at: new Date().toISOString() } as never)
+      .update(patch as never)
       .eq("id", context.userId);
 
     if (error) throw new Error(`Failed to recount: ${error.message}`);

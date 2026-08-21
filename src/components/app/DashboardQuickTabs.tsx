@@ -27,7 +27,7 @@ type SuperTabKey =
   | "security" | "launch" | "technicians";
 
 type TenantTechnicianTabKey = "overview" | "installs" | "sensors" | "actuators" | "alerts";
-type GlobalTechnicianTabKey = "overview" | "installs" | "command-center";
+type GlobalTechnicianTabKey = "overview" | "installs";
 type TechnicianTabKey = TenantTechnicianTabKey | GlobalTechnicianTabKey;
 
 type TabKey = AdminTabKey | SuperTabKey | ManagerTabKey | TechnicianTabKey;
@@ -67,10 +67,9 @@ const CATALOG_TENANT_TECHNICIAN: Def<TenantTechnicianTabKey>[] = [
   { key: "installs", label: "My Installs", icon: Package, to: "/technician/installs" },
 ];
 
-// Global technicians (superadmin tech) — fleet management, command center
+// Global technicians (superadmin tech) — overview + installs
 const CATALOG_GLOBAL_TECHNICIAN: Def<GlobalTechnicianTabKey>[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "command-center", label: "Command Center", icon: Shield, to: "/superadmin-technician" },
   { key: "installs", label: "My Installs", icon: Package, to: "/technician/installs" },
 ];
 

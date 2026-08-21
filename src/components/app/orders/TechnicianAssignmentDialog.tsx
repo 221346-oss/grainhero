@@ -100,6 +100,9 @@ export function TechnicianAssignmentDialog({
       toast.success("Technician assigned successfully");
       qc.invalidateQueries({ queryKey: ["platform-orders"] });
       qc.invalidateQueries({ queryKey: ["platform.order", order.id] });
+      // Refresh technician list so job counts and availability update
+      qc.invalidateQueries({ queryKey: ["warehouse-technicians"] });
+      qc.invalidateQueries({ queryKey: ["my-technician-profile"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
@@ -261,7 +264,7 @@ export function TechnicianAssignmentDialog({
                           )}
                           {!tech.is_available && (
                             <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                              At capacity
+                              {tech.current_job_count >= tech.max_concurrent_jobs ? "At capacity" : "Unavailable"}
                             </span>
                           )}
                         </div>

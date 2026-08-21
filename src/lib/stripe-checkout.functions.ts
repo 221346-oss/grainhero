@@ -826,13 +826,12 @@ export const checkAndUpdatePaymentStatus = createServerFn({ method: "POST" })
       admin_id: string;
     } | null;
 
-    const orderRow = order as { id: string; status: string; stripe_session_id: string | null; admin_id: string } | null;
-    if (!orderRow || !orderRow.stripe_session_id) {
+    if (!order || !order.stripe_session_id) {
       throw new Error("Order not found or no session ID");
     }
 
     // Check session status on Stripe
-    const session = await stripeFetch(`/checkout/sessions/${orderRow.stripe_session_id}`, null, "GET");
+    const session = await stripeFetch(`/checkout/sessions/${order.stripe_session_id}`, null, "GET");
     const sessionData = session as {
       id: string;
       payment_status: string;

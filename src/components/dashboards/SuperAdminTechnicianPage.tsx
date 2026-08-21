@@ -166,10 +166,7 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
             <p className="text-sm text-muted-foreground">My installs, status tracking, and warehouse assignments</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1"><Shield className="h-3 w-3" /> Technician</Badge>
-            <Badge className={TECH_STATUS_CONFIG[myStatus]?.color ?? "bg-slate-100"}>
-              {TECH_STATUS_CONFIG[myStatus]?.label ?? myStatus}
-            </Badge>
+            {/* Status shown in profile card below */}
           </div>
         </div>
 
@@ -435,9 +432,19 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
   const order = (install.hardware_orders ?? {}) as Record<string, any>;
   const status = install.status as string;
 
-  // Determine which steps are done
+  // Determine which steps are done.
+  // Map install statuses to lifecycle step indices:
+  //   scheduled/paid → step 0 (Paid done, awaiting dispatch)
+  //   en_route       → step 1
+  //   onsite         → step 2
+  //   installing     → step 3
+  //   completed      → step 4
   const stepOrder = ["paid", "en_route", "onsite", "installing", "completed"];
-  const currentStepIdx = stepOrder.indexOf(status === "blocked" ? "scheduled" : status);
+  const statusToStep: Record<string, string> = {
+    scheduled: "paid",       // install is scheduled = admin has paid, awaiting dispatch
+    blocked: "paid",         // blocked goes back to showing paid as last progress
+  };
+  const currentStepIdx = stepOrder.indexOf(statusToStep[status] ?? status);
 
   // Available next statuses based on current status.
   const nextStatuses: Record<string, { status: string; label: string }[]> = {

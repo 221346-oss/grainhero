@@ -94,6 +94,7 @@ type FormState = {
   warehouse_id: string;
   capacity_kg: string;
   location_description: string;
+  address: string;
   status: "active" | "offline" | "maintenance";
   notes: string;
 };
@@ -103,8 +104,23 @@ const emptyForm: FormState = {
   warehouse_id: "",
   capacity_kg: "",
   location_description: "",
+  address: "",
   status: "active",
   notes: "",
+};
+
+type WarehouseFormState = {
+  name: string;
+  address: string;
+  total_capacity_kg: string;
+  status: "active" | "offline" | "maintenance";
+};
+
+const emptyWarehouseForm: WarehouseFormState = {
+  name: "",
+  address: "",
+  total_capacity_kg: "10000",
+  status: "active",
 };
 
 export function SilosSection() {
@@ -193,22 +209,51 @@ export function SilosSection() {
   }, [data, q, statusFilter]);
 
   // ── Two-level hierarchy: Region → Warehouse → Silos ─────────────────────
-  // Region = city. Try location.description, then parse from address, then warehouse name.
+  // Region = city. Check address, description, then warehouse name against known cities.
+  const SILOS_KNOWN_CITIES = ["Lahore", "Sialkot", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad",
+    "Multan", "Peshawar", "Quetta", "Gujranwala", "Sargodha", "Abbottabad", "Mardan",
+    "Hyderabad", "Gujrat", "Jhang", "Sheikhupura", "Sahiwal", "Okara", "Dera Ghazi Khan"];
+  
+  function extractCity(text: string): string | null {
+    const parts = text.split(",").map(s => s.trim()).filter(Boolean);
+    for (const part of parts) {
+      const normalized = part.toLowerCase();
+      for (const city of SILOS_KNOWN_CITIES) {
+        if (normalized === city.toLowerCase()) return city;
+      }
+    }
+    return null;
+  }
+
   function extractRegion(wh: Warehouse | undefined): string {
-    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     if (!wh) return "Unassigned Region";
     const desc = (wh.location?.description ?? "").trim();
-    if (desc) return desc;
     const addr = (wh.location?.address ?? "").trim();
-    if (addr) {
-      const parts = addr.split(",").map((s) => s.trim()).filter(Boolean);
-      const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
-      if (city) return cap(city);
+    
+    // Try address, description, then warehouse name against known cities
+    for (const text of [addr, desc, wh.name ?? ""]) {
+      if (text) {
+        const city = extractCity(text);
+        if (city) return city;
+      }
     }
+    
+    // Fallback: use description as-is
+    if (desc) return desc;
+    
+    // Try second-to-last comma part from address
+    if (addr) {
+      const parts = addr.split(",").map(s => s.trim()).filter(Boolean);
+      const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+      if (city) return city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
+    }
+    
+    // Last resort: extract city prefix from warehouse name (e.g. "sialkot — D2E304" → "Sialkot")
     if (wh.name) {
       const city = wh.name.split(/[—\-–]/)[0].trim();
-      if (city) return cap(city);
+      if (city) return city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
     }
+    
     return "Unassigned Region";
   }
 
@@ -252,9 +297,10 @@ export function SilosSection() {
         data: {
           id: fs.id,
           name: fs.name.trim() || undefined,
-          warehouse_id: fs.warehouse_id,
+          warehouse_id: fs.warehouse_id || null,
           capacity_kg: Number(fs.capacity_kg),
           location_description: fs.location_description.trim() || null,
+          address: fs.address.trim() || null,
           status: fs.status,
           notes: fs.notes.trim() || null,
         },
@@ -300,12 +346,15 @@ export function SilosSection() {
   });
 
   function openEdit(s: Silo) {
+    // Get address from the silo's warehouse
+    const wh = warehouses.find((w) => w.id === s.warehouse_id);
     setForm({
       id: s.id,
       name: s.name ?? "",
       warehouse_id: s.warehouse_id ?? "",
       capacity_kg: String(s.capacity_kg ?? ""),
       location_description: s.location?.description ?? "",
+      address: (wh as any)?.location?.address ?? "",
       status: (s.status ?? "active") as FormState["status"],
       notes: s.notes ?? "",
     });
@@ -416,15 +465,16 @@ export function SilosSection() {
               )}
             </div>
             <div>
-              <Label>Warehouse *</Label>
+              <Label>Warehouse</Label>
               <Select
-                value={form.warehouse_id}
-                onValueChange={(v) => setForm({ ...form, warehouse_id: v })}
+                value={form.warehouse_id || "__auto__"}
+                onValueChange={(v) => setForm({ ...form, warehouse_id: v === "__auto__" ? "" : v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select warehouse" />
+                  <SelectValue placeholder="Auto-detect from location" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__auto__">Auto-detect from location</SelectItem>
                   {warehouses.map((w) => (
                     <SelectItem key={w.id} value={w.id}>
                       {w.name}
@@ -432,6 +482,9 @@ export function SilosSection() {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Leave on "Auto-detect" to create a warehouse from the silo's location
+              </p>
             </div>
             <div>
               <Label>Capacity (kg) *</Label>
@@ -444,12 +497,22 @@ export function SilosSection() {
               />
             </div>
             <div>
-              <Label>Location</Label>
+              <Label>City / Location *</Label>
               <Input
                 value={form.location_description}
                 onChange={(e) => setForm({ ...form, location_description: e.target.value })}
-                placeholder="e.g. Building A, Zone 1"
+                placeholder="e.g. Lahore, Sialkot"
               />
+              <p className="text-[10px] text-muted-foreground mt-1">Used for region grouping</p>
+            </div>
+            <div>
+              <Label>Address</Label>
+              <Input
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="e.g. 125 farm road, block a"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Street address for warehouse identification</p>
             </div>
             <div>
               <Label>Status</Label>
@@ -483,7 +546,7 @@ export function SilosSection() {
             <Button
               form="silo-form"
               type="submit"
-              disabled={saveMutation.isPending || !form.warehouse_id || !form.capacity_kg}
+              disabled={saveMutation.isPending || !form.capacity_kg}
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

@@ -51,18 +51,35 @@ export const listWarehousesByCity = createServerFn({ method: "GET" })
     const warehousesByCity: Record<string, any[]> = {};
     
     (warehouses ?? []).forEach((warehouse) => {
-      // Extract city from address - assume format like "Street, City, State"
+      // Extract city from address, description, or warehouse name for region grouping
       let city = "Unknown City";
-      const loc = warehouse.location as { address?: string; city?: string } | null;
-      const address = typeof loc?.address === "string" ? loc.address : undefined;
-      if (typeof loc?.city === "string" && loc.city.trim()) {
-        city = loc.city.trim();
-      } else if (address) {
-        const addressParts = address.split(',');
-        if (addressParts.length >= 2) {
-          city = addressParts[1].trim();
+      const loc = warehouse.location as { address?: string; description?: string } | null;
+      const address = typeof loc?.address === "string" ? loc.address : "";
+      const description = typeof loc?.description === "string" ? loc.description : "";
+      const whName = (warehouse.name ?? "") as string;
+      
+      // Try known cities from address first
+      if (address) {
+        const extracted = extractCityFromAddress(address);
+        if (extracted) city = extracted;
+      }
+      // Then try description
+      if (city === "Unknown City" && description) {
+        const extracted = extractCityFromAddress(description);
+        if (extracted) city = extracted;
+      }
+      // Then try warehouse name — e.g. "sialkot — D2E304" → "Sialkot"
+      if (city === "Unknown City" && whName) {
+        const extracted = extractCityFromAddress(whName);
+        if (extracted) city = extracted;
+      }
+      // Fallback to second-to-last comma part
+      if (city === "Unknown City" && address) {
+        const parts = address.split(',').map((s: string) => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          city = parts[parts.length - 2];
         } else {
-          city = addressParts[0].trim();
+          city = parts[0];
         }
       }
       
@@ -309,9 +326,10 @@ const siloInput = z.object({
   id: z.string().uuid().optional(),
   silo_id: z.string().min(1).max(50).optional(),
   name: z.string().min(1).max(200).optional(),
-  warehouse_id: z.string().uuid(),
+  warehouse_id: z.string().uuid().nullable().optional(),
   capacity_kg: z.number().positive(),
   location_description: z.string().max(500).optional().nullable(),
+  address: z.string().max(500).optional().nullable(),
   status: z.enum(["active", "offline", "error", "maintenance"]).default("active"),
   notes: z.string().max(2000).optional().nullable(),
 });
@@ -337,7 +355,95 @@ export const upsertSilo = createServerFn({ method: "POST" })
         userId: context.userId,
       });
     }
-    const location = { description: data.location_description ?? null };
+    const location = { description: data.location_description ?? null, address: data.address ?? null };
+    
+    // Resolve warehouse_id: if null OR if editing with a new address, find/create warehouse
+    let resolvedWarehouseId = data.warehouse_id;
+    
+    // For edits: check if address changed and needs a new warehouse
+    if (resolvedWarehouseId && data.id && data.address) {
+      const { data: currentSilo } = await context.supabase
+        .from("silos")
+        .select("warehouse_id")
+        .eq("id", data.id)
+        .maybeSingle();
+      
+      // Get current warehouse's address
+      const { data: currentWh } = await context.supabase
+        .from("warehouses")
+        .select("location")
+        .eq("id", currentSilo?.warehouse_id)
+        .maybeSingle();
+      
+      const currentAddr = (currentWh?.location?.address ?? "").trim().toLowerCase();
+      const newAddr = data.address.trim().toLowerCase();
+      
+      // If address changed, find or create a new warehouse
+      if (currentAddr !== newAddr) {
+        resolvedWarehouseId = null; // Force auto-warehouse resolution
+      }
+    }
+    
+    if (!resolvedWarehouseId) {
+      const locationDesc = (data.location_description ?? "").trim();
+      if (locationDesc) {
+        // Get tenant admin ID
+        const { data: prof } = await context.supabase
+          .from("profiles")
+          .select("id, admin_id")
+          .eq("id", context.userId)
+          .maybeSingle();
+        const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
+        
+        // Look for existing warehouse with the SAME address
+        const { data: existingWh } = await context.supabase
+          .from("warehouses")
+          .select("id, name, location")
+          .eq("admin_id", tenantAdminId)
+          .is("deleted_at", null)
+          .limit(50);
+        
+        const searchAddr = (data.address ?? locationDesc).toLowerCase();
+        const match = (existingWh ?? []).find((w: any) => {
+          const addr = (w.location?.address ?? "").trim().toLowerCase();
+          const desc = (w.location?.description ?? "").trim().toLowerCase();
+          return addr === searchAddr || desc === searchAddr;
+        });
+        
+        if (match) {
+          resolvedWarehouseId = match.id;
+        } else {
+          // Create new warehouse for this address
+          const whAddress = data.address ?? locationDesc;
+          const whName = whAddress.length > 50 ? whAddress.substring(0, 50) + "..." : whAddress;
+          const { data: newWh } = await context.supabase
+            .from("warehouses")
+            .insert({
+              name: whName,
+              warehouse_id: `WH-${Date.now().toString().slice(-8)}`,
+              admin_id: tenantAdminId,
+              location: { description: data.location_description ?? null, address: whAddress },
+              status: "active",
+              total_capacity_kg: 50000,
+              created_by: context.userId,
+            } as never)
+            .select("id")
+            .single();
+          if (newWh) resolvedWarehouseId = newWh.id;
+        }
+      }
+      
+      // Fallback: if still null, keep existing warehouse_id from the silo
+      if (!resolvedWarehouseId && data.id) {
+        const { data: current } = await context.supabase
+          .from("silos")
+          .select("warehouse_id")
+          .eq("id", data.id)
+          .maybeSingle();
+        resolvedWarehouseId = current?.warehouse_id;
+      }
+    }
+    
     if (data.id) {
       // Update: silo_id (the auto-generated code) stays immutable. `name`
       // is user-editable, but renaming (changing it) is gated to
@@ -357,7 +463,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
       const { data: row, error } = await context.supabase
         .from("silos")
         .update({
-          warehouse_id: data.warehouse_id,
+          warehouse_id: resolvedWarehouseId,
           capacity_kg: data.capacity_kg,
           location,
           status: data.status,
@@ -372,6 +478,97 @@ export const upsertSilo = createServerFn({ method: "POST" })
       return row;
     }
     // Insert: auto-generate silo_id and a unique name within the same warehouse region.
+    // If no warehouse_id provided, auto-create/find one based on the silo's FULL ADDRESS.
+    // Each unique address gets its own warehouse (not merged by city).
+    // Use resolved warehouse_id (already resolved above for both insert and update)
+    let warehouseId = resolvedWarehouseId;
+    if (!warehouseId) {
+      const locationDesc = (data.location_description ?? "").trim();
+      
+      // Get tenant admin ID
+      const { data: prof } = await context.supabase
+        .from("profiles")
+        .select("id, admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
+      
+      if (locationDesc) {
+        // Look for existing warehouse with the SAME address
+        // Use ilike with the full address to find exact match
+        const { data: existingWh } = await context.supabase
+          .from("warehouses")
+          .select("id, name, location")
+          .eq("admin_id", tenantAdminId)
+          .is("deleted_at", null)
+          .limit(50);
+        
+        // Find warehouse with matching address (use address field if provided, else location_description)
+        const searchAddress = (data.address ?? locationDesc).toLowerCase();
+        const match = (existingWh ?? []).find((w: any) => {
+          const addr = (w.location?.address ?? "").trim().toLowerCase();
+          const desc = (w.location?.description ?? "").trim().toLowerCase();
+          return addr === searchAddress || desc === searchAddress;
+        });
+        
+        if (match) {
+          warehouseId = match.id;
+          console.log(`[upsertSilo] Auto-matched warehouse "${match.name}" for address "${locationDesc}"`);
+        } else {
+          // Create new warehouse for this address
+          // Use address as name if provided, else location_description
+          const whAddress = data.address ?? locationDesc;
+          const whName = whAddress.length > 50 ? whAddress.substring(0, 50) + "..." : whAddress;
+          const { data: newWh, error: whErr } = await context.supabase
+            .from("warehouses")
+            .insert({
+              name: whName,
+              warehouse_id: `WH-${Date.now().toString().slice(-8)}`,
+              admin_id: tenantAdminId,
+              location: { description: data.location_description ?? null, address: whAddress },
+              status: "active",
+              total_capacity_kg: 50000,
+              created_by: context.userId,
+            } as never)
+            .select("id")
+            .single();
+          
+          if (whErr) {
+            console.warn("[upsertSilo] Auto-warehouse creation failed:", whErr.message);
+          } else if (newWh) {
+            warehouseId = newWh.id;
+            console.log(`[upsertSilo] Auto-created warehouse "${whName}" for address "${locationDesc}"`);
+          }
+        }
+      }
+      
+      // Fallback: if still no warehouse, create a default one
+      if (!warehouseId) {
+        const { data: prof2 } = await context.supabase
+          .from("profiles")
+          .select("id, admin_id")
+          .eq("id", context.userId)
+          .maybeSingle();
+        const adminId = prof2?.admin_id ?? prof2?.id ?? context.userId;
+        
+        const { data: defaultWh } = await context.supabase
+          .from("warehouses")
+          .insert({
+            name: "Default Warehouse",
+            warehouse_id: `WH-${Date.now().toString().slice(-8)}`,
+            admin_id: adminId,
+            location: { description: locationDesc || "General" },
+            status: "active",
+            total_capacity_kg: 50000,
+            created_by: context.userId,
+          } as never)
+          .select("id")
+          .single();
+        
+        if (defaultWh) warehouseId = defaultWh.id;
+      }
+    }
+    
     const siloId = data.silo_id ?? `SILO-${Date.now().toString().slice(-8)}`;
 
     // If no name supplied, generate one like "Silo A", "Silo B", …, "Silo Z",
@@ -414,7 +611,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
       .insert({
         silo_id: siloId,
         name,
-        warehouse_id: data.warehouse_id,
+        warehouse_id: warehouseId!,
         capacity_kg: data.capacity_kg,
         location,
         status: data.status,

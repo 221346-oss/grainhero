@@ -36,18 +36,72 @@ type WarehouseRow = {
   technician_names: string[];
 };
 
-// ── Extract a region label from location fields ──────────────────────────────
-// Tries location.description first, then full address for better grouping.
-// This ensures warehouses at the same location are grouped together.
-function extractRegion(loc: WarehouseRow["location"] | null): string {
+// ── Extract a region label (city) from location fields ──────────────────────
+// Extracts just the city name for grouping, not the full address.
+// e.g. "125 farm road, block a, Lahore" → "Lahore"
+//      "123 Farm road, Block A, Sialkot" → "Sialkot"
+//      "abc123, Block A" → "abc123, Block A" (no city found, use as-is)
+const KNOWN_CITIES = ["Lahore", "Sialkot", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad",
+  "Multan", "Peshawar", "Quetta", "Gujranwala", "Sargodha", "Abbottabad", "Mardan",
+  "Hyderabad", "Gujrat", "Jhang", "Sheikhupura", "Sahiwal", "Okara", "Dera Ghazi Khan"];
+
+function extractCityFromAddress(addr: string): string | null {
+  const parts = addr.split(",").map(s => s.trim()).filter(Boolean);
+  
+  // Check each part against known cities
+  for (const part of parts) {
+    const normalized = part.toLowerCase();
+    for (const city of KNOWN_CITIES) {
+      if (normalized === city.toLowerCase()) return city;
+    }
+  }
+  
+  // If no known city, try to extract city from comma-separated address
+  // Typically: "street, area, city, country" → city is second-to-last
+  if (parts.length >= 2) {
+    // Check second-to-last part (common position for city in Pakistani addresses)
+    const candidate = parts[parts.length - 2];
+    // If it's short and doesn't contain numbers, likely a city name
+    if (candidate.length <= 20 && !/\d/.test(candidate)) {
+      return candidate.charAt(0).toUpperCase() + candidate.slice(1).toLowerCase();
+    }
+  }
+  
+  return null;
+}
+
+function extractRegion(loc: WarehouseRow["location"] | null, warehouseName?: string): string {
   if (!loc) return "Unassigned Region";
   
-  // Prefer location.description if set (for custom grouping)
   const desc = (loc.description ?? "").trim();
+  const addr = (loc.address ?? "").trim();
+  
+  // Location.description is now the city name (set during silo creation)
+  // Use it directly if it looks like a city name
+  if (desc) {
+    // Check if it's a known city
+    const city = extractCityFromAddress(desc);
+    if (city) return city;
+    // If not a known city but short (likely a city name), use as-is
+    if (desc.length <= 30) return desc.charAt(0).toUpperCase() + desc.slice(1).toLowerCase();
+  }
+  
+  // Try to extract city from address
+  if (addr) {
+    const city = extractCityFromAddress(addr);
+    if (city) return city;
+  }
+  
+  // Check warehouse name — e.g. "sialkot — D2E304" → "Sialkot"
+  if (warehouseName) {
+    const city = extractCityFromAddress(warehouseName);
+    if (city) return city;
+  }
+  
+  // Fallback: use description as-is
   if (desc) return desc;
   
-  // Otherwise use full address - this groups same-location warehouses together
-  const addr = (loc.address ?? "").trim();
+  // Last resort: use full address
   if (addr) return addr;
   
   return "Unassigned Region";
@@ -273,7 +327,7 @@ export function MultiRegionWarehousesView() {
     const warehouses = (data ?? []) as WarehouseRow[];
     const map = new Map<string, WarehouseRow[]>();
     for (const w of warehouses) {
-      const region = extractRegion(w.location);
+      const region = extractRegion(w.location, w.name);
       if (!map.has(region)) map.set(region, []);
       map.get(region)!.push(w);
     }
