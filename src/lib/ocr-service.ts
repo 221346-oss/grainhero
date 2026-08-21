@@ -278,12 +278,11 @@ export async function extractPaymentDetails(imageFile: File): Promise<ExtractedP
 
   console.log("[ocr] Creating Tesseract worker (fetches core + language data on first use)…");
   const workerStart = Date.now();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let worker: any;
   try {
     worker = await withTimeout(
       createWorker("eng", 1, {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         logger: (m: any) => console.log("[ocr:tesseract]", m?.status, m?.progress),
       }),
       TESSERACT_TIMEOUT_MS,

@@ -42,7 +42,6 @@ export const Route = createFileRoute("/_authenticated/platform/dashboard-builder
   component: DashboardBuilderPage,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const ROLES = ["super_admin", "admin", "manager", "technician", "buyer"] as const;
