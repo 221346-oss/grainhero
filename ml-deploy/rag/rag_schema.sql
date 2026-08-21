@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS rag_knowledge_base (
     metadata        JSONB       DEFAULT '{}'::JSONB,
     -- e.g. {"source_file": "silo_manual.pdf", "page": 4, "grain_type": "wheat"}
     embedding       VECTOR(768) NOT NULL,  -- dense embedding vector
-    created_at      TIMESTAMPTZ DEFAULT NOW()
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (tenant_id, document_title, chunk_index)
 );
 
 -- ── 2. HNSW index ────────────────────────────────────────────────────────────
@@ -205,6 +206,52 @@ AS $$
     WHERE
         kb.tenant_id = query_tenant_id
         AND to_tsvector('english', kb.chunk_content) @@ plainto_tsquery('english', query_text)
-    ORDER BY rank DESC
     LIMIT match_count;
 $$;
+
+-- ── 9. Chat Sessions (Conversation Memory) ────────────────────────────────────
+-- Stores history of conversations between users and the RAG AI
+CREATE TABLE IF NOT EXISTS rag_chat_sessions (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id  TEXT        NOT NULL,
+    tenant_id   UUID        NOT NULL,
+    user_id     UUID,
+    role        TEXT        NOT NULL CHECK (role IN ('user', 'assistant')),
+    content     TEXT        NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_rag_chat_session ON rag_chat_sessions (session_id, created_at ASC);
+
+ALTER TABLE rag_chat_sessions ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename  = 'rag_chat_sessions'
+          AND policyname = 'rag_chat_service_role_all'
+    ) THEN
+        CREATE POLICY "rag_chat_service_role_all"
+            ON rag_chat_sessions
+            FOR ALL
+            TO service_role
+            USING (true)
+            WITH CHECK (true);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename  = 'rag_chat_sessions'
+          AND policyname = 'rag_chat_authenticated_read'
+    ) THEN
+        CREATE POLICY "rag_chat_authenticated_read"
+            ON rag_chat_sessions
+            FOR SELECT
+            TO authenticated
+            USING (tenant_id = (auth.jwt() ->> 'tenant_id')::UUID);
+    END IF;
+END $$;
+

@@ -11,3 +11,6 @@ Whenever the user uploads new research papers to the "Research Papers" folder, o
 Whenever a new chat starts in this workspace, you MUST immediately use the `view_file` tool to read the `AI_CHAT_LOG.md` file in the root directory to restore the user's context and progress.
 
 Whenever you finish a task, make a significant decision, or end a conversation, you MUST update the `AI_CHAT_LOG.md` file with a detailed summary of the recent discussion so that future sessions (regardless of the logged-in account) can resume perfectly.
+
+## Pitch Deck Maintenance Rule
+For every new improvement made, addition, opportunity discovery, change in business model, change of revenue streams, or whatever update we make — you MUST update the `PITCH_DECK_CONTENT_V1.md` artifact (in the `.gemini/antigravity-ide/brain/...` folder) to reflect these changes. It must always be kept monetizable and market-feasible.

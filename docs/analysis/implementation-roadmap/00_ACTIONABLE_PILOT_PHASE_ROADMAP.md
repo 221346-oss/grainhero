@@ -1,4 +1,4 @@
-﻿# GrainHero (by TEQrock): Master Pilot Phase Roadmap
+# GrainHero (by TEQrock): Master Pilot Phase Roadmap
 ## Ultra-Detailed, Chronological, Step-by-Step Task List
 ### Updated for latest platform UIs: Supabase, Render, EMQX Cloud, Arduino IDE 2.x
 
@@ -70,14 +70,26 @@ To move fast without blocking each other, the team will work in parallel sprints
 | **[ML-INTERNEE]** | **Task 2.5:** Upgrade `_spoilage_trend()` to rate_per_hour <br> **Task 2.3C/D:** GitHub Action for RAG refresh <br> **Task 2.6:** Synthetic dataset gen script |
 | **[IOT-INTERNEE]** | **Task 0.3:** Configure EMQX credentials in firmware <br> **Task 0.4:** Test OTA local Python server <br> **Task 6.0:** Document new prototype sensors |
 
+### Sprint 2 — Research & Intelligence Automation (Added 2026-08-19)
+*Based on competitive research deep-dive and 20 paper analysis.*
+
+| Role | Tasks |
+|---|---|
+| **[OWNER]** | **Task R.1:** Add CO₂ sensor (MH-Z14A) + load cell (weight) to ESP32 pod spec. Update firmware for 5-sensor JSON payload. <br> **Task R.2:** Confirm cooling approach for automated aeration (separate from Walinga pneumatic conveyor) |
+| **[ML-INTERNEE]** | **Task R.3:** Run `python scripts/harvest_research_papers.py` weekly via GitHub Action (cron) <br> **Task R.4:** Upgrade `source_papers.py` to use OpenAlex + CORE APIs (see `scripts/harvest_research_papers.py`) <br> **Task R.5:** Implement REGAN-BS-YOLOv8 pest detection module (use `agriengineering-08-00283.pdf` as reference — 97.7% mAP) <br> **Task R.6:** Add Isolation Forest anomaly detection to H2 roadmap (validated by blockchain paper — 96% accuracy) |
+| **[FUTURE — Year 3]** | **Task R.7:** Blockchain supply chain traceability module (dual-storage LOF-Isolation Forest architecture per Paper #5 findings) |
+
+> **New Hardware Spec (Pod v2):** Based on paper analysis, pod sensors must include: DHT22/SHT40 (temp+humidity), capacitive moisture probe, **MH-Z14A CO₂** (pest activity = CO₂ rise), **load cell** (fill level/weight), PIR/acoustic (rodent). 5-dimensional data per reading.
+
+> **CO₂ as Pest Alarm:** RiceShield paper confirms CO₂ rise is the earliest indicator of stored-grain insect activity — detectable BEFORE visible infestation. Priority 1 addition.
+
 ---
 
-## PHASE 0: Pre-Cloud â€” Local Hardware & Firmware Prep
+## PHASE 0: Pre-Cloud — Local Hardware & Firmware Prep
 ### Goal: Prove the silo hardware works BEFORE waiting for cloud credentials.
 
 ---
 
-<details><summary><b>âœ… Task 0.1 â€” Remove Hardcoded WiFi Secrets [DONE]</b></summary>
 
 ### âœ… Task 0.1 â€” Remove Hardcoded WiFi Secrets [IOT-INTERNEE] [DONE]
 
@@ -1425,6 +1437,41 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 ### ðŸŸ¢ Task 8.2 â€” A/B Test Mamba vs XGBoost [ML-INTERNEE]
 **What this does:** Upload the `mamba_v1.onnx` to Supabase Storage. Render hot-swaps it in. Monitor the early warning rate and false positive rate for 2 weeks compared to the XGBoost baseline. If Mamba wins, it becomes the permanent default.
 
+## PHASE 9: Autonomous Service Orchestration (DevOps)
+### Goal: Ensure no scripts require manual starting. All services start/stop autonomously.
+
+---
+
+### ðŸŸ¢ Task 9.1 â€” Implement Supervisord for Render
+**What this does:** Render's free tier only lets you run one command per service (e.g., `uvicorn app:app`). To run the `retrain_watcher.py` and `mqtt_bridge.js` simultaneously without manually triggering them, we need a process manager. This fulfills the requirement that everything runs on its own.
+
+**File to create:** `ml-deploy/supervisord.conf`
+```ini
+[supervisord]
+nodaemon=true
+
+[program:fastapi]
+command=uvicorn app:app --host 0.0.0.0 --port 10000
+autostart=true
+autorestart=true
+
+[program:retrain_watcher]
+command=python retrain_watcher.py
+autostart=true
+autorestart=true
+
+[program:mqtt_bridge]
+command=node mqtt_bridge.js
+autostart=true
+autorestart=true
+```
+
+**File to update:** `ml-deploy/Dockerfile`
+Change the `CMD` at the end to:
+```dockerfile
+RUN pip install supervisor
+CMD ["supervisord", "-c", "supervisord.conf"]
+```
 
 ## FINAL MASTER CHECKLISTS
 
@@ -1436,17 +1483,18 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 - [x] **1.2** Add 3 GitHub Secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_API_KEY`. ~~DONE~~
 - [ ] **2.1** Run `upload_initial_models.py` â€” push all 5 ONNX models to Supabase Storage.
 - [ ] **2.2** Deploy ML service to Render (Docker). Confirm Swagger UI is live. Add URL to frontend env.
+- [ ] **9.1** Add `supervisord.conf` and update `Dockerfile` to start all background services autonomously.
 - [ ] **PILOT** Flash ESP32 boards. Install at flour mill. Confirm live data in dashboard.
 
 ### ðŸŸ¢ INTERNEE Checklist
 
 - [x] **0.1** WiFiManager integrated into firmware. ~~DONE~~.
 - [ ] **0.2** Verify `computePestMoldRisk()` output in Serial Monitor. Confirm `pest_presence` is in MQTT payload.
-- [ ] **1.3** Run `git rm --cached` on `.onnx`/`.pkl` files. Add to `.gitignore`. Push.
-- [ ] **2.3A** Enable pgvector in Supabase SQL Editor. Create `research_embeddings` table + ivfflat index.
-- [ ] **2.3B** Write `scripts/source_papers.py` (Semantic Scholar + Gemini embedding pipeline).
-- [ ] **2.3C** Create `.github/workflows/rag-update.yml` for weekly auto-refresh.
-- [ ] **2.3D** Run `source_papers.py` manually once. Verify 50+ rows in Supabase.
+- [x] **1.3** Run `git rm --cached` on `.onnx`/`.pkl` files. Add to `.gitignore`. Push. ~~DONE~~
+- [x] **2.3A** Enable pgvector in Supabase SQL Editor. Create `research_embeddings` table + ivfflat index. ~~DONE~~
+- [x] **2.3B** Write `scripts/source_papers.py` (Semantic Scholar + Gemini embedding pipeline). ~~DONE~~
+- [x] **2.3C** Create `.github/workflows/rag-update.yml` for weekly auto-refresh. ~~DONE~~
+- [x] **2.3D** Run `source_papers.py` manually once. Verify 50+ rows in Supabase. ~~DONE~~
 - [ ] **2.4** Add `silo_id` to `PredictionRequest`. Write `_fetch_sensor_history()`. Enrich `/predict` endpoint to auto-pull last 24 Supabase readings. Verify `spoilage_trend` shows real historical context.
 - [ ] **2.5** Add `DANGER_THRESHOLDS` dict + `_analyze_sensor_trend()`. Replace `_spoilage_trend()` with rate+projection version. Update `_run_inference` to pass `grain_type`. Add `/trend` endpoint. Test with rising-sensor JSON fixture in Swagger `/docs`.
 - [ ] **3.1** Expand `ActivityLog.js` enums. Add helper methods to `loggingService.js`.

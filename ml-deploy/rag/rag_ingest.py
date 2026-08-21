@@ -296,8 +296,29 @@ class TextChunker:
         self.chunk_size = chunk_size
         self.overlap = overlap
 
-    def chunk(self, text: str) -> List[str]:
-        """Returns a list of text chunk strings."""
+    def chunk(self, text: str, title: str = "", category: str = "research_paper") -> List[str]:
+        """Returns a list of text chunk strings. Uses LLM extraction for research papers."""
+        if category in ("research_paper", "academic") and GEMINI_API_KEY:
+            logger.info("Using Gemini to extract 500-word abstract/method/findings chunk...")
+            prompt = f"Read the following text from '{title}'. Extract and summarize the Abstract, Methodology, and Key Findings into exactly ONE concise chunk of around 500 words. Focus on grain storage, IoT sensors, and thresholds. Text:\n{text[:40000]}"
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+                payload = {
+                    "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                    "generationConfig": {"temperature": 0.1, "maxOutputTokens": 800}
+                }
+                import httpx
+                with httpx.Client(timeout=45) as client:
+                    resp = client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        summary = resp.json().get("candidates", [])[0].get("content", {}).get("parts", [])[0].get("text", "").strip()
+                        if summary:
+                            logger.info("Semantic chunk extracted successfully (%d chars).", len(summary))
+                            return [summary]
+            except Exception as e:
+                logger.warning("Gemini extraction failed, falling back to sliding window: %s", e)
+
+        # Fallback to sliding window
         words = text.split()
         chunks = []
         start = 0
@@ -307,13 +328,11 @@ class TextChunker:
             chunk_words = words[start:end]
             chunk_text = " ".join(chunk_words).strip()
 
-            # Skip empty or very short chunks (likely whitespace artifacts)
             if len(chunk_text) >= 50:
                 chunks.append(chunk_text)
 
-            # Slide window forward, stepping back by 'overlap' to create overlap
             step = self.chunk_size - self.overlap
-            start += max(1, step)  # Safety: always advance at least 1
+            start += max(1, step)
 
         logger.info("Text chunked into %d chunks (size=%d, overlap=%d)",
                     len(chunks), self.chunk_size, self.overlap)
@@ -393,49 +412,46 @@ class EmbeddingEngine:
             raise ValueError(f"Unknown embedding provider: '{self.provider}'. Use 'gemini', 'openai' or 'huggingface'.")
 
     def _embed_gemini(self, texts: List[str]) -> List[List[float]]:
-        """Calls Google Gemini Embeddings API (gemini-embedding-001, 1500 RPM free tier)."""
+        """Calls Google Gemini Embeddings API using batchEmbedContents."""
         if not GEMINI_API_KEY:
             raise RuntimeError("GEMINI_API_KEY environment variable is not set.")
 
         embeddings = []
         with httpx.Client(timeout=30.0) as client:
-            for i, text in enumerate(texts):
-                for attempt in range(1, MAX_RETRIES + 1):
-                    try:
-                        resp = client.post(
-                            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={GEMINI_API_KEY}",
-                            headers={"Content-Type": "application/json"},
-                            json={
-                                "model": "models/gemini-embedding-001",
-                                "content": {"parts": [{"text": text}]},
-                                "outputDimensionality": 768,
-                            },
-                        )
-                        resp.raise_for_status()
-                        data = resp.json()
-                        embeddings.append(data["embedding"]["values"])
-                        break
-                    except httpx.HTTPStatusError as e:
-                        if e.response.status_code == 429:
-                            wait = 30 * attempt  # 30s, 60s, 90s
-                            logger.warning(
-                                "Rate limited (chunk %d, attempt %d/%d). Waiting %ds...",
-                                i, attempt, MAX_RETRIES, wait,
-                            )
-                            if attempt < MAX_RETRIES:
-                                time.sleep(wait)
-                            else:
-                                raise
+            # We batch them since texts are already batched by EMBEDDING_BATCH_SIZE above
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    requests = [
+                        {
+                            "model": "models/gemini-embedding-001",
+                            "content": {"parts": [{"text": t}]},
+                            "outputDimensionality": 768
+                        } for t in texts
+                    ]
+                    resp = client.post(
+                        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key={GEMINI_API_KEY}",
+                        headers={"Content-Type": "application/json"},
+                        json={"requests": requests},
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                    embeddings = [item["values"] for item in data.get("embeddings", [])]
+                    break
+                except httpx.HTTPStatusError as e:
+                    if e.response.status_code == 429:
+                        wait = 30 * attempt
+                        logger.warning("Rate limited (attempt %d/%d). Waiting %ds...", attempt, MAX_RETRIES, wait)
+                        if attempt < MAX_RETRIES:
+                            time.sleep(wait)
                         else:
-                            logger.warning(
-                                "Gemini API error (chunk %d, attempt %d/%d): %s",
-                                i, attempt, MAX_RETRIES, e.response.text[:300],
-                            )
-                            if attempt < MAX_RETRIES:
-                                time.sleep(RETRY_DELAY_SEC * attempt)
-                            else:
-                                raise
-        logger.debug("Gemini embedded %d texts", len(texts))
+                            raise
+                    else:
+                        logger.warning("Gemini API error (attempt %d/%d): %s", attempt, MAX_RETRIES, e.response.text[:300])
+                        if attempt < MAX_RETRIES:
+                            time.sleep(RETRY_DELAY_SEC * attempt)
+                        else:
+                            raise
+        logger.debug("Gemini batched embedded %d texts", len(texts))
         return embeddings
 
 
@@ -633,7 +649,7 @@ class RAGIngestionPipeline:
 
             # ── Stage 4: Chunk ────────────────────────────────────────────────
             logger.info("=== [3/7] Chunking text ===")
-            chunks_text = self.chunker.chunk(cleaned_text)
+            chunks_text = self.chunker.chunk(cleaned_text, title=title, category=category)
 
             # ── Stage 5: Metadata Extraction ──────────────────────────────────
             logger.info("=== [4/7] Extracting metadata for %d chunks ===", len(chunks_text))

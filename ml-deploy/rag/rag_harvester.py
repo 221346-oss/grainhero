@@ -34,6 +34,11 @@ from typing import List, Optional
 from urllib.parse import quote_plus
 
 import requests
+import fitz  # PyMuPDF
+from dotenv import load_dotenv
+
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -244,6 +249,25 @@ def _safe_filename(title: str, source: str, paper_id: str) -> str:
     uid  = hashlib.md5(paper_id.encode()).hexdigest()[:8]
     return f"{source}_{slug}_{uid}.pdf"
 
+def check_relevance(title: str, abstract: str) -> bool:
+    """Uses Gemini to check if a paper is relevant to GrainHero."""
+    if not GEMINI_API_KEY:
+        return True # Fallback if no key
+        
+    prompt = f"Title: {title}\nAbstract: {abstract}\n\nIs this paper highly relevant to grain storage, silos, post-harvest agriculture, IoT monitoring, or grain quality detection? Reply only with 'YES' or 'NO'."
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.0, "maxOutputTokens": 10}
+    }
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        resp = requests.post(url, json=payload, timeout=10)
+        if resp.status_code == 200:
+            text = resp.json().get("candidates", [])[0].get("content", {}).get("parts", [])[0].get("text", "").strip().upper()
+            return "YES" in text
+    except Exception as e:
+        logger.warning("Relevance check failed: %s", e)
+    return True # Default to True on failure
 
 def download_pdf(paper: PaperRecord, out_dir: Path, timeout: int = 30) -> Optional[Path]:
     """Downloads a single PDF. Returns the file path if successful."""
@@ -268,6 +292,28 @@ def download_pdf(paper: PaperRecord, out_dir: Path, timeout: int = 30) -> Option
         with open(out_path, "wb") as f:
             for chunk in resp.iter_content(chunk_size=8192):
                 f.write(chunk)
+
+        # Parse check
+        try:
+            doc = fitz.open(str(out_path))
+            text = ""
+            for page in doc[:3]: # check first 3 pages
+                text += page.get_text("text")
+            doc.close()
+            
+            if len(text.strip()) < 100:
+                # Unparseable
+                logger.warning("  [UNPARSEABLE] Saved link for manual review.")
+                with open(out_dir.parent / "UNPARSEABLE_LINKS.md", "a", encoding="utf-8") as link_file:
+                    link_file.write(f"- [{paper.title}]({paper.pdf_url})\n")
+                out_path.unlink()
+                return None
+        except Exception:
+            logger.warning("  [UNPARSEABLE] Saved link for manual review.")
+            with open(out_dir.parent / "UNPARSEABLE_LINKS.md", "a", encoding="utf-8") as link_file:
+                link_file.write(f"- [{paper.title}]({paper.pdf_url})\n")
+            out_path.unlink()
+            return None
 
         size_kb = out_path.stat().st_size // 1024
         logger.info("  [OK] %s (%d KB) from %s", filename, size_kb, paper.source)
@@ -320,9 +366,14 @@ def harvest(
     for paper in all_papers:
         if paper.pdf_url and paper.pdf_url not in seen_urls:
             seen_urls.add(paper.pdf_url)
-            unique_papers.append(paper)
+            
+            # Semantic relevance check
+            if check_relevance(paper.title, paper.abstract):
+                unique_papers.append(paper)
+            else:
+                logger.info("  [SKIP] Irrelevant paper: %s", paper.title[:60])
 
-    logger.info("=== Found %d unique downloadable papers across all sources ===", len(unique_papers))
+    logger.info("=== Found %d unique relevant downloadable papers across all sources ===", len(unique_papers))
 
     # Download all PDFs
     downloaded: List[Path] = []

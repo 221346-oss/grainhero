@@ -879,4 +879,230 @@ def create_sequences(df: pd.DataFrame, window_size: int = 24):
 - [x] **5.3** Write `scripts/generate_sliding_window.py` dataset prep script.
 
 
+---
+
+## SPRINT 2 — Research Intelligence & Sensor Expansion (Added: 2026-08-19)
+> These tasks come from our deep analysis of 111 research papers and competitive intelligence gathering. Priority is HIGH.
+
+---
+
+### Task R.3 — Upgrade `source_papers.py` to OpenAlex + CORE APIs [ML-INTERNEE]
+
+**Why:** The current Semantic Scholar scraper is unreliable and rate-limited. OpenAlex is free, requires no API key for basic use, and gives us open-access PDF URLs directly.
+
+**Steps:**
+
+1. Open `scripts/source_papers.py`
+2. Replace the current Semantic Scholar code with this pattern:
+
+```python
+import requests
+
+CONTACT_EMAIL = "grainhero@teqrock.com"
+
+# ─── OPENALEX ────────────────────────────────────────────────
+def search_openalex(query: str, per_page: int = 25) -> list[dict]:
+    """Search OpenAlex API. Free, no key needed."""
+    url = "https://api.openalex.org/works"
+    params = {
+        "search": query,
+        "filter": "open_access.is_oa:true",
+        "per-page": per_page,
+        "sort": "cited_by_count:desc",
+        "mailto": CONTACT_EMAIL,
+    }
+    resp = requests.get(url, params=params, timeout=15)
+    if resp.status_code == 200:
+        return resp.json().get("results", [])
+    return []
+
+# ─── UNPAYWALL ───────────────────────────────────────────────
+def get_pdf_url(doi: str) -> str | None:
+    """Given a DOI, get a free legal PDF URL via Unpaywall."""
+    url = f"https://api.unpaywall.org/v2/{doi}?email={CONTACT_EMAIL}"
+    resp = requests.get(url, timeout=8)
+    if resp.status_code == 200:
+        data = resp.json()
+        loc = data.get("best_oa_location") or {}
+        return loc.get("url_for_pdf")
+    return None
+
+# ─── CORE ────────────────────────────────────────────────────
+def search_core(query: str, limit: int = 10) -> list[dict]:
+    """Search CORE aggregator for open-access papers."""
+    url = "https://api.core.ac.uk/v3/search/works"
+    params = {"q": query, "limit": limit}
+    resp = requests.get(url, params=params, timeout=15)
+    if resp.status_code == 200:
+        return resp.json().get("results", [])
+    return []
+```
+
+3. Call these functions with grain-storage-specific queries (use the same queries from `scripts/harvest_research_papers.py`)
+4. For each result, generate a Gemini embedding and upsert into Supabase `research_embeddings` table
+5. Test by querying `/api/rag/search?q=grain+pest+detection` — should return relevant paper excerpts
+
+**API rate limits (no key needed):**
+- OpenAlex: 100,000 requests/day (polite pool, just include email)
+- CORE: 10,000/month free
+- Unpaywall: Unlimited with email
+
+---
+
+### Task R.4 — Set Up Weekly Auto-Harvest GitHub Action [ML-INTERNEE]
+
+**Why:** We want new papers discovered automatically every week without anyone running scripts manually.
+
+**The file is already created:** `.github/workflows/research_harvest.yml`
+
+**Your job:**
+1. Push the workflow file to `Ai/Ml-Branch`
+2. Go to GitHub → Actions → "Auto Harvest & Index Research Papers"
+3. Click "Run workflow" to do a manual test run first
+4. Verify `_ANALYSIS/WEEKLY_RESEARCH_APPROVAL.md` is generated in the commit (the indexer should NOT run automatically)
+
+**Expected outcome:** Every Monday at 6AM PKT, GitHub automatically:
+- Searches OpenAlex using the 20 highly curated keywords
+- Downloads any open-access PDFs
+- Generates `WEEKLY_RESEARCH_APPROVAL.md` containing the abstracts
+- Pauses automation. The CEO will review the report. Once approved, we manually trigger the indexer and update the roadmap.
+
+---
+
+### Task R.5 — Implement REGAN-BS-YOLOv8 Pest Detection Module [ML-INTERNEE]
+
+**Source paper:** `agriengineering-08-00283.pdf` (in `newly_added_papers/`)  
+**Performance benchmark:** 97.7% mAP@0.5 across 9 grain pest types
+
+**Architecture:**
+```
+Input image → Real-ESRGAN (super-resolution) → YOLOv8 + BiFPN neck + Swin Transformer backbone → Pest class + bounding box
+```
+
+**Steps:**
+
+1. Set up the pest detection submodule:
+```
+ml-deploy/
+  pest_detection/
+    __init__.py
+    model.py          # YOLOv8 inference wrapper
+    preprocess.py     # Image resize + normalize
+    postprocess.py    # NMS + confidence filter
+```
+
+2. Install dependencies (training environment only, NOT on Render):
+```
+pip install ultralytics torch torchvision
+```
+
+3. Download pre-trained YOLOv8n weights as starting point:
+```python
+from ultralytics import YOLO
+model = YOLO('yolov8n.pt')  # Start from nano — smallest/fastest
+```
+
+4. The paper uses a 5,818-image dataset of 9 pest classes. For our MVP, use the publicly available **stored-grain pest dataset** on Roboflow or Kaggle as a starting point.
+
+5. Export to ONNX for Render deployment:
+```python
+model.export(format='onnx', opset=12, simplify=True)
+```
+
+6. Add a `/pest-detect` endpoint to `app.py`:
+```python
+@app.post("/pest-detect")
+async def detect_pest(image: UploadFile = File(...)):
+    # Read image, run ONNX inference, return detections
+    ...
+```
+
+**Do NOT train from scratch yet — use transfer learning on YOLOv8n pretrained weights.**
+
+---
+
+### Task R.6 — Add Isolation Forest to H2 Anomaly Detection [ML-INTERNEE]
+
+**Source paper:** Blockchain Traceability paper (LOF-Isolation Forest = 96% anomaly detection accuracy on IoT sensor data)
+
+**What to build:**
+```python
+# In ml-deploy/app.py — add to the existing ML pipeline
+
+from sklearn.ensemble import IsolationForest
+
+def detect_sensor_anomaly(sensor_reading: dict) -> dict:
+    """
+    Detect anomalous sensor readings before they hit the main ML model.
+    Returns: {'is_anomaly': bool, 'anomaly_score': float, 'reason': str}
+    """
+    features = [
+        sensor_reading.get('temperature', 25),
+        sensor_reading.get('humidity', 50),
+        sensor_reading.get('moisture', 14),
+        sensor_reading.get('co2_ppm', 400),
+    ]
+    # Load pre-fitted IsolationForest model (train offline, load .pkl on Render)
+    score = isolation_forest_model.decision_function([features])[0]
+    is_anomaly = score < -0.1  # threshold tunable
+    return {
+        "is_anomaly": bool(is_anomaly),
+        "anomaly_score": float(score),
+        "reason": "Sensor reading outside normal distribution" if is_anomaly else "Normal"
+    }
+```
+
+**Integration:**
+- Call `detect_sensor_anomaly()` at the start of `/predict` endpoint
+- If anomaly detected, add `"sensor_anomaly": true` to the response
+- Log anomalies to Supabase for audit trail (future blockchain integration)
+
+---
+
+### Task R.7 — CO₂ Sensor Data Ingestion [ML-INTERNEE]
+
+**Hardware change (Owner will flash):** Pod v2 includes MH-Z14A CO₂ sensor.
+**Your job:** Update the ML service to accept and use CO₂ readings.
+
+**Step 1:** Update `PredictionRequest` schema in `app.py`:
+```python
+class PredictionRequest(BaseModel):
+    temperature: float
+    humidity: float
+    moisture: float
+    co2_ppm: float = 400.0  # NEW — default to ambient 400ppm
+    weight_kg: float = 0.0  # NEW — grain fill level
+    grain_type: str
+    silo_id: str | None = None
+```
+
+**Step 2:** Add CO₂ as a feature in the ONNX model input:
+- The current models don't have CO₂. Use it as a **rule-based override first**:
+```python
+# CO2 pest alarm — based on RiceShield paper findings
+if co2_ppm > 1200:  # 3x ambient = active insect metabolism
+    risk_score = max(risk_score, 0.85)
+    alerts.append("HIGH CO2: Pest activity likely. CO2={co2_ppm}ppm")
+elif co2_ppm > 800:
+    risk_score = max(risk_score, 0.55)
+    alerts.append("ELEVATED CO2: Monitor closely. CO2={co2_ppm}ppm")
+```
+- In Phase 2 (after real data), retrain ONNX models with CO₂ as an input feature
+
+**Step 3:** Add CO₂ to the Supabase `sensor_readings` table schema (via SQL migration)
+
+---
+
+## WHAT THE OWNER NEEDS TO DO (Not Intern Tasks)
+
+> These require hardware access, credentials, or business decisions that only the owner can make.
+
+| # | Task | Why Only You | When |
+|---|---|---|---|
+| **O.1** | Order MH-Z14A CO₂ sensors (UART version) | Hardware purchase | This week |
+| **O.2** | Order load cells (HX711 + 1kg cell) | Hardware purchase | This week |
+| **O.3** | Tell me your cooling approach so I can update architecture | Design decision | ASAP — needed for roadmap |
+| **O.4** | Flash updated firmware to ESP32 pods once intern finishes Task R.7 schema | Hardware access | After R.7 done |
+| **O.5** | Approve/deny blockchain traceability as Year 3 feature in pitch deck | Business decision | Before next pitch |
+| **O.6** | Run `python scripts/harvest_research_papers.py` once manually (downloads ~20 new papers) | Internet + disk access | This week |
 

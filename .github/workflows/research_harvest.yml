@@ -1,0 +1,48 @@
+name: Daily Research Harvest & Approval Report
+
+on:
+  schedule:
+    # Run every day at 6:00 AM PKT (UTC+5 → 01:00 UTC)
+    - cron: '0 1 * * *'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+    inputs:
+      force_reindex:
+        description: 'Force re-index all papers (ignore hash cache)'
+        required: false
+        default: 'false'
+
+jobs:
+  daily-harvest:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pypdf requests
+
+      - name: Harvest new papers from OpenAlex + CORE APIs
+        run: |
+          python scripts/harvest_research_papers.py
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: Commit daily research approval report
+        run: |
+          git config user.name "GrainHero Bot"
+          git config user.email "grainhero-bot@teqrock.com"
+          git add _ANALYSIS/DAILY_RESEARCH_APPROVAL.md
+          git add newly_added_papers/ --force
+          git diff --staged --quiet || git commit -m "chore(research): daily approval report [$(date +'%Y-%m-%d')]"
+          git push origin ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
