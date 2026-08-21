@@ -921,7 +921,7 @@ export const getMyTechnicianInstalls = createServerFn({ method: "GET" })
     }));
 
     // Sort by scheduled_for (nulls last), then created_at desc
-    enrichedInstalls.sort((a, b) => {
+    enrichedInstalls.sort((a: Record<string, any>, b: Record<string, any>) => {
       const aDate = a.scheduled_for ? new Date(a.scheduled_for as string).getTime() : Infinity;
       const bDate = b.scheduled_for ? new Date(b.scheduled_for as string).getTime() : Infinity;
       return aDate - bDate;

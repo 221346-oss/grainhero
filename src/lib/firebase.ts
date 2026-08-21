@@ -17,24 +17,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app: FirebaseApp;
-const auth: Auth;
-const db: Firestore;
-const realtimeDb: Database;
-const storage: FirebaseStorage;
-let analytics: Analytics | null = null;
-
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+const app: FirebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 // Initialize Firebase services
-auth = getAuth(app);
-db = getFirestore(app);
-realtimeDb = getDatabase(app);
-storage = getStorage(app);
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const realtimeDb: Database = getDatabase(app);
+const storage: FirebaseStorage = getStorage(app);
+let analytics: Analytics | null = null;
 
 // Initialize Analytics only on client side and in production
 if (typeof window !== "undefined" && import.meta.env.PROD) {

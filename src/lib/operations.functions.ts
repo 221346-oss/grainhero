@@ -22,6 +22,47 @@ function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   throw new Error(msg);
 }
 
+const KNOWN_CITIES = [
+  "Lahore",
+  "Sialkot",
+  "Karachi",
+  "Islamabad",
+  "Rawalpindi",
+  "Faisalabad",
+  "Multan",
+  "Peshawar",
+  "Quetta",
+  "Gujranwala",
+  "Sargodha",
+  "Abbottabad",
+  "Mardan",
+  "Hyderabad",
+  "Gujrat",
+  "Jhang",
+  "Sheikhupura",
+  "Sahiwal",
+  "Okara",
+  "Dera Ghazi Khan",
+];
+
+function extractCityFromAddress(addr: string): string | null {
+  const parts = addr
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  for (const part of parts) {
+    const normalized = part.toLowerCase();
+    for (const city of KNOWN_CITIES) {
+      if (normalized === city.toLowerCase()) return city;
+    }
+  }
+  if (parts.length >= 2) {
+    const candidate = parts[parts.length - 2];
+    if (candidate.length <= 30 && !/\d/.test(candidate)) return candidate;
+  }
+  return null;
+}
+
 export const listWarehousesByCity = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -379,18 +420,21 @@ export const upsertSilo = createServerFn({ method: "POST" })
           .maybeSingle();
 
         // Get current warehouse's address
-        const { data: currentWh } = await context.supabase
-          .from("warehouses")
-          .select("location")
-          .eq("id", currentSilo?.warehouse_id)
-          .maybeSingle();
+        if (currentSilo?.warehouse_id) {
+          const { data: currentWh } = await context.supabase
+            .from("warehouses")
+            .select("location")
+            .eq("id", currentSilo.warehouse_id)
+            .maybeSingle();
 
-        const currentAddr = (currentWh?.location?.address ?? "").trim().toLowerCase();
-        const newAddr = data.address.trim().toLowerCase();
+          const loc = currentWh?.location as { address?: string } | null;
+          const currentAddr = (loc?.address ?? "").trim().toLowerCase();
+          const newAddr = data.address.trim().toLowerCase();
 
-        // If address changed, find or create a new warehouse
-        if (currentAddr !== newAddr) {
-          resolvedWarehouseId = null; // Force auto-warehouse resolution
+          // If address changed, find or create a new warehouse
+          if (currentAddr !== newAddr) {
+            resolvedWarehouseId = null; // Force auto-warehouse resolution
+          }
         }
       }
 
@@ -473,7 +517,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
         const { data: row, error } = await context.supabase
           .from("silos")
           .update({
-            warehouse_id: resolvedWarehouseId,
+            warehouse_id: resolvedWarehouseId ?? undefined,
             capacity_kg: data.capacity_kg,
             location,
             status: data.status,
@@ -592,7 +636,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
         const { data: existingSilos } = await context.supabase
           .from("silos")
           .select("name")
-          .eq("warehouse_id", data.warehouse_id)
+          .eq("warehouse_id", data.warehouse_id ?? "")
           .is("deleted_at" as never, null);
 
         const used = new Set(
