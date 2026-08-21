@@ -9,7 +9,8 @@ const STRIPE_API = "https://api.stripe.com/v1";
 
 function form(params: Record<string, string | number | undefined>) {
   const body = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null) body.append(k, String(v));
+  for (const [k, v] of Object.entries(params))
+    if (v !== undefined && v !== null) body.append(k, String(v));
   return body;
 }
 
@@ -22,7 +23,10 @@ async function stripeFetch(
   if (!key) throw new Error("Stripe not configured");
   const res = await fetch(`${STRIPE_API}${path}`, {
     method,
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: body ?? undefined,
   });
   const text = await res.text();
@@ -41,7 +45,10 @@ const PLAN_NAME_MAP: Record<string, string> = {
   enterprise: "Grain Enterprise",
 };
 
-const PLAN_LIMITS: Record<string, { users: number; devices: number; storage: number; batches: number }> = {
+const PLAN_LIMITS: Record<
+  string,
+  { users: number; devices: number; storage: number; batches: number }
+> = {
   basic: { users: 5, devices: 3, storage: 10, batches: 100 },
   intermediate: { users: 10, devices: 6, storage: 50, batches: 500 },
   pro: { users: 999999, devices: 15, storage: 999999, batches: 999999 },
@@ -66,7 +73,18 @@ export async function syncSubscriptionFromStripe(
     cancel_at_period_end?: boolean;
     latest_invoice?: string | null;
     metadata?: Record<string, string>;
-    items?: { data: Array<{ id: string; price: { id: string; unit_amount: number; currency: string; recurring?: { interval: string }; metadata?: Record<string, string> } }> };
+    items?: {
+      data: Array<{
+        id: string;
+        price: {
+          id: string;
+          unit_amount: number;
+          currency: string;
+          recurring?: { interval: string };
+          metadata?: Record<string, string>;
+        };
+      }>;
+    };
   };
 
   const { data: prof } = await supabaseAdmin
@@ -84,8 +102,17 @@ export async function syncSubscriptionFromStripe(
   const price = sub.items?.data[0]?.price;
   const itemId = sub.items?.data[0]?.id ?? null;
   const interval = price?.recurring?.interval ?? "month";
-  const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
-  const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial", "trialing", "past_due"]);
+  const billingCycle =
+    interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
+  const validStatuses = new Set([
+    "active",
+    "inactive",
+    "cancelled",
+    "expired",
+    "trial",
+    "trialing",
+    "past_due",
+  ]);
   const status = validStatuses.has(sub.status) ? sub.status : "active";
 
   const row = {
@@ -273,7 +300,11 @@ export async function stripeEventAlreadyProcessed(
   eventId: string,
   eventType: string,
 ) {
-  const { data } = await supabaseAdmin.from("stripe_events").select("id").eq("id", eventId).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("stripe_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle();
   if (data) return true;
   await supabaseAdmin.from("stripe_events").insert({ id: eventId, type: eventType } as never);
   return false;

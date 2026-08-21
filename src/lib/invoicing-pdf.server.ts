@@ -17,7 +17,11 @@ export async function renderInvoicePdf(
   const settings = await loadMarketplaceSettings(sb);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const client = sb as any;
-  const { data: inv } = await client.from("buyer_invoices").select("*").eq("id", invoiceId).single();
+  const { data: inv } = await client
+    .from("buyer_invoices")
+    .select("*")
+    .eq("id", invoiceId)
+    .single();
   const i = inv as Row | null;
   if (!i) throw new Error("Invoice not found");
 
@@ -36,12 +40,18 @@ export async function renderInvoicePdf(
 
   draw(`INVOICE ${i.invoice_number}`, 400, 790, 12, bold);
   draw(`Issued: ${new Date(i.created_at).toLocaleDateString()}`, 400, 772, 9, font, gray);
-  if (i.due_date) draw(`Due: ${new Date(i.due_date).toLocaleDateString()}`, 400, 758, 9, font, gray);
+  if (i.due_date)
+    draw(`Due: ${new Date(i.due_date).toLocaleDateString()}`, 400, 758, 9, font, gray);
 
   draw("Bill to", 40, 730, 9, bold, gray);
   draw(String(i.buyer_company ?? i.buyer_name ?? "—"), 40, 715, 11, bold);
   const contact = (i.buyer_contact ?? {}) as Row;
-  const lines = [contact.email, contact.phone, contact.address, [contact.city, contact.country].filter(Boolean).join(", ")].filter(Boolean) as string[];
+  const lines = [
+    contact.email,
+    contact.phone,
+    contact.address,
+    [contact.city, contact.country].filter(Boolean).join(", "),
+  ].filter(Boolean) as string[];
   lines.forEach((l, idx) => draw(String(l), 40, 700 - idx * 12, 9, font, gray));
 
   // Items table
@@ -50,7 +60,12 @@ export async function renderInvoicePdf(
   draw("Qty (kg)", 320, tableY, 10, bold);
   draw("Unit", 400, tableY, 10, bold);
   draw("Total", 500, tableY, 10, bold);
-  page.drawLine({ start: { x: 40, y: tableY - 4 }, end: { x: 555, y: tableY - 4 }, thickness: 0.5, color: gray });
+  page.drawLine({
+    start: { x: 40, y: tableY - 4 },
+    end: { x: 555, y: tableY - 4 },
+    thickness: 0.5,
+    color: gray,
+  });
   const items = Array.isArray(i.items) ? (i.items as Row[]) : [];
   items.forEach((it, idx) => {
     const y = tableY - 22 - idx * 18;
@@ -65,7 +80,14 @@ export async function renderInvoicePdf(
   draw(`${i.currency} ${Number(i.subtotal ?? 0).toFixed(2)}`, 500, totalsY);
   draw("Total", 400, totalsY - 18, 12, bold);
   draw(`${i.currency} ${Number(i.total_amount ?? 0).toFixed(2)}`, 500, totalsY - 18, 12, bold);
-  draw(`Status: ${String(i.payment_status ?? "").toUpperCase()}`, 400, totalsY - 36, 10, font, gray);
+  draw(
+    `Status: ${String(i.payment_status ?? "").toUpperCase()}`,
+    400,
+    totalsY - 36,
+    10,
+    font,
+    gray,
+  );
 
   draw(settings.invoicing.footerNote, 40, 60, 9, font, gray);
   draw(`${settings.brandName} · ${settings.supportEmail}`, 40, 46, 8, font, gray);
@@ -74,14 +96,22 @@ export async function renderInvoicePdf(
   const path = `${i.admin_id}/${i.invoice_number}.pdf`;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   await supabaseAdmin.storage.from("invoices").upload(path, bytes, {
-    contentType: "application/pdf", upsert: true,
+    contentType: "application/pdf",
+    upsert: true,
   });
-  const { data: signed } = await supabaseAdmin.storage.from("invoices")
+  const { data: signed } = await supabaseAdmin.storage
+    .from("invoices")
     .createSignedUrl(path, 60 * 60 * 24 * 30);
   const signedUrl = signed?.signedUrl ?? "";
-  await client.from("buyer_invoices").update({ pdf_url: signedUrl } as never).eq("id", i.id);
+  await client
+    .from("buyer_invoices")
+    .update({ pdf_url: signedUrl } as never)
+    .eq("id", i.id);
   if (i.order_id) {
-    await client.from("buyer_orders").update({ invoice_pdf_url: signedUrl } as never).eq("id", i.order_id);
+    await client
+      .from("buyer_orders")
+      .update({ invoice_pdf_url: signedUrl } as never)
+      .eq("id", i.order_id);
   }
   return { path, signedUrl };
 }

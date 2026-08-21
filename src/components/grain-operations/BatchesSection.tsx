@@ -8,18 +8,61 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  Package, Plus, Search, Edit2, Trash2, Eye, Loader2, QrCode,
-  Truck, AlertTriangle, User, Calendar, Wheat, FlaskConical, ShieldCheck, Undo2,
+  Package,
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  Eye,
+  Loader2,
+  QrCode,
+  Truck,
+  AlertTriangle,
+  User,
+  Calendar,
+  Wheat,
+  FlaskConical,
+  ShieldCheck,
+  Undo2,
   ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -628,7 +671,9 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           columns={batchExportColumns}
         />
         {canCreate && (
-          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Package className="w-4 h-4" /> New batch</Button>
+          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap">
+            <Package className="w-4 h-4" /> New batch
+          </Button>
         )}
       </div>
 
@@ -646,10 +691,14 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   Create a silo first →
                 </Link>
               ) : (
-                <span className="text-sm text-muted-foreground">No available silos in your assigned warehouses.</span>
+                <span className="text-sm text-muted-foreground">
+                  No available silos in your assigned warehouses.
+                </span>
               )
             ) : canCreate ? (
-              <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add incoming batch</Button>
+              <Button onClick={openCreate} size="sm" className="gap-2">
+                <Plus className="w-4 h-4" /> Add incoming batch
+              </Button>
             ) : null}
           </CardContent>
         </Card>
@@ -681,16 +730,31 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                     <TableRow
                       key={b.id}
                       className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition cursor-pointer"
-                      onClick={() => { setSelected(b); setViewOpen(true); }}
+                      onClick={() => {
+                        setSelected(b);
+                        setViewOpen(true);
+                      }}
                     >
                       <TableCell className="font-medium">{b.batch_id}</TableCell>
                       <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{supplier}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.silos?.name ?? "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell><StatusBadge value={b.status} qcPassedAt={(b as any).qc_passed_at} /></TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">
+                        {supplier}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">
+                        {b.silos?.name ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {intake.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {remaining.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge value={b.status} qcPassedAt={(b as any).qc_passed_at} />
+                      </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <RowActions
                           actions={[
@@ -1214,19 +1278,33 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   <Wheat className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span className="truncate">{selected.batch_id}</span>
                 </SheetTitle>
-                <SheetDescription>{selected.grain_type}{selected.variety ? ` · ${selected.variety}` : ""}</SheetDescription>
+                <SheetDescription>
+                  {selected.grain_type}
+                  {selected.variety ? ` · ${selected.variety}` : ""}
+                </SheetDescription>
               </SheetHeader>
               <div className="space-y-3 text-sm py-4">
-                <Row label="Status"><StatusBadge value={selected.status} /></Row>
+                <Row label="Status">
+                  <StatusBadge value={selected.status} />
+                </Row>
                 <Row label="Quantity">{Number(selected.quantity_kg).toLocaleString()} kg</Row>
                 {selected.dispatched_quantity_kg ? (
-                  <Row label="Dispatched">{Number(selected.dispatched_quantity_kg).toLocaleString()} kg</Row>
+                  <Row label="Dispatched">
+                    {Number(selected.dispatched_quantity_kg).toLocaleString()} kg
+                  </Row>
                 ) : null}
                 <Row label="Silo">{selected.silos?.name ?? "—"}</Row>
-                {selected.intake_date && <Row label="Intake">{new Date(selected.intake_date).toLocaleDateString()}</Row>}
+                {selected.intake_date && (
+                  <Row label="Intake">{new Date(selected.intake_date).toLocaleDateString()}</Row>
+                )}
               </div>
               <SheetFooter className="gap-2 sm:justify-start">
-                <Button variant="outline" size="sm" onClick={() => setDetailOpen(true)} className="gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDetailOpen(true)}
+                  className="gap-1"
+                >
                   View full detail <ArrowUpRight className="w-3.5 h-3.5" />
                 </Button>
               </SheetFooter>
@@ -1283,11 +1361,29 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                 )}
               </div>
               <DialogFooter className="gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => { setDetailOpen(false); setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDetailOpen(false);
+                    setViewOpen(false);
+                    openEdit(selected);
+                  }}
+                  className="gap-1"
+                >
+                  <Edit2 className="w-4 h-4" /> Edit
+                </Button>
                 {/* Dispatch happens from the silo's mixed stock, not a single batch — see dispatchFromSilo/createDispatchFromSilo. */}
                 {selected.silos && (
                   <Button size="sm" asChild className="gap-1">
-                    <Link to="/silos/$siloId" params={{ siloId: selected.silos.id }} onClick={() => { setDetailOpen(false); setViewOpen(false); }}>
+                    <Link
+                      to="/silos/$siloId"
+                      params={{ siloId: selected.silos.id }}
+                      onClick={() => {
+                        setDetailOpen(false);
+                        setViewOpen(false);
+                      }}
+                    >
                       <Truck className="w-4 h-4" /> Dispatch from {selected.silos.name}
                     </Link>
                   </Button>

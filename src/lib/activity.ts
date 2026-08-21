@@ -26,9 +26,7 @@ export interface ActivityLogInput {
 }
 
 export async function logActivity(input: ActivityLogInput): Promise<void> {
-  const sb =
-    input.sb ??
-    (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  const sb = input.sb ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   try {
     await sb.from("activity_logs").insert({
       admin_id: input.tenantAdminId ?? input.actorId ?? "",
@@ -38,7 +36,8 @@ export async function logActivity(input: ActivityLogInput): Promise<void> {
       entity_type: input.targetType ?? null,
       entity_id: input.targetId ?? null,
       severity: input.severity ?? "info",
-      metadata: (input.meta ?? {}) as unknown as Database["public"]["Tables"]["activity_logs"]["Insert"]["metadata"],
+      metadata: (input.meta ??
+        {}) as unknown as Database["public"]["Tables"]["activity_logs"]["Insert"]["metadata"],
     });
   } catch (err) {
     // Never let logging fail the primary operation.
@@ -54,7 +53,7 @@ export async function logActivity(input: ActivityLogInput): Promise<void> {
  * - "info" for view/access operations
  */
 export async function logManagerAction(
-  input: ActivityLogInput & { managerName?: string }
+  input: ActivityLogInput & { managerName?: string },
 ): Promise<void> {
   // Manager actions default to "warning" severity for audit visibility
   const severity = input.severity ?? "warning";

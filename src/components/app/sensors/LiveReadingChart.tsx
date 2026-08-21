@@ -1,7 +1,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 import {
   NeonPatternDefs,
   ChartEmpty,
@@ -27,8 +35,16 @@ const COL: Record<Metric, string> = {
 type Point = { t: string; v: number | null };
 
 export function LiveReadingChart({
-  siloId, deviceId, metric = "temperature", hours = 6,
-}: { siloId: string; deviceId: string; metric?: Metric; hours?: number }) {
+  siloId,
+  deviceId,
+  metric = "temperature",
+  hours = 6,
+}: {
+  siloId: string;
+  deviceId: string;
+  metric?: Metric;
+  hours?: number;
+}) {
   const fetchReadings = useServerFn(getSiloReadings);
   const { data, isLoading } = useQuery({
     queryKey: ["silo-readings", siloId, metric, hours],
@@ -43,23 +59,33 @@ export function LiveReadingChart({
     let failures = 0;
     const channel = supabase
       .channel(`readings:${deviceId}`)
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "sensor_readings", filter: `device_id=eq.${deviceId}` },
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "sensor_readings",
+          filter: `device_id=eq.${deviceId}`,
+        },
         (payload) => {
           const row = payload.new as Record<string, unknown>;
           const v = row[COL[metric]] as number | null;
           const t = (row.reading_timestamp as string) ?? new Date().toISOString();
           setLive((prev) => [...prev.slice(-99), { t, v }]);
-        })
+        },
+      )
       .subscribe((status) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           failures += 1;
           if (failures >= 3) setPaused(true);
         } else if (status === "SUBSCRIBED") {
-          failures = 0; setPaused(false);
+          failures = 0;
+          setPaused(false);
         }
       });
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [deviceId, metric]);
 
   const points = useMemo<Point[]>(() => {
@@ -76,9 +102,13 @@ export function LiveReadingChart({
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground uppercase tracking-wide">{metric}</div>
         {paused ? (
-          <Badge variant="outline" className="gap-1 text-amber-600"><WifiOff className="h-3 w-3" /> Live paused · polling</Badge>
+          <Badge variant="outline" className="gap-1 text-amber-600">
+            <WifiOff className="h-3 w-3" /> Live paused · polling
+          </Badge>
         ) : (
-          <Badge variant="outline" className="gap-1 text-emerald-600"><Radio className="h-3 w-3" /> Live</Badge>
+          <Badge variant="outline" className="gap-1 text-emerald-600">
+            <Radio className="h-3 w-3" /> Live
+          </Badge>
         )}
       </div>
       <NeonPatternDefs />
@@ -94,11 +124,16 @@ export function LiveReadingChart({
               <XAxis
                 {...neonAxis}
                 dataKey="t"
-                tickFormatter={(t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                tickFormatter={(t) =>
+                  new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                }
                 minTickGap={30}
               />
               <YAxis {...neonAxis} width={44} />
-              <Tooltip {...neonTooltipStyle} labelFormatter={(t) => new Date(t as string).toLocaleString()} />
+              <Tooltip
+                {...neonTooltipStyle}
+                labelFormatter={(t) => new Date(t as string).toLocaleString()}
+              />
               <Area
                 type="monotone"
                 dataKey="v"

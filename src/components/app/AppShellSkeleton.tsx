@@ -39,9 +39,7 @@ export function AppShellSkeleton({ children }: { children?: ReactNode }) {
         </header>
 
         {/* Body slot */}
-        <main className="flex-1 overflow-x-hidden">
-          {children ?? <AppShellBodyFallback />}
-        </main>
+        <main className="flex-1 overflow-x-hidden">{children ?? <AppShellBodyFallback />}</main>
       </div>
     </div>
   );

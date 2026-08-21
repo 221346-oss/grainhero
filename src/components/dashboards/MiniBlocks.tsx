@@ -9,7 +9,17 @@ function useExtras() {
   return useQuery({ queryKey: ["dashboard-extras"], queryFn: () => fn(), refetchInterval: 30_000 });
 }
 
-function MiniCard({ to, icon: Icon, label, children }: { to: string; icon: typeof Users2; label: string; children: React.ReactNode }) {
+function MiniCard({
+  to,
+  icon: Icon,
+  label,
+  children,
+}: {
+  to: string;
+  icon: typeof Users2;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       to={to}
@@ -36,14 +46,21 @@ export function TeamMini() {
     <MiniCard to="/team-management" icon={Users2} label="Team">
       <div className="flex items-center gap-2">
         <div className="flex -space-x-2">
-          {shown.length === 0 && <span className="text-sm text-muted-foreground">No members yet</span>}
+          {shown.length === 0 && (
+            <span className="text-sm text-muted-foreground">No members yet</span>
+          )}
           {shown.map((u) => (
-            <div key={u.id} className="h-8 w-8 rounded-full ring-2 ring-background bg-emerald-100 text-emerald-700 grid place-items-center text-[10px] font-semibold">
+            <div
+              key={u.id}
+              className="h-8 w-8 rounded-full ring-2 ring-background bg-emerald-100 text-emerald-700 grid place-items-center text-[10px] font-semibold"
+            >
               {(u.name ?? u.email ?? "?").slice(0, 2).toUpperCase()}
             </div>
           ))}
           {extra > 0 && (
-            <div className="h-8 w-8 rounded-full ring-2 ring-background bg-muted grid place-items-center text-[10px] font-medium text-muted-foreground">+{extra}</div>
+            <div className="h-8 w-8 rounded-full ring-2 ring-background bg-muted grid place-items-center text-[10px] font-medium text-muted-foreground">
+              +{extra}
+            </div>
           )}
         </div>
         <span className="ml-auto text-lg font-bold tabular-nums">{rows.length}</span>
@@ -60,9 +77,15 @@ export function InstallOrdersMini() {
       <div className="flex items-center justify-between">
         <div className="text-2xl font-bold tabular-nums">{c.total}</div>
         <div className="text-[11px] text-muted-foreground text-right leading-tight">
-          <div><span className="font-semibold text-amber-600">{c.pending}</span> pending</div>
-          <div><span className="font-semibold text-sky-600">{c.scheduled}</span> in progress</div>
-          <div><span className="font-semibold text-emerald-600">{c.completed}</span> done</div>
+          <div>
+            <span className="font-semibold text-amber-600">{c.pending}</span> pending
+          </div>
+          <div>
+            <span className="font-semibold text-sky-600">{c.scheduled}</span> in progress
+          </div>
+          <div>
+            <span className="font-semibold text-emerald-600">{c.completed}</span> done
+          </div>
         </div>
       </div>
     </MiniCard>
@@ -77,13 +100,19 @@ export function RevenueMini() {
     <MiniCard to="/subscription" icon={CreditCard} label="Revenue & plan">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-2xl font-bold tabular-nums">PKR {Math.round(rev).toLocaleString()}</div>
+          <div className="text-2xl font-bold tabular-nums">
+            PKR {Math.round(rev).toLocaleString()}
+          </div>
           <div className="text-[10px] text-muted-foreground">Dispatched batches</div>
         </div>
         <div className="text-right">
-          <div className="text-xs font-semibold text-emerald-600">{sub?.plan_name ?? "No plan"}</div>
+          <div className="text-xs font-semibold text-emerald-600">
+            {sub?.plan_name ?? "No plan"}
+          </div>
           {sub?.next_payment_date && (
-            <div className="text-[10px] text-muted-foreground">renews {new Date(sub.next_payment_date).toLocaleDateString()}</div>
+            <div className="text-[10px] text-muted-foreground">
+              renews {new Date(sub.next_payment_date).toLocaleDateString()}
+            </div>
           )}
         </div>
       </div>

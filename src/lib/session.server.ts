@@ -20,9 +20,7 @@ export type VerifiedUser = {
   email: string | null;
 };
 
-export async function getVerifiedUser(
-  supabase: SupabaseClient<Database>,
-): Promise<VerifiedUser> {
+export async function getVerifiedUser(supabase: SupabaseClient<Database>): Promise<VerifiedUser> {
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
     throw new Response("Unauthorized", { status: 401 });

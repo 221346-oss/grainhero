@@ -1,13 +1,13 @@
-import { motion } from 'framer-motion'
-import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
+import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 
 const specs = [
-  ['Edge controller', 'Keeps logging when the network drops.'],
-  ['Multi-depth probes', 'Temperature, moisture and CO₂ per layer.'],
-  ['LoRa + Wi-Fi', 'Works across remote yards, no new cabling.'],
-  ['2-hour install', 'Retro-fits onto silos you already own.'],
-]
+  ["Edge controller", "Keeps logging when the network drops."],
+  ["Multi-depth probes", "Temperature, moisture and CO₂ per layer."],
+  ["LoRa + Wi-Fi", "Works across remote yards, no new cabling."],
+  ["2-hour install", "Retro-fits onto silos you already own."],
+];
 
 export function HardwareSection() {
   return (
@@ -23,8 +23,7 @@ export function HardwareSection() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="text-[1.75rem] font-black leading-[1.02] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl">
-            Start with the silo.{' '}
-            <span className="text-[#2FA84F]">Software comes with it.</span>
+            Start with the silo. <span className="text-[#2FA84F]">Software comes with it.</span>
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#4A554C] dark:text-muted-foreground sm:text-base">
             Every unit ships paired to the dashboard.
@@ -63,5 +62,5 @@ export function HardwareSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

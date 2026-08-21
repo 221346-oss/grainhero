@@ -15,10 +15,19 @@ export const getMyNotificationPrefs = createServerFn({ method: "GET" })
         .select("email_enabled, sms_enabled, push_enabled, categories")
         .eq("user_id", context.userId)
         .maybeSingle(),
-      context.supabase.from("profiles").select("phone_e164, email").eq("id", context.userId).maybeSingle(),
+      context.supabase
+        .from("profiles")
+        .select("phone_e164, email")
+        .eq("id", context.userId)
+        .maybeSingle(),
     ]);
     return {
-      prefs: prefs ?? { email_enabled: true, sms_enabled: false, push_enabled: true, categories: {} },
+      prefs: prefs ?? {
+        email_enabled: true,
+        sms_enabled: false,
+        push_enabled: true,
+        categories: {},
+      },
       profile: profile ?? { phone_e164: null, email: null },
       categories: CATEGORIES,
       channels: CHANNELS,

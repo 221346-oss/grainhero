@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { getIncidents, assignIncident, escalateIncident, updateIncidentStatus } from "@/lib/monitoring.functions";
+import {
+  getIncidents,
+  assignIncident,
+  escalateIncident,
+  updateIncidentStatus,
+} from "@/lib/monitoring.functions";
 import { closeFieldIncident } from "@/lib/field-incidents.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getMyRole } from "@/lib/roles.functions";
@@ -13,14 +18,34 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Loader2, AlertOctagon, Plus, X, CheckCircle2, MessageSquare, SlidersHorizontal,
-  Search, ArrowUpCircle, Clock, Ban, Layers, Users, Archive, AlertTriangle,
+  Loader2,
+  AlertOctagon,
+  Plus,
+  X,
+  CheckCircle2,
+  MessageSquare,
+  SlidersHorizontal,
+  Search,
+  ArrowUpCircle,
+  Clock,
+  Ban,
+  Layers,
+  Users,
+  Archive,
+  AlertTriangle,
 } from "lucide-react";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
-import { MonitoringDiscussionDialog, type MonitoringIncidentItem } from "@/components/app/MonitoringDiscussionDialog";
+import {
+  MonitoringDiscussionDialog,
+  type MonitoringIncidentItem,
+} from "@/components/app/MonitoringDiscussionDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -62,30 +87,30 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
 
 const SEVERITY_COLOR: Record<string, string> = {
   critical: "bg-red-100 text-red-800 border-red-200",
-  medium:   "bg-amber-100 text-amber-800 border-amber-200",
-  low:      "bg-emerald-100 text-emerald-800 border-emerald-200",
+  medium: "bg-amber-100 text-amber-800 border-amber-200",
+  low: "bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  open:          "bg-blue-100 text-blue-800 border-blue-200",
-  pending:       "bg-blue-100 text-blue-800 border-blue-200",
+  open: "bg-blue-100 text-blue-800 border-blue-200",
+  pending: "bg-blue-100 text-blue-800 border-blue-200",
   investigating: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  acknowledged:  "bg-purple-100 text-purple-800 border-purple-200",
-  escalated:     "bg-purple-100 text-purple-800 border-purple-200",
-  resolved:      "bg-emerald-100 text-emerald-800 border-emerald-200",
-  closed:        "bg-emerald-100 text-emerald-800 border-emerald-200",
-  dismissed:     "bg-slate-100 text-slate-600 border-slate-200",
+  acknowledged: "bg-purple-100 text-purple-800 border-purple-200",
+  escalated: "bg-purple-100 text-purple-800 border-purple-200",
+  resolved: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  closed: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  dismissed: "bg-slate-100 text-slate-600 border-slate-200",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
-  open:          <Clock className="h-3 w-3" />,
-  pending:       <Clock className="h-3 w-3" />,
+  open: <Clock className="h-3 w-3" />,
+  pending: <Clock className="h-3 w-3" />,
   investigating: <Clock className="h-3 w-3 text-indigo-600" />,
-  acknowledged:  <CheckCircle2 className="h-3 w-3" />,
-  escalated:     <ArrowUpCircle className="h-3 w-3" />,
-  resolved:      <CheckCircle2 className="h-3 w-3" />,
-  closed:        <CheckCircle2 className="h-3 w-3" />,
-  dismissed:     <Ban className="h-3 w-3" />,
+  acknowledged: <CheckCircle2 className="h-3 w-3" />,
+  escalated: <ArrowUpCircle className="h-3 w-3" />,
+  resolved: <CheckCircle2 className="h-3 w-3" />,
+  closed: <CheckCircle2 className="h-3 w-3" />,
+  dismissed: <Ban className="h-3 w-3" />,
 };
 
 function IncidentCard({
@@ -99,7 +124,7 @@ function IncidentCard({
 }) {
   // Determine severity for display
   const displaySeverity = row.isFieldIncident ? "medium" : row.priority;
-  
+
   return (
     <Card
       className={`cursor-pointer transition-all border ${
@@ -111,13 +136,17 @@ function IncidentCard({
         <div className="space-y-2">
           {/* Title */}
           <h4 className="text-sm font-semibold text-foreground">{row.title}</h4>
-          
+
           {/* Badges */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={`${SEVERITY_COLOR[displaySeverity] || SEVERITY_COLOR.medium} border text-[10px] px-1.5 py-0.5`}>
+            <Badge
+              className={`${SEVERITY_COLOR[displaySeverity] || SEVERITY_COLOR.medium} border text-[10px] px-1.5 py-0.5`}
+            >
               {displaySeverity}
             </Badge>
-            <Badge className={`${STATUS_COLOR[row.status] || STATUS_COLOR.open} border text-[10px] px-1.5 py-0.5 gap-1`}>
+            <Badge
+              className={`${STATUS_COLOR[row.status] || STATUS_COLOR.open} border text-[10px] px-1.5 py-0.5 gap-1`}
+            >
               {STATUS_ICON[row.status]}
               {row.status}
             </Badge>
@@ -135,9 +164,7 @@ function IncidentCard({
               {row.isFieldIncident && row.recipientName && ` → ${row.recipientName}`}
               {!row.isFieldIncident && row.assignedToName && ` → ${row.assignedToName}`}
             </span>
-            {row.triggered_at && (
-              <span>{new Date(row.triggered_at).toLocaleDateString()}</span>
-            )}
+            {row.triggered_at && <span>{new Date(row.triggered_at).toLocaleDateString()}</span>}
           </div>
         </div>
       </CardContent>
@@ -155,7 +182,7 @@ function DetailPanel({
   children: React.ReactNode;
 }) {
   const displaySeverity = row.isFieldIncident ? "medium" : row.priority;
-  
+
   return (
     <div className="lg:sticky lg:top-4">
       <Card className="border-primary/20 shadow-lg">
@@ -165,10 +192,14 @@ function DetailPanel({
             <div className="space-y-2 flex-1">
               <h3 className="text-sm font-bold text-foreground">{row.title}</h3>
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge className={`${SEVERITY_COLOR[displaySeverity] || SEVERITY_COLOR.medium} border text-[10px] px-2 py-0.5`}>
+                <Badge
+                  className={`${SEVERITY_COLOR[displaySeverity] || SEVERITY_COLOR.medium} border text-[10px] px-2 py-0.5`}
+                >
                   {displaySeverity.toUpperCase()}
                 </Badge>
-                <Badge className={`${STATUS_COLOR[row.status] || STATUS_COLOR.open} border text-[10px] px-2 py-0.5 gap-1`}>
+                <Badge
+                  className={`${STATUS_COLOR[row.status] || STATUS_COLOR.open} border text-[10px] px-2 py-0.5 gap-1`}
+                >
                   {STATUS_ICON[row.status]}
                   {row.status}
                 </Badge>
@@ -181,17 +212,18 @@ function DetailPanel({
 
           {/* Description */}
           <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Description</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Description
+            </p>
             <p className="text-xs text-foreground whitespace-pre-wrap">
               {(() => {
                 // Remove the "Reported by:" header line if it exists
-                let desc = row.message || "No description provided.";
-                const lines = desc.split('\n');
-                const filteredLines = lines.filter(line => 
-                  !line.startsWith('Reported by:') && 
-                  !line.includes('Target Role:')
+                const desc = row.message || "No description provided.";
+                const lines = desc.split("\n");
+                const filteredLines = lines.filter(
+                  (line) => !line.startsWith("Reported by:") && !line.includes("Target Role:"),
                 );
-                return filteredLines.join('\n').trim() || "No description provided.";
+                return filteredLines.join("\n").trim() || "No description provided.";
               })()}
             </p>
           </div>
@@ -199,16 +231,20 @@ function DetailPanel({
           {/* Date and Time */}
           {row.triggered_at && (
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Reported Date & Time</p>
-              <p className="text-xs">{new Date(row.triggered_at).toLocaleString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-              })}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Reported Date & Time
+              </p>
+              <p className="text-xs">
+                {new Date(row.triggered_at).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: true,
+                })}
+              </p>
             </div>
           )}
 
@@ -232,7 +268,9 @@ function DetailPanel({
           {/* Sent To (for outgoing incidents) */}
           {row.isMine && (row.recipientName || row.assignedToName) && (
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Sent To</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Sent To
+              </p>
               <p className="text-xs">
                 <span className="font-medium">{row.recipientName || row.assignedToName}</span>
                 {row.isFieldIncident && row.custom_fields?.target_role && (
@@ -282,9 +320,14 @@ export function IncidentsSection() {
   const canManage = me?.role === "manager" || me?.role === "admin";
   const canReportAsAdmin = me?.role === "admin" || me?.role === "manager";
 
-  const teamQ = useQuery({ queryKey: ["team-members"], queryFn: () => listTeamFn(), enabled: canManage });
-  const technicians = ((teamQ.data ?? []) as Array<{ id: string; name: string | null; email: string; role: string }>)
-    .filter((m) => m.role === "technician");
+  const teamQ = useQuery({
+    queryKey: ["team-members"],
+    queryFn: () => listTeamFn(),
+    enabled: canManage,
+  });
+  const technicians = (
+    (teamQ.data ?? []) as Array<{ id: string; name: string | null; email: string; role: string }>
+  ).filter((m) => m.role === "technician");
 
   const assignMut = useMutation({
     mutationFn: (v: { id: string; technicianId: string | null }) => assignFn({ data: v }),
@@ -332,11 +375,12 @@ export function IncidentsSection() {
       case "all":
         return allIncidents;
       case "active":
-        return allIncidents.filter((i) => 
-          i.status === "open" || 
-          i.status === "pending" || 
-          i.status === "investigating" || 
-          i.status === "acknowledged"
+        return allIncidents.filter(
+          (i) =>
+            i.status === "open" ||
+            i.status === "pending" ||
+            i.status === "investigating" ||
+            i.status === "acknowledged",
         );
       case "escalated":
         return allIncidents.filter((i) => i.status === "escalated");
@@ -356,11 +400,12 @@ export function IncidentsSection() {
   const tabCounts = useMemo(() => {
     return {
       all: allIncidents.length,
-      active: allIncidents.filter((i) => 
-        i.status === "open" || 
-        i.status === "pending" || 
-        i.status === "investigating" || 
-        i.status === "acknowledged"
+      active: allIncidents.filter(
+        (i) =>
+          i.status === "open" ||
+          i.status === "pending" ||
+          i.status === "investigating" ||
+          i.status === "acknowledged",
       ).length,
       escalated: allIncidents.filter((i) => i.status === "escalated").length,
       resolved: allIncidents.filter((i) => i.status === "resolved" || i.status === "closed").length,
@@ -377,11 +422,16 @@ export function IncidentsSection() {
         const sev = i.isFieldIncident ? "medium" : i.priority;
         if (sev !== severityFilter) return false;
       }
-      
+
       // Status filter for dropdown
       if (statusFilter !== "all") {
         if (statusFilter === "active") {
-          if (i.status !== "open" && i.status !== "pending" && i.status !== "investigating" && i.status !== "acknowledged") {
+          if (
+            i.status !== "open" &&
+            i.status !== "pending" &&
+            i.status !== "investigating" &&
+            i.status !== "acknowledged"
+          ) {
             return false;
           }
         } else if (statusFilter === "resolved") {
@@ -399,7 +449,7 @@ export function IncidentsSection() {
       if (roleFilter !== "all") {
         const targetRole = i.custom_fields?.target_role;
         const reporterRole = i.custom_fields?.reporter_role;
-        
+
         if (roleFilter === "admin") {
           // Show incidents where target_role is admin OR reporter_role is admin
           if (targetRole !== "admin" && reporterRole !== "admin") return false;
@@ -408,13 +458,14 @@ export function IncidentsSection() {
           if (targetRole !== "technician" && reporterRole !== "technician") return false;
         }
       }
-      
+
       // Search filter
       if (search.trim()) {
         const t = search.trim().toLowerCase();
-        if (!i.title?.toLowerCase().includes(t) && !i.message?.toLowerCase().includes(t)) return false;
+        if (!i.title?.toLowerCase().includes(t) && !i.message?.toLowerCase().includes(t))
+          return false;
       }
-      
+
       return true;
     });
   }, [tabFiltered, severityFilter, statusFilter, roleFilter, search]);
@@ -475,10 +526,18 @@ export function IncidentsSection() {
             <SelectValue placeholder="All severities" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-xs">All severities</SelectItem>
-            <SelectItem value="critical" className="text-xs">Critical</SelectItem>
-            <SelectItem value="medium" className="text-xs">Medium</SelectItem>
-            <SelectItem value="low" className="text-xs">Low</SelectItem>
+            <SelectItem value="all" className="text-xs">
+              All severities
+            </SelectItem>
+            <SelectItem value="critical" className="text-xs">
+              Critical
+            </SelectItem>
+            <SelectItem value="medium" className="text-xs">
+              Medium
+            </SelectItem>
+            <SelectItem value="low" className="text-xs">
+              Low
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -487,12 +546,24 @@ export function IncidentsSection() {
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-xs">All statuses</SelectItem>
-            <SelectItem value="active" className="text-xs">Active</SelectItem>
-            <SelectItem value="escalated" className="text-xs">Escalated</SelectItem>
-            <SelectItem value="resolved" className="text-xs">Resolved</SelectItem>
-            <SelectItem value="dismissed" className="text-xs">Dismissed</SelectItem>
-            <SelectItem value="incoming" className="text-xs">Incoming</SelectItem>
+            <SelectItem value="all" className="text-xs">
+              All statuses
+            </SelectItem>
+            <SelectItem value="active" className="text-xs">
+              Active
+            </SelectItem>
+            <SelectItem value="escalated" className="text-xs">
+              Escalated
+            </SelectItem>
+            <SelectItem value="resolved" className="text-xs">
+              Resolved
+            </SelectItem>
+            <SelectItem value="dismissed" className="text-xs">
+              Dismissed
+            </SelectItem>
+            <SelectItem value="incoming" className="text-xs">
+              Incoming
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -501,9 +572,15 @@ export function IncidentsSection() {
             <SelectValue placeholder="All roles" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all" className="text-xs">All roles</SelectItem>
-            <SelectItem value="admin" className="text-xs">Admin</SelectItem>
-            <SelectItem value="technician" className="text-xs">Technician</SelectItem>
+            <SelectItem value="all" className="text-xs">
+              All roles
+            </SelectItem>
+            <SelectItem value="admin" className="text-xs">
+              Admin
+            </SelectItem>
+            <SelectItem value="technician" className="text-xs">
+              Technician
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -581,12 +658,16 @@ export function IncidentsSection() {
           <CardContent className="py-12 text-center">
             <AlertOctagon className="h-8 w-8 mx-auto opacity-20 mb-2" />
             <p className="text-sm text-muted-foreground">
-              {tabFiltered.length === 0 ? `No ${activeTab} incidents.` : "No incidents match your filters."}
+              {tabFiltered.length === 0
+                ? `No ${activeTab} incidents.`
+                : "No incidents match your filters."}
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className={splitView ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start" : "space-y-2"}>
+        <div
+          className={splitView ? "grid grid-cols-1 lg:grid-cols-2 gap-4 items-start" : "space-y-2"}
+        >
           {/* Fixed height container for 4 entries with vertical scroll */}
           <div className={splitView ? "space-y-2" : "space-y-2 h-[320px] overflow-y-auto"}>
             {filtered.map((i) => (
@@ -611,7 +692,10 @@ export function IncidentsSection() {
                     <Select
                       value={active.assigned_to ?? "unassigned"}
                       onValueChange={(v) =>
-                        assignMut.mutate({ id: active.id, technicianId: v === "unassigned" ? null : v })
+                        assignMut.mutate({
+                          id: active.id,
+                          technicianId: v === "unassigned" ? null : v,
+                        })
                       }
                     >
                       <SelectTrigger className="h-8 text-xs">
@@ -647,27 +731,31 @@ export function IncidentsSection() {
               )}
 
               {/* Actions for field incidents - show escalate option only if not resolved/dismissed */}
-              {active.isFieldIncident && canManage && active.status !== "escalated" && active.status !== "resolved" && active.status !== "dismissed" && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Actions
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => escalateMut.mutate(active.id)}
-                    disabled={escalateMut.isPending}
-                    className="gap-1.5 w-full"
-                  >
-                    {escalateMut.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <ArrowUpCircle className="h-3.5 w-3.5" />
-                    )}
-                    Escalate to Admin
-                  </Button>
-                </div>
-              )}
+              {active.isFieldIncident &&
+                canManage &&
+                active.status !== "escalated" &&
+                active.status !== "resolved" &&
+                active.status !== "dismissed" && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Actions
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => escalateMut.mutate(active.id)}
+                      disabled={escalateMut.isPending}
+                      className="gap-1.5 w-full"
+                    >
+                      {escalateMut.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <ArrowUpCircle className="h-3.5 w-3.5" />
+                      )}
+                      Escalate to Admin
+                    </Button>
+                  </div>
+                )}
 
               {/* Resolve and Dismiss actions for all incidents (when manager and not already resolved/dismissed) */}
               {canManage && active.status !== "resolved" && active.status !== "dismissed" && (
@@ -739,7 +827,11 @@ export function IncidentsSection() {
         </div>
       )}
 
-      <ReportTicketDialog open={ticketDlgOpen} onOpenChange={setTicketDlgOpen} extraInvalidate={[["incidents"]]} />
+      <ReportTicketDialog
+        open={ticketDlgOpen}
+        onOpenChange={setTicketDlgOpen}
+        extraInvalidate={[["incidents"]]}
+      />
       <MonitoringDiscussionDialog
         open={discussionOpen}
         onOpenChange={setDiscussionOpen}

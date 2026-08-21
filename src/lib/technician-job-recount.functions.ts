@@ -32,7 +32,9 @@ export const recountMyActiveJobs = createServerFn({ method: "POST" })
         .from("hardware_order_installations" as never)
         .select("order_id")
         .in("order_id", assignedOrderIds);
-      const installOrderIds = new Set((existingInstalls ?? []).map((i: any) => i.order_id as string));
+      const installOrderIds = new Set(
+        (existingInstalls ?? []).map((i: any) => i.order_id as string),
+      );
       extraOrderCount = assignedOrderIds.filter((id: string) => !installOrderIds.has(id)).length;
     }
 

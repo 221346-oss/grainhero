@@ -21,15 +21,14 @@ if (!url || !key) {
   process.exit(1);
 }
 
-const sql = readFileSync("supabase/migrations/20260820000000_add_installing_status_constraint.sql", "utf-8");
+const sql = readFileSync(
+  "supabase/migrations/20260820000000_add_installing_status_constraint.sql",
+  "utf-8",
+);
 
 async function run() {
   // Try the Supabase SQL API endpoint
-  const endpoints = [
-    `${url}/pg/query`,
-    `${url}/sql`,
-    `${url}/rest/v1/`,
-  ];
+  const endpoints = [`${url}/pg/query`, `${url}/sql`, `${url}/rest/v1/`];
 
   for (const endpoint of endpoints) {
     console.log(`Trying ${endpoint}...`);
@@ -55,9 +54,13 @@ async function run() {
     }
   }
 
-  console.log("\n❌ Could not apply migration via API. Please run manually in Supabase Dashboard SQL Editor.");
+  console.log(
+    "\n❌ Could not apply migration via API. Please run manually in Supabase Dashboard SQL Editor.",
+  );
   console.log(`URL: ${url.replace(".supabase.co", ".supabase.com/dashboard/sql/new")}`);
-  console.log("Paste contents of: supabase/migrations/20260820000000_add_installing_status_constraint.sql");
+  console.log(
+    "Paste contents of: supabase/migrations/20260820000000_add_installing_status_constraint.sql",
+  );
 }
 
 run();

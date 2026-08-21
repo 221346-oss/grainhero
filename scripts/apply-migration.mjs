@@ -16,7 +16,10 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
   process.exit(1);
 }
 
-const sql = readFileSync("supabase/migrations/20260820000000_add_installing_status_constraint.sql", "utf-8");
+const sql = readFileSync(
+  "supabase/migrations/20260820000000_add_installing_status_constraint.sql",
+  "utf-8",
+);
 
 async function run() {
   // Use the Supabase SQL endpoint (pg_net compatible)
@@ -85,8 +88,12 @@ async function run() {
     // Last resort: try Supabase's database webhooks / SQL editor API
     console.log("\n⚠️  Direct SQL execution not available via API.");
     console.log("Please run the migration manually in the Supabase Dashboard:");
-    console.log(`1. Go to ${SUPABASE_URL.replace(".supabase.co", ".supabase.com/dashboard")}/sql/new`);
-    console.log("2. Paste the contents of supabase/migrations/20260820000000_add_installing_status_constraint.sql");
+    console.log(
+      `1. Go to ${SUPABASE_URL.replace(".supabase.co", ".supabase.com/dashboard")}/sql/new`,
+    );
+    console.log(
+      "2. Paste the contents of supabase/migrations/20260820000000_add_installing_status_constraint.sql",
+    );
     console.log("3. Click 'Run'");
   }
 }

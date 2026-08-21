@@ -50,7 +50,10 @@ export async function runExpiryReminders() {
           </div>`;
         const res = await fetch(RESEND_URL, {
           method: "POST",
-          headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             from: `GrainHero <${from}>`,
             to: [profile.email],

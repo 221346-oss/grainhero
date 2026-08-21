@@ -29,31 +29,57 @@ function CommandCenterPage() {
         tiles={[
           { key: "active", label: "Active shipments", value: k?.activeShipments ?? "—" },
           { key: "ontime", label: "On-time delivery", value: k ? `${k.onTimePct}%` : "—" },
-          { key: "cost", label: "Logistics spend", value: k ? `PKR ${k.totalLogisticsCost.toLocaleString()}` : "—", hint: k ? `PKR ${k.costPerKg}/kg` : undefined },
+          {
+            key: "cost",
+            label: "Logistics spend",
+            value: k ? `PKR ${k.totalLogisticsCost.toLocaleString()}` : "—",
+            hint: k ? `PKR ${k.costPerKg}/kg` : undefined,
+          },
           { key: "util", label: "Fleet utilization", value: k ? `${k.fleetUtilizationPct}%` : "—" },
         ]}
       />
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="border-slate-200/70">
-          <CardHeader><CardTitle className="text-sm font-semibold">Delivery performance</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Delivery performance</CardTitle>
+          </CardHeader>
           <CardContent className="text-sm text-slate-600 space-y-2">
-            <div className="flex justify-between"><span>Delivered</span><span className="font-medium">{k?.deliveredCount ?? 0}</span></div>
-            <div className="flex justify-between"><span>On-time</span><span className="font-medium">{k?.onTimePct ?? 0}%</span></div>
-            <div className="flex justify-between"><span>Active drivers</span><span className="font-medium">{k?.driversCount ?? 0}</span></div>
+            <div className="flex justify-between">
+              <span>Delivered</span>
+              <span className="font-medium">{k?.deliveredCount ?? 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>On-time</span>
+              <span className="font-medium">{k?.onTimePct ?? 0}%</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Active drivers</span>
+              <span className="font-medium">{k?.driversCount ?? 0}</span>
+            </div>
             <div className="flex justify-between items-center">
               <span>Licence alerts</span>
-              {(k?.licenseAlertsCount ?? 0) > 0
-                ? <Badge variant="destructive">{k?.licenseAlertsCount}</Badge>
-                : <span className="font-medium text-emerald-600">0</span>}
+              {(k?.licenseAlertsCount ?? 0) > 0 ? (
+                <Badge variant="destructive">{k?.licenseAlertsCount}</Badge>
+              ) : (
+                <span className="font-medium text-emerald-600">0</span>
+              )}
             </div>
           </CardContent>
         </Card>
         <Card className="border-slate-200/70">
-          <CardHeader><CardTitle className="text-sm font-semibold">Getting started</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Getting started</CardTitle>
+          </CardHeader>
           <CardContent className="text-sm text-slate-600 space-y-2">
-            <p>1. Add carriers under <span className="font-medium">Platform → Carriers</span>.</p>
-            <p>2. Register vehicles & drivers under <span className="font-medium">Fleet</span>.</p>
-            <p>3. Assign a carrier to any dispatched shipment to start capturing cost & SLA data.</p>
+            <p>
+              1. Add carriers under <span className="font-medium">Platform → Carriers</span>.
+            </p>
+            <p>
+              2. Register vehicles & drivers under <span className="font-medium">Fleet</span>.
+            </p>
+            <p>
+              3. Assign a carrier to any dispatched shipment to start capturing cost & SLA data.
+            </p>
             <p>4. Tune limits under Marketplace Settings → Logistics.</p>
           </CardContent>
         </Card>

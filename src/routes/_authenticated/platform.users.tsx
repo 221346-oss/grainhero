@@ -6,9 +6,29 @@ import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
 import { setUserRole } from "@/lib/platform.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
@@ -26,14 +46,34 @@ export const Route = createFileRoute("/_authenticated/platform/users")({
   head: () => ({
     meta: [
       { title: "Platform · Users — Grain Hero" },
-      { name: "description", content: "Platform · Users workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Users workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Users — Grain Hero" },
-      { property: "og:description", content: "Platform · Users workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Users workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
-  }), component: UsersPage });
+  }),
+  component: UsersPage,
+});
 
-type Row = { id: string; name: string | null; email: string | null; business_type: string | null; blocked: boolean | null; email_verified: boolean | null; created_at: string | null; last_login: string | null; role: string; admin_id: string | null };
+type Row = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  business_type: string | null;
+  blocked: boolean | null;
+  email_verified: boolean | null;
+  created_at: string | null;
+  last_login: string | null;
+  role: string;
+  admin_id: string | null;
+};
 
 const ROLE_TEXT: Record<string, string> = {
   super_admin: "text-destructive",
@@ -45,9 +85,9 @@ const ROLE_TEXT: Record<string, string> = {
 
 const ASSIGNABLE_ROLES = [
   { value: "technician", label: "Technician" },
-  { value: "manager",    label: "Manager"    },
-  { value: "admin",      label: "Admin"      },
-  { value: "pending",    label: "Pending"    },
+  { value: "manager", label: "Manager" },
+  { value: "admin", label: "Admin" },
+  { value: "pending", label: "Pending" },
 ] as const;
 
 interface ChangeRoleDialogProps {
@@ -58,9 +98,17 @@ interface ChangeRoleDialogProps {
   isPending: boolean;
 }
 
-function ChangeRoleSheet({ user, open, onOpenChange, onConfirm, isPending }: ChangeRoleDialogProps) {
+function ChangeRoleSheet({
+  user,
+  open,
+  onOpenChange,
+  onConfirm,
+  isPending,
+}: ChangeRoleDialogProps) {
   const [newRole, setNewRole] = useState(user?.role ?? "pending");
-  useEffect(() => { if (open && user) setNewRole(user.role); }, [open, user]);
+  useEffect(() => {
+    if (open && user) setNewRole(user.role);
+  }, [open, user]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -68,23 +116,33 @@ function ChangeRoleSheet({ user, open, onOpenChange, onConfirm, isPending }: Cha
         <SheetHeader>
           <SheetTitle>Change role</SheetTitle>
           <SheetDescription>
-            <span className="font-medium text-slate-700">{user?.name ?? user?.email ?? "This user"}</span>
+            <span className="font-medium text-slate-700">
+              {user?.name ?? user?.email ?? "This user"}
+            </span>
             &apos;s role will be updated immediately.
           </SheetDescription>
         </SheetHeader>
         <div className="py-6 space-y-1.5">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">New role</label>
+          <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            New role
+          </label>
           <Select value={newRole} onValueChange={setNewRole}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {ASSIGNABLE_ROLES.map((r) => (
-                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <SheetFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             disabled={!user || newRole === user.role || isPending}
             onClick={() => user && onConfirm(user.id, newRole)}
@@ -104,22 +162,35 @@ function UsersPage() {
   const toggleFn = useServerFn(toggleUserBlocked);
   const impersonateFn = useServerFn(startImpersonation);
   const setRoleFn = useServerFn(setUserRole);
-  const { data = [], isLoading } = useQuery({ queryKey: ["platform-users"], queryFn: () => fn() as Promise<Row[]> });
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["platform-users"],
+    queryFn: () => fn() as Promise<Row[]>,
+  });
   const [q, setQ] = useState("");
   const [qInput, setQInput] = useState("");
   const [role, setRole] = useState("all");
   const [roleTarget, setRoleTarget] = useState<Row | null>(null);
   const ticketCount = useTicketCount();
 
-  const filtered = useMemo(() => data.filter((u) => {
-    const s = q.toLowerCase();
-    const hit = !s || (u.name ?? "").toLowerCase().includes(s) || (u.email ?? "").toLowerCase().includes(s);
-    return hit && (role === "all" || u.role === role);
-  }), [data, q, role]);
+  const filtered = useMemo(
+    () =>
+      data.filter((u) => {
+        const s = q.toLowerCase();
+        const hit =
+          !s ||
+          (u.name ?? "").toLowerCase().includes(s) ||
+          (u.email ?? "").toLowerCase().includes(s);
+        return hit && (role === "all" || u.role === role);
+      }),
+    [data, q, role],
+  );
 
   const toggle = useMutation({
     mutationFn: (v: { id: string; blocked: boolean }) => toggleFn({ data: v }),
-    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["platform-users"] }); },
+    onSuccess: () => {
+      toast.success("Updated");
+      qc.invalidateQueries({ queryKey: ["platform-users"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -189,13 +260,16 @@ function UsersPage() {
             </div>
             {/* Table header */}
             <div className="px-4 py-2.5 grid grid-cols-5 gap-4 border-b border-slate-100">
-              {["User","Role","Joined","Status","Actions"].map((col) => (
+              {["User", "Role", "Joined", "Status", "Actions"].map((col) => (
                 <div key={col} className="h-3 w-14 animate-pulse rounded bg-slate-100" />
               ))}
             </div>
             {/* Table rows */}
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="px-4 py-3 grid grid-cols-5 gap-4 items-center border-b border-slate-50">
+              <div
+                key={i}
+                className="px-4 py-3 grid grid-cols-5 gap-4 items-center border-b border-slate-50"
+              >
                 <div className="space-y-1.5">
                   <div className="h-3.5 w-32 animate-pulse rounded bg-slate-100" />
                   <div className="h-2.5 w-44 animate-pulse rounded bg-slate-100" />
@@ -228,29 +302,44 @@ function UsersPage() {
 
       <AdminFilterBar onSubmit={() => setQ(qInput)}>
         <AdminFilterField label="Search" width="flex-1 min-w-[240px]">
-          <Input value={qInput} onChange={(e) => setQInput(e.target.value)} placeholder="Search by name or email…" />
+          <Input
+            value={qInput}
+            onChange={(e) => setQInput(e.target.value)}
+            placeholder="Search by name or email…"
+          />
         </AdminFilterField>
         <AdminFilterField label="Role" width="w-52">
           <Select value={role} onValueChange={setRole}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All roles ({data.length})</SelectItem>
-              <SelectItem value="super_admin">Super admin ({data.filter(u => u.role === "super_admin").length})</SelectItem>
-              <SelectItem value="admin">Admin ({data.filter(u => u.role === "admin").length})</SelectItem>
-              <SelectItem value="manager">Manager ({data.filter(u => u.role === "manager").length})</SelectItem>
-              <SelectItem value="technician">Technician ({data.filter(u => u.role === "technician").length})</SelectItem>
-              <SelectItem value="pending">Pending ({data.filter(u => u.role === "pending").length})</SelectItem>
+              <SelectItem value="super_admin">
+                Super admin ({data.filter((u) => u.role === "super_admin").length})
+              </SelectItem>
+              <SelectItem value="admin">
+                Admin ({data.filter((u) => u.role === "admin").length})
+              </SelectItem>
+              <SelectItem value="manager">
+                Manager ({data.filter((u) => u.role === "manager").length})
+              </SelectItem>
+              <SelectItem value="technician">
+                Technician ({data.filter((u) => u.role === "technician").length})
+              </SelectItem>
+              <SelectItem value="pending">
+                Pending ({data.filter((u) => u.role === "pending").length})
+              </SelectItem>
             </SelectContent>
           </Select>
         </AdminFilterField>
       </AdminFilterBar>
 
-      <AdminDataCard
-        title="All users"
-        description={`Showing ${filtered.length} of ${data.length}`}
-      >
+      <AdminDataCard title="All users" description={`Showing ${filtered.length} of ${data.length}`}>
         {isLoading ? (
-          <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
+          <div className="p-4">
+            <TableSkeleton rows={8} cols={4} />
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-slate-400">
             <p className="text-sm">No users found</p>
@@ -262,9 +351,15 @@ function UsersPage() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="h-10 font-normal text-muted-foreground">User</TableHead>
                   <TableHead className="h-10 font-normal text-muted-foreground">Role</TableHead>
-                  <TableHead className="h-10 font-normal text-muted-foreground hidden sm:table-cell">Joined</TableHead>
-                  <TableHead className="h-10 font-normal text-muted-foreground hidden sm:table-cell">Status</TableHead>
-                  <TableHead className="h-10 font-normal text-muted-foreground text-right">Actions</TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground hidden sm:table-cell">
+                    Joined
+                  </TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground hidden sm:table-cell">
+                    Status
+                  </TableHead>
+                  <TableHead className="h-10 font-normal text-muted-foreground text-right">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <tbody aria-hidden="true" className="h-2" />
@@ -275,11 +370,17 @@ function UsersPage() {
                     className="border-0 hover:bg-muted/40 [&>td]:border-0 [&_td:first-child]:rounded-s-lg [&_td:last-child]:rounded-e-lg"
                   >
                     <TableCell className="py-3">
-                      <div className="font-medium truncate max-w-[120px] sm:max-w-none">{u.name ?? "Unnamed user"}</div>
-                      <div className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">{u.email}</div>
+                      <div className="font-medium truncate max-w-[120px] sm:max-w-none">
+                        {u.name ?? "Unnamed user"}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">
+                        {u.email}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <span className={`text-sm font-medium ${ROLE_TEXT[u.role] ?? ROLE_TEXT.pending}`}>
+                      <span
+                        className={`text-sm font-medium ${ROLE_TEXT[u.role] ?? ROLE_TEXT.pending}`}
+                      >
                         {u.role.replace("_", " ")}
                       </span>
                     </TableCell>
@@ -304,7 +405,12 @@ function UsersPage() {
                             className="h-auto p-0 text-primary"
                             title="View as"
                           >
-                            <UserCog className="opacity-60 sm:me-1" size={16} strokeWidth={2} aria-hidden="true" />
+                            <UserCog
+                              className="opacity-60 sm:me-1"
+                              size={16}
+                              strokeWidth={2}
+                              aria-hidden="true"
+                            />
                             <span className="hidden sm:inline">View as</span>
                           </Button>
                         )}
@@ -315,7 +421,12 @@ function UsersPage() {
                           className="h-auto p-0 text-slate-500 hover:text-slate-800"
                           title="Role"
                         >
-                          <ShieldCheck className="opacity-60 sm:me-1" size={16} strokeWidth={2} aria-hidden="true" />
+                          <ShieldCheck
+                            className="opacity-60 sm:me-1"
+                            size={16}
+                            strokeWidth={2}
+                            aria-hidden="true"
+                          />
                           <span className="hidden sm:inline">Role</span>
                         </Button>
                         <Button

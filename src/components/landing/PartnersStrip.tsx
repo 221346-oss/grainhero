@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
 
-const partners = ['NICAT', 'HUAWEI', 'NUST', 'HEC', 'NCRA', 'PARC']
+const partners = ["NICAT", "HUAWEI", "NUST", "HEC", "NCRA", "PARC"];
 
 export function PartnersStrip() {
   return (
@@ -22,5 +22,5 @@ export function PartnersStrip() {
         </div>
       </div>
     </section>
-  )
+  );
 }

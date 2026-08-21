@@ -12,15 +12,23 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
     await assertSuperAdmin(context.supabase, context.userId);
     const supabaseAdmin = context.supabase;
     const [profiles, roles, batches, silos, alerts, subs, logs] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, admin_id, subscription_plan, created_at, business_type, blocked", { count: "exact" }),
+      supabaseAdmin
+        .from("profiles")
+        .select("id, admin_id, subscription_plan, created_at, business_type, blocked", {
+          count: "exact",
+        }),
       supabaseAdmin.from("user_roles").select("role, user_id"),
       supabaseAdmin.from("grain_batches").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("silos").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("grain_alerts").select("id, priority", { count: "exact" }),
-      supabaseAdmin.from("subscriptions").select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at"),
+      supabaseAdmin
+        .from("subscriptions")
+        .select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at"),
       supabaseAdmin.from("activity_logs").select("id, severity", { count: "exact" }),
     ]);
-    const tenants = new Set((profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id));
+    const tenants = new Set(
+      (profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id),
+    );
     const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.priority === "critical").length;
     const { computeMrr } = await import("@/lib/plan-pricing.server");
     const mrrResult = await computeMrr({
@@ -54,7 +62,9 @@ export const listAllUsers = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, admin_id, business_type, blocked, email_verified, created_at, last_login")
+      .select(
+        "id, name, email, admin_id, business_type, blocked, email_verified, created_at, last_login",
+      )
       .order("created_at", { ascending: false })
       .limit(500);
     const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id, role");
@@ -85,9 +95,13 @@ export const listAllTenants = createServerFn({ method: "GET" })
       supabaseAdmin.from("grain_batches").select("admin_id").in("admin_id", ids),
     ]);
     const teamMap = new Map<string, number>();
-    for (const r of teamCounts ?? []) { if (r.admin_id) teamMap.set(r.admin_id, (teamMap.get(r.admin_id) ?? 0) + 1); }
+    for (const r of teamCounts ?? []) {
+      if (r.admin_id) teamMap.set(r.admin_id, (teamMap.get(r.admin_id) ?? 0) + 1);
+    }
     const batchMap = new Map<string, number>();
-    for (const r of batchCounts ?? []) { if (r.admin_id) batchMap.set(r.admin_id, (batchMap.get(r.admin_id) ?? 0) + 1); }
+    for (const r of batchCounts ?? []) {
+      if (r.admin_id) batchMap.set(r.admin_id, (batchMap.get(r.admin_id) ?? 0) + 1);
+    }
     return (admins ?? []).map((a: any) => ({
       ...a,
       team_size: (teamMap.get(a.id) ?? 0) + 1,
@@ -102,19 +116,28 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
     await assertSuperAdmin(context.supabase, context.userId);
     if (data.id === context.userId) throw new Error("Cannot block yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("profiles").update({ blocked: data.blocked }).eq("id", data.id);
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ blocked: data.blocked })
+      .eq("id", data.id);
     if (error) throw error;
     // Fire-and-forget platform event webhook.
     try {
       const { notifyPlatformEvent } = await import("./platform-notify.server");
-      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", data.id).maybeSingle();
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", data.id)
+        .maybeSingle();
       await notifyPlatformEvent({
         type: data.blocked ? "user_blocked" : "user_unblocked",
         userId: data.id,
         email: prof?.email ?? null,
         by: context.userId,
       });
-    } catch { /* never fail the action on webhook error */ }
+    } catch {
+      /* never fail the action on webhook error */
+    }
     return { ok: true };
   });
 
@@ -124,8 +147,11 @@ export const getPlatformLogs = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let q = supabaseAdmin.from("activity_logs")
-      .select("id, admin_id, user_id, user_name, user_role, action, category, entity_type, entity_ref, description, severity, created_at")
+    let q = supabaseAdmin
+      .from("activity_logs")
+      .select(
+        "id, admin_id, user_id, user_name, user_role, action, category, entity_type, entity_ref, description, severity, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 200);
     if (data.severity && data.severity !== "all") q = q.eq("severity", data.severity);
@@ -158,7 +184,9 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
       supabaseAdmin
         .from("subscriptions")
-        .select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at, cancellation_date"),
+        .select(
+          "id, admin_id, status, plan_id, plan_name, price_per_month, created_at, cancellation_date",
+        ),
       supabaseAdmin
         .from("hubspot_sync_log")
         .select("id, action, status, hubspot_object_type, created_at")
@@ -181,7 +209,8 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     const signupsTotal = signupsSeries.reduce((s, p) => s + p.count, 0);
     const last7 = signupsSeries.slice(-7).reduce((s, p) => s + p.count, 0);
     const prev7 = signupsSeries.slice(-14, -7).reduce((s, p) => s + p.count, 0);
-    const wowDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
+    const wowDelta =
+      prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
 
     // Revenue snapshot — PKR from plan_thresholds (single source of truth).
     const subs = subsRes.data ?? [];
@@ -197,7 +226,9 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     });
     const mrr = mrrResult.mrr;
     const activeSubs = mrrResult.entries;
-    const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancellation_date);
+    const churnedSubs = subs.filter(
+      (s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancellation_date,
+    );
 
     // Pipeline snapshot — aggregate HubSpot sync activity by status.
     const pipeline: Record<string, number> = {};
@@ -239,9 +270,7 @@ export const getAdminTeam = createServerFn({ method: "GET" })
         .eq("admin_id", data.adminId)
         .order("created_at", { ascending: false })
         .limit(200),
-      supabaseAdmin
-        .from("user_roles")
-        .select("user_id, role"),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
     ]);
 
     const order = ["super_admin", "admin", "manager", "technician", "pending"];
@@ -252,12 +281,12 @@ export const getAdminTeam = createServerFn({ method: "GET" })
     }
 
     return (members ?? []).map((m: any) => ({
-      id:         m.id,
-      name:       m.name ?? m.email ?? m.id.slice(0, 8),
-      email:      m.email ?? null,
-      role:       rmap.get(m.id) ?? "pending",
+      id: m.id,
+      name: m.name ?? m.email ?? m.id.slice(0, 8),
+      email: m.email ?? null,
+      role: rmap.get(m.id) ?? "pending",
       last_login: m.last_login ?? null,
-      blocked:    m.blocked ?? false,
+      blocked: m.blocked ?? false,
     }));
   });
 
@@ -297,7 +326,7 @@ export const getPlatformApiHealth = createServerFn({ method: "GET" })
 
     const checks = [profiles, realtime, storage];
     const allHealthy = checks.every((c) => c.status === "healthy");
-    const anyDown    = checks.some((c) => c.status === "down");
+    const anyDown = checks.some((c) => c.status === "down");
 
     return {
       overall: allHealthy ? "healthy" : anyDown ? "down" : "degraded",
@@ -332,13 +361,11 @@ export const setUserRole = createServerFn({ method: "POST" })
 
     // Insert the new role (unless it's "pending" — pending = no role row)
     if (data.role !== "pending") {
-      const { error: insErr } = await supabaseAdmin
-        .from("user_roles")
-        .insert({
-          user_id: data.userId,
-          role: data.role as "admin" | "buyer" | "manager" | "super_admin" | "technician",
-          granted_by: context.userId,
-        });
+      const { error: insErr } = await supabaseAdmin.from("user_roles").insert({
+        user_id: data.userId,
+        role: data.role as "admin" | "buyer" | "manager" | "super_admin" | "technician",
+        granted_by: context.userId,
+      });
       if (insErr) throw insErr;
     }
 

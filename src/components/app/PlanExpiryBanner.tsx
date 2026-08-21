@@ -33,9 +33,7 @@ export function PlanExpiryBanner() {
 
   if (!endDate || dismissed || role !== "admin") return null;
 
-  const daysLeft = Math.ceil(
-    (new Date(endDate).getTime() - Date.now()) / 86_400_000,
-  );
+  const daysLeft = Math.ceil((new Date(endDate).getTime() - Date.now()) / 86_400_000);
 
   if (daysLeft > 7 || daysLeft < 0) return null;
 

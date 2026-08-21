@@ -16,7 +16,10 @@ export const Route = createFileRoute("/_authenticated/intelligence")({
   head: () => ({
     meta: [
       { title: "Intelligence — Grain Hero" },
-      { name: "description", content: "Intelligence workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Intelligence workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Intelligence — Grain Hero" },
       { property: "og:description", content: "Intelligence workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
@@ -29,8 +32,8 @@ type Tab = "predictions" | "analytics" | "ml-models";
 
 const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "predictions", label: "AI Predictions", icon: Brain },
-  { key: "analytics",   label: "Analytics",      icon: BarChart3 },
-  { key: "ml-models",   label: "ML Models",      icon: Cpu },
+  { key: "analytics", label: "Analytics", icon: BarChart3 },
+  { key: "ml-models", label: "ML Models", icon: Cpu },
 ];
 
 function IntelligenceWorkspace() {
@@ -42,8 +45,6 @@ function IntelligenceWorkspace() {
   const isSuperAdmin = role === "super_admin";
   const allowedAnalytics = ["super_admin", "admin", "manager"].includes(role);
   const allowedModels = ["super_admin", "admin"].includes(role);
-
-  if (roleQ.isLoading) return <KpiChartHubSkeleton />;
 
   const fetchPredictions = useServerFn(getSiloPredictions);
   const fetchOverview = useServerFn(getAnalyticsOverview);
@@ -67,9 +68,13 @@ function IntelligenceWorkspace() {
     enabled: allowedModels,
   });
 
+  if (roleQ.isLoading) return <KpiChartHubSkeleton />;
+
   const preds = predictions?.predictions ?? [];
   const atRisk = preds.filter((p: any) => p.level === "critical" || p.level === "high").length;
-  const avgRisk = preds.length ? Math.round(preds.reduce((s: number, p: any) => s + p.score, 0) / preds.length) : 0;
+  const avgRisk = preds.length
+    ? Math.round(preds.reduce((s: number, p: any) => s + p.score, 0) / preds.length)
+    : 0;
   const models = mlModels?.models ?? [];
   const productionModels = models.filter((m: any) => m.status === "production").length;
 
@@ -92,13 +97,11 @@ function IntelligenceWorkspace() {
       className="min-h-screen bg-background p-4 md:p-8"
       style={{
         fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        backgroundImage:
-          "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
         backgroundSize: "28px 28px",
       }}
     >
       <div className="max-w-7xl mx-auto space-y-8">
-
         {/* Header */}
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
@@ -111,7 +114,6 @@ function IntelligenceWorkspace() {
 
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
           {/* Bar Chart Panel */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
@@ -165,11 +167,14 @@ function IntelligenceWorkspace() {
                     <span className="truncate max-w-[120px]">{s.label}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-base font-mono">{s.value}</span>
-                    {s.up
-                      ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                      : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                    }
+                    <span className="text-foreground font-black text-base font-mono">
+                      {s.value}
+                    </span>
+                    {s.up ? (
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+                    )}
                   </div>
                 </div>
               ))}
@@ -179,7 +184,6 @@ function IntelligenceWorkspace() {
 
         {/* Tabbed Sections */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-
           {/* Tab Bar — variable-font hover nav */}
           <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
@@ -193,10 +197,17 @@ function IntelligenceWorkspace() {
                       isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    <VariableFontText text={tab.label} base={isActive ? 850 : 350} hover={850} staggerMs={30} />
+                    <VariableFontText
+                      text={tab.label}
+                      base={isActive ? 850 : 350}
+                      hover={850}
+                      staggerMs={30}
+                    />
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${
-                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"
+                        isActive
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground/60"
                       }`}
                     >
                       {counts[tab.key]}
@@ -221,7 +232,6 @@ function IntelligenceWorkspace() {
             {activeTab === "ml-models" && <MLModelsSection />}
           </div>
         </div>
-
       </div>
     </div>
   );

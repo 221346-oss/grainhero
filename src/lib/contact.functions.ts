@@ -1,58 +1,60 @@
-import { createServerFn } from '@tanstack/react-start'
-import { z } from 'zod'
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
 const contactFormInput = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Valid email is required'),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Valid email is required"),
   phone: z.string().optional(),
-  subject: z.string().min(1, 'Subject is required'),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
-})
+  subject: z.string().min(1, "Subject is required"),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+});
 
-type ContactFormInput = z.infer<typeof contactFormInput>
+type ContactFormInput = z.infer<typeof contactFormInput>;
 
 /**
  * Send contact form email
  * This function sends an email notification when someone submits the contact form
  */
-export const sendContactEmail = createServerFn({ method: 'POST' })
+export const sendContactEmail = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => contactFormInput.parse(d))
   .handler(async ({ data }) => {
     try {
       // Create professional email template
-      const emailHtml = generateEmailTemplate(data)
-      const emailText = generateEmailText(data)
+      const emailHtml = generateEmailTemplate(data);
+      const emailText = generateEmailText(data);
 
       // Send email using Resend API
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: 'GrainHero Contact Form <noreply@grainhero.com>',
-          to: 'grainhero@gmail.com',
+          from: "GrainHero Contact Form <noreply@grainhero.com>",
+          to: "grainhero@gmail.com",
           reply_to: data.email,
           subject: `New Contact Form Submission: ${data.subject}`,
           html: emailHtml,
           text: emailText,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.text()
-        console.error('Email send failed:', error)
-        throw new Error('Failed to send email')
+        const error = await response.text();
+        console.error("Email send failed:", error);
+        throw new Error("Failed to send email");
       }
 
-      const result = await response.json()
-      return { success: true, messageId: result.id }
+      const result = await response.json();
+      return { success: true, messageId: result.id };
     } catch (error) {
-      console.error('Error sending contact email:', error)
-      throw new Error('Failed to send message. Please try again or email us directly at grainhero@gmail.com')
+      console.error("Error sending contact email:", error);
+      throw new Error(
+        "Failed to send message. Please try again or email us directly at grainhero@gmail.com",
+      );
     }
-  })
+  });
 
 /**
  * Generate HTML email template
@@ -131,7 +133,9 @@ function generateEmailTemplate(data: ContactFormInput): string {
                   </td>
                 </tr>
                 
-                ${data.phone ? `
+                ${
+                  data.phone
+                    ? `
                 <tr>
                   <td style="padding: 15px 0; border-bottom: 1px solid #EDE9D4;">
                     <table width="100%">
@@ -148,7 +152,9 @@ function generateEmailTemplate(data: ContactFormInput): string {
                     </table>
                   </td>
                 </tr>
-                ` : ''}
+                `
+                    : ""
+                }
               </table>
 
               <!-- Message -->
@@ -188,7 +194,7 @@ ${data.message}
   </table>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }
 
 /**
@@ -206,7 +212,7 @@ CONTACT DETAILS
 
 Name: ${data.name}
 Email: ${data.email}
-${data.phone ? `Phone: ${data.phone}` : ''}
+${data.phone ? `Phone: ${data.phone}` : ""}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -221,5 +227,5 @@ To reply, send an email to: ${data.email}
 ---
 GrainHero | Smart Grain Storage Monitoring
 https://grainhero.com
-  `.trim()
+  `.trim();
 }

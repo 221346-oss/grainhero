@@ -39,7 +39,9 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [qc]);
 
   const { data: m } = useQuery({
@@ -59,8 +61,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   });
 
   const mrr = revenueData?.kpis?.mrr ?? m?.mrr ?? 0;
-  const mrrSpark = (revenueData?.revenueSeries ?? []).map(
-    (r: { revenue?: number }) => Number(r.revenue ?? 0),
+  const mrrSpark = (revenueData?.revenueSeries ?? []).map((r: { revenue?: number }) =>
+    Number(r.revenue ?? 0),
   );
   const mrrDelta = (() => {
     if (mrrSpark.length < 2) return 0;
@@ -105,7 +107,9 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         {/* Row 3: Charts + Tables (2 column layout) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2">
           {/* Left: Charts */}
-          <div><SuperBento recentSignups={w?.recentSignups ?? []} /></div>
+          <div>
+            <SuperBento recentSignups={w?.recentSignups ?? []} />
+          </div>
           {/* Right: Would add pie charts or additional metrics here */}
         </div>
       </div>

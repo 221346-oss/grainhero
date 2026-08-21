@@ -6,13 +6,17 @@ export const getOpenAlerts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     // Resolve tenant admin id
     const { data: profile } = await context.supabase
-      .from("profiles").select("id, admin_id").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const adminId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
 
     // Get open alerts with silo details
     const { data: openAlerts } = await context.supabase
       .from("grain_alerts")
-      .select(`
+      .select(
+        `
         id,
         alert_id,
         title,
@@ -34,13 +38,14 @@ export const getOpenAlerts = createServerFn({ method: "GET" })
           name,
           email
         )
-      `)
+      `,
+      )
       .eq("admin_id", adminId)
       .in("status", ["pending", "acknowledged", "escalated"] as never)
       .order("triggered_at", { ascending: false, nullsFirst: false });
 
     return {
-      alerts: openAlerts || []
+      alerts: openAlerts || [],
     };
   });
 

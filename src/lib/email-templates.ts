@@ -64,15 +64,19 @@ export function day3EmailHTML(firstName: string, siloCount: number, analyticsUrl
         <li><strong>Set Up Smart Alerts</strong></li>
         <li><strong>Try AI Predictions</strong></li>
       </ol>
-      ${siloCount === 0 ? `
+      ${
+        siloCount === 0
+          ? `
       <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;padding:20px;text-align:center">
         <h3 style="color:#92400e">⚠️ Haven't added your first silo yet?</h3>
         <a href="${analyticsUrl}/support" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;text-decoration:none">Book Setup Call</a>
-      </div>` : `
+      </div>`
+          : `
       <div style="background:#d1fae5;padding:20px;text-align:center">
         <h3 style="color:#065f46">✅ Great progress!</h3>
-        <p>You've added <strong>${siloCount} silo${siloCount > 1 ? 's' : ''}</strong></p>
-      </div>`}
+        <p>You've added <strong>${siloCount} silo${siloCount > 1 ? "s" : ""}</strong></p>
+      </div>`
+      }
       <div style="text-align:center;margin:32px 0">
         <a href="${analyticsUrl}" style="display:inline-block;background:#0ea5e9;color:#fff;padding:14px 28px;border-radius:10px;font-weight:600;text-decoration:none">View Analytics →</a>
       </div>
@@ -80,7 +84,12 @@ export function day3EmailHTML(firstName: string, siloCount: number, analyticsUrl
   return emailWrapper(content);
 }
 
-export function day10EmailHTML(firstName: string, siloCount: number, storageGB: number, featuresUrl: string) {
+export function day10EmailHTML(
+  firstName: string,
+  siloCount: number,
+  storageGB: number,
+  featuresUrl: string,
+) {
   const content = `
     <div style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);padding:32px;color:#fff;text-align:center">
       <h1 style="margin:0 0 8px;font-size:26px">Unlock Hidden Features 💎</h1>
@@ -135,7 +144,12 @@ export function trialEndingEmailHTML(firstName: string, daysLeft: number, pricin
   return emailWrapper(content);
 }
 
-export function reengagementEmailHTML(firstName: string, siloCount: number, storageGB: number, loginUrl: string) {
+export function reengagementEmailHTML(
+  firstName: string,
+  siloCount: number,
+  storageGB: number,
+  loginUrl: string,
+) {
   const content = `
     <div style="background:linear-gradient(135deg,#f97316,#ea580c);padding:32px;color:#fff;text-align:center">
       <h1 style="margin:0 0 8px;font-size:26px">We Miss You, ${escapeHtml(firstName)}! 👋</h1>

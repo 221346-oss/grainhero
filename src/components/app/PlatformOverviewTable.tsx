@@ -33,7 +33,9 @@ export function PlatformOverviewTable<T extends { admin_id: string; name: string
             <CardTitle className="text-base">{title}</CardTitle>
             {description && <CardDescription className="text-xs">{description}</CardDescription>}
           </div>
-          <Badge variant="outline" className="text-[10px]">{rows.length} tenants</Badge>
+          <Badge variant="outline" className="text-[10px]">
+            {rows.length} tenants
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -57,8 +59,13 @@ export function PlatformOverviewTable<T extends { admin_id: string; name: string
               </thead>
               <tbody>
                 {visible.map((row) => (
-                  <tr key={row.admin_id} className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors">
-                    <td className="px-4 py-2 font-medium text-foreground truncate max-w-[220px]">{row.name}</td>
+                  <tr
+                    key={row.admin_id}
+                    className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors"
+                  >
+                    <td className="px-4 py-2 font-medium text-foreground truncate max-w-[220px]">
+                      {row.name}
+                    </td>
                     {columns.map((c) => (
                       <td
                         key={String(c.key)}

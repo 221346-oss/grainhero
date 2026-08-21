@@ -1,85 +1,85 @@
-import { createServerFn } from '@tanstack/react-start'
-import { z } from 'zod'
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
 // Input validation
 const contactFormSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
-  email: z.string().email('Valid email is required').max(100),
+  name: z.string().min(1, "Name is required").max(100),
+  email: z.string().email("Valid email is required").max(100),
   phone: z.string().max(20).optional(),
-  subject: z.string().min(1, 'Subject is required').max(200),
-  message: z.string().min(10, 'Message must be at least 10 characters').max(2000),
-})
+  subject: z.string().min(1, "Subject is required").max(200),
+  message: z.string().min(10, "Message must be at least 10 characters").max(2000),
+});
 
-type ContactFormInput = z.infer<typeof contactFormSchema>
+type ContactFormInput = z.infer<typeof contactFormSchema>;
 
 /**
  * Send contact form email using Resend API
  */
-export const sendContactEmail = createServerFn({ method: 'POST' })
+export const sendContactEmail = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => contactFormSchema.parse(data))
   .handler(async ({ data }) => {
     try {
-      const resendApiKey = process.env.RESEND_API_KEY
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'GrainHero <onboarding@grainhero.me>'
+      const resendApiKey = process.env.RESEND_API_KEY;
+      const fromEmail = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@grainhero.me>";
 
-      console.log('📧 Attempting to send email...', {
+      console.log("📧 Attempting to send email...", {
         hasApiKey: !!resendApiKey,
         fromEmail,
-        to: 'grainhero@gmail.com',
-      })
+        to: "grainhero@gmail.com",
+      });
 
       if (!resendApiKey) {
-        console.error('RESEND_API_KEY not configured')
+        console.error("RESEND_API_KEY not configured");
         return {
           success: false,
-          error: 'Email service not configured. Please contact support.',
-        }
+          error: "Email service not configured. Please contact support.",
+        };
       }
 
       // Send email via Resend API
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           from: fromEmail,
-          to: 'grainhero@gmail.com',
+          to: "grainhero@gmail.com",
           reply_to: data.email,
           subject: `🌾 GrainHero Contact: ${data.subject}`,
           html: generateEmailHTML(data),
         }),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        console.error('Resend API error:', {
+        console.error("Resend API error:", {
           status: response.status,
           statusText: response.statusText,
           error: result,
-        })
+        });
         return {
           success: false,
           error: `Failed to send email: ${result.message || response.statusText}`,
-        }
+        };
       }
 
-      console.log('✅ Email sent successfully:', result.id)
+      console.log("✅ Email sent successfully:", result.id);
 
       return {
         success: true,
-        message: 'Thank you for contacting us! We will get back to you within 24 hours.',
-      }
+        message: "Thank you for contacting us! We will get back to you within 24 hours.",
+      };
     } catch (error) {
-      console.error('Email sending error:', error)
+      console.error("Email sending error:", error);
       return {
         success: false,
-        error: 'Failed to send message. Please try again.',
-      }
+        error: "Failed to send message. Please try again.",
+      };
     }
-  })
+  });
 
 /**
  * Generate professional HTML email template
@@ -144,7 +144,9 @@ function generateEmailHTML(data: ContactFormInput): string {
                     </table>
                   </td>
                 </tr>
-                ${data.phone ? `
+                ${
+                  data.phone
+                    ? `
                 <tr>
                   <td style="padding: 15px 0; border-bottom: 1px solid #EDE9D4;">
                     <table width="100%">
@@ -159,7 +161,9 @@ function generateEmailHTML(data: ContactFormInput): string {
                     </table>
                   </td>
                 </tr>
-                ` : ''}
+                `
+                    : ""
+                }
               </table>
             </td>
           </tr>
@@ -200,7 +204,7 @@ function generateEmailHTML(data: ContactFormInput): string {
   </table>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }
 
 /**
@@ -208,11 +212,11 @@ function generateEmailHTML(data: ContactFormInput): string {
  */
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  }
-  return text.replace(/[&<>"']/g, (char) => map[char])
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
 }

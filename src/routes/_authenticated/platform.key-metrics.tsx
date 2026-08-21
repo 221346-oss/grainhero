@@ -11,9 +11,16 @@ export const Route = createFileRoute("/_authenticated/platform/key-metrics")({
   head: () => ({
     meta: [
       { title: "Platform · Key Metrics — Grain Hero" },
-      { name: "description", content: "Platform · Key Metrics workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Key Metrics workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Key Metrics — Grain Hero" },
-      { property: "og:description", content: "Platform · Key Metrics workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Key Metrics workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -25,7 +32,11 @@ function PlatformKeyMetricsPage() {
   const healthFn = useServerFn(getDeviceHealth);
 
   const ordersQ = useQuery({ queryKey: ["platform-hardware-orders"], queryFn: () => ordersFn() });
-  const healthQ = useQuery({ queryKey: ["device-health"], queryFn: () => healthFn(), refetchInterval: 30_000 });
+  const healthQ = useQuery({
+    queryKey: ["device-health"],
+    queryFn: () => healthFn(),
+    refetchInterval: 30_000,
+  });
 
   const orders = ordersQ.data?.orders ?? [];
   // "Sold" = every non-cancelled order's device quantity. Deployed = devices
@@ -37,9 +48,19 @@ function PlatformKeyMetricsPage() {
   const remaining = Math.max(0, totalOrdered - deployed);
 
   const stockTiles = [
-    { key: "ordered", label: "Total devices sold", value: totalOrdered, hint: "Sum of ordered quantities" },
+    {
+      key: "ordered",
+      label: "Total devices sold",
+      value: totalOrdered,
+      hint: "Sum of ordered quantities",
+    },
     { key: "deployed", label: "Deployed", value: deployed, hint: "Registered & installed" },
-    { key: "remaining", label: "Remaining to deploy", value: remaining, hint: "Sold, not yet installed" },
+    {
+      key: "remaining",
+      label: "Remaining to deploy",
+      value: remaining,
+      hint: "Sold, not yet installed",
+    },
   ];
 
   const statusTiles = [

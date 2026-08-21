@@ -4,7 +4,7 @@ import { listTickets } from "@/lib/tickets.functions";
 
 export function useTicketCount() {
   const ticketsFn = useServerFn(listTickets);
-  
+
   const { data: ticketData } = useQuery({
     queryKey: ["field-tickets", "open"],
     queryFn: () => ticketsFn({ data: { status: "open" } }),

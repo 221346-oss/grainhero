@@ -84,8 +84,18 @@ function parsePaymentId(text: string): string | null {
 }
 
 const MONTH_INDEX: Record<string, number> = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
 };
 
 // Builds an ISO date from explicit, already-disambiguated parts — never
@@ -139,12 +149,16 @@ const DATE_LABEL_PATTERNS = [
   new RegExp(`receipt\\s*date\\s*[:\\-]?\\s*${DATE_VALUE}`, "i"),
   new RegExp(`transaction\\s*date\\s*[:\\-]?\\s*${DATE_VALUE}`, "i"),
   new RegExp(`issue(?:d)?\\s*(?:date|on)?\\s*[:\\-]?\\s*${DATE_VALUE}`, "i"),
-  new RegExp(`(?<!due\\s)(?<!expiry\\s)(?<!expires\\s)(?<!payable\\s)\\bdate\\b\\s*[:\\-]?\\s*${DATE_VALUE}`, "i"),
+  new RegExp(
+    `(?<!due\\s)(?<!expiry\\s)(?<!expires\\s)(?<!payable\\s)\\bdate\\b\\s*[:\\-]?\\s*${DATE_VALUE}`,
+    "i",
+  ),
 ];
 
 function resolveDateMatch(groups: Record<string, string | undefined>): string | null {
   if (groups.y1) return buildIsoDate(Number(groups.y1), Number(groups.m1) - 1, Number(groups.d1));
-  if (groups.d2) return parseAmbiguousNumericDate(Number(groups.d2), Number(groups.m2), Number(groups.y2));
+  if (groups.d2)
+    return parseAmbiguousNumericDate(Number(groups.d2), Number(groups.m2), Number(groups.y2));
   if (groups.d3 && groups.mon3) {
     const mi = monthFromName(groups.mon3);
     const yr = Number(groups.y3) < 100 ? 2000 + Number(groups.y3) : Number(groups.y3);
@@ -185,8 +199,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
     promise.then(
-      (v) => { clearTimeout(timer); resolve(v); },
-      (e) => { clearTimeout(timer); reject(e); },
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
     );
   });
 }
@@ -222,18 +242,30 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
  * which stage failed and why (check the browser console).
  */
 export async function extractPaymentDetails(imageFile: File): Promise<ExtractedPaymentDetails> {
-  const empty: ExtractedPaymentDetails = { paymentId: null, amount: null, date: null, rawText: "", confidence: 0 };
+  const empty: ExtractedPaymentDetails = {
+    paymentId: null,
+    amount: null,
+    date: null,
+    rawText: "",
+    confidence: 0,
+  };
 
   if (typeof window === "undefined") {
-    console.warn("[ocr] extractPaymentDetails called outside the browser — OCR is client-only, skipping");
+    console.warn(
+      "[ocr] extractPaymentDetails called outside the browser — OCR is client-only, skipping",
+    );
     return empty;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let createWorker: ((lang: string, oem?: number, options?: Record<string, unknown>) => Promise<any>) | null = null;
+  let createWorker:
+    ((lang: string, oem?: number, options?: Record<string, unknown>) => Promise<any>) | null = null;
   try {
     const mod = await import("tesseract.js");
-    createWorker = mod.createWorker ?? (mod as unknown as { default?: { createWorker?: typeof mod.createWorker } }).default?.createWorker ?? null;
+    createWorker =
+      mod.createWorker ??
+      (mod as unknown as { default?: { createWorker?: typeof mod.createWorker } }).default
+        ?.createWorker ??
+      null;
   } catch (err) {
     console.error("[ocr] Failed to load the tesseract.js module:", err);
     return empty;
@@ -275,7 +307,9 @@ export async function extractPaymentDetails(imageFile: File): Promise<ExtractedP
       "OCR recognition",
     );
     const rawText = data.text ?? "";
-    console.log(`[ocr] recognize() finished in ${Date.now() - recognizeStart}ms, confidence=${data.confidence}`);
+    console.log(
+      `[ocr] recognize() finished in ${Date.now() - recognizeStart}ms, confidence=${data.confidence}`,
+    );
     console.log("[ocr] Raw text:", JSON.stringify(rawText));
     return {
       paymentId: parsePaymentId(rawText),

@@ -3,7 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 
 async function assertSuperAdmin(supabase: any, userId: string) {
-  if ((await getEffectiveRole(supabase, userId)) !== "super_admin") throw new Error("Forbidden: super admin only");
+  if ((await getEffectiveRole(supabase, userId)) !== "super_admin")
+    throw new Error("Forbidden: super admin only");
 }
 
 export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
@@ -18,7 +19,8 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
     const [subsRes, invRes, profRes, hwRes] = await Promise.all([
       sa.from("subscriptions").select("*"),
       // invoices is a billing table — may be empty in dev; graceful fallback
-      sa.from("invoices")
+      sa
+        .from("invoices")
         .select("id,admin_id,amount,currency,status,billing_date,invoice_number,created_at")
         .order("billing_date", { ascending: false })
         .limit(500)
@@ -28,7 +30,8 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
         ),
       sa.from("profiles").select("id, subscription_plan, created_at, admin_id, name, email"),
       // hardware_orders — filter using PostgREST array syntax (not raw SQL)
-      sa.from("hardware_orders")
+      sa
+        .from("hardware_orders")
         .select("id, admin_id, plan_name, hardware_total, currency, status, created_at")
         .not("status", "in", '("pending_payment","cancelled","refunded")')
         .then(
@@ -43,7 +46,11 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
     const profiles = (profRes.data ?? []).filter((p: any) => !p.admin_id);
     const hardware = hwRes.data ?? [];
 
-    let mrrResult: { mrr: number; entries: any[]; byPlan: Record<string, number> } = { mrr: 0, entries: [], byPlan: {} };
+    let mrrResult: { mrr: number; entries: any[]; byPlan: Record<string, number> } = {
+      mrr: 0,
+      entries: [],
+      byPlan: {},
+    };
     try {
       mrrResult = await computeMrr({ supabase: sa, subscriptions, profiles });
     } catch (err) {
@@ -53,11 +60,17 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
     const arr = mrr * 12;
     const activeSubs = mrrResult.entries;
 
-    const trialSubs  = subscriptions.filter((s: any) => s.status === "trial" || s.status === "trialing");
+    const trialSubs = subscriptions.filter(
+      (s: any) => s.status === "trial" || s.status === "trialing",
+    );
     const cancelledSubs = subscriptions.filter((s: any) => s.status === "cancelled");
     const paid = invoices.filter((i: any) => i.status === "paid");
-    const hardwareRevenue = hardware.reduce((s: number, o: any) => s + Number(o.hardware_total ?? 0), 0);
-    const totalRevenue = paid.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0) + hardwareRevenue;
+    const hardwareRevenue = hardware.reduce(
+      (s: number, o: any) => s + Number(o.hardware_total ?? 0),
+      0,
+    );
+    const totalRevenue =
+      paid.reduce((s: number, i: any) => s + Number(i.amount ?? 0), 0) + hardwareRevenue;
 
     // ── Revenue by month (last 12) ──────────────────────────────────────────
     const byMonth: Record<string, number> = {};
@@ -80,7 +93,10 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
     const revenueSeries = Object.entries(byMonth).map(([month, revenue]) => ({ month, revenue }));
 
     // ── Plan breakdown ──────────────────────────────────────────────────────
-    const planSeries = Object.entries(mrrResult.byPlan).map(([plan, m]) => ({ plan, mrr: Math.round(m as number) }));
+    const planSeries = Object.entries(mrrResult.byPlan).map(([plan, m]) => ({
+      plan,
+      mrr: Math.round(m as number),
+    }));
 
     // ── Subscriber growth (cumulative, last 12 months) ──────────────────────
     const growth: { month: string; subscribers: number }[] = [];
@@ -96,13 +112,26 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
     const now = Date.now();
     const in7 = now + 7 * 86_400_000;
     const expiring = subscriptions
-      .filter((s: any) => s.current_period_end && new Date(s.current_period_end).getTime() <= in7 && new Date(s.current_period_end).getTime() >= now)
-      .sort((a: any, b: any) => new Date(a.current_period_end).getTime() - new Date(b.current_period_end).getTime());
+      .filter(
+        (s: any) =>
+          s.current_period_end &&
+          new Date(s.current_period_end).getTime() <= in7 &&
+          new Date(s.current_period_end).getTime() >= now,
+      )
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.current_period_end).getTime() - new Date(b.current_period_end).getTime(),
+      );
 
     // ── Churn (30-day window) ───────────────────────────────────────────────
     const in30 = now - 30 * 86_400_000;
-    const churned = subscriptions.filter((s: any) => s.status === "cancelled" && s.updated_at && new Date(s.updated_at).getTime() >= in30).length;
-    const activeStart = subscriptions.filter((s: any) => new Date(s.created_at).getTime() < in30 && s.status !== "trial").length;
+    const churned = subscriptions.filter(
+      (s: any) =>
+        s.status === "cancelled" && s.updated_at && new Date(s.updated_at).getTime() >= in30,
+    ).length;
+    const activeStart = subscriptions.filter(
+      (s: any) => new Date(s.created_at).getTime() < in30 && s.status !== "trial",
+    ).length;
     const churnRate = activeStart > 0 ? (churned / activeStart) * 100 : 0;
 
     // ── Per-admin subscription details for the table ────────────────────────
@@ -147,8 +176,13 @@ export const getSaasRevenueAnalytics = createServerFn({ method: "GET" })
         };
       }),
       recentInvoices: invoices.slice(0, 20).map((i: any) => ({
-        id: i.id, admin_id: i.admin_id, amount: i.amount, currency: i.currency,
-        status: i.status, billing_date: i.billing_date, invoice_number: i.invoice_number,
+        id: i.id,
+        admin_id: i.admin_id,
+        amount: i.amount,
+        currency: i.currency,
+        status: i.status,
+        billing_date: i.billing_date,
+        invoice_number: i.invoice_number,
       })),
       currency: "PKR",
     };

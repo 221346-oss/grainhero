@@ -16,11 +16,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  getAdminWarehouses, 
+import {
+  getAdminWarehouses,
   getTechniciansForWarehouse,
   assignTechnicianToOrder,
 } from "@/lib/warehouse-assignment.functions";
@@ -83,7 +89,11 @@ export function TechnicianAssignmentDialog({
   });
 
   // Fetch technicians for selected warehouse
-  const { data: techniciansData, isLoading: loadingTechnicians, error: techniciansError } = useQuery({
+  const {
+    data: techniciansData,
+    isLoading: loadingTechnicians,
+    error: techniciansError,
+  } = useQuery({
     queryKey: ["warehouse-technicians", selectedWarehouse],
     queryFn: () => getTechnicians({ data: { warehouseId: selectedWarehouse || null } }),
     enabled: open,
@@ -115,8 +125,7 @@ export function TechnicianAssignmentDialog({
     // Available technicians first, then busy, then offline/on-leave.
     .slice()
     .sort((a: any, b: any) => {
-      const rank = (s: string | null | undefined) =>
-        s === "available" ? 0 : s === "busy" ? 1 : 2;
+      const rank = (s: string | null | undefined) => (s === "available" ? 0 : s === "busy" ? 1 : 2);
       return rank(a.technician_status) - rank(b.technician_status);
     });
   const isFiltered = techniciansData?.filtered_by_warehouse ?? false;
@@ -201,7 +210,8 @@ export function TechnicianAssignmentDialog({
               )}
               {isFiltered && selectedWarehouse && (
                 <p className="text-xs text-muted-foreground">
-                  Showing technicians assigned to this warehouse first, then other available technicians
+                  Showing technicians assigned to this warehouse first, then other available
+                  technicians
                 </p>
               )}
             </div>
@@ -228,7 +238,9 @@ export function TechnicianAssignmentDialog({
             ) : (
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {technicians.map((tech: any) => {
-                  const statusConfig = TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] || TECH_STATUS_CONFIG.available;
+                  const statusConfig =
+                    TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] ||
+                    TECH_STATUS_CONFIG.available;
                   const StatusIcon = statusConfig.icon;
 
                   return (
@@ -246,25 +258,33 @@ export function TechnicianAssignmentDialog({
                           <User className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                           <div className="min-w-0">
                             <div className="font-medium text-sm">{tech.name}</div>
-                            <div className="text-xs text-muted-foreground truncate">{tech.email}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {tech.email}
+                            </div>
                             {tech.phone && (
                               <div className="text-xs text-muted-foreground">{tech.phone}</div>
                             )}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
-                          <Badge variant="outline" className={`text-xs whitespace-nowrap ${statusConfig.color}`}>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs whitespace-nowrap ${statusConfig.color}`}
+                          >
                             <StatusIcon className="h-3 w-3 mr-1" />
                             {statusConfig.label}
                           </Badge>
-                          {(tech.current_job_count !== undefined && tech.max_concurrent_jobs !== undefined) && (
-                            <span className="text-xs text-muted-foreground">
-                              {tech.current_job_count}/{tech.max_concurrent_jobs}
-                            </span>
-                          )}
+                          {tech.current_job_count !== undefined &&
+                            tech.max_concurrent_jobs !== undefined && (
+                              <span className="text-xs text-muted-foreground">
+                                {tech.current_job_count}/{tech.max_concurrent_jobs}
+                              </span>
+                            )}
                           {!tech.is_available && (
                             <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                              {tech.current_job_count >= tech.max_concurrent_jobs ? "At capacity" : "Unavailable"}
+                              {tech.current_job_count >= tech.max_concurrent_jobs
+                                ? "At capacity"
+                                : "Unavailable"}
                             </span>
                           )}
                         </div>
@@ -281,20 +301,32 @@ export function TechnicianAssignmentDialog({
             <div className="p-3 bg-muted/50 rounded-lg border border-border space-y-2">
               <div className="text-sm font-medium">Selected Technician</div>
               <div className="space-y-1 text-xs text-muted-foreground">
-                <div><span className="font-medium">Name:</span> {selectedTech.name}</div>
-                <div><span className="font-medium">Email:</span> {selectedTech.email}</div>
+                <div>
+                  <span className="font-medium">Name:</span> {selectedTech.name}
+                </div>
+                <div>
+                  <span className="font-medium">Email:</span> {selectedTech.email}
+                </div>
                 <div className="flex items-center gap-1">
                   <span className="font-medium">Status:</span>
-                  <Badge variant="outline" className={`text-xs ${TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.color || ''}`}>
-                    {TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.label || "Unknown"}
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.color || ""}`}
+                  >
+                    {TECH_STATUS_CONFIG[
+                      selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG
+                    ]?.label || "Unknown"}
                   </Badge>
                 </div>
-                <div><span className="font-medium">Current jobs:</span> {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}</div>
+                <div>
+                  <span className="font-medium">Current jobs:</span>{" "}
+                  {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}
+                </div>
               </div>
               {!selectedTech.is_available && (
                 <p className="text-xs text-amber-700 pt-1">
-                  This technician is not available (on leave / offline or at capacity).
-                  Assigning is blocked until they free a slot or set themselves available.
+                  This technician is not available (on leave / offline or at capacity). Assigning is
+                  blocked until they free a slot or set themselves available.
                 </p>
               )}
             </div>
@@ -322,7 +354,9 @@ export function TechnicianAssignmentDialog({
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={!selectedTechnician || !selectedTech?.is_available || assignMutation.isPending}
+            disabled={
+              !selectedTechnician || !selectedTech?.is_available || assignMutation.isPending
+            }
           >
             {assignMutation.isPending ? (
               <>

@@ -26,25 +26,39 @@ type Kind =
   | "refundIssued"
   | "orderCancelled";
 
-async function fetchOrderCtx(sb: SupabaseClient<Database>, orderId: string): Promise<{
+async function fetchOrderCtx(
+  sb: SupabaseClient<Database>,
+  orderId: string,
+): Promise<{
   to: string | null;
   vars: Record<string, string>;
 } | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (sb as any).from("buyer_orders")
-    .select("id, order_number, quantity_kg, subtotal, currency, buyer_account_id, grain_listings(title)")
-    .eq("id", orderId).maybeSingle();
+  const { data } = await (sb as any)
+    .from("buyer_orders")
+    .select(
+      "id, order_number, quantity_kg, subtotal, currency, buyer_account_id, grain_listings(title)",
+    )
+    .eq("id", orderId)
+    .maybeSingle();
   const o = data as Row | null;
   if (!o) return null;
   let email: string | null = null;
   if (o.buyer_account_id) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: acc } = await (sb as any).from("buyer_accounts")
-      .select("user_id, contact_phone").eq("id", o.buyer_account_id).maybeSingle();
+    const { data: acc } = await (sb as any)
+      .from("buyer_accounts")
+      .select("user_id, contact_phone")
+      .eq("id", o.buyer_account_id)
+      .maybeSingle();
     const userId = (acc as Row | null)?.user_id;
     if (userId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: prof } = await (sb as any).from("profiles").select("email").eq("id", userId).maybeSingle();
+      const { data: prof } = await (sb as any)
+        .from("profiles")
+        .select("email")
+        .eq("id", userId)
+        .maybeSingle();
       email = (prof as Row | null)?.email ?? null;
     }
   }
@@ -63,11 +77,14 @@ async function fetchOrderCtx(sb: SupabaseClient<Database>, orderId: string): Pro
 }
 
 function toHtml(body: string): string {
-  const escaped = body
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const paragraphs = escaped.split(/\n\n+/).map((p) =>
-    `<p style="margin:0 0 12px;line-height:1.5;color:#0f172a">${p.replace(/\n/g, "<br/>")}</p>`
-  ).join("");
+  const escaped = body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const paragraphs = escaped
+    .split(/\n\n+/)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 12px;line-height:1.5;color:#0f172a">${p.replace(/\n/g, "<br/>")}</p>`,
+    )
+    .join("");
   return `<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:560px;padding:24px;color:#0f172a">${paragraphs}</div>`;
 }
 

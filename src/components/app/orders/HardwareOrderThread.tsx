@@ -57,7 +57,10 @@ export function HardwareOrderThread({
           {data?.messages?.map((msg) => {
             const mine = (msg.sender_role as string) === as;
             return (
-              <div key={msg.id as string} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div
+                key={msg.id as string}
+                className={`flex ${mine ? "justify-end" : "justify-start"}`}
+              >
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 ${
                     mine ? "bg-emerald-600 text-white" : "bg-muted text-foreground"

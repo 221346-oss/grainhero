@@ -21,10 +21,14 @@ export const issueCommand = createServerFn({ method: "POST" })
   .validator((d) => ISSUE_INPUT.parse(d))
   .handler(async ({ data, context }) => {
     const role = await getEffectiveRole(context.supabase, context.userId);
-    if (!["admin", "manager", "super_admin", "technician"].includes(role)) throw new Error("Forbidden");
+    if (!["admin", "manager", "super_admin", "technician"].includes(role))
+      throw new Error("Forbidden");
 
     const { data: act } = await context.supabase
-      .from("actuators").select("id, admin_id, status").eq("id", data.actuatorId).maybeSingle();
+      .from("actuators")
+      .select("id, admin_id, status")
+      .eq("id", data.actuatorId)
+      .maybeSingle();
     if (!act) throw new Error("Actuator not found");
     const a = act as Row;
 
@@ -58,7 +62,8 @@ export const issueCommand = createServerFn({ method: "POST" })
       actorId: context.userId,
       tenantAdminId: a.admin_id as string,
       action: "actuator.command_issued",
-      targetType: "actuator", targetId: data.actuatorId,
+      targetType: "actuator",
+      targetId: data.actuatorId,
       meta: { command: data.command, correlationId: (cmd as Row).correlation_id },
     });
     return { id: (cmd as Row).id as string, correlationId: (cmd as Row).correlation_id as string };
@@ -66,9 +71,20 @@ export const issueCommand = createServerFn({ method: "POST" })
 
 export const listCommands = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ actuatorId: z.string().uuid().optional(), limit: z.number().int().min(1).max(200).default(50) }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        actuatorId: z.string().uuid().optional(),
+        limit: z.number().int().min(1).max(200).default(50),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    let q = context.supabase.from("actuator_commands").select("*").order("created_at", { ascending: false }).limit(data.limit);
+    let q = context.supabase
+      .from("actuator_commands")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
     if (data.actuatorId) q = q.eq("actuator_id", data.actuatorId);
     const { data: rows, error } = await q;
     if (error) throw error;
@@ -82,9 +98,10 @@ export async function ackCommandByCorrelation(
   error?: string | null,
 ): Promise<boolean> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const patch: Row = outcome === "ack"
-    ? { status: "ack", ack_at: new Date().toISOString(), error: null }
-    : { status: "failed", ack_at: new Date().toISOString(), error: error ?? "unknown" };
+  const patch: Row =
+    outcome === "ack"
+      ? { status: "ack", ack_at: new Date().toISOString(), error: null }
+      : { status: "failed", ack_at: new Date().toISOString(), error: error ?? "unknown" };
   const { data, error: e } = await supabaseAdmin
     .from("actuator_commands")
     .update(patch as never)

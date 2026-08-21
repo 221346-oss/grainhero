@@ -7,9 +7,7 @@ import { z } from "zod";
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
   if (r.success) return r.data;
-  const msg = r.error.issues
-    .map((i) => `${i.path.join(".") || "field"}: ${i.message}`)
-    .join(" · ");
+  const msg = r.error.issues.map((i) => `${i.path.join(".") || "field"}: ${i.message}`).join(" · ");
   throw new Error(msg);
 }
 
@@ -17,10 +15,7 @@ async function resolveRole(
   supabase: ReturnType<typeof import("@supabase/supabase-js").createClient>,
   userId: string,
 ): Promise<string> {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
+  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   const roles = ((data as { role: string }[] | null) ?? []).map((r) => r.role);
   const order = ["super_admin", "admin", "manager", "technician", "buyer", "pending"];
   return order.find((r) => roles.includes(r)) ?? "admin";
@@ -103,9 +98,10 @@ export const createTicket = createServerFn({ method: "POST" })
       .select("name, email")
       .eq("id", context.userId)
       .maybeSingle();
-    const fromName = (profile as { name?: string; email?: string } | null)?.name
-      ?? (profile as { name?: string; email?: string } | null)?.email
-      ?? "Admin";
+    const fromName =
+      (profile as { name?: string; email?: string } | null)?.name ??
+      (profile as { name?: string; email?: string } | null)?.email ??
+      "Admin";
 
     const priorityType = data.priority === "high" ? "warning" : "info";
 

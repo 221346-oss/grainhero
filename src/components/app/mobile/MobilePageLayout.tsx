@@ -25,7 +25,7 @@ export function MobilePageLayout({
   userName,
 }: MobilePageLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarView, setSidebarView] = useState<'navigation' | 'tickets'>('navigation');
+  const [sidebarView, setSidebarView] = useState<"navigation" | "tickets">("navigation");
   const [selectedTicket, setSelectedTicket] = useState<TicketRow | null>(null);
 
   // Fetch tickets for the mobile tickets panel - Only OPEN tickets
@@ -40,12 +40,12 @@ export function MobilePageLayout({
   // Lock body scroll when sidebar is open
   useEffect(() => {
     if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [sidebarOpen]);
 
@@ -57,15 +57,15 @@ export function MobilePageLayout({
       {sidebarOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setSidebarOpen(false)}
           ></div>
-          
+
           {/* Drawer */}
           <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white border-r border-border z-50 overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-border px-4 py-4 flex items-center justify-between">
-              {sidebarView === 'navigation' ? (
+              {sidebarView === "navigation" ? (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-success flex items-center justify-center">
@@ -73,7 +73,7 @@ export function MobilePageLayout({
                     </div>
                     <span className="font-semibold text-foreground">GrainHero</span>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setSidebarOpen(false)}
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                   >
@@ -84,7 +84,7 @@ export function MobilePageLayout({
                 <>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setSidebarView('navigation')}
+                      onClick={() => setSidebarView("navigation")}
                       className="p-2 hover:bg-muted rounded-lg transition-colors"
                       aria-label="Back to navigation"
                     >
@@ -92,7 +92,7 @@ export function MobilePageLayout({
                     </button>
                     <span className="font-semibold text-foreground">Tickets</span>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setSidebarOpen(false)}
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                   >
@@ -101,18 +101,17 @@ export function MobilePageLayout({
                 </>
               )}
             </div>
-            
+
             <div className="py-1">
-              {sidebarView === 'navigation' ? (
-                <MobileAdminNav 
-                  isOpen={true}
-                  onClose={() => setSidebarOpen(false)}
-                />
+              {sidebarView === "navigation" ? (
+                <MobileAdminNav isOpen={true} onClose={() => setSidebarOpen(false)} />
               ) : (
                 // Tickets View - List all tickets
                 <div className="space-y-1">
                   <div className="px-4 py-3 border-b border-border">
-                    <p className="text-xs text-muted-foreground">Open incident tickets from all admins</p>
+                    <p className="text-xs text-muted-foreground">
+                      Open incident tickets from all admins
+                    </p>
                   </div>
                   {allTickets.length === 0 ? (
                     <div className="px-4 py-8 text-center">
@@ -126,7 +125,9 @@ export function MobilePageLayout({
                         className="w-full text-left px-4 py-2.5 border-b border-border/30 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="text-sm font-medium text-foreground line-clamp-1">{ticket.title}</h4>
+                          <h4 className="text-sm font-medium text-foreground line-clamp-1">
+                            {ticket.title}
+                          </h4>
                           <Badge variant="outline" className="text-xs shrink-0">
                             {ticket.priority}
                           </Badge>
@@ -146,15 +147,13 @@ export function MobilePageLayout({
 
       {/* Main Content Area - Full width, scrollable */}
       <main className="flex-1 w-full overflow-y-auto">
-        <div className="w-full min-h-full bg-white">
-          {children}
-        </div>
+        <div className="w-full min-h-full bg-white">{children}</div>
       </main>
 
       {/* Ticket Detail Sheet */}
-      <TicketDetailSheet 
-        ticket={selectedTicket} 
-        open={!!selectedTicket} 
+      <TicketDetailSheet
+        ticket={selectedTicket}
+        open={!!selectedTicket}
         onClose={() => setSelectedTicket(null)}
       />
     </div>

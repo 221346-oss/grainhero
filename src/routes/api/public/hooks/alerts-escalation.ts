@@ -49,7 +49,12 @@ export const Route = createFileRoute("/api/public/hooks/alerts-escalation")({
           console.error("field-incident reassignment error:", dueErr);
         } else {
           const { emitNotification } = await import("@/lib/notify");
-          for (const incident of (due ?? []) as unknown as Array<{ id: string; admin_id: string; recipient_id: string | null; custom_fields: Record<string, unknown> | null }>) {
+          for (const incident of (due ?? []) as unknown as Array<{
+            id: string;
+            admin_id: string;
+            recipient_id: string | null;
+            custom_fields: Record<string, unknown> | null;
+          }>) {
             const tenantAdminId = incident.admin_id;
             if (!tenantAdminId || incident.recipient_id === tenantAdminId) continue;
             const oldRecipient = incident.recipient_id;
@@ -86,7 +91,12 @@ export const Route = createFileRoute("/api/public/hooks/alerts-escalation")({
         }
 
         return new Response(
-          JSON.stringify({ ok: true, escalated: data?.length ?? 0, reassigned, at: new Date().toISOString() }),
+          JSON.stringify({
+            ok: true,
+            escalated: data?.length ?? 0,
+            reassigned,
+            at: new Date().toISOString(),
+          }),
           { headers: { "content-type": "application/json" } },
         );
       },

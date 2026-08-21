@@ -16,9 +16,15 @@ export const Route = createFileRoute("/auth/accept-invite")({
   head: () => ({
     meta: [
       { title: "Accept your invitation — GrainHero" },
-      { name: "description", content: "Accept your GrainHero team invitation and set up your account." },
+      {
+        name: "description",
+        content: "Accept your GrainHero team invitation and set up your account.",
+      },
       { property: "og:title", content: "Accept your invitation — GrainHero" },
-      { property: "og:description", content: "Accept your GrainHero team invitation and set up your account." },
+      {
+        property: "og:description",
+        content: "Accept your GrainHero team invitation and set up your account.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

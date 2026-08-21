@@ -58,7 +58,12 @@ export const Route = createFileRoute("/api/public/hooks/sensor-offline-detector"
         }
 
         return new Response(
-          JSON.stringify({ ok: true, offlined: updated, alertsCreated, at: new Date().toISOString() }),
+          JSON.stringify({
+            ok: true,
+            offlined: updated,
+            alertsCreated,
+            at: new Date().toISOString(),
+          }),
           { headers: { "content-type": "application/json" } },
         );
       },

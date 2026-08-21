@@ -6,8 +6,12 @@ import { WelcomeBanner } from "./WelcomeBanner";
 import { KpiSummary } from "./KpiSummary";
 import { InsightsStrip } from "./InsightsStrip";
 import {
-  DashboardSiloCards, IncomingQueueCard, FieldIncidentsCard, RecentActivityCard,
-  RecentBatchesCard, SupportTicketsCard,
+  DashboardSiloCards,
+  IncomingQueueCard,
+  FieldIncidentsCard,
+  RecentActivityCard,
+  RecentBatchesCard,
+  SupportTicketsCard,
 } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";

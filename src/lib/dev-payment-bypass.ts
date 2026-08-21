@@ -1,7 +1,7 @@
 /**
  * Development-only payment bypass
  * Allows testing the complete order flow without Stripe CLI or webhooks
- * 
+ *
  * SECURITY: Only works in development mode, not in production
  */
 
@@ -39,7 +39,7 @@ export const devSimulatePayment = createServerFn({ method: "POST" })
     }
 
     const orderStatus = String((order as any).status ?? "");
-    
+
     // Only allow simulating payment for approved or pending_payment orders
     if (orderStatus !== "approved" && orderStatus !== "pending_payment") {
       throw new Error(`Cannot simulate payment for order with status: ${orderStatus}`);
@@ -62,7 +62,7 @@ export const devSimulatePayment = createServerFn({ method: "POST" })
     // Notify the user
     try {
       const { emitNotification } = await import("@/lib/notify");
-      
+
       await emitNotification(supabaseAdmin, {
         recipientId: context.userId,
         tenantAdminId: context.userId,
@@ -78,8 +78,8 @@ export const devSimulatePayment = createServerFn({ method: "POST" })
       console.warn("[devSimulatePayment] notification failed:", (e as Error).message);
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: "Payment simulated successfully. Order status updated to 'paid'.",
       devNote: "This is a development-only bypass. In production, Stripe webhooks handle this.",
     };

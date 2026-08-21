@@ -4,13 +4,29 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  Package, ArrowLeft, Building2, MapPin, Truck, Wheat, Loader2, Inbox, Edit2, Eye,
+  Package,
+  ArrowLeft,
+  Building2,
+  MapPin,
+  Truck,
+  Wheat,
+  Loader2,
+  Inbox,
+  Edit2,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { StatusBadge } from "@/components/app/DataListPage";
 import { InlineRename } from "@/components/app/InlineRename";
@@ -26,9 +42,15 @@ export const Route = createFileRoute("/_authenticated/silos/$siloId")({
   head: () => ({
     meta: [
       { title: "Silos · SiloId — Grain Hero" },
-      { name: "description", content: "Silos · SiloId workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Silos · SiloId workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Silos · SiloId — Grain Hero" },
-      { property: "og:description", content: "Silos · SiloId workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Silos · SiloId workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -46,8 +68,12 @@ type Silo = {
   location: { description?: string | null } | null;
   notes: string | null;
   warehouses?: {
-    id: string; name: string; warehouse_id: string;
-    city?: string | null; country?: string | null; address_line1?: string | null;
+    id: string;
+    name: string;
+    warehouse_id: string;
+    city?: string | null;
+    country?: string | null;
+    address_line1?: string | null;
   } | null;
 };
 
@@ -89,7 +115,10 @@ function SiloDetailPage() {
   const fetchRole = useServerFn(getMyRole);
   const qc = useQueryClient();
   const silosQ = useQuery({ queryKey: ["silos"], queryFn: () => listS() as Promise<Silo[]> });
-  const batchesQ = useQuery({ queryKey: ["grain-batches"], queryFn: () => listB() as Promise<Batch[]> });
+  const batchesQ = useQuery({
+    queryKey: ["grain-batches"],
+    queryFn: () => listB() as Promise<Batch[]>,
+  });
   const dispatchesQ = useQuery({
     queryKey: ["silo-dispatches", siloId],
     queryFn: () => listD({ data: { siloId } }),
@@ -109,7 +138,10 @@ function SiloDetailPage() {
     onError: (e: Error) => toast.error(e.message || "Rename failed"),
   });
 
-  const silo = useMemo(() => silosQ.data?.find((s) => s.id === siloId) ?? null, [silosQ.data, siloId]);
+  const silo = useMemo(
+    () => silosQ.data?.find((s) => s.id === siloId) ?? null,
+    [silosQ.data, siloId],
+  );
   const batches = useMemo(
     () => (batchesQ.data ?? []).filter((b) => b.silos?.id === siloId),
     [batchesQ.data, siloId],
@@ -124,7 +156,10 @@ function SiloDetailPage() {
     let costedValue = 0;
     let totalRemaining = 0;
     for (const b of batches) {
-      const remaining = Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0));
+      const remaining = Math.max(
+        0,
+        Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0),
+      );
       totalRemaining += remaining;
       if (b.purchase_price_per_kg != null) {
         costedKg += remaining;
@@ -132,7 +167,11 @@ function SiloDetailPage() {
       }
     }
     const avgCost = costedKg > 0 ? costedValue / costedKg : null;
-    return { avgCost, totalRemaining, stockValue: avgCost != null ? avgCost * totalRemaining : null };
+    return {
+      avgCost,
+      totalRemaining,
+      stockValue: avgCost != null ? avgCost * totalRemaining : null,
+    };
   }, [batches]);
 
   // Margin summary from dispatch history — revenue/cost/profit are already
@@ -165,10 +204,18 @@ function SiloDetailPage() {
   if (!silo) {
     return (
       <div className="p-8 max-w-3xl mx-auto">
-        <Link to="/grain-operations" search={{ tab: "silos" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link
+          to="/grain-operations"
+          search={{ tab: "silos" }}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
           <ArrowLeft className="w-4 h-4" /> Back to silos
         </Link>
-        <Card className="border-dashed"><CardContent className="py-12 text-center text-muted-foreground">Silo not found.</CardContent></Card>
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Silo not found.
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -180,7 +227,11 @@ function SiloDetailPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-      <Link to="/grain-operations" search={{ tab: "silos" }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/grain-operations"
+        search={{ tab: "silos" }}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="w-4 h-4" /> Back to silos
       </Link>
 
@@ -191,7 +242,9 @@ function SiloDetailPage() {
               <InlineRename
                 value={silo.name}
                 canRename={canRename}
-                onSave={async (next) => { await renameMutation.mutateAsync({ id: silo.id, name: next }); }}
+                onSave={async (next) => {
+                  await renameMutation.mutateAsync({ id: silo.id, name: next });
+                }}
               />
             </h1>
             <InfoDot text={`${silo.silo_id} · ${cap.toLocaleString()} kg capacity`} />
@@ -210,7 +263,9 @@ function SiloDetailPage() {
             <div>
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                 <span>Occupancy</span>
-                <span className="font-medium tabular-nums">{occ.toLocaleString()} / {cap.toLocaleString()} kg</span>
+                <span className="font-medium tabular-nums">
+                  {occ.toLocaleString()} / {cap.toLocaleString()} kg
+                </span>
               </div>
               <Progress value={pct} className="h-2" />
               <div className="text-[10px] text-muted-foreground mt-1">{pct}% full</div>
@@ -222,7 +277,9 @@ function SiloDetailPage() {
             )}
             {silo.notes && (
               <div className="pt-2 border-t border-border/60">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Notes</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  Notes
+                </div>
                 <p className="text-sm text-foreground whitespace-pre-wrap">{silo.notes}</p>
               </div>
             )}
@@ -247,7 +304,9 @@ function SiloDetailPage() {
               </div>
               {wh && (
                 <Button size="sm" variant="ghost" className="h-7 gap-1" asChild>
-                  <Link to="/grain-operations" search={{ tab: "silos" }}><Eye className="w-3.5 h-3.5" /> Open</Link>
+                  <Link to="/grain-operations" search={{ tab: "silos" }}>
+                    <Eye className="w-3.5 h-3.5" /> Open
+                  </Link>
                 </Button>
               )}
             </div>
@@ -277,17 +336,27 @@ function SiloDetailPage() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Wheat className="w-4 h-4 text-amber-600" /> Grain batches in this silo
-              <Badge variant="secondary" className="ml-1">{batches.length}</Badge>
+              <Badge variant="secondary" className="ml-1">
+                {batches.length}
+              </Badge>
             </div>
             <Button size="sm" variant="outline" asChild className="gap-1 h-7">
-              <Link to="/grain-operations" search={{ tab: "batches" }}><Edit2 className="w-3.5 h-3.5" /> Manage</Link>
+              <Link to="/grain-operations" search={{ tab: "batches" }}>
+                <Edit2 className="w-3.5 h-3.5" /> Manage
+              </Link>
             </Button>
           </div>
           {batches.length === 0 ? (
             <div className="py-12 flex flex-col items-center text-muted-foreground text-sm">
               <Inbox className="w-8 h-8 mb-2 opacity-60" />
               No grain batches in this silo yet.
-              <Link to="/grain-operations" search={{ tab: "batches" }} className="text-emerald-600 hover:underline mt-2">Add the first batch →</Link>
+              <Link
+                to="/grain-operations"
+                search={{ tab: "batches" }}
+                className="text-emerald-600 hover:underline mt-2"
+              >
+                Add the first batch →
+              </Link>
             </div>
           ) : (
             <div className="overflow-auto max-h-[60vh]">
@@ -309,16 +378,35 @@ function SiloDetailPage() {
                     const remaining = Math.max(0, intake - Number(b.dispatched_quantity_kg ?? 0));
                     const intakeDate = b.harvest_date ?? b.intake_date ?? null;
                     return (
-                      <TableRow key={b.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5">
+                      <TableRow
+                        key={b.id}
+                        className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5"
+                      >
                         <TableCell className="font-medium">
-                          <Link to="/grain-operations" search={{ tab: "batches" }} className="hover:text-emerald-700 hover:underline">{b.batch_id}</Link>
+                          <Link
+                            to="/grain-operations"
+                            search={{ tab: "batches" }}
+                            className="hover:text-emerald-700 hover:underline"
+                          >
+                            {b.batch_id}
+                          </Link>
                         </TableCell>
                         <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
-                        <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.farmer_name ?? "—"}</TableCell>
-                        <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
-                        <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
-                        <TableCell><StatusBadge value={b.status} /></TableCell>
+                        <TableCell className="text-muted-foreground truncate max-w-[140px]">
+                          {b.farmer_name ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {intake.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {remaining.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground whitespace-nowrap">
+                          {intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge value={b.status} />
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -335,7 +423,9 @@ function SiloDetailPage() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Truck className="w-4 h-4 text-emerald-600" /> Dispatch history
-              <Badge variant="secondary" className="ml-1">{dispatches.length}</Badge>
+              <Badge variant="secondary" className="ml-1">
+                {dispatches.length}
+              </Badge>
             </div>
           </div>
           {dispatchesQ.isLoading ? (
@@ -363,12 +453,25 @@ function SiloDetailPage() {
                   {dispatches.map((d) => {
                     const date = d.dispatched_at ?? d.created_at;
                     return (
-                      <TableRow key={d.id} className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5">
-                        <TableCell className="text-muted-foreground whitespace-nowrap">{date ? new Date(date).toLocaleDateString() : "—"}</TableCell>
-                        <TableCell className="font-medium truncate max-w-[160px]">{d.buyers?.name ?? "—"}</TableCell>
-                        <TableCell className="text-right tabular-nums">{Number(d.total_qty_kg).toLocaleString()}</TableCell>
-                        <TableCell className="text-right tabular-nums">{Number(d.price_per_kg).toLocaleString()}</TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">{Number(d.total_amount).toLocaleString()}</TableCell>
+                      <TableRow
+                        key={d.id}
+                        className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5"
+                      >
+                        <TableCell className="text-muted-foreground whitespace-nowrap">
+                          {date ? new Date(date).toLocaleDateString() : "—"}
+                        </TableCell>
+                        <TableCell className="font-medium truncate max-w-[160px]">
+                          {d.buyers?.name ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {Number(d.total_qty_kg).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {Number(d.price_per_kg).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {Number(d.total_amount).toLocaleString()}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -391,19 +494,29 @@ function SiloDetailPage() {
             ) : (
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Remaining stock</div>
-                  <div className="font-medium tabular-nums text-foreground">{stockCost.totalRemaining.toLocaleString()} kg</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Remaining stock
+                  </div>
+                  <div className="font-medium tabular-nums text-foreground">
+                    {stockCost.totalRemaining.toLocaleString()} kg
+                  </div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Weighted avg cost</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Weighted avg cost
+                  </div>
                   <div className="font-medium tabular-nums text-foreground">
                     {stockCost.avgCost != null ? `${stockCost.avgCost.toFixed(2)} / kg` : "—"}
                   </div>
                 </div>
                 <div className="col-span-2 pt-1 border-t border-border/60">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Estimated stock value</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Estimated stock value
+                  </div>
                   <div className="font-semibold tabular-nums text-foreground">
-                    {stockCost.stockValue != null ? stockCost.stockValue.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}
+                    {stockCost.stockValue != null
+                      ? stockCost.stockValue.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                      : "—"}
                   </div>
                 </div>
               </div>
@@ -421,25 +534,41 @@ function SiloDetailPage() {
             ) : (
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Total revenue</div>
-                  <div className="font-medium tabular-nums text-foreground">{marginSummary.revenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Cost basis</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Total revenue
+                  </div>
                   <div className="font-medium tabular-nums text-foreground">
-                    {marginSummary.hasCostData ? marginSummary.cost.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}
+                    {marginSummary.revenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Profit</div>
-                  <div className={`font-semibold tabular-nums ${marginSummary.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Cost basis
+                  </div>
+                  <div className="font-medium tabular-nums text-foreground">
+                    {marginSummary.hasCostData
+                      ? marginSummary.cost.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                      : "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Profit
+                  </div>
+                  <div
+                    className={`font-semibold tabular-nums ${marginSummary.profit >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                  >
                     {marginSummary.profit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Margin</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Margin
+                  </div>
                   <div className="font-semibold tabular-nums text-foreground">
-                    {marginSummary.marginPct != null ? `${marginSummary.marginPct.toFixed(1)}%` : "—"}
+                    {marginSummary.marginPct != null
+                      ? `${marginSummary.marginPct.toFixed(1)}%`
+                      : "—"}
                   </div>
                 </div>
               </div>

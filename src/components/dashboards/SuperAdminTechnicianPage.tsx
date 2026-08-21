@@ -25,14 +25,42 @@ import {
   getMyWarehouseAssignments,
   updateMyAvailability,
 } from "@/lib/technician-management.functions";
-import { updateInstallStatus, logVisitEvent, commissionDevice } from "@/lib/hardware-lifecycle.functions";
+import {
+  updateInstallStatus,
+  logVisitEvent,
+  commissionDevice,
+} from "@/lib/hardware-lifecycle.functions";
 import { recountMyActiveJobs } from "@/lib/technician-job-recount.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Search, RefreshCw, MapPin, Wrench, Users, Truck, Loader2, CheckCircle2, AlertCircle,
-  XCircle, Clock, Phone, Mail, CalendarClock, ChevronRight, ChevronDown, ChevronUp,
-  BarChart3, Activity, Shield, ArrowUpRight, Package, Ban, Cpu, HardHat,
-  Warehouse as WarehouseIcon, CheckCircle, Circle,
+  Search,
+  RefreshCw,
+  MapPin,
+  Wrench,
+  Users,
+  Truck,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  Clock,
+  Phone,
+  Mail,
+  CalendarClock,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  Activity,
+  Shield,
+  ArrowUpRight,
+  Package,
+  Ban,
+  Cpu,
+  HardHat,
+  Warehouse as WarehouseIcon,
+  CheckCircle,
+  Circle,
 } from "lucide-react";
 
 // ── Status config ──────────────────────────────────────────────────────────
@@ -83,14 +111,24 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
     staleTime: 60_000,
   });
 
-  const { data: installsData, isLoading: installsLoading, isFetching: installsFetching, refetch: refetchInstalls, error: installsError } = useQuery({
+  const {
+    data: installsData,
+    isLoading: installsLoading,
+    isFetching: installsFetching,
+    refetch: refetchInstalls,
+    error: installsError,
+  } = useQuery({
     queryKey: ["my-technician-installs"],
     queryFn: () => fetchMyInstalls(),
     staleTime: 15_000,
     refetchInterval: 30_000,
   });
 
-  const { data: warehouseData, isLoading: warehouseLoading, error: warehouseError } = useQuery({
+  const {
+    data: warehouseData,
+    isLoading: warehouseLoading,
+    error: warehouseError,
+  } = useQuery({
     queryKey: ["my-warehouse-assignments"],
     queryFn: () => fetchWarehouses(),
     staleTime: 60_000,
@@ -106,31 +144,43 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
   useEffect(() => {
     if (!profile?.id || !myInstalls.length) return;
     const activeCount = myInstalls.filter((i: any) =>
-      ["scheduled", "en_route", "onsite", "installing", "installed"].includes(i.status)
+      ["scheduled", "en_route", "onsite", "installing", "installed"].includes(i.status),
     ).length;
     if (activeCount !== (profile.current_job_count ?? 0)) {
-      recountFn().then(() => {
-        qc.invalidateQueries({ queryKey: ["my-technician-profile"] });
-      }).catch(() => {});
+      recountFn()
+        .then(() => {
+          qc.invalidateQueries({ queryKey: ["my-technician-profile"] });
+        })
+        .catch(() => {});
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id, myInstalls.length]);
 
   // ── Realtime ──
   useEffect(() => {
     const channel = supabase
       .channel(`tech-my-installs-${channelId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_installations" }, () => {
-        qc.invalidateQueries({ queryKey: ["my-technician-installs"] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hardware_order_installations" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-technician-installs"] });
+        },
+      )
       .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
         qc.invalidateQueries({ queryKey: ["my-technician-installs"] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_status_history" }, () => {
-        qc.invalidateQueries({ queryKey: ["my-technician-installs"] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hardware_order_status_history" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-technician-installs"] });
+        },
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [channelId, qc]);
 
   // ── Derived data ──
@@ -144,7 +194,10 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
   const availFn = useServerFn(updateMyAvailability);
   const setAvailability = useMutation({
     mutationFn: (status: string) => availFn({ data: { technician_status: status as any } }),
-    onSuccess: () => { toast.success("Availability updated"); qc.invalidateQueries({ queryKey: ["my-technician-profile"] }); },
+    onSuccess: () => {
+      toast.success("Availability updated");
+      qc.invalidateQueries({ queryKey: ["my-technician-profile"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -163,11 +216,11 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
             <h1 className="text-2xl font-semibold tracking-tight">
               Technician Dashboard — {name ?? profile?.name ?? "Technician"}
             </h1>
-            <p className="text-sm text-muted-foreground">My installs, status tracking, and warehouse assignments</p>
+            <p className="text-sm text-muted-foreground">
+              My installs, status tracking, and warehouse assignments
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Status shown in profile card below */}
-          </div>
+          <div className="flex items-center gap-2">{/* Status shown in profile card below */}</div>
         </div>
 
         {/* Profile Card */}
@@ -184,16 +237,25 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
                 )}
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold tabular-nums">{profile?.current_job_count ?? 0}/{profile?.max_concurrent_jobs ?? 3}</div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Active Jobs</div>
+                <div className="text-lg font-bold tabular-nums">
+                  {profile?.current_job_count ?? 0}/{profile?.max_concurrent_jobs ?? 3}
+                </div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Active Jobs
+                </div>
               </div>
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">My Availability</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  My Availability
+                </div>
                 <div className="flex gap-1">
                   {Object.entries(TECH_STATUS_CONFIG).map(([key, cfg]) => {
                     const Icon = cfg.icon;
                     return (
-                      <Button key={key} size="sm" variant={myStatus === key ? "default" : "outline"}
+                      <Button
+                        key={key}
+                        size="sm"
+                        variant={myStatus === key ? "default" : "outline"}
                         className={`h-7 text-xs ${myStatus === key ? cfg.color : ""}`}
                         onClick={() => setAvailability.mutate(key)}
                         disabled={setAvailability.isPending}
@@ -213,9 +275,12 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button key={tab.key}
+              <button
+                key={tab.key}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.key ? "border-emerald-600 text-emerald-700" : "border-transparent text-muted-foreground hover:text-foreground"
+                  activeTab === tab.key
+                    ? "border-emerald-600 text-emerald-700"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -242,19 +307,33 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
         {activeTab === "overview" && (
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Total Installs</CardTitle></CardHeader>
-              <CardContent><div className="text-2xl font-bold">{myInstalls.length}</div></CardContent>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Total Installs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{myInstalls.length}</div>
+              </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Active</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Active</CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-emerald-600">
-                  {myInstalls.filter((i: any) => ["scheduled", "en_route", "onsite", "installing", "installed"].includes(i.status)).length}
+                  {
+                    myInstalls.filter((i: any) =>
+                      ["scheduled", "en_route", "onsite", "installing", "installed"].includes(
+                        i.status,
+                      ),
+                    ).length
+                  }
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Completed</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Completed</CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{statusCounts["completed"] ?? 0}</div>
               </CardContent>
@@ -266,14 +345,35 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex gap-2 flex-wrap">
-                {["total", "scheduled", "en_route", "onsite", "installing", "installed", "completed", "blocked"].map((key) => (
-                  <div key={key} className={`rounded-lg border p-2 text-center min-w-[60px] ${key === "total" ? "border-emerald-400 bg-emerald-50" : ""}`}>
-                    <div className="text-[10px] uppercase text-muted-foreground">{key.replace("_", " ")}</div>
-                    <div className="text-sm font-bold">{key === "total" ? myInstalls.length : (statusCounts[key] ?? 0)}</div>
+                {[
+                  "total",
+                  "scheduled",
+                  "en_route",
+                  "onsite",
+                  "installing",
+                  "installed",
+                  "completed",
+                  "blocked",
+                ].map((key) => (
+                  <div
+                    key={key}
+                    className={`rounded-lg border p-2 text-center min-w-[60px] ${key === "total" ? "border-emerald-400 bg-emerald-50" : ""}`}
+                  >
+                    <div className="text-[10px] uppercase text-muted-foreground">
+                      {key.replace("_", " ")}
+                    </div>
+                    <div className="text-sm font-bold">
+                      {key === "total" ? myInstalls.length : (statusCounts[key] ?? 0)}
+                    </div>
                   </div>
                 ))}
               </div>
-              <Button size="sm" variant="outline" onClick={() => refetchInstalls()} disabled={installsFetching}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => refetchInstalls()}
+                disabled={installsFetching}
+              >
                 <RefreshCw className={`h-3.5 w-3.5 ${installsFetching ? "animate-spin" : ""}`} />
               </Button>
             </div>
@@ -285,18 +385,28 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
                 {myInstalls.map((install: any) => {
                   const order = install.hardware_orders ?? {};
                   return (
-                    <Card key={install.id} className="hover:border-emerald-400 transition-colors cursor-pointer"
-                      onClick={() => setSelectedInstallId(install.id)}>
+                    <Card
+                      key={install.id}
+                      className="hover:border-emerald-400 transition-colors cursor-pointer"
+                      onClick={() => setSelectedInstallId(install.id)}
+                    >
                       <CardContent className="p-4 flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">{String(order.id ?? "").slice(0, 8)}</span>
-                            <span className="text-xs text-muted-foreground">{order.plan_name ?? "—"}</span>
+                            <span className="font-medium text-sm">
+                              {String(order.id ?? "").slice(0, 8)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {order.plan_name ?? "—"}
+                            </span>
                           </div>
-                          <div className="text-sm text-muted-foreground">{order.customer_name ?? "—"}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {order.customer_name ?? "—"}
+                          </div>
                           {(order.install_city || order.install_address) && (
                             <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <MapPin className="h-3 w-3" />{order.install_city ?? order.install_address}
+                              <MapPin className="h-3 w-3" />
+                              {order.install_city ?? order.install_address}
                             </div>
                           )}
                         </div>
@@ -306,7 +416,9 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
                               {new Date(install.scheduled_for).toLocaleDateString()}
                             </span>
                           )}
-                          <Badge className={`${INSTALL_STATUS_COLOR[install.status] ?? "bg-slate-200"} text-xs`}>
+                          <Badge
+                            className={`${INSTALL_STATUS_COLOR[install.status] ?? "bg-slate-200"} text-xs`}
+                          >
                             {(install.status as string).replace(/_/g, " ")}
                           </Badge>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -327,7 +439,10 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
 
       {/* Install Detail Drawer */}
       {selectedInstallId && (
-        <InstallDetailDrawer installId={selectedInstallId} onClose={() => setSelectedInstallId(null)} />
+        <InstallDetailDrawer
+          installId={selectedInstallId}
+          onClose={() => setSelectedInstallId(null)}
+        />
       )}
     </div>
   );
@@ -337,33 +452,53 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
 
 function WarehousesTab({ assignments, loading }: { assignments: any[]; loading: boolean }) {
   if (loading) return <div className="h-32 rounded-xl bg-muted animate-pulse" />;
-  if (!assignments.length) return <div className="text-center py-12 text-muted-foreground">No warehouse assignments found.</div>;
+  if (!assignments.length)
+    return (
+      <div className="text-center py-12 text-muted-foreground">No warehouse assignments found.</div>
+    );
 
   return (
     <div className="space-y-4">
       {assignments.map((a: any, idx: number) => {
         const wh = a.warehouses ?? {};
         const orders = a.orders ?? [];
-        const activeOrders = orders.filter((o: any) => !["completed", "cancelled"].includes(o.status));
+        const activeOrders = orders.filter(
+          (o: any) => !["completed", "cancelled"].includes(o.status),
+        );
         return (
           <Card key={a.id ?? idx}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <div className="font-medium">{wh.name ?? a.city ?? "Warehouse"}</div>
-                  {wh.location && <div className="text-xs text-muted-foreground">{wh.location?.city ?? wh.location?.address}</div>}
+                  {wh.location && (
+                    <div className="text-xs text-muted-foreground">
+                      {wh.location?.city ?? wh.location?.address}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {a.is_primary && <Badge className="bg-emerald-100 text-emerald-800 text-xs">Primary</Badge>}
-                  <Badge variant="outline" className="text-xs">{activeOrders.length} active</Badge>
-                  <Badge variant="outline" className="text-xs">{orders.length} total</Badge>
+                  {a.is_primary && (
+                    <Badge className="bg-emerald-100 text-emerald-800 text-xs">Primary</Badge>
+                  )}
+                  <Badge variant="outline" className="text-xs">
+                    {activeOrders.length} active
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {orders.length} total
+                  </Badge>
                 </div>
               </div>
               {orders.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">Orders</div>
+                  <div className="text-xs font-semibold uppercase text-muted-foreground">
+                    Orders
+                  </div>
                   {orders.map((o: any) => (
-                    <div key={o.id} className="flex items-center justify-between text-sm rounded border p-2">
+                    <div
+                      key={o.id}
+                      className="flex items-center justify-between text-sm rounded border p-2"
+                    >
                       <div>
                         <span className="font-medium">{o.customer_name ?? "—"}</span>
                         <span className="text-muted-foreground ml-2">{o.plan_name ?? ""}</span>
@@ -371,8 +506,14 @@ function WarehousesTab({ assignments, loading }: { assignments: any[]; loading: 
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {o.tracking_carrier && <span>📦 {o.tracking_carrier}</span>}
                         {o.tracking_number && <span>#{o.tracking_number}</span>}
-                        {o.expected_arrival_at && <span>ETA: {new Date(o.expected_arrival_at).toLocaleDateString()}</span>}
-                        <Badge className={`${INSTALL_STATUS_COLOR[o.status] ?? "bg-slate-200"} text-xs`}>{o.status}</Badge>
+                        {o.expected_arrival_at && (
+                          <span>ETA: {new Date(o.expected_arrival_at).toLocaleDateString()}</span>
+                        )}
+                        <Badge
+                          className={`${INSTALL_STATUS_COLOR[o.status] ?? "bg-slate-200"} text-xs`}
+                        >
+                          {o.status}
+                        </Badge>
                       </div>
                     </div>
                   ))}
@@ -388,7 +529,13 @@ function WarehousesTab({ assignments, loading }: { assignments: any[]; loading: 
 
 // ── Install Detail Drawer ──────────────────────────────────────────────────
 
-function InstallDetailDrawer({ installId, onClose }: { installId: string | null; onClose: () => void }) {
+function InstallDetailDrawer({
+  installId,
+  onClose,
+}: {
+  installId: string | null;
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const fetchDetail = useServerFn(getMyInstallDetail);
   const statusFn = useServerFn(updateInstallStatus);
@@ -401,16 +548,31 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
   });
 
   const setStatus = useMutation({
-    mutationFn: (v: { status: "scheduled" | "en_route" | "onsite" | "installing" | "completed" | "blocked"; blockerNote?: string }) =>
-      statusFn({ data: { installId: installId!, status: v.status, blockerNote: v.blockerNote ?? null } }),
-    onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["my-technician-installs"] }); qc.invalidateQueries({ queryKey: ["my-install-detail", installId] }); },
+    mutationFn: (v: {
+      status: "scheduled" | "en_route" | "onsite" | "installing" | "completed" | "blocked";
+      blockerNote?: string;
+    }) =>
+      statusFn({
+        data: { installId: installId!, status: v.status, blockerNote: v.blockerNote ?? null },
+      }),
+    onSuccess: () => {
+      toast.success("Status updated");
+      qc.invalidateQueries({ queryKey: ["my-technician-installs"] });
+      qc.invalidateQueries({ queryKey: ["my-install-detail", installId] });
+    },
     onError: (e: Error) => toast.error(String(e)),
   });
 
   const addEvent = useMutation({
-    mutationFn: (v: { eventType: "arrived" | "inspection" | "install" | "test" | "handover" | "issue"; note?: string }) =>
+    mutationFn: (v: {
+      eventType: "arrived" | "inspection" | "install" | "test" | "handover" | "issue";
+      note?: string;
+    }) =>
       eventFn({ data: { installId: installId!, eventType: v.eventType, note: v.note ?? null } }),
-    onSuccess: () => { toast.success("Event logged"); qc.invalidateQueries({ queryKey: ["my-install-detail", installId] }); },
+    onSuccess: () => {
+      toast.success("Event logged");
+      qc.invalidateQueries({ queryKey: ["my-install-detail", installId] });
+    },
     onError: (e: Error) => toast.error(String(e)),
   });
 
@@ -441,8 +603,8 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
   //   completed      → step 4
   const stepOrder = ["paid", "en_route", "onsite", "installing", "completed"];
   const statusToStep: Record<string, string> = {
-    scheduled: "paid",       // install is scheduled = admin has paid, awaiting dispatch
-    blocked: "paid",         // blocked goes back to showing paid as last progress
+    scheduled: "paid", // install is scheduled = admin has paid, awaiting dispatch
+    blocked: "paid", // blocked goes back to showing paid as last progress
   };
   const currentStepIdx = stepOrder.indexOf(statusToStep[status] ?? status);
 
@@ -461,19 +623,29 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-lg font-semibold">Install {install.id?.slice(0, 8)}</h2>
-              {install.scheduled_for && <p className="text-xs text-muted-foreground">Scheduled {new Date(install.scheduled_for).toLocaleString()}</p>}
+              {install.scheduled_for && (
+                <p className="text-xs text-muted-foreground">
+                  Scheduled {new Date(install.scheduled_for).toLocaleString()}
+                </p>
+              )}
             </div>
-            <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg"><XCircle className="h-5 w-5" /></button>
+            <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg">
+              <XCircle className="h-5 w-5" />
+            </button>
           </div>
 
           {/* Status Badge */}
-          <Badge className={`text-xs ${INSTALL_STATUS_COLOR[status] ?? "bg-slate-200 text-slate-700"}`}>
+          <Badge
+            className={`text-xs ${INSTALL_STATUS_COLOR[status] ?? "bg-slate-200 text-slate-700"}`}
+          >
             {status.replace(/_/g, " ")}
           </Badge>
 
           {/* Lifecycle Timeline */}
           <div>
-            <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-3">Installation Progress</h3>
+            <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-3">
+              Installation Progress
+            </h3>
             <div className="space-y-0">
               {LIFECYCLE_STEPS.map((step, idx) => {
                 const done = currentStepIdx >= idx;
@@ -491,7 +663,11 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
                       )}
                     </div>
                     <div className={`pb-4 ${current ? "font-semibold" : ""}`}>
-                      <div className={`text-sm ${done ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</div>
+                      <div
+                        className={`text-sm ${done ? "text-foreground" : "text-muted-foreground"}`}
+                      >
+                        {step.label}
+                      </div>
                       <div className="text-[11px] text-muted-foreground">{step.description}</div>
                     </div>
                   </div>
@@ -511,7 +687,9 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
                   disabled={setStatus.isPending}
                   onClick={() => setStatus.mutate({ status: ns.status as any })}
                 >
-                  {setStatus.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+                  {setStatus.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                  ) : null}
                   {ns.label}
                 </Button>
               ))}
@@ -523,7 +701,8 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
                   disabled={setStatus.isPending}
                   onClick={() => {
                     const note = prompt("Blocker reason?");
-                    if (note && note.trim().length >= 3) setStatus.mutate({ status: "blocked", blockerNote: note.trim() });
+                    if (note && note.trim().length >= 3)
+                      setStatus.mutate({ status: "blocked", blockerNote: note.trim() });
                   }}
                 >
                   <Ban className="h-3.5 w-3.5 mr-1" /> Mark Blocked
@@ -535,18 +714,26 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
           {/* Buyer Info */}
           <div className="grid gap-4 grid-cols-2">
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Buyer</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Buyer</CardTitle>
+              </CardHeader>
               <CardContent className="text-sm">
                 <div className="font-medium">{buyer?.name ?? order.customer_name ?? "—"}</div>
-                <div className="text-muted-foreground text-xs">{buyer?.email ?? order.customer_email ?? "—"}</div>
+                <div className="text-muted-foreground text-xs">
+                  {buyer?.email ?? order.customer_email ?? "—"}
+                </div>
                 <div className="text-muted-foreground text-xs">{buyer?.phone ?? "—"}</div>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Address</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Address</CardTitle>
+              </CardHeader>
               <CardContent className="text-sm">
                 <div>{order.install_address ?? order.shipping_address ?? "—"}</div>
-                <div className="text-muted-foreground text-xs">{order.install_city ?? order.shipping_city ?? ""}</div>
+                <div className="text-muted-foreground text-xs">
+                  {order.install_city ?? order.shipping_city ?? ""}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -554,13 +741,23 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
           {/* Devices */}
           {devices.length > 0 && (
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Cpu className="h-4 w-4" /> Devices</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Cpu className="h-4 w-4" /> Devices
+                </CardTitle>
+              </CardHeader>
               <CardContent className="space-y-2">
                 {devices.map((d: any) => (
-                  <div key={d.id} className="flex items-center justify-between rounded border p-2 text-sm">
+                  <div
+                    key={d.id}
+                    className="flex items-center justify-between rounded border p-2 text-sm"
+                  >
                     <div className="font-medium">{d.device_type ?? "sensor"}</div>
                     {d.commissioned_at ? (
-                      <Badge className="bg-emerald-100 text-emerald-800"><CheckCircle2 className="h-3 w-3 mr-1" />Commissioned</Badge>
+                      <Badge className="bg-emerald-100 text-emerald-800">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Commissioned
+                      </Badge>
                     ) : (
                       <Badge variant="outline">Pending</Badge>
                     )}
@@ -573,15 +770,21 @@ function InstallDetailDrawer({ installId, onClose }: { installId: string | null;
           {/* Timeline */}
           {history.length > 0 && (
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Timeline</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Timeline</CardTitle>
+              </CardHeader>
               <CardContent className="text-sm max-h-48 overflow-y-auto space-y-2">
                 {history.map((h: any) => (
                   <div key={h.id} className="flex items-start gap-2 text-xs">
-                    <div className="mt-0.5"><Circle className="h-2.5 w-2.5" /></div>
+                    <div className="mt-0.5">
+                      <Circle className="h-2.5 w-2.5" />
+                    </div>
                     <div>
                       <span className="font-medium">{h.to_status?.replace(/_/g, " ")}</span>
                       {h.note && <span className="text-muted-foreground ml-1">— {h.note}</span>}
-                      <div className="text-muted-foreground">{h.created_at ? new Date(h.created_at).toLocaleString() : ""}</div>
+                      <div className="text-muted-foreground">
+                        {h.created_at ? new Date(h.created_at).toLocaleString() : ""}
+                      </div>
                     </div>
                   </div>
                 ))}

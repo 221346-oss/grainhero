@@ -24,9 +24,15 @@ export const Route = createFileRoute("/auth/verify-otp")({
   head: () => ({
     meta: [
       { title: "Enter your code — GrainHero" },
-      { name: "description", content: "Enter the verification code sent to your email to finish signing in." },
+      {
+        name: "description",
+        content: "Enter the verification code sent to your email to finish signing in.",
+      },
       { property: "og:title", content: "Enter your code — GrainHero" },
-      { property: "og:description", content: "Enter the verification code sent to your email to finish signing in." },
+      {
+        property: "og:description",
+        content: "Enter the verification code sent to your email to finish signing in.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -36,7 +42,6 @@ export const Route = createFileRoute("/auth/verify-otp")({
 function VerifyOtpPage() {
   const navigate = useNavigate();
   const { email } = Route.useSearch();
-  if (!email) return null;
   const claimFn = useServerFn(claimPaidCheckoutForUser);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -113,6 +118,8 @@ function VerifyOtpPage() {
     };
   }, [navigate]);
 
+  if (!email) return null;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     verify(otp.join(""));
@@ -129,7 +136,11 @@ function VerifyOtpPage() {
     void logSecurityEvent({ data: { event: "sign_in_success", meta: { email } } }).catch(() => {});
 
     let pendingSessionId: string | null = null;
-    try { pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY); } catch { /* ignore */ }
+    try {
+      pendingSessionId = window.localStorage.getItem(PENDING_SESSION_KEY);
+    } catch {
+      /* ignore */
+    }
     if (pendingSessionId) {
       try {
         await claimFn({ data: { sessionId: pendingSessionId } });
@@ -168,7 +179,9 @@ function VerifyOtpPage() {
         return;
       }
 
-      const isExpiredOrInvalid = error.message.toLowerCase().includes("expired") || error.message.toLowerCase().includes("invalid");
+      const isExpiredOrInvalid =
+        error.message.toLowerCase().includes("expired") ||
+        error.message.toLowerCase().includes("invalid");
       void logFailedSignIn({ data: { email: email!, reason: error.message } }).catch(() => {});
       setMsg({
         type: "error",
@@ -215,8 +228,7 @@ function VerifyOtpPage() {
           </div>
           <h1 className="text-2xl font-semibold">Check your email</h1>
           <p className="text-sm text-muted-foreground">
-            We sent a 6-digit code to{" "}
-            <span className="font-medium text-slate-900">{email}</span>
+            We sent a 6-digit code to <span className="font-medium text-slate-900">{email}</span>
           </p>
           <p className="text-xs text-muted-foreground">
             If you don't see the email, please check your spam or junk folder.
@@ -228,7 +240,9 @@ function VerifyOtpPage() {
             {otp.map((digit, i) => (
               <Input
                 key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
+                ref={(el) => {
+                  inputRefs.current[i] = el;
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -248,9 +262,7 @@ function VerifyOtpPage() {
             disabled={loading}
             className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
           >
-            {loading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : "Verify & go to dashboard"}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & go to dashboard"}
           </Button>
         </form>
 
@@ -261,9 +273,11 @@ function VerifyOtpPage() {
             disabled={resending}
             className="text-sm text-[#00a63e] hover:underline inline-flex items-center gap-1.5 disabled:opacity-50"
           >
-            {resending
-              ? <Loader2 className="w-3 h-3 animate-spin" />
-              : <RefreshCw className="w-3 h-3" />}
+            {resending ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3 h-3" />
+            )}
             Resend code
           </button>
         </div>

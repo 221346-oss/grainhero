@@ -9,12 +9,17 @@ import { z } from "zod";
 
 const BODY = z.object({
   deviceId: z.string().uuid(),
-  readings: z.array(z.object({
-    metric: z.enum(["temperature", "humidity", "moisture", "co2", "o2"]),
-    value: z.number().finite(),
-    recordedAt: z.string().datetime().optional(),
-    raw: z.record(z.string(), z.unknown()).optional(),
-  })).min(1).max(50),
+  readings: z
+    .array(
+      z.object({
+        metric: z.enum(["temperature", "humidity", "moisture", "co2", "o2"]),
+        value: z.number().finite(),
+        recordedAt: z.string().datetime().optional(),
+        raw: z.record(z.string(), z.unknown()).optional(),
+      }),
+    )
+    .min(1)
+    .max(50),
   battery: z.number().optional(),
   rssi: z.number().optional(),
 });
@@ -26,7 +31,11 @@ function verify(rawBody: string, signature: string | null): boolean {
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
-  try { return timingSafeEqual(a, b); } catch { return false; }
+  try {
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }
 
 export const Route = createFileRoute("/api/public/telemetry")({
@@ -38,12 +47,18 @@ export const Route = createFileRoute("/api/public/telemetry")({
           return new Response("invalid signature", { status: 401 });
         }
         let parsed;
-        try { parsed = BODY.parse(JSON.parse(raw)); }
-        catch (e) { return Response.json({ error: "invalid body", detail: String(e) }, { status: 400 }); }
+        try {
+          parsed = BODY.parse(JSON.parse(raw));
+        } catch (e) {
+          return Response.json({ error: "invalid body", detail: String(e) }, { status: 400 });
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: dev } = await supabaseAdmin
-          .from("sensor_devices").select("id, admin_id, silo_id").eq("id", parsed.deviceId).maybeSingle();
+          .from("sensor_devices")
+          .select("id, admin_id, silo_id")
+          .eq("id", parsed.deviceId)
+          .maybeSingle();
         if (!dev) return Response.json({ error: "device not found" }, { status: 404 });
 
         const { writeReadingAndEvaluate } = await import("@/lib/telemetry.functions");
@@ -53,9 +68,11 @@ export const Route = createFileRoute("/api/public/telemetry")({
             adminId: (dev as { admin_id: string }).admin_id,
             siloId: (dev as { silo_id: string }).silo_id,
             sensorDeviceId: (dev as { id: string }).id,
-            metric: r.metric, value: r.value,
+            metric: r.metric,
+            value: r.value,
             source: "http",
-            raw: r.raw, recordedAt: r.recordedAt,
+            raw: r.raw,
+            recordedAt: r.recordedAt,
           });
           if (res.alertId) alerts.push(res.alertId);
         }

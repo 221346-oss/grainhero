@@ -2,7 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
-import { payApprovedSiloOrder, createSiloDraftRequest, checkAndUpdatePaymentStatus } from "@/lib/stripe-checkout.functions";
+import {
+  payApprovedSiloOrder,
+  createSiloDraftRequest,
+  checkAndUpdatePaymentStatus,
+} from "@/lib/stripe-checkout.functions";
 
 import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
@@ -70,28 +74,28 @@ export const Route = createFileRoute("/_authenticated/orders")({
 // ── Status display ────────────────────────────────────────────────────────────
 const STATUS_STYLE: Record<string, string> = {
   pending_payment: "bg-slate-200 text-slate-700",
-  new:             "bg-amber-100 text-amber-800",
-  approved:        "bg-emerald-100 text-emerald-800",
-  tech_assigned:   "bg-indigo-100 text-indigo-800",
-  installed:       "bg-emerald-100 text-emerald-800",
-  live:            "bg-emerald-600 text-white",
-  cancelled:       "bg-red-100 text-red-700",
+  new: "bg-amber-100 text-amber-800",
+  approved: "bg-emerald-100 text-emerald-800",
+  tech_assigned: "bg-indigo-100 text-indigo-800",
+  installed: "bg-emerald-100 text-emerald-800",
+  live: "bg-emerald-600 text-white",
+  cancelled: "bg-red-100 text-red-700",
 };
 
 const STATUS_LABEL: Record<string, string> = {
   pending_payment: "Payment pending — waiting for approval",
-  new:             "Awaiting approval",
-  approved:        "Approved — payment required",
-  paid:            "Paid — installation in progress",
-  tech_assigned:   "Tech assigned",
-  packing:         "Packing",
-  shipped:         "Shipped",
-  in_transit:      "In transit",
-  installing:      "Installing",
-  installed:       "Installed — sign-off required",
-  completed:       "Completed",
-  live:            "Live",
-  cancelled:       "Cancelled",
+  new: "Awaiting approval",
+  approved: "Approved — payment required",
+  paid: "Paid — installation in progress",
+  tech_assigned: "Tech assigned",
+  packing: "Packing",
+  shipped: "Shipped",
+  in_transit: "In transit",
+  installing: "Installing",
+  installed: "Installed — sign-off required",
+  completed: "Completed",
+  live: "Live",
+  cancelled: "Cancelled",
 };
 
 // Pre-payment / pre-install statuses — no install pipeline active yet.
@@ -165,7 +169,7 @@ function MyOrdersPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const paymentStatus = params.get("silo_payment");
-    const autoRequest   = params.get("request");
+    const autoRequest = params.get("request");
 
     // Auto-open request sheet when navigating here with ?request=1
     if (autoRequest === "1") {
@@ -185,7 +189,7 @@ function MyOrdersPage() {
       toast.success("🎉 Payment received! Your silo install order is now active.");
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       qc.invalidateQueries({ queryKey: ["plan-gate"] });
-      
+
       // Poll for status change from webhook (every 2 seconds for 30 seconds)
       // In case webhook is delayed or hasn't fired yet
       let attempts = 0;
@@ -197,7 +201,7 @@ function MyOrdersPage() {
         }
         qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       }, 2000);
-      
+
       return () => clearInterval(pollInterval);
     } else if (paymentStatus === "cancelled") {
       window.history.replaceState({}, "", window.location.pathname);
@@ -257,8 +261,8 @@ function MyOrdersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-hardware-orders"],
-    queryFn:  () => fetchFn(),
-    staleTime: 0,          // always refetch — orders change after approval
+    queryFn: () => fetchFn(),
+    staleTime: 0, // always refetch — orders change after approval
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
@@ -267,24 +271,30 @@ function MyOrdersPage() {
   useEffect(() => {
     const channel = supabase
       .channel("admin-orders")
-      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_installations" }, () => {
-        qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
-        qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
-        qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hardware_order_installations" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+        },
+      )
       .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
         qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [qc]);
-  const orders      = data?.orders ?? [];
+  const orders = data?.orders ?? [];
   const hasApproved = orders.some((o) => o.status === "approved" || o.status === "pending_payment");
   // Auto-poll every 3s while any approved/pending order is waiting for payment confirmation
   // (Stripe webhook updates to "paid" and we need to reflect that quickly)
   useQuery({
     queryKey: ["my-hardware-orders"],
-    queryFn:  () => fetchFn(),
+    queryFn: () => fetchFn(),
     staleTime: 0,
     refetchInterval: hasApproved ? 3_000 : false,
     enabled: hasApproved,
@@ -341,9 +351,12 @@ function MyOrdersPage() {
         <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2.5 flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-emerald-900">Your silo request has been approved!</p>
+            <p className="text-xs font-semibold text-emerald-900">
+              Your silo request has been approved!
+            </p>
             <p className="text-[11px] text-emerald-700 mt-0.5">
-              Click <strong>Pay now</strong> on the order card below to complete payment and schedule your installation.
+              Click <strong>Pay now</strong> on the order card below to complete payment and
+              schedule your installation.
             </p>
           </div>
         </div>
@@ -382,12 +395,18 @@ function MyOrdersPage() {
                           {Number(o.hardware_quantity) === 1 ? "" : "s"}
                         </CardTitle>
                         {(o.status === "approved" || o.status === "pending_payment") && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-amber-600 border-amber-300 bg-amber-50">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0 h-5 text-amber-600 border-amber-300 bg-amber-50"
+                          >
                             Awaiting payment
                           </Badge>
                         )}
                         {o.status === "new" && !o.stripe_payment_intent && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-blue-600 border-blue-300 bg-blue-50">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0 h-5 text-blue-600 border-blue-300 bg-blue-50"
+                          >
                             Awaiting approval
                           </Badge>
                         )}
@@ -418,7 +437,7 @@ function MyOrdersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" /> 
+                    <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                     <span className="truncate">{o.contact_phone ?? "—"}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -456,22 +475,23 @@ function MyOrdersPage() {
                       paying={payMut.isPending && payMut.variables === o.id}
                     />
                     {/* DEV ONLY: Manual payment simulation when Stripe webhook isn't working */}
-                    {process.env.NODE_ENV === "development" && (o.status === "approved" || o.status === "pending_payment") && (
-                      <div className="flex gap-1">
-                        {o.status === "pending_payment" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-blue-600 border-blue-300 hover:bg-blue-50 text-xs h-7"
-                            onClick={() => checkPaymentMut.mutate(o.id as string)}
-                            disabled={checkPaymentMut.isPending}
-                            title="Check Stripe session status and update if paid"
-                          >
-                            {checkPaymentMut.isPending ? "Checking…" : "Check Payment"}
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    {process.env.NODE_ENV === "development" &&
+                      (o.status === "approved" || o.status === "pending_payment") && (
+                        <div className="flex gap-1">
+                          {o.status === "pending_payment" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-blue-600 border-blue-300 hover:bg-blue-50 text-xs h-7"
+                              onClick={() => checkPaymentMut.mutate(o.id as string)}
+                              disabled={checkPaymentMut.isPending}
+                              title="Check Stripe session status and update if paid"
+                            >
+                              {checkPaymentMut.isPending ? "Checking…" : "Check Payment"}
+                            </Button>
+                          )}
+                        </div>
+                      )}
                   </div>
                   <div className="md:col-span-2">
                     <HardwareOrderThread orderId={o.id as string} as="admin" />
@@ -502,20 +522,30 @@ function MyOrdersPage() {
             <DialogTitle>Silo limit reached</DialogTitle>
             <DialogDescription>
               Your current plan (<strong>{siloGate.data?.planId ?? "starter"}</strong>) allows up to{" "}
-              <strong>{typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}</strong> silos
-              and you are already using{" "}
-              <strong>{typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}</strong> of them.
+              <strong>
+                {typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}
+              </strong>{" "}
+              silos and you are already using{" "}
+              <strong>
+                {typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}
+              </strong>{" "}
+              of them.
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-slate-600 px-1">
-            To request additional silos you need to upgrade your plan. Visit the plan management page to
-            request a higher tier.
+            To request additional silos you need to upgrade your plan. Visit the plan management
+            page to request a higher tier.
           </p>
           <DialogFooter className="mt-2 flex gap-2">
-            <Button variant="outline" onClick={() => setLimitOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setLimitOpen(false)}>
+              Cancel
+            </Button>
             <Button
               className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-              onClick={() => { setLimitOpen(false); navigate({ to: "/plan-management" }); }}
+              onClick={() => {
+                setLimitOpen(false);
+                navigate({ to: "/plan-management" });
+              }}
             >
               Upgrade plan
             </Button>
@@ -524,12 +554,22 @@ function MyOrdersPage() {
       </Dialog>
 
       {/* ── Request silo sheet ───────────────────────────────────── */}
-      <Sheet open={requestOpen} onOpenChange={(v) => { setRequestOpen(v); if (!v) { setDraftForm(emptyDraftForm); setPhoneError(null); } }}>
+      <Sheet
+        open={requestOpen}
+        onOpenChange={(v) => {
+          setRequestOpen(v);
+          if (!v) {
+            setDraftForm(emptyDraftForm);
+            setPhoneError(null);
+          }
+        }}
+      >
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Request a new silo</SheetTitle>
             <SheetDescription>
-              Fill in your install details. Our team will review and approve — you'll be notified once it's ready for payment.
+              Fill in your install details. Our team will review and approve — you'll be notified
+              once it's ready for payment.
             </SheetDescription>
           </SheetHeader>
           <form
@@ -596,20 +636,38 @@ function MyOrdersPage() {
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="s-notes">Notes (optional)</Label>
-              <Textarea id="s-notes" rows={3} value={draftForm.notes} onChange={(e) => setDraftForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Preferred install time, access instructions…" />
+              <Textarea
+                id="s-notes"
+                rows={3}
+                value={draftForm.notes}
+                onChange={(e) => setDraftForm((f) => ({ ...f, notes: e.target.value }))}
+                placeholder="Preferred install time, access instructions…"
+              />
             </div>
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
               <p className="font-semibold text-slate-700">What happens next</p>
               <ol className="list-decimal pl-4 space-y-0.5">
                 <li>Our team reviews your request (usually within 24 h).</li>
                 <li>You'll get a notification once approved.</li>
-                <li>Click <strong>Pay now</strong> on this page to complete payment.</li>
+                <li>
+                  Click <strong>Pay now</strong> on this page to complete payment.
+                </li>
               </ol>
             </div>
             <div className="flex justify-end gap-3 pt-1">
-              <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={draftMut.isPending || siloGate.isLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-                {draftMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+              <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={draftMut.isPending || siloGate.isLoading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              >
+                {draftMut.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="h-4 w-4" />
+                )}
                 {draftMut.isPending ? "Submitting…" : "Submit request"}
               </Button>
             </div>
@@ -653,7 +711,14 @@ function MyOrdersPage() {
 }
 
 // ── Install-stage actions (track + sign-off) ──────────────────────────────────
-function CardActions({ order, onTrack, onComplete, completing, onPay, paying }: {
+function CardActions({
+  order,
+  onTrack,
+  onComplete,
+  completing,
+  onPay,
+  paying,
+}: {
   order: Record<string, unknown>;
   onTrack: () => void;
   onComplete: () => void;
@@ -677,8 +742,8 @@ function CardActions({ order, onTrack, onComplete, completing, onPay, paying }: 
     <div className="flex items-center gap-1.5 flex-wrap">
       {/* Pay Now button for approved orders */}
       {needsPayment && onPay && (
-        <Button 
-          size="sm" 
+        <Button
+          size="sm"
           className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs"
           onClick={onPay}
           disabled={paying}
@@ -724,18 +789,25 @@ function CardActions({ order, onTrack, onComplete, completing, onPay, paying }: 
               <p>GrainHero will automatically:</p>
               <ul className="list-disc pl-5 space-y-1">
                 <li>Provision a warehouse for this install (if none exists yet).</li>
-                <li>Create one silo per device serial the technician recorded ({deviceCount} ordered).</li>
-                <li>Move the order to <strong>Completed</strong> — this cannot be reversed.</li>
+                <li>
+                  Create one silo per device serial the technician recorded ({deviceCount} ordered).
+                </li>
+                <li>
+                  Move the order to <strong>Completed</strong> — this cannot be reversed.
+                </li>
               </ul>
               <p className="text-amber-700 bg-amber-50 rounded p-2 border border-amber-200">
                 Silos don't appear instantly — if they're missing after a minute, open
-                <strong> Track installation</strong> and confirm the technician saved device serials.
-                Each serial provisions one silo.
+                <strong> Track installation</strong> and confirm the technician saved device
+                serials. Each serial provisions one silo.
               </p>
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel>Not yet</AlertDialogCancel>
-              <AlertDialogAction className="bg-emerald-600 hover:bg-emerald-700" onClick={onComplete}>
+              <AlertDialogAction
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={onComplete}
+              >
                 Yes, sign off
               </AlertDialogAction>
             </AlertDialogFooter>

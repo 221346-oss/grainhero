@@ -39,24 +39,25 @@ const emptyForm = { address: "", city: "", country: "", phone: "", notes: "" };
 
 function SiloRequestPage() {
   const draftFn = useServerFn(createSiloDraftRequest);
-  const qc      = useQueryClient();
+  const qc = useQueryClient();
   const navigate = useNavigate();
   const siloGate = usePlanGate("max_silos");
 
-  const [form, setForm]       = useState(emptyForm);
+  const [form, setForm] = useState(emptyForm);
   const [submitted, setSubmitted] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const draftMut = useMutation({
-    mutationFn: () => draftFn({
-      data: {
-        address: form.address.trim(),
-        city:    form.city.trim()    || null,
-        country: form.country.trim(),
-        phone:   formatPakistaniPhone(form.phone.trim()),
-        notes:   form.notes.trim()   || null,
-      },
-    }),
+    mutationFn: () =>
+      draftFn({
+        data: {
+          address: form.address.trim(),
+          city: form.city.trim() || null,
+          country: form.country.trim(),
+          phone: formatPakistaniPhone(form.phone.trim()),
+          notes: form.notes.trim() || null,
+        },
+      }),
     onSuccess: () => {
       setSubmitted(true);
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
@@ -93,12 +94,18 @@ function SiloRequestPage() {
             <div>
               <p className="text-lg font-semibold text-emerald-900">Request submitted!</p>
               <p className="text-sm text-emerald-700 mt-1">
-                Our team will review your request and notify you once it's approved.
-                You can then return to your orders page to complete payment.
+                Our team will review your request and notify you once it's approved. You can then
+                return to your orders page to complete payment.
               </p>
             </div>
             <div className="flex justify-center gap-3">
-              <Button variant="outline" onClick={() => { setForm(emptyForm); setSubmitted(false); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setForm(emptyForm);
+                  setSubmitted(false);
+                }}
+              >
                 Submit another request
               </Button>
               <Button
@@ -119,9 +126,14 @@ function SiloRequestPage() {
               <p className="text-lg font-semibold text-amber-900">Silo limit reached</p>
               <p className="text-sm text-amber-700 mt-1">
                 Your current plan allows up to{" "}
-                <strong>{typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}</strong> silos
-                and you are already using{" "}
-                <strong>{typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}</strong> of them.
+                <strong>
+                  {typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}
+                </strong>{" "}
+                silos and you are already using{" "}
+                <strong>
+                  {typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}
+                </strong>{" "}
+                of them.
               </p>
               <p className="text-sm text-amber-700 mt-1">
                 Upgrade your plan to request additional silos.
@@ -145,20 +157,18 @@ function SiloRequestPage() {
         <Card>
           <CardHeader>
             <CardTitle>Install details</CardTitle>
-            <CardDescription>
-              Where should the silo hardware be installed?
-            </CardDescription>
+            <CardDescription>Where should the silo hardware be installed?</CardDescription>
           </CardHeader>
           <CardContent>
             <form
               className="grid gap-4"
               onSubmit={(e) => {
-              e.preventDefault();
-              const phoneErr = validatePakistaniPhone(form.phone);
-              setPhoneError(phoneErr);
-              if (phoneErr) return;
-              draftMut.mutate();
-            }}
+                e.preventDefault();
+                const phoneErr = validatePakistaniPhone(form.phone);
+                setPhoneError(phoneErr);
+                if (phoneErr) return;
+                draftMut.mutate();
+              }}
             >
               <div className="grid gap-1.5">
                 <Label htmlFor="req-address">Install address *</Label>
@@ -214,7 +224,9 @@ function SiloRequestPage() {
                   className={phoneError ? "border-red-400 focus-visible:ring-red-400" : ""}
                 />
                 {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
-                <p className="text-[11px] text-slate-400">Pakistani number — e.g. +923001234567 or 03001234567</p>
+                <p className="text-[11px] text-slate-400">
+                  Pakistani number — e.g. +923001234567 or 03001234567
+                </p>
               </div>
 
               <div className="grid gap-1.5">
@@ -234,7 +246,10 @@ function SiloRequestPage() {
                 <ol className="list-decimal pl-5 space-y-1 text-xs">
                   <li>Our team reviews your request (usually within 24 hours).</li>
                   <li>You'll receive an in-app notification once approved.</li>
-                  <li>Return to <strong>My install orders</strong> and click <strong>Pay now</strong> to complete payment and lock in your install slot.</li>
+                  <li>
+                    Return to <strong>My install orders</strong> and click <strong>Pay now</strong>{" "}
+                    to complete payment and lock in your install slot.
+                  </li>
                 </ol>
               </div>
 
@@ -247,9 +262,11 @@ function SiloRequestPage() {
                   disabled={draftMut.isPending || siloGate.isLoading}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                 >
-                  {draftMut.isPending
-                    ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : <PlusCircle className="h-4 w-4" />}
+                  {draftMut.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <PlusCircle className="h-4 w-4" />
+                  )}
                   {draftMut.isPending ? "Submitting…" : "Submit request"}
                 </Button>
               </div>

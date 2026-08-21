@@ -102,7 +102,7 @@ function IncidentCard({ incident }: { incident: AssignedIncident }) {
             </span>
             <span
               className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${SevColor(
-                incident.severity
+                incident.severity,
               )}`}
             >
               {incident.severity}
@@ -218,12 +218,14 @@ type OpenTicket = {
 function SevPill({ severity }: { severity: string }) {
   const map: Record<string, string> = {
     critical: "bg-red-500/10 text-red-600 border-red-200/60",
-    high:     "bg-orange-500/10 text-orange-600 border-orange-200/60",
-    medium:   "bg-amber-500/10 text-amber-600 border-amber-200/60",
-    low:      "bg-sky-500/10 text-sky-600 border-sky-200/60",
+    high: "bg-orange-500/10 text-orange-600 border-orange-200/60",
+    medium: "bg-amber-500/10 text-amber-600 border-amber-200/60",
+    low: "bg-sky-500/10 text-sky-600 border-sky-200/60",
   };
   return (
-    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${map[severity] ?? map.medium}`}>
+    <span
+      className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${map[severity] ?? map.medium}`}
+    >
       {severity}
     </span>
   );
@@ -231,11 +233,13 @@ function SevPill({ severity }: { severity: string }) {
 
 function StatusPill({ status }: { status: string }) {
   const map: Record<string, string> = {
-    open:          "bg-rose-500/10 text-rose-600 border-rose-200/60",
+    open: "bg-rose-500/10 text-rose-600 border-rose-200/60",
     investigating: "bg-blue-500/10 text-blue-600 border-blue-200/60",
   };
   return (
-    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${map[status] ?? "bg-slate-500/10 text-slate-600 border-slate-200/60"}`}>
+    <span
+      className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${map[status] ?? "bg-slate-500/10 text-slate-600 border-slate-200/60"}`}
+    >
       {status}
     </span>
   );
@@ -283,7 +287,9 @@ function AllOpenTicketsSection() {
           </div>
         ) : tickets.length === 0 ? (
           <div className="py-8 text-center">
-            <p className="text-xs text-muted-foreground">No open mobile field reports right now. 🎉</p>
+            <p className="text-xs text-muted-foreground">
+              No open mobile field reports right now. 🎉
+            </p>
             <button
               onClick={() => setReportOpen(true)}
               className="mt-3 text-[11px] font-semibold text-amber-600 hover:underline"
@@ -299,10 +305,13 @@ function AllOpenTicketsSection() {
             >
               <AlertTriangle
                 className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${
-                  t.severity === "critical" ? "text-red-500"
-                  : t.severity === "high"   ? "text-orange-500"
-                  : t.severity === "medium" ? "text-amber-500"
-                  : "text-sky-500"
+                  t.severity === "critical"
+                    ? "text-red-500"
+                    : t.severity === "high"
+                      ? "text-orange-500"
+                      : t.severity === "medium"
+                        ? "text-amber-500"
+                        : "text-sky-500"
                 }`}
               />
               <div className="flex-1 min-w-0">
@@ -368,10 +377,7 @@ export function TechnicianDashboard({ name }: { name?: string }) {
       title={`Technician${name ? ` — ${name}` : ""}`}
       subtitle="Sensor health, actuator status and open maintenance work"
       actions={
-        <Badge
-          variant="outline"
-          className="bg-emerald-50 text-emerald-700 border-emerald-200"
-        >
+        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
           Technician
         </Badge>
       }

@@ -22,15 +22,20 @@ export const getEnvironmentalOverview = createServerFn({ method: "GET" })
     const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const { data: readings } = await context.supabase
       .from("sensor_readings")
-      .select("silo_id, warehouse_id, device_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ambient_temperature, ambient_humidity, dew_point, condensation_risk, anomaly_detected, reading_timestamp")
+      .select(
+        "silo_id, warehouse_id, device_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ambient_temperature, ambient_humidity, dew_point, condensation_risk, anomaly_detected, reading_timestamp",
+      )
       .gte("reading_timestamp", since)
       .order("reading_timestamp", { ascending: false })
       .limit(2000);
 
     const rows = (readings ?? []) as any[];
-    const avg = (k: string) => rows.length ? rows.reduce((s, x) => s + Number(x[k] ?? 0), 0) / rows.length : 0;
-    const min = (k: string) => rows.length ? Math.min(...rows.map((x) => Number(x[k] ?? Infinity))) : 0;
-    const max = (k: string) => rows.length ? Math.max(...rows.map((x) => Number(x[k] ?? -Infinity))) : 0;
+    const avg = (k: string) =>
+      rows.length ? rows.reduce((s, x) => s + Number(x[k] ?? 0), 0) / rows.length : 0;
+    const min = (k: string) =>
+      rows.length ? Math.min(...rows.map((x) => Number(x[k] ?? Infinity))) : 0;
+    const max = (k: string) =>
+      rows.length ? Math.max(...rows.map((x) => Number(x[k] ?? -Infinity))) : 0;
 
     // Latest per silo
     const bySilo = new Map<string, any>();
@@ -40,13 +45,19 @@ export const getEnvironmentalOverview = createServerFn({ method: "GET" })
     const siloIds = Array.from(bySilo.keys());
     let silos: any[] = [];
     if (siloIds.length > 0) {
-      const { data } = await context.supabase.from("silos").select("id, name, silo_id, warehouse_id, status").in("id", siloIds);
+      const { data } = await context.supabase
+        .from("silos")
+        .select("id, name, silo_id, warehouse_id, status")
+        .in("id", siloIds);
       silos = data ?? [];
     }
     const siloLatest = silos.map((s: any) => ({ ...s, latest: bySilo.get(s.id) }));
 
     // Hourly bins for last 24h
-    const bins: Record<string, { hour: string; temp: number; hum: number; moist: number; count: number }> = {};
+    const bins: Record<
+      string,
+      { hour: string; temp: number; hum: number; moist: number; count: number }
+    > = {};
     for (let i = 23; i >= 0; i--) {
       const d = new Date(Date.now() - i * 3600 * 1000);
       const key = `${d.toISOString().slice(0, 13)}:00`;
@@ -71,9 +82,17 @@ export const getEnvironmentalOverview = createServerFn({ method: "GET" })
     return {
       samples: rows.length,
       env: {
-        temp: { avg: avg("temperature_value"), min: min("temperature_value"), max: max("temperature_value") },
+        temp: {
+          avg: avg("temperature_value"),
+          min: min("temperature_value"),
+          max: max("temperature_value"),
+        },
         hum: { avg: avg("humidity_value"), min: min("humidity_value"), max: max("humidity_value") },
-        moist: { avg: avg("moisture_value"), min: min("moisture_value"), max: max("moisture_value") },
+        moist: {
+          avg: avg("moisture_value"),
+          min: min("moisture_value"),
+          max: max("moisture_value"),
+        },
         co2: { avg: avg("co2_value"), max: max("co2_value") },
         voc: { avg: avg("voc_value"), max: max("voc_value") },
       },
@@ -97,7 +116,9 @@ export const getIncidents = createServerFn({ method: "GET" })
     // Incidents tab is never empty when there are field incidents reported.
     const { data: alerts } = await context.supabase
       .from("grain_alerts")
-      .select("id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source, recipient_id")
+      .select(
+        "id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source, recipient_id",
+      )
       .or("priority.in.(critical,high),source.eq.field_incident")
       .order("triggered_at", { ascending: false })
       .limit(200);
@@ -105,20 +126,23 @@ export const getIncidents = createServerFn({ method: "GET" })
     const list = (alerts ?? []) as any[];
     if (list.length > 0) {
       // Include recipient_id in name lookup for field incidents
-      const ids = Array.from(new Set(
-        list.flatMap((x) => [x.created_by, x.assigned_to, x.recipient_id]).filter(Boolean)
-      ));
+      const ids = Array.from(
+        new Set(list.flatMap((x) => [x.created_by, x.assigned_to, x.recipient_id]).filter(Boolean)),
+      );
       if (ids.length > 0) {
-        const { data: profs } = await context.supabase.from("profiles").select("id, name, email").in("id", ids as string[]);
+        const { data: profs } = await context.supabase
+          .from("profiles")
+          .select("id, name, email")
+          .in("id", ids as string[]);
         const nameOf = new Map((profs ?? []).map((p) => [p.id, p.name ?? p.email ?? p.id]));
         for (const x of list) {
-          x.reportedByName = x.created_by   ? (nameOf.get(x.created_by)   ?? null) : null;
-          x.assignedToName = x.assigned_to  ? (nameOf.get(x.assigned_to)  ?? null) : null;
-          x.recipientName  = x.recipient_id ? (nameOf.get(x.recipient_id) ?? null) : null;
+          x.reportedByName = x.created_by ? (nameOf.get(x.created_by) ?? null) : null;
+          x.assignedToName = x.assigned_to ? (nameOf.get(x.assigned_to) ?? null) : null;
+          x.recipientName = x.recipient_id ? (nameOf.get(x.recipient_id) ?? null) : null;
           // Convenience flag so UI can distinguish field incidents from system alerts
           x.isFieldIncident = x.source === "field_incident";
-          x.isMine    = x.created_by   === context.userId;
-          x.isForMe   = x.recipient_id === context.userId;
+          x.isMine = x.created_by === context.userId;
+          x.isForMe = x.recipient_id === context.userId;
         }
       }
     }
@@ -133,7 +157,12 @@ export const getIncidents = createServerFn({ method: "GET" })
     const mtta = list.filter((x) => x.acknowledged_at && x.triggered_at);
     const mttr = list.filter((x) => x.resolved_at && x.triggered_at);
     const avgMinutes = (arr: any[], a: string, b: string) =>
-      arr.length ? arr.reduce((s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000, 0) / arr.length : 0;
+      arr.length
+        ? arr.reduce(
+            (s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000,
+            0,
+          ) / arr.length
+        : 0;
 
     return {
       incidents: list,
@@ -170,7 +199,9 @@ export const getPlatformIncidentsOverview = createServerFn({ method: "GET" })
 
     let q = context.supabase
       .from("grain_alerts")
-      .select("id, priority, status, admin_id, batch_id, triggered_at, acknowledged_at, resolved_at")
+      .select(
+        "id, priority, status, admin_id, batch_id, triggered_at, acknowledged_at, resolved_at",
+      )
       .order("triggered_at", { ascending: false })
       .limit(2000);
     // Super-admin's platform view only cares about environment-level status
@@ -191,25 +222,45 @@ export const getPlatformIncidentsOverview = createServerFn({ method: "GET" })
       acknowledged: list.filter((x) => x.acknowledged_at && !x.resolved_at).length,
     };
     const avgMin = (arr: any[], a: string, b: string) =>
-      arr.length ? arr.reduce((s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000, 0) / arr.length : 0;
-    const mtta = avgMin(list.filter((x) => x.acknowledged_at && x.triggered_at), "acknowledged_at", "triggered_at");
-    const mttr = avgMin(list.filter((x) => x.resolved_at && x.triggered_at), "resolved_at", "triggered_at");
+      arr.length
+        ? arr.reduce(
+            (s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000,
+            0,
+          ) / arr.length
+        : 0;
+    const mtta = avgMin(
+      list.filter((x) => x.acknowledged_at && x.triggered_at),
+      "acknowledged_at",
+      "triggered_at",
+    );
+    const mttr = avgMin(
+      list.filter((x) => x.resolved_at && x.triggered_at),
+      "resolved_at",
+      "triggered_at",
+    );
 
     // Bucket by tenant.
-    const byTenant = new Map<string, { total: number; open: number; critical: number; lastTriggeredAt: string | null }>();
+    const byTenant = new Map<
+      string,
+      { total: number; open: number; critical: number; lastTriggeredAt: string | null }
+    >();
     for (const a of list) {
       const key = a.admin_id ?? "unknown";
       const b = byTenant.get(key) ?? { total: 0, open: 0, critical: 0, lastTriggeredAt: null };
       b.total += 1;
       if (a.status !== "resolved") b.open += 1;
       if (a.priority === "critical") b.critical += 1;
-      if (a.triggered_at && (!b.lastTriggeredAt || a.triggered_at > b.lastTriggeredAt)) b.lastTriggeredAt = a.triggered_at;
+      if (a.triggered_at && (!b.lastTriggeredAt || a.triggered_at > b.lastTriggeredAt))
+        b.lastTriggeredAt = a.triggered_at;
       byTenant.set(key, b);
     }
     const ids = Array.from(byTenant.keys()).filter((k) => k !== "unknown");
     let profiles: Array<{ id: string; name: string | null; email: string | null }> = [];
     if (ids.length > 0) {
-      const { data } = await context.supabase.from("profiles").select("id, name, email").in("id", ids);
+      const { data } = await context.supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", ids);
       profiles = data ?? [];
     }
     const nameOf = new Map(profiles.map((p) => [p.id, p.name ?? p.email ?? p.id]));
@@ -235,7 +286,11 @@ export const acknowledgeIncident = createServerFn({ method: "POST" })
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
 
-    const patch: any = { acknowledged_at: new Date().toISOString(), acknowledged_by: context.userId, status: "acknowledged" };
+    const patch: any = {
+      acknowledged_at: new Date().toISOString(),
+      acknowledged_by: context.userId,
+      status: "acknowledged",
+    };
     if (data.resolve) {
       patch.resolved_at = new Date().toISOString();
       patch.resolved_by = context.userId;
@@ -262,8 +317,12 @@ export const reportIncident = createServerFn({ method: "POST" })
     requireAny(r, ["technician"]);
 
     const { data: profile } = await context.supabase
-      .from("profiles").select("admin_id").eq("id", context.userId).maybeSingle();
-    const tenantAdminId = (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
+      .from("profiles")
+      .select("admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId =
+      (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
 
     const { data: row, error } = await context.supabase
       .from("grain_alerts")
@@ -315,13 +374,19 @@ export const assignIncident = createServerFn({ method: "POST" })
 
     const { error } = await context.supabase
       .from("grain_alerts")
-      .update({ assigned_to: data.technicianId, status: data.technicianId ? "acknowledged" : "pending" })
+      .update({
+        assigned_to: data.technicianId,
+        status: data.technicianId ? "acknowledged" : "pending",
+      })
       .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
 
-const escalateInput = z.object({ id: z.string().uuid(), reason: z.string().trim().max(500).optional().nullable() });
+const escalateInput = z.object({
+  id: z.string().uuid(),
+  reason: z.string().trim().max(500).optional().nullable(),
+});
 
 /**
  * Manager (or admin): manual escalation to Super Admin. Incidents also
@@ -337,10 +402,25 @@ export const escalateIncident = createServerFn({ method: "POST" })
     requireAny(r, ["manager", "admin"]);
 
     const { data: current } = await context.supabase
-      .from("grain_alerts").select("escalation_level, escalation_history, title, message, priority, admin_id").eq("id", data.id).maybeSingle();
-    const c = current as { escalation_level?: number | null; escalation_history?: unknown[] | null; title?: string; message?: string; priority?: string; admin_id?: string | null } | null;
+      .from("grain_alerts")
+      .select("escalation_level, escalation_history, title, message, priority, admin_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    const c = current as {
+      escalation_level?: number | null;
+      escalation_history?: unknown[] | null;
+      title?: string;
+      message?: string;
+      priority?: string;
+      admin_id?: string | null;
+    } | null;
     const history = Array.isArray(c?.escalation_history) ? c.escalation_history : [];
-    history.push({ at: new Date().toISOString(), by: context.userId, reason: data.reason ?? null, manual: true });
+    history.push({
+      at: new Date().toISOString(),
+      by: context.userId,
+      reason: data.reason ?? null,
+      manual: true,
+    });
 
     const { error } = await context.supabase
       .from("grain_alerts")
@@ -362,7 +442,7 @@ export const escalateIncident = createServerFn({ method: "POST" })
 
       const managerName = profile?.name || profile?.email || "Manager";
       const tenantAdminId = c?.admin_id ?? context.userId;
-      
+
       const { emitToRole } = await import("./notify");
       await emitToRole(context.supabase, tenantAdminId, "admin", {
         category: "ops",
@@ -400,10 +480,10 @@ export const listMonitoringIncidentComments = createServerFn({ method: "GET" })
       throw new Error("Incident not found");
     }
 
-    const inc = incident as { 
-      created_by: string | null; 
-      assigned_to: string | null; 
-      admin_id: string | null; 
+    const inc = incident as {
+      created_by: string | null;
+      assigned_to: string | null;
+      admin_id: string | null;
       source: string | null;
       recipient_id: string | null;
     };
@@ -421,10 +501,11 @@ export const listMonitoringIncidentComments = createServerFn({ method: "GET" })
         .select("admin_id")
         .eq("id", context.userId)
         .maybeSingle();
-      
-      const userTenantId = (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
-      
-      isParticipant = 
+
+      const userTenantId =
+        (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
+
+      isParticipant =
         inc.created_by === context.userId ||
         inc.assigned_to === context.userId ||
         inc.admin_id === userTenantId ||
@@ -436,8 +517,9 @@ export const listMonitoringIncidentComments = createServerFn({ method: "GET" })
     }
 
     // Try to select from grain_alert_comments table
-    const { data: comments, error } = await (context.supabase
-      .from("grain_alert_comments" as any) as any)
+    const { data: comments, error } = await (
+      context.supabase.from("grain_alert_comments" as any) as any
+    )
       .select("id, incident_id, user_id, author_name, author_role, message, created_at")
       .eq("incident_id", data.incident_id)
       .order("created_at", { ascending: true });
@@ -463,10 +545,14 @@ export const listMonitoringIncidentComments = createServerFn({ method: "GET" })
 
 export const addMonitoringIncidentComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
-    incident_id: z.string().uuid(),
-    message: z.string().min(1).max(2000),
-  }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        incident_id: z.string().uuid(),
+        message: z.string().min(1).max(2000),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
@@ -482,10 +568,10 @@ export const addMonitoringIncidentComment = createServerFn({ method: "POST" })
       throw new Error("Incident not found");
     }
 
-    const inc = incident as { 
-      created_by: string | null; 
-      assigned_to: string | null; 
-      admin_id: string | null; 
+    const inc = incident as {
+      created_by: string | null;
+      assigned_to: string | null;
+      admin_id: string | null;
       source: string | null;
       recipient_id: string | null;
       status: string;
@@ -504,10 +590,11 @@ export const addMonitoringIncidentComment = createServerFn({ method: "POST" })
         .select("admin_id")
         .eq("id", context.userId)
         .maybeSingle();
-      
-      const userTenantId = (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
-      
-      isParticipant = 
+
+      const userTenantId =
+        (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
+
+      isParticipant =
         inc.created_by === context.userId ||
         inc.assigned_to === context.userId ||
         inc.admin_id === userTenantId ||
@@ -544,7 +631,7 @@ export const addMonitoringIncidentComment = createServerFn({ method: "POST" })
     // Notify participants
     try {
       const { emitNotification } = await import("./notify");
-      
+
       if (inc.source === "field_incident") {
         // Notify the other participant in field incident
         const recipientId = context.userId === inc.created_by ? inc.recipient_id : inc.created_by;
@@ -594,17 +681,32 @@ export const getReportsData = createServerFn({ method: "GET" })
     requireAny(r, ["super_admin", "admin", "manager"]);
 
     const [batches, alerts, invoices, silos, batchesInSilos] = await Promise.all([
-      context.supabase.from("grain_batches")
-        .select("id, batch_id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, spoilage_label, risk_score, intake_date, created_at, silo_id")
-        .is("deleted_at", null).order("created_at", { ascending: false }).limit(1000),
-      context.supabase.from("grain_alerts")
+      context.supabase
+        .from("grain_batches")
+        .select(
+          "id, batch_id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, spoilage_label, risk_score, intake_date, created_at, silo_id",
+        )
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      context.supabase
+        .from("grain_alerts")
         .select("id, priority, status, alert_type, created_at, resolved_at")
-        .order("created_at", { ascending: false }).limit(1000),
-      context.supabase.from("buyer_invoices")
-        .select("id, invoice_number, buyer_name, total_amount, amount_paid, payment_status, currency, created_at")
-        .order("created_at", { ascending: false }).limit(1000),
-      context.supabase.from("silos").select("id, name, silo_id, capacity_kg, current_occupancy_kg, status").limit(500),
-      context.supabase.from("grain_batches")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      context.supabase
+        .from("buyer_invoices")
+        .select(
+          "id, invoice_number, buyer_name, total_amount, amount_paid, payment_status, currency, created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      context.supabase
+        .from("silos")
+        .select("id, name, silo_id, capacity_kg, current_occupancy_kg, status")
+        .limit(500),
+      context.supabase
+        .from("grain_batches")
         .select("id, batch_id, grain_type, silo_id, quantity_kg, status")
         .in("status", ["stored", "active", "ready"] as never)
         .is("deleted_at", null),
@@ -656,10 +758,7 @@ export const updateIncidentStatus = createServerFn({ method: "POST" })
       resolved_by: context.userId,
     };
 
-    const { error } = await context.supabase
-      .from("grain_alerts")
-      .update(patch)
-      .eq("id", data.id);
+    const { error } = await context.supabase.from("grain_alerts").update(patch).eq("id", data.id);
 
     if (error) throw error;
 

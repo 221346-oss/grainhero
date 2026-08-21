@@ -14,50 +14,53 @@
  *   SUPABASE_SERVICE_KEY   Supabase service-role key (for Authorization header)
  */
 
-'use strict';
+"use strict";
 
-const mqtt   = require('mqtt');
-const path   = require('path');
+const mqtt = require("mqtt");
+const path = require("path");
 
 // ─── Load .env if available ──────────────────────────────────────────────────
 try {
-  require('dotenv').config({ path: path.join(__dirname, '.env') });
-} catch (_) { /* dotenv is optional */ }
+  require("dotenv").config({ path: path.join(__dirname, ".env") });
+} catch (_) {
+  /* dotenv is optional */
+}
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-const MQTT_BROKER_URL     = process.env.MQTT_BROKER_URL     || 'mqtt://192.168.100.229:1883';
-const SUPABASE_INGEST_URL = process.env.SUPABASE_INGEST_URL || (process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL}/functions/v1/ingest` : '');
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const MQTT_BROKER_URL = process.env.MQTT_BROKER_URL || "mqtt://192.168.100.229:1883";
+const SUPABASE_INGEST_URL =
+  process.env.SUPABASE_INGEST_URL ||
+  (process.env.SUPABASE_URL ? `${process.env.SUPABASE_URL}/functions/v1/ingest` : "");
+const SUPABASE_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 // Telemetry topic pattern – matches any device telemetry message
-const TELEMETRY_TOPIC = 'grainhero/telemetry/#';
+const TELEMETRY_TOPIC = "grainhero/telemetry/#";
 
 // Retry config for failed HTTP pushes
-const MAX_RETRIES    = 3;
+const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
 
 // ─── Validate config ─────────────────────────────────────────────────────────
 if (!SUPABASE_INGEST_URL) {
-  console.error('[bridge] ❌  SUPABASE_INGEST_URL is not set. Exiting.');
+  console.error("[bridge] ❌  SUPABASE_INGEST_URL is not set. Exiting.");
   process.exit(1);
 }
 if (!SUPABASE_SERVICE_KEY) {
-  console.warn('[bridge] ⚠️  SUPABASE_SERVICE_KEY is not set – requests will be unauthenticated.');
+  console.warn("[bridge] ⚠️  SUPABASE_SERVICE_KEY is not set – requests will be unauthenticated.");
 }
 
 // ─── HTTP helper with exponential-backoff retry ──────────────────────────────
 async function postToSupabase(payload, attempt = 1) {
   // Use built-in fetch (Node 18+) or fall back to node-fetch
-  const fetchFn = typeof fetch !== 'undefined'
-    ? fetch
-    : (await import('node-fetch')).default;
+  const fetchFn = typeof fetch !== "undefined" ? fetch : (await import("node-fetch")).default;
 
   try {
     const res = await fetchFn(SUPABASE_INGEST_URL, {
-      method:  'POST',
+      method: "POST",
       headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -71,8 +74,10 @@ async function postToSupabase(payload, attempt = 1) {
   } catch (err) {
     if (attempt <= MAX_RETRIES) {
       const delay = RETRY_DELAY_MS * attempt;
-      console.warn(`[bridge] ⚠️  POST failed (attempt ${attempt}/${MAX_RETRIES}): ${err.message}. Retrying in ${delay}ms…`);
-      await new Promise(r => setTimeout(r, delay));
+      console.warn(
+        `[bridge] ⚠️  POST failed (attempt ${attempt}/${MAX_RETRIES}): ${err.message}. Retrying in ${delay}ms…`,
+      );
+      await new Promise((r) => setTimeout(r, delay));
       return postToSupabase(payload, attempt + 1);
     }
     console.error(`[bridge] ❌  Giving up after ${MAX_RETRIES} retries: ${err.message}`);
@@ -81,23 +86,23 @@ async function postToSupabase(payload, attempt = 1) {
 
 // ─── MQTT client ─────────────────────────────────────────────────────────────
 const client = mqtt.connect(MQTT_BROKER_URL, {
-  clientId:       `grainhero-bridge-${Date.now()}`,
-  clean:          true,
+  clientId: `grainhero-bridge-${Date.now()}`,
+  clean: true,
   reconnectPeriod: 5000,
 });
 
-client.on('connect', () => {
+client.on("connect", () => {
   console.log(`[bridge] 🔌  Connected to MQTT broker: ${MQTT_BROKER_URL}`);
   client.subscribe(TELEMETRY_TOPIC, { qos: 1 }, (err) => {
     if (err) {
-      console.error('[bridge] ❌  Subscribe failed:', err.message);
+      console.error("[bridge] ❌  Subscribe failed:", err.message);
     } else {
       console.log(`[bridge] 📡  Subscribed to: ${TELEMETRY_TOPIC}`);
     }
   });
 });
 
-client.on('message', async (topic, message) => {
+client.on("message", async (topic, message) => {
   let payload;
   try {
     payload = JSON.parse(message.toString());
@@ -116,22 +121,30 @@ client.on('message', async (topic, message) => {
     return;
   }
 
-  console.log(`[bridge] 📨  Received telemetry from ${payload.deviceID || 'unknown'} on ${topic}`);
+  console.log(`[bridge] 📨  Received telemetry from ${payload.deviceID || "unknown"} on ${topic}`);
   await postToSupabase(payload);
 });
 
-client.on('error', (err) => {
-  console.error('[bridge] MQTT error:', err.message);
+client.on("error", (err) => {
+  console.error("[bridge] MQTT error:", err.message);
 });
 
-client.on('reconnect', () => {
-  console.log('[bridge] 🔄  Reconnecting to MQTT broker…');
+client.on("reconnect", () => {
+  console.log("[bridge] 🔄  Reconnecting to MQTT broker…");
 });
 
-client.on('offline', () => {
-  console.warn('[bridge] ⚡  MQTT broker is offline');
+client.on("offline", () => {
+  console.warn("[bridge] ⚡  MQTT broker is offline");
 });
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
-process.on('SIGINT',  () => { console.log('\n[bridge] 🛑  Shutting down…'); client.end(true); process.exit(0); });
-process.on('SIGTERM', () => { console.log('\n[bridge] 🛑  Shutting down…'); client.end(true); process.exit(0); });
+process.on("SIGINT", () => {
+  console.log("\n[bridge] 🛑  Shutting down…");
+  client.end(true);
+  process.exit(0);
+});
+process.on("SIGTERM", () => {
+  console.log("\n[bridge] 🛑  Shutting down…");
+  client.end(true);
+  process.exit(0);
+});

@@ -71,8 +71,8 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
   // Calculate activity summary
   const activitySummary = {
     signups: recentSignups.length,
-    orders: rows.filter(r => categorizeActivity(r.action) === "order").length,
-    alerts: rows.filter(r => categorizeActivity(r.action) === "alert").length,
+    orders: rows.filter((r) => categorizeActivity(r.action) === "order").length,
+    alerts: rows.filter((r) => categorizeActivity(r.action) === "alert").length,
   };
 
   return (
@@ -81,7 +81,11 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
       <Card className="border-border/60 shadow-sm">
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm">Recent Signups</CardTitle>
-          <Link to="/platform/users" aria-label="Open users" className="text-emerald-600 hover:text-emerald-700">
+          <Link
+            to="/platform/users"
+            aria-label="Open users"
+            className="text-emerald-600 hover:text-emerald-700"
+          >
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </CardHeader>
@@ -115,7 +119,11 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                   </tr>
                 ))}
                 {recentSignups.length === 0 && (
-                  <tr><td colSpan={3} className="text-center text-muted-foreground py-8 text-xs">No recent signups</td></tr>
+                  <tr>
+                    <td colSpan={3} className="text-center text-muted-foreground py-8 text-xs">
+                      No recent signups
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -127,7 +135,11 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
       <Card className="border-border/60 shadow-sm">
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm">Platform Activity</CardTitle>
-          <Link to="/platform/audit-logs" aria-label="View all activity" className="text-emerald-600 hover:text-emerald-700">
+          <Link
+            to="/platform/audit-logs"
+            aria-label="View all activity"
+            className="text-emerald-600 hover:text-emerald-700"
+          >
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </CardHeader>
@@ -137,21 +149,27 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
             <NeonPanel className="text-center py-2">
               <div className="flex flex-col items-center gap-1">
                 <UserPlus className="w-4 h-4 text-success" />
-                <span className="text-xl font-bold tabular-nums text-foreground">{activitySummary.signups}</span>
+                <span className="text-xl font-bold tabular-nums text-foreground">
+                  {activitySummary.signups}
+                </span>
                 <span className="text-[10px] text-muted-foreground">New Users</span>
               </div>
             </NeonPanel>
             <NeonPanel className="text-center py-2">
               <div className="flex flex-col items-center gap-1">
                 <Package className="w-4 h-4 text-info" />
-                <span className="text-xl font-bold tabular-nums text-foreground">{activitySummary.orders}</span>
+                <span className="text-xl font-bold tabular-nums text-foreground">
+                  {activitySummary.orders}
+                </span>
                 <span className="text-[10px] text-muted-foreground">Orders</span>
               </div>
             </NeonPanel>
             <NeonPanel className="text-center py-2">
               <div className="flex flex-col items-center gap-1">
                 <AlertTriangle className="w-4 h-4 text-warning" />
-                <span className="text-xl font-bold tabular-nums text-foreground">{activitySummary.alerts}</span>
+                <span className="text-xl font-bold tabular-nums text-foreground">
+                  {activitySummary.alerts}
+                </span>
                 <span className="text-[10px] text-muted-foreground">Alerts</span>
               </div>
             </NeonPanel>
@@ -159,17 +177,22 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
 
           {/* Recent Events - Simplified */}
           <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Recent Events</p>
-            {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No recent activity</p>}
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+              Recent Events
+            </p>
+            {rows.length === 0 && (
+              <p className="text-xs text-muted-foreground py-2">No recent activity</p>
+            )}
             <div className="space-y-1">
               {rows.slice(0, 5).map((r) => {
-                const category = activityCategories[categorizeActivity(r.action)] || activityCategories.default;
+                const category =
+                  activityCategories[categorizeActivity(r.action)] || activityCategories.default;
                 const Icon = category.icon;
-                
+
                 return (
-                  <Link 
-                    key={r.id} 
-                    to="/platform/audit-logs" 
+                  <Link
+                    key={r.id}
+                    to="/platform/audit-logs"
                     className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-muted/30 transition rounded group"
                   >
                     <div className={`p-1 rounded ${category.bgColor}`}>
@@ -178,7 +201,12 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate text-foreground">{category.label}</p>
                       <p className="text-[10px] text-muted-foreground truncate">
-                        {r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                        {r.created_at
+                          ? new Date(r.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""}
                       </p>
                     </div>
                   </Link>

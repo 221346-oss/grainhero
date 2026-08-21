@@ -9,7 +9,11 @@ import {
   NEON,
 } from "@/components/charts/neon";
 
-export type StatusSlice = { name: string; value: number; tone: "yellow" | "orange" | "green" | "blue" | "purple" | "red" };
+export type StatusSlice = {
+  name: string;
+  value: number;
+  tone: "yellow" | "orange" | "green" | "blue" | "purple" | "red";
+};
 
 // 6-stage scheme: yellow = pending, orange = QC, green = stored,
 // blue = processing, purple = dispatched, red = issue.

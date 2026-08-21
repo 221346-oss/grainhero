@@ -16,13 +16,19 @@ export const Route = createFileRoute("/api/public/v1/uploads/sign")({
         const ctx = await authenticateMobile(request);
         if (ctx instanceof Response) return ctx;
         let body: z.infer<typeof BODY>;
-        try { body = BODY.parse(await request.json()); }
-        catch (e) { return Response.json({ error: "invalid_body", detail: String(e) }, { status: 400 }); }
+        try {
+          body = BODY.parse(await request.json());
+        } catch (e) {
+          return Response.json({ error: "invalid_body", detail: String(e) }, { status: 400 });
+        }
 
         const cfg = ctx.settings.uploads?.[body.purpose];
         if (!cfg) return Response.json({ error: "unknown_purpose" }, { status: 400 });
         if (!cfg.allowed_mime.includes(body.mime)) {
-          return Response.json({ error: "mime_not_allowed", allowed: cfg.allowed_mime }, { status: 400 });
+          return Response.json(
+            { error: "mime_not_allowed", allowed: cfg.allowed_mime },
+            { status: 400 },
+          );
         }
         if (body.size_bytes > cfg.max_mb * 1024 * 1024) {
           return Response.json({ error: "file_too_large", max_mb: cfg.max_mb }, { status: 400 });
@@ -35,7 +41,8 @@ export const Route = createFileRoute("/api/public/v1/uploads/sign")({
         const { data, error } = await supabaseAdmin.storage
           .from(cfg.bucket)
           .createSignedUploadUrl(path);
-        if (error || !data) return Response.json({ error: "sign_failed", detail: error?.message }, { status: 500 });
+        if (error || !data)
+          return Response.json({ error: "sign_failed", detail: error?.message }, { status: 500 });
         const { data: readUrl } = await supabaseAdmin.storage
           .from(cfg.bucket)
           .createSignedUrl(path, 60 * 60 * 24 * 7);

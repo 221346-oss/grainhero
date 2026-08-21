@@ -4,7 +4,11 @@ import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 export function SuperInsightsStrip({
-  signupsTotal, wowDelta, ticketsTotal, pipelineTotal, criticalAlerts,
+  signupsTotal,
+  wowDelta,
+  ticketsTotal,
+  pipelineTotal,
+  criticalAlerts,
 }: {
   signupsTotal: number;
   wowDelta: number;
@@ -13,7 +17,7 @@ export function SuperInsightsStrip({
   criticalAlerts: number;
 }) {
   const signPositive = wowDelta >= 0;
-  
+
   const tiles = [
     {
       key: "signups",
@@ -59,7 +63,7 @@ export function SuperInsightsStrip({
         <h2 className="text-sm font-semibold text-foreground">Platform Insights</h2>
         <InfoDot text="Key platform metrics at a glance" />
       </div>
-      
+
       <HairlineGrid cols="grid-cols-2 lg:grid-cols-4">
         {tiles.map((t) => (
           <Link key={t.key} to={t.to}>
@@ -69,16 +73,24 @@ export function SuperInsightsStrip({
                   {t.label}
                 </span>
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className={`text-2xl font-bold tabular-nums leading-none ${
-                    t.positive ? "text-success" : "text-warning"
-                  }`}>
+                  <span
+                    className={`text-2xl font-bold tabular-nums leading-none ${
+                      t.positive ? "text-success" : "text-warning"
+                    }`}
+                  >
                     {t.value}
                   </span>
                   {t.hasChange && (
-                    <div className={`flex items-center gap-0.5 text-[11px] font-semibold ${
-                      t.positive ? "text-success" : "text-warning"
-                    }`}>
-                      {t.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    <div
+                      className={`flex items-center gap-0.5 text-[11px] font-semibold ${
+                        t.positive ? "text-success" : "text-warning"
+                      }`}
+                    >
+                      {t.positive ? (
+                        <TrendingUp className="w-3 h-3" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3" />
+                      )}
                     </div>
                   )}
                 </div>

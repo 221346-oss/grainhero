@@ -23,7 +23,7 @@ export function AdminPageShell({
   className,
 }: AdminPageShellProps) {
   const ticketCount = useTicketCount();
-  
+
   // Get user profile data
   const profileFn = useServerFn(getMyProfile);
   const { data: profile } = useQuery({
@@ -41,23 +41,15 @@ export function AdminPageShell({
       >
         <div className="w-full px-4 py-4 pb-8 space-y-4 bg-white">
           <div>
-            <h1 className="text-lg font-semibold text-foreground break-words">
-              {title}
-            </h1>
+            <h1 className="text-lg font-semibold text-foreground break-words">{title}</h1>
             {subtitle && (
-              <p className="text-xs text-muted-foreground mt-1 break-words">
-                {subtitle}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1 break-words">{subtitle}</p>
             )}
           </div>
           {/* Page actions (e.g. "Add Technician") must be reachable on mobile
               too — the desktop-only header below hides them under md: */}
-          {actions && (
-            <div className="flex flex-wrap gap-2">{actions}</div>
-          )}
-          <div className="w-full">
-            {children}
-          </div>
+          {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+          <div className="w-full">{children}</div>
         </div>
       </MobilePageLayout>
 

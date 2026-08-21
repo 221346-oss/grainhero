@@ -35,7 +35,8 @@ export const createListingFromBatch = createServerFn({ method: "POST" })
     const { data: batch } = await context.supabase
       .from("grain_batches")
       .select("id, admin_id, status, grain_type, batch_number, quality_grade")
-      .eq("id", data.batchId).single();
+      .eq("id", data.batchId)
+      .single();
     const b = batch as Row | null;
     if (!b) throw new Error("Batch not found");
     if (!["ready", "stored", "processing"].includes(String(b.status))) {
@@ -59,12 +60,15 @@ export const createListingFromBatch = createServerFn({ method: "POST" })
         expires_at: data.expiresAt ?? null,
         created_by: context.userId,
       } as never)
-      .select("id").single();
+      .select("id")
+      .single();
     if (error) throw error;
 
     await logActivity({
-      actorId: context.userId, tenantAdminId: b.admin_id as string,
-      action: "listing.created", targetType: "grain_listing",
+      actorId: context.userId,
+      tenantAdminId: b.admin_id as string,
+      action: "listing.created",
+      targetType: "grain_listing",
       targetId: (saved as Row).id as string,
       meta: { batchId: b.id, title, pricePerKg: data.pricePerKg },
     });
@@ -97,12 +101,16 @@ export const updateListing = createServerFn({ method: "POST" })
     if (data.description !== undefined) patch.description = data.description;
     if (data.expiresAt !== undefined) patch.expires_at = data.expiresAt;
     const { error } = await context.supabase
-      .from("grain_listings").update(patch as never).eq("id", data.id);
+      .from("grain_listings")
+      .update(patch as never)
+      .eq("id", data.id);
     if (error) throw error;
     await logActivity({
       actorId: context.userId,
       tenantAdminId: await tenantAdminIdFor(context.supabase, context.userId),
-      action: "listing.updated", targetType: "grain_listing", targetId: data.id,
+      action: "listing.updated",
+      targetType: "grain_listing",
+      targetId: data.id,
       meta: patch,
     });
     return { ok: true };
@@ -110,15 +118,20 @@ export const updateListing = createServerFn({ method: "POST" })
 
 export const listListings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    status: z.enum(["draft", "active", "paused", "sold_out", "archived", "all"]).default("all"),
-    limit: z.number().int().min(1).max(200).default(100),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        status: z.enum(["draft", "active", "paused", "sold_out", "archived", "all"]).default("all"),
+        limit: z.number().int().min(1).max(200).default(100),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("grain_listings")
       .select("*, grain_batches(id, batch_number, grain_type, quality_grade)")
-      .order("created_at", { ascending: false }).limit(data.limit);
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
     if (data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
     if (error) throw error;
@@ -131,12 +144,13 @@ export const getEligibleBatches = createServerFn({ method: "GET" })
     // Batches that are ready and not yet listed
     const { data: batches } = await context.supabase
       .from("grain_batches")
-      .select("id, batch_number, grain_type, quality_grade, net_weight_kg, quantity_kg, silo_id, status")
+      .select(
+        "id, batch_number, grain_type, quality_grade, net_weight_kg, quantity_kg, silo_id, status",
+      )
       .in("status", ["ready", "stored"])
       .order("state_changed_at", { ascending: false, nullsFirst: false })
       .limit(50);
-    const { data: existing } = await context.supabase
-      .from("grain_listings").select("batch_id");
+    const { data: existing } = await context.supabase.from("grain_listings").select("batch_id");
     const listed = new Set(((existing ?? []) as Row[]).map((r) => r.batch_id as string));
     const rows = ((batches ?? []) as Row[]).filter((b) => !listed.has(b.id as string));
     return { batches: rows };

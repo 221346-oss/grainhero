@@ -23,14 +23,18 @@ export const listMyHardwareOrders = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("hardware_orders" as never)
-      .select("*, installation:hardware_order_installations(*), visit_events:hardware_order_visit_events(*)")
+      .select(
+        "*, installation:hardware_order_installations(*), visit_events:hardware_order_visit_events(*)",
+      )
       .eq("admin_id", context.userId)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return {
       orders: (data ?? []).map((o: any) => ({
         ...o,
-        installation: Array.isArray(o.installation) ? o.installation[0] ?? null : o.installation ?? null,
+        installation: Array.isArray(o.installation)
+          ? (o.installation[0] ?? null)
+          : (o.installation ?? null),
         visit_events: o.visit_events ?? [],
       })) as HardwareOrder[],
     };
@@ -44,15 +48,24 @@ export const listAllHardwareOrders = createServerFn({ method: "GET" })
     if (!isSuper) throw new Error("Forbidden");
     const { data, error } = await context.supabase
       .from("hardware_orders" as never)
-      .select("*, installation:hardware_order_installations(*), visit_events:hardware_order_visit_events(*)")
+      .select(
+        "*, installation:hardware_order_installations(*), visit_events:hardware_order_visit_events(*)",
+      )
       .order("created_at", { ascending: false });
     if (error) throw error;
-    const rows = (data ?? []).map((o: any) => ({
-      ...o,
-      installation: Array.isArray(o.installation) ? o.installation[0] ?? null : o.installation ?? null,
-      visit_events: o.visit_events ?? [],
-    }) as HardwareOrder);
-    const adminIds = Array.from(new Set(rows.map((o) => o.admin_id as string | null).filter(Boolean) as string[]));
+    const rows = (data ?? []).map(
+      (o: any) =>
+        ({
+          ...o,
+          installation: Array.isArray(o.installation)
+            ? (o.installation[0] ?? null)
+            : (o.installation ?? null),
+          visit_events: o.visit_events ?? [],
+        }) as HardwareOrder,
+    );
+    const adminIds = Array.from(
+      new Set(rows.map((o) => o.admin_id as string | null).filter(Boolean) as string[]),
+    );
     let profiles: Record<string, any> = {};
     if (adminIds.length > 0) {
       const { data: profs } = await context.supabase
@@ -93,14 +106,15 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
     if (!isSuper) throw new Error("Forbidden");
 
     const patch: Record<string, unknown> = {};
-    if (data.status)                       patch.status              = data.status;
-    if (data.technicianName !== undefined)  patch.technician_name     = data.technicianName;
-    if (data.technicianPhone !== undefined) patch.technician_phone    = data.technicianPhone;
-    if (data.scheduledInstallDate !== undefined) patch.scheduled_install_date = data.scheduledInstallDate || null;
-    if (data.status === "installed")        patch.installed_at        = new Date().toISOString();
-    if (data.status === "cancelled")        patch.cancelled_at        = new Date().toISOString();
-    if (data.cancelReason !== undefined)    patch.cancel_reason       = data.cancelReason;
-    if (data.refunded !== undefined)        patch.refunded            = data.refunded;
+    if (data.status) patch.status = data.status;
+    if (data.technicianName !== undefined) patch.technician_name = data.technicianName;
+    if (data.technicianPhone !== undefined) patch.technician_phone = data.technicianPhone;
+    if (data.scheduledInstallDate !== undefined)
+      patch.scheduled_install_date = data.scheduledInstallDate || null;
+    if (data.status === "installed") patch.installed_at = new Date().toISOString();
+    if (data.status === "cancelled") patch.cancelled_at = new Date().toISOString();
+    if (data.cancelReason !== undefined) patch.cancel_reason = data.cancelReason;
+    if (data.refunded !== undefined) patch.refunded = data.refunded;
 
     // Use the super-admin's authenticated RLS client — no service role needed.
     const { data: updated, error } = await context.supabase
@@ -117,7 +131,10 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
     if (o.admin_id) {
       try {
         const { emitNotification } = await import("@/lib/notify");
-        const notifMap: Record<string, { title: string; body: string; severity: "info" | "warning" | "success" }> = {
+        const notifMap: Record<
+          string,
+          { title: string; body: string; severity: "info" | "warning" | "success" }
+        > = {
           approved: {
             title: "Your silo request has been approved! 🎉",
             body: "Visit your install orders page to complete payment and schedule your installation.",
@@ -141,19 +158,21 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
           const mod = await import("@/integrations/supabase/client.server");
           void mod.supabaseAdmin.auth; // probe — throws if SUPABASE_SERVICE_ROLE_KEY missing
           notifClient = mod.supabaseAdmin;
-        } catch { /* no service role — use RLS client */ }
+        } catch {
+          /* no service role — use RLS client */
+        }
 
         await emitNotification(notifClient, {
-          recipientId:   o.admin_id as string,
+          recipientId: o.admin_id as string,
           tenantAdminId: o.admin_id as string,
-          category:      "install",
-          severity:      cfg.severity,
-          title:         cfg.title,
-          body:          cfg.body,
-          link:          "/orders",
-          entityType:    "hardware_order",
-          entityId:      o.id as string,
-          metadata:      { status: o.status },
+          category: "install",
+          severity: cfg.severity,
+          title: cfg.title,
+          body: cfg.body,
+          link: "/orders",
+          entityType: "hardware_order",
+          entityId: o.id as string,
+          metadata: { status: o.status },
         });
       } catch (notifErr) {
         // Notification failure MUST NOT break the approval — just log.
@@ -165,8 +184,8 @@ export const updateHardwareOrder = createServerFn({ method: "POST" })
   });
 
 const messageInput = z.object({
-  orderId:    z.string().uuid(),
-  message:    z.string().trim().min(1).max(2000),
+  orderId: z.string().uuid(),
+  message: z.string().trim().min(1).max(2000),
   emailBuyer: z.boolean().default(true),
 });
 
@@ -191,37 +210,45 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
     if (data.emailBuyer && isSuper) {
       try {
         const { data: buyer } = buyerId
-          ? await context.supabase.from("profiles").select("email,name").eq("id", buyerId).maybeSingle()
+          ? await context.supabase
+              .from("profiles")
+              .select("email,name")
+              .eq("id", buyerId)
+              .maybeSingle()
           : { data: null };
-        const email = (buyer as { email?: string } | null)?.email
-          ?? (order as { customer_email?: string | null }).customer_email
-          ?? null;
+        const email =
+          (buyer as { email?: string } | null)?.email ??
+          (order as { customer_email?: string | null }).customer_email ??
+          null;
         const gatewayKey = process.env.LOVABLE_API_KEY;
-        const resendKey  = process.env.RESEND_API_KEY;
+        const resendKey = process.env.RESEND_API_KEY;
         const from = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
         if (email && gatewayKey && resendKey) {
           const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-            method:  "POST",
+            method: "POST",
             headers: {
-              "Content-Type":  "application/json",
-              Authorization:   `Bearer ${gatewayKey}`,
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${gatewayKey}`,
               "X-Connection-Api-Key": resendKey,
             },
             body: JSON.stringify({
-              from, to: [email],
+              from,
+              to: [email],
               subject: "Update on your GrainHero install order",
               html: `<p>${data.message.replace(/</g, "&lt;").replace(/\n/g, "<br/>")}</p>`,
             }),
           }).catch(() => null);
           emailed = !!res?.ok;
         }
-      } catch { /* email is non-fatal */ }
+      } catch {
+        /* email is non-fatal */
+      }
     }
 
     await context.supabase.from("hardware_order_messages" as never).insert({
-      order_id:  data.orderId,
+      order_id: data.orderId,
       sender_id: context.userId,
-      message:   data.message,
+      message: data.message,
       emailed,
     } as never);
 
@@ -233,26 +260,36 @@ export const sendOrderMessage = createServerFn({ method: "POST" })
         const mod = await import("@/integrations/supabase/client.server");
         void mod.supabaseAdmin.auth;
         notifClient = mod.supabaseAdmin;
-      } catch { /* use RLS client */ }
+      } catch {
+        /* use RLS client */
+      }
 
       if (isSuper && buyerId) {
         await emitNotification(notifClient, {
-          recipientId: buyerId, tenantAdminId: buyerId,
-          category: "install", severity: "info",
+          recipientId: buyerId,
+          tenantAdminId: buyerId,
+          category: "install",
+          severity: "info",
           title: "New message about your install order",
-          body: data.message, link: "/orders",
-          entityType: "hardware_order", entityId: data.orderId,
+          body: data.message,
+          link: "/orders",
+          entityType: "hardware_order",
+          entityId: data.orderId,
         });
       } else if (isOwner) {
         await emitToSuperAdmins(notifClient, {
-          category: "install", severity: "info",
+          category: "install",
+          severity: "info",
           title: "Buyer replied on install order",
           body: data.message,
           link: `/platform/orders/${data.orderId}`,
-          entityType: "hardware_order", entityId: data.orderId,
+          entityType: "hardware_order",
+          entityId: data.orderId,
         });
       }
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
 
     return { ok: true, emailed, senderRole };
   });
@@ -269,8 +306,12 @@ export const listOrderMessages = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
     if (error) throw error;
     type Msg = {
-      id: string; order_id: string; sender_id: string;
-      message: string; emailed: boolean | null; created_at: string;
+      id: string;
+      order_id: string;
+      sender_id: string;
+      message: string;
+      emailed: boolean | null;
+      created_at: string;
     };
     const list = (rows ?? []) as unknown as Msg[];
     const { data: ord } = await context.supabase
@@ -280,8 +321,11 @@ export const listOrderMessages = createServerFn({ method: "GET" })
       .maybeSingle();
     const ownerId = (ord as { admin_id?: string | null } | null)?.admin_id ?? null;
     const messages = list.map((m) => ({
-      id: m.id, order_id: m.order_id, sender_id: m.sender_id,
-      message: m.message, created_at: m.created_at,
+      id: m.id,
+      order_id: m.order_id,
+      sender_id: m.sender_id,
+      message: m.message,
+      created_at: m.created_at,
       sender_role: (m.sender_id === ownerId ? "admin" : "super_admin") as "admin" | "super_admin",
     }));
     return { messages, viewerIsOwner: ownerId === context.userId };
@@ -321,7 +365,7 @@ export const getTenantSiloInfo = createServerFn({ method: "GET" })
       .eq("id", data.adminId)
       .maybeSingle();
 
-    const planId     = (profile as any)?.subscription_plan ?? "starter";
+    const planId = (profile as any)?.subscription_plan ?? "starter";
     const tenantName = (profile as any)?.name ?? (profile as any)?.email ?? "Tenant";
 
     const { data: threshold } = await context.supabase
@@ -330,10 +374,18 @@ export const getTenantSiloInfo = createServerFn({ method: "GET" })
       .eq("plan_id", planId)
       .maybeSingle();
 
-    const maxSilos    = Number((threshold as any)?.max_silos ?? 0);
-    const planName    = (threshold as any)?.name ?? planId;
-    const used        = siloCount ?? 0;
+    const maxSilos = Number((threshold as any)?.max_silos ?? 0);
+    const planName = (threshold as any)?.name ?? planId;
+    const used = siloCount ?? 0;
     const withinLimit = maxSilos <= 0 || used < maxSilos;
 
-    return { used, limit: maxSilos, unlimited: maxSilos <= 0, withinLimit, planId, planName, tenantName };
+    return {
+      used,
+      limit: maxSilos,
+      unlimited: maxSilos <= 0,
+      withinLimit,
+      planId,
+      planName,
+      tenantName,
+    };
   });

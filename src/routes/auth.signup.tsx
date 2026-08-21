@@ -13,7 +13,10 @@ import { SignupOrderSummary } from "@/components/auth/SignupOrderSummary";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 import { validateSignupForm, validatePassword, type PasswordStrength } from "@/lib/validation";
 import { resolvePlanId, type PlanId } from "@/lib/pricing-data";
-import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
+import {
+  getCheckoutSessionSummary,
+  claimPaidCheckoutForUser,
+} from "@/lib/stripe-checkout.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
 import { sendWelcomeEmail } from "@/lib/email-automation.functions";
 import { syncSignupToHubspot } from "@/lib/hubspot.functions";
@@ -56,14 +59,14 @@ export const Route = createFileRoute("/auth/signup")({
     meta: [
       { title: "Create your account — GrainHero" },
       { name: "description", content: "Start monitoring your grain in minutes." },
-      { property: 'og:title', content: "Create your account — GrainHero" },
-      { property: 'og:description', content: "Start monitoring your grain in minutes." },
-      { property: 'og:url', content: 'https://grainhero.app/auth/signup' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'robots', content: 'noindex, nofollow' },
+      { property: "og:title", content: "Create your account — GrainHero" },
+      { property: "og:description", content: "Start monitoring your grain in minutes." },
+      { property: "og:url", content: "https://grainhero.app/auth/signup" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/auth/signup' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/auth/signup" }],
   }),
   component: SignupPage,
 });
@@ -132,18 +135,30 @@ function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
-  const [strength, setStrength] = useState<PasswordStrength>({ score: 0, feedback: [], isValid: false });
+  const [strength, setStrength] = useState<PasswordStrength>({
+    score: 0,
+    feedback: [],
+    isValid: false,
+  });
   const [touched, setTouched] = useState<Record<keyof typeof form, boolean>>({
-    name: false, email: false, phone: false, password: false, confirmPassword: false,
+    name: false,
+    email: false,
+    phone: false,
+    password: false,
+    confirmPassword: false,
   });
   const [fieldErrors, setFieldErrors] = useState<Record<keyof typeof form, string>>({
-    name: "", email: "", phone: "", password: "", confirmPassword: "",
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const update = (k: keyof typeof form, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (k === "password") setStrength(validatePassword(v).strength);
-    
+
     // Real-time validation on change (if field was touched)
     if (touched[k]) {
       validateSingleField(k, v);
@@ -152,14 +167,14 @@ function SignupPage() {
 
   const validateSingleField = (field: keyof typeof form, value: string) => {
     const result = validateSignupForm({ ...form, [field]: value });
-    setFieldErrors(prev => ({
+    setFieldErrors((prev) => ({
       ...prev,
-      [field]: result.errors[field] || ""
+      [field]: result.errors[field] || "",
     }));
   };
 
   const handleBlur = (field: keyof typeof form) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
     validateSingleField(field, form[field]);
   };
 
@@ -188,7 +203,7 @@ function SignupPage() {
         emailRedirectTo: `${window.location.origin}/auth/verify-otp`,
       },
     });
-    
+
     if (error) {
       setMsg({ type: "error", text: error.message });
       setLoading(false);
@@ -196,16 +211,17 @@ function SignupPage() {
     }
 
     // Check if email confirmation is required
-    const needsEmailConfirmation = data?.user && !data.user.email_confirmed_at && data.user.identities?.length === 0;
-    
+    const needsEmailConfirmation =
+      data?.user && !data.user.email_confirmed_at && data.user.identities?.length === 0;
+
     if (needsEmailConfirmation) {
       // Store email for verification page
       if (typeof window !== "undefined") {
         window.localStorage.setItem("pendingVerificationEmail", normalizedEmail);
       }
-      setMsg({ 
-        type: "success", 
-        text: "Account created! Please check your email to verify your account." 
+      setMsg({
+        type: "success",
+        text: "Account created! Please check your email to verify your account.",
       });
       setLoading(false);
       // Redirect to verification page after 2 seconds
@@ -260,30 +276,37 @@ function SignupPage() {
     else navigate({ to: "/dashboard" });
   };
 
-
   return (
     <AuthShell>
       <div className="space-y-6">
         <div className="text-center">
           <h1 className="text-2xl font-semibold">Create your account</h1>
           <p className="text-sm text-muted-foreground">
-            {orderPaid ? "Finish setup for your paid plan" : "Start monitoring your grain in minutes"}
+            {orderPaid
+              ? "Finish setup for your paid plan"
+              : "Start monitoring your grain in minutes"}
           </p>
         </div>
         {showOrderSummary && orderPlanId && (
-          <SignupOrderSummary planId={orderPlanId} iotQuantity={orderIotQuantity} paid={orderPaid} />
+          <SignupOrderSummary
+            planId={orderPlanId}
+            iotQuantity={orderIotQuantity}
+            paid={orderPaid}
+          />
         )}
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="su-name">Full name</Label>
-            <Input 
-              id="su-name" 
-              value={form.name} 
-              onChange={(e) => update("name", e.target.value)} 
+            <Input
+              id="su-name"
+              value={form.name}
+              onChange={(e) => update("name", e.target.value)}
               onBlur={() => handleBlur("name")}
-              placeholder="e.g., Ahmed Khan" 
+              placeholder="e.g., Ahmed Khan"
               required
-              className={touched.name && fieldErrors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
+              className={
+                touched.name && fieldErrors.name ? "border-red-500 focus-visible:ring-red-500" : ""
+              }
             />
             {touched.name && fieldErrors.name && (
               <p className="text-xs text-red-600">{fieldErrors.name}</p>
@@ -291,15 +314,19 @@ function SignupPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="su-email">Email</Label>
-            <Input 
-              id="su-email" 
-              type="email" 
-              value={form.email} 
-              onChange={(e) => update("email", e.target.value)} 
+            <Input
+              id="su-email"
+              type="email"
+              value={form.email}
+              onChange={(e) => update("email", e.target.value)}
               onBlur={() => handleBlur("email")}
-              placeholder="ahmed@grainstorage.pk" 
+              placeholder="ahmed@grainstorage.pk"
               required
-              className={touched.email && fieldErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+              className={
+                touched.email && fieldErrors.email
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }
             />
             {touched.email && fieldErrors.email && (
               <p className="text-xs text-red-600">{fieldErrors.email}</p>
@@ -307,13 +334,17 @@ function SignupPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="su-phone">Phone (optional)</Label>
-            <Input 
-              id="su-phone" 
-              value={form.phone} 
-              onChange={(e) => update("phone", e.target.value)} 
+            <Input
+              id="su-phone"
+              value={form.phone}
+              onChange={(e) => update("phone", e.target.value)}
               onBlur={() => handleBlur("phone")}
               placeholder="+92 300 1234567"
-              className={touched.phone && fieldErrors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
+              className={
+                touched.phone && fieldErrors.phone
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }
             />
             {touched.phone && fieldErrors.phone && (
               <p className="text-xs text-red-600">{fieldErrors.phone}</p>
@@ -354,14 +385,22 @@ function SignupPage() {
               onChange={(e) => update("confirmPassword", e.target.value)}
               onBlur={() => handleBlur("confirmPassword")}
               required
-              className={touched.confirmPassword && fieldErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}
+              className={
+                touched.confirmPassword && fieldErrors.confirmPassword
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }
             />
             {touched.confirmPassword && fieldErrors.confirmPassword && (
               <p className="text-xs text-red-600">{fieldErrors.confirmPassword}</p>
             )}
           </div>
           <Message msg={msg} />
-          <Button type="submit" disabled={loading} className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
+          >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create account"}
           </Button>
         </form>

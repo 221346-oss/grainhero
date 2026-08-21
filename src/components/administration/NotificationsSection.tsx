@@ -9,20 +9,45 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Bell, BellOff, CheckCircle2, AlertTriangle, Info, XCircle, Clock,
-  Package, Truck, DollarSign, Shield, FileText, Settings, Check, RefreshCw, Trash2,
+  Bell,
+  BellOff,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  XCircle,
+  Clock,
+  Package,
+  Truck,
+  DollarSign,
+  Shield,
+  FileText,
+  Settings,
+  Check,
+  RefreshCw,
+  Trash2,
 } from "lucide-react";
 import {
-  listNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification,
+  listNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  deleteNotification,
 } from "@/lib/notifications-audit.functions";
 
 type Filter = "all" | "unread" | "read";
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
   info: { icon: <Info className="h-5 w-5" />, color: "text-blue-600", bg: "bg-blue-50" },
-  warning: { icon: <AlertTriangle className="h-5 w-5" />, color: "text-amber-600", bg: "bg-amber-50" },
+  warning: {
+    icon: <AlertTriangle className="h-5 w-5" />,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+  },
   critical: { icon: <XCircle className="h-5 w-5" />, color: "text-red-600", bg: "bg-red-50" },
-  success: { icon: <CheckCircle2 className="h-5 w-5" />, color: "text-emerald-600", bg: "bg-emerald-50" },
+  success: {
+    icon: <CheckCircle2 className="h-5 w-5" />,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+  },
 };
 
 const CATEGORY_ICON: Record<string, React.ReactNode> = {
@@ -67,11 +92,17 @@ export function NotificationsSection() {
   });
   const allMut = useMutation({
     mutationFn: () => markAll(),
-    onSuccess: () => { invalidate(); toast.success("All marked as read"); },
+    onSuccess: () => {
+      invalidate();
+      toast.success("All marked as read");
+    },
   });
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
-    onSuccess: () => { invalidate(); toast.success("Notification removed"); },
+    onSuccess: () => {
+      invalidate();
+      toast.success("Notification removed");
+    },
   });
 
   const notifications = data?.notifications ?? [];
@@ -83,7 +114,9 @@ export function NotificationsSection() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted-foreground">
-          {unread > 0 ? `${unread} unread notification${unread === 1 ? "" : "s"}` : "All caught up!"}
+          {unread > 0
+            ? `${unread} unread notification${unread === 1 ? "" : "s"}`
+            : "All caught up!"}
         </p>
         <div className="flex flex-wrap gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
@@ -106,7 +139,13 @@ export function NotificationsSection() {
             onClick={() => setFilter(f)}
             className={filter === f ? "bg-emerald-600 hover:bg-emerald-700" : ""}
           >
-            {f === "all" ? <Bell className="h-4 w-4 mr-1.5" /> : f === "unread" ? <BellOff className="h-4 w-4 mr-1.5" /> : <Check className="h-4 w-4 mr-1.5" />}
+            {f === "all" ? (
+              <Bell className="h-4 w-4 mr-1.5" />
+            ) : f === "unread" ? (
+              <BellOff className="h-4 w-4 mr-1.5" />
+            ) : (
+              <Check className="h-4 w-4 mr-1.5" />
+            )}
             {f[0].toUpperCase() + f.slice(1)}
             {f === "unread" && unread > 0 && (
               <Badge className="ml-1.5 bg-red-500 text-white text-[10px] px-1.5">{unread}</Badge>
@@ -118,13 +157,17 @@ export function NotificationsSection() {
       <Card className="border-slate-200/70">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-4"><ListSkeleton rows={5} /></div>
+            <div className="p-4">
+              <ListSkeleton rows={5} />
+            </div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
               <Bell className="h-12 w-12 mb-3 opacity-30" />
               <p className="text-lg font-medium">No notifications</p>
               <p className="text-sm mt-1">
-                {filter === "unread" ? "All notifications have been read" : "You have no notifications yet"}
+                {filter === "unread"
+                  ? "All notifications have been read"
+                  : "You have no notifications yet"}
               </p>
             </div>
           ) : (
@@ -139,12 +182,16 @@ export function NotificationsSection() {
                       className={`flex items-start gap-3 sm:gap-4 p-4 cursor-pointer transition-colors hover:bg-slate-50 ${!n.read ? "bg-emerald-50/30 border-l-4 border-l-emerald-500" : "border-l-4 border-l-transparent"}`}
                       onClick={() => !n.read && readMut.mutate(n.id)}
                     >
-                      <div className={`mt-0.5 shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${t.bg}`}>
+                      <div
+                        className={`mt-0.5 shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${t.bg}`}
+                      >
                         <span className={t.color}>{t.icon}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-semibold leading-snug ${!n.read ? "text-slate-900" : "text-slate-600"}`}>
+                          <p
+                            className={`text-sm font-semibold leading-snug ${!n.read ? "text-slate-900" : "text-slate-600"}`}
+                          >
                             {n.title}
                           </p>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -166,7 +213,10 @@ export function NotificationsSection() {
                           </Badge>
                           <button
                             className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
-                            onClick={(e) => { e.stopPropagation(); delMut.mutate(n.id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              delMut.mutate(n.id);
+                            }}
                             title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />

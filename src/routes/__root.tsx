@@ -95,9 +95,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "GrainHero — AI-Powered Grain Storage Management" },
-      { name: "twitter:description", content: "Monitor, predict, and optimize your grain storage with GrainHero's intelligent SaaS platform." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/103a216c-3714-4c93-a116-dfad0356f524/id-preview-e07050d2--08a93ae3-e513-4d21-8fb9-bf6979e71541.lovable.app-1783459228294.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/103a216c-3714-4c93-a116-dfad0356f524/id-preview-e07050d2--08a93ae3-e513-4d21-8fb9-bf6979e71541.lovable.app-1783459228294.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Monitor, predict, and optimize your grain storage with GrainHero's intelligent SaaS platform.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/103a216c-3714-4c93-a116-dfad0356f524/id-preview-e07050d2--08a93ae3-e513-4d21-8fb9-bf6979e71541.lovable.app-1783459228294.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/103a216c-3714-4c93-a116-dfad0356f524/id-preview-e07050d2--08a93ae3-e513-4d21-8fb9-bf6979e71541.lovable.app-1783459228294.png",
+      },
     ],
     links: [
       {
@@ -125,14 +137,18 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
         {/* Apply dark mode before paint to prevent flash */}
-        <script dangerouslySetInnerHTML={{ __html: `
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
           try {
             var m = localStorage.getItem('gh-theme-mode');
             if (m === 'dark' || (!m && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
               document.documentElement.classList.add('dark');
             }
           } catch(e) {}
-        `}} />
+        `,
+          }}
+        />
       </head>
       <body>
         {children}

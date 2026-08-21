@@ -20,7 +20,11 @@ export const Route = createFileRoute("/_authenticated/superadmin-technician")({
   head: () => ({
     meta: [
       { title: "Technician Command Center — Grain Hero" },
-      { name: "description", content: "Fleet management, installations, ticketing and real-time status for superadmin technicians." },
+      {
+        name: "description",
+        content:
+          "Fleet management, installations, ticketing and real-time status for superadmin technicians.",
+      },
       { property: "og:title", content: "Technician Command Center — Grain Hero" },
       { name: "robots", content: "noindex, nofollow" },
     ],

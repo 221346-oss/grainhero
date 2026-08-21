@@ -12,7 +12,12 @@ export type Column<T> = {
 };
 
 export function DataListPage<T extends Record<string, unknown>>({
-  title, subtitle, badge, queryKey, queryFn, columns,
+  title,
+  subtitle,
+  badge,
+  queryKey,
+  queryFn,
+  columns,
 }: {
   title: string;
   subtitle?: string;
@@ -26,7 +31,11 @@ export function DataListPage<T extends Record<string, unknown>>({
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      <PageHeader title={title} subtitle={subtitle} badge={badge ?? (isLoading ? "…" : `${rows.length}`)} />
+      <PageHeader
+        title={title}
+        subtitle={subtitle}
+        badge={badge ?? (isLoading ? "…" : `${rows.length}`)}
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-24 text-slate-500">
@@ -63,7 +72,9 @@ export function DataListPage<T extends Record<string, unknown>>({
                   <tr key={(row.id as string) ?? i} className="hover:bg-muted/40 transition-colors">
                     {columns.map((c) => (
                       <td key={c.key} className="px-4 py-3 text-foreground/80">
-                        {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key] ?? "—")}
+                        {c.render
+                          ? c.render(row)
+                          : String((row as Record<string, unknown>)[c.key] ?? "—")}
                       </td>
                     ))}
                   </tr>
@@ -77,12 +88,18 @@ export function DataListPage<T extends Record<string, unknown>>({
   );
 }
 
-export function StatusBadge({ value, qcPassedAt }: { value: string | null | undefined; qcPassedAt?: string | null }) {
+export function StatusBadge({
+  value,
+  qcPassedAt,
+}: {
+  value: string | null | undefined;
+  qcPassedAt?: string | null;
+}) {
   if (!value) return <span className="text-slate-400">—</span>;
-  
+
   // Get user-friendly stage label
   const stageLabel = getBatchStageLabel(value, qcPassedAt);
-  
+
   const colors: Record<string, string> = {
     // QC Workflow stages
     pending_qc: "bg-slate-100 text-slate-700",
@@ -91,7 +108,7 @@ export function StatusBadge({ value, qcPassedAt }: { value: string | null | unde
     qc_failed: "bg-rose-100 text-rose-700",
     admin_rejected: "bg-rose-100 text-rose-700",
     pending_approval: "bg-amber-100 text-amber-700",
-    
+
     // General statuses
     active: "bg-emerald-100 text-emerald-700",
     online: "bg-emerald-100 text-emerald-700",

@@ -45,7 +45,7 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     // (project not fully wired to Cloud), the Proxy throws on first access.
     // Degrade gracefully so the buyer can still reach Stripe; the webhook +
     // post-payment claim flow will attach the order to the user later.
-    type AdminClient = typeof import("@/integrations/supabase/client.server")["supabaseAdmin"];
+    type AdminClient = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
     let admin: AdminClient | null = null;
     try {
       const mod = await import("@/integrations/supabase/client.server");
@@ -53,7 +53,10 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
       void mod.supabaseAdmin.auth;
       admin = mod.supabaseAdmin;
     } catch (e) {
-      console.warn("[checkout] supabaseAdmin unavailable, running guest-only flow:", (e as Error).message);
+      console.warn(
+        "[checkout] supabaseAdmin unavailable, running guest-only flow:",
+        (e as Error).message,
+      );
       admin = null;
     }
 
@@ -86,8 +89,13 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
       customerId = created.id as string;
       if (existingUserId && admin) {
         try {
-          await admin.from("profiles").update({ stripe_customer_id: customerId }).eq("id", existingUserId);
-        } catch (e) { console.warn("[checkout] profile update failed:", (e as Error).message); }
+          await admin
+            .from("profiles")
+            .update({ stripe_customer_id: customerId })
+            .eq("id", existingUserId);
+        } catch (e) {
+          console.warn("[checkout] profile update failed:", (e as Error).message);
+        }
       }
     }
 
@@ -128,7 +136,10 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
         if (error) throw error;
         orderId = (order as { id: string }).id;
       } catch (e) {
-        console.warn("[checkout] could not create hardware order draft (continuing):", (e as Error).message);
+        console.warn(
+          "[checkout] could not create hardware order draft (continuing):",
+          (e as Error).message,
+        );
       }
     }
 
@@ -166,27 +177,37 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
     // (separate line item with no [recurring] = one-time on first invoice).
     // If Stripe rejects it (400), we fall back to bundling IoT cost into the
     // subscription unit_amount so the total is still correct.
-    const iotStripeTotal = data.iotQuantity > 0 && plan.iotCharge
-      ? Math.round(Number(plan.iotCharge) * data.iotQuantity * 100)
-      : 0;
+    const iotStripeTotal =
+      data.iotQuantity > 0 && plan.iotCharge
+        ? Math.round(Number(plan.iotCharge) * data.iotQuantity * 100)
+        : 0;
     const subscriptionUnitAmount = Math.round(Number(plan.price) * 100);
 
     // Try with separate IoT line item first
     if (iotStripeTotal > 0) {
       params.append("line_items[1][quantity]", "1");
       params.append("line_items[1][price_data][currency]", currency);
-      params.append("line_items[1][price_data][product_data][name]", `IoT Sensor Setup × ${data.iotQuantity}`);
-      params.append("line_items[1][price_data][product_data][description]", `One-time hardware installation for ${data.iotQuantity} sensor(s)`);
+      params.append(
+        "line_items[1][price_data][product_data][name]",
+        `IoT Sensor Setup × ${data.iotQuantity}`,
+      );
+      params.append(
+        "line_items[1][price_data][product_data][description]",
+        `One-time hardware installation for ${data.iotQuantity} sensor(s)`,
+      );
       params.append("line_items[1][price_data][unit_amount]", String(iotStripeTotal));
       // No [recurring] = treated as one-time on first invoice
     }
 
     let session: { url: string; id: string };
     try {
-      session = await stripeFetch("/checkout/sessions", params) as { url: string; id: string };
+      session = (await stripeFetch("/checkout/sessions", params)) as { url: string; id: string };
     } catch (e) {
       // Stripe rejected mixed line items — bundle IoT into subscription amount
-      console.warn("[checkout] separate IoT line item rejected, bundling into subscription:", (e as Error).message);
+      console.warn(
+        "[checkout] separate IoT line item rejected, bundling into subscription:",
+        (e as Error).message,
+      );
 
       const fallbackParams = stripeForm({
         mode: "subscription",
@@ -209,12 +230,14 @@ export const createStripeCheckoutSession = createServerFn({ method: "POST" })
         "line_items[0][quantity]": "1",
         "line_items[0][price_data][currency]": currency,
         "line_items[0][price_data][product_data][name]": `GrainHero ${plan.name} + IoT Setup`,
-        "line_items[0][price_data][product_data][description]":
-          `${plan.description} · Includes ${data.iotQuantity} sensor installation(s) (Rs. ${(data.iotQuantity * Number(plan.iotCharge)).toLocaleString()} one-time)`,
+        "line_items[0][price_data][product_data][description]": `${plan.description} · Includes ${data.iotQuantity} sensor installation(s) (Rs. ${(data.iotQuantity * Number(plan.iotCharge)).toLocaleString()} one-time)`,
         "line_items[0][price_data][unit_amount]": String(subscriptionUnitAmount + iotStripeTotal),
         "line_items[0][price_data][recurring][interval]": plan.interval ?? "month",
       });
-      session = await stripeFetch("/checkout/sessions", fallbackParams) as { url: string; id: string };
+      session = (await stripeFetch("/checkout/sessions", fallbackParams)) as {
+        url: string;
+        id: string;
+      };
     }
     // Stash the session id on the order so the webhook can look it up.
     if (orderId && admin) {
@@ -260,7 +283,10 @@ export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     const profile = profileRow as {
-      email?: string | null; name?: string | null; stripe_customer_id?: string | null; subscription_plan?: string | null;
+      email?: string | null;
+      name?: string | null;
+      stripe_customer_id?: string | null;
+      subscription_plan?: string | null;
     } | null;
 
     const planId = profile?.subscription_plan ?? "basic";
@@ -277,7 +303,10 @@ export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
         stripeForm({ email, name, "metadata[user_id]": context.userId }),
       );
       customerId = created.id as string;
-      await context.supabase.from("profiles").update({ stripe_customer_id: customerId }).eq("id", context.userId);
+      await context.supabase
+        .from("profiles")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", context.userId);
     }
 
     const iotUnit = Number(plan.iotCharge ?? 7000);
@@ -298,7 +327,8 @@ export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
         install_city: data.install.city ?? null,
         install_country: data.install.country,
         contact_phone: data.install.phone,
-        notes: data.install.notes || "Additional silo/IoT device request — plan silo limit reached.",
+        notes:
+          data.install.notes || "Additional silo/IoT device request — plan silo limit reached.",
         status: "pending_payment",
       } as never)
       .select("id")
@@ -322,20 +352,27 @@ export const createSiloAddonCheckoutSession = createServerFn({ method: "POST" })
       "line_items[0][quantity]": "1",
       "line_items[0][price_data][currency]": currency,
       "line_items[0][price_data][product_data][name]": "Additional silo / IoT sensor",
-      "line_items[0][price_data][product_data][description]": "One-time hardware + install fee for one additional silo beyond your plan's included limit.",
+      "line_items[0][price_data][product_data][description]":
+        "One-time hardware + install fee for one additional silo beyond your plan's included limit.",
       "line_items[0][price_data][unit_amount]": String(Math.round(iotUnit * 100)),
     });
 
     let session: { url: string; id: string };
     try {
-      session = await stripeFetch("/checkout/sessions", params) as { url: string; id: string };
+      session = (await stripeFetch("/checkout/sessions", params)) as { url: string; id: string };
     } catch (e) {
       // Roll back the draft order if Stripe rejects the session, so it
       // doesn't linger forever in "pending_payment".
-      await context.supabase.from("hardware_orders" as never).delete().eq("id", orderId);
+      await context.supabase
+        .from("hardware_orders" as never)
+        .delete()
+        .eq("id", orderId);
       throw e;
     }
-    await context.supabase.from("hardware_orders" as never).update({ stripe_session_id: session.id } as never).eq("id", orderId);
+    await context.supabase
+      .from("hardware_orders" as never)
+      .update({ stripe_session_id: session.id } as never)
+      .eq("id", orderId);
     return { url: session.url, id: session.id };
   });
 
@@ -345,7 +382,11 @@ export const getCheckoutSessionSummary = createServerFn({ method: "GET" })
   .inputValidator((d) => checkoutSummaryInput.parse(d))
   .handler(async ({ data }) => {
     const { stripeFetch } = await import("@/lib/stripe-api.server");
-    const session = await stripeFetch(`/checkout/sessions/${encodeURIComponent(data.sessionId)}`, null, "GET") as {
+    const session = (await stripeFetch(
+      `/checkout/sessions/${encodeURIComponent(data.sessionId)}`,
+      null,
+      "GET",
+    )) as {
       id: string;
       status?: string;
       payment_status?: string;
@@ -363,8 +404,18 @@ export const getCheckoutSessionSummary = createServerFn({ method: "GET" })
     return {
       id: session.id,
       paid: session.payment_status === "paid" || session.status === "complete",
-      email: String(row.customer_email ?? session.customer_details?.email ?? session.metadata?.customer_email ?? ""),
-      name: String(row.customer_name ?? session.customer_details?.name ?? session.metadata?.customer_name ?? ""),
+      email: String(
+        row.customer_email ??
+          session.customer_details?.email ??
+          session.metadata?.customer_email ??
+          "",
+      ),
+      name: String(
+        row.customer_name ??
+          session.customer_details?.name ??
+          session.metadata?.customer_name ??
+          "",
+      ),
       planName: String(row.plan_name ?? session.metadata?.plan_id ?? ""),
       hardwareQuantity: Number(row.hardware_quantity ?? session.metadata?.iot_quantity ?? 0),
     };
@@ -383,7 +434,11 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       .select("id,email,name,stripe_customer_id")
       .eq("id", context.userId)
       .maybeSingle();
-    const email = ((profile as { email?: string } | null)?.email ?? (context.claims?.email as string | undefined) ?? "").toLowerCase();
+    const email = (
+      (profile as { email?: string } | null)?.email ??
+      (context.claims?.email as string | undefined) ??
+      ""
+    ).toLowerCase();
     if (!email) return { claimed: 0 };
 
     let orderQuery = supabaseAdmin
@@ -411,7 +466,9 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       // previous call (matched via admin_id.eq.userId), so notifying over
       // the whole `orders` list re-fires "new order placed" on every login,
       // not just on an actual new order. Notify strictly over this subset.
-      const pendingOrders = orders.filter((o) => String(o.status ?? "") === "pending_payment" && o.stripe_session_id);
+      const pendingOrders = orders.filter(
+        (o) => String(o.status ?? "") === "pending_payment" && o.stripe_session_id,
+      );
       const pendingIds = pendingOrders.map((o) => String(o.id ?? "")).filter(Boolean);
       if (pendingIds.length > 0) {
         await supabaseAdmin
@@ -455,20 +512,28 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
       } as never)
       .eq("id", context.userId);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", context.userId);
-    await supabaseAdmin.from("user_roles").insert({ user_id: context.userId, role: "admin" } as never);
+    await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: context.userId, role: "admin" } as never);
 
     const planNameMap: Record<string, string> = {
       basic: "Grain Starter",
       intermediate: "Grain Professional",
       pro: "Grain Enterprise",
     };
-    const planLimits: Record<string, { users: number; devices: number; storage: number; batches: number }> = {
+    const planLimits: Record<
+      string,
+      { users: number; devices: number; storage: number; batches: number }
+    > = {
       basic: { users: 5, devices: 3, storage: 10, batches: 100 },
       intermediate: { users: 10, devices: 6, storage: 50, batches: 500 },
       pro: { users: 999999, devices: 15, storage: 999999, batches: 999999 },
     };
     const limits = planLimits[planId] ?? planLimits.basic;
-    const planPrice = Number((pricingData.find((p: { id: string }) => p.id === planId) as { price?: number } | undefined)?.price ?? 0);
+    const planPrice = Number(
+      (pricingData.find((p: { id: string }) => p.id === planId) as { price?: number } | undefined)
+        ?.price ?? 0,
+    );
 
     // Always upsert a subscription record so the success page can detect
     // subscriptionActive immediately — even before the Stripe webhook fires.
@@ -482,10 +547,22 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
 
     if (stripeSubscriptionId) {
       try {
-        const sub = await stripeFetch(`/subscriptions/${encodeURIComponent(stripeSubscriptionId)}`, null, "GET") as {
+        const sub = (await stripeFetch(
+          `/subscriptions/${encodeURIComponent(stripeSubscriptionId)}`,
+          null,
+          "GET",
+        )) as {
           status?: string;
           current_period_end?: number;
-          items?: { data?: Array<{ price?: { unit_amount?: number; currency?: string; recurring?: { interval?: string } } }> };
+          items?: {
+            data?: Array<{
+              price?: {
+                unit_amount?: number;
+                currency?: string;
+                recurring?: { interval?: string };
+              };
+            }>;
+          };
         };
         stripeStatus = sub.status ?? stripeStatus;
         currentPeriodEnd = sub.current_period_end ?? null;
@@ -494,13 +571,17 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
         if (price?.currency) currency = price.currency;
         if (price?.recurring?.interval) interval = price.recurring.interval;
       } catch (e) {
-        console.warn("could not fetch subscription during claim, using plan defaults:", (e as Error).message);
+        console.warn(
+          "could not fetch subscription during claim, using plan defaults:",
+          (e as Error).message,
+        );
       }
     }
 
     const validStatuses = new Set(["active", "inactive", "cancelled", "expired", "trial"]);
     const status = validStatuses.has(stripeStatus) ? stripeStatus : "active";
-    const billingCycle = interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
+    const billingCycle =
+      interval === "year" ? "yearly" : interval === "quarter" ? "quarterly" : "monthly";
 
     // Use stripe_subscription_id as conflict key when available,
     // otherwise fall back to admin_id so we still upsert a single row.
@@ -516,7 +597,9 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
           end_date: currentPeriodEnd
             ? new Date(currentPeriodEnd * 1000).toISOString()
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          next_payment_date: currentPeriodEnd ? new Date(currentPeriodEnd * 1000).toISOString() : null,
+          next_payment_date: currentPeriodEnd
+            ? new Date(currentPeriodEnd * 1000).toISOString()
+            : null,
           price_per_month: unitAmount,
           currency: currency.toUpperCase(),
           billing_cycle: billingCycle as never,
@@ -529,7 +612,8 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
         } as never,
         { onConflict: "stripe_subscription_id" },
       );
-      if (subUpsertError) console.error("[claim] subscriptions upsert failed:", subUpsertError.message);
+      if (subUpsertError)
+        console.error("[claim] subscriptions upsert failed:", subUpsertError.message);
     } else {
       // Webhook hasn't fired yet — upsert by admin_id so the success page
       // sees subscriptionActive = true immediately.
@@ -540,22 +624,26 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
         .maybeSingle();
 
       if (existingSub) {
-        const { error: subUpdateError } = await supabaseAdmin.from("subscriptions").update({
-          plan_name: (planNameMap[planId] ?? "Custom") as never,
-          status: "active" as never,
-          auto_renew: true,
-          start_date: new Date().toISOString(),
-          end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          price_per_month: planPrice,
-          currency: "PKR",
-          billing_cycle: "monthly" as never,
-          stripe_customer_id: stripeCustomerId || null,
-          max_users: limits.users,
-          max_devices: limits.devices,
-          max_storage_gb: limits.storage,
-          max_batches: limits.batches,
-        } as never).eq("admin_id", context.userId);
-        if (subUpdateError) console.error("[claim] subscriptions update failed:", subUpdateError.message);
+        const { error: subUpdateError } = await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            plan_name: (planNameMap[planId] ?? "Custom") as never,
+            status: "active" as never,
+            auto_renew: true,
+            start_date: new Date().toISOString(),
+            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            price_per_month: planPrice,
+            currency: "PKR",
+            billing_cycle: "monthly" as never,
+            stripe_customer_id: stripeCustomerId || null,
+            max_users: limits.users,
+            max_devices: limits.devices,
+            max_storage_gb: limits.storage,
+            max_batches: limits.batches,
+          } as never)
+          .eq("admin_id", context.userId);
+        if (subUpdateError)
+          console.error("[claim] subscriptions update failed:", subUpdateError.message);
       } else {
         const { error: subInsertError } = await supabaseAdmin.from("subscriptions").insert({
           admin_id: context.userId,
@@ -575,7 +663,8 @@ export const claimPaidCheckoutForUser = createServerFn({ method: "POST" })
           max_storage_gb: limits.storage,
           max_batches: limits.batches,
         } as never);
-        if (subInsertError) console.error("[claim] subscriptions insert failed:", subInsertError.message);
+        if (subInsertError)
+          console.error("[claim] subscriptions insert failed:", subInsertError.message);
       }
     }
 
@@ -608,11 +697,14 @@ export const createStripeBillingPortalSession = createServerFn({ method: "POST" 
 // ── Draft silo request (no Stripe — super-admin approval required first) ─────
 
 const siloDraftInput = z.object({
-  address:  z.string().trim().min(3).max(300),
-  city:     z.string().trim().max(120).optional().nullable(),
-  country:  z.string().trim().min(1).max(120),
-  phone:    z.string().trim().regex(/^\+92\d{10}$/, "Phone must be in format +92XXXXXXXXXX (11 digits total)"),
-  notes:    z.string().trim().max(1000).optional().nullable(),
+  address: z.string().trim().min(3).max(300),
+  city: z.string().trim().max(120).optional().nullable(),
+  country: z.string().trim().min(1).max(120),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+92\d{10}$/, "Phone must be in format +92XXXXXXXXXX (11 digits total)"),
+  notes: z.string().trim().max(1000).optional().nullable(),
 });
 
 /**
@@ -631,33 +723,36 @@ export const createSiloDraftRequest = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     const profile = profileRow as {
-      id?: string; email?: string | null; name?: string | null; subscription_plan?: string | null;
+      id?: string;
+      email?: string | null;
+      name?: string | null;
+      subscription_plan?: string | null;
     } | null;
 
-    const planId   = profile?.subscription_plan ?? "basic";
+    const planId = profile?.subscription_plan ?? "basic";
     const planMeta = pricingData.find((p: { id: string }) => p.id === planId) ?? pricingData[0];
-    const email    = (profile?.email ?? "").trim().toLowerCase();
-    const name     = (profile?.name ?? "").trim() || email;
-    const iotUnit  = Number(planMeta.iotCharge ?? 7000);
+    const email = (profile?.email ?? "").trim().toLowerCase();
+    const name = (profile?.name ?? "").trim() || email;
+    const iotUnit = Number(planMeta.iotCharge ?? 7000);
 
     const { data: order, error } = await context.supabase
       .from("hardware_orders" as never)
       .insert({
-        admin_id:           context.userId,
-        customer_name:      name,
-        customer_email:     email,
-        plan_id:            planMeta.id,
-        plan_name:          planMeta.name,
-        hardware_quantity:  1,
+        admin_id: context.userId,
+        customer_name: name,
+        customer_email: email,
+        plan_id: planMeta.id,
+        plan_name: planMeta.name,
+        hardware_quantity: 1,
         hardware_unit_price: iotUnit,
-        hardware_total:     iotUnit,
-        currency:           "PKR",
-        install_address:    data.address,
-        install_city:       data.city ?? null,
-        install_country:    data.country,
-        contact_phone:      data.phone,
-        notes:              data.notes || null,
-        status:             "new",          // awaiting super-admin approval
+        hardware_total: iotUnit,
+        currency: "PKR",
+        install_address: data.address,
+        install_city: data.city ?? null,
+        install_country: data.country,
+        contact_phone: data.phone,
+        notes: data.notes || null,
+        status: "new", // awaiting super-admin approval
       } as never)
       .select("id")
       .single();
@@ -669,13 +764,13 @@ export const createSiloDraftRequest = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { emitToSuperAdmins } = await import("@/lib/notify");
       await emitToSuperAdmins(supabaseAdmin, {
-        category:   "install",
-        severity:   "info",
-        title:      "New silo request awaiting approval",
-        body:       `${name} (${email}) submitted a silo install request for ${data.city ?? data.country}.`,
-        link:       "/platform/silo-requests",
+        category: "install",
+        severity: "info",
+        title: "New silo request awaiting approval",
+        body: `${name} (${email}) submitted a silo install request for ${data.city ?? data.country}.`,
+        link: "/platform/silo-requests",
         entityType: "hardware_order",
-        entityId:   orderId,
+        entityId: orderId,
       });
     } catch (e) {
       console.warn("[siloDraft] notify super-admins failed:", (e as Error).message);
@@ -713,7 +808,9 @@ export const payApprovedSiloOrder = createServerFn({ method: "POST" })
     const payableStatuses = new Set(["approved", "pending_payment"]);
     if (!payableStatuses.has(String(order.status))) {
       if (String(order.status) === "new") {
-        throw new Error("Your silo request is still awaiting approval. You can only pay after a super-admin approves it.");
+        throw new Error(
+          "Your silo request is still awaiting approval. You can only pay after a super-admin approves it.",
+        );
       }
       throw new Error(`Cannot pay for an order with status "${order.status}".`);
     }
@@ -725,10 +822,13 @@ export const payApprovedSiloOrder = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     const profile = profileRow as {
-      id?: string; email?: string | null; name?: string | null; stripe_customer_id?: string | null;
+      id?: string;
+      email?: string | null;
+      name?: string | null;
+      stripe_customer_id?: string | null;
     } | null;
     const email = (profile?.email ?? String(order.customer_email ?? "")).trim().toLowerCase();
-    const name  = (profile?.name  ?? String(order.customer_name  ?? "")).trim() || email;
+    const name = (profile?.name ?? String(order.customer_name ?? "")).trim() || email;
 
     const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
 
@@ -753,36 +853,40 @@ export const payApprovedSiloOrder = createServerFn({ method: "POST" })
       }
     }
 
-    const iotUnit   = Number(order.hardware_total ?? order.hardware_unit_price ?? 7000);
-    const currency  = String(order.currency ?? "PKR").toLowerCase();
-    const origin    = requireAppOrigin();
+    const iotUnit = Number(order.hardware_total ?? order.hardware_unit_price ?? 7000);
+    const currency = String(order.currency ?? "PKR").toLowerCase();
+    const origin = requireAppOrigin();
 
     const params = stripeForm({
-      mode:                     "payment",
-      customer:                 customerId ?? undefined,
-      client_reference_id:      data.orderId,
-      success_url:              `${origin}/orders?silo_payment=success`,
-      cancel_url:               `${origin}/orders?silo_payment=cancelled`,
-      "metadata[user_id]":      context.userId,
+      mode: "payment",
+      customer: customerId ?? undefined,
+      client_reference_id: data.orderId,
+      success_url: `${origin}/orders?silo_payment=success`,
+      cancel_url: `${origin}/orders?silo_payment=cancelled`,
+      "metadata[user_id]": context.userId,
       "metadata[hardware_order_id]": data.orderId,
-      "metadata[addon]":        "true",
-      "line_items[0][quantity]":                               "1",
-      "line_items[0][price_data][currency]":                   currency,
-      "line_items[0][price_data][product_data][name]":         "Additional silo / IoT sensor",
-      "line_items[0][price_data][product_data][description]":  "One-time hardware + install fee for one additional silo.",
-      "line_items[0][price_data][unit_amount]":                String(Math.round(iotUnit * 100)),
+      "metadata[addon]": "true",
+      "line_items[0][quantity]": "1",
+      "line_items[0][price_data][currency]": currency,
+      "line_items[0][price_data][product_data][name]": "Additional silo / IoT sensor",
+      "line_items[0][price_data][product_data][description]":
+        "One-time hardware + install fee for one additional silo.",
+      "line_items[0][price_data][unit_amount]": String(Math.round(iotUnit * 100)),
     });
 
-    const session = await stripeFetch("/checkout/sessions", params) as { url: string; id: string };
+    const session = (await stripeFetch("/checkout/sessions", params)) as {
+      url: string;
+      id: string;
+    };
 
     // Stash session id and advance to pending_payment — use context.supabase (user owns this order).
     // NOTE: We update to pending_payment here, then webhook will update to "paid"
     // If webhook fails, this leaves order in pending_payment state (customer can retry)
     const { error: sessionError } = await context.supabase
       .from("hardware_orders" as never)
-      .update({ 
-        stripe_session_id: session.id, 
-        status: "pending_payment" 
+      .update({
+        stripe_session_id: session.id,
+        status: "pending_payment",
       } as never)
       .eq("id", data.orderId);
 
@@ -790,11 +894,12 @@ export const payApprovedSiloOrder = createServerFn({ method: "POST" })
       throw new Error(`Failed to save checkout session: ${sessionError.message}`);
     }
 
-    console.log(`[payApprovedSiloOrder] Session created: ${session.id}, order moved to pending_payment`);
+    console.log(
+      `[payApprovedSiloOrder] Session created: ${session.id}, order moved to pending_payment`,
+    );
 
     return { url: session.url as string };
   });
-
 
 // ── Check Stripe session and update order if payment succeeded ────────────────
 

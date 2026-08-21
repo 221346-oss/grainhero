@@ -71,13 +71,28 @@ export function LocationMap({ address, city, country }: Props) {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs">
                   {address && (
-                    <span><span className="uppercase tracking-wider text-muted-foreground/70 mr-1.5">Address</span><span className="font-medium text-foreground">{address}</span></span>
+                    <span>
+                      <span className="uppercase tracking-wider text-muted-foreground/70 mr-1.5">
+                        Address
+                      </span>
+                      <span className="font-medium text-foreground">{address}</span>
+                    </span>
                   )}
                   {city && (
-                    <span><span className="uppercase tracking-wider text-muted-foreground/70 mr-1.5">City</span><span className="font-medium text-foreground">{city}</span></span>
+                    <span>
+                      <span className="uppercase tracking-wider text-muted-foreground/70 mr-1.5">
+                        City
+                      </span>
+                      <span className="font-medium text-foreground">{city}</span>
+                    </span>
                   )}
                   {country && (
-                    <span><span className="uppercase tracking-wider text-muted-foreground/70 mr-1.5">Country</span><span className="font-medium text-foreground">{country}</span></span>
+                    <span>
+                      <span className="uppercase tracking-wider text-muted-foreground/70 mr-1.5">
+                        Country
+                      </span>
+                      <span className="font-medium text-foreground">{country}</span>
+                    </span>
                   )}
                 </div>
                 <a

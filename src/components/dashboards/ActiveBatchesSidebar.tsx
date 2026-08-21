@@ -22,54 +22,55 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "short", 
+      month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       intake: "bg-blue-100 text-blue-800",
-      processing: "bg-amber-100 text-amber-800", 
+      processing: "bg-amber-100 text-amber-800",
       treatment: "bg-purple-100 text-purple-800",
       pending_qc: "bg-orange-100 text-orange-800",
-      qc_submitted: "bg-green-100 text-green-800"
+      qc_submitted: "bg-green-100 text-green-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   return (
     <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 transition-opacity duration-300 ease-in-out"
           onClick={onClose}
           style={{
-            opacity: isOpen ? 1 : 0
+            opacity: isOpen ? 1 : 0,
           }}
         />
       )}
-      
+
       {/* Sliding Container - always render for smooth animation */}
-      <div className={`
+      <div
+        className={`
         fixed top-0 right-0 h-full w-[500px] bg-white dark:bg-gray-900 z-50 
         transform transition-all duration-300 ease-in-out border-l
         border-gray-200 dark:border-gray-700
-        ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
       `}
-      style={{
-        visibility: isOpen ? 'visible' : 'hidden',
-        transitionDelay: isOpen ? '0ms' : '300ms'
-      }}
+        style={{
+          visibility: isOpen ? "visible" : "hidden",
+          transitionDelay: isOpen ? "0ms" : "300ms",
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gray-50 dark:bg-gray-800">
@@ -81,12 +82,7 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
               {batches.length} batches currently in observation
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -118,14 +114,20 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
                       <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                         {batch.batch_id}
                       </h3>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(batch.status)}`}>
+                      <span
+                        className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(batch.status)}`}
+                      >
                         {formatStatus(batch.status)}
                       </span>
                     </div>
                     {batch.risk_score && (
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${
-                        batch.risk_score >= 70 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                      }`}>
+                      <div
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          batch.risk_score >= 70
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
                         Risk: {batch.risk_score}%
                       </div>
                     )}
@@ -141,9 +143,7 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
                         <p className="font-medium text-gray-900 dark:text-gray-100">
                           {batch.grain_type}
                         </p>
-                        {batch.variety && (
-                          <p className="text-xs text-gray-500">{batch.variety}</p>
-                        )}
+                        {batch.variety && <p className="text-xs text-gray-500">{batch.variety}</p>}
                       </div>
                     </div>
 
@@ -153,9 +153,9 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">Technician</p>
                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {batch.assigned_technician?.name || 
-                           batch.assigned_technician?.email || 
-                           'Unassigned'}
+                          {batch.assigned_technician?.name ||
+                            batch.assigned_technician?.email ||
+                            "Unassigned"}
                         </p>
                       </div>
                     </div>
@@ -166,8 +166,11 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">Intake Kg</p>
                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {batch.intake_kg ? `${Math.round(batch.intake_kg / 1000).toLocaleString()}t` : 
-                           batch.quantity_kg ? `${Math.round(batch.quantity_kg / 1000).toLocaleString()}t` : 'N/A'}
+                          {batch.intake_kg
+                            ? `${Math.round(batch.intake_kg / 1000).toLocaleString()}t`
+                            : batch.quantity_kg
+                              ? `${Math.round(batch.quantity_kg / 1000).toLocaleString()}t`
+                              : "N/A"}
                         </p>
                       </div>
                     </div>
@@ -178,7 +181,9 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">Intake Date</p>
                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {batch.intake_date ? formatDate(batch.intake_date) : formatDate(batch.created_at)}
+                          {batch.intake_date
+                            ? formatDate(batch.intake_date)
+                            : formatDate(batch.created_at)}
                         </p>
                       </div>
                     </div>
@@ -188,7 +193,9 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
                   <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                     <div className="flex items-center gap-2 mb-2">
                       <Package className="h-4 w-4 text-emerald-600" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Silo Information</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Silo Information
+                      </span>
                     </div>
                     {batch.silos ? (
                       <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3">
@@ -220,7 +227,10 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
                         )}
                         {batch.farmer_name && (
                           <span className="text-gray-600 dark:text-gray-400">
-                            Farmer: <span className="font-medium text-gray-900 dark:text-gray-100">{batch.farmer_name}</span>
+                            Farmer:{" "}
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {batch.farmer_name}
+                            </span>
                           </span>
                         )}
                       </div>

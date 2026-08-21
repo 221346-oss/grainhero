@@ -6,23 +6,25 @@ import { z } from "zod";
 // Uses Lovable AI Gateway (google/gemini-3-flash-preview by default).
 export const getSpoilageInsight = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ siloId: z.string().uuid() }).parse(d),
-  )
+  .inputValidator((d: unknown) => z.object({ siloId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
 
     const { data: silo } = await context.supabase
       .from("silos")
-      .select("id, silo_id, name, capacity_kg, current_occupancy_kg, current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type, moisture_content, quantity_kg)")
+      .select(
+        "id, silo_id, name, capacity_kg, current_occupancy_kg, current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type, moisture_content, quantity_kg)",
+      )
       .eq("id", data.siloId)
       .single();
     if (!silo) throw new Error("Silo not found");
 
     const { data: readings } = await context.supabase
       .from("sensor_readings")
-      .select("reading_timestamp, temperature_value, humidity_value, moisture_value, co2_value, voc_value, anomaly_detected, condensation_risk")
+      .select(
+        "reading_timestamp, temperature_value, humidity_value, moisture_value, co2_value, voc_value, anomaly_detected, condensation_risk",
+      )
       .eq("silo_id", data.siloId)
       .order("reading_timestamp", { ascending: false })
       .limit(48);
@@ -30,7 +32,8 @@ export const getSpoilageInsight = createServerFn({ method: "POST" })
     const recent = readings ?? [];
     if (recent.length === 0) {
       return {
-        insight: "No recent sensor readings for this silo. Ensure at least one sensor is online and reporting.",
+        insight:
+          "No recent sensor readings for this silo. Ensure at least one sensor is online and reporting.",
         risk_level: "unknown" as const,
         recommendations: [],
         model: "none",
@@ -38,7 +41,12 @@ export const getSpoilageInsight = createServerFn({ method: "POST" })
     }
 
     const summary = {
-      silo: { id: silo.silo_id, name: silo.name, capacity_kg: silo.capacity_kg, occupancy_kg: silo.current_occupancy_kg },
+      silo: {
+        id: silo.silo_id,
+        name: silo.name,
+        capacity_kg: silo.capacity_kg,
+        occupancy_kg: silo.current_occupancy_kg,
+      },
       current_batch: silo.current_batch,
       readings_count: recent.length,
       window: {
@@ -70,24 +78,33 @@ export const getSpoilageInsight = createServerFn({ method: "POST" })
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: system },
-          { role: "user", content: `Silo telemetry summary:\n${JSON.stringify(summary, null, 2)}\n\nReturn only JSON.` },
+          {
+            role: "user",
+            content: `Silo telemetry summary:\n${JSON.stringify(summary, null, 2)}\n\nReturn only JSON.`,
+          },
         ],
         response_format: { type: "json_object" },
       }),
     });
 
     if (res.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
-    if (res.status === 402) throw new Error("AI credits exhausted. Please top up in the workspace billing.");
+    if (res.status === 402)
+      throw new Error("AI credits exhausted. Please top up in the workspace billing.");
     if (!res.ok) throw new Error(`AI Gateway error ${res.status}`);
 
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const content = json.choices?.[0]?.message?.content ?? "{}";
     let parsed: { risk_level?: string; insight?: string; recommendations?: string[] } = {};
-    try { parsed = JSON.parse(content); } catch { parsed = { insight: content }; }
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      parsed = { insight: content };
+    }
 
     return {
       insight: parsed.insight ?? "No insight generated.",
-      risk_level: (parsed.risk_level ?? "unknown") as "low" | "moderate" | "high" | "critical" | "unknown",
+      risk_level: (parsed.risk_level ?? "unknown") as
+        "low" | "moderate" | "high" | "critical" | "unknown",
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       summary,
       model: "google/gemini-3-flash-preview",

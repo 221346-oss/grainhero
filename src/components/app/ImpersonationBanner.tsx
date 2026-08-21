@@ -44,7 +44,7 @@ export function ImpersonationBanner() {
   const queryClient = useQueryClient();
   const stopFn = useServerFn(stopImpersonation);
   const [session, setSession] = useState<ImpersonationSession | null>(() =>
-    getImpersonationSession()
+    getImpersonationSession(),
   );
 
   useEffect(() => {
@@ -86,9 +86,7 @@ export function ImpersonationBanner() {
               {session.adminName || session.adminEmail || "Unknown User"}
             </span>
             {session.businessType && (
-              <span className="text-amber-700 ml-1">
-                ({session.businessType})
-              </span>
+              <span className="text-amber-700 ml-1">({session.businessType})</span>
             )}
           </span>
         </div>

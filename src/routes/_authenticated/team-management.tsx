@@ -4,7 +4,21 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Eye, Edit2, Trash2, Mail, Loader2, X, Calendar, Phone, AtSign, Warehouse, Package } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit2,
+  Trash2,
+  Mail,
+  Loader2,
+  X,
+  Calendar,
+  Phone,
+  AtSign,
+  Warehouse,
+  Package,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,12 +67,21 @@ export const Route = createFileRoute("/_authenticated/team-management")({
   head: () => ({
     meta: [
       { title: "Team Management — Grain Hero" },
-      { name: "description", content: "Team Management workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Team Management workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Team Management — Grain Hero" },
-      { property: "og:description", content: "Team Management workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Team Management workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
-  }), component: TeamPage });
+  }),
+  component: TeamPage,
+});
 
 type Role = "admin" | "manager" | "technician" | "pending";
 type Member = {
@@ -127,7 +150,12 @@ function TeamPage() {
   const [inviteForm, setInviteForm] = useState({ email: "", name: "", role: "technician" as Role });
   const [viewing, setViewing] = useState<Member | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", role: "technician" as Role });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    role: "technician" as Role,
+  });
   const [deleting, setDeleting] = useState<Member | null>(null);
   const [assignSiloId, setAssignSiloId] = useState<string>("none");
   const [assignBatchId, setAssignBatchId] = useState<string>("none");
@@ -156,7 +184,7 @@ function TeamPage() {
   const activeBatches = useMemo(() => {
     if (!allBatches) return [];
     return (allBatches as any[]).filter(
-      (b: any) => !["dispatched", "sold", "rejected"].includes(b.status)
+      (b: any) => !["dispatched", "sold", "rejected"].includes(b.status),
     );
   }, [allBatches]);
 
@@ -228,15 +256,16 @@ function TeamPage() {
     onError: (e: Error) => toast.error(e.message),
   });
   const update = useMutation({
-    mutationFn: (v: { data: { id: string; name?: string; email?: string; phone?: string; role?: Role } }) =>
-      updateFn(v),
+    mutationFn: (v: {
+      data: { id: string; name?: string; email?: string; phone?: string; role?: Role };
+    }) => updateFn(v),
     onSuccess: (_, variables) => {
       toast.success("Member updated");
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["team-members"] });
       qc.invalidateQueries({ queryKey: ["member-detail", variables.data.id] });
       if (viewing && viewing.id === variables.data.id) {
-        setViewing((prev) => prev ? { ...prev, ...variables.data } as any : null);
+        setViewing((prev) => (prev ? ({ ...prev, ...variables.data } as any) : null));
       }
     },
     onError: (e: Error) => toast.error(e.message),
@@ -340,11 +369,7 @@ function TeamPage() {
           </div>
           <div>
             <Label className="text-xs font-medium text-slate-500 mb-1 block">Date Joined</Label>
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-            />
+            <Input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} />
           </div>
           <div>
             <Label className="text-xs font-medium text-slate-500 mb-1 block">Day Joined</Label>
@@ -387,9 +412,7 @@ function TeamPage() {
             {tab.label}
             <span
               className={`px-1.5 py-0.5 rounded-full text-xs font-mono ${
-                activeSection === tab.key
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-100 text-slate-600"
+                activeSection === tab.key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
               }`}
             >
               {tab.count}
@@ -399,8 +422,9 @@ function TeamPage() {
       </div>
 
       {/* ── 1×2 Grid: Members list + Detail panel ── */}
-      <div className={`grid gap-4 transition-all duration-300 ${viewing ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
-
+      <div
+        className={`grid gap-4 transition-all duration-300 ${viewing ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}
+      >
         {/* Left: Member list */}
         <AdminDataCard
           title={
@@ -440,8 +464,13 @@ function TeamPage() {
                     <div className="text-xs text-slate-500 truncate">{m.email}</div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={ROLE_BADGE[isPendingMember(m) ? 'pending' : m.role] ?? ROLE_BADGE.pending} variant="outline">
-                      {isPendingMember(m) ? 'Pending' : m.role}
+                    <Badge
+                      className={
+                        ROLE_BADGE[isPendingMember(m) ? "pending" : m.role] ?? ROLE_BADGE.pending
+                      }
+                      variant="outline"
+                    >
+                      {isPendingMember(m) ? "Pending" : m.role}
                     </Badge>
                     {m.blocked && (
                       <Badge className="bg-red-100 text-red-700 border-red-200" variant="outline">
@@ -489,7 +518,9 @@ function TeamPage() {
             <CardContent className="p-0">
               {/* Header with Edit + Close */}
               <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Member details</h3>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Member details
+                </h3>
                 <div className="flex items-center gap-1">
                   {viewing.role === "technician" && canManageMember(viewing.role) && (
                     <Button
@@ -529,11 +560,18 @@ function TeamPage() {
                     {/* Avatar + name */}
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-xl font-bold text-emerald-700 dark:text-emerald-300 shrink-0">
-                        {((memberDetail.name ?? memberDetail.email ?? "?") as string).slice(0, 1).toUpperCase()}
+                        {((memberDetail.name ?? memberDetail.email ?? "?") as string)
+                          .slice(0, 1)
+                          .toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-900 dark:text-slate-100 text-base">{memberDetail.name ?? "—"}</div>
-                        <Badge className={ROLE_BADGE[(memberDetail.role as string)] ?? ROLE_BADGE.pending} variant="outline">
+                        <div className="font-semibold text-slate-900 dark:text-slate-100 text-base">
+                          {memberDetail.name ?? "—"}
+                        </div>
+                        <Badge
+                          className={ROLE_BADGE[memberDetail.role as string] ?? ROLE_BADGE.pending}
+                          variant="outline"
+                        >
                           {memberDetail.role as string}
                         </Badge>
                       </div>
@@ -543,33 +581,50 @@ function TeamPage() {
                     <div className="space-y-2.5">
                       <div className="flex items-center gap-3 text-sm">
                         <AtSign className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-400 break-all">{memberDetail.email ?? "—"}</span>
+                        <span className="text-slate-600 dark:text-slate-400 break-all">
+                          {memberDetail.email ?? "—"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3 text-sm">
                         <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-400">{(memberDetail.phone as string | null) ?? "—"}</span>
+                        <span className="text-slate-600 dark:text-slate-400">
+                          {(memberDetail.phone as string | null) ?? "—"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-3 text-sm">
                         <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
                         <span className="text-slate-600 dark:text-slate-400">
-                          Joined {memberDetail.created_at ? new Date(memberDetail.created_at as string).toLocaleString() : "—"}
+                          Joined{" "}
+                          {memberDetail.created_at
+                            ? new Date(memberDetail.created_at as string).toLocaleString()
+                            : "—"}
                         </span>
                       </div>
                     </div>
 
                     {/* Assigned work */}
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Assigned Work</p>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                        Assigned Work
+                      </p>
                       {memberDetail.assignedBatches.length === 0 ? (
                         <p className="text-sm text-slate-400">No active batches assigned.</p>
                       ) : (
                         <div className="space-y-2">
                           {memberDetail.assignedBatches.map((b) => (
-                            <div key={b.id} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-1">
+                            <div
+                              key={b.id}
+                              className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-1"
+                            >
                               <div className="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
                                 <Package className="w-3.5 h-3.5 text-emerald-500" />
                                 {b.batch_id}
-                                <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]" variant="outline">{b.status}</Badge>
+                                <Badge
+                                  className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]"
+                                  variant="outline"
+                                >
+                                  {b.status}
+                                </Badge>
                               </div>
                               {b.silos && (
                                 <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -586,35 +641,48 @@ function TeamPage() {
                     {/* Manager: Assign silo/batch to technician */}
                     {isManagerOrAdmin && viewing?.role === "technician" && (
                       <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Assign Work</p>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">
+                          Assign Work
+                        </p>
                         <div className="space-y-3">
                           <div>
-                            <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Silo</Label>
-                            <Select value={assignSiloId} onValueChange={(v) => { setAssignSiloId(v); setAssignBatchId("none"); }}>
+                            <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                              Silo
+                            </Label>
+                            <Select
+                              value={assignSiloId}
+                              onValueChange={(v) => {
+                                setAssignSiloId(v);
+                                setAssignBatchId("none");
+                              }}
+                            >
                               <SelectTrigger className="mt-1">
                                 <SelectValue placeholder="Select a silo" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="none">— Select silo —</SelectItem>
-                                {(allSilos as any[] ?? []).map((s: any) => (
-                                  <SelectItem key={s.id} value={s.id}>{s.name} ({s.silo_id})</SelectItem>
+                                {((allSilos as any[]) ?? []).map((s: any) => (
+                                  <SelectItem key={s.id} value={s.id}>
+                                    {s.name} ({s.silo_id})
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
                           <div>
-                            <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Batch</Label>
-                            <Select
-                              value={assignBatchId}
-                              onValueChange={setAssignBatchId}
-                            >
+                            <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                              Batch
+                            </Label>
+                            <Select value={assignBatchId} onValueChange={setAssignBatchId}>
                               <SelectTrigger className="mt-1">
                                 <SelectValue placeholder="Select batch" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="none">— Select batch —</SelectItem>
                                 {activeBatches.map((b: any) => (
-                                  <SelectItem key={b.id} value={b.id}>{b.batch_id} · {b.grain_type ?? b.status}</SelectItem>
+                                  <SelectItem key={b.id} value={b.id}>
+                                    {b.batch_id} · {b.grain_type ?? b.status}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -623,12 +691,16 @@ function TeamPage() {
                             onClick={() =>
                               viewing &&
                               assignBatchId !== "none" &&
-                              assignBatch.mutate({ data: { batchId: assignBatchId, technicianId: viewing.id } })
+                              assignBatch.mutate({
+                                data: { batchId: assignBatchId, technicianId: viewing.id },
+                              })
                             }
                             disabled={assignBatchId === "none" || assignBatch.isPending}
                             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                           >
-                            {assignBatch.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            {assignBatch.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
                             Assign
                           </Button>
                         </div>

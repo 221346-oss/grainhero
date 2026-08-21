@@ -37,15 +37,15 @@ export const Route = createFileRoute("/api/temp-run-migration")({
           const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
           const migrationSQL = readFileSync(
-            path.resolve(process.cwd(), "supabase/migrations/20260820000001_fix_technician_job_count_and_installing_status.sql"),
-            "utf-8"
+            path.resolve(
+              process.cwd(),
+              "supabase/migrations/20260820000001_fix_technician_job_count_and_installing_status.sql",
+            ),
+            "utf-8",
           );
 
           // Try the Supabase SQL API endpoints
-          const endpoints = [
-            `${SUPABASE_URL}/pg/query`,
-            `${SUPABASE_URL}/sql`,
-          ];
+          const endpoints = [`${SUPABASE_URL}/pg/query`, `${SUPABASE_URL}/sql`];
 
           for (const endpoint of endpoints) {
             try {
@@ -60,11 +60,16 @@ export const Route = createFileRoute("/api/temp-run-migration")({
               });
               if (res.ok) {
                 const data = await res.text();
-                return new Response(JSON.stringify({ success: true, endpoint, data: data.slice(0, 500) }), {
-                  headers: { "Content-Type": "application/json" },
-                });
+                return new Response(
+                  JSON.stringify({ success: true, endpoint, data: data.slice(0, 500) }),
+                  {
+                    headers: { "Content-Type": "application/json" },
+                  },
+                );
               }
-            } catch {}
+            } catch {
+              /* ignore */
+            }
           }
 
           // If none of the API endpoints work, try using the pg module
@@ -73,15 +78,20 @@ export const Route = createFileRoute("/api/temp-run-migration")({
           if (projectRef) {
             // Try connecting via the pooler - but we need the password
             // This won't work without the password, so return instructions
-            return new Response(JSON.stringify({
-              success: false,
-              message: "Could not execute SQL via API. Please run the migration in the Supabase Dashboard SQL Editor.",
-              migrationFile: "supabase/migrations/20260820000001_fix_technician_job_count_and_installing_status.sql",
-              dashboardUrl: `https://supabase.com/dashboard/project/${projectRef}/sql/new`,
-            }), {
-              headers: { "Content-Type": "application/json" },
-              status: 500,
-            });
+            return new Response(
+              JSON.stringify({
+                success: false,
+                message:
+                  "Could not execute SQL via API. Please run the migration in the Supabase Dashboard SQL Editor.",
+                migrationFile:
+                  "supabase/migrations/20260820000001_fix_technician_job_count_and_installing_status.sql",
+                dashboardUrl: `https://supabase.com/dashboard/project/${projectRef}/sql/new`,
+              }),
+              {
+                headers: { "Content-Type": "application/json" },
+                status: 500,
+              },
+            );
           }
 
           return new Response(JSON.stringify({ success: false, message: "Unknown project ref" }), {

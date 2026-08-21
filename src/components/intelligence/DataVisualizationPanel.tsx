@@ -2,13 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -62,13 +56,21 @@ import {
   PolarRadiusAxis,
   Radar,
 } from "recharts";
-import { NEON, NeonPatternDefs, neonFill, neonGrid, neonAxis, neonTooltipStyle, neonAnim, ChartEmpty, HairlineGrid, NeonPanel, StatusBadge as NeonStatusBadge } from "@/components/charts/neon";
-import { useFirebaseSensor } from "@/hooks/use-firebase-sensor";
 import {
-  listSensorDevices,
-  getSensorHistory,
-  exportSensorCSV,
-} from "@/lib/operations.functions";
+  NEON,
+  NeonPatternDefs,
+  neonFill,
+  neonGrid,
+  neonAxis,
+  neonTooltipStyle,
+  neonAnim,
+  ChartEmpty,
+  HairlineGrid,
+  NeonPanel,
+  StatusBadge as NeonStatusBadge,
+} from "@/components/charts/neon";
+import { useFirebaseSensor } from "@/hooks/use-firebase-sensor";
+import { listSensorDevices, getSensorHistory, exportSensorCSV } from "@/lib/operations.functions";
 import { getMLModels } from "@/lib/analytics.functions";
 
 /* ────────── Types ────────── */
@@ -92,15 +94,7 @@ interface MlMetrics {
 }
 
 /* ────────── Helper: status badge ────────── */
-function StatusBadge({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: string;
-}) {
+function StatusBadge({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="flex items-center gap-1.5 text-xs">
       <span className="text-slate-500 font-medium">{label}:</span>
@@ -147,14 +141,20 @@ export function DataVisualizationPanel() {
   }, [devices, selectedDeviceId]);
 
   // Live telemetry via Firebase RTDB
-  const { reading: liveTelemetry, connected, configured: firebaseConfigured } = useFirebaseSensor(
-    activeDevice?.device_id
-  );
+  const {
+    reading: liveTelemetry,
+    connected,
+    configured: firebaseConfigured,
+  } = useFirebaseSensor(activeDevice?.device_id);
 
   const rangeToHours: Record<string, number> = { "1h": 1, "6h": 6, "24h": 24, "7d": 168 };
 
   // Fetch historical data from Supabase
-  const { data: rawHistory = [], isLoading: isLoadingHistory, refetch: refetchHistory } = useQuery({
+  const {
+    data: rawHistory = [],
+    isLoading: isLoadingHistory,
+    refetch: refetchHistory,
+  } = useQuery({
     queryKey: ["sensor-history", activeDevice?.id, selectedRange],
     queryFn: () =>
       getHistoryFn({
@@ -248,7 +248,7 @@ export function DataVisualizationPanel() {
     const rows = history
       .map(
         (h) =>
-          `${h.fullTime},${h.temperature},${h.humidity},${h.tvoc},${h.dewPoint ?? ""},${h.riskIndex},${h.fanOn},${h.pwm}`
+          `${h.fullTime},${h.temperature},${h.humidity},${h.tvoc},${h.dewPoint ?? ""},${h.riskIndex},${h.fanOn},${h.pwm}`,
       )
       .join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
@@ -262,11 +262,19 @@ export function DataVisualizationPanel() {
   };
 
   const radarData = useMemo(() => {
-    const temp = liveTelemetry?.temperature ?? (history.length ? history[history.length - 1].temperature : 23.5);
-    const hum = liveTelemetry?.humidity ?? (history.length ? history[history.length - 1].humidity : 55);
-    const voc = liveTelemetry?.tvoc ?? liveTelemetry?.co2 ?? (history.length ? history[history.length - 1].tvoc : 350);
-    const risk = liveTelemetry?.riskIndex ?? (history.length ? history[history.length - 1].riskIndex : 15);
-    const dew = liveTelemetry?.dewPoint ?? (history.length ? history[history.length - 1].dewPoint : null);
+    const temp =
+      liveTelemetry?.temperature ??
+      (history.length ? history[history.length - 1].temperature : 23.5);
+    const hum =
+      liveTelemetry?.humidity ?? (history.length ? history[history.length - 1].humidity : 55);
+    const voc =
+      liveTelemetry?.tvoc ??
+      liveTelemetry?.co2 ??
+      (history.length ? history[history.length - 1].tvoc : 350);
+    const risk =
+      liveTelemetry?.riskIndex ?? (history.length ? history[history.length - 1].riskIndex : 15);
+    const dew =
+      liveTelemetry?.dewPoint ?? (history.length ? history[history.length - 1].dewPoint : null);
 
     return [
       {
@@ -524,9 +532,7 @@ export function DataVisualizationPanel() {
               {stats ? `${stats.avgTvoc.toFixed(0)} ppb` : "—"}
             </div>
             {stats && (
-              <p className="text-xs text-slate-500 mt-1">
-                {stats.count} datapoints analyzed
-              </p>
+              <p className="text-xs text-slate-500 mt-1">{stats.count} datapoints analyzed</p>
             )}
           </CardContent>
         </Card>
@@ -539,7 +545,9 @@ export function DataVisualizationPanel() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${stats ? riskColor(stats.avgRisk) : "text-slate-900"}`}>
+            <div
+              className={`text-2xl font-bold ${stats ? riskColor(stats.avgRisk) : "text-slate-900"}`}
+            >
               {stats ? `${stats.avgRisk.toFixed(0)}/100` : "—"}
             </div>
             {stats && (
@@ -586,7 +594,10 @@ export function DataVisualizationPanel() {
                 icon: <Activity className="h-4 w-4 text-purple-500" />,
               },
             ].map(({ label, value, icon }) => (
-              <div key={label} className="border border-slate-100 rounded-xl p-4 flex items-center gap-3 bg-slate-50/30">
+              <div
+                key={label}
+                className="border border-slate-100 rounded-xl p-4 flex items-center gap-3 bg-slate-50/30"
+              >
                 {icon}
                 <div>
                   <div className="text-xs uppercase text-slate-500 font-semibold">{label}</div>
@@ -654,8 +665,17 @@ export function DataVisualizationPanel() {
               <AreaChart data={history} margin={{ left: -10, right: 10, top: 10, bottom: 0 }}>
                 <CartesianGrid {...neonGrid} />
                 <XAxis dataKey="time" minTickGap={45} {...neonAxis} />
-                <YAxis yAxisId="left" {...neonAxis} label={{ value: "°C", position: "insideTopLeft", offset: -5 }} />
-                <YAxis yAxisId="right" orientation="right" {...neonAxis} label={{ value: "%", position: "insideTopRight", offset: -5 }} />
+                <YAxis
+                  yAxisId="left"
+                  {...neonAxis}
+                  label={{ value: "°C", position: "insideTopLeft", offset: -5 }}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  {...neonAxis}
+                  label={{ value: "%", position: "insideTopRight", offset: -5 }}
+                />
                 <Tooltip {...neonTooltipStyle} />
                 <Legend />
                 <Area
@@ -754,14 +774,27 @@ export function DataVisualizationPanel() {
           <div className="h-64">
             {history.length > 1 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart data={history} margin={{ left: -15, right: 10, top: 10, bottom: 0 }}>
+                <RechartsBarChart
+                  data={history}
+                  margin={{ left: -15, right: 10, top: 10, bottom: 0 }}
+                >
                   <CartesianGrid {...neonGrid} />
                   <XAxis dataKey="time" minTickGap={40} {...neonAxis} />
                   <YAxis {...neonAxis} />
                   <Tooltip {...neonTooltipStyle} />
                   <Legend />
-                  <Bar dataKey="pwm" name="Fan Speed (PWM %)" radius={0} {...neonFill(NEON.brand)} />
-                  <Bar dataKey="fanOn" name="Aeration Fan State" radius={0} {...neonFill(NEON.success)} />
+                  <Bar
+                    dataKey="pwm"
+                    name="Fan Speed (PWM %)"
+                    radius={0}
+                    {...neonFill(NEON.brand)}
+                  />
+                  <Bar
+                    dataKey="fanOn"
+                    name="Aeration Fan State"
+                    radius={0}
+                    {...neonFill(NEON.success)}
+                  />
                 </RechartsBarChart>
               </ResponsiveContainer>
             ) : (
@@ -779,22 +812,23 @@ export function DataVisualizationPanel() {
               <Zap className="h-4 w-4 text-amber-500" />
               Sensor Health Radar Map
             </CardTitle>
-            <CardDescription>
-              Telemetry metrics values vs safe range boundaries
-            </CardDescription>
+            <CardDescription>Telemetry metrics values vs safe range boundaries</CardDescription>
           </CardHeader>
           <CardContent className="h-72 flex items-center justify-center">
             {radarData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                   <PolarGrid stroke="var(--border)" />
-                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: "var(--muted-foreground)" }} />
-                  <Radar
-                    name="Core Readings"
-                    dataKey="value"
-                    {...neonFill(NEON.brand)}
+                  <PolarAngleAxis
+                    dataKey="metric"
+                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
                   />
+                  <PolarRadiusAxis
+                    angle={30}
+                    domain={[0, 100]}
+                    tick={{ fontSize: 9, fill: "var(--muted-foreground)" }}
+                  />
+                  <Radar name="Core Readings" dataKey="value" {...neonFill(NEON.brand)} />
                   <Radar
                     name="Safe Threshold"
                     dataKey="safe"
@@ -833,7 +867,9 @@ export function DataVisualizationPanel() {
                     icon: <Thermometer className="h-4 w-4 text-rose-500" />,
                     warn:
                       (liveTelemetry?.temperature ?? 0) > 35 ||
-                      (!liveTelemetry && history.length && history[history.length - 1].temperature > 35),
+                      (!liveTelemetry &&
+                        history.length &&
+                        history[history.length - 1].temperature > 35),
                   },
                   {
                     label: "Core Humidity",
@@ -845,7 +881,9 @@ export function DataVisualizationPanel() {
                     icon: <Droplets className="h-4 w-4 text-sky-500" />,
                     warn:
                       (liveTelemetry?.humidity ?? 0) > 75 ||
-                      (!liveTelemetry && history.length && history[history.length - 1].humidity > 75),
+                      (!liveTelemetry &&
+                        history.length &&
+                        history[history.length - 1].humidity > 75),
                   },
                   {
                     label: "Total VOCs",
@@ -861,11 +899,12 @@ export function DataVisualizationPanel() {
                   },
                   {
                     label: "Dew Point Gap",
-                    val: liveTelemetry?.dewPoint !== undefined
-                      ? `${Number(liveTelemetry.dewPoint).toFixed(1)}°C`
-                      : history.length && history[history.length - 1].dewPoint !== null
-                        ? `${history[history.length - 1].dewPoint!.toFixed(1)}°C`
-                        : "N/A",
+                    val:
+                      liveTelemetry?.dewPoint !== undefined
+                        ? `${Number(liveTelemetry.dewPoint).toFixed(1)}°C`
+                        : history.length && history[history.length - 1].dewPoint !== null
+                          ? `${history[history.length - 1].dewPoint!.toFixed(1)}°C`
+                          : "N/A",
                     icon: <CloudRain className="h-4 w-4 text-cyan-500" />,
                     warn: false,
                   },
@@ -881,25 +920,25 @@ export function DataVisualizationPanel() {
                   },
                   {
                     label: "Node Pressure",
-                    val: liveTelemetry?.pressure !== undefined
-                      ? `${liveTelemetry.pressure} hPa`
-                      : "1013 hPa",
+                    val:
+                      liveTelemetry?.pressure !== undefined
+                        ? `${liveTelemetry.pressure} hPa`
+                        : "1013 hPa",
                     icon: <Gauge className="h-4 w-4 text-slate-500" />,
                     warn: false,
                   },
                   {
                     label: "Light Level",
-                    val: liveTelemetry?.light !== undefined
-                      ? `${liveTelemetry.light} lux`
-                      : "N/A",
+                    val: liveTelemetry?.light !== undefined ? `${liveTelemetry.light} lux` : "N/A",
                     icon: <Sun className="h-4 w-4 text-amber-500" />,
                     warn: false,
                   },
                   {
                     label: "Pest Score",
-                    val: liveTelemetry?.pestRiskScore !== undefined
-                      ? `${liveTelemetry.pestRiskScore}`
-                      : "0",
+                    val:
+                      liveTelemetry?.pestRiskScore !== undefined
+                        ? `${liveTelemetry.pestRiskScore}`
+                        : "0",
                     icon: <Bug className="h-4 w-4 text-emerald-600" />,
                     warn: Number(liveTelemetry?.pestRiskScore ?? 0) > 5,
                   },
@@ -914,12 +953,18 @@ export function DataVisualizationPanel() {
                       {icon}
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">{label}</div>
-                      <div className={`font-black text-sm text-slate-800 ${warn ? "text-rose-600" : ""}`}>
+                      <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                        {label}
+                      </div>
+                      <div
+                        className={`font-black text-sm text-slate-800 ${warn ? "text-rose-600" : ""}`}
+                      >
                         {val}
                       </div>
                     </div>
-                    {warn && <AlertTriangle className="h-4 w-4 text-rose-500 ml-auto animate-bounce" />}
+                    {warn && (
+                      <AlertTriangle className="h-4 w-4 text-rose-500 ml-auto animate-bounce" />
+                    )}
                   </div>
                 ))}
               </div>
@@ -935,9 +980,15 @@ export function DataVisualizationPanel() {
       {/* Dataset & Integrations Tabs */}
       <Tabs defaultValue="dataset" className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-slate-100/80 p-1 rounded-xl">
-          <TabsTrigger value="dataset" className="rounded-lg">Dataset Preview</TabsTrigger>
-          <TabsTrigger value="actions" className="rounded-lg">Export &amp; Actions</TabsTrigger>
-          <TabsTrigger value="diagnostics" className="rounded-lg">Diagnostics</TabsTrigger>
+          <TabsTrigger value="dataset" className="rounded-lg">
+            Dataset Preview
+          </TabsTrigger>
+          <TabsTrigger value="actions" className="rounded-lg">
+            Export &amp; Actions
+          </TabsTrigger>
+          <TabsTrigger value="diagnostics" className="rounded-lg">
+            Diagnostics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dataset" className="mt-4">
@@ -953,14 +1004,30 @@ export function DataVisualizationPanel() {
                 <table className="w-full text-[13px]">
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Timestamp</th>
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Temp (°C)</th>
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Hum (%)</th>
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">VOC Index</th>
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Dew Pt</th>
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Risk Index</th>
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Fan State</th>
-                      <th className="text-left font-medium text-muted-foreground px-3 py-2">Fan PWM</th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        Timestamp
+                      </th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        Temp (°C)
+                      </th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        Hum (%)
+                      </th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        VOC Index
+                      </th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        Dew Pt
+                      </th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        Risk Index
+                      </th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        Fan State
+                      </th>
+                      <th className="text-left font-medium text-muted-foreground px-3 py-2">
+                        Fan PWM
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -969,21 +1036,33 @@ export function DataVisualizationPanel() {
                       .reverse()
                       .slice(0, 20)
                       .map((row, idx) => (
-                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                          <td className="px-3 py-2 text-muted-foreground tabular-nums">{row.fullTime}</td>
-                          <td className="px-3 py-2 font-medium text-foreground tabular-nums">{row.temperature.toFixed(1)}°C</td>
+                        <tr
+                          key={idx}
+                          className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                        >
+                          <td className="px-3 py-2 text-muted-foreground tabular-nums">
+                            {row.fullTime}
+                          </td>
+                          <td className="px-3 py-2 font-medium text-foreground tabular-nums">
+                            {row.temperature.toFixed(1)}°C
+                          </td>
                           <td className="px-3 py-2 tabular-nums">{row.humidity.toFixed(1)}%</td>
                           <td className="px-3 py-2 tabular-nums">{row.tvoc} ppb</td>
                           <td className="px-3 py-2 tabular-nums">
                             {row.dewPoint !== null ? `${row.dewPoint.toFixed(1)}°C` : "—"}
                           </td>
                           <td className="px-3 py-2">
-                            <span className={`font-medium tabular-nums ${riskColor(row.riskIndex)}`}>
+                            <span
+                              className={`font-medium tabular-nums ${riskColor(row.riskIndex)}`}
+                            >
                               {row.riskIndex}/100
                             </span>
                           </td>
                           <td className="px-3 py-2">
-                            <NeonStatusBadge status={row.fanOn === 1 ? "active" : "closed"} label={row.fanOn === 1 ? "ON" : "OFF"} />
+                            <NeonStatusBadge
+                              status={row.fanOn === 1 ? "active" : "closed"}
+                              label={row.fanOn === 1 ? "ON" : "OFF"}
+                            />
                           </td>
                           <td className="px-3 py-2 tabular-nums">{row.pwm}%</td>
                         </tr>
@@ -1012,7 +1091,10 @@ export function DataVisualizationPanel() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3">
-              <Button onClick={handleExportCSV} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold">
+              <Button
+                onClick={handleExportCSV}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-semibold"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download CSV (Full Device Logs)
               </Button>
@@ -1040,7 +1122,10 @@ export function DataVisualizationPanel() {
                     <Wifi className="h-3 w-3" /> Connected
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="bg-slate-50 border-slate-200 text-slate-500 font-bold gap-1">
+                  <Badge
+                    variant="secondary"
+                    className="bg-slate-50 border-slate-200 text-slate-500 font-bold gap-1"
+                  >
                     <Wifi className="h-3 w-3" /> Offline (using DB)
                   </Badge>
                 )}

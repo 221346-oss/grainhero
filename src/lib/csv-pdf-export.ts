@@ -51,7 +51,12 @@ export function downloadCsv<T>(filename: string, rows: T[], columns: ExportColum
 }
 
 /** Simple tabular PDF — one page, wraps to a new page every ~45 rows. Good enough for the row counts these tables show (tens, not thousands). */
-export async function downloadPdf<T>(filename: string, title: string, rows: T[], columns: ExportColumn<T>[]) {
+export async function downloadPdf<T>(
+  filename: string,
+  title: string,
+  rows: T[],
+  columns: ExportColumn<T>[],
+) {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -68,7 +73,13 @@ export async function downloadPdf<T>(filename: string, title: string, rows: T[],
     page.drawText(title, { x: margin, y, size: 12, font: bold, color: rgb(0.05, 0.4, 0.2) });
     y -= 20;
     columns.forEach((c, i) => {
-      page.drawText(c.header, { x: margin + i * colWidth, y, size: 8, font: bold, color: rgb(0.2, 0.2, 0.2) });
+      page.drawText(c.header, {
+        x: margin + i * colWidth,
+        y,
+        size: 8,
+        font: bold,
+        color: rgb(0.2, 0.2, 0.2),
+      });
     });
     y -= rowHeight;
   }
@@ -83,7 +94,13 @@ export async function downloadPdf<T>(filename: string, title: string, rows: T[],
     columns.forEach((c, i) => {
       const raw = c.value(row);
       const text = raw == null ? "" : String(raw);
-      page.drawText(text.slice(0, 40), { x: margin + i * colWidth, y, size: 8, font, color: rgb(0.1, 0.1, 0.1) });
+      page.drawText(text.slice(0, 40), {
+        x: margin + i * colWidth,
+        y,
+        size: 8,
+        font,
+        color: rgb(0.1, 0.1, 0.1),
+      });
     });
     y -= rowHeight;
   }

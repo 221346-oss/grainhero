@@ -17,15 +17,7 @@ import {
   listAllInstallations,
 } from "@/lib/technician-management.functions";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Search,
-  RefreshCw,
-  MapPin,
-  Wrench,
-  Users,
-  Truck,
-  Loader2,
-} from "lucide-react";
+import { Search, RefreshCw, MapPin, Wrench, Users, Truck, Loader2 } from "lucide-react";
 
 const INSTALL_STATUS_COLOR: Record<string, string> = {
   scheduled: "bg-slate-200 text-slate-700",
@@ -53,16 +45,22 @@ export function SuperAdminTechnicianDashboard() {
   useEffect(() => {
     const channel = supabase
       .channel(`sa-tech-installs-${channelId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "hardware_order_installations" }, () => {
-        qc.invalidateQueries({ queryKey: ["all-installations"] });
-        qc.invalidateQueries({ queryKey: ["technician-dashboard-stats"] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hardware_order_installations" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["all-installations"] });
+          qc.invalidateQueries({ queryKey: ["technician-dashboard-stats"] });
+        },
+      )
       .on("postgres_changes", { event: "*", schema: "public", table: "hardware_orders" }, () => {
         qc.invalidateQueries({ queryKey: ["all-installations"] });
         qc.invalidateQueries({ queryKey: ["technician-dashboard-stats"] });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [channelId, qc]);
 
   const allInstalls = (data?.installations ?? []) as Array<Record<string, any>>;
@@ -74,11 +72,21 @@ export function SuperAdminTechnicianDashboard() {
     if (search.trim()) {
       const s = search.toLowerCase();
       const match =
-        String(order.id ?? "").toLowerCase().includes(s) ||
-        String(order.customer_name ?? "").toLowerCase().includes(s) ||
-        String(order.plan_name ?? "").toLowerCase().includes(s) ||
-        String(order.install_city ?? "").toLowerCase().includes(s) ||
-        String(tech.name ?? "").toLowerCase().includes(s);
+        String(order.id ?? "")
+          .toLowerCase()
+          .includes(s) ||
+        String(order.customer_name ?? "")
+          .toLowerCase()
+          .includes(s) ||
+        String(order.plan_name ?? "")
+          .toLowerCase()
+          .includes(s) ||
+        String(order.install_city ?? "")
+          .toLowerCase()
+          .includes(s) ||
+        String(tech.name ?? "")
+          .toLowerCase()
+          .includes(s);
       if (!match) return false;
     }
     return true;
@@ -113,15 +121,41 @@ export function SuperAdminTechnicianDashboard() {
       {/* Fleet summary */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {[
-          { label: "Fleet", value: techCount, sub: `${sc.available} available`, color: "border-emerald-200 bg-emerald-50/50", icon: Users },
-          { label: "Busy", value: sc.busy, sub: "on active jobs", color: "border-amber-200 bg-amber-50/50", icon: Wrench },
-          { label: "In transit", value: inTransit, sub: "silos on trucks", color: "border-indigo-200 bg-indigo-50/50", icon: Truck },
-          { label: "Total installs", value: allInstalls.length, sub: `${statusCounts.completed ?? 0} completed`, color: "border-slate-200 bg-slate-50/50", icon: MapPin },
+          {
+            label: "Fleet",
+            value: techCount,
+            sub: `${sc.available} available`,
+            color: "border-emerald-200 bg-emerald-50/50",
+            icon: Users,
+          },
+          {
+            label: "Busy",
+            value: sc.busy,
+            sub: "on active jobs",
+            color: "border-amber-200 bg-amber-50/50",
+            icon: Wrench,
+          },
+          {
+            label: "In transit",
+            value: inTransit,
+            sub: "silos on trucks",
+            color: "border-indigo-200 bg-indigo-50/50",
+            icon: Truck,
+          },
+          {
+            label: "Total installs",
+            value: allInstalls.length,
+            sub: `${statusCounts.completed ?? 0} completed`,
+            color: "border-slate-200 bg-slate-50/50",
+            icon: MapPin,
+          },
         ].map((kpi) => (
           <div key={kpi.label} className={`rounded-xl border p-4 ${kpi.color}`}>
             <div className="flex items-center gap-2 mb-1">
               <kpi.icon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{kpi.label}</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                {kpi.label}
+              </span>
             </div>
             <div className="text-2xl font-bold tabular-nums">{kpi.value}</div>
             {kpi.sub && <div className="text-[11px] text-muted-foreground mt-0.5">{kpi.sub}</div>}
@@ -148,7 +182,9 @@ export function SuperAdminTechnicianDashboard() {
                 : "border-border bg-background hover:bg-muted/30"
             }`}
           >
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{kpi.label}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+              {kpi.label}
+            </div>
             <div className="text-xl font-bold mt-0.5 tabular-nums">{kpi.value}</div>
           </button>
         ))}
@@ -172,7 +208,9 @@ export function SuperAdminTechnicianDashboard() {
         >
           <RefreshCw className={`w-3 h-3 ${isFetching ? "animate-spin" : ""}`} />
         </button>
-        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} install{filtered.length !== 1 ? "s" : ""}</span>
+        <span className="text-xs text-muted-foreground ml-auto">
+          {filtered.length} install{filtered.length !== 1 ? "s" : ""}
+        </span>
       </div>
 
       {/* Table */}
@@ -192,12 +230,24 @@ export function SuperAdminTechnicianDashboard() {
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-muted/30">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Order</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Customer</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">City</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Technician</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Scheduled</th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Order
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Customer
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    City
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Technician
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Scheduled
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -205,16 +255,27 @@ export function SuperAdminTechnicianDashboard() {
                   const order = (i.hardware_orders ?? {}) as Record<string, any>;
                   const tech = (i.profiles ?? {}) as Record<string, any>;
                   return (
-                    <tr key={`${i.order_id}-${i.id ?? "none"}`} className="hover:bg-muted/30 transition-colors">
+                    <tr
+                      key={`${i.order_id}-${i.id ?? "none"}`}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
                       <td className="px-4 py-3">
-                        <Link to="/platform/orders" className="font-medium text-emerald-700 hover:underline">
+                        <Link
+                          to="/platform/orders"
+                          className="font-medium text-emerald-700 hover:underline"
+                        >
                           {(i.order_id as string)?.slice(0, 8) ?? "—"}
                         </Link>
-                        <div className="text-[11px] text-muted-foreground">{order.plan_name ?? "—"}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {order.plan_name ?? "—"}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm">{order.customer_name ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{order.install_city ?? "—"}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {order.install_city ?? "—"}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         {tech.name ? (
@@ -224,12 +285,16 @@ export function SuperAdminTechnicianDashboard() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <Badge className={`text-[10px] ${INSTALL_STATUS_COLOR[i.status as string] ?? "bg-slate-200 text-slate-700"}`}>
+                        <Badge
+                          className={`text-[10px] ${INSTALL_STATUS_COLOR[i.status as string] ?? "bg-slate-200 text-slate-700"}`}
+                        >
                           {(i.status as string).replace(/_/g, " ")}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">
-                        {i.scheduled_for ? new Date(i.scheduled_for as string).toLocaleDateString() : "—"}
+                        {i.scheduled_for
+                          ? new Date(i.scheduled_for as string).toLocaleDateString()
+                          : "—"}
                       </td>
                     </tr>
                   );

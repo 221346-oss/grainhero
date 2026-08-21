@@ -39,7 +39,9 @@ export const listGlobalTechnicians = createServerFn({ method: "GET" })
     // is no is_technician column on profiles.
     const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at")
+      .select(
+        "id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at",
+      )
       .is("admin_id", null)
       .order("created_at", { ascending: false });
 
@@ -63,8 +65,8 @@ export const listGlobalTechnicians = createServerFn({ method: "GET" })
       .filter((p: any) => validIds.has(p.id))
       .map((p: any) => ({
         ...p,
-        is_available: 
-          p.technician_status === 'available' || 
+        is_available:
+          p.technician_status === "available" ||
           (p.current_job_count ?? 0) < (p.max_concurrent_jobs ?? 3),
       }));
 
@@ -79,7 +81,7 @@ const createTechnicianInput = z.object({
   email: z.string().email().toLowerCase(),
   name: z.string().min(2).max(100),
   phone: z.string().optional(),
-  password: z.string().min(8).max(100).optional(),  // If creating with password
+  password: z.string().min(8).max(100).optional(), // If creating with password
   max_concurrent_jobs: z.number().int().min(1).max(20).default(3),
 });
 
@@ -133,15 +135,21 @@ export const createGlobalTechnician = createServerFn({ method: "POST" })
         };
         if (data.password) createOpts.password = data.password;
 
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser(createOpts);
+        const { data: authData, error: authError } =
+          await supabaseAdmin.auth.admin.createUser(createOpts);
         if (authError) throw authError;
         userId = authData.user.id;
       } catch (createErr: any) {
         const msg = createErr?.message || String(createErr ?? "");
         console.warn("[createGlobalTechnician] createUser failed, falling back to listUsers:", msg);
-        const { data: existingUsers, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const { data: existingUsers, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        });
         if (listErr) throw new Error(listErr.message || "Failed to look up existing user");
-        const found = existingUsers?.users?.find((u) => (u.email ?? "").toLowerCase() === data.email);
+        const found = existingUsers?.users?.find(
+          (u) => (u.email ?? "").toLowerCase() === data.email,
+        );
         if (!found) throw new Error(msg || "Could not create the user in Supabase Auth.");
         userId = found.id;
       }
@@ -152,23 +160,21 @@ export const createGlobalTechnician = createServerFn({ method: "POST" })
     // auth user was created, so a plain INSERT fails with a profiles_pkey
     // duplicate-key error — the upsert updates that row instead and sets the
     // technician fields in one step (it also covers the restore path).
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .upsert(
-        {
-          id: userId,
-          email: data.email,
-          name: data.name,
-          phone: data.phone || null,
-          admin_id: null, // KEY: Global technician
-          technician_status: "available",
-          max_concurrent_jobs: data.max_concurrent_jobs,
-          current_job_count: 0,
-          has_access: "full",
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "id" },
-      );
+    const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
+      {
+        id: userId,
+        email: data.email,
+        name: data.name,
+        phone: data.phone || null,
+        admin_id: null, // KEY: Global technician
+        technician_status: "available",
+        max_concurrent_jobs: data.max_concurrent_jobs,
+        current_job_count: 0,
+        has_access: "full",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
 
     if (profileError) throw new Error(`Failed to save profile: ${profileError.message}`);
 
@@ -181,7 +187,8 @@ export const createGlobalTechnician = createServerFn({ method: "POST" })
       .delete()
       .eq("user_id", userId)
       .in("role", ["admin", "pending"]);
-    if (stripRoleError) throw new Error(`Failed to configure technician role: ${stripRoleError.message}`);
+    if (stripRoleError)
+      throw new Error(`Failed to configure technician role: ${stripRoleError.message}`);
 
     const { data: roleExists } = await supabaseAdmin
       .from("user_roles")
@@ -191,12 +198,10 @@ export const createGlobalTechnician = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!roleExists) {
-      const { error: roleError } = await supabaseAdmin
-        .from("user_roles")
-        .insert({
-          user_id: userId,
-          role: "technician",
-        });
+      const { error: roleError } = await supabaseAdmin.from("user_roles").insert({
+        user_id: userId,
+        role: "technician",
+      });
 
       if (roleError) throw new Error(`Failed to assign role: ${roleError.message}`);
     }
@@ -219,7 +224,10 @@ export const createGlobalTechnician = createServerFn({ method: "POST" })
           </div>`,
         });
       } catch (emailErr) {
-        console.warn("[createGlobalTechnician] invite email failed (non-fatal):", (emailErr as Error).message);
+        console.warn(
+          "[createGlobalTechnician] invite email failed (non-fatal):",
+          (emailErr as Error).message,
+        );
       }
     }
 
@@ -267,7 +275,8 @@ export const updateGlobalTechnician = createServerFn({ method: "POST" })
     if (data.name) updates.name = data.name;
     if (data.phone !== undefined) updates.phone = data.phone || null;
     if (data.technician_status) updates.technician_status = data.technician_status;
-    if (data.max_concurrent_jobs !== undefined) updates.max_concurrent_jobs = data.max_concurrent_jobs;
+    if (data.max_concurrent_jobs !== undefined)
+      updates.max_concurrent_jobs = data.max_concurrent_jobs;
     if (data.current_job_count !== undefined) updates.current_job_count = data.current_job_count;
 
     // Cast is required because the generated DB types don't expose the
@@ -276,7 +285,7 @@ export const updateGlobalTechnician = createServerFn({ method: "POST" })
       .from("profiles")
       .update(updates as any)
       .eq("id", data.technicianId)
-      .is("admin_id", null);  // Safety: only update global technicians
+      .is("admin_id", null); // Safety: only update global technicians
 
     if (error) throw new Error(`Failed to update: ${error.message}`);
 
@@ -331,7 +340,9 @@ export const getGlobalTechnicianDetails = createServerFn({ method: "GET" })
 
     const { data: tech, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at")
+      .select(
+        "id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at",
+      )
       .eq("id", data.technicianId)
       .is("admin_id", null)
       .maybeSingle();
@@ -371,7 +382,8 @@ export const getTechnicianDashboardStats = createServerFn({ method: "GET" })
     const statusCounts = { available: 0, busy: 0, offline: 0, on_leave: 0, other: 0 };
     for (const p of (profiles ?? []) as Array<{ technician_status: string | null }>) {
       const s = p.technician_status;
-      if (s === "available" || s === "busy" || s === "offline" || s === "on_leave") statusCounts[s]++;
+      if (s === "available" || s === "busy" || s === "offline" || s === "on_leave")
+        statusCounts[s]++;
       else statusCounts.other++;
     }
 
@@ -406,7 +418,11 @@ export const getTechnicianDashboardStats = createServerFn({ method: "GET" })
       .from("technician_warehouse_assignments" as never)
       .select("city, technician_id, warehouse_id");
     const cityMap = new Map<string, { technicians: Set<string>; warehouses: Set<string> }>();
-    for (const a of (assignments ?? []) as Array<{ city: string | null; technician_id: string; warehouse_id: string | null }>) {
+    for (const a of (assignments ?? []) as Array<{
+      city: string | null;
+      technician_id: string;
+      warehouse_id: string | null;
+    }>) {
       const city = a.city ?? "Unknown";
       if (!cityMap.has(city)) cityMap.set(city, { technicians: new Set(), warehouses: new Set() });
       const entry = cityMap.get(city)!;
@@ -414,7 +430,11 @@ export const getTechnicianDashboardStats = createServerFn({ method: "GET" })
       if (a.warehouse_id) entry.warehouses.add(a.warehouse_id);
     }
     const cityCoverage = Array.from(cityMap.entries())
-      .map(([city, v]) => ({ city, technicians: v.technicians.size, warehouses: v.warehouses.size }))
+      .map(([city, v]) => ({
+        city,
+        technicians: v.technicians.size,
+        warehouses: v.warehouses.size,
+      }))
       .sort((a, b) => b.technicians - a.technicians || b.warehouses - a.warehouses);
 
     return {
@@ -441,7 +461,9 @@ export const getGlobalTechnicianDetail = createServerFn({ method: "GET" })
 
     const { data: tech } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at, last_active_at")
+      .select(
+        "id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at, last_active_at",
+      )
       .eq("id", data.technicianId)
       .is("admin_id", null)
       .maybeSingle();
@@ -449,7 +471,9 @@ export const getGlobalTechnicianDetail = createServerFn({ method: "GET" })
 
     const { data: installs } = await supabaseAdmin
       .from("hardware_order_installations" as never)
-      .select("id, status, scheduled_for, completed_at, blocker_note, order_id, hardware_orders(id, customer_name, customer_email, install_city, status, tracking_carrier, tracking_number)")
+      .select(
+        "id, status, scheduled_for, completed_at, blocker_note, order_id, hardware_orders(id, customer_name, customer_email, install_city, status, tracking_carrier, tracking_number)",
+      )
       .eq("technician_id", data.technicianId)
       .order("scheduled_for", { ascending: false });
 
@@ -479,11 +503,15 @@ export const getMyTechnicianProfile = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
-      .select("id, name, email, phone, admin_id, technician_status, current_job_count, max_concurrent_jobs")
+      .select(
+        "id, name, email, phone, admin_id, technician_status, current_job_count, max_concurrent_jobs",
+      )
       .eq("id", context.userId)
       .maybeSingle();
     if (error) throw error;
-    console.log(`[getMyTechnicianProfile] userId=${context.userId} profile=${JSON.stringify({ id: data?.id, name: data?.name, admin_id: data?.admin_id, current_job_count: data?.current_job_count })}`);
+    console.log(
+      `[getMyTechnicianProfile] userId=${context.userId} profile=${JSON.stringify({ id: data?.id, name: data?.name, admin_id: data?.admin_id, current_job_count: data?.current_job_count })}`,
+    );
     return { profile: data ?? null };
   });
 
@@ -501,8 +529,8 @@ export const listAllInstallations = createServerFn({ method: "GET" })
       .from("hardware_order_installations" as never)
       .select(
         "id, status, scheduled_for, completed_at, blocker_note, order_id, technician_id, created_at, updated_at, " +
-        "hardware_orders(id, plan_name, hardware_quantity, install_city, install_country, customer_name, customer_email, status, assigned_technician_id, created_at), " +
-        "profiles!hardware_order_installations_technician_id_fkey(id, name, email, phone)",
+          "hardware_orders(id, plan_name, hardware_quantity, install_city, install_country, customer_name, customer_email, status, assigned_technician_id, created_at), " +
+          "profiles!hardware_order_installations_technician_id_fkey(id, name, email, phone)",
       )
       .order("created_at", { ascending: false });
 
@@ -513,7 +541,7 @@ export const listAllInstallations = createServerFn({ method: "GET" })
       .from("hardware_orders" as never)
       .select(
         "id, plan_name, hardware_quantity, install_city, install_country, customer_name, customer_email, status, assigned_technician_id, created_at, " +
-        "profiles!hardware_orders_assigned_technician_id_fkey(id, name, email)",
+          "profiles!hardware_orders_assigned_technician_id_fkey(id, name, email)",
       )
       .not("assigned_technician_id", "is", null)
       .order("created_at", { ascending: false });
@@ -536,8 +564,9 @@ export const listAllInstallations = createServerFn({ method: "GET" })
         profiles: o.profiles,
       }));
 
-    const all = [...((installs ?? []) as any[]), ...pendingAssigns]
-      .sort((a: any, b: any) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
+    const all = [...((installs ?? []) as any[]), ...pendingAssigns].sort((a: any, b: any) =>
+      String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")),
+    );
 
     return { installations: all };
   });
@@ -545,9 +574,11 @@ export const listAllInstallations = createServerFn({ method: "GET" })
 export const updateMyAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      technician_status: z.enum(["available", "busy", "offline", "on_leave"]),
-    }).parse(d),
+    z
+      .object({
+        technician_status: z.enum(["available", "busy", "offline", "on_leave"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { data: isTech } = await context.supabase.rpc("has_role", {
@@ -559,7 +590,10 @@ export const updateMyAvailability = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("profiles")
-      .update({ technician_status: data.technician_status, updated_at: new Date().toISOString() } as never)
+      .update({
+        technician_status: data.technician_status,
+        updated_at: new Date().toISOString(),
+      } as never)
       .eq("id", context.userId);
     if (error) throw new Error(`Failed to update availability: ${error.message}`);
 
@@ -574,9 +608,15 @@ export const updateMyAvailability = createServerFn({ method: "POST" })
 // ────────────────────────────────────────────────────────────────────────────
 
 async function requireTechnicianOrSuperAdmin(supabase: any, userId: string) {
-  const { data: isSuper } = await supabase.rpc("has_role", { _user_id: userId, _role: "super_admin" });
+  const { data: isSuper } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "super_admin",
+  });
   if (isSuper) return;
-  const { data: isTech } = await supabase.rpc("has_role", { _user_id: userId, _role: "technician" });
+  const { data: isTech } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "technician",
+  });
   if (!isTech) throw new Error("Forbidden: technician or super-admin only");
 }
 
@@ -594,8 +634,8 @@ export const listAllInstallationsForFleet = createServerFn({ method: "GET" })
       .from("hardware_order_installations" as never)
       .select(
         "id, status, scheduled_for, completed_at, blocker_note, order_id, technician_id, created_at, updated_at, " +
-        "hardware_orders(id, plan_name, hardware_quantity, install_city, install_country, customer_name, customer_email, status, assigned_technician_id, created_at), " +
-        "profiles!hardware_order_installations_technician_id_fkey(id, name, email, phone)",
+          "hardware_orders(id, plan_name, hardware_quantity, install_city, install_country, customer_name, customer_email, status, assigned_technician_id, created_at), " +
+          "profiles!hardware_order_installations_technician_id_fkey(id, name, email, phone)",
       )
       .order("created_at", { ascending: false });
 
@@ -606,7 +646,7 @@ export const listAllInstallationsForFleet = createServerFn({ method: "GET" })
       .from("hardware_orders" as never)
       .select(
         "id, plan_name, hardware_quantity, install_city, install_country, customer_name, customer_email, status, assigned_technician_id, created_at, " +
-        "profiles!hardware_orders_assigned_technician_id_fkey(id, name, email)",
+          "profiles!hardware_orders_assigned_technician_id_fkey(id, name, email)",
       )
       .not("assigned_technician_id", "is", null)
       .order("created_at", { ascending: false });
@@ -628,8 +668,9 @@ export const listAllInstallationsForFleet = createServerFn({ method: "GET" })
         profiles: o.profiles,
       }));
 
-    const all = [...((installs ?? []) as any[]), ...pendingAssigns]
-      .sort((a: any, b: any) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
+    const all = [...((installs ?? []) as any[]), ...pendingAssigns].sort((a: any, b: any) =>
+      String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")),
+    );
 
     return { installations: all };
   });
@@ -654,7 +695,9 @@ export const getFleetDashboardStats = createServerFn({ method: "GET" })
     const { data: profiles } = techIds.length
       ? await supabaseAdmin
           .from("profiles")
-          .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at")
+          .select(
+            "id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at",
+          )
           .is("admin_id", null)
           .in("id", techIds)
       : { data: [] };
@@ -662,7 +705,8 @@ export const getFleetDashboardStats = createServerFn({ method: "GET" })
     const statusCounts = { available: 0, busy: 0, offline: 0, on_leave: 0, other: 0 };
     for (const p of (profiles ?? []) as Array<{ technician_status: string | null }>) {
       const s = p.technician_status;
-      if (s === "available" || s === "busy" || s === "offline" || s === "on_leave") statusCounts[s]++;
+      if (s === "available" || s === "busy" || s === "offline" || s === "on_leave")
+        statusCounts[s]++;
       else statusCounts.other++;
     }
 
@@ -727,7 +771,9 @@ export const listAllFleetTechnicians = createServerFn({ method: "GET" })
 
     const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at")
+      .select(
+        "id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs, created_at, updated_at",
+      )
       .is("admin_id", null)
       .order("created_at", { ascending: false });
 
@@ -795,31 +841,44 @@ export const getMyTechnicianInstalls = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Get installs assigned to this technician
-    const SELECT = "id, status, scheduled_for, completed_at, blocker_note, order_id, technician_id, created_at, updated_at, " +
+    const SELECT =
+      "id, status, scheduled_for, completed_at, blocker_note, order_id, technician_id, created_at, updated_at, " +
       "hardware_orders(id, plan_name, hardware_quantity, install_city, install_country, install_address, customer_name, customer_email, contact_phone, status, assigned_technician_id, created_at, tracking_carrier, tracking_number, expected_arrival_at)";
 
     const [byTechRes, ordersRes] = await Promise.all([
-      supabaseAdmin.from("hardware_order_installations" as never).select(SELECT).eq("technician_id", context.userId),
-      supabaseAdmin.from("hardware_orders" as never).select("id").eq("assigned_technician_id", context.userId),
+      supabaseAdmin
+        .from("hardware_order_installations" as never)
+        .select(SELECT)
+        .eq("technician_id", context.userId),
+      supabaseAdmin
+        .from("hardware_orders" as never)
+        .select("id")
+        .eq("assigned_technician_id", context.userId),
     ]);
 
     if (byTechRes.error) throw byTechRes.error;
     const byTech = (byTechRes.data ?? []) as Row[];
     const orderIds = new Set(((ordersRes.data ?? []) as Row[]).map((o) => o.id as string));
 
-    console.log(`[getMyTechnicianInstalls] userId=${context.userId} byTech=${byTech.length} orderIds=${orderIds.size} ordersRes.error=${ordersRes.error ? JSON.stringify(ordersRes.error) : "none"}`);
+    console.log(
+      `[getMyTechnicianInstalls] userId=${context.userId} byTech=${byTech.length} orderIds=${orderIds.size} ordersRes.error=${ordersRes.error ? JSON.stringify(ordersRes.error) : "none"}`,
+    );
 
     // Diagnostic: check total orders/installations in DB to rule out data-vs-query issue
     const [{ count: totalOrders }, { count: totalInstalls }] = await Promise.all([
       supabaseAdmin.from("hardware_orders" as never).select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("hardware_order_installations" as never).select("id", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("hardware_order_installations" as never)
+        .select("id", { count: "exact", head: true }),
     ]);
     // Also check how many orders have ANY technician assigned
     const { count: ordersWithTech } = await supabaseAdmin
       .from("hardware_orders" as never)
       .select("id", { count: "exact", head: true })
       .not("assigned_technician_id", "is", null);
-    console.log(`[getMyTechnicianInstalls] DIAGNOSTIC totalOrders=${totalOrders ?? 0} totalInstalls=${totalInstalls ?? 0} ordersWithTech=${ordersWithTech ?? 0}`);
+    console.log(
+      `[getMyTechnicianInstalls] DIAGNOSTIC totalOrders=${totalOrders ?? 0} totalInstalls=${totalInstalls ?? 0} ordersWithTech=${ordersWithTech ?? 0}`,
+    );
 
     let installs = byTech;
     if (orderIds.size > 0) {
@@ -829,7 +888,10 @@ export const getMyTechnicianInstalls = createServerFn({ method: "GET" })
         .in("order_id", [...orderIds]);
       if (byOrderErr) throw byOrderErr;
       const seen = new Set(byTech.map((i) => i.id as string));
-      installs = [...byTech, ...((byOrder ?? []) as Row[]).filter((i) => !seen.has(i.id as string))];
+      installs = [
+        ...byTech,
+        ...((byOrder ?? []) as Row[]).filter((i) => !seen.has(i.id as string)),
+      ];
     }
 
     // Get status history for each install
@@ -838,7 +900,10 @@ export const getMyTechnicianInstalls = createServerFn({ method: "GET" })
       ? await supabaseAdmin
           .from("hardware_order_status_history" as never)
           .select("id, order_id, from_status, to_status, actor_id, actor_role, note, created_at")
-          .in("order_id", installIds.map((i) => i.order_id as string))
+          .in(
+            "order_id",
+            installIds.map((i) => i.order_id as string),
+          )
           .order("created_at", { ascending: false })
       : { data: [] };
 
@@ -895,16 +960,32 @@ export const getMyInstallDetail = createServerFn({ method: "GET" })
     if (
       inst.technician_id !== context.userId &&
       (order?.assigned_technician_id as string | undefined) !== context.userId
-    ) throw new Error("Forbidden");
+    )
+      throw new Error("Forbidden");
 
     const adminId = (order?.admin_id as string | undefined) ?? null;
 
     const [devicesRes, eventsRes, historyRes, buyerRes] = await Promise.all([
-      supabaseAdmin.from("hardware_order_devices" as never).select("*").eq("order_id", inst.order_id),
-      supabaseAdmin.from("hardware_order_visit_events" as never).select("*").eq("installation_id", inst.id).order("created_at", { ascending: false }),
-      supabaseAdmin.from("hardware_order_status_history" as never).select("*").eq("order_id", inst.order_id).order("created_at", { ascending: true }),
+      supabaseAdmin
+        .from("hardware_order_devices" as never)
+        .select("*")
+        .eq("order_id", inst.order_id),
+      supabaseAdmin
+        .from("hardware_order_visit_events" as never)
+        .select("*")
+        .eq("installation_id", inst.id)
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("hardware_order_status_history" as never)
+        .select("*")
+        .eq("order_id", inst.order_id)
+        .order("created_at", { ascending: true }),
       adminId
-        ? supabaseAdmin.from("profiles").select("id,name,email,phone").eq("id", adminId).maybeSingle()
+        ? supabaseAdmin
+            .from("profiles")
+            .select("id,name,email,phone")
+            .eq("id", adminId)
+            .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
 
@@ -958,28 +1039,28 @@ export const getMyWarehouseAssignments = createServerFn({ method: "GET" })
       .from("hardware_orders" as never)
       .select(
         "id, warehouse_id, status, customer_name, install_city, install_country, " +
-        "tracking_carrier, tracking_number, expected_arrival_at, plan_name, hardware_quantity, " +
-        "assigned_technician_id, created_at"
+          "tracking_carrier, tracking_number, expected_arrival_at, plan_name, hardware_quantity, " +
+          "assigned_technician_id, created_at",
       )
       .eq("assigned_technician_id", context.userId)
       .not("warehouse_id", "is", null);
 
-    console.log(`[getMyWarehouseAssignments] userId=${context.userId} formalAssignments=${(assignments ?? []).length} orderDerived=${((assignedOrders ?? []) as Row[]).length}`);
+    console.log(
+      `[getMyWarehouseAssignments] userId=${context.userId} formalAssignments=${(assignments ?? []).length} orderDerived=${((assignedOrders ?? []) as Row[]).length}`,
+    );
 
     // Collect all unique warehouse IDs from both sources
     const formalWarehouseIds = new Set(
-      (assignments ?? []).map((a: any) => a.warehouse_id as string).filter(Boolean)
+      (assignments ?? []).map((a: any) => a.warehouse_id as string).filter(Boolean),
     );
     const orderWarehouseIds = new Set(
-      ((assignedOrders ?? []) as Row[])
-        .map((o) => o.warehouse_id as string)
-        .filter(Boolean)
+      ((assignedOrders ?? []) as Row[]).map((o) => o.warehouse_id as string).filter(Boolean),
     );
     const allWarehouseIds = [...new Set([...formalWarehouseIds, ...orderWarehouseIds])];
 
     // Fetch warehouse details for any warehouse IDs we don't already have from formal assignments
     const missingWarehouseIds = allWarehouseIds.filter((id) => !formalWarehouseIds.has(id));
-    let extraWarehouseDetails: Record<string, any> = {};
+    const extraWarehouseDetails: Record<string, any> = {};
     if (missingWarehouseIds.length > 0) {
       const { data: whData } = await supabaseAdmin
         .from("warehouses" as never)
@@ -992,7 +1073,7 @@ export const getMyWarehouseAssignments = createServerFn({ method: "GET" })
 
     // Group orders by warehouse_id
     const ordersByWarehouse = new Map<string, Row[]>();
-    for (const o of ((assignedOrders ?? []) as Row[])) {
+    for (const o of (assignedOrders ?? []) as Row[]) {
       const wid = o.warehouse_id as string;
       if (!ordersByWarehouse.has(wid)) ordersByWarehouse.set(wid, []);
       ordersByWarehouse.get(wid)!.push(o);

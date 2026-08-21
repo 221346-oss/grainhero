@@ -48,8 +48,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Users, Plus, MoreHorizontal, Loader2, CheckCircle2, AlertCircle, XCircle, Clock,
-  Phone, Mail, Warehouse as WarehouseIcon, MapPin, CalendarClock,
+  Users,
+  Plus,
+  MoreHorizontal,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  Clock,
+  Phone,
+  Mail,
+  Warehouse as WarehouseIcon,
+  MapPin,
+  CalendarClock,
 } from "lucide-react";
 import { SuperAdminTechnicianDashboard } from "@/components/dashboards/SuperAdminTechnicianDashboard";
 
@@ -102,7 +113,15 @@ function PlatformTechniciansPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (v: { data: { name: string; email: string; phone?: string; password?: string; max_concurrent_jobs: number } }) => createFn(v),
+    mutationFn: (v: {
+      data: {
+        name: string;
+        email: string;
+        phone?: string;
+        password?: string;
+        max_concurrent_jobs: number;
+      };
+    }) => createFn(v),
     onSuccess: () => {
       toast.success("Technician created successfully");
       qc.invalidateQueries({ queryKey: ["global-technicians"] });
@@ -179,7 +198,9 @@ function PlatformTechniciansPage() {
         <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-muted-foreground">No global technicians yet</p>
-          <p className="text-sm text-muted-foreground mt-1">Create your first technician to start assigning installations</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Create your first technician to start assigning installations
+          </p>
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-background overflow-hidden">
@@ -187,24 +208,44 @@ function PlatformTechniciansPage() {
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-muted/30">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Name</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Email</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Jobs</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">Created</th>
-                  <th className="px-4 py-3 text-right font-semibold text-xs uppercase text-muted-foreground">Actions</th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Email
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Jobs
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
+                    Created
+                  </th>
+                  <th className="px-4 py-3 text-right font-semibold text-xs uppercase text-muted-foreground">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {technicians.map((tech: any) => {
-                  const statusCfg = STATUS_CONFIG[tech.technician_status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.available;
+                  const statusCfg =
+                    STATUS_CONFIG[tech.technician_status as keyof typeof STATUS_CONFIG] ||
+                    STATUS_CONFIG.available;
                   const StatusIcon = statusCfg.icon;
                   return (
-                    <tr key={tech.id} className="hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setDetailId(tech.id)}>
+                    <tr
+                      key={tech.id}
+                      className="hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => setDetailId(tech.id)}
+                    >
                       <td className="px-4 py-3">
                         <div>
                           <div className="font-medium">{tech.name}</div>
-                          {tech.phone && <div className="text-xs text-muted-foreground">{tech.phone}</div>}
+                          {tech.phone && (
+                            <div className="text-xs text-muted-foreground">{tech.phone}</div>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{tech.email}</td>
@@ -228,7 +269,9 @@ function PlatformTechniciansPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => setDetailId(tech.id)}>View details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDetailId(tech.id)}>
+                              View details
+                            </DropdownMenuItem>
                             <DropdownMenuItem disabled>Edit (coming soon)</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -314,7 +357,10 @@ function PlatformTechniciansPage() {
 
             <div>
               <Label htmlFor="jobs">Max Concurrent Jobs</Label>
-              <Select value={formData.max_concurrent_jobs} onValueChange={(v) => setFormData({ ...formData, max_concurrent_jobs: v })}>
+              <Select
+                value={formData.max_concurrent_jobs}
+                onValueChange={(v) => setFormData({ ...formData, max_concurrent_jobs: v })}
+              >
                 <SelectTrigger id="jobs" className="h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -336,10 +382,7 @@ function PlatformTechniciansPage() {
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={createMutation.isPending}
-            >
+            <Button onClick={handleCreate} disabled={createMutation.isPending}>
               {createMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -365,7 +408,10 @@ function PlatformTechniciansPage() {
               <SheetHeader>
                 <SheetTitle>{detail.technician.name}</SheetTitle>
                 <SheetDescription>
-                  {detail.technician.email} · {(detail.technician as any).created_at ? new Date((detail.technician as any).created_at).toLocaleDateString() : "—"}
+                  {detail.technician.email} ·{" "}
+                  {(detail.technician as any).created_at
+                    ? new Date((detail.technician as any).created_at).toLocaleDateString()
+                    : "—"}
                 </SheetDescription>
               </SheetHeader>
 
@@ -375,7 +421,10 @@ function PlatformTechniciansPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Status</span>
                     {(() => {
-                      const cfg = STATUS_CONFIG[detail.technician.technician_status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.available;
+                      const cfg =
+                        STATUS_CONFIG[
+                          detail.technician.technician_status as keyof typeof STATUS_CONFIG
+                        ] || STATUS_CONFIG.available;
                       const Icon = cfg.icon;
                       return (
                         <Badge variant="outline" className={`text-xs ${cfg.color}`}>
@@ -387,13 +436,19 @@ function PlatformTechniciansPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Jobs</span>
                     <span className="font-medium flex items-center gap-2">
-                      {(detail.technician as any).current_job_count ?? 0}/{(detail.technician as any).max_concurrent_jobs ?? 3}
-                      {((detail.technician as any).current_job_count ?? 0) > ((detail.technician as any).max_concurrent_jobs ?? 3) && (
+                      {(detail.technician as any).current_job_count ?? 0}/
+                      {(detail.technician as any).max_concurrent_jobs ?? 3}
+                      {((detail.technician as any).current_job_count ?? 0) >
+                        ((detail.technician as any).max_concurrent_jobs ?? 3) && (
                         <button
                           onClick={() => {
                             const cur = (detail.technician as any).current_job_count ?? 0;
                             const max = (detail.technician as any).max_concurrent_jobs ?? 3;
-                            if (confirm(`Reset job count from ${cur}/${max} to 0/? This frees slots for new assignments.`)) {
+                            if (
+                              confirm(
+                                `Reset job count from ${cur}/${max} to 0/? This frees slots for new assignments.`,
+                              )
+                            ) {
                               resetCountMutation.mutate((detail.technician as any).id);
                             }
                           }}
@@ -408,37 +463,65 @@ function PlatformTechniciansPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Phone</span>
                     {detail.technician.phone ? (
-                      <a href={`tel:${detail.technician.phone}`} className="inline-flex items-center gap-1 text-emerald-700 hover:underline"><Phone className="h-3.5 w-3.5" />{detail.technician.phone}</a>
-                    ) : <span className="text-muted-foreground">—</span>}
+                      <a
+                        href={`tel:${detail.technician.phone}`}
+                        className="inline-flex items-center gap-1 text-emerald-700 hover:underline"
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                        {detail.technician.phone}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Email</span>
-                    <a href={`mailto:${detail.technician.email}`} className="inline-flex items-center gap-1 text-emerald-700 hover:underline"><Mail className="h-3.5 w-3.5" />Contact</a>
+                    <a
+                      href={`mailto:${detail.technician.email}`}
+                      className="inline-flex items-center gap-1 text-emerald-700 hover:underline"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      Contact
+                    </a>
                   </div>
                   {(detail.technician as any).last_active_at && (
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Last active</span>
-                      <span>{new Date((detail.technician as any).last_active_at).toLocaleString()}</span>
+                      <span>
+                        {new Date((detail.technician as any).last_active_at).toLocaleString()}
+                      </span>
                     </div>
                   )}
                 </div>
 
                 {/* Warehouse assignments */}
                 <div>
-                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><WarehouseIcon className="h-4 w-4 text-muted-foreground" /> Warehouse assignments</h4>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                    <WarehouseIcon className="h-4 w-4 text-muted-foreground" /> Warehouse
+                    assignments
+                  </h4>
                   {detail.assignments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Not assigned to any warehouse yet.</p>
+                    <p className="text-sm text-muted-foreground">
+                      Not assigned to any warehouse yet.
+                    </p>
                   ) : (
                     <ul className="space-y-1.5">
                       {detail.assignments.map((a) => (
-                        <li key={a.id as string} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                        <li
+                          key={a.id as string}
+                          className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                        >
                           <span className="inline-flex items-center gap-1.5">
                             <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                             {a.city ?? "—"}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {(a.warehouses as any)?.name ?? "—"}
-                            {a.is_primary ? <Badge className="ml-2 bg-emerald-100 text-emerald-800 text-[10px]">Primary</Badge> : null}
+                            {a.is_primary ? (
+                              <Badge className="ml-2 bg-emerald-100 text-emerald-800 text-[10px]">
+                                Primary
+                              </Badge>
+                            ) : null}
                           </span>
                         </li>
                       ))}
@@ -448,7 +531,9 @@ function PlatformTechniciansPage() {
 
                 {/* Install history */}
                 <div>
-                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><CalendarClock className="h-4 w-4 text-muted-foreground" /> Install history</h4>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                    <CalendarClock className="h-4 w-4 text-muted-foreground" /> Install history
+                  </h4>
                   {detail.installs.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No installs assigned yet.</p>
                   ) : (
@@ -456,16 +541,37 @@ function PlatformTechniciansPage() {
                       {detail.installs.map((i) => {
                         const order = (i.hardware_orders ?? {}) as Record<string, any>;
                         return (
-                          <li key={i.id as string} className="rounded-md border border-border p-3 text-sm">
+                          <li
+                            key={i.id as string}
+                            className="rounded-md border border-border p-3 text-sm"
+                          >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-medium">Order {(i.order_id as string)?.slice(0, 8)}</span>
-                              <Badge className="text-[10px] bg-slate-200 text-slate-700">{(i.status as string).replace("_", " ")}</Badge>
+                              <span className="font-medium">
+                                Order {(i.order_id as string)?.slice(0, 8)}
+                              </span>
+                              <Badge className="text-[10px] bg-slate-200 text-slate-700">
+                                {(i.status as string).replace("_", " ")}
+                              </Badge>
                             </div>
                             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                              {i.scheduled_for && <span className="inline-flex items-center gap-1"><CalendarClock className="h-3 w-3" />{new Date(i.scheduled_for as string).toLocaleString()}</span>}
-                              {(order.install_city || order.customer_name) && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{order.install_city ?? order.customer_name}</span>}
+                              {i.scheduled_for && (
+                                <span className="inline-flex items-center gap-1">
+                                  <CalendarClock className="h-3 w-3" />
+                                  {new Date(i.scheduled_for as string).toLocaleString()}
+                                </span>
+                              )}
+                              {(order.install_city || order.customer_name) && (
+                                <span className="inline-flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {order.install_city ?? order.customer_name}
+                                </span>
+                              )}
                             </div>
-                            {i.blocker_note && <p className="mt-1 text-xs text-rose-700">Blocked: {i.blocker_note}</p>}
+                            {i.blocker_note && (
+                              <p className="mt-1 text-xs text-rose-700">
+                                Blocked: {i.blocker_note}
+                              </p>
+                            )}
                           </li>
                         );
                       })}

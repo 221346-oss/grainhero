@@ -3,9 +3,25 @@ import { Link } from "@tanstack/react-router";
 import { X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Home, Package, DollarSign, Users, Grid3x3, BarChart3, Activity,
-  Building2, FileText, Shield, Briefcase, HeartHandshake, Rocket, TrendingUp, Wheat, Wrench,
-  Radio, ToggleRight, Bell
+  Home,
+  Package,
+  DollarSign,
+  Users,
+  Grid3x3,
+  BarChart3,
+  Activity,
+  Building2,
+  FileText,
+  Shield,
+  Briefcase,
+  HeartHandshake,
+  Rocket,
+  TrendingUp,
+  Wheat,
+  Wrench,
+  Radio,
+  ToggleRight,
+  Bell,
 } from "lucide-react";
 
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
@@ -96,7 +112,12 @@ const superAdminGroups: NavGroup[] = [
       { id: "platform-users", label: "Users", icon: Users, link: "/platform/users" },
       { id: "platform-leads", label: "Leads", icon: Users, link: "/platform/leads" },
       { id: "platform-pipeline", label: "Pipeline", icon: TrendingUp, link: "/platform/pipeline" },
-      { id: "platform-technicians", label: "Company Technicians", icon: Wrench, link: "/platform/technicians" },
+      {
+        id: "platform-technicians",
+        label: "Company Technicians",
+        icon: Wrench,
+        link: "/platform/technicians",
+      },
     ],
   },
   {
@@ -105,9 +126,19 @@ const superAdminGroups: NavGroup[] = [
     icon: Briefcase,
     items: [
       { id: "platform-business", label: "Business", icon: Briefcase, link: "/platform/business" },
-      { id: "platform-financials", label: "Financials", icon: DollarSign, link: "/platform/financials" },
+      {
+        id: "platform-financials",
+        label: "Financials",
+        icon: DollarSign,
+        link: "/platform/financials",
+      },
       { id: "platform-plans", label: "Plans", icon: CreditCard, link: "/platform/plans" },
-      { id: "platform-subscriptions", label: "Subscriptions", icon: Grid3x3, link: "/platform/subscriptions" },
+      {
+        id: "platform-subscriptions",
+        label: "Subscriptions",
+        icon: Grid3x3,
+        link: "/platform/subscriptions",
+      },
       { id: "platform-orders", label: "Install Orders", icon: Package, link: "/platform/orders" },
     ],
   },
@@ -116,9 +147,19 @@ const superAdminGroups: NavGroup[] = [
     label: "Monitoring & Health",
     icon: Activity,
     items: [
-      { id: "platform-monitoring", label: "Monitoring", icon: Activity, link: "/platform/monitoring" },
+      {
+        id: "platform-monitoring",
+        label: "Monitoring",
+        icon: Activity,
+        link: "/platform/monitoring",
+      },
       { id: "platform-health", label: "Health", icon: Activity, link: "/platform/health" },
-      { id: "platform-silo-requests", label: "Silo Requests", icon: Inbox, link: "/platform/silo-requests" },
+      {
+        id: "platform-silo-requests",
+        label: "Silo Requests",
+        icon: Inbox,
+        link: "/platform/silo-requests",
+      },
     ],
   },
   {
@@ -126,8 +167,18 @@ const superAdminGroups: NavGroup[] = [
     label: "Reporting & Analytics",
     icon: BarChart3,
     items: [
-      { id: "platform-reporting", label: "Reporting", icon: BarChart3, link: "/platform/reporting" },
-      { id: "platform-audit-logs", label: "Audit Logs", icon: FileText, link: "/platform/audit-logs" },
+      {
+        id: "platform-reporting",
+        label: "Reporting",
+        icon: BarChart3,
+        link: "/platform/reporting",
+      },
+      {
+        id: "platform-audit-logs",
+        label: "Audit Logs",
+        icon: FileText,
+        link: "/platform/audit-logs",
+      },
       { id: "platform-system-logs", label: "System Logs", icon: FileText, link: "/platform/logs" },
     ],
   },
@@ -137,8 +188,18 @@ const superAdminGroups: NavGroup[] = [
     icon: Shield,
     items: [
       { id: "platform-security", label: "Security", icon: Shield, link: "/platform/security" },
-      { id: "platform-insurance", label: "Insurance", icon: HeartHandshake, link: "/platform/insurance" },
-      { id: "platform-launch", label: "Launch Readiness", icon: Rocket, link: "/platform/launch-readiness" },
+      {
+        id: "platform-insurance",
+        label: "Insurance",
+        icon: HeartHandshake,
+        link: "/platform/insurance",
+      },
+      {
+        id: "platform-launch",
+        label: "Launch Readiness",
+        icon: Rocket,
+        link: "/platform/launch-readiness",
+      },
     ],
   },
 ];
@@ -155,20 +216,24 @@ export function MobileAdminNav({ isOpen, onClose }: MobileAdminNavProps) {
   // (admin / manager) gets the tenant workspace groups.
   const { isGlobalTechnician, isTenantTechnician } = useIsGlobalTechnician();
   const groups =
-    role === "super_admin" ? superAdminGroups :
-    isGlobalTechnician ? globalTechnicianGroups :
-    isTenantTechnician ? tenantTechnicianGroups :
-    workspaceGroups;
+    role === "super_admin"
+      ? superAdminGroups
+      : isGlobalTechnician
+        ? globalTechnicianGroups
+        : isTenantTechnician
+          ? tenantTechnicianGroups
+          : workspaceGroups;
 
   // Build initial open state from defaultOpen flags
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
-    groups.forEach((g) => { init[g.id] = g.defaultOpen ?? false; });
+    groups.forEach((g) => {
+      init[g.id] = g.defaultOpen ?? false;
+    });
     return init;
   });
 
-  const toggle = (id: string) =>
-    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggle = (id: string) => setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <AnimatePresence>
@@ -192,67 +257,64 @@ export function MobileAdminNav({ isOpen, onClose }: MobileAdminNavProps) {
             transition={{ type: "spring", damping: 25, stiffness: 220 }}
             className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white border-r border-border z-50 flex flex-col md:hidden"
           >
-        {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-border px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#2FAC0C] flex items-center justify-center">
-              <span className="text-white font-bold text-sm">GH</span>
-            </div>
-            <span className="font-semibold text-foreground">GrainHero</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Navigation Groups — Scrollable */}
-        <nav className="flex-1 overflow-y-auto py-2 px-2">
-          {groups.map((group) => {
-            const isOpen = openGroups[group.id] ?? false;
-            const GroupIcon = group.icon;
-
-            return (
-              <div key={group.id} className="mb-1">
-                {/* Group header — acts as collapsible toggle */}
-                <button
-                  onClick={() => toggle(group.id)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <GroupIcon className="w-[18px] h-[18px] text-[#2FAC0C] flex-shrink-0" />
-                  <span className="flex-1 text-left text-[13px] font-semibold text-foreground tracking-wide">
-                    {group.label}
-                  </span>
-                  <ChevronRight
-                    className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
-                  />
-                </button>
-
-                {/* Collapsible child items */}
-                {isOpen && (
-                  <div className="ml-3 pl-4 border-l-2 border-[#2FAC0C]/20 space-y-0.5 pb-1">
-                    {group.items.map((item) => {
-                      const ItemIcon = item.icon;
-                      return (
-                        <Link
-                          key={item.id}
-                          to={item.link}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-[13px] text-foreground active:bg-muted"
-                          onClick={onClose}
-                        >
-                          <ItemIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+            {/* Header */}
+            <div className="flex-shrink-0 bg-white border-b border-border px-4 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#2FAC0C] flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">GH</span>
+                </div>
+                <span className="font-semibold text-foreground">GrainHero</span>
               </div>
-            );
-          })}
-        </nav>
+              <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Navigation Groups — Scrollable */}
+            <nav className="flex-1 overflow-y-auto py-2 px-2">
+              {groups.map((group) => {
+                const isOpen = openGroups[group.id] ?? false;
+                const GroupIcon = group.icon;
+
+                return (
+                  <div key={group.id} className="mb-1">
+                    {/* Group header — acts as collapsible toggle */}
+                    <button
+                      onClick={() => toggle(group.id)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <GroupIcon className="w-[18px] h-[18px] text-[#2FAC0C] flex-shrink-0" />
+                      <span className="flex-1 text-left text-[13px] font-semibold text-foreground tracking-wide">
+                        {group.label}
+                      </span>
+                      <ChevronRight
+                        className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
+
+                    {/* Collapsible child items */}
+                    {isOpen && (
+                      <div className="ml-3 pl-4 border-l-2 border-[#2FAC0C]/20 space-y-0.5 pb-1">
+                        {group.items.map((item) => {
+                          const ItemIcon = item.icon;
+                          return (
+                            <Link
+                              key={item.id}
+                              to={item.link}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-[13px] text-foreground active:bg-muted"
+                              onClick={onClose}
+                            >
+                              <ItemIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="truncate">{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
           </motion.div>
         </>
       )}
