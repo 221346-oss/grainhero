@@ -56,7 +56,7 @@ export function MetricWidget({
 
   const display = useMemo(() => {
     if (!query.data || !query.data.ok) return { value: "—", extra: null as string | null };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const result = query.data.result as any;
     if (result && typeof result === "object" && "value" in result) {
       return { value: formatValue(result.value, format, unit), extra: result.label ?? null };

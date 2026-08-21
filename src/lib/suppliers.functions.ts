@@ -7,7 +7,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const kinds = ["external", "own_farm", "internal_transfer", "anonymous"] as const;

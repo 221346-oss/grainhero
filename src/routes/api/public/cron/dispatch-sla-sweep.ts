@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/public/cron/dispatch-sla-sweep")({
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { loadMarketplaceSettings } = await import("@/lib/marketplace-settings.functions");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const sb = supabaseAdmin as any;
         const settings = await loadMarketplaceSettings(sb);
         const now = Date.now();

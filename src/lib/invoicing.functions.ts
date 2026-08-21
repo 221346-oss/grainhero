@@ -9,7 +9,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity } from "@/lib/activity";
 import { insertInvoiceWithUniqueNumber } from "@/lib/invoice-number";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const generateInvoice = createServerFn({ method: "POST" })
@@ -126,7 +125,6 @@ export const generateInvoice = createServerFn({ method: "POST" })
   });
 
 export async function sendInvoiceEmailAndTrack(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sb: any,
   invoiceId: string,
   orderId: string,
@@ -310,11 +308,11 @@ export const getSalesSummary = createServerFn({ method: "GET" })
         .from("buyer_invoices")
         .select("id, payment_status, total_amount, amount_paid, currency, due_date, created_at"),
     ]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const listings = (listingsRes.data ?? []) as any[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const orders = (ordersRes.data ?? []) as any[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const invoices = (invoicesRes.data ?? []) as any[];
 
     const activeListings = listings.filter((l) => l.status === "active").length;

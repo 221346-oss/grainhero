@@ -8,7 +8,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const submitReview = createServerFn({ method: "POST" })
@@ -30,7 +29,7 @@ export const submitReview = createServerFn({ method: "POST" })
     if (data.body.length < settings.reviews.minChars) {
       throw new Error(`Review must be at least ${settings.reviews.minChars} characters`);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: order } = await sb
       .from("buyer_orders")
@@ -109,7 +108,7 @@ export const moderateReview = createServerFn({ method: "POST" })
       _user_id: context.userId,
     });
     if (!isAdmin) throw new Error("Forbidden");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { error } = await sb
       .from("buyer_reviews")
@@ -130,7 +129,7 @@ export const listReviewsForModeration = createServerFn({ method: "GET" })
       _user_id: context.userId,
     });
     if (!isAdmin) throw new Error("Forbidden");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data } = await sb
       .from("buyer_reviews")
@@ -184,7 +183,7 @@ export const respondToReview = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const settings = await loadMarketplaceSettings(context.supabase);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: r } = await sb
       .from("buyer_reviews")
@@ -229,7 +228,6 @@ export const markReviewHelpful = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ reviewId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: acc } = await sb
       .from("buyer_accounts")
@@ -268,7 +266,6 @@ export const reportReview = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { error } = await sb
       .from("buyer_reviews")

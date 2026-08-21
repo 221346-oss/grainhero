@@ -7,11 +7,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function requireSuper(sb: unknown, userId: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = sb as any;
   const { data } = await c.rpc("get_my_role", { _user_id: userId });
   if (data !== "super_admin") throw new Error("Forbidden");
@@ -29,7 +27,7 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     await requireSuper(context.supabase, context.userId);
     const settings = await loadMarketplaceSettings(context.supabase);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const nowMs = Date.now();
     const sinceIso = new Date(nowMs - data.days * 86400_000).toISOString();
@@ -190,7 +188,7 @@ export const getSlaDrilldown = createServerFn({ method: "GET" })
     const overdueMs = settings.dispatch.slaHours.delivered * 3600_000;
     const startIso = new Date(`${data.day}T00:00:00Z`).toISOString();
     const endIso = new Date(`${data.day}T23:59:59Z`).toISOString();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows } = await sb
       .from("buyer_shipments")

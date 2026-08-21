@@ -16,7 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { listGrainBatches } from "@/lib/operations.functions";
 
 // Structurally-compatible with the Silo type used in the Silos page.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type Silo = any;
 
 type Batch = {

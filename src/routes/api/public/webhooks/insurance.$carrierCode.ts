@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/webhooks/insurance/$carrierCod
         const rawBody = await request.text();
         const sigHeader = request.headers.get("x-signature") ?? "";
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const sb = supabaseAdmin as any;
 
         // Carrier lookup by lowercased-name match on the code slug

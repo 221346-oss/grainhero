@@ -12,7 +12,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireRole } from "@/lib/rbac.server";
 import { logActivity, logManagerAction } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function resolveTenantAdminId(supabase: Row, userId: string): Promise<string> {

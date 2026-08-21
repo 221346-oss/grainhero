@@ -10,7 +10,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import type { Database } from "@/integrations/supabase/types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 function publicClient() {
@@ -67,7 +66,7 @@ export const getSellerReputation = createServerFn({ method: "GET" })
   .validator((d) => z.object({ adminId: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const sb = publicClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { data: row } = await (sb as any)
       .from("seller_reputation")
       .select("*")
@@ -105,7 +104,7 @@ export const listSellerRankings = createServerFn({ method: "GET" })
       _user_id: context.userId,
     });
     if (!isAdmin) throw new Error("Forbidden");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows } = await sb.from("seller_reputation").select("*").limit(data.limit);
     const list = (rows ?? []) as Row[];
@@ -138,7 +137,7 @@ export const getPublicSellerStorefront = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const sb = publicClient();
     const settings = await loadSettingsPublic();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const anon = sb as any;
     const [profRes, repRes, revRes, listRes] = await Promise.all([
       anon

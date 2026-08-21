@@ -359,7 +359,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
     queryFn: () => listSupFn({ data: {} }),
     retry: 1,
   });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const suppliers: any[] = (suppliersQ.data?.suppliers ?? []) as any[];
 
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
@@ -470,7 +470,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           assignedTechnicianId: f.id ? undefined : f.assignedTechnicianId || null,
         },
       }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     onSuccess: (row: any) => {
       // Safety net: some server-fn error shapes resolve instead of rejecting
       // (e.g. an { error } payload survives serialization as a 200). Treat those
@@ -487,7 +487,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       setEditOpen(false);
       setForm(emptyForm);
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     onError: (e: any) => {
       const message = e?.message || (typeof e === "string" ? e : null) || "Save failed";
       toast.error(message);
@@ -522,7 +522,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           action_taken: payload.s.action_taken || null,
         },
       }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     onSuccess: (row: any) => {
       const softError = row?.error ?? (row == null ? "Log failed — no data returned" : null);
       if (softError) {
@@ -535,7 +535,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       setSpoilageOpen(false);
       setSpoilage(emptySpoilage);
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     onError: (e: any) =>
       toast.error(e?.message || (typeof e === "string" ? e : null) || "Log failed"),
   });

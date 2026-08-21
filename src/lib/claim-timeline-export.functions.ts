@@ -17,7 +17,6 @@ export const exportClaimTimeline = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: claim } = await sb
       .from("insurance_claims")
@@ -33,7 +32,7 @@ export const exportClaimTimeline = createServerFn({ method: "POST" })
 
     if (data.format === "csv") {
       const header = csvLine(["timestamp", "event_type", "actor_user_id", "status", "notes"]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const body = ((events ?? []) as any[])
         .map((e) =>
           csvLine([e.created_at, e.event_type, e.actor_user_id, e.status ?? "", e.notes ?? ""]),
@@ -66,7 +65,7 @@ export const exportClaimTimeline = createServerFn({ method: "POST" })
     y -= 14;
     page.drawText(`Status: ${claim.status ?? "n/a"}`, { x: 40, y, size: 10, font });
     y -= 24;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     for (const e of (events ?? []) as any[]) {
       if (y < 60) {
         page = doc.addPage([595, 842]);

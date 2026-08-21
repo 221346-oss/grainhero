@@ -7,7 +7,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const getDispatchAnalytics = createServerFn({ method: "GET" })
@@ -16,7 +15,7 @@ export const getDispatchAnalytics = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const settings = await loadMarketplaceSettings(context.supabase);
     const since = new Date(Date.now() - data.days * 86400000).toISOString();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: ships, error } = await sb
       .from("buyer_shipments")
@@ -113,7 +112,7 @@ export const exportDispatchCsv = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const since = new Date(Date.now() - data.days * 86400000).toISOString();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const q = sb
       .from("buyer_shipments")
@@ -125,7 +124,7 @@ export const exportDispatchCsv = createServerFn({ method: "GET" })
       .limit(2000);
     const { data: rows, error } = await q;
     if (error) throw error;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     let filtered = (rows ?? []) as any[];
     if (data.batchId) filtered = filtered.filter((r) => r.buyer_orders?.batch_id === data.batchId);
     if (data.siloId)

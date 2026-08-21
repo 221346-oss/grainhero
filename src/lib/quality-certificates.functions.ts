@@ -9,14 +9,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { emitNotification } from "@/lib/notify";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const listBatchCertificates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ batchId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: rows, error } = await sb
       .from("batch_quality_certificates")
@@ -56,7 +54,7 @@ export const addBatchCertificate = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const settings = await loadMarketplaceSettings(context.supabase);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: batch } = await sb
       .from("grain_batches")
@@ -139,7 +137,6 @@ export const verifyCertificate = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: role } = await sb.rpc("get_my_role", { _user_id: context.userId });
     if (role !== "super_admin") throw new Error("Forbidden");
@@ -159,7 +156,6 @@ export const verifyCertificate = createServerFn({ method: "POST" })
 export const listPendingCertificates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: role } = await sb.rpc("get_my_role", { _user_id: context.userId });
     if (role !== "super_admin") throw new Error("Forbidden");

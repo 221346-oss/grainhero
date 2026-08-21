@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/hooks/analytics-refresh")({
         const url = process.env.SUPABASE_URL!;
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
         const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const { data, error } = await (admin as any).schema("analytics").rpc("refresh_all");
         if (error) {
           return new Response(JSON.stringify({ ok: false, error: error.message }), {

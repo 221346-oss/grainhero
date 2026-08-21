@@ -19,7 +19,6 @@ import type { ExportColumn } from "@/lib/csv-pdf-export";
 type Period = "day" | "week" | "month" | "year";
 const PERIOD_DAYS: Record<Period, number> = { day: 1, week: 7, month: 30, year: 365 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const batchColumns: ExportColumn<Row>[] = [

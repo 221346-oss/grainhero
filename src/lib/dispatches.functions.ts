@@ -8,7 +8,6 @@ import { requireRole } from "@/lib/rbac.server";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 /** FIFO-allocate `qtyKg` of `grainType` out of `siloId`'s available batches, oldest first. */
@@ -598,7 +597,6 @@ export const createDispatchPhotoUploadUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ filename: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: adminId } = await (context.supabase as any).rpc("get_tenant_admin_id", {
       _user_id: context.userId,
     });
@@ -612,7 +610,7 @@ export const createDispatchPhotoUploadUrl = createServerFn({ method: "POST" })
       throw new Error("No tenant admin found for this account — cannot upload a dispatch photo");
     const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${adminId}/${Date.now()}-${safe}`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { data: signed, error } = await (context.supabase as any).storage
       .from("dispatch-photos")
       .createSignedUploadUrl(path);
@@ -624,7 +622,6 @@ export const getDispatchPhotoSignedUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ path: z.string().min(1) }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: signed, error } = await (context.supabase as any).storage
       .from("dispatch-photos")
       .createSignedUrl(data.path, 60 * 10);

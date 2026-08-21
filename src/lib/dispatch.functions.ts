@@ -10,7 +10,6 @@ import { logActivity } from "@/lib/activity";
 import { loadMarketplaceSettings, renderTemplate } from "@/lib/marketplace-settings.functions";
 import { emitNotification } from "@/lib/notify";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 /**
@@ -112,7 +111,6 @@ export const createShipment = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: order } = await sb
       .from("buyer_orders")
@@ -217,7 +215,6 @@ export const appendShipmentEvent = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const actor = await resolveActor(sb, context.userId);
     const { error } = await sb.from("buyer_shipment_events").insert({
@@ -286,7 +283,6 @@ export const markDelivered = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: ship } = await sb
       .from("buyer_shipments")
@@ -375,7 +371,6 @@ export const getShipmentTracking = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: shipment } = await sb
       .from("buyer_shipments")

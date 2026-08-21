@@ -14,7 +14,6 @@ import { requireRole } from "@/lib/rbac.server";
 import { logActivity, logManagerAction } from "@/lib/activity";
 import { assertPlanAllows } from "@/lib/plan-gate";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function resolveTenantAdminId(supabase: Row, userId: string): Promise<string> {

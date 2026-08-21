@@ -7,7 +7,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function ensureBuyerAccount(context: {
@@ -15,7 +14,6 @@ async function ensureBuyerAccount(context: {
   userId: string;
   claims: Record<string, unknown>;
 }): Promise<Row> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = context.supabase as any;
   const { data: existing } = await sb
     .from("buyer_accounts")
@@ -53,7 +51,7 @@ export const updateMyBuyerAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const patch: Row = {};
     if (data.companyName !== undefined) patch.company_name = data.companyName;
@@ -77,7 +75,7 @@ export const createBuyerOrder = createServerFn({ method: "POST" })
   .validator((d) => CREATE.parse(d))
   .handler(async ({ data, context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
 
     // Read listing via public policy (no admin access)
@@ -183,7 +181,7 @@ export const listMyOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data, error } = await sb
       .from("buyer_orders")
@@ -201,7 +199,7 @@ export const getMyOrder = createServerFn({ method: "GET" })
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const [oRes, eRes] = await Promise.all([
       sb
@@ -228,7 +226,7 @@ export const cancelMyOrder = createServerFn({ method: "POST" })
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: o } = await sb
       .from("buyer_orders")
@@ -263,7 +261,7 @@ export const listMyFavorites = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data } = await sb
       .from("favorite_listings")
@@ -280,7 +278,7 @@ export const toggleFavoriteListing = createServerFn({ method: "POST" })
   .validator((d) => z.object({ listingId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: existing } = await sb
       .from("favorite_listings")
@@ -308,7 +306,7 @@ export const duplicateOrder = createServerFn({ method: "POST" })
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const account = await ensureBuyerAccount(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: prev } = await sb
       .from("buyer_orders")

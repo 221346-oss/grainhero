@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { stripeFetch, stripeForm } from "@/lib/stripe-api.server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const startBuyerCheckout = createServerFn({ method: "POST" })
@@ -20,7 +19,6 @@ export const startBuyerCheckout = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: account } = await sb
       .from("buyer_accounts")

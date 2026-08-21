@@ -25,7 +25,6 @@ export const exportMetricCsv = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const filters = { ...(data.filters ?? {}), date_from: data.from, date_to: data.to };
     const { data: result, error } = await sb.rpc("run_metric", {
@@ -33,7 +32,7 @@ export const exportMetricCsv = createServerFn({ method: "POST" })
       _filters: filters,
     });
     if (error) throw new Error(error.message);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = result as any;
     let rows: Array<Record<string, unknown>> = [];
     if (Array.isArray(r)) rows = r;

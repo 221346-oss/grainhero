@@ -8,7 +8,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { computeScore } from "@/lib/reputation.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const getMarketplaceHealth = createServerFn({ method: "GET" })
@@ -23,7 +22,7 @@ export const getMarketplaceHealth = createServerFn({ method: "GET" })
     if (!isAdmin) throw new Error("Forbidden");
     const settings = await loadMarketplaceSettings(context.supabase);
     const since = new Date(Date.now() - data.days * 86400000).toISOString();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
 
     const [listingsRes, ordersRes, disputesRes, refundsRes, reputationRes, reviewsRes] =

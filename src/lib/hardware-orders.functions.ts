@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 
 // Order rows contain arbitrary column values; return them as a JSON-safe map.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export type HardwareOrder = Record<string, any>;
 
 const STATUS = z.enum([

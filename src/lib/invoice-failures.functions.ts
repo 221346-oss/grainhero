@@ -6,11 +6,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendInvoiceEmailAndTrack } from "./invoicing.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function requireStaff(sb: unknown, userId: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = sb as any;
   const { data } = await c.rpc("get_my_role", { _user_id: userId });
   if (!["super_admin", "admin", "manager"].includes(data as string)) {
@@ -30,7 +28,7 @@ export const listInvoiceEmailFailures = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     await requireStaff(context.supabase, context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     let q = sb
       .from("buyer_invoices")
@@ -62,7 +60,7 @@ export const getInvoiceHistory = createServerFn({ method: "GET" })
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireStaff(context.supabase, context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const [inv, events] = await Promise.all([
       sb.from("buyer_invoices").select("*").eq("order_id", data.orderId).maybeSingle(),
@@ -84,7 +82,7 @@ export const getInvoiceRetryHistory = createServerFn({ method: "GET" })
   .validator((d) => z.object({ invoiceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireStaff(context.supabase, context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: inv } = await sb
       .from("buyer_invoices")
@@ -117,7 +115,7 @@ export const bulkRetryInvoiceEmails = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireStaff(context.supabase, context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows } = await sb
       .from("buyer_invoices")
@@ -159,7 +157,7 @@ export const exportInvoiceFailuresCsv = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     await requireStaff(context.supabase, context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     let q = sb
       .from("buyer_invoices")
@@ -232,7 +230,7 @@ export const exportInvoiceFailuresPdf = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireStaff(context.supabase, context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     let q = sb
       .from("buyer_invoices")

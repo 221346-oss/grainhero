@@ -84,7 +84,7 @@ function ListingsPage() {
   const summary = useMemo(
     () => ({
       total: items.length,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       active: items.filter((l: any) => l.status === "active").length,
 
       stock: items
@@ -152,7 +152,7 @@ function ListingsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {}
                 {items.map((l: any) => (
                   <TableRow key={l.id} className="hover:bg-emerald-50/40">
                     <TableCell className="font-medium max-w-[220px] truncate">{l.title}</TableCell>
@@ -243,7 +243,6 @@ function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreat
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selected = (batchesQ.data?.batches ?? []).find((b: any) => b.id === batchId);
   useEffect(() => {
     if (selected && !available)
@@ -287,7 +286,7 @@ function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreat
                 <SelectValue placeholder="Pick a ready batch" />
               </SelectTrigger>
               <SelectContent>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {}
                 {(batchesQ.data?.batches ?? []).map((b: any) => (
                   <SelectItem key={b.id} value={b.id}>
                     {b.batch_number} · {b.grain_type ?? "grain"} ·{" "}
@@ -319,7 +318,7 @@ function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreat
             </div>
             <div>
               <Label>Visibility</Label>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {}
               <Select value={visibility} onValueChange={(v) => setVisibility(v as any)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -374,7 +373,7 @@ function PlaceOrderDialog({
   const [buyerId, setBuyerId] = useState("");
   const [qty, setQty] = useState("");
   const [note, setNote] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const buyersQ = useQuery<any[]>({
     queryKey: ["buyers-simple"],
     queryFn: async () => {

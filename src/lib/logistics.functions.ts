@@ -9,7 +9,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function assertSuperAdmin(ctx: { supabase: any; userId: string }) {
@@ -74,7 +73,6 @@ function nearestNeighbourOrder<T extends { lat?: number | null; lng?: number | n
 export const listCarriers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data } = await sb.from("carriers").select("*").order("name");
     return { carriers: (data ?? []) as Row[] };
@@ -102,7 +100,7 @@ export const upsertCarrier = createServerFn({ method: "POST" })
   .validator((d) => CarrierSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const payload = { ...data };
     if (payload.id) {
@@ -125,7 +123,7 @@ export const rotateCarrierWebhookSecret = createServerFn({ method: "POST" })
     const secret = Array.from(bytes)
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { error } = await sb
       .from("carriers")
@@ -140,7 +138,6 @@ export const rotateCarrierWebhookSecret = createServerFn({ method: "POST" })
 export const listVehicles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data } = await sb
       .from("vehicles")
@@ -167,7 +164,7 @@ export const upsertVehicle = createServerFn({ method: "POST" })
   .validator((d) => VehicleSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     if (data.id) {
       const { error } = await sb.from("vehicles").update(data).eq("id", data.id);
@@ -184,7 +181,6 @@ export const upsertVehicle = createServerFn({ method: "POST" })
 export const listDrivers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data } = await sb.from("drivers").select("*, carriers(name)").order("full_name");
     return { drivers: (data ?? []) as Row[] };
@@ -205,7 +201,7 @@ export const upsertDriver = createServerFn({ method: "POST" })
   .validator((d) => DriverSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     if (data.id) {
       const { error } = await sb.from("drivers").update(data).eq("id", data.id);
@@ -244,7 +240,6 @@ export const assignShipment = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const settings = await loadMarketplaceSettings(context.supabase);
     if (!settings.logistics.carriersEnabled) throw new Error("Logistics disabled");
@@ -361,7 +356,6 @@ export const optimizeRoute = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ assignmentId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const settings = await loadMarketplaceSettings(context.supabase);
     if (settings.logistics.routeOptimizer === "off")
@@ -404,7 +398,6 @@ export const recordLogisticsCost = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { error } = await sb.from("logistics_cost_entries").insert({
       assignment_id: data.assignmentId,
@@ -424,7 +417,6 @@ export const listAssignmentCosts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ assignmentId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: rows } = await sb
       .from("logistics_cost_entries")
@@ -440,7 +432,7 @@ export const getLogisticsCommandCenter = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const [aRes, cRes, vRes, dRes] = await Promise.all([
       sb
@@ -502,7 +494,7 @@ export const getFleetOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const [{ data: vehicles }, { data: drivers }] = await Promise.all([
       sb.from("vehicles").select("*, carriers(name)").order("registration_no"),
@@ -514,7 +506,6 @@ export const getFleetOverview = createServerFn({ method: "GET" })
 /* ---------- Totals helper for financials integration ---------- */
 
 export async function sumLogisticsCosts(sb: unknown): Promise<number> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = sb as any;
   const { data } = await c.from("logistics_cost_entries").select("amount");
   return (data ?? []).reduce((s: number, r: Row) => s + Number(r.amount ?? 0), 0);

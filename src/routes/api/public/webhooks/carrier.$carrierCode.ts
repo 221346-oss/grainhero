@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/webhooks/carrier/$carrierCode"
         const rawBody = await request.text();
         const sigHeader = request.headers.get("x-signature") ?? "";
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const sb = supabaseAdmin as any;
 
         const { data: carrier } = await sb

@@ -4,7 +4,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const SEVERITY_WEIGHT: Record<string, number> = { critical: 100, warning: 30, info: 5 };

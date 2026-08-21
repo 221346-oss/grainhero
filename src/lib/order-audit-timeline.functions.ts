@@ -8,7 +8,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export type TimelineEntry = {
@@ -20,7 +19,7 @@ export type TimelineEntry = {
   from: string | null;
   to: string | null;
   note: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   metadata: any;
   createdAt: string;
 };
@@ -38,7 +37,6 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     // Authorise: super_admin, or the buyer/seller on the order.
     const { data: order } = await sb

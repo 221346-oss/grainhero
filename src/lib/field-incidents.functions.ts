@@ -18,7 +18,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "@/lib/rbac.server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const TENANT_ROLES = ["admin", "manager", "technician"];
@@ -49,7 +48,7 @@ export const reportFieldIncident = createServerFn({ method: "POST" })
     const tenantAdminId = await resolveTenantAdminId(context.supabase, context.userId);
 
     let recipientId: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const customFields: Record<string, any> = { creatorRole: role };
     // Only set for the super_admin fan-out case — inserting the notification
     // row for the recipient needs a cross-tenant client (see below).

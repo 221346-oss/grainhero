@@ -7,11 +7,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { emitNotification } from "@/lib/notify";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function resolveOrderParties(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sb: any,
   orderId: string,
 ): Promise<{ adminId: string; buyerUserId: string | null; orderNumber: string | null } | null> {
@@ -68,7 +66,7 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (data.body.length > settings.messaging.maxBodyChars) {
       throw new Error(`Message exceeds ${settings.messaging.maxBodyChars} characters`);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const parties = await resolveOrderParties(sb, data.orderId);
     if (!parties) throw new Error("Order not found");
@@ -124,7 +122,6 @@ export const listMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: rows, error } = await sb
       .from("buyer_order_messages")
@@ -141,7 +138,6 @@ export const markMessagesRead = createServerFn({ method: "POST" })
     z.object({ orderId: z.string().uuid(), as: z.enum(["seller", "buyer"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const nowIso = new Date().toISOString();
     const col = data.as === "seller" ? "read_by_seller_at" : "read_by_buyer_at";
@@ -162,7 +158,6 @@ export const markMessagesRead = createServerFn({ method: "POST" })
 export const listFlaggedMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: role } = await sb.rpc("get_my_role", { _user_id: context.userId });
     if (role !== "super_admin") throw new Error("Forbidden");
@@ -187,7 +182,6 @@ export const moderateMessage = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: role } = await sb.rpc("get_my_role", { _user_id: context.userId });
     if (role !== "super_admin") throw new Error("Forbidden");

@@ -74,7 +74,7 @@ export function ShipmentPanel({
           shipmentId: data!.shipment!.id,
           code: nextStatus || "update",
           label: eventLabel || "Update",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           setStatus: (nextStatus || undefined) as any,
         },
       }),

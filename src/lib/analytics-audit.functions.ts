@@ -18,7 +18,7 @@ export const listGovernanceAudit = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     let q = sb
       .from("analytics_governance_audit")
@@ -42,7 +42,7 @@ export const exportGovernanceAuditCsv = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     let q = sb
       .from("analytics_governance_audit")

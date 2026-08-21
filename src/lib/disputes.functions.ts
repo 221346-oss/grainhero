@@ -8,7 +8,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const openDispute = createServerFn({ method: "POST" })
@@ -40,7 +39,7 @@ export const openDispute = createServerFn({ method: "POST" })
     if (!settings.disputes.categories.find((c) => c.key === data.category)) {
       throw new Error("Unknown dispute category");
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: order } = await sb
       .from("buyer_orders")
@@ -118,7 +117,6 @@ export const listDisputes = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     let q = sb
       .from("buyer_disputes")
@@ -135,7 +133,6 @@ export const getDispute = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const [{ data: disp }, { data: events }] = await Promise.all([
       sb
@@ -169,7 +166,7 @@ export const resolveDispute = createServerFn({ method: "POST" })
     const settings = await loadMarketplaceSettings(context.supabase);
     const rez = settings.disputes.resolutions.find((r) => r.key === data.resolutionKey);
     if (!rez) throw new Error("Unknown resolution");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: disp } = await sb
       .from("buyer_disputes")

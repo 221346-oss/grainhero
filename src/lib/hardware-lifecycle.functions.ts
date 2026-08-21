@@ -13,7 +13,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireRole, getEffectiveRole } from "./rbac.server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const LIFECYCLE_STATUSES = [
@@ -72,7 +71,6 @@ async function recordStatusChange(
     note?: string | null;
   },
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (sb as any).from("hardware_order_status_history").insert({
     order_id: args.orderId,
     from_status: args.from,

@@ -26,7 +26,6 @@ export const Route = createFileRoute("/_authenticated/suppliers/$supplierId")({
   component: SupplierDetail,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 function SupplierDetail() {

@@ -37,7 +37,7 @@ export type NotifInput = {
 };
 
 // Loose typing: this module is imported by both authed and admin clients.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type SB = any;
 
 function row(input: NotifInput) {

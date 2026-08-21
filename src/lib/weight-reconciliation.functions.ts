@@ -8,7 +8,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { emitNotification } from "@/lib/notify";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const recordDispatchedWeight = createServerFn({ method: "POST" })
@@ -23,7 +22,6 @@ export const recordDispatchedWeight = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: order } = await sb
       .from("buyer_orders")
@@ -77,7 +75,6 @@ export const recordReceivedWeight = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const settings = await loadMarketplaceSettings(context.supabase);
     const { data: rec } = await sb
@@ -148,7 +145,6 @@ export const getReconciliation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: rec } = await sb
       .from("buyer_order_weight_reconciliation")

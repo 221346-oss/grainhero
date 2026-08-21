@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const STATES = [
@@ -33,7 +32,6 @@ const ALLOWED: Record<State, State[]> = {
 };
 
 async function nextOrderNumber(sb: unknown, adminId: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = sb as any;
   const { count } = await c
     .from("buyer_orders")

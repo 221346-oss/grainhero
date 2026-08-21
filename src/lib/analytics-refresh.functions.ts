@@ -18,11 +18,11 @@ export const refreshWarehouse = createServerFn({ method: "POST" })
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const fn = data.scope === "all" ? "refresh_all" : `refresh_${data.scope}`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const admin = supabaseAdmin as any;
     const { data: result, error } = await admin.schema("analytics").rpc(fn);
     if (error) throw new Error(error.message);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     await (context.supabase as any).rpc("record_governance_audit", {
       _action: "refresh.run",
       _target_type: "refresh",
@@ -39,7 +39,7 @@ export const retryRefreshOne = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const admin = supabaseAdmin as any;
     const scope = data.fact_name.replace(/^fact_/, "").replace(/_daily$/, "");
     const map: Record<string, string> = {
@@ -52,7 +52,7 @@ export const retryRefreshOne = createServerFn({ method: "POST" })
     const fn = map[scope] ?? "refresh_all";
     const { data: result, error } = await admin.schema("analytics").rpc(fn);
     if (error) return { ok: false as const, error: error.message };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     await (context.supabase as any).rpc("record_governance_audit", {
       _action: "refresh.retry",
       _target_type: "refresh",
@@ -68,7 +68,7 @@ export const listRefreshLog = createServerFn({ method: "GET" })
   .validator((d) => z.object({ limit: z.number().int().min(1).max(200).default(50) }).parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows, error } = await sb
       .from("analytics_refresh_log")
@@ -76,7 +76,7 @@ export const listRefreshLog = createServerFn({ method: "GET" })
       .order("started_at", { ascending: false })
       .limit(data.limit);
     if (error) throw error;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     return { rows: (rows ?? []) as Array<Record<string, any>> };
   });
 
@@ -84,7 +84,7 @@ export const getWarehouseHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows, error } = await sb
       .from("analytics_refresh_log")

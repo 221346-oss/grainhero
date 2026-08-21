@@ -3,7 +3,6 @@
 // (SuperAdmin overview, revenue analytics, financials, integrity checks)
 // so a price edit in the DB propagates everywhere immediately.
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyClient = any;
 
 export type PlanPriceRow = {
@@ -46,9 +45,9 @@ export async function loadSuperAdminIds(supabase: AnyClient): Promise<Set<string
 
 export type MrrInputs = {
   supabase: AnyClient;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   subscriptions?: Array<any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   profiles?: Array<any> | null;
 };
 

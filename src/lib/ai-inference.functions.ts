@@ -46,7 +46,6 @@ export type MLInferenceInput = {
  * tenant to attribute the request to).
  */
 export type MLLogContext = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
   adminId?: string | null;
   siloId?: string | null;

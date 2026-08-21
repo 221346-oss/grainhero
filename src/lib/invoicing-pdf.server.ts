@@ -7,7 +7,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export async function renderInvoicePdf(
@@ -15,7 +14,7 @@ export async function renderInvoicePdf(
   invoiceId: string,
 ): Promise<{ path: string; signedUrl: string }> {
   const settings = await loadMarketplaceSettings(sb);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const client = sb as any;
   const { data: inv } = await client
     .from("buyer_invoices")

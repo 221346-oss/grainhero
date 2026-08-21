@@ -15,7 +15,6 @@
  * anyway still resolves instead of failing the whole request.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SB = any;
 
 export async function nextInvoiceNumber(sb: SB, adminId: string): Promise<string> {

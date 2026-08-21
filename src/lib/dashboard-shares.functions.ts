@@ -17,7 +17,6 @@ function makeToken(): string {
 export const listMyShares = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data, error } = await sb
       .from("dashboard_shares")
@@ -41,7 +40,6 @@ export const createShare = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const role = await getEffectiveRole(sb, context.userId);
     const token = makeToken();
@@ -74,7 +72,6 @@ export const revokeShare = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { error } = await sb
       .from("dashboard_shares")
@@ -96,7 +93,7 @@ export const resolveShare = createServerFn({ method: "POST" })
   .validator((d) => z.object({ token: z.string().min(8).max(200) }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const admin = supabaseAdmin as any;
     const { data: meta, error } = await admin.rpc("resolve_dashboard_share", {
       _token: data.token,
@@ -120,7 +117,7 @@ export const resolveShare = createServerFn({ method: "POST" })
     );
     const { data: metrics } = await admin.from("metric_registry").select("*").in("key", metricKeys);
     // Run each metric in the caller-agnostic way (using admin — public read-only surface).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const results: Record<string, any> = {};
     for (const m of (metrics ?? []) as Array<{ key: string; sql_template: string }>) {
       try {

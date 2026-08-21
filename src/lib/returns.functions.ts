@@ -10,22 +10,15 @@ import { emitNotification } from "@/lib/notify";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
-async function requireRole(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sb: any,
-  userId: string,
-  allowed: string[],
-): Promise<string> {
+async function requireRole(sb: any, userId: string, allowed: string[]): Promise<string> {
   const { data } = await sb.rpc("get_my_role", { _user_id: userId });
   const r = (data as string) ?? "";
   if (!allowed.includes(r)) throw new Error("Forbidden");
   return r;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveOrder(sb: any, orderId: string): Promise<Row> {
   const { data } = await sb
     .from("buyer_orders")
@@ -95,7 +88,6 @@ export const requestReturn = createServerFn({ method: "POST" })
     const reason = settings.returns.reasons.find((r) => r.key === data.reasonKey);
     if (!reason) throw new Error("Unknown return reason");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const order = await resolveOrder(sb, data.orderId);
     if (order.buyerUserId !== context.userId)
@@ -177,7 +169,7 @@ export const approveReturn = createServerFn({ method: "POST" })
     const settings = await loadMarketplaceSettings(context.supabase);
     const resolution = settings.returns.resolutions.find((r) => r.key === data.resolutionKey);
     if (!resolution) throw new Error("Unknown resolution");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const role = await requireRole(sb, context.userId, ["admin", "manager", "super_admin"]);
     const { data: r } = await sb
@@ -243,7 +235,6 @@ export const denyReturn = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const role = await requireRole(sb, context.userId, ["admin", "manager", "super_admin"]);
     const { data: r } = await sb
@@ -303,7 +294,6 @@ export const markReturnReceived = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const role = await requireRole(sb, context.userId, ["admin", "manager", "super_admin"]);
     const { data: r } = await sb
@@ -341,7 +331,6 @@ export const finalizeReturn = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const role = await requireRole(sb, context.userId, ["admin", "manager", "super_admin"]);
     const { data: r } = await sb
@@ -426,7 +415,6 @@ export const listReturns = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     let q = sb
       .from("buyer_returns")
@@ -449,7 +437,6 @@ export const getReturnDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ returnId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const [{ data: ret }, { data: events }] = await Promise.all([
       sb

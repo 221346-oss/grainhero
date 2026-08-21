@@ -6,9 +6,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SB = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type Row = Record<string, any>;
 
 const OVERRIDE_WINDOW_SEC = 300;

@@ -187,7 +187,7 @@ export function DispatchDialog({
   }
 
   // Suggested prices
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const settings = (priceQ.data ?? null) as any;
   const marginPct = settings?.default_margin_pct != null ? Number(settings.default_margin_pct) : 15;
   const marketMap = (settings?.per_grain_margin ?? settings?.market_price_snapshot ?? {}) as Record<

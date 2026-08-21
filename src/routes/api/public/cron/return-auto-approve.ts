@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/public/cron/return-auto-approve")({
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { loadMarketplaceSettings } = await import("@/lib/marketplace-settings.functions");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const settings = await loadMarketplaceSettings(supabaseAdmin as any);
         if (!settings.returns.enabled || settings.returns.autoApproveHours <= 0) {
           return Response.json({ ok: true, processed: 0, skipped: "disabled" });

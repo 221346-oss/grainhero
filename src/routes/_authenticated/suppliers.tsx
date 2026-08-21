@@ -37,7 +37,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RowActions } from "@/components/app/RowActions";
 import { listSuppliers, upsertSupplier, deleteSupplier } from "@/lib/suppliers.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupplierRow = Record<string, any>;
 
 export const Route = createFileRoute("/_authenticated/suppliers")({

@@ -7,7 +7,6 @@ import type { Database } from "@/integrations/supabase/types";
 import { sendEmailViaResend } from "@/lib/resend.server";
 import { loadMarketplaceSettings, renderTemplate } from "@/lib/marketplace-settings.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 type Kind =
@@ -33,7 +32,6 @@ async function fetchOrderCtx(
   to: string | null;
   vars: Record<string, string>;
 } | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (sb as any)
     .from("buyer_orders")
     .select(
@@ -45,7 +43,6 @@ async function fetchOrderCtx(
   if (!o) return null;
   let email: string | null = null;
   if (o.buyer_account_id) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: acc } = await (sb as any)
       .from("buyer_accounts")
       .select("user_id, contact_phone")
@@ -53,7 +50,6 @@ async function fetchOrderCtx(
       .maybeSingle();
     const userId = (acc as Row | null)?.user_id;
     if (userId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: prof } = await (sb as any)
         .from("profiles")
         .select("email")

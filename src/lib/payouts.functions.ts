@@ -8,11 +8,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function ensureAdmin(ctx: { supabase: unknown; userId: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (ctx.supabase as any).rpc("is_super_admin", { _user_id: ctx.userId });
   if (!data) throw new Error("Forbidden");
 }
@@ -22,7 +20,7 @@ export const listPayableSellers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await ensureAdmin(context);
     const settings = await loadMarketplaceSettings(context.supabase);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data } = await sb
       .from("finance_ledger_entries")
@@ -63,7 +61,7 @@ export const createPayoutBatch = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
     const settings = await loadMarketplaceSettings(context.supabase);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const created: string[] = [];
     for (const sellerId of data.sellerIds) {
@@ -119,7 +117,7 @@ export const approvePayout = createServerFn({ method: "POST" })
   .validator((d) => z.object({ payoutId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { error } = await sb
       .from("seller_payouts")
@@ -153,7 +151,7 @@ export const markPayoutPaid = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: items } = await sb
       .from("seller_payout_items")
@@ -211,7 +209,7 @@ export const cancelPayout = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await ensureAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { error } = await sb
       .from("seller_payouts")
@@ -247,7 +245,7 @@ export const listPayouts = createServerFn({ method: "GET" })
     const { data: isAdmin } = await context.supabase.rpc("is_super_admin", {
       _user_id: context.userId,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     let q: any = (context.supabase as any)
       .from("seller_payouts")
       .select(
@@ -280,7 +278,6 @@ export const upsertPayoutAccount = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const payload = {
       seller_id: context.userId,
@@ -304,7 +301,6 @@ export const upsertPayoutAccount = createServerFn({ method: "POST" })
 export const getMyPayoutAccount = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data } = await sb
       .from("seller_payout_accounts")

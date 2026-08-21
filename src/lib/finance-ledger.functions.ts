@@ -10,7 +10,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export interface LedgerEntryInput {
@@ -67,7 +66,7 @@ export const getSellerBalance = createServerFn({ method: "GET" })
   .validator((d) => z.object({ sellerId: z.string().uuid().optional() }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const sellerId = data.sellerId ?? context.userId;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows } = await sb
       .from("finance_ledger_entries")
@@ -111,7 +110,7 @@ export const getPlatformFinanceSummary = createServerFn({ method: "GET" })
     if (!isAdmin) throw new Error("Forbidden");
     const days = data.days ?? 30;
     const since = new Date(Date.now() - days * 86400_000).toISOString();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows } = await sb
       .from("finance_ledger_entries")
@@ -185,7 +184,7 @@ export const listLedgerEntries = createServerFn({ method: "GET" })
     const { data: isAdmin } = await context.supabase.rpc("is_super_admin", {
       _user_id: context.userId,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     let q: any = (context.supabase as any)
       .from("finance_ledger_entries")
       .select(

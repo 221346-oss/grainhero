@@ -20,7 +20,6 @@ const DEFAULTS: OpsCfg = {
   webhook_cooldown_seconds: 900,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function loadOps(sb: any): Promise<OpsCfg> {
   const { data } = await sb
     .from("platform_settings")
@@ -35,7 +34,7 @@ export const safeReplayWebhook = createServerFn({ method: "POST" })
   .validator((d) => z.object({ event_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const cfg = await loadOps(sb);
     const { data: ev, error: evErr } = await sb
@@ -70,7 +69,7 @@ export const safeReplayWebhook = createServerFn({ method: "POST" })
     }
 
     const { replayInsuranceWebhookEvent } = await import("@/lib/insurance.functions");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const res: any = await (replayInsuranceWebhookEvent as any)({
       data: { event_id: data.event_id },
     });
@@ -114,7 +113,7 @@ export const getReplayHistory = createServerFn({ method: "POST" })
   .validator((d) => z.object({ event_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: ev } = await sb
       .from("insurance_webhook_events")

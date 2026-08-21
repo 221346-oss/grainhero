@@ -13,11 +13,9 @@ import { logActivity } from "@/lib/activity";
 import { getEffectiveRole } from "./rbac.server";
 import { insertInvoiceWithUniqueNumber } from "./invoice-number";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function tenantAdminId(supabase: unknown, userId: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase as any).rpc("get_tenant_admin_id", { _user_id: userId });
   if (!data) throw new Error("No tenant admin");
   return data as string;
@@ -242,7 +240,7 @@ export const createReceiptUploadUrl = createServerFn({ method: "POST" })
     const adminId = await tenantAdminId(sb, context.userId);
     const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${adminId}/${data.dispatchId}/${Date.now()}-${safe}`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { data: signed, error } = await (sb as any).storage
       .from("payment-receipts")
       .createSignedUploadUrl(path);
@@ -255,7 +253,6 @@ export const getReceiptSignedUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ path: z.string().min(1) }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: signed, error } = await (context.supabase as any).storage
       .from("payment-receipts")
       .createSignedUrl(data.path, 60 * 10);

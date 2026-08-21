@@ -9,17 +9,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function assertSuperAdmin(ctx: { supabase: unknown; userId: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (ctx.supabase as any).rpc("is_super_admin", { _user_id: ctx.userId });
   if (!data) throw new Error("Forbidden");
 }
 
 async function tenantAdminId(ctx: { supabase: unknown; userId: string }): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (ctx.supabase as any).rpc("get_tenant_admin_id", { _user_id: ctx.userId });
   return (data as string) ?? ctx.userId;
 }
@@ -39,7 +36,6 @@ async function audit(
   },
 ) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (ctx.supabase as any).from("insurance_audit_log").insert({
       actor_id: ctx.userId,
       admin_id: entry.admin_id ?? null,
@@ -62,7 +58,6 @@ async function audit(
 export const listCarriers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (context.supabase as any)
       .from("insurance_carriers")
       .select("*")
@@ -88,7 +83,7 @@ export const upsertCarrier = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = (context.supabase as any).from("insurance_carriers");
     if (data.id) {
       const { error } = await sb.update(data).eq("id", data.id);
@@ -105,7 +100,7 @@ export const deleteCarrier = createServerFn({ method: "POST" })
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { error } = await (context.supabase as any)
       .from("insurance_carriers")
       .delete()
@@ -119,7 +114,6 @@ export const deleteCarrier = createServerFn({ method: "POST" })
 export const listProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (context.supabase as any)
       .from("insurance_products")
       .select("*, carrier:insurance_carriers(id,name,logo_url)")
@@ -149,7 +143,7 @@ export const upsertProduct = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = (context.supabase as any).from("insurance_products");
     if (data.id) {
       const { error } = await sb.update(data).eq("id", data.id);
@@ -166,7 +160,7 @@ export const deleteProduct = createServerFn({ method: "POST" })
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { error } = await (context.supabase as any)
       .from("insurance_products")
       .delete()
@@ -181,7 +175,6 @@ export const listPolicies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ scope: z.enum(["mine", "all"]).default("mine") }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     let q = sb
       .from("insurance_policies")
@@ -217,7 +210,7 @@ export const bindPolicy = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const admin = await tenantAdminId(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: row, error } = await sb
       .from("insurance_policies")
@@ -262,7 +255,6 @@ export const cancelPolicy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (context.supabase as any)
       .from("insurance_policies")
       .update({ status: "cancelled" })
@@ -289,7 +281,6 @@ export const renewPolicy = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const patch: Row = {
       coverage_end: data.new_end_date,
@@ -325,7 +316,6 @@ export const listClaims = createServerFn({ method: "GET" })
       .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     let q = sb
       .from("insurance_claims")
@@ -367,7 +357,7 @@ export const openClaim = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const admin = await tenantAdminId(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: row, error } = await sb
       .from("insurance_claims")
@@ -423,7 +413,6 @@ export const addClaimEvidence = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: row, error } = await sb
       .from("insurance_claim_attachments")
@@ -460,7 +449,7 @@ export const moderateClaim = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const patch: Row = { status: data.decision };
     if (data.decision === "approved" || data.decision === "rejected") {
@@ -540,7 +529,6 @@ export const getClaimTimeline = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ claim_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const [claim, events, attachments] = await Promise.all([
       sb
@@ -571,7 +559,6 @@ export const getClaimTimeline = createServerFn({ method: "GET" })
 export const getInsuranceKpis = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const [policies, claims] = await Promise.all([
       sb.from("insurance_policies").select("status, premium_cents, currency").limit(5000),
@@ -616,7 +603,7 @@ export const getInsuranceAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const [policies, claims] = await Promise.all([
       sb
@@ -760,7 +747,6 @@ export const listInsuranceAudit = createServerFn({ method: "GET" })
       .parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     let q = sb
       .from("insurance_audit_log")
@@ -793,7 +779,7 @@ export const exportInsuranceAuditCsv = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     let q = sb
       .from("insurance_audit_log")
@@ -845,7 +831,7 @@ export const listInsuranceWebhookEvents = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     let q = sb
       .from("insurance_webhook_events")
@@ -863,7 +849,7 @@ export const replayInsuranceWebhookEvent = createServerFn({ method: "POST" })
   .validator((d) => z.object({ event_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: evt, error } = await sb
       .from("insurance_webhook_events")
@@ -902,7 +888,6 @@ export const listPolicyDocuments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ policy_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const [{ data: policy }, { data: docs }] = await Promise.all([
       sb
@@ -930,7 +915,6 @@ export const createPolicyDocumentUploadUrl = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const admin = await tenantAdminId(context);
     const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -958,7 +942,6 @@ export const savePolicyDocument = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const admin = await tenantAdminId(context);
     // Determine next version and demote current docs.
@@ -1012,7 +995,6 @@ export const getPolicyDocumentDownloadUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: doc } = await sb
       .from("insurance_policy_documents")
@@ -1032,7 +1014,7 @@ export const deletePolicyDocument = createServerFn({ method: "POST" })
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: doc } = await sb
       .from("insurance_policy_documents")
@@ -1071,7 +1053,6 @@ export const createEvidenceUploadUrl = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const admin = await tenantAdminId(context);
     const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");

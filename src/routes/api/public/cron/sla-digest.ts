@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/public/cron/sla-digest")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { sendEmailViaResend } = await import("@/lib/resend.server");
         const { loadMarketplaceSettings } = await import("@/lib/marketplace-settings.functions");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const sb = supabaseAdmin as any;
         const now = new Date();
         const windowStart = new Date(now.getTime() - 24 * 3_600_000);
@@ -52,7 +52,6 @@ export const Route = createFileRoute("/api/public/cron/sla-digest")({
             .gte("dispatched_at", windowStart.toISOString()),
         ]);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const shipRows = (recentShip ?? []) as any[];
         const total = shipRows.length;
         const delivered = shipRows.filter((s) => s.status === "delivered").length;
@@ -69,7 +68,7 @@ export const Route = createFileRoute("/api/public/cron/sla-digest")({
           .from("user_roles")
           .select("user_id, profiles!inner(email, name)")
           .eq("role", "super_admin");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const recipients = ((sa ?? []) as any[])
           .map((r) => r.profiles?.email as string | undefined)
           .filter((e): e is string => !!e);

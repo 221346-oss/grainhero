@@ -82,7 +82,7 @@ function SalesPage() {
   const summaryQ = useQuery({ queryKey: ["sales-summary"], queryFn: () => summaryFn() });
   const ordersQ = useQuery({
     queryKey: ["buyer-orders", status],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     queryFn: () => listFn({ data: { status: status as any } }),
   });
 
@@ -159,7 +159,7 @@ function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {}
                 {rows.map((o: any) => (
                   <TableRow key={o.id} className="hover:bg-emerald-50/40">
                     <TableCell className="font-mono text-xs">{o.order_number}</TableCell>
@@ -437,7 +437,7 @@ function OrderDrawer({
                   )}
                   {payments.length > 0 && (
                     <div className="text-xs space-y-1 border-t pt-2">
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {}
                       {payments.map((p: any) => (
                         <div key={p.id} className="flex justify-between text-slate-600">
                           <span>
@@ -463,7 +463,7 @@ function OrderDrawer({
               </CardHeader>
               <CardContent className="space-y-1 text-xs">
                 {events.length === 0 && <p className="text-slate-500">No events.</p>}
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {}
                 {events.map((e: any) => (
                   <div
                     key={e.id}

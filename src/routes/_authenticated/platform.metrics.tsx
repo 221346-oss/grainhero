@@ -50,7 +50,6 @@ export const Route = createFileRoute("/_authenticated/platform/metrics")({
   component: MetricRegistryPage,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Metric = Record<string, any>;
 
 const ROLE_OPTIONS = ["super_admin", "admin", "manager", "technician", "buyer"] as const;

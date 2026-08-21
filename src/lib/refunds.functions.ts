@@ -10,7 +10,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function stripeRefund(paymentIntentId: string, amountCents?: number, reason?: string) {
@@ -55,7 +54,6 @@ export const initiateRefund = createServerFn({ method: "POST" })
     const reason = settings.refunds.reasonCodes.find((r) => r.key === data.reasonKey);
     if (!reason) throw new Error("Unknown refund reason");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: order } = await sb
       .from("buyer_orders")
@@ -133,7 +131,6 @@ export const cancelOrder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { data: order } = await sb
       .from("buyer_orders")
@@ -182,7 +179,6 @@ export const listRefunds = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ limit: z.number().int().min(1).max(200).default(100) }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: rows, error } = await (context.supabase as any)
       .from("buyer_refunds")
       .select("*, buyer_orders(order_number, currency, subtotal)")

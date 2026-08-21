@@ -25,7 +25,6 @@ function publicClient() {
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const FILTER = z.object({
@@ -39,7 +38,7 @@ export const listPublicListings = createServerFn({ method: "GET" })
   .validator((d: unknown) => FILTER.parse(d ?? {}))
   .handler(async ({ data }) => {
     const sb = publicClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     let q = (sb as any).from("public_listings_v").select("*").limit(data.limit);
     if (data.grainType) q = q.eq("grain_type", data.grainType);
     if (data.maxPricePerKg !== undefined) q = q.lte("price_per_kg", data.maxPricePerKg);
@@ -61,7 +60,7 @@ export const getPublicListing = createServerFn({ method: "GET" })
   .validator((d) => z.object({ slug: z.string().min(1) }).parse(d))
   .handler(async ({ data }) => {
     const sb = publicClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { data: row, error } = await (sb as any)
       .from("public_listings_v")
       .select("*")

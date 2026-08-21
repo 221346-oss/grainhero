@@ -5,13 +5,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const listTaxRules = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (context.supabase as any)
       .from("tax_rules")
       .select("*")
@@ -41,7 +39,7 @@ export const upsertTaxRule = createServerFn({ method: "POST" })
       _user_id: context.userId,
     });
     if (!isAdmin) throw new Error("Forbidden");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const payload = {
       region: data.region,
@@ -71,7 +69,7 @@ export const archiveTaxRule = createServerFn({ method: "POST" })
       _user_id: context.userId,
     });
     if (!isAdmin) throw new Error("Forbidden");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { error } = await (context.supabase as any)
       .from("tax_rules")
       .update({ active: false })
@@ -83,7 +81,6 @@ export const archiveTaxRule = createServerFn({ method: "POST" })
 export const listMyTaxRegistrations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (context.supabase as any)
       .from("tax_registrations")
       .select("*")
@@ -103,7 +100,6 @@ export const upsertTaxRegistration = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (context.supabase as any).from("tax_registrations").upsert(
       {
         seller_id: context.userId,

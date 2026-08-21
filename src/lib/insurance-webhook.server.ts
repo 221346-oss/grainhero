@@ -3,7 +3,7 @@
  * Runs on the server only. Used by the public webhook route AND by the
  * super-admin replay server-fn so both share identical semantics.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type SB = any;
 
 export type InsuranceWebhookProcessResult = {

@@ -420,7 +420,6 @@ export function mergeSettings(raw: unknown): MarketplaceSettings {
 export async function loadMarketplaceSettings(
   sb: SupabaseClient<Database>,
 ): Promise<MarketplaceSettings> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (sb as any)
     .from("platform_settings")
     .select("config")
@@ -695,7 +694,7 @@ export const updateMarketplaceSettings = createServerFn({ method: "POST" })
       _user_id: context.userId,
     });
     if (!isAdmin) throw new Error("Forbidden");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: row } = await sb
       .from("platform_settings")

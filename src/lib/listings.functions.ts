@@ -6,7 +6,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const CREATE_FROM_BATCH = z.object({
@@ -22,7 +21,6 @@ const CREATE_FROM_BATCH = z.object({
 });
 
 async function tenantAdminIdFor(sb: unknown, userId: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = sb as any;
   const { data } = await c.rpc("get_tenant_admin_id", { _user_id: userId });
   return (data as string | null) ?? userId;
