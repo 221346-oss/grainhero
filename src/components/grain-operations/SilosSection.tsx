@@ -590,7 +590,7 @@ export function SilosSection() {
           qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
           qc.invalidateQueries({ queryKey: ["revenue"] });
         }}
-        presetSilo={sellSilo ? { id: sellSilo.id, name: sellSilo.name } : null}
+        presetSilo={sellSilo ? { id: sellSilo.id, name: sellSilo.name, current_occupancy_kg: sellSilo.current_occupancy_kg, capacity_kg: sellSilo.capacity_kg } : null}
       />
 
       {/* Plan limit dialog — shown when admin tries to request a silo beyond their plan cap */}

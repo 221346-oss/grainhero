@@ -2,15 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CheckCircle2, FileText, Loader2, ScanLine, Truck, Upload, UserCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, FileText, Loader2, ScanLine, Truck, Upload, UserCheck, X } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listSiloAvailableBatches, createDispatchFromSilo, createDispatchPhotoUploadUrl, confirmDispatchBuyer, approveDispatch, listSilosWithActiveDispatch } from "@/lib/dispatches.functions";
+import { listSiloAvailableBatches, createDispatchFromSilo, createDispatchPhotoUploadUrl, confirmDispatchBuyer, approveDispatch, listSilosWithActiveDispatch, cancelDispatch } from "@/lib/dispatches.functions";
 import { createDispatchInvoice, recordDispatchPayment, createReceiptUploadUrl } from "@/lib/dispatch-sales.functions";
+import { generateInvoicePdf } from "@/lib/invoicing-pdf.functions";
 import { listBuyers, listSilos } from "@/lib/operations.functions";
 import { extractPaymentDetails, type ExtractedPaymentDetails } from "@/lib/ocr-service";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,7 @@ import { KG_PER_MAN, kgToMan, pricePerKgToPerMan } from "@/lib/units";
 type Step = "details" | "invoice" | "dispatch" | "payment" | "complete";
 type Batch = { id: string; batch_id: string; grain_type: string; remaining_kg: number | string };
 type Buyer = { id: string; name: string; company_name: string | null };
-type Silo = { id: string; name: string; silo_id: string };
+type Silo = { id: string; name: string; silo_id: string; current_occupancy_kg?: number | null; capacity_kg?: number | null };
 
 function money(n: number, ccy: string) {
   return `${ccy} ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
@@ -32,7 +33,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch,
   /** Reopen straight at the payment step for an already-approved dispatch that was closed before a receipt was recorded — see the Outstanding payments table in RevenueSection. */
   resumeDispatch?: { id: string; dispatchNumber: string } | null;
   /** Launched from a specific silo's card (Grain Operations / Dashboard) — pre-select and lock the silo instead of asking the admin to pick one. */
-  presetSilo?: { id: string; name: string } | null;
+  presetSilo?: { id: string; name: string; current_occupancy_kg?: number | null; capacity_kg?: number | null } | null;
 }) {
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>("details");
@@ -110,6 +111,45 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch,
   const signUploadFn = useServerFn(createReceiptUploadUrl);
   const recordPaymentFn = useServerFn(recordDispatchPayment);
   const listActiveFn = useServerFn(listSilosWithActiveDispatch);
+  const cancelDispatchFn = useServerFn(cancelDispatch);
+  const genPdfFn = useServerFn(generateInvoicePdf);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+
+  const cancelBlockingM = useMutation({
+    mutationFn: (d: { id: string; dispatchNumber: string }) =>
+      cancelDispatchFn({ data: { id: d.id, reason: "Cancelled by admin to start a new sale" } }),
+    onSuccess: (_res, d) => {
+      toast.success(`${d.dispatchNumber} cancelled — silo is now available`);
+      activeDispatchQ.refetch();
+    },
+    onError: (e: Error) => toast.error(e.message || "Could not cancel dispatch"),
+  });
+
+  async function handleDownloadWizardPdf() {
+    if (!invoiceId) return;
+    setPdfDownloading(true);
+    try {
+      const res = await genPdfFn({ data: { invoiceId } });
+      if (res?.signedUrl) {
+        const blob = await fetch(res.signedUrl).then(r => r.blob());
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${invoiceNumber ?? "Invoice"}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast.success(`Downloaded ${invoiceNumber ?? "Invoice"}.pdf`);
+      } else {
+        toast.error("Failed to generate PDF URL");
+      }
+    } catch (err) {
+      toast.error((err as Error).message || "PDF download failed");
+    } finally {
+      setPdfDownloading(false);
+    }
+  }
 
   const silosQ = useQuery({ queryKey: ["wizard-silos"], queryFn: () => listSilosFn(), enabled: open });
   const buyersQ = useQuery({ queryKey: ["buyers-mini"], queryFn: () => listBuyersFn(), enabled: open });
@@ -128,13 +168,25 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch,
 
   const silos = (silosQ.data ?? []) as Silo[];
   const batches = (batchesQ.data?.batches ?? []) as Batch[];
-  const grainTypes = useMemo(() => Array.from(new Set(batches.map((b) => b.grain_type))), [batches]);
+  const selectedSilo = useMemo(() => {
+    if (presetSilo && presetSilo.id === siloId) return presetSilo;
+    return silos.find((s) => s.id === siloId);
+  }, [presetSilo, siloId, silos]);
+
+  const grainTypes = useMemo(() => {
+    const batchTypes = Array.from(new Set(batches.map((b) => b.grain_type)));
+    if (batchTypes.length > 0) return batchTypes;
+    return ["Wheat", "Rice", "Corn", "Barley", "Soybean"];
+  }, [batches]);
+
   useEffect(() => { if (!grainType && grainTypes.length > 0) setGrainType(grainTypes[0]); }, [grainTypes, grainType]);
 
   const qtyNum = Number(qty) || 0;
   const priceNum = Number(price) || 0;
   const total = qtyNum * priceNum;
-  const available = batches.filter((b) => b.grain_type === grainType).reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
+  const batchAvailable = batches.filter((b) => b.grain_type === grainType).reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
+  const siloOccupancy = Number(selectedSilo?.current_occupancy_kg ?? 0);
+  const available = batchAvailable > 0 ? batchAvailable : (siloOccupancy > 0 ? siloOccupancy : 0);
 
   const detailsValid = !!siloId && !siloPending && !!grainType && qtyNum > 0 && priceNum > 0 && (!!buyerId || !!newBuyer.trim());
 
@@ -144,7 +196,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch,
       // always produces a clear toast instead of the button silently doing
       // nothing — same pattern as the silo-card DispatchDialog's mutationFn.
       if (!siloId) throw new Error("Pick a silo first");
-      if (batches.length === 0) throw new Error("This silo has no available stock to invoice");
+      if (available <= 0) throw new Error("This silo has no available stock to invoice");
       if (!grainType) throw new Error("Pick a grain type");
       if (!(qtyNum > 0)) throw new Error("Enter a valid quantity greater than 0");
       if (qtyNum > available) throw new Error(`Only ${available.toLocaleString()} kg of ${grainType} available in this silo`);
@@ -332,9 +384,48 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch,
                   </Select>
                 )}
                 {siloPending && (
-                  <p className="text-[10px] text-amber-600 mt-1">
-                    {siloPending.dispatch_number} is already {siloPending.status} against this silo — resolve it first.
-                  </p>
+                  <div className="mt-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-amber-700 font-semibold">{siloPending.dispatch_number} ({siloPending.status}) is already active on this silo.</p>
+                        <p className="text-[10px] text-amber-600 mt-0.5">Choose what to do with it before starting a new sale:</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] px-2.5 border-emerald-400/50 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 gap-1"
+                        onClick={() => {
+                          const entry = activeDispatchQ.data?.active.find(a => a.silo_id === siloId);
+                          if (entry) {
+                            setDispatchId(entry.id);
+                            setDispatchNumber(entry.dispatch_number);
+                            setBuyerConfirmed(true);
+                            setDispatchApproved(true);
+                            setStep("payment");
+                            toast.success(`Resuming ${entry.dispatch_number} — upload receipt or enter payment details below`);
+                          }
+                        }}
+                      >
+                        <CheckCircle2 className="h-3 w-3" /> Complete existing sale (record payment)
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] px-2.5 border-rose-300 text-rose-600 hover:bg-rose-50 hover:text-rose-700 gap-1"
+                        disabled={cancelBlockingM.isPending}
+                        onClick={() => {
+                          const entry = activeDispatchQ.data?.active.find(a => a.silo_id === siloId);
+                          if (entry) cancelBlockingM.mutate({ id: entry.id, dispatchNumber: entry.dispatch_number });
+                          else toast.error("Could not find blocking dispatch ID");
+                        }}
+                      >
+                        {cancelBlockingM.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />} Cancel & free silo
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
               <div>
@@ -509,7 +600,12 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch,
             </Button>
           </>)}
           {step === "invoice" && (
-            <Button onClick={() => setStep("dispatch")} className="gap-1.5"><Truck className="h-4 w-4" /> Proceed to dispatch</Button>
+            <>
+              <Button variant="outline" onClick={handleDownloadWizardPdf} disabled={pdfDownloading} className="gap-1.5 border-emerald-500/40 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30">
+                {pdfDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 text-emerald-600" />} Download PDF
+              </Button>
+              <Button onClick={() => setStep("dispatch")} className="gap-1.5"><Truck className="h-4 w-4" /> Proceed to dispatch</Button>
+            </>
           )}
           {step === "dispatch" && !dispatchId && (
             <Button disabled={dispatchMut.isPending} onClick={() => dispatchMut.mutate()} className="gap-1.5">

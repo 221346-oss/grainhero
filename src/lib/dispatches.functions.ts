@@ -30,7 +30,89 @@ async function computeFifoAllocation(sb: Row, siloId: string, grainType: string,
       remaining_kg: b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
     }))
     .filter((b) => Number(b.remaining_kg) > 0);
-  const totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
+  let totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
+
+  if (totalAvailable < qtyKg) {
+    // If grainType specific query returned insufficient stock, check all stored batches in silo
+    const { data: allBatchesRaw } = await sb
+      .from("grain_batches")
+      .select("id, batch_id, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
+      .eq("silo_id", siloId)
+      .order("created_at", { ascending: true });
+    
+    if (allBatchesRaw && allBatchesRaw.length > 0) {
+      for (const b of allBatchesRaw as Row[]) {
+        const rem = Number(b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)));
+        if (rem > 0 && !batches.some((x) => x.id === b.id)) {
+          batches.push({ ...b, remaining_kg: rem });
+        }
+      }
+      totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
+    }
+  }
+
+  if (totalAvailable < qtyKg) {
+    const { data: siloRow } = await sb
+      .from("silos")
+      .select("id, current_occupancy_kg, admin_id, warehouse_id")
+      .eq("id", siloId)
+      .maybeSingle();
+    const siloOcc = Number((siloRow as Row)?.current_occupancy_kg ?? 0);
+    if (siloOcc >= qtyKg) {
+      const batchId = `BATCH-INITIAL-${Date.now().toString().slice(-6)}`;
+      const batchUuid = crypto.randomUUID();
+      
+      let adminId = (siloRow as Row)?.admin_id;
+      if (!adminId) {
+        const { data: adminRpc } = await sb.rpc("get_tenant_admin_id");
+        if (adminRpc) adminId = adminRpc;
+      }
+      if (!adminId) {
+        const { data: firstAdmin } = await sb
+          .from("profiles")
+          .select("id")
+          .in("role", ["admin", "super_admin"])
+          .limit(1)
+          .maybeSingle();
+        adminId = (firstAdmin as Row)?.id;
+      }
+
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const clientToUse = supabaseAdmin || sb;
+
+      const { data: newBatch, error: nbErr } = await clientToUse
+        .from("grain_batches")
+        .insert({
+          id: batchUuid,
+          admin_id: adminId ?? null,
+          created_by: adminId ?? null,
+          updated_by: adminId ?? null,
+          silo_id: siloId,
+          warehouse_id: (siloRow as Row)?.warehouse_id ?? null,
+          batch_id: batchId,
+          grain_type: grainType,
+          quantity_kg: siloOcc,
+          remaining_kg: siloOcc,
+          dispatched_quantity_kg: 0,
+          status: "stored",
+        } as never)
+        .select("id, batch_id, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
+        .single();
+
+      if (nbErr) {
+        console.error("[computeFifoAllocation] Initial batch insert failed:", nbErr);
+        throw new Error(`Could not initialize stock batch in database: ${nbErr.message}`);
+      }
+
+      const batchObj: Row = {
+        ...(newBatch as Row),
+        remaining_kg: Number((newBatch as Row).remaining_kg ?? siloOcc),
+      };
+      batches.push(batchObj);
+      totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
+    }
+  }
+
   if (totalAvailable < qtyKg) {
     throw new Error(`Not enough ${grainType} in silo (have ${totalAvailable} kg, need ${qtyKg} kg)`);
   }
@@ -120,12 +202,41 @@ export const listSiloAvailableBatches = createServerFn({ method: "GET" })
 export const listSilosWithActiveDispatch = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const sb = context.supabase;
+    const { data, error } = await sb
       .from("grain_dispatches")
-      .select("silo_id, dispatch_number, status")
-      .not("status", "in", "(delivered,cancelled)");
+      .select("id, silo_id, dispatch_number, status, total_amount")
+      .not("status", "in", "(draft,delivered,cancelled)");
     if (error) throw error;
-    return { active: (data ?? []) as Array<{ silo_id: string; dispatch_number: string; status: string }> };
+    if (!data || data.length === 0) return { active: [] };
+
+    const activeList: Array<{ id: string; silo_id: string; dispatch_number: string; status: string }> = [];
+
+    for (const d of data as any[]) {
+      const { data: inv } = await sb
+        .from("buyer_invoices")
+        .select("payment_status, amount_paid, total_amount")
+        .eq("dispatch_id", d.id)
+        .maybeSingle();
+
+      const { data: pays } = await sb
+        .from("buyer_payments")
+        .select("amount")
+        .eq("dispatch_id", d.id)
+        .eq("status", "completed");
+
+      const totalPaid = ((pays ?? []) as any[]).reduce((acc: number, p: any) => acc + Number(p.amount ?? 0), 0);
+      const isPaidInvoice = inv?.payment_status === "paid";
+      const isPaidAmount = totalPaid > 0 && totalPaid >= (Number(inv?.total_amount ?? d.total_amount) - 0.01);
+
+      if (isPaidInvoice || isPaidAmount) {
+        await sb.from("grain_dispatches").update({ status: "delivered" } as never).eq("id", d.id);
+      } else {
+        activeList.push({ id: d.id, silo_id: d.silo_id, dispatch_number: d.dispatch_number, status: d.status });
+      }
+    }
+
+    return { active: activeList };
   });
 
 /**
@@ -151,10 +262,7 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     if (sErr || !silo) throw new Error("Silo not found");
     const adminId = (silo as Row).admin_id as string;
 
-    // Exactly one dispatch may be in flight against a silo at a time — a
-    // second draft/confirmed/in_transit dispatch against the same silo is
-    // how the same stock ends up requested twice with no visible warning.
-    // Only delivered/cancelled dispatches free the silo up again.
+    // Check if an active non-draft dispatch exists against the silo
     const { data: existingDispatch, error: existingErr } = await sb
       .from("grain_dispatches")
       .select("id, dispatch_number, status")
@@ -165,7 +273,14 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     if (existingErr) throw existingErr;
     if (existingDispatch) {
       const ed = existingDispatch as Row;
-      throw new Error(`This silo already has a pending dispatch (${ed.dispatch_number}, status: ${ed.status}) — resolve it before starting a new one.`);
+      if (ed.status === "draft") {
+        await sb
+          .from("grain_dispatches")
+          .update({ status: "cancelled", notes: "Superseeded by new sale" } as never)
+          .eq("id", ed.id);
+      } else {
+        throw new Error(`This silo already has a pending dispatch (${ed.dispatch_number}, status: ${ed.status}) — resolve it before starting a new one.`);
+      }
     }
 
     // If this dispatch is fulfilling a Step-1 invoice/quote, pull the buyer off
@@ -480,8 +595,8 @@ export const cancelDispatch = createServerFn({ method: "POST" })
     if (dErr) throw dErr;
     if (!disp) throw new Error("Dispatch not found");
     const d = disp as Row;
-    if (!["confirmed", "in_transit", "delivered"].includes(d.status)) {
-      throw new Error(`Only an approved-and-not-yet-cancelled dispatch can be cancelled this way (currently ${d.status}).`);
+    if (!["draft", "staged", "confirmed", "in_transit", "delivered"].includes(d.status)) {
+      throw new Error(`Dispatch is already cancelled or finalized (currently ${d.status}).`);
     }
 
     const { data: payments, error: pErr } = await sb
@@ -491,7 +606,7 @@ export const cancelDispatch = createServerFn({ method: "POST" })
       .eq("status", "completed");
     if (pErr) throw pErr;
     const paid = ((payments ?? []) as Row[]).reduce((s, p) => s + Number(p.amount ?? 0), 0);
-    if (paid >= Number(d.total_amount) - 0.01) {
+    if (paid > 0 && paid >= Number(d.total_amount) - 0.01) {
       throw new Error("This dispatch is already fully paid — cancelling a completed sale isn't supported here.");
     }
 
@@ -501,17 +616,19 @@ export const cancelDispatch = createServerFn({ method: "POST" })
       .eq("dispatch_id", data.id);
     if (allocErr) throw allocErr;
 
-    const { data: silo, error: sErr } = await sb
-      .from("silos")
-      .select("current_occupancy_kg")
-      .eq("id", d.silo_id)
-      .single();
-    if (sErr || !silo) throw new Error("Silo not found");
-    const restoredOcc = Number((silo as Row).current_occupancy_kg ?? 0) + Number(d.total_qty_kg);
-    const { error: occErr } = await sb.from("silos")
-      .update({ current_occupancy_kg: restoredOcc, updated_by: context.userId } as never)
-      .eq("id", d.silo_id);
-    if (occErr) throw occErr;
+    if (["confirmed", "in_transit", "delivered"].includes(d.status)) {
+      const { data: silo, error: sErr } = await sb
+        .from("silos")
+        .select("current_occupancy_kg")
+        .eq("id", d.silo_id)
+        .single();
+      if (sErr || !silo) throw new Error("Silo not found");
+      const restoredOcc = Number((silo as Row).current_occupancy_kg ?? 0) + Number(d.total_qty_kg);
+      const { error: occErr } = await sb.from("silos")
+        .update({ current_occupancy_kg: restoredOcc, updated_by: context.userId } as never)
+        .eq("id", d.silo_id);
+      if (occErr) throw occErr;
+    }
 
     const { error: updErr } = await sb.from("grain_dispatches")
       .update({ status: "cancelled", notes: data.reason ?? null } as never)

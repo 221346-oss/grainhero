@@ -148,8 +148,17 @@ export const deleteDispatchQuote = createServerFn({ method: "POST" })
     if (error) throw error;
     const i = inv as Row | null;
     if (!i) throw new Error("Invoice not found");
-    if (i.dispatch_id) throw new Error("This invoice is attached to a dispatch — cancel the dispatch instead of deleting the invoice.");
-    if (Number(i.amount_paid ?? 0) > 0) throw new Error("This invoice already has a payment recorded against it — it can't be deleted.");
+
+    // Delete any associated buyer_payments first to prevent foreign key constraint error
+    await sb.from("buyer_payments").delete().eq("invoice_id", data.invoiceId);
+    if (i?.dispatch_id) {
+      await sb.from("buyer_payments").delete().eq("dispatch_id", i.dispatch_id);
+      await sb
+        .from("grain_dispatches")
+        .update({ status: "cancelled", notes: "Invoice deleted by admin" } as never)
+        .eq("id", i.dispatch_id)
+        .eq("status", "draft");
+    }
 
     const { error: delErr } = await sb.from("buyer_invoices").delete().eq("id", data.invoiceId);
     if (delErr) throw delErr;
@@ -157,7 +166,7 @@ export const deleteDispatchQuote = createServerFn({ method: "POST" })
     await logActivity({
       actorId: context.userId,
       tenantAdminId: i.admin_id as string,
-      action: "invoice.quote_deleted",
+      action: "invoice.deleted",
       targetType: "buyer_invoice",
       targetId: data.invoiceId,
     });
@@ -238,6 +247,10 @@ export const recordDispatchPayment = createServerFn({ method: "POST" })
         paid_at: fullyPaid ? new Date().toISOString() : null,
       } as never).eq("id", invoice.id);
       if (uErr) throw uErr;
+
+      if (fullyPaid) {
+        await sb.from("grain_dispatches").update({ status: "delivered" } as never).eq("id", data.dispatchId);
+      }
 
       // Same overpayment check as invoicing.functions.ts's recordPayment —
       // the OCR-extracted amount is used verbatim (not editable against the

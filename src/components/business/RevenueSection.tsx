@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -7,11 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Truck, RotateCcw, Ban, Trash2 } from "lucide-react";
+import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Truck, RotateCcw, Ban, Trash2, Download, Loader2 } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
 import { deleteDispatchQuote } from "@/lib/dispatch-sales.functions";
+import { generateInvoicePdf } from "@/lib/invoicing-pdf.functions";
 import { cancelDispatch } from "@/lib/dispatches.functions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -32,6 +33,7 @@ type Invoice = {
   currency: string | null;
   payment_status: string | null;
   due_date: string | null;
+  created_at: string | null;
   dispatch_id: string | null;
   grain_dispatches: { dispatch_number: string } | null;
 };
@@ -129,6 +131,17 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
   // already-approved dispatch that was closed before a receipt was added.
   function openReopen(d: OutstandingDispatch) { setResumeDispatch({ id: d.id, dispatchNumber: d.dispatch_number }); setWizardOpen(true); }
 
+  // Listen for the "complete existing sale" button inside the wizard's blocking dispatch warning
+  useEffect(() => {
+    function handleReopenDispatch(e: Event) {
+      const { id, dispatchNumber } = (e as CustomEvent<{ id: string; dispatchNumber: string }>).detail;
+      setResumeDispatch({ id, dispatchNumber });
+      setWizardOpen(true);
+    }
+    window.addEventListener("grainhero:reopen-dispatch", handleReopenDispatch);
+    return () => window.removeEventListener("grainhero:reopen-dispatch", handleReopenDispatch);
+  }, []);
+
   // Managers see revenue read-only: no mark-paid action
   const canWrite = role === "admin" || role === "super_admin";
 
@@ -160,6 +173,32 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
       qc.invalidateQueries({ queryKey: ["revenue"] });
     },
     onError: (e: Error) => toast.error(e.message ?? "Could not delete"),
+  });
+
+  const genPdfFn = useServerFn(generateInvoicePdf);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
+
+  const downloadPdfM = useMutation({
+    mutationFn: async (i: Invoice) => {
+      setDownloadingPdfId(i.id);
+      const res = await genPdfFn({ data: { invoiceId: i.id } });
+      if (res?.signedUrl) {
+        const blob = await fetch(res.signedUrl).then(r => r.blob());
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${i.invoice_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } else {
+        throw new Error("No PDF URL generated");
+      }
+    },
+    onSuccess: (_, i) => toast.success(`Downloaded ${i.invoice_number}.pdf`),
+    onError: (e: Error) => toast.error(e.message || "Failed to download PDF"),
+    onSettled: () => setDownloadingPdfId(null),
   });
 
   const invoices = data?.invoices ?? [];
@@ -300,7 +339,11 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                           <Badge className={payBadge(i.payment_status)}>{i.payment_status ?? "pending"}</Badge>
                           {dispatch && <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> {dispatch.dispatch_number}</Badge>}
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">{i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}{i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}</div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}
+                          {i.created_at ? ` · ${new Date(i.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} ${new Date(i.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}` : ""}
+                          {i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}
+                        </div>
                         {qtyKg != null && pricePerKg != null && (
                           <div className="text-[11px] text-slate-400 mt-0.5">{qtyKg.toLocaleString()} kg (~{kgToMan(qtyKg).toFixed(1)} man) · {money(pricePerKg, i.currency)}/kg · {money(pricePerKgToPerMan(pricePerKg), i.currency)}/man</div>
                         )}
@@ -309,13 +352,15 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                         <div className="font-bold">{money(i.total_amount, i.currency)}</div>
                         {remaining > 0 && <div className="text-xs text-amber-600">{money(remaining, i.currency)} due</div>}
                       </div>
+                      <Button size="sm" variant="outline" onClick={() => downloadPdfM.mutate(i)} disabled={downloadingPdfId === i.id} className="gap-1">
+                        {downloadingPdfId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5 text-emerald-600" />} PDF
+                      </Button>
                       {remaining > 0 && canWrite && (
                         <Button size="sm" variant="outline" onClick={() => markM.mutate(i.id)} disabled={markM.isPending}>
                           <DollarSign className="h-3.5 w-3.5 mr-1" /> Mark paid
                         </Button>
                       )}
-                      {/* Only a quote that never became a real dispatch and never got paid — a real sale gets cancelled (Outstanding payments), not deleted */}
-                      {canWrite && !i.dispatch_id && !dispatch && Number(i.amount_paid ?? 0) === 0 && (
+                      {canWrite && (
                         <Button size="sm" variant="outline" onClick={() => setDeleteQuoteTarget(i)} className="text-rose-600 hover:text-rose-700 border-rose-200 hover:bg-rose-50">
                           <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                         </Button>
@@ -363,20 +408,19 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
       <AlertDialog open={!!deleteQuoteTarget} onOpenChange={(o) => !o && setDeleteQuoteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete quote {deleteQuoteTarget?.invoice_number}?</AlertDialogTitle>
+            <AlertDialogTitle>Delete invoice {deleteQuoteTarget?.invoice_number}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This quote never turned into an actual dispatch and has no payment against it — deleting it removes the record entirely
-              (unlike a real sale, which gets cancelled instead of deleted). This can't be undone.
+              This permanently removes the invoice record from the database. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-rose-600 hover:bg-rose-700"
               disabled={deleteQuoteM.isPending}
               onClick={() => deleteQuoteTarget && deleteQuoteM.mutate(deleteQuoteTarget.id)}
             >
-              {deleteQuoteM.isPending ? "Deleting…" : "Delete quote"}
+              {deleteQuoteM.isPending ? "Deleting…" : "Delete invoice"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
