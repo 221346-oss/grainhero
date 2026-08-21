@@ -95,9 +95,9 @@ const CATALOG_SUPER: Def<SuperTabKey>[] = [
 const STORAGE_ADMIN = "gh_admin_tabs_v3";
 const STORAGE_SUPER = "gh_super_tabs_v1";
 const STORAGE_MANAGER = "gh_manager_tabs_v1";
-const DEFAULT_ADMIN: AdminTabKey[] = ["overview", "silos", "batches", "alerts", "marketplace"];
+const DEFAULT_ADMIN: AdminTabKey[] = ["overview", "silos", "batches", "sensors", "marketplace"];
 const DEFAULT_SUPER: SuperTabKey[] = ["overview", "orders", "financials", "users", "plans"];
-const DEFAULT_MANAGER: ManagerTabKey[] = ["overview", "silos", "batches", "alerts", "dispatch"];
+const DEFAULT_MANAGER: ManagerTabKey[] = ["overview", "silos", "batches", "sensors", "dispatch"];
 const DEFAULT_TENANT_TECHNICIAN: TenantTechnicianTabKey[] = ["overview", "sensors", "actuators"];
 const DEFAULT_GLOBAL_TECHNICIAN: GlobalTechnicianTabKey[] = ["overview", "installs"];
 

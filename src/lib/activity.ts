@@ -15,9 +15,10 @@ import type { Database } from "@/integrations/supabase/types";
 
 export interface ActivityLogInput {
   actorId: string | null;
+  managerId?: string | null;
   tenantAdminId?: string | null;
-  action: string; // e.g. "silo.created", "plan.upgraded"
-  targetType?: string | null; // "silo" | "order" | ...
+  action: string;
+  targetType?: string | null;
   targetId?: string | null;
   meta?: Record<string, unknown>;
   severity?: "info" | "warning" | "error";

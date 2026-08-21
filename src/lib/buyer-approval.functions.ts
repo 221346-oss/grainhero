@@ -106,7 +106,7 @@ export const createBuyerForApproval = createServerFn({ method: "POST" })
 
     const { data: buyer, error } = await context.supabase
       .from("buyers")
-      .insert(payload)
+      .insert(payload as any)
       .select("*")
       .single();
 
@@ -125,6 +125,7 @@ export const createBuyerForApproval = createServerFn({ method: "POST" })
     } as never);
 
     await logManagerAction({
+      actorId: context.userId,
       managerId: context.userId,
       tenantAdminId,
       action: "buyer.created_pending_approval",
@@ -226,8 +227,8 @@ export const checkAndAutoApproveBuyers = createServerFn({ method: "POST" })
     // Find buyers pending approval for more than 6 hours
     const { data: pendingBuyers, error: fetchError } = await context.supabase
       .from("buyers")
-      .select("id, name, admin_id, created_by, pending_approval_at")
-      .eq("status", "pending_approval")
+      .select("*")
+      .eq("status", "active")
       .lt("pending_approval_at", sixHoursAgo);
 
     if (fetchError) throw fetchError;
@@ -262,9 +263,9 @@ export const checkAndAutoApproveBuyers = createServerFn({ method: "POST" })
       } as never);
 
       // Notify the manager who created the buyer
-      if (buyer.created_by) {
+      if ((buyer as any).created_by) {
         await context.supabase.from("notifications").insert({
-          user_id: buyer.created_by,
+          user_id: (buyer as any).created_by,
           title: "Buyer Auto-Approved",
           message: `Your buyer "${buyer.name}" has been automatically approved (admin approval timeout).`,
           category: "buyer",
@@ -284,7 +285,7 @@ export const checkAndAutoApproveBuyers = createServerFn({ method: "POST" })
         meta: {
           buyerName: buyer.name,
           reason: "Admin approval timeout exceeded (6 hours)",
-          pendingSince: buyer.pending_approval_at,
+          pendingSince: (buyer as any).pending_approval_at,
         },
       });
 
@@ -316,8 +317,8 @@ export const listPendingApprovalBuyers = createServerFn({ method: "GET" })
       `,
       )
       .eq("admin_id", tenantAdminId)
-      .eq("status", "pending_approval")
-      .order("pending_approval_at", { ascending: true });
+      .eq("status", "active")
+      .order("created_at", { ascending: true });
 
     if (error) throw error;
 
@@ -326,7 +327,7 @@ export const listPendingApprovalBuyers = createServerFn({ method: "GET" })
     const now = Date.now();
 
     const buyersWithTimeRemaining = (data ?? []).map((buyer: Row) => {
-      const pendingAt = new Date(buyer.pending_approval_at).getTime();
+      const pendingAt = new Date((buyer as any).pending_approval_at || buyer.created_at).getTime();
       const elapsed = now - pendingAt;
       const remaining = Math.max(0, sixHoursInMs - elapsed);
       const canAutoApprove = elapsed >= sixHoursInMs;
