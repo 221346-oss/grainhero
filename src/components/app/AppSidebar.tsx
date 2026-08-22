@@ -108,12 +108,42 @@ function Section({ items, role, currentPath, collapsed }: { label?: string; item
 
 export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeChange: (mode: SidebarMode) => void }) {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const collapsed = mode !== "expanded";
   const isHidden = mode === "hidden";
 
-  // Click anywhere on a collapsed rail commits it open (stays open until
-  // scroll-collapse or a manual collapse/hide action). No hover-expand —
-  // only a click opens it.
+  // Hovering the icon rail previews the full sidebar without committing the
+  // mode, so moving the cursor away snaps it back to icons. A short delay on
+  // each edge keeps a cursor crossing the rail from flapping it open/shut.
+  const [previewing, setPreviewing] = React.useState(false);
+  const hoverTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleHover = React.useCallback((next: boolean, delay: number) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => setPreviewing(next), delay);
+  }, []);
+  React.useEffect(() => () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  }, []);
+  // A mode change out of "collapsed" ends any preview in flight.
+  React.useEffect(() => {
+    if (mode !== "collapsed") {
+      if (hoverTimer.current) clearTimeout(hoverTimer.current);
+      setPreviewing(false);
+    }
+  }, [mode]);
+
+  const handleRailEnter = () => {
+    if (mode !== "collapsed") return;
+    scheduleHover(true, 120);
+  };
+  const handleRailLeave = () => {
+    if (mode !== "collapsed") return;
+    scheduleHover(false, 180);
+  };
+
+  // Icon-only whenever the rail is collapsed and not being hover-previewed.
+  const collapsed = mode !== "expanded" && !previewing;
+
+  // Click anywhere on a collapsed rail commits it open, so it stays put once
+  // the cursor leaves (hover alone only previews).
   const handleRailClick = () => {
     if (mode !== "collapsed") return;
     onModeChange("expanded");
@@ -172,6 +202,8 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
     <Sidebar
       collapsible="none"
       onClick={handleRailClick}
+      onMouseEnter={handleRailEnter}
+      onMouseLeave={handleRailLeave}
       aria-hidden={isHidden}
       className={cn(
         "hidden md:block sticky top-0 h-screen bg-transparent transition-[width] duration-300 ease-out overflow-hidden",
@@ -224,7 +256,7 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
                   jump). */}
               <div className={cn(collapsed && "flex flex-col items-center gap-0.5")}>
                 <Section items={utilityNav} role={role} currentPath={currentPath} collapsed={collapsed} />
-                {mode === "collapsed" && (
+                {collapsed && (
                   <Tooltip delayDuration={120}>
                     <TooltipTrigger asChild>
                       <button
