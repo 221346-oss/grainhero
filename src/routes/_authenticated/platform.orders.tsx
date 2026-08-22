@@ -1,3 +1,4 @@
+import { SectionLabel } from "@/components/app/surface";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -360,6 +361,7 @@ function PlatformOrdersPage() {
         })}
       </div>
 
+      <SectionLabel index="01">Order pipeline</SectionLabel>
       {/* ── KPI cards — clickable, color-coded, with trend + progress ── */}
       {!isLoading && (
         <KpiStrip kpis={kpis} activeFilter={statusFilter} onFilter={setStatus} allOrders={allOrders} planTab={planTab} />
@@ -404,6 +406,7 @@ function PlatformOrdersPage() {
         )}
       </div>
 
+      <SectionLabel index="02">All install orders</SectionLabel>
       {/* ── Table ─────────────────────────────────────────────────── */}
       {isLoading ? <OrdersSkeleton /> : (
         filtered.length === 0 ? (

@@ -79,7 +79,7 @@ function FinanceCommandPage() {
       </div>
 
       <HairlineGrid cols="grid-cols-1">
-        <NeonPanel title="Daily flow" subtitle={`Last ${days} days`}>
+        <NeonPanel index="01" title="Daily flow" subtitle={`Last ${days} days`}>
           {trend.length === 0 ? (
             <ChartEmpty label="No ledger activity in this range yet" height={300} />
           ) : (

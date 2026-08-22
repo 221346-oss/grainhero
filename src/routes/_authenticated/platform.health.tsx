@@ -198,7 +198,7 @@ function PlatformHealthPage() {
           </div>
 
           {/* Recent incidents */}
-          <NeonPanel title="Recent Incidents" subtitle={`${events.length} events in last 30 days`}>
+          <NeonPanel index="01" title="Recent Incidents" subtitle={`${events.length} events in last 30 days`}>
             {events.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <CheckCircle2 className="w-8 h-8 mb-2" style={{ color: NEON.success }} />

@@ -132,7 +132,7 @@ function PlatformSecurityPage() {
 
       <HairlineGrid cols="grid-cols-1 lg:grid-cols-2">
         {/* User access */}
-        <NeonPanel title="User access" subtitle="Roles and blocked accounts - manage user access">
+        <NeonPanel index="01" title="User access" subtitle="Roles and blocked accounts - manage user access">
           <div className="rounded-md overflow-hidden">
             <div className="divide-y divide-border/40 max-h-[500px] overflow-y-auto">
               {allUsers.map((u: any) => (
@@ -175,7 +175,7 @@ function PlatformSecurityPage() {
         </NeonPanel>
 
         {/* Security events */}
-        <NeonPanel title="Security events" subtitle="Recent warnings and errors from the audit log">
+        <NeonPanel index="02" title="Security events" subtitle="Recent warnings and errors from the audit log">
           <div className="rounded-md overflow-hidden">
             <div className="divide-y divide-border/40 max-h-[400px] overflow-y-auto">
               {logs.map((l: any) => (

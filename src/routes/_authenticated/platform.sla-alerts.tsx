@@ -89,7 +89,7 @@ function SlaAlertsPage() {
           />
 
           <HairlineGrid cols="grid-cols-1">
-            <NeonPanel
+            <NeonPanel index="01"
               title={
                 <span className="flex items-center gap-2">
                   <TrendingDown className="h-4 w-4" style={{ color: NEON.brand }} />
@@ -124,7 +124,7 @@ function SlaAlertsPage() {
             </NeonPanel>
           </HairlineGrid>
 
-          <NeonPanel
+          <NeonPanel index="02"
             title={
               <span className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" style={{ color: NEON.critical }} />
@@ -182,7 +182,7 @@ function SlaAlertsPage() {
             </div>
           </NeonPanel>
 
-          <NeonPanel
+          <NeonPanel index="03"
             title={
               <span className="flex items-center gap-2">
                 <TrendingDown className="h-4 w-4" style={{ color: NEON.warning }} />

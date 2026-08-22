@@ -40,14 +40,14 @@ function EnvHealthPage() {
           ))}
         </div>
       ) : error ? (
-        <NeonPanel title="Unavailable">
+        <NeonPanel index="01" title="Unavailable">
           <p className="text-sm text-muted-foreground">
             Could not run the check. This page is restricted to platform super admins.
           </p>
         </NeonPanel>
       ) : (
         <>
-          <NeonPanel
+          <NeonPanel index="02"
             title="Service role key"
             subtitle={`Last checked ${new Date(data!.checkedAt).toLocaleString()}`}
           >
@@ -90,7 +90,7 @@ function EnvHealthPage() {
           </div>
 
           {!serviceRoleOk && (
-            <NeonPanel title="How to fix the service-role key">
+            <NeonPanel index="03" title="How to fix the service-role key">
               <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
                 <li>
                   Open the project in the Lovable editor and go to{" "}

@@ -109,7 +109,7 @@ function FinancialsPage() {
 
       <HairlineGrid cols="grid-cols-1 lg:grid-cols-3">
         {/* P&L Summary */}
-        <NeonPanel title="P&L summary">
+        <NeonPanel index="01" title="P&L summary">
           <div className="space-y-2 text-sm">
             <PnlRow label="Total sales" value={money(pnl.sales)} />
             <PnlRow label="Cost of goods sold" value={`- ${money(pnl.cogs)}`} negative />
@@ -122,7 +122,7 @@ function FinancialsPage() {
         </NeonPanel>
 
         {/* Revenue mix donut */}
-        <NeonPanel title="Revenue mix">
+        <NeonPanel index="02" title="Revenue mix">
           {mix.length === 0 ? (
             <ChartEmpty label="No revenue mix data yet" height={240} />
           ) : (
@@ -141,7 +141,7 @@ function FinancialsPage() {
         </NeonPanel>
 
         {/* MRR trend */}
-        <NeonPanel title="MRR trend" subtitle="Last 12 months">
+        <NeonPanel index="03" title="MRR trend" subtitle="Last 12 months">
           {trend.length === 0 ? (
             <ChartEmpty label="No MRR trend data yet" height={280} />
           ) : (
@@ -162,7 +162,7 @@ function FinancialsPage() {
 
       {/* Plan split */}
       <HairlineGrid cols="grid-cols-1">
-        <NeonPanel title="Revenue by plan">
+        <NeonPanel index="04" title="Revenue by plan">
           {planSplit.length === 0 ? (
             <ChartEmpty label="No active paid subscriptions yet — plan breakdown will appear here once tenants subscribe." height={160} />
           ) : (

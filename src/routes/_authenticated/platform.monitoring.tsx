@@ -334,7 +334,7 @@ function PlatformMonitoringPage() {
       {/* ── 3. Tenant health + Incidents side by side ─────────────── */}
       <HairlineGrid cols="grid-cols-1 lg:grid-cols-2">
         {/* Tenant health */}
-        <NeonPanel
+        <NeonPanel index="01"
           title="Tenant Health"
           action={
             <div className="flex items-center gap-3 text-[10px]">
@@ -352,7 +352,7 @@ function PlatformMonitoringPage() {
         </NeonPanel>
 
         {/* Incidents by tenant */}
-        <NeonPanel
+        <NeonPanel index="02"
           title="Incidents by Tenant"
           subtitle={
             incTotals
@@ -366,7 +366,7 @@ function PlatformMonitoringPage() {
       </HairlineGrid>
 
       {/* ── 4. Maintenance requests ───────────────────────────────── */}
-      <NeonPanel
+      <NeonPanel index="03"
         title="Maintenance Requests"
         subtitle={`${openMaint} open · ${maints.length} total`}
         className="rounded-md"

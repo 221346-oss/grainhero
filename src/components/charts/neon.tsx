@@ -207,11 +207,14 @@ export function NeonPanel({
   title,
   subtitle,
   action,
+  index,
   className,
   bodyClassName,
   children,
 }: {
   title?: ReactNode;
+  /** Two-digit section number — renders the title as a numbered eyebrow. */
+  index?: string;
   subtitle?: ReactNode;
   action?: ReactNode;
   className?: string;
@@ -223,7 +226,15 @@ export function NeonPanel({
       {(title || action) && (
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
-            {title && <p className="text-[13px] font-medium text-foreground truncate">{title}</p>}
+            {title && (index
+              ? (
+                <p className="flex items-center gap-2.5 truncate">
+                  <span className="text-[10px] font-semibold tabular-nums text-muted-foreground/40">{index}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+                </p>
+              )
+              : <p className="text-[13px] font-medium text-foreground truncate">{title}</p>
+            )}
             {subtitle && <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
           </div>
           {action}

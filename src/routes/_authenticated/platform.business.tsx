@@ -443,7 +443,7 @@ function PlatformBusinessPage() {
       <HairlineGrid cols="grid-cols-1 lg:grid-cols-5">
 
         {/* ── Revenue Insights — neon redesign ───────────────────────── */}
-        <NeonPanel
+        <NeonPanel index="01"
           className="lg:col-span-3"
           title="Revenue Insights"
           action={
@@ -601,7 +601,7 @@ function PlatformBusinessPage() {
         </NeonPanel>
 
         {/* Sales Overview — donut */}
-        <NeonPanel className="lg:col-span-2" title="Sales Overview">
+        <NeonPanel index="02" className="lg:col-span-2" title="Sales Overview">
           {donutData.length > 0 ? (
             <div className="flex flex-col items-center pb-1">
               {/* Fixed square container so the chart is always a perfect circle */}

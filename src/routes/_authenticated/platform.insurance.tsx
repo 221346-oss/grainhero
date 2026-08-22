@@ -123,7 +123,7 @@ function AnalyticsTab() {
   return (
     <div className="space-y-4">
       <HairlineGrid cols="grid-cols-1">
-        <NeonPanel
+        <NeonPanel index="01"
           title={
             <span className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" style={{ color: NEON.brand }} /> Monthly trend (12m)
@@ -151,7 +151,7 @@ function AnalyticsTab() {
       </HairlineGrid>
 
       <HairlineGrid cols="grid-cols-1 lg:grid-cols-2">
-        <NeonPanel title="Carrier performance">
+        <NeonPanel index="02" title="Carrier performance">
           <div className="h-64">
             {data.carriers.length === 0 ? (
               <ChartEmpty label="No carrier activity yet" height={256} />
@@ -170,7 +170,7 @@ function AnalyticsTab() {
             )}
           </div>
         </NeonPanel>
-        <NeonPanel title="Product performance" bodyClassName="-m-4 mt-0">
+        <NeonPanel index="03" title="Product performance" bodyClassName="-m-4 mt-0">
           <MobileTableWrapper className="border-t overflow-hidden">
             <table className="w-full text-[13px] min-w-[600px]">
               <thead className="border-b bg-muted/30">

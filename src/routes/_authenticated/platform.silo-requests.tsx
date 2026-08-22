@@ -1,3 +1,4 @@
+import { SectionLabel } from "@/components/app/surface";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -224,6 +225,7 @@ function SiloRequestsPage() {
         </button>
       }
     >
+      <SectionLabel index="01">Request queue</SectionLabel>
       {/* Summary tiles — neon hairline gap-px grid ─────────────────────── */}
       <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
         {TAB_CFG.map((t) => (
@@ -255,6 +257,7 @@ function SiloRequestsPage() {
         />
       </div>
 
+      <SectionLabel index="02">All requests</SectionLabel>
       {/* Request list ───────────────────────────────────────────────── */}
       {isLoading ? (
         <div className="grid gap-px bg-border rounded-md overflow-hidden">
