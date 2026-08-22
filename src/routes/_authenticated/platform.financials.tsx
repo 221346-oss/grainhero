@@ -191,14 +191,14 @@ function KpiCard({ icon, label, value, sub, delta, accent }: { icon: React.React
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2 text-muted-foreground text-xs uppercase tracking-wide font-semibold">
+        <div className="flex items-center justify-between mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           <span>{label}</span>
           <span className="text-muted-foreground/70">{icon}</span>
         </div>
-        <div className={`text-lg font-bold ${accent ?? "text-foreground"}`}>{value}</div>
+        <div className={`text-2xl font-bold tabular-nums ${accent ?? "text-foreground"}`}>{value}</div>
         {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
         {typeof delta === "number" && (
-          <div className={`text-xs mt-1 inline-flex items-center gap-1 ${delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+          <div className={`text-xs mt-1 inline-flex items-center gap-1 ${delta >= 0 ? "text-success" : "text-severity-critical"}`}>
             {delta >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
             {delta >= 0 ? "+" : ""}{money(delta)} MoM
           </div>
