@@ -86,7 +86,7 @@ function WebhookMonitor() {
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-500 uppercase tracking-wide">Status</span>
+        <span className="text-xs text-muted-foreground uppercase tracking-wide">Status</span>
         <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -112,7 +112,7 @@ function WebhookMonitor() {
             </TableHeader>
             <TableBody>
               {events.length === 0 && (
-                <TableRow><TableCell colSpan={6} className="text-center text-slate-400 py-10">
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-10">
                   No webhook events for the current filter
                 </TableCell></TableRow>
               )}
@@ -121,7 +121,7 @@ function WebhookMonitor() {
                   <TableCell className="text-xs">{new Date(e.created_at).toLocaleString()}</TableCell>
                   <TableCell className="text-sm">{e.carrier?.name ?? e.carrier_code ?? "—"}</TableCell>
                   <TableCell className="text-sm font-mono">{e.event_type ?? "—"}</TableCell>
-                  <TableCell className="text-xs text-slate-500 truncate max-w-[180px]">{e.external_id ?? "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground truncate max-w-[180px]">{e.external_id ?? "—"}</TableCell>
                   <TableCell>
                     <Badge className={`text-[10px] ${STATUS_BADGE[e.status] ?? ""}`}>{e.status}</Badge>
                     {e.error_message && (
@@ -157,24 +157,24 @@ function WebhookMonitor() {
           </SheetHeader>
           {detail && (
             <div className="space-y-4 mt-4 text-sm">
-              <div><span className="text-slate-500">Status:</span> {detail.status}</div>
-              <div><span className="text-slate-500">Carrier:</span> {detail.carrier?.name ?? detail.carrier_code}</div>
-              <div><span className="text-slate-500">Event:</span> {detail.event_type}</div>
-              <div><span className="text-slate-500">External ID:</span> {detail.external_id ?? "—"}</div>
+              <div><span className="text-muted-foreground">Status:</span> {detail.status}</div>
+              <div><span className="text-muted-foreground">Carrier:</span> {detail.carrier?.name ?? detail.carrier_code}</div>
+              <div><span className="text-muted-foreground">Event:</span> {detail.event_type}</div>
+              <div><span className="text-muted-foreground">External ID:</span> {detail.external_id ?? "—"}</div>
               {detail.error_message && (
                 <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
                   {detail.error_message}
                 </div>
               )}
               <div>
-                <div className="text-xs text-slate-500 mb-1">Payload</div>
-                <pre className="text-[11px] bg-slate-50 p-2 rounded border overflow-auto max-h-64">
+                <div className="text-xs text-muted-foreground mb-1">Payload</div>
+                <pre className="text-[11px] bg-muted/20 p-2 rounded border overflow-auto max-h-64">
 {JSON.stringify(detail.raw, null, 2)}
                 </pre>
               </div>
               <div>
-                <div className="text-xs text-slate-500 mb-1">Headers</div>
-                <pre className="text-[11px] bg-slate-50 p-2 rounded border overflow-auto max-h-40">
+                <div className="text-xs text-muted-foreground mb-1">Headers</div>
+                <pre className="text-[11px] bg-muted/20 p-2 rounded border overflow-auto max-h-40">
 {JSON.stringify(detail.headers, null, 2)}
                 </pre>
               </div>
@@ -194,11 +194,11 @@ function WebhookMonitor() {
 }
 
 function StatTile({ label, value, tone }: { label: string; value: number; tone: "red"|"emerald"|"slate" }) {
-  const cls = tone === "red" ? "text-red-600" : tone === "emerald" ? "text-emerald-600" : "text-slate-700";
+  const cls = tone === "red" ? "text-red-600" : tone === "emerald" ? "text-emerald-600" : "text-foreground";
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="text-xs text-slate-500 uppercase">{label}</div>
+        <div className="text-xs text-muted-foreground uppercase">{label}</div>
         <div className={`text-2xl font-bold mt-1 ${cls}`}>{value}</div>
       </CardContent>
     </Card>

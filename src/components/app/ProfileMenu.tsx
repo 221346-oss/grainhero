@@ -37,7 +37,7 @@ export function ProfileMenu() {
           aria-label="Open profile menu"
           className="shrink-0 rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-emerald-500 transition-transform hover:scale-105"
         >
-          <Avatar className="h-8 w-8 border border-border/60">
+          <Avatar className="h-8 w-8">
             {avatar ? <AvatarImage src={avatar} alt={name ?? email ?? "Profile"} /> : null}
             <AvatarFallback className="bg-[#2FAC0C]/15 text-[#2FAC0C] text-xs font-black">
               {initialsOf(name, email)}

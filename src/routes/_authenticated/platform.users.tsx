@@ -1,3 +1,4 @@
+import { SectionLabel } from "@/components/app/surface";
 import { TableSkeleton } from "@/components/app/skeletons";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -68,12 +69,12 @@ function ChangeRoleSheet({ user, open, onOpenChange, onConfirm, isPending }: Cha
         <SheetHeader>
           <SheetTitle>Change role</SheetTitle>
           <SheetDescription>
-            <span className="font-medium text-slate-700">{user?.name ?? user?.email ?? "This user"}</span>
+            <span className="font-medium text-foreground">{user?.name ?? user?.email ?? "This user"}</span>
             &apos;s role will be updated immediately.
           </SheetDescription>
         </SheetHeader>
         <div className="py-6 space-y-1.5">
-          <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">New role</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">New role</label>
           <Select value={newRole} onValueChange={setNewRole}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -173,39 +174,39 @@ function UsersPage() {
           {/* 3-tile summary */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-2xl border-slate-200 bg-card p-4 space-y-2">
-                <div className="h-7 w-10 animate-pulse rounded bg-slate-100" />
-                <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+              <div key={i} className="rounded-2xl border-border/40 bg-card p-4 space-y-2">
+                <div className="h-7 w-10 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-20 animate-pulse rounded bg-muted" />
               </div>
             ))}
           </div>
           {/* Filter bar */}
-          <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
+          <div className="h-12 animate-pulse rounded-lg bg-muted" />
           {/* Users table */}
-          <div className="rounded-2xl border-slate-200 bg-card overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
-              <div className="h-4 w-20 animate-pulse rounded bg-slate-100" />
-              <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />
+          <div className="rounded-2xl border-border/40 bg-card overflow-hidden">
+            <div className="px-4 py-3 border-b border-border/40 flex justify-between">
+              <div className="h-4 w-20 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-24 animate-pulse rounded bg-muted" />
             </div>
             {/* Table header */}
-            <div className="px-4 py-2.5 grid grid-cols-5 gap-4 border-b border-slate-100">
+            <div className="px-4 py-2.5 grid grid-cols-5 gap-4 border-b border-border/40">
               {["User","Role","Joined","Status","Actions"].map((col) => (
-                <div key={col} className="h-3 w-14 animate-pulse rounded bg-slate-100" />
+                <div key={col} className="h-3 w-14 animate-pulse rounded bg-muted" />
               ))}
             </div>
             {/* Table rows */}
             {[...Array(8)].map((_, i) => (
               <div key={i} className="px-4 py-3 grid grid-cols-5 gap-4 items-center border-b border-slate-50">
                 <div className="space-y-1.5">
-                  <div className="h-3.5 w-32 animate-pulse rounded bg-slate-100" />
-                  <div className="h-2.5 w-44 animate-pulse rounded bg-slate-100" />
+                  <div className="h-3.5 w-32 animate-pulse rounded bg-muted" />
+                  <div className="h-2.5 w-44 animate-pulse rounded bg-muted" />
                 </div>
-                <div className="h-3.5 w-16 animate-pulse rounded bg-slate-100" />
-                <div className="h-3.5 w-20 animate-pulse rounded bg-slate-100" />
-                <div className="h-3.5 w-12 animate-pulse rounded bg-slate-100" />
+                <div className="h-3.5 w-16 animate-pulse rounded bg-muted" />
+                <div className="h-3.5 w-20 animate-pulse rounded bg-muted" />
+                <div className="h-3.5 w-12 animate-pulse rounded bg-muted" />
                 <div className="flex justify-end gap-2">
-                  <div className="h-6 w-16 animate-pulse rounded bg-slate-100" />
-                  <div className="h-6 w-12 animate-pulse rounded bg-slate-100" />
+                  <div className="h-6 w-16 animate-pulse rounded bg-muted" />
+                  <div className="h-6 w-12 animate-pulse rounded bg-muted" />
                 </div>
               </div>
             ))}
@@ -217,6 +218,7 @@ function UsersPage() {
 
   return (
     <AdminPageShell title="Platform users" subtitle="All users across tenants and organizations">
+      <SectionLabel index="01">User base</SectionLabel>
       <AdminSummaryTiles
         columns={3}
         tiles={[
@@ -226,6 +228,7 @@ function UsersPage() {
         ]}
       />
 
+      <SectionLabel index="02">All users</SectionLabel>
       <AdminFilterBar onSubmit={() => setQ(qInput)}>
         <AdminFilterField label="Search" width="flex-1 min-w-[240px]">
           <Input value={qInput} onChange={(e) => setQInput(e.target.value)} placeholder="Search by name or email…" />
@@ -252,7 +255,7 @@ function UsersPage() {
         {isLoading ? (
           <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
             <p className="text-sm">No users found</p>
           </div>
         ) : (
@@ -312,7 +315,7 @@ function UsersPage() {
                           size="sm"
                           variant="link"
                           onClick={() => setRoleTarget(u)}
-                          className="h-auto p-0 text-slate-500 hover:text-slate-800"
+                          className="h-auto p-0 text-muted-foreground hover:text-foreground"
                           title="Role"
                         >
                           <ShieldCheck className="opacity-60 sm:me-1" size={16} strokeWidth={2} aria-hidden="true" />

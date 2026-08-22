@@ -55,7 +55,7 @@ function SupplierDetail() {
 
       <Card>
         <CardContent className="p-0">
-          <div className="p-3 text-sm font-medium border-b border-border">Delivery history</div>
+          <div className="p-3 text-sm font-medium border-b border-border/40">Delivery history</div>
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
               <tr>

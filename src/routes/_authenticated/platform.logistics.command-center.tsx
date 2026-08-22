@@ -34,9 +34,9 @@ function CommandCenterPage() {
         ]}
       />
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-slate-200/70">
+        <Card className="border-border/40/70">
           <CardHeader><CardTitle className="text-sm font-semibold">Delivery performance</CardTitle></CardHeader>
-          <CardContent className="text-sm text-slate-600 space-y-2">
+          <CardContent className="text-sm text-muted-foreground space-y-2">
             <div className="flex justify-between"><span>Delivered</span><span className="font-medium">{k?.deliveredCount ?? 0}</span></div>
             <div className="flex justify-between"><span>On-time</span><span className="font-medium">{k?.onTimePct ?? 0}%</span></div>
             <div className="flex justify-between"><span>Active drivers</span><span className="font-medium">{k?.driversCount ?? 0}</span></div>
@@ -48,9 +48,9 @@ function CommandCenterPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-200/70">
+        <Card className="border-border/40/70">
           <CardHeader><CardTitle className="text-sm font-semibold">Getting started</CardTitle></CardHeader>
-          <CardContent className="text-sm text-slate-600 space-y-2">
+          <CardContent className="text-sm text-muted-foreground space-y-2">
             <p>1. Add carriers under <span className="font-medium">Platform → Carriers</span>.</p>
             <p>2. Register vehicles & drivers under <span className="font-medium">Fleet</span>.</p>
             <p>3. Assign a carrier to any dispatched shipment to start capturing cost & SLA data.</p>
@@ -58,7 +58,7 @@ function CommandCenterPage() {
           </CardContent>
         </Card>
       </div>
-      {isLoading && <p className="text-xs text-slate-400">Loading…</p>}
+      {isLoading && <p className="text-xs text-muted-foreground">Loading…</p>}
     </AdminPageShell>
   );
 }

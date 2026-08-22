@@ -44,7 +44,7 @@ function AuditLogsPage() {
           description={isLoading ? "Loading…" : `${data?.activity.length ?? 0} events`}
         >
           {!isLoading && (data?.activity.length ?? 0) === 0 ? (
-            <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
               <p className="text-sm">No activity logs yet</p>
             </div>
           ) : (
@@ -52,9 +52,9 @@ function AuditLogsPage() {
               {(data?.activity ?? []).map((row) => {
                 const r = row as Record<string, unknown>;
                 return (
-                  <li key={String(r.id)} className="px-4 py-3 hover:bg-slate-50">
-                    <div className="text-sm font-medium text-slate-800">{String(r.action ?? r.event ?? "activity")}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
+                  <li key={String(r.id)} className="px-4 py-3 hover:bg-muted/20">
+                    <div className="text-sm font-medium text-foreground">{String(r.action ?? r.event ?? "activity")}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
                   </li>
                 );
               })}
@@ -66,7 +66,7 @@ function AuditLogsPage() {
           description={isLoading ? "Loading…" : `${data?.security.length ?? 0} events`}
         >
           {!isLoading && (data?.security.length ?? 0) === 0 ? (
-            <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
               <p className="text-sm">No security events</p>
             </div>
           ) : (
@@ -75,8 +75,8 @@ function AuditLogsPage() {
                 const r = row as Record<string, unknown>;
                 return (
                   <li key={String(r.id)} className="px-4 py-3 hover:bg-red-50/40">
-                    <div className="text-sm font-medium text-slate-800">{String(r.event)}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
+                    <div className="text-sm font-medium text-foreground">{String(r.event)}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
                   </li>
                 );
               })}

@@ -124,7 +124,7 @@ function TitleCombobox({
 
       {/* Dropdown with suggestions only */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg max-h-56 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full rounded-md border-border bg-popover shadow-lg max-h-56 overflow-y-auto">
           <div className="py-1">
             {filtered.length === 0 && (
               <p className="px-3 py-2 text-xs text-muted-foreground">No matches — select "Other" or type your own.</p>
@@ -446,7 +446,7 @@ export function ReportTicketDialog({
                 />
               </label>
             ) : (
-              <div className="flex items-center justify-between gap-2 p-2 rounded-md border border-border bg-emerald-50/50 dark:bg-emerald-900/10">
+              <div className="flex items-center justify-between gap-2 p-2 rounded-md border-border bg-emerald-50/50 dark:bg-emerald-900/10">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <Upload className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                   <span className="text-xs truncate font-medium">{attachment.name}</span>

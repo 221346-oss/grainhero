@@ -107,7 +107,7 @@ export function InstallStageTracker({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div className="rounded-2xl border-border bg-card p-4 space-y-3">
         {pillRow}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           {label}

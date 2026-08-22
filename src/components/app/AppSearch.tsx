@@ -171,7 +171,7 @@ export function AppSearch() {
       </kbd>
 
       {open && q.trim() && (
-        <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-border bg-background shadow-lg overflow-hidden z-40">
+        <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border-border bg-background shadow-lg overflow-hidden z-40">
           {matches.length === 0 ? (
             <div className="p-4 text-sm text-muted-foreground">No matching pages.</div>
           ) : (
@@ -197,7 +197,7 @@ export function AppSearch() {
                   </li>
                 ))}
               </ul>
-              <div className="flex items-center justify-between gap-3 px-3 py-1.5 border-t border-border bg-muted/40 text-[10px] text-muted-foreground">
+              <div className="flex items-center justify-between gap-3 px-3 py-1.5 border-t border-border/40 bg-muted/40 text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-2">
                   <kbd className="rounded border border-border/60 px-1">↑</kbd>
                   <kbd className="rounded border border-border/60 px-1">↓</kbd> navigate

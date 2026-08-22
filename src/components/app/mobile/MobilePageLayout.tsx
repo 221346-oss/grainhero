@@ -50,7 +50,7 @@ export function MobilePageLayout({
   }, [sidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-white md:hidden flex flex-col">
+    <div className="min-h-screen bg-card md:hidden flex flex-col">
       {/* Removed duplicate fixed mobile header since the app shell already provides one */}
 
       {/* Sidebar Overlay Drawer */}
@@ -63,8 +63,8 @@ export function MobilePageLayout({
           ></div>
           
           {/* Drawer */}
-          <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white border-r border-border z-50 overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-border px-4 py-4 flex items-center justify-between">
+          <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-card border-r border-border z-50 overflow-y-auto">
+            <div className="sticky top-0 bg-card border-b border-border/40 px-4 py-4 flex items-center justify-between">
               {sidebarView === 'navigation' ? (
                 <>
                   <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export function MobilePageLayout({
               ) : (
                 // Tickets View - List all tickets
                 <div className="space-y-1">
-                  <div className="px-4 py-3 border-b border-border">
+                  <div className="px-4 py-3 border-b border-border/40">
                     <p className="text-xs text-muted-foreground">Open incident tickets from all admins</p>
                   </div>
                   {allTickets.length === 0 ? (
@@ -146,7 +146,7 @@ export function MobilePageLayout({
 
       {/* Main Content Area - Full width, scrollable */}
       <main className="flex-1 w-full overflow-y-auto">
-        <div className="w-full min-h-full bg-white">
+        <div className="w-full min-h-full bg-card">
           {children}
         </div>
       </main>

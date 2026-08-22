@@ -46,16 +46,16 @@ function ServerMonitoringPage() {
         <PlatformScopeBanner label="Fleet health across every tenant. Read-only." />
       )}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Server className="h-6 w-6 text-emerald-600" /> Device Health</h1>
-        <p className="text-sm text-slate-500 mt-1">Live connectivity and hardware status across all sensor devices.</p>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Server className="h-6 w-6 text-emerald-600" /> Device Health</h1>
+        <p className="text-sm text-muted-foreground mt-1">Live connectivity and hardware status across all sensor devices.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card><CardContent className="p-4"><div className="text-xs uppercase text-slate-500 font-semibold">Uptime</div><div className="text-2xl font-bold text-emerald-600">{uptime.toFixed(1)}%</div></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Online</div><div className="text-2xl font-bold">{totals.online}</div></div><Wifi className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Offline</div><div className="text-2xl font-bold text-red-600">{totals.offline}</div></div><WifiOff className="h-6 w-6 text-red-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Low battery</div><div className="text-2xl font-bold text-amber-600">{totals.lowBattery}</div></div><Battery className="h-6 w-6 text-amber-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Weak signal</div><div className="text-2xl font-bold text-amber-600">{totals.weakSignal}</div></div><Signal className="h-6 w-6 text-amber-600" /></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase text-muted-foreground font-semibold">Uptime</div><div className="text-2xl font-bold text-emerald-600">{uptime.toFixed(1)}%</div></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Online</div><div className="text-2xl font-bold">{totals.online}</div></div><Wifi className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Offline</div><div className="text-2xl font-bold text-red-600">{totals.offline}</div></div><WifiOff className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Low battery</div><div className="text-2xl font-bold text-amber-600">{totals.lowBattery}</div></div><Battery className="h-6 w-6 text-amber-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Weak signal</div><div className="text-2xl font-bold text-amber-600">{totals.weakSignal}</div></div><Signal className="h-6 w-6 text-amber-600" /></CardContent></Card>
       </div>
 
       <Card>
@@ -72,7 +72,7 @@ function ServerMonitoringPage() {
                     </Badge>
                     <Badge variant="outline" className="text-[10px]">{d.device_type}</Badge>
                   </div>
-                  <div className="text-xs text-slate-500 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {d.device_id} · fw {d.firmware_version ?? "—"} · heartbeat {fmtGap(d.secondsSinceHeartbeat)}
                   </div>
                 </div>
@@ -82,7 +82,7 @@ function ServerMonitoringPage() {
                 </div>
               </div>
             ))}
-            {devices.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No devices registered.</div>}
+            {devices.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No devices registered.</div>}
           </div>
         </CardContent>
       </Card>

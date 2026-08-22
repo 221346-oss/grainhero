@@ -157,10 +157,10 @@ function PlatformReportingPage() {
         <ResponsiveTabsContent value="hardware" className="mt-4">
           <AdminDataCard title="Open hardware orders" description="Install and hardware orders needing attention">
             {isLoading ? (
-              <p className="p-6 text-sm text-slate-500">Loading…</p>
+              <p className="p-6 text-sm text-muted-foreground">Loading…</p>
             ) : (
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                <thead className="bg-muted/20 text-muted-foreground text-xs uppercase tracking-wider">
                   <tr>
                     <th className="text-left px-4 py-2 font-medium">Customer</th>
                     <th className="text-left px-2 py-2 font-medium">Status</th>
@@ -170,24 +170,24 @@ function PlatformReportingPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {(details?.hardwareOrders ?? []).map((o: Record<string, unknown>) => (
-                    <tr key={String(o.id)} className="hover:bg-slate-50">
+                    <tr key={String(o.id)} className="hover:bg-muted/20">
                       <td className="px-4 py-2">
-                        <p className="font-medium text-slate-900">{String(o.customer_name ?? o.customer_email ?? "—")}</p>
-                        <p className="text-[11px] text-slate-500">{String(o.customer_email ?? "")}</p>
+                        <p className="font-medium text-foreground">{String(o.customer_name ?? o.customer_email ?? "—")}</p>
+                        <p className="text-[11px] text-muted-foreground">{String(o.customer_email ?? "")}</p>
                       </td>
                       <td className="px-2 py-2">
                         <Badge variant="outline" className="capitalize">
                           {String(o.status ?? "unknown").replace(/_/g, " ")}
                         </Badge>
                       </td>
-                      <td className="px-2 py-2 text-slate-600 hidden md:table-cell">{String(o.contact_phone ?? "—")}</td>
-                      <td className="px-4 py-2 text-right text-slate-500 whitespace-nowrap">
+                      <td className="px-2 py-2 text-muted-foreground hidden md:table-cell">{String(o.contact_phone ?? "—")}</td>
+                      <td className="px-4 py-2 text-right text-muted-foreground whitespace-nowrap">
                         {o.created_at ? new Date(String(o.created_at)).toLocaleDateString() : "—"}
                       </td>
                     </tr>
                   ))}
                   {!details?.hardwareOrders?.length && (
-                    <tr><td colSpan={4} className="text-center text-slate-400 py-8">No open hardware orders</td></tr>
+                    <tr><td colSpan={4} className="text-center text-muted-foreground py-8">No open hardware orders</td></tr>
                   )}
                 </tbody>
               </table>
@@ -202,7 +202,7 @@ function PlatformReportingPage() {
             description="Bug reports submitted by admins via the incident ticket form"
           >
             {bugTickets.length === 0 ? (
-              <p className="p-6 text-sm text-slate-400 text-center">No bug report tickets submitted yet</p>
+              <p className="p-6 text-sm text-muted-foreground text-center">No bug report tickets submitted yet</p>
             ) : (
               <div className="divide-y divide-slate-100">
                 {bugTickets.map((t) => (
@@ -210,12 +210,12 @@ function PlatformReportingPage() {
                     key={t.id}
                     type="button"
                     onClick={() => setSelectedTicket(t)}
-                    className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
+                    className="w-full text-left p-4 hover:bg-muted/20 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="font-semibold text-sm text-slate-900">
+                          <span className="font-semibold text-sm text-foreground">
                             {t.reporter_name}
                           </span>
                           <Badge
@@ -225,7 +225,7 @@ function PlatformReportingPage() {
                                 ? "bg-red-50 text-red-700 border-red-200"
                                 : t.priority === "medium"
                                 ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-slate-100 text-slate-600 border-slate-200",
+                                : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {t.priority}
@@ -235,23 +235,23 @@ function PlatformReportingPage() {
                             className={cn(
                               "text-[10px] font-semibold uppercase",
                               t.status === "open"
-                                ? "border-slate-300 text-slate-600"
+                                ? "border-slate-300 text-muted-foreground"
                                 : t.status === "resolved"
                                 ? "border-emerald-300 text-emerald-700 bg-emerald-50"
-                                : "bg-slate-100 text-slate-500 border-slate-200",
+                                : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {t.status}
                           </Badge>
                         </div>
-                        <p className="text-xs text-slate-500 line-clamp-2">{t.description}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
                         {(t.admin_name || t.admin_email) && (
-                          <p className="text-[11px] text-slate-400 mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             From: {t.admin_name ?? t.admin_email}
                           </p>
                         )}
                       </div>
-                      <span className="text-xs text-slate-400 shrink-0">
+                      <span className="text-xs text-muted-foreground shrink-0">
                         {new Date(t.created_at).toLocaleDateString()}
                       </span>
                     </div>
@@ -267,7 +267,7 @@ function PlatformReportingPage() {
             description="Error and critical logs from the last 30 days"
           >
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+              <thead className="bg-muted/20 text-muted-foreground text-xs uppercase tracking-wider">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Action</th>
                   <th className="text-left px-2 py-2 font-medium">User</th>
@@ -277,24 +277,24 @@ function PlatformReportingPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {(details?.bugReports ?? []).map((b: Record<string, unknown>) => (
-                  <tr key={String(b.id)} className="hover:bg-slate-50">
+                  <tr key={String(b.id)} className="hover:bg-muted/20">
                     <td className="px-4 py-2">
-                      <p className="font-medium text-slate-900">{String(b.action ?? "Error")}</p>
-                      <p className="text-[11px] text-slate-500 truncate max-w-md">{String(b.description ?? "")}</p>
+                      <p className="font-medium text-foreground">{String(b.action ?? "Error")}</p>
+                      <p className="text-[11px] text-muted-foreground truncate max-w-md">{String(b.description ?? "")}</p>
                     </td>
-                    <td className="px-2 py-2 text-slate-600">{String(b.user_name ?? b.user_role ?? "—")}</td>
+                    <td className="px-2 py-2 text-muted-foreground">{String(b.user_name ?? b.user_role ?? "—")}</td>
                     <td className="px-2 py-2">
                       <Badge variant="outline" className="border-red-300 text-red-700 capitalize">
                         {String(b.severity ?? "error")}
                       </Badge>
                     </td>
-                    <td className="px-4 py-2 text-right text-slate-500 whitespace-nowrap">
+                    <td className="px-4 py-2 text-right text-muted-foreground whitespace-nowrap">
                       {b.created_at ? new Date(String(b.created_at)).toLocaleDateString() : "—"}
                     </td>
                   </tr>
                 ))}
                 {!details?.bugReports?.length && (
-                  <tr><td colSpan={4} className="text-center text-slate-400 py-8">No system error logs</td></tr>
+                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">No system error logs</td></tr>
                 )}
               </tbody>
             </table>
@@ -307,7 +307,7 @@ function PlatformReportingPage() {
             description="Questions and support requests sent by tenant admins and managers"
           >
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+              <thead className="bg-muted/20 text-muted-foreground text-xs uppercase tracking-wider">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Subject</th>
                   <th className="text-left px-2 py-2 font-medium">From</th>
@@ -317,22 +317,22 @@ function PlatformReportingPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {(details?.managerQueries ?? []).map((q: Record<string, unknown>) => (
-                  <tr key={String(q.id)} className="hover:bg-slate-50">
-                    <td className="px-4 py-2 font-medium text-slate-900">{String(q.action ?? "Query")}</td>
-                    <td className="px-2 py-2 text-slate-600">
+                  <tr key={String(q.id)} className="hover:bg-muted/20">
+                    <td className="px-4 py-2 font-medium text-foreground">{String(q.action ?? "Query")}</td>
+                    <td className="px-2 py-2 text-muted-foreground">
                       {String(q.user_name ?? "—")}
-                      {q.user_role ? <span className="text-[11px] text-slate-400 ml-1">({String(q.user_role)})</span> : null}
+                      {q.user_role ? <span className="text-[11px] text-muted-foreground ml-1">({String(q.user_role)})</span> : null}
                     </td>
-                    <td className="px-2 py-2 text-slate-500 hidden md:table-cell truncate max-w-xs">
+                    <td className="px-2 py-2 text-muted-foreground hidden md:table-cell truncate max-w-xs">
                       {String(q.description ?? "")}
                     </td>
-                    <td className="px-4 py-2 text-right text-slate-500 whitespace-nowrap">
+                    <td className="px-4 py-2 text-right text-muted-foreground whitespace-nowrap">
                       {q.created_at ? new Date(String(q.created_at)).toLocaleDateString() : "—"}
                     </td>
                   </tr>
                 ))}
                 {!details?.managerQueries?.length && (
-                  <tr><td colSpan={4} className="text-center text-slate-400 py-8">No manager queries yet</td></tr>
+                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">No manager queries yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -384,25 +384,25 @@ function PlatformReportingPage() {
 
           <AdminDataCard title="Recent customer feedback" description="Post-installation reviews and ratings">
             {loadingFeedback ? (
-              <p className="p-6 text-sm text-slate-500">Loading feedback...</p>
+              <p className="p-6 text-sm text-muted-foreground">Loading feedback...</p>
             ) : feedback.feedback.length === 0 ? (
-              <p className="p-6 text-sm text-slate-400 text-center">No feedback yet</p>
+              <p className="p-6 text-sm text-muted-foreground text-center">No feedback yet</p>
             ) : (
               <div className="divide-y divide-slate-100">
                 {feedback.feedback.map((f: any) => (
-                  <div key={f.id} className="p-4 hover:bg-slate-50">
+                  <div key={f.id} className="p-4 hover:bg-muted/20">
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm text-slate-900">
+                          <span className="font-medium text-sm text-foreground">
                             {f.admin?.name || "Anonymous"}
                           </span>
-                          <span className="text-xs text-slate-400">·</span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-muted-foreground">·</span>
+                          <span className="text-xs text-muted-foreground">
                             {f.order?.install_city || "Unknown location"}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-600">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span>Order: {f.order?.plan_name || "N/A"}</span>
                           {f.technician && <span>· Tech: {f.technician.name}</span>}
                           {f.warehouse && <span>· {f.warehouse.name}</span>}
@@ -413,20 +413,20 @@ function PlatformReportingPage() {
                           <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                           <span className="font-semibold text-sm">{f.overall_rating}</span>
                         </div>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-muted-foreground">
                           {new Date(f.submitted_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                     {f.comments && (
-                      <p className="text-sm text-slate-600 mt-2 mb-2">{f.comments}</p>
+                      <p className="text-sm text-muted-foreground mt-2 mb-2">{f.comments}</p>
                     )}
                     <div className="flex items-center gap-4 text-xs">
                       {f.technician_rating && (
-                        <span className="text-slate-500">Tech: {f.technician_rating}/5</span>
+                        <span className="text-muted-foreground">Tech: {f.technician_rating}/5</span>
                       )}
                       {f.installation_quality && (
-                        <span className="text-slate-500">Quality: {f.installation_quality}/5</span>
+                        <span className="text-muted-foreground">Quality: {f.installation_quality}/5</span>
                       )}
                       {f.would_recommend !== null && (
                         <Badge variant={f.would_recommend ? "default" : "secondary"} className="text-xs">
@@ -488,14 +488,14 @@ function PlatformReportingPage() {
                   <Skeleton className="h-10 w-full rounded-md" />
                 </div>
               ) : warehouses.insights.topUtilized.length === 0 ? (
-                <p className="p-6 text-sm text-slate-400 text-center">No data</p>
+                <p className="p-6 text-sm text-muted-foreground text-center">No data</p>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {warehouses.insights.topUtilized.map((w: any) => (
-                    <div key={w.warehouse_id} className="p-3 flex items-center justify-between hover:bg-slate-50">
+                    <div key={w.warehouse_id} className="p-3 flex items-center justify-between hover:bg-muted/20">
                       <div>
-                        <div className="font-medium text-sm text-slate-900">{w.warehouse_name}</div>
-                        <div className="text-xs text-slate-500">
+                        <div className="font-medium text-sm text-foreground">{w.warehouse_name}</div>
+                        <div className="text-xs text-muted-foreground">
                           {w.active_silos} silos · {(w.total_capacity_kg / 1000).toFixed(1)}t capacity
                         </div>
                       </div>
@@ -513,15 +513,15 @@ function PlatformReportingPage() {
 
             <AdminDataCard title="Warehouses with issues" description="Recent alerts or quality incidents">
               {warehouses.insights.withIssues.length === 0 ? (
-                <p className="p-6 text-sm text-slate-400 text-center">No issues reported</p>
+                <p className="p-6 text-sm text-muted-foreground text-center">No issues reported</p>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {warehouses.insights.withIssues.map((w: any) => (
-                    <div key={w.warehouse_id} className="p-3 hover:bg-slate-50">
+                    <div key={w.warehouse_id} className="p-3 hover:bg-muted/20">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="font-medium text-sm text-slate-900">{w.warehouse_name}</div>
-                          <div className="text-xs text-slate-500">{w.location_desc || "—"}</div>
+                          <div className="font-medium text-sm text-foreground">{w.warehouse_name}</div>
+                          <div className="text-xs text-muted-foreground">{w.location_desc || "—"}</div>
                         </div>
                         <div className="flex flex-col items-end gap-1 text-xs">
                           {w.recent_alerts > 0 && (
@@ -554,10 +554,10 @@ function PlatformReportingPage() {
                 <Skeleton className="h-10 w-full rounded-md" />
               </div>
             ) : technicians.technicians.length === 0 ? (
-              <p className="p-6 text-sm text-slate-400 text-center">No technicians yet</p>
+              <p className="p-6 text-sm text-muted-foreground text-center">No technicians yet</p>
             ) : (
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                <thead className="bg-muted/20 text-muted-foreground text-xs uppercase tracking-wider">
                   <tr>
                     <th className="text-left px-4 py-2 font-medium">Technician</th>
                     <th className="text-center px-2 py-2 font-medium">Status</th>
@@ -569,10 +569,10 @@ function PlatformReportingPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {technicians.technicians.map((t: any) => (
-                    <tr key={t.technician_id} className="hover:bg-slate-50">
+                    <tr key={t.technician_id} className="hover:bg-muted/20">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-slate-900">{t.technician_name}</div>
-                        <div className="text-xs text-slate-500">{t.technician_email}</div>
+                        <div className="font-medium text-foreground">{t.technician_name}</div>
+                        <div className="text-xs text-muted-foreground">{t.technician_email}</div>
                       </td>
                       <td className="px-2 py-3 text-center">
                         <Badge
@@ -582,7 +582,7 @@ function PlatformReportingPage() {
                               ? "border-emerald-300 text-emerald-700"
                               : t.technician_status === "busy"
                               ? "border-amber-300 text-amber-700"
-                              : "border-slate-300 text-slate-600"
+                              : "border-slate-300 text-muted-foreground"
                           }
                         >
                           {t.technician_status || "—"}
@@ -599,13 +599,13 @@ function PlatformReportingPage() {
                             <span className="font-medium">{t.avg_technician_rating.toFixed(1)}</span>
                           </div>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-2 py-3 text-xs text-slate-600">
+                      <td className="px-2 py-3 text-xs text-muted-foreground">
                         {t.assigned_warehouses || 0} assigned
                         {t.service_cities?.length > 0 && (
-                          <div className="text-slate-400 mt-0.5">
+                          <div className="text-muted-foreground mt-0.5">
                             {t.service_cities.slice(0, 2).join(", ")}
                             {t.service_cities.length > 2 && ` +${t.service_cities.length - 2}`}
                           </div>
@@ -626,7 +626,7 @@ function PlatformReportingPage() {
             description="All tickets raised by admins — open, resolved, and closed"
           >
             {/* Filter bar */}
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2 flex-wrap">
+            <div className="px-4 py-3 border-b border-border/40 flex items-center gap-2 flex-wrap">
               {(["all", "open", "resolved", "closed"] as const).map((s) => (
                 <button
                   key={s}
@@ -636,7 +636,7 @@ function PlatformReportingPage() {
                     "text-xs font-medium px-3 py-1 rounded-full border transition-colors capitalize",
                     ticketStatusFilter === s
                       ? "bg-slate-900 text-white border-slate-900"
-                      : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+                      : "border-border/40 text-muted-foreground hover:border-slate-300 hover:bg-muted/20",
                   )}
                 >
                   {s === "all" ? `All (${allTickets.length})` : `${s} (${allTickets.filter((t) => t.status === s).length})`}
@@ -645,9 +645,9 @@ function PlatformReportingPage() {
             </div>
 
             {loadingTickets ? (
-              <p className="p-6 text-sm text-slate-500">Loading tickets…</p>
+              <p className="p-6 text-sm text-muted-foreground">Loading tickets…</p>
             ) : filteredTickets.length === 0 ? (
-              <p className="p-6 text-sm text-slate-400 text-center">
+              <p className="p-6 text-sm text-muted-foreground text-center">
                 {allTickets.length === 0 ? "No tickets raised yet" : `No ${ticketStatusFilter} tickets`}
               </p>
             ) : (
@@ -657,12 +657,12 @@ function PlatformReportingPage() {
                     key={ticket.id}
                     type="button"
                     onClick={() => setSelectedTicket(ticket)}
-                    className="w-full text-left p-4 hover:bg-slate-50 transition-colors"
+                    className="w-full text-left p-4 hover:bg-muted/20 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="font-semibold text-sm text-slate-900">{ticket.title}</span>
+                          <span className="font-semibold text-sm text-foreground">{ticket.title}</span>
                           {/* Priority */}
                           <Badge
                             className={cn(
@@ -671,7 +671,7 @@ function PlatformReportingPage() {
                                 ? "bg-red-50 text-red-700 border-red-200"
                                 : ticket.priority === "medium"
                                 ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-slate-100 text-slate-600 border-slate-200",
+                                : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {ticket.priority}
@@ -682,16 +682,16 @@ function PlatformReportingPage() {
                             className={cn(
                               "text-[10px] font-semibold uppercase",
                               ticket.status === "open"
-                                ? "border-slate-300 text-slate-600"
+                                ? "border-slate-300 text-muted-foreground"
                                 : ticket.status === "resolved"
                                 ? "border-emerald-300 text-emerald-700 bg-emerald-50"
-                                : "bg-slate-100 text-slate-500 border-slate-200",
+                                : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {ticket.status}
                           </Badge>
                         </div>
-                        <div className="text-xs text-slate-500 mb-1">
+                        <div className="text-xs text-muted-foreground mb-1">
                           <span className="font-medium">{ticket.reporter_name}</span>
                           <span className="mx-1 opacity-50">·</span>
                           <span className="capitalize">{ticket.reporter_role}</span>
@@ -702,7 +702,7 @@ function PlatformReportingPage() {
                             </>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                           {ticket.description}
                         </p>
                         {ticket.resolved_note && (
@@ -711,7 +711,7 @@ function PlatformReportingPage() {
                           </p>
                         )}
                       </div>
-                      <div className="shrink-0 text-xs text-slate-400 text-right space-y-1 min-w-[90px]">
+                      <div className="shrink-0 text-xs text-muted-foreground text-right space-y-1 min-w-[90px]">
                         <div>{new Date(ticket.created_at).toLocaleDateString()}</div>
                         {ticket.resolved_at && (
                           <div className="text-emerald-600 font-medium flex items-center gap-1 justify-end">
@@ -720,7 +720,7 @@ function PlatformReportingPage() {
                           </div>
                         )}
                         {ticket.closed_at && (
-                          <div className="text-slate-400 font-medium">
+                          <div className="text-muted-foreground font-medium">
                             Closed {new Date(ticket.closed_at).toLocaleDateString()}
                           </div>
                         )}

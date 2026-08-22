@@ -38,7 +38,7 @@ export function PlatformOverviewTable<T extends { admin_id: string; name: string
       </CardHeader>
       <CardContent className="p-0">
         {visible.length === 0 ? (
-          <div className="p-6 text-center text-sm text-slate-500">{emptyLabel}</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">{emptyLabel}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

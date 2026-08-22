@@ -119,12 +119,12 @@ export function MobileCardTable({ data, renderCard, emptyMessage = "No data avai
   return (
     <div className="space-y-2 md:hidden">
       {data.length === 0 ? (
-        <div className="p-8 text-center text-sm text-muted-foreground border border-border rounded-md">
+        <div className="p-8 text-center text-sm text-muted-foreground border-border rounded-md">
           {emptyMessage}
         </div>
       ) : (
         data.map((item, idx) => (
-          <div key={idx} className="border border-border rounded-md p-3 bg-background">
+          <div key={idx} className="border-border rounded-2xl p-3 bg-background">
             {renderCard(item, idx)}
           </div>
         ))

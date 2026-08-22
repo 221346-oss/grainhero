@@ -24,7 +24,7 @@ export function LocationMap({ address, city, country }: Props) {
   return (
     <motion.div
       layout
-      className="overflow-hidden rounded-2xl border border-border bg-card"
+      className="overflow-hidden rounded-2xl border-border bg-card"
       style={{
         backgroundImage:
           "radial-gradient(ellipse at center, rgba(52,211,153,0.05) 0%, transparent 70%)",
@@ -59,7 +59,7 @@ export function LocationMap({ address, city, country }: Props) {
             transition={{ type: "spring", stiffness: 220, damping: 28 }}
           >
             <div className="space-y-3 px-4 pb-4">
-              <div className="overflow-hidden rounded-xl border border-border">
+              <div className="overflow-hidden rounded-xl border-border">
                 <iframe
                   title="Location map"
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=13&output=embed`}

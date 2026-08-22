@@ -198,13 +198,13 @@ export function TechnicianAssignmentDialog({
                 Loading technicians...
               </div>
             ) : technicians.length === 0 ? (
-              <div className="p-4 border border-dashed rounded-lg text-center text-sm text-muted-foreground">
+              <div className="p-4 border-dashed rounded-lg text-center text-sm text-muted-foreground">
                 {isFiltered
                   ? "No technicians assigned to this warehouse yet."
                   : "No technicians available in the system."}
               </div>
             ) : (
-              <div className="space-y-2 max-h-[300px] overflow-y-auto border rounded-lg p-2">
+              <div className="space-y-2 max-h-[300px] overflow-y-auto rounded-lg p-2">
                 {technicians.map((tech: any) => {
                   const statusConfig = TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] || TECH_STATUS_CONFIG.available;
                   const StatusIcon = statusConfig.icon;
@@ -256,7 +256,7 @@ export function TechnicianAssignmentDialog({
 
           {/* Selected Technician Summary */}
           {selectedTech && (
-            <div className="p-3 bg-muted/50 rounded-lg border">
+            <div className="p-3 bg-muted/50 rounded-lg">
               <div className="text-sm font-medium mb-2">Selected: {selectedTech.name}</div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span>Status: {TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.label || "Unknown"}</span>

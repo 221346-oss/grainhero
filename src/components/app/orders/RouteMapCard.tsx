@@ -31,7 +31,7 @@ export function RouteMapCard({ originAddress, originLat, originLng, destAddress,
     : null;
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="rounded-2xl border-border bg-card overflow-hidden">
       <div className="relative h-[240px] bg-gradient-to-br from-primary/5 via-muted/40 to-primary/10 dark:from-primary/10 dark:via-muted/20 dark:to-primary/20">
         {/* faux street lines */}
         <svg className="absolute inset-0 w-full h-full opacity-30 dark:opacity-25" viewBox="0 0 400 240" preserveAspectRatio="none">
@@ -76,7 +76,7 @@ export function RouteMapCard({ originAddress, originLat, originLng, destAddress,
             <div className="text-foreground truncate">{destAddress ?? "—"}</div>
           </div>
         </div>
-        <div className="flex items-center justify-between pt-2 border-t border-border">
+        <div className="flex items-center justify-between pt-2 border-t border-border/40">
           <span className="text-muted-foreground">{km !== null ? `${km.toFixed(1)} km` : "Add coordinates to see distance"}</span>
           {directionsUrl && (
             <a href={directionsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary font-semibold hover:underline">

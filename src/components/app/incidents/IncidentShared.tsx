@@ -134,7 +134,7 @@ export function IncidentTabNav({ counts = {}, basePath = "/platform/field-incide
   };
 
   return (
-    <div className="flex items-center gap-0 border-b border-border mb-5 overflow-x-auto no-scrollbar">
+    <div className="flex items-center gap-0 border-b border-border/40 mb-5 overflow-x-auto no-scrollbar">
       {TABS.map((tab) => {
         const tabPath = basePath + tab.subpath;
         const active = isActive(tabPath);
@@ -228,7 +228,7 @@ export function SearchCombobox({
         </button>
       )}
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[260px] rounded-md border border-border bg-popover shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full min-w-[260px] rounded-md border-border bg-popover shadow-lg max-h-60 overflow-y-auto">
           <div className="py-1">
             {filtered.length === 0 && (
               <p className="px-3 py-2 text-xs text-muted-foreground italic">No matching titles found.</p>
@@ -414,7 +414,7 @@ export function DetailPanel({
           {row.resolution_notes && (
             <div className="space-y-1">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Resolution notes</p>
-              <p className="text-sm whitespace-pre-wrap bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-200/60 rounded-lg px-3 py-2 leading-relaxed">
+              <p className="text-sm whitespace-pre-wrap bg-emerald-50/60 dark:bg-emerald-900/10 border-emerald-200/60 rounded-lg px-3 py-2 leading-relaxed">
                 {row.resolution_notes}
               </p>
             </div>

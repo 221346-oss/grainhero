@@ -155,7 +155,7 @@ function MonitoringWorkspace() {
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Bar Chart Panel */}
-          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+          <div className="lg:col-span-2 bg-card border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
               Monitoring Overview
             </p>
@@ -192,7 +192,7 @@ function MonitoringWorkspace() {
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+          <div className="bg-card border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
             <div className="flex justify-between items-start mb-6">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                 Key Metrics
@@ -228,9 +228,9 @@ function MonitoringWorkspace() {
         </div>
 
         {/* Tabbed Sections */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="bg-card border-border rounded-2xl overflow-hidden">
           {/* Tab Bar — variable-font hover nav */}
-          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
+          <div className="border-b border-border/40 px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {visibleTabs.map((tab) => {
                 const isActive = activeTab === tab.key;

@@ -68,7 +68,7 @@ export function ThresholdDrawer({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-lg border p-3 space-y-3">
+          <div className="rounded-lg p-3 space-y-3">
             <div className="text-sm font-medium">Add / update</div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
@@ -96,7 +96,7 @@ export function ThresholdDrawer({
             </Button>
           </div>
 
-          <div className="rounded-lg border">
+          <div className="rounded-lg">
             <div className="px-3 py-2 text-sm font-medium border-b">Existing</div>
             {isLoading ? <div className="p-4 text-sm text-muted-foreground">Loading…</div> :
               (data?.thresholds ?? []).length === 0 ? <div className="p-4 text-sm text-muted-foreground">No thresholds configured.</div> :

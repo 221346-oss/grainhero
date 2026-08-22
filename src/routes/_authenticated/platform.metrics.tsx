@@ -127,7 +127,7 @@ function MetricRegistryPage() {
 
       <AdminDataCard title="Metrics" description="Click a metric to edit or preview.">
         <table className="w-full text-sm">
-          <thead className="text-xs uppercase tracking-wide text-slate-500 bg-slate-50/50">
+          <thead className="text-xs uppercase tracking-wide text-muted-foreground bg-muted/20">
             <tr>
               <th className="text-left px-4 py-2">Key</th>
               <th className="text-left px-4 py-2">Label</th>
@@ -140,9 +140,9 @@ function MetricRegistryPage() {
           <tbody>
             {metrics.map((m) => (
               <tr key={m.id} className="border-t hover:bg-emerald-50/40">
-                <td className="px-4 py-2 font-mono text-xs text-slate-700">{m.key}</td>
+                <td className="px-4 py-2 font-mono text-xs text-foreground">{m.key}</td>
                 <td className="px-4 py-2">{m.label}</td>
-                <td className="px-4 py-2 text-slate-500">{m.format}</td>
+                <td className="px-4 py-2 text-muted-foreground">{m.format}</td>
                 <td className="px-4 py-2">
                   <div className="flex flex-wrap gap-1">
                     {(m.allowed_roles as string[]).map((r) => (
@@ -165,7 +165,7 @@ function MetricRegistryPage() {
               </tr>
             ))}
             {metrics.length === 0 && !listQ.isPending && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No metrics yet. Add your first one.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No metrics yet. Add your first one.</td></tr>
             )}
           </tbody>
         </table>
@@ -179,7 +179,7 @@ function MetricRegistryPage() {
 
       <AdminDataCard title="Recent warehouse refreshes">
         <table className="w-full text-sm">
-          <thead className="text-xs uppercase text-slate-500 bg-slate-50/50">
+          <thead className="text-xs uppercase text-muted-foreground bg-muted/20">
             <tr>
               <th className="text-left px-4 py-2">Fact</th>
               <th className="text-left px-4 py-2">Started</th>
@@ -191,7 +191,7 @@ function MetricRegistryPage() {
             {(logQ.data?.rows ?? []).map((r) => (
               <tr key={String(r.id)} className="border-t">
                 <td className="px-4 py-2 font-mono text-xs">{String(r.fact_name)}</td>
-                <td className="px-4 py-2 text-xs text-slate-500">{String(r.started_at ?? "")}</td>
+                <td className="px-4 py-2 text-xs text-muted-foreground">{String(r.started_at ?? "")}</td>
                 <td className="px-4 py-2 text-right tabular-nums">{String(r.rows_upserted ?? 0)}</td>
                 <td className="px-4 py-2 text-xs text-rose-600 truncate max-w-[300px]">{String(r.error ?? "")}</td>
               </tr>
@@ -256,7 +256,7 @@ function MetricEditorSheet({
               value={form.sql_template}
               onChange={(e) => upd({ sql_template: e.target.value })}
             />
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1">
               Must return a single row. Access filters via <code>$1-&gt;&gt;'key'</code>. Bound by run_metric() sandbox.
             </p>
           </div>
@@ -287,7 +287,7 @@ function MetricEditorSheet({
                 const on = (form.allowed_roles as string[]).includes(r);
                 return (
                   <button key={r} type="button" onClick={() => toggleRole(r)}
-                    className={`px-3 py-1 rounded-full text-xs border transition-colors ${on ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-slate-600 border-slate-200 hover:border-emerald-300"}`}>
+                    className={`px-3 py-1 rounded-full text-xs border transition-colors ${on ? "bg-emerald-500 text-white border-emerald-500" : "bg-card text-muted-foreground border-border/40 hover:border-emerald-300"}`}>
                     {r}
                   </button>
                 );

@@ -263,7 +263,7 @@ function PlanManagementPage() {
 
       {/* Pending scheduled / pending payment banner */}
       {pending && (
-        <div className="rounded-xl border border-amber-300/60 bg-amber-500/10 text-amber-900 dark:text-amber-200 p-4 flex items-start gap-3">
+        <div className="rounded-xl border-amber-300/60 bg-amber-500/10 text-amber-900 dark:text-amber-200 p-4 flex items-start gap-3">
           <Clock className="h-5 w-5 mt-0.5 shrink-0" />
           <div className="flex-1 text-sm">
             <div className="font-semibold">
@@ -411,7 +411,7 @@ function PlanManagementPage() {
               <b>3 billing cycles</b>. One tap. No card change.
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4 text-sm text-foreground/80">
+          <div className="rounded-lg border-emerald-500/40 bg-emerald-500/5 p-4 text-sm text-foreground/80">
             <div className="flex items-center justify-between">
               <span>Your next {currentCycle} bill</span>
               <span className="text-right">
@@ -543,7 +543,7 @@ function HeroBanner({
 }) {
   const hasDiscount = retention.discount_pct > 0 && retention.active_until && new Date(retention.active_until) > new Date();
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-card to-card p-5 md:p-6">
+    <div className="relative overflow-hidden rounded-2xl border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-card to-card p-5 md:p-6">
       <div className="absolute -top-16 -right-16 h-52 w-52 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
       <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -617,7 +617,7 @@ function UsageStrip({
             const hot = pct >= 70;
             const critical = pct >= 90;
             return (
-              <div key={it.label} className="rounded-lg border border-border bg-card p-3">
+              <div key={it.label} className="rounded-2xl border-border bg-card p-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
                     <it.icon className="h-3.5 w-3.5" />
@@ -662,7 +662,7 @@ function RoiCalculator({ currentPlan }: { currentPlan: string }) {
           label="Est. spoilage reduction"
           value={<span className="text-emerald-600 font-bold">~{spoilagePctSavings}% of stock value</span>}
         />
-        <div className="rounded-md border border-dashed border-emerald-500/40 bg-emerald-500/5 p-2.5 text-[11px] text-foreground/80">
+        <div className="rounded-md border-dashed border-emerald-500/40 bg-emerald-500/5 p-2.5 text-[11px] text-foreground/80">
           For a mid-size operator, that's typically <b className="text-emerald-600">10×</b> the upgrade cost recovered each month.
         </div>
       </CardContent>
@@ -708,7 +708,7 @@ function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: st
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.label} className="border-t border-border">
+              <tr key={r.label} className="border-t border-border/40">
                 <td className="py-2 pr-2 text-foreground/80">{r.label}</td>
                 {plans.map((p) => {
                   const raw = p.limits?.[r.key as string] as number;
@@ -726,7 +726,7 @@ function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: st
                 })}
               </tr>
             ))}
-            <tr className="border-t border-border">
+            <tr className="border-t border-border/40">
               <td className="py-2 pr-2 text-foreground/80">Priority support</td>
               <td className="py-2 px-2 text-right text-muted-foreground">Email</td>
               <td className="py-2 px-2 text-right font-semibold">Chat + Email</td>
@@ -741,7 +741,7 @@ function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: st
 
 function SocialProofStrip() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
+    <div className="rounded-2xl border-border bg-card p-4 md:p-5">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex items-center gap-2 text-sm">
           <div className="flex -space-x-2">
@@ -801,7 +801,7 @@ function PreviewPanel({
               />
             </div>
             {preview.apply_now ? (
-              <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4">
+              <div className="rounded-lg border-emerald-500/40 bg-emerald-500/5 p-4">
                 <div className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-400 font-semibold">
                   {preview.quote_source === "stripe"
                     ? "Stripe-verified prorated charge"
@@ -828,7 +828,7 @@ function PreviewPanel({
                 <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">Cancel</Button>
               </div>
             ) : (
-              <div className="rounded-lg border border-amber-400/40 bg-amber-500/5 p-4">
+              <div className="rounded-lg border-amber-400/40 bg-amber-500/5 p-4">
                 <div className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5" /> Scheduled at period end
                 </div>
@@ -856,7 +856,7 @@ function PreviewPanel({
 
 function SummaryTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
+    <div className="rounded-2xl border-border bg-card p-3">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</div>
       <div className="text-sm font-semibold text-foreground mt-0.5">{value}</div>
     </div>

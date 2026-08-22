@@ -157,7 +157,7 @@ function SettingsPage() {
     >
       <Tabs value={tab} onValueChange={setTab}>
         {/* Variable-font hover nav — letters bolden outward from the center */}
-        <div className="mb-6 overflow-x-auto no-scrollbar border-b border-border">
+        <div className="mb-6 overflow-x-auto no-scrollbar border-b border-border/40">
           <div className="flex items-center gap-8 px-1">
             {([
               { value: "profile", label: "Profile" },
@@ -357,8 +357,8 @@ function PlatformSettingsSection() {
           <CardDescription>When on, tenant apps can display a maintenance notice. Reads platform_settings.config.maintenance_mode.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
-            <span className="text-sm font-medium text-slate-700">Enable maintenance mode</span>
+          <div className="flex items-center justify-between rounded-lg border-border/40 p-3">
+            <span className="text-sm font-medium text-foreground">Enable maintenance mode</span>
             <Switch checked={cfg.maintenance_mode} onCheckedChange={(v) => setCfg({ ...cfg, maintenance_mode: v })} />
           </div>
         </CardContent>
@@ -374,7 +374,7 @@ function PlatformSettingsSection() {
             <p className="text-sm text-muted-foreground">No feature flags yet.</p>
           )}
           {Object.entries(cfg.feature_flags).map(([k, v]) => (
-            <div key={k} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+            <div key={k} className="flex items-center justify-between rounded-lg border-border/40 p-3">
               <code className="text-sm font-mono">{k}</code>
               <div className="flex items-center gap-2">
                 <Switch checked={v} onCheckedChange={(next) => setCfg({ ...cfg, feature_flags: { ...cfg.feature_flags, [k]: next } })} />
@@ -407,7 +407,7 @@ function PlatformSettingsSection() {
             <p className="text-sm text-muted-foreground">No default thresholds yet.</p>
           )}
           {Object.entries(cfg.default_thresholds).map(([k, v]) => (
-            <div key={k} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3">
+            <div key={k} className="flex items-center justify-between gap-3 rounded-lg border-border/40 p-3">
               <code className="text-sm font-mono flex-1 truncate">{k}</code>
               <Input
                 type="number"
@@ -524,20 +524,20 @@ function IotPricingCard({
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between rounded-lg border border-slate-200 p-3 gap-3"
+              className="flex items-center justify-between rounded-lg border-border/40 p-3 gap-3"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-slate-800">{item.name}</span>
-                  <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                  <span className="text-sm font-semibold text-foreground">{item.name}</span>
+                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                     {item.unit}
                   </span>
                 </div>
                 {item.description && (
-                  <p className="text-xs text-slate-500 mt-0.5 truncate">{item.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>
                 )}
               </div>
-              <div className="text-sm font-bold text-slate-700 tabular-nums shrink-0">
+              <div className="text-sm font-bold text-foreground tabular-nums shrink-0">
                 PKR {fmtPKR(item.price_pkr)}
               </div>
               <div className="flex items-center gap-1 shrink-0">

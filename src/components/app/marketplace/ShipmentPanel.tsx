@@ -76,7 +76,7 @@ export function ShipmentPanel({
       <CardHeader className="pb-2"><CardTitle className="text-sm">Shipment & tracking</CardTitle></CardHeader>
       <CardContent className="space-y-3">
         {!ship && canManage && orderStatus === "paid" && (
-          <div className="space-y-2 rounded-md border p-3">
+          <div className="space-y-2 rounded-md p-3">
             <div className="text-xs text-muted-foreground">No shipment yet. Dispatch this order:</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div>
@@ -117,7 +117,7 @@ export function ShipmentPanel({
               {events.length === 0 ? (
                 <div className="text-muted-foreground">No tracking events yet.</div>
               ) : (events as Array<{ id: string; label: string; location: string | null; at: string }>).map((e) => (
-                <div key={e.id} className="flex justify-between border-b py-1 last:border-0 text-slate-600">
+                <div key={e.id} className="flex justify-between border-b py-1 last:border-0 text-muted-foreground">
                   <span><b>{e.label}</b>{e.location ? ` · ${e.location}` : ""}</span>
                   <span>{new Date(e.at).toLocaleString()}</span>
                 </div>

@@ -78,8 +78,8 @@ function SiloRequestPage() {
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Request a new silo</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Request a new silo</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Fill in your install details and submit. Our team will review and approve your request —
           you'll be notified once it's ready for payment.
         </p>
@@ -214,7 +214,7 @@ function SiloRequestPage() {
                   className={phoneError ? "border-red-400 focus-visible:ring-red-400" : ""}
                 />
                 {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
-                <p className="text-[11px] text-slate-400">Pakistani number — e.g. +923001234567 or 03001234567</p>
+                <p className="text-[11px] text-muted-foreground">Pakistani number — e.g. +923001234567 or 03001234567</p>
               </div>
 
               <div className="grid gap-1.5">
@@ -229,8 +229,8 @@ function SiloRequestPage() {
               </div>
 
               {/* What happens next info box */}
-              <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600 space-y-2">
-                <p className="font-semibold text-slate-700">What happens next</p>
+              <div className="rounded-lg bg-muted/20 border-border/40 p-4 text-sm text-muted-foreground space-y-2">
+                <p className="font-semibold text-foreground">What happens next</p>
                 <ol className="list-decimal pl-5 space-y-1 text-xs">
                   <li>Our team reviews your request (usually within 24 hours).</li>
                   <li>You'll receive an in-app notification once approved.</li>

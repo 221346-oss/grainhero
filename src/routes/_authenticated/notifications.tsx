@@ -98,14 +98,14 @@ function NotificationPreferences() {
   });
 
   return (
-    <Card className="border-slate-200/70">
+    <Card className="border-border/40/70">
       <CardHeader>
         <CardTitle className="text-base">Notification preferences</CardTitle>
         <CardDescription>Choose how we contact you. Changes save automatically.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {PREF_ROWS.map((row) => (
-          <div key={row.key} className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div key={row.key} className="flex items-center justify-between rounded-lg border-border p-3">
             <span className="text-sm font-medium text-foreground">{row.label}</span>
             <Switch
               checked={prefs[row.key]}
@@ -167,8 +167,8 @@ function NotificationsPage() {
       </Link>
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Notifications</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Notifications</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {unread > 0 ? `${unread} unread notification${unread === 1 ? "" : "s"}` : "All caught up!"}
           </p>
         </div>
@@ -204,7 +204,7 @@ function NotificationsPage() {
 
       {(data?.availableCategories?.length ?? 0) > 0 && (
         <div className="flex gap-1.5 flex-wrap items-center">
-          <span className="text-xs text-slate-500 uppercase tracking-wide mr-1">Categories:</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide mr-1">Categories:</span>
           {(data?.availableCategories ?? []).map((c) => {
             const on = categories.has(c);
             return (
@@ -229,12 +229,12 @@ function NotificationsPage() {
         </div>
       )}
 
-      <Card className="border-slate-200/70">
+      <Card className="border-border/40/70">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-4"><ListSkeleton rows={5} /></div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Bell className="h-12 w-12 mb-3 opacity-30" />
               <p className="text-lg font-medium">No notifications</p>
               <p className="text-sm mt-1">

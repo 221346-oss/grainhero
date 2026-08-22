@@ -119,7 +119,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
           <div className="mt-4 space-y-6">
             {/* Warning: if admin_id is null the advance_install_stage RPC will throw "order not found" */}
             {order && !order.admin_id && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+              <div className="rounded-md border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
                 ⚠️ This order has no admin linked (admin_id is null). Stage advances will fail until
                 the admin completes payment and the order is claimed. Ask the admin to go to
                 their install orders page and complete payment.
@@ -237,7 +237,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
               <div className="space-y-2 mb-3">
                 {(q.data?.events ?? []).length === 0 && <div className="text-xs text-muted-foreground">No visit events yet.</div>}
                 {(q.data?.events ?? []).map((e: any) => (
-                  <div key={e.id} className="border border-border rounded-lg p-3 bg-card">
+                  <div key={e.id} className="border-border rounded-2xl p-3 bg-card">
                     <div className="text-xs text-muted-foreground mb-1">{new Date(e.event_at).toLocaleString()}</div>
                     <div className="text-sm text-foreground whitespace-pre-wrap">{e.note}</div>
                   </div>

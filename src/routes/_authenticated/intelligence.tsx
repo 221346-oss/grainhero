@@ -113,7 +113,7 @@ function IntelligenceWorkspace() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Bar Chart Panel */}
-          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+          <div className="lg:col-span-2 bg-card border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
               Intelligence Overview
             </p>
@@ -153,7 +153,7 @@ function IntelligenceWorkspace() {
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
+          <div className="bg-card border-border rounded-2xl p-6 flex flex-col justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
               Key Metrics
             </p>
@@ -178,10 +178,10 @@ function IntelligenceWorkspace() {
         </div>
 
         {/* Tabbed Sections */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="bg-card border-border rounded-2xl overflow-hidden">
 
           {/* Tab Bar — variable-font hover nav */}
-          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
+          <div className="border-b border-border/40 px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key;

@@ -32,8 +32,8 @@ export function AdminDataCard({
       <CardContent className="p-0">
         <div className={cn("overflow-auto", maxHeight)}>{children}</div>
         {totalPages && totalPages > 1 && page !== undefined && onPageChange && (
-          <div className="flex items-center justify-between p-4 border-t bg-slate-50/50">
-            <p className="text-sm text-slate-500">
+          <div className="flex items-center justify-between p-4 bg-muted/20">
+            <p className="text-sm text-muted-foreground">
               Page {page} of {totalPages}
             </p>
             <div className="flex gap-2">

@@ -310,15 +310,15 @@ function ActuatorsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-lg border p-2 bg-muted/30">
+                    <div className="rounded-lg p-2 bg-muted/30">
                       <div className="text-[10px] uppercase text-muted-foreground">Power</div>
                       <div className="font-bold flex items-center justify-center gap-1"><Gauge className="h-3 w-3" />{r.power_level ?? 0}%</div>
                     </div>
-                    <div className="rounded-lg border p-2 bg-muted/30">
+                    <div className="rounded-lg p-2 bg-muted/30">
                       <div className="text-[10px] uppercase text-muted-foreground">Mode</div>
                       <div className="font-bold text-xs">{authority === "HUMAN" ? "🧑 Manual" : authority === "FAILSAFE" ? "🛡️ Safe" : "🤖 Auto"}</div>
                     </div>
-                    <div className="rounded-lg border p-2 bg-muted/30">
+                    <div className="rounded-lg p-2 bg-muted/30">
                       <div className="text-[10px] uppercase text-muted-foreground">ML</div>
                       <div className="font-bold text-xs capitalize truncate">{r.ml_decision ?? "—"}</div>
                     </div>
@@ -509,7 +509,7 @@ function ActuatorsPage() {
                 <Row label="MAC" val={viewing.mac_address ?? "—"} />
                 {viewing.notes && <Row label="Notes" val={viewing.notes} />}
                 {viewing.current_operation && (
-                  <div className="p-2 rounded border bg-muted/30 text-xs">
+                  <div className="p-2 rounded bg-muted/30 text-xs">
                     <div className="font-medium mb-1">Last operation</div>
                     <pre className="whitespace-pre-wrap">{JSON.stringify(viewing.current_operation, null, 2)}</pre>
                   </div>
@@ -557,7 +557,7 @@ function StatCard({ label, value, icon, tone }: { label: string; value: number; 
     rose: "text-rose-500/70 dark:text-rose-400/70",
   };
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
+    <div className="rounded-2xl border-border bg-card p-3">
       <div className="flex items-center justify-between">
         <div className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">{label}</div>
         <span className={iconTone[tone]}>{icon}</span>

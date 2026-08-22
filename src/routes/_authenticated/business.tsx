@@ -206,12 +206,12 @@ function BusinessWorkspace() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+          <div className="lg:col-span-2 bg-card border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">Business Overview</p>
             <RevenueChart invoices={invoices} payments={payments} />
           </div>
 
-          <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+          <div className="bg-card border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
             <div className="flex justify-between items-center mb-6 gap-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Key Metrics</p>
               <DropdownMenu>
@@ -263,7 +263,7 @@ function BusinessWorkspace() {
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
                       <div className="flex items-center gap-2">
-                        <FileText className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground dark:text-muted-foreground" />
                         <span className="font-medium">Invoiced</span>
                       </div>
                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
@@ -411,8 +411,8 @@ function BusinessWorkspace() {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
+        <div className="bg-card border-border rounded-2xl overflow-hidden">
+          <div className="border-b border-border/40 px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key;

@@ -38,7 +38,7 @@ export function CustomWidgetsBand({ className }: { className?: string }) {
   return (
     <section className={className}>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <LayoutGrid className="h-4 w-4 text-emerald-600" />
           My Metrics
         </h2>

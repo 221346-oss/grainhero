@@ -33,7 +33,7 @@ function statusBadge(s: string | null | undefined) {
     case "trial": return "bg-blue-100 text-blue-800 border-blue-200";
     case "cancelled": return "bg-red-100 text-red-800 border-red-200";
     case "expired": return "bg-amber-100 text-amber-800 border-amber-200";
-    default: return "bg-slate-100 text-slate-700 border-slate-200";
+    default: return "bg-muted text-foreground border-border/40";
   }
 }
 
@@ -89,36 +89,36 @@ function PlatformSubscriptionsPage() {
     >
       <AdminDataCard title="All subscriptions" description={`${allSubs.length} subscription${allSubs.length === 1 ? "" : "s"} · manage plans, cancel or resume from here`}>
         {allSubs.length === 0 && (
-          <div className="p-8 text-center text-sm text-slate-500">No tenant subscriptions yet.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">No tenant subscriptions yet.</div>
         )}
         <div className="divide-y divide-slate-100 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b">
+            <thead className="bg-muted/20 border-b">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold text-slate-700">User</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-700">Plan</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-700">Status</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-700">Price</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-700">Expires</th>
-                <th className="text-right px-4 py-3 font-semibold text-slate-700">Actions</th>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">User</th>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">Plan</th>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">Status</th>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">Price</th>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">Expires</th>
+                <th className="text-right px-4 py-3 font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {allSubs.map((s: any) => {
                 const daysLeft = s.next_payment_date ? Math.ceil((new Date(s.next_payment_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
                 const expiryText = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";
-                const expiryColor = daysLeft !== null && daysLeft <= 7 ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-slate-500";
+                const expiryColor = daysLeft !== null && daysLeft <= 7 ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-muted-foreground";
                 return (
-                  <tr key={s.id} className="border-b hover:bg-slate-50 last:border-b-0">
+                  <tr key={s.id} className="border-b hover:bg-muted/20 last:border-b-0">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{s.user_name}</div>
-                      <div className="text-xs text-slate-500">{s.user_email}</div>
+                      <div className="font-medium text-foreground">{s.user_name}</div>
+                      <div className="text-xs text-muted-foreground">{s.user_email}</div>
                     </td>
                     <td className="px-4 py-3 font-medium">{s.plan_name}</td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className={statusBadge(s.status)}>{s.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 font-mono text-sm">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-slate-500">/mo</span></td>
+                    <td className="px-4 py-3 font-mono text-sm">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-muted-foreground">/mo</span></td>
                     <td className={`px-4 py-3 text-[10px] font-medium ${expiryColor}`}>{expiryText}</td>
                     <td className="px-4 py-3 text-right">
                       <DropdownMenu>

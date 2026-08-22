@@ -149,10 +149,10 @@ export function MobileAdminNav({ isOpen, onClose }: MobileAdminNavProps) {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 220 }}
-            className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-white border-r border-border z-50 flex flex-col md:hidden"
+            className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-card border-r border-border z-50 flex flex-col md:hidden"
           >
         {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-border px-4 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 bg-card border-b border-border/40 px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#2FAC0C] flex items-center justify-center">
               <span className="text-white font-bold text-sm">GH</span>

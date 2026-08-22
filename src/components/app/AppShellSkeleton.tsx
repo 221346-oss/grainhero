@@ -56,7 +56,7 @@ function AppShellBodyFallback() {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border/40 bg-card p-4 space-y-3">
+          <div key={i} className="rounded-2xl border-border/40 bg-card p-4 space-y-3">
             <Skeleton className="h-3 w-20 rounded" />
             <Skeleton className="h-8 w-24 rounded" />
             <Skeleton className="h-3 w-16 rounded" />
@@ -64,10 +64,10 @@ function AppShellBodyFallback() {
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-xl border border-border/40 bg-card p-4 h-72">
+        <div className="lg:col-span-2 rounded-2xl border-border/40 bg-card p-4 h-72">
           <Skeleton className="h-full w-full rounded-lg" />
         </div>
-        <div className="rounded-xl border border-border/40 bg-card p-4 space-y-3">
+        <div className="rounded-2xl border-border/40 bg-card p-4 space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3">
               <Skeleton className="h-9 w-9 rounded-full" />

@@ -129,8 +129,8 @@ function TraceabilityPage() {
     <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Grain Traceability</h1>
-          <p className="text-sm text-slate-500 mt-1">Complete supply chain tracking from farm to market</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Grain Traceability</h1>
+          <p className="text-sm text-muted-foreground mt-1">Complete supply chain tracking from farm to market</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
@@ -151,8 +151,8 @@ function TraceabilityPage() {
           <Card key={s.label}>
             <CardContent className="p-4 sm:p-6">
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-slate-600">{s.label}</p>
-                <p className="text-2xl font-bold text-slate-900">{s.val}</p>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">{s.label}</p>
+                <p className="text-2xl font-bold text-foreground">{s.val}</p>
               </div>
             </CardContent>
           </Card>
@@ -164,7 +164,7 @@ function TraceabilityPage() {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-3">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Batch ID, grain type, or farmer name…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
             <Select value={status} onValueChange={setStatus}>
@@ -186,8 +186,8 @@ function TraceabilityPage() {
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No batches found</h3>
-            <p className="text-slate-600">Try adjusting your search criteria or filters.</p>
+            <h3 className="text-lg font-medium text-foreground mb-2">No batches found</h3>
+            <p className="text-muted-foreground">Try adjusting your search criteria or filters.</p>
           </CardContent>
         </Card>
       ) : (
@@ -207,30 +207,30 @@ function TraceabilityPage() {
                   <CardDescription>{batch.grain_type}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <QrCode className="h-4 w-4 text-slate-500" />
-                      <span className="text-sm text-slate-600">QR Code</span>
+                      <QrCode className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">QR Code</span>
                     </div>
                     <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setSelected(batch); setQrOpen(true); }}>
                       View QR
                     </Button>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <MapPin className="h-4 w-4 text-slate-400" />{silo?.name ?? "No location"}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />{silo?.name ?? "No location"}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     {Number(batch.quantity_kg).toLocaleString()} kg
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className="h-4 w-4 text-slate-400" />
-                    <span className="text-slate-600">Risk:</span>
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Risk:</span>
                     <Badge className={riskBadge(Number(batch.risk_score ?? 0))}>
                       {batch.spoilage_label} ({Number(batch.risk_score ?? 0)}%)
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Calendar className="h-4 w-4 text-slate-400" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
                     Intake: {batch.intake_date ? new Date(batch.intake_date).toLocaleDateString() : "—"}
                   </div>
                   {dispatch?.buyer_name && (
@@ -368,20 +368,20 @@ function TimelineBody({ batch }: { batch: Batch }) {
               notes={dispatch.notes}
             />
           ) : batch.status !== "dispatched" && (
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg border-border/40">
               <div className="w-10 h-10 rounded-full bg-slate-400 flex items-center justify-center shrink-0">
                 <Truck className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h4 className="font-medium text-slate-700">Pending Dispatch</h4>
-                <p className="text-sm text-slate-600">Batch is ready for dispatch</p>
+                <h4 className="font-medium text-foreground">Pending Dispatch</h4>
+                <p className="text-sm text-muted-foreground">Batch is ready for dispatch</p>
               </div>
             </div>
           )}
           {batch.notes && (
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-              <h4 className="font-medium text-slate-700 mb-1">Notes</h4>
-              <p className="text-sm text-slate-600">{batch.notes}</p>
+            <div className="p-3 bg-muted/20 rounded-lg border-border/40">
+              <h4 className="font-medium text-foreground mb-1">Notes</h4>
+              <p className="text-sm text-muted-foreground">{batch.notes}</p>
             </div>
           )}
         </CardContent>
@@ -418,22 +418,22 @@ function AuditTrailCard({ batchId }: { batchId: string }) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-sm text-slate-500">Loading…</p>
+          <p className="text-sm text-muted-foreground">Loading…</p>
         ) : events.length === 0 ? (
-          <p className="text-sm text-slate-500">No logged events yet for this batch.</p>
+          <p className="text-sm text-muted-foreground">No logged events yet for this batch.</p>
         ) : (
           <div className="space-y-2">
             {events.map((e: any) => (
-              <div key={`${e.kind}-${e.id}`} className="flex items-start gap-3 text-sm border-l-2 border-slate-200 pl-3 py-1">
+              <div key={`${e.kind}-${e.id}`} className="flex items-start gap-3 text-sm border-l-2 border-border/40 pl-3 py-1">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-slate-800">{e.action.replace(/[._]/g, " ")}</span>
+                    <span className="font-medium text-foreground">{e.action.replace(/[._]/g, " ")}</span>
                     {e.kind === "field_incident" && (
                       <Badge variant="outline" className="text-[10px]">field incident</Badge>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500">{e.description}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-xs text-muted-foreground">{e.description}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     {e.actorName}{e.actorRole ? ` (${e.actorRole})` : ""} · {new Date(e.at).toLocaleString()}
                   </p>
                 </div>
@@ -474,7 +474,7 @@ function TimelineStep({
           ))}
         </div>
         {notes && (
-          <div className="mt-2 p-2 bg-white/70 rounded text-xs">
+          <div className="mt-2 p-2 bg-card/70 rounded text-xs">
             <span className="font-medium">Notes:</span> {notes}
           </div>
         )}

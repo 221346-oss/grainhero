@@ -149,7 +149,7 @@ function EnvironmentalPage() {
             {current?.weather?.[0]?.icon && (
               <div className="flex items-center gap-2">
                 <img src={`https://openweathermap.org/img/wn/${current.weather[0].icon}@2x.png`} alt="" width={56} height={56} />
-                <span className="text-sm font-medium capitalize text-slate-600">{current.weather[0].description}</span>
+                <span className="text-sm font-medium capitalize text-muted-foreground">{current.weather[0].description}</span>
               </div>
             )}
           </div>
@@ -183,7 +183,7 @@ function EnvironmentalPage() {
             <div className={`text-4xl font-bold ${aqiColor(aqi)}`}>{aqi ?? "--"}</div>
             <div>
               <div className={`text-lg font-semibold ${aqiColor(aqi)}`}>{aqiLabel(aqi)}</div>
-              <div className="text-xs text-slate-500">1 = Good … 5 = Very Poor</div>
+              <div className="text-xs text-muted-foreground">1 = Good … 5 = Very Poor</div>
             </div>
           </div>
           {aqiComp && (
@@ -198,9 +198,9 @@ function EnvironmentalPage() {
                 ["NO", aqiComp.no, "text-teal-600"],
                 ["NH₃", aqiComp.nh3, "text-lime-600"],
               ].map(([label, value, color]) => (
-                <div key={String(label)} className="p-2 rounded-lg border bg-white">
-                  <div className="text-xs text-slate-500">{label as string}</div>
-                  <div className={`text-lg font-bold ${color as string}`}>{typeof value === "number" ? value.toFixed(1) : "--"} <span className="text-xs font-normal text-slate-400">μg/m³</span></div>
+                <div key={String(label)} className="p-2 rounded-lg bg-card">
+                  <div className="text-xs text-muted-foreground">{label as string}</div>
+                  <div className={`text-lg font-bold ${color as string}`}>{typeof value === "number" ? value.toFixed(1) : "--"} <span className="text-xs font-normal text-muted-foreground">μg/m³</span></div>
                 </div>
               ))}
             </div>
@@ -215,7 +215,7 @@ function EnvironmentalPage() {
         <CardContent>
           {forecastSeries.length > 0 ? (
             <HairlineGrid cols="grid-cols-1" className="!bg-transparent !border-0">
-              <NeonPanel title="Temperature & Feels-like" className="border border-border rounded-md">
+              <NeonPanel index="01" title="Temperature & Feels-like" className="border-border rounded-md">
                 <ForecastChart>
                   <LineChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
@@ -227,7 +227,7 @@ function EnvironmentalPage() {
                   </LineChart>
                 </ForecastChart>
               </NeonPanel>
-              <NeonPanel title="Precipitation" className="border border-border rounded-md">
+              <NeonPanel index="02" title="Precipitation" className="border-border rounded-md">
                 <ForecastChart>
                   <AreaChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
@@ -239,7 +239,7 @@ function EnvironmentalPage() {
                   </AreaChart>
                 </ForecastChart>
               </NeonPanel>
-              <NeonPanel title="Humidity & Wind" className="border border-border rounded-md">
+              <NeonPanel index="03" title="Humidity & Wind" className="border-border rounded-md">
                 <ForecastChart>
                   <LineChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
@@ -296,8 +296,8 @@ function Metric({ icon: Icon, label, value, sub, color }: { icon: React.Componen
 }
 function MiniMetric({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
-    <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-      <div className="text-xs uppercase text-slate-500 flex items-center gap-1"><Icon className="h-3 w-3" /> {label}</div>
+    <div className="p-3 rounded-lg bg-muted/20 border-border/40">
+      <div className="text-xs uppercase text-muted-foreground flex items-center gap-1"><Icon className="h-3 w-3" /> {label}</div>
       <div className="text-lg font-semibold">{value}</div>
     </div>
   );

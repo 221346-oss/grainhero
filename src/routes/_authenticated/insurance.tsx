@@ -211,25 +211,25 @@ function InsurancePage() {
               <Plus className="h-4 w-4 mr-2" /> New policy
             </Button>
           </div>
-          <Card className="bg-white border border-border">
+          <Card className="bg-card">
             <CardContent className="p-0">
               {policiesLoading ? (
                 <DashboardSkeleton />
               ) : policies.length === 0 ? (
-                <div className="p-10 text-center text-slate-500 font-medium">No policies found</div>
+                <div className="p-10 text-center text-muted-foreground font-medium">No policies found</div>
               ) : (
                 <div className="divide-y divide-border">
                   {policies.map((p) => (
-                    <div key={p.id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30 transition-colors bg-white">
+                    <div key={p.id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30 transition-colors bg-card">
                       <div className="flex-1 min-w-[200px]">
-                        <div className="font-bold text-slate-900 text-base">{p.policy_number}</div>
-                        <div className="text-xs text-slate-500 font-medium mt-0.5">{p.provider_name} · <span className="capitalize">{p.coverage_type}</span></div>
+                        <div className="font-bold text-foreground text-base">{p.policy_number}</div>
+                        <div className="text-xs text-muted-foreground font-medium mt-0.5">{p.provider_name} · <span className="capitalize">{p.coverage_type}</span></div>
                       </div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        <span className="text-xs font-normal text-slate-500 block">Coverage</span>PKR {(p.coverage_amount ?? 0).toLocaleString()}
+                      <div className="text-sm font-semibold text-foreground">
+                        <span className="text-xs font-normal text-muted-foreground block">Coverage</span>PKR {(p.coverage_amount ?? 0).toLocaleString()}
                       </div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        <span className="text-xs font-normal text-slate-500 block">Premium</span>PKR {(p.premium_amount ?? 0).toLocaleString()}
+                      <div className="text-sm font-semibold text-foreground">
+                        <span className="text-xs font-normal text-muted-foreground block">Premium</span>PKR {(p.premium_amount ?? 0).toLocaleString()}
                       </div>
                       <Badge className={POLICY_STATUS[p.status] ?? POLICY_STATUS.pending} variant="outline">{p.status}</Badge>
                       <div className="flex items-center gap-1">
@@ -250,22 +250,22 @@ function InsurancePage() {
               <Plus className="h-4 w-4 mr-2" /> New claim
             </Button>
           </div>
-          <Card className="bg-white border border-border">
+          <Card className="bg-card">
             <CardContent className="p-0">
               {claimsLoading ? (
                 <DashboardSkeleton />
               ) : claims.length === 0 ? (
-                <div className="p-10 text-center text-slate-500 font-medium">No claims found</div>
+                <div className="p-10 text-center text-muted-foreground font-medium">No claims found</div>
               ) : (
                 <div className="divide-y divide-border">
                   {claims.map((c) => (
-                    <div key={c.id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30 transition-colors bg-white">
+                    <div key={c.id} className="flex flex-wrap items-center justify-between gap-4 p-4 hover:bg-muted/30 transition-colors bg-card">
                       <div className="flex-1 min-w-[200px]">
-                        <div className="font-bold text-slate-900 text-base">{c.claim_number}</div>
-                        <div className="text-xs text-slate-500 font-medium mt-0.5 truncate">{c.claim_type} · {c.description ?? "—"}</div>
+                        <div className="font-bold text-foreground text-base">{c.claim_number}</div>
+                        <div className="text-xs text-muted-foreground font-medium mt-0.5 truncate">{c.claim_type} · {c.description ?? "—"}</div>
                       </div>
-                      <div className="text-sm font-semibold text-slate-900"><span className="text-xs font-normal text-slate-500 block">Claimed</span>PKR {(c.amount_claimed ?? 0).toLocaleString()}</div>
-                      <div className="text-sm font-semibold text-slate-900"><span className="text-xs font-normal text-slate-500 block">Approved</span>PKR {(c.amount_approved ?? 0).toLocaleString()}</div>
+                      <div className="text-sm font-semibold text-foreground"><span className="text-xs font-normal text-muted-foreground block">Claimed</span>PKR {(c.amount_claimed ?? 0).toLocaleString()}</div>
+                      <div className="text-sm font-semibold text-foreground"><span className="text-xs font-normal text-muted-foreground block">Approved</span>PKR {(c.amount_approved ?? 0).toLocaleString()}</div>
                       <Badge className={CLAIM_STATUS[c.status] ?? CLAIM_STATUS.filed} variant="outline">{c.status}</Badge>
                       <div className="flex items-center gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openEditClaim(c)}><Edit2 className="h-4 w-4" /></Button>

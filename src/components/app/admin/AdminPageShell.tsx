@@ -39,7 +39,7 @@ export function AdminPageShell({
         ticketCount={ticketCount}
         userName={profile?.name || profile?.email || "Admin"}
       >
-        <div className="w-full px-4 py-4 pb-8 space-y-4 bg-white">
+        <div className="w-full px-4 py-4 pb-8 space-y-4 bg-background">
           <div>
             <h1 className="text-lg font-semibold text-foreground break-words">
               {title}
@@ -59,14 +59,14 @@ export function AdminPageShell({
       {/* Desktop View */}
       <div
         className={cn(
-          "min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 space-y-4 bg-white hidden md:block",
+          "min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 space-y-4 bg-background hidden md:block",
           className,
         )}
       >
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              <h1 className="truncate text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              <h1 className="truncate text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                 {title}
               </h1>
               {subtitle && <InfoDot text={subtitle} />}

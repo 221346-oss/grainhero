@@ -268,7 +268,7 @@ function SensorsPage() {
 
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search device, MAC, silo…" className="pl-9" />
         </div>
         <div className="grid grid-cols-2 sm:flex gap-2">
@@ -327,7 +327,7 @@ function SensorsPage() {
             <DialogDescription>Device ID is auto-generated if omitted.</DialogDescription>
           </DialogHeader>
           {warehouses.length === 0 && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
+            <div className="rounded-md border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">You have no warehouses yet.</div>
@@ -336,7 +336,7 @@ function SensorsPage() {
             </div>
           )}
           {warehouses.length > 0 && form.warehouse_id && filteredSilos.length === 0 && (
-            <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
+            <div className="rounded-md border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">This warehouse has no silos.</div>
@@ -477,7 +477,7 @@ function SensorsPage() {
                 onEdit={() => { setViewOpen(false); openEdit(selected); }}
               />
               {selected.silo_id && (
-                <div className="mt-4 rounded-lg border p-3">
+                <div className="mt-4 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-medium">Live readings</div>
                     <QualityBadge flag={readingByDevice.get(selected.id) ? "ok" : "missing"} />
@@ -524,15 +524,15 @@ function SensorCard({ device, reading, onView, onEdit, onDelete, onThresholds }:
   const sig = reading?.signal_strength ?? device.signal_strength;
 
   return (
-    <Card className="border-slate-200/70 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <Card className="border-border/40/70 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2 min-w-0">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
               <Cpu className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span className="font-semibold text-slate-900 truncate">{device.device_name}</span>
+              <span className="font-semibold text-foreground truncate">{device.device_name}</span>
             </div>
-            <div className="text-xs text-slate-500 truncate mt-0.5">{device.device_id}</div>
+            <div className="text-xs text-muted-foreground truncate mt-0.5">{device.device_id}</div>
           </div>
           <div className="flex flex-col items-end gap-1">
             <StatusBadge value={device.status} />
@@ -548,10 +548,10 @@ function SensorCard({ device, reading, onView, onEdit, onDelete, onThresholds }:
         </div>
 
         {device.silos && (
-          <div className="text-xs text-slate-600 flex items-center gap-1 min-w-0 flex-wrap">
+          <div className="text-xs text-muted-foreground flex items-center gap-1 min-w-0 flex-wrap">
             <span className="truncate">{device.silos.name}</span>
             {device.warehouses && (<>
-              <span className="text-slate-400">·</span>
+              <span className="text-muted-foreground">·</span>
               <Building2 className="w-3 h-3" /><span className="truncate">{device.warehouses.name}</span>
             </>)}
           </div>
@@ -574,7 +574,7 @@ function SensorCard({ device, reading, onView, onEdit, onDelete, onThresholds }:
         </div>
 
         {/* Health */}
-        <div className="flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 pt-2">
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-2">
           <span className="inline-flex items-center gap-1">
             <Battery className="w-3 h-3" /> {batt != null ? `${Math.round(Number(batt))}%` : "—"}
           </span>
@@ -627,8 +627,8 @@ function DeviceDetail({ device, reading, historyFn, onEdit }: {
         <Row label="Last heartbeat">{device.last_heartbeat ? new Date(device.last_heartbeat).toLocaleString() : "—"}</Row>
         <Row label="Calibration due">{device.calibration_due_date ? new Date(device.calibration_due_date).toLocaleDateString() : "—"}</Row>
 
-        <div className="pt-3 border-t border-slate-100">
-          <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">Latest reading</div>
+        <div className="pt-3 border-t border-border/40">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Latest reading</div>
           {reading ? (
             <div className="grid grid-cols-4 gap-2">
               <MiniReading icon={Thermometer} value={reading.temperature_value} unit="°C" />
@@ -636,17 +636,17 @@ function DeviceDetail({ device, reading, historyFn, onEdit }: {
               <MiniReading icon={Wind} value={reading.co2_value} unit="ppm" />
               <MiniReading icon={AlertTriangle} value={reading.voc_value} unit="" />
             </div>
-          ) : <p className="text-xs text-slate-500">No readings yet.</p>}
+          ) : <p className="text-xs text-muted-foreground">No readings yet.</p>}
         </div>
 
-        <div className="pt-3 border-t border-slate-100">
-          <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">Recent history</div>
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> :
-           !history || history.length === 0 ? <p className="text-xs text-slate-500">No history.</p> : (
-            <div className="max-h-56 overflow-y-auto rounded border border-slate-100 divide-y divide-slate-100 text-xs">
+        <div className="pt-3 border-t border-border/40">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Recent history</div>
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> :
+           !history || history.length === 0 ? <p className="text-xs text-muted-foreground">No history.</p> : (
+            <div className="max-h-56 overflow-y-auto rounded border border-border/40 divide-y divide-slate-100 text-xs">
               {history.map(r => (
                 <div key={r.id} className="grid grid-cols-5 items-center px-2 py-1 gap-1">
-                  <span className="col-span-2 text-slate-500">{new Date(r.reading_timestamp).toLocaleTimeString()}</span>
+                  <span className="col-span-2 text-muted-foreground">{new Date(r.reading_timestamp).toLocaleTimeString()}</span>
                   <span className="tabular-nums">{r.temperature_value != null ? `${Number(r.temperature_value).toFixed(1)}°` : "—"}</span>
                   <span className="tabular-nums">{r.humidity_value != null ? `${Number(r.humidity_value).toFixed(0)}%` : "—"}</span>
                   <span className="tabular-nums text-right">{r.anomaly_detected ? <Badge variant="destructive" className="text-[9px] h-4 px-1">anom</Badge> : r.ml_risk_class ?? ""}</span>
@@ -657,9 +657,9 @@ function DeviceDetail({ device, reading, historyFn, onEdit }: {
         </div>
 
         {device.notes && (
-          <div className="pt-2 border-t border-slate-100">
-            <div className="text-xs uppercase tracking-wider text-slate-500 mb-1">Notes</div>
-            <p className="text-slate-700 whitespace-pre-wrap">{device.notes}</p>
+          <div className="pt-2 border-t border-border/40">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Notes</div>
+            <p className="text-foreground whitespace-pre-wrap">{device.notes}</p>
           </div>
         )}
       </div>
@@ -688,8 +688,8 @@ function MiniReading({ icon: Icon, value, unit, tone }: { icon: ComponentType<{ 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 items-start">
-      <span className="text-xs uppercase tracking-wider text-slate-500 pt-0.5">{label}</span>
-      <span className="text-slate-800 text-right min-w-0 truncate">{children}</span>
+      <span className="text-xs uppercase tracking-wider text-muted-foreground pt-0.5">{label}</span>
+      <span className="text-foreground text-right min-w-0 truncate">{children}</span>
     </div>
   );
 }
@@ -697,12 +697,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function MiniStat({ icon: Icon, label, value, tint }: { icon: ComponentType<{ className?: string }>; label: string; value: React.ReactNode; tint: "emerald"|"sky"|"amber"|"rose" }) {
   const map = { emerald: "text-emerald-600 bg-emerald-50", sky: "text-sky-600 bg-sky-50", amber: "text-amber-600 bg-amber-50", rose: "text-rose-600 bg-rose-50" };
   return (
-    <Card className="border-slate-200/70 shadow-sm">
+    <Card className="border-border/40/70 shadow-sm">
       <CardContent className="p-3 flex items-center gap-2">
         <div className={`w-8 h-8 rounded-md flex items-center justify-center ${map[tint]}`}><Icon className="w-4 h-4" /></div>
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
-          <div className="font-semibold text-slate-900 truncate">{value}</div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+          <div className="font-semibold text-foreground truncate">{value}</div>
         </div>
       </CardContent>
     </Card>

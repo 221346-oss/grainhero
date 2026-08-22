@@ -74,15 +74,15 @@ function RevenuePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Wallet className="h-6 w-6 text-emerald-600" /> Revenue</h1>
-        <p className="text-sm text-slate-500 mt-1">Buyer invoices, collections and cash flow.</p>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Wallet className="h-6 w-6 text-emerald-600" /> Revenue</h1>
+        <p className="text-sm text-muted-foreground mt-1">Buyer invoices, collections and cash flow.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.paid, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Overdue</div><div className="text-2xl font-bold text-red-600">{totals.overdue}</div><div className="text-xs text-slate-500 mt-1">past due</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-muted-foreground mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.paid, "PKR")}</div><div className="text-xs text-muted-foreground mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Overdue</div><div className="text-2xl font-bold text-red-600">{totals.overdue}</div><div className="text-xs text-muted-foreground mt-1">past due</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
       </div>
 
       <Card>
@@ -91,7 +91,7 @@ function RevenuePage() {
           {Object.entries(byStatus).map(([k, v]) => (
             <Badge key={k} className={payBadge(k)}>{k}: {String(v)}</Badge>
           ))}
-          {Object.keys(byStatus).length === 0 && <span className="text-sm text-slate-500">No invoices yet.</span>}
+          {Object.keys(byStatus).length === 0 && <span className="text-sm text-muted-foreground">No invoices yet.</span>}
         </CardContent>
       </Card>
 
@@ -105,7 +105,7 @@ function RevenuePage() {
           <Card>
             <CardHeader className="flex flex-row justify-between items-center gap-3">
               <div><CardTitle>Buyer invoices</CardTitle><CardDescription>{filteredInv.length} of {invoices.length}</CardDescription></div>
-              <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 w-64" /></div>
+              <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-8 w-64" /></div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y">
@@ -115,10 +115,10 @@ function RevenuePage() {
                     <div key={i.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-slate-900">{i.invoice_number}</span>
+                          <span className="font-semibold text-foreground">{i.invoice_number}</span>
                           <Badge className={payBadge(i.payment_status)}>{i.payment_status ?? "pending"}</Badge>
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">{i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}{i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}{i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}</div>
                       </div>
                       <div className="text-right">
                         <div className="font-bold">{money(i.total_amount, i.currency)}</div>
@@ -132,7 +132,7 @@ function RevenuePage() {
                     </div>
                   );
                 })}
-                {filteredInv.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No invoices.</div>}
+                {filteredInv.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No invoices.</div>}
               </div>
             </CardContent>
           </Card>
@@ -147,7 +147,7 @@ function RevenuePage() {
                   <div key={p.id} className="p-3 flex items-center justify-between text-sm">
                     <div>
                       <div className="font-medium">{p.payment_reference ?? p.id.slice(0, 8)}</div>
-                      <div className="text-xs text-slate-500">{p.payment_method}{p.payment_date ? ` · ${new Date(p.payment_date).toLocaleDateString()}` : ""}</div>
+                      <div className="text-xs text-muted-foreground">{p.payment_method}{p.payment_date ? ` · ${new Date(p.payment_date).toLocaleDateString()}` : ""}</div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{money(p.amount, p.currency)}</span>
@@ -155,7 +155,7 @@ function RevenuePage() {
                     </div>
                   </div>
                 ))}
-                {payments.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No payments recorded.</div>}
+                {payments.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No payments recorded.</div>}
               </div>
             </CardContent>
           </Card>

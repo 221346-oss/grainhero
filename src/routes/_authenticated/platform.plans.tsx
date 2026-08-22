@@ -1,3 +1,4 @@
+import { SectionLabel } from "@/components/app/surface";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -540,9 +541,9 @@ function PlatformPlansPage() {
       {/* ── Plan cards — shown when activeView is plans or active ─── */}
       {(activeView === "plans" || activeView === "active") && (
       <div>
-        <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-          {activeView === "active" ? "Active Plan Tiers" : "Plan Tiers"} — click "Edit plan" to configure limits
-        </p>
+        <SectionLabel index="01" className="mb-3">
+          {activeView === "active" ? "Active plan tiers" : "Plan tiers"}
+        </SectionLabel>
         {plansQ.isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
             {[1, 2, 3].map((i) => <PlanCardSkeleton key={i} />)}
@@ -567,9 +568,7 @@ function PlatformPlansPage() {
       <div className="rounded-2xl bg-card/50 overflow-hidden">
         <div className="px-5 py-4 border-b flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Plan Change Requests
-            </span>
+            <SectionLabel index="02">Plan change requests</SectionLabel>
             {pendingCount > 0 && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                 {pendingCount} pending

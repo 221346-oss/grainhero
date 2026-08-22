@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/platform/orders/$orderId")
 });
 
 const STATUS_COLOR: Record<string, string> = {
-  pending_payment: "bg-slate-200 text-slate-700",
+  pending_payment: "bg-slate-200 text-foreground",
   paid: "bg-blue-100 text-blue-800",
   packing: "bg-amber-100 text-amber-800",
   shipped: "bg-indigo-100 text-indigo-800",
@@ -31,7 +31,7 @@ const STATUS_COLOR: Record<string, string> = {
   installing: "bg-emerald-100 text-emerald-800",
   completed: "bg-emerald-600 text-white",
   cancelled: "bg-rose-100 text-rose-700",
-  refunded: "bg-slate-200 text-slate-700",
+  refunded: "bg-slate-200 text-foreground",
 };
 
 function OrderDetailPage() {

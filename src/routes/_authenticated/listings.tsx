@@ -83,7 +83,7 @@ function ListingsPage() {
           {listQ.isLoading ? (
             <div className="p-8 text-center"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading…</div>
           ) : items.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No listings. Create one from a ready batch.</div>
+            <div className="p-8 text-center text-muted-foreground">No listings. Create one from a ready batch.</div>
           ) : (
             <Table>
               <TableHeader><TableRow>

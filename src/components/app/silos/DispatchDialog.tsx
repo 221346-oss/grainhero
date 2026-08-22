@@ -270,7 +270,7 @@ export function DispatchDialog({
             </div>
 
             {qtyNum > 0 && (
-              <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-xs">
+              <div className="rounded-lg bg-muted/30 p-3 space-y-2 text-xs">
                 <div className="flex justify-between"><span className="text-muted-foreground">Revenue</span><span className="font-medium tabular-nums">{currency} {total.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Priced at</span><span className="tabular-nums">{currency} {priceNum.toFixed(2)}/kg · {currency} {pricePerKgToPerMan(priceNum).toFixed(2)}/man</span></div>
                 {avgCost != null && (
@@ -289,7 +289,7 @@ export function DispatchDialog({
                     </div>
                     <div className="grid gap-1">
                       {preview.map((p) => (
-                        <div key={p.batch_id} className="flex items-center justify-between rounded-md bg-background/60 border border-border/60 px-2 py-1 text-[11px]">
+                        <div key={p.batch_id} className="flex items-center justify-between rounded-2xl bg-background/60 border-border/60 px-2 py-1 text-[11px]">
                           <span className="font-mono text-emerald-700 dark:text-emerald-400">{p.batch_id}</span>
                           <span className="tabular-nums text-muted-foreground">{p.qty.toLocaleString()} kg</span>
                           <span className="tabular-nums">{p.unit_cost != null ? `${currency} ${p.unit_cost.toFixed(2)}/kg` : <span className="text-amber-600">no cost</span>}</span>

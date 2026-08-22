@@ -57,7 +57,7 @@ export function CommandConsole({ actuatorId }: { actuatorId: string }) {
   });
 
   return (
-    <div className="rounded-lg border p-3 space-y-3">
+    <div className="rounded-lg p-3 space-y-3">
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <Label className="text-xs">Command</Label>

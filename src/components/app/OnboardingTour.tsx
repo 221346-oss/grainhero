@@ -390,8 +390,8 @@ export function OnboardingTour() {
         className="absolute pointer-events-auto animate-scale-in"
         style={tooltipStyle}
       >
-        <div className="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden max-w-sm">
-          <div className="h-1 bg-slate-100">
+        <div className="bg-card rounded-xl shadow-2xl border-border/40 overflow-hidden max-w-sm">
+          <div className="h-1 bg-muted">
             <div
               className="h-full bg-gradient-to-r from-emerald-500 via-sky-500 to-violet-500 transition-all"
               style={{ width: `${progress}%` }}
@@ -403,10 +403,10 @@ export function OnboardingTour() {
                 {stepIdx === STEPS.length - 1 && <PartyPopper className="h-4 w-4" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
                   Step {stepIdx + 1} of {STEPS.length}
                 </p>
-                <h3 className="font-semibold text-slate-900 leading-tight">{step.title}</h3>
+                <h3 className="font-semibold text-foreground leading-tight">{step.title}</h3>
               </div>
               <button
                 onClick={finish}
@@ -416,7 +416,7 @@ export function OnboardingTour() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">{step.body}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{step.body}</p>
             <div className="flex items-center justify-between pt-2">
               <button
                 onClick={finish}

@@ -85,7 +85,7 @@ function PipelinePage() {
               <Card key={s.id}>
                 <CardHeader className="pb-3 border-b">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold text-slate-700">{s.label}</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-foreground">{s.label}</CardTitle>
                     <Badge variant="outline" className={s.color}>{list.length}</Badge>
                   </div>
                   <CardDescription className="text-xs mt-1">
@@ -94,8 +94,8 @@ function PipelinePage() {
                 </CardHeader>
                 <CardContent className="p-3 space-y-2 max-h-[360px] overflow-y-auto">
                   {list.map((d) => (
-                    <div key={d.id} className="rounded-2xl border-slate-200 p-2.5 hover:shadow-sm transition-shadow bg-card">
-                      <div className="text-sm font-medium text-slate-800 truncate">{d.properties?.dealname ?? d.id}</div>
+                    <div key={d.id} className="rounded-2xl border-border/40 p-2.5 hover:shadow-sm transition-shadow bg-card">
+                      <div className="text-sm font-medium text-foreground truncate">{d.properties?.dealname ?? d.id}</div>
                       <div className="text-xs text-emerald-600 font-medium mt-0.5 mb-1.5">PKR {Number(d.properties?.amount ?? 0).toLocaleString()}</div>
                       <div className="flex gap-1 flex-wrap">
                         {STAGES.filter((x) => x.id !== s.id).slice(0, 2).map((x) => (
@@ -115,7 +115,7 @@ function PipelinePage() {
                     </div>
                   ))}
                   {list.length === 0 && (
-                    <div className="text-center py-6 text-slate-400 text-xs">No deals</div>
+                    <div className="text-center py-6 text-muted-foreground text-xs">No deals</div>
                   )}
                 </CardContent>
               </Card>

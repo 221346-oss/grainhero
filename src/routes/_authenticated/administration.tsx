@@ -130,7 +130,7 @@ function AdministrationWorkspace() {
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Area Chart Panel */}
-          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+          <div className="lg:col-span-2 bg-card border-border rounded-2xl p-6">
             <div className="flex items-start justify-between mb-5">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                 Administration Overview
@@ -151,9 +151,9 @@ function AdministrationWorkspace() {
         </div>
 
         {/* Tabbed Sections */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="bg-card border-border rounded-2xl overflow-hidden">
           {/* Tab Bar */}
-          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
+          <div className="border-b border-border/40 px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {visibleTabs.map((tab) => {
                 const isActive = activeTab === tab.key;

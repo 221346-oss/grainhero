@@ -47,19 +47,19 @@ function CarriersPage() {
     >
       <div className="grid gap-3">
         {(data?.carriers ?? []).map((c) => (
-          <Card key={c.id} className="border-slate-200/70 hover:border-emerald-400 transition-colors">
+          <Card key={c.id} className="border-border/40/70 hover:border-emerald-400 transition-colors">
             <CardContent className="p-4 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-[220px]">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-slate-900">{c.name}</span>
+                  <span className="font-semibold text-foreground">{c.name}</span>
                   <Badge variant={c.type === "in_house" ? "default" : "secondary"}>{c.type}</Badge>
                   {!c.active && <Badge variant="outline">Inactive</Badge>}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   code <code className="font-mono">{c.code}</code>
                   {c.contact_email && <> · {c.contact_email}</>}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-1 font-mono">
+                <p className="text-[11px] text-muted-foreground mt-1 font-mono">
                   webhook: /api/public/webhooks/carrier/{c.code}
                 </p>
               </div>
@@ -73,7 +73,7 @@ function CarriersPage() {
           </Card>
         ))}
         {(data?.carriers ?? []).length === 0 && (
-          <p className="text-sm text-slate-500 text-center py-8">
+          <p className="text-sm text-muted-foreground text-center py-8">
             No carriers yet. Add one to start assigning shipments.
           </p>
         )}

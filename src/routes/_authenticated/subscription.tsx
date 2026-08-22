@@ -53,8 +53,8 @@ function UsageRow({ icon: Icon, label, used, max }: { icon: any; label: string; 
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
-        <span className="flex items-center gap-2 text-slate-700"><Icon className="h-4 w-4" />{label}</span>
-        <span className="font-medium text-slate-900">{used}{limit > 0 ? ` / ${limit}` : ""}</span>
+        <span className="flex items-center gap-2 text-foreground"><Icon className="h-4 w-4" />{label}</span>
+        <span className="font-medium text-foreground">{used}{limit > 0 ? ` / ${limit}` : ""}</span>
       </div>
       {limit > 0 && <Progress value={pct} className="h-2" />}
     </div>
@@ -163,8 +163,8 @@ function SubscriptionPage() {
       {!sub && (
         <Card>
           <CardContent className="p-8 text-center space-y-3">
-            <div className="text-lg font-semibold text-slate-900">No active subscription</div>
-            <p className="text-sm text-slate-500 max-w-md mx-auto">You&apos;re not on a paid plan yet. Pick one to unlock warehouses, silos and AI predictions at scale.</p>
+            <div className="text-lg font-semibold text-foreground">No active subscription</div>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">You&apos;re not on a paid plan yet. Pick one to unlock warehouses, silos and AI predictions at scale.</p>
             <Button asChild><Link to="/plans">Choose a plan</Link></Button>
           </CardContent>
         </Card>
@@ -173,7 +173,7 @@ function SubscriptionPage() {
       {sub && (
         <>
           {(sub as any).cancel_at && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm flex items-center justify-between gap-3">
+            <div className="rounded-md border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <Calendar className="h-4 w-4" />
                 Scheduled to cancel on {new Date((sub as any).cancel_at).toLocaleDateString()}
@@ -196,10 +196,10 @@ function SubscriptionPage() {
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-4 text-sm">
-              <div><div className="text-xs uppercase text-slate-500 font-semibold">Price</div><div className="text-lg font-bold">{sub.currency ?? "PKR"} {Number(sub.price_per_month).toFixed(2)}<span className="text-xs text-slate-500">/mo</span></div></div>
-              <div><div className="text-xs uppercase text-slate-500 font-semibold">Billing cycle</div><div className="text-lg font-bold capitalize">{sub.billing_cycle ?? "monthly"}</div></div>
-              <div><div className="text-xs uppercase text-slate-500 font-semibold flex items-center gap-1"><Calendar className="h-3 w-3" />Renews</div><div className="text-lg font-bold">{sub.next_payment_date ? new Date(sub.next_payment_date).toLocaleDateString() : "—"}</div></div>
-              <div><div className="text-xs uppercase text-slate-500 font-semibold">Auto-renew</div><div className="text-lg font-bold">{sub.auto_renew ? "On" : "Off"}</div></div>
+              <div><div className="text-xs uppercase text-muted-foreground font-semibold">Price</div><div className="text-lg font-bold">{sub.currency ?? "PKR"} {Number(sub.price_per_month).toFixed(2)}<span className="text-xs text-muted-foreground">/mo</span></div></div>
+              <div><div className="text-xs uppercase text-muted-foreground font-semibold">Billing cycle</div><div className="text-lg font-bold capitalize">{sub.billing_cycle ?? "monthly"}</div></div>
+              <div><div className="text-xs uppercase text-muted-foreground font-semibold flex items-center gap-1"><Calendar className="h-3 w-3" />Renews</div><div className="text-lg font-bold">{sub.next_payment_date ? new Date(sub.next_payment_date).toLocaleDateString() : "—"}</div></div>
+              <div><div className="text-xs uppercase text-muted-foreground font-semibold">Auto-renew</div><div className="text-lg font-bold">{sub.auto_renew ? "On" : "Off"}</div></div>
             </CardContent>
           </Card>
 
@@ -224,7 +224,7 @@ function SubscriptionPage() {
                   ["Custom integrations", sub.custom_integrations],
                 ].map(([label, on]) => (
                   <div key={label as string} className="flex justify-between">
-                    <span className="text-slate-700">{label as string}</span>
+                    <span className="text-foreground">{label as string}</span>
                     <Badge variant="outline" className={on ? "border-emerald-200 text-emerald-700" : "text-slate-500"}>{on ? "Enabled" : "—"}</Badge>
                   </div>
                 ))}
@@ -240,7 +240,7 @@ function SubscriptionPage() {
                   <div key={inv.id} className="p-3 flex items-center justify-between text-sm">
                     <div>
                       <div className="font-medium">{inv.invoice_number ?? inv.id.slice(0, 8)}</div>
-                      <div className="text-xs text-slate-500">{inv.billing_date ? new Date(inv.billing_date).toLocaleDateString() : "—"}</div>
+                      <div className="text-xs text-muted-foreground">{inv.billing_date ? new Date(inv.billing_date).toLocaleDateString() : "—"}</div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{inv.currency ?? "PKR"} {Number(inv.amount).toFixed(2)}</span>
@@ -248,7 +248,7 @@ function SubscriptionPage() {
                     </div>
                   </div>
                 ))}
-                {invoices.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No invoices yet.</div>}
+                {invoices.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No invoices yet.</div>}
               </div>
             </CardContent>
           </Card>
@@ -276,7 +276,7 @@ function SubscriptionPage() {
       {isSuperAdmin && (
         <AdminDataCard title="All platform subscriptions" description={`${allSubs.length} subscription${allSubs.length === 1 ? "" : "s"} · manage plans, cancel or resume from here`}>
           {allSubs.length === 0 && (
-            <div className="p-8 text-center text-sm text-slate-500">No tenant subscriptions yet.</div>
+            <div className="p-8 text-center text-sm text-muted-foreground">No tenant subscriptions yet.</div>
           )}
           <div className="divide-y divide-slate-100">
             {allSubs.map((s: any) => {
@@ -284,15 +284,15 @@ function SubscriptionPage() {
               const expiryText = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";
               const expiryColor = daysLeft !== null && daysLeft <= 7 ? "text-red-600" : daysLeft !== null && daysLeft <= 30 ? "text-amber-600" : "text-slate-500";
               return (
-                <div key={s.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                <div key={s.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-muted/20">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-slate-900 truncate">{s.user_name}</div>
-                    <div className="text-xs text-slate-500 truncate">{s.user_email} · {s.business_type}</div>
+                    <div className="font-medium text-foreground truncate">{s.user_name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{s.user_email} · {s.business_type}</div>
                   </div>
                   <Badge variant="outline" className={statusBadge(s.status)}>{s.status}</Badge>
-                  <span className="text-sm font-medium text-slate-700">{s.plan_name}</span>
+                  <span className="text-sm font-medium text-foreground">{s.plan_name}</span>
                   <div className="flex flex-col items-end gap-0.5 min-w-[110px]">
-                    <span className="text-sm font-bold text-slate-900">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-slate-500">/mo</span></span>
+                    <span className="text-sm font-bold text-foreground">{s.currency ?? "PKR"} {Number(s.monthly_price ?? 0).toFixed(0)}<span className="text-xs text-muted-foreground">/mo</span></span>
                     <div className={`text-[10px] font-medium ${expiryColor}`}>Expires: {expiryText}</div>
                   </div>
                   <DropdownMenu>

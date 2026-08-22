@@ -88,7 +88,7 @@ function DashboardBuilderPage() {
               <SelectTrigger><SelectValue placeholder="Pick metric" /></SelectTrigger>
               <SelectContent>
                 {metrics.map((m) => (
-                  <SelectItem key={m.key} value={m.key}>{m.label} <span className="text-slate-400">({m.key})</span></SelectItem>
+                  <SelectItem key={m.key} value={m.key}>{m.label} <span className="text-muted-foreground">({m.key})</span></SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -126,7 +126,7 @@ function DashboardBuilderPage() {
 
       <AdminDataCard title="Live preview">
         {widgets.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">No widgets yet. Add one above to see it here.</div>
+          <div className="p-8 text-center text-muted-foreground">No widgets yet. Add one above to see it here.</div>
         ) : (
           <div className="p-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {widgets.map((w) => {
@@ -148,7 +148,7 @@ function DashboardBuilderPage() {
       </AdminDataCard>
 
       <Card>
-        <CardContent className="p-4 text-xs text-slate-500">
+        <CardContent className="p-4 text-xs text-muted-foreground">
           Every widget renders through <code>public.run_metric()</code>. Metrics visible here follow the role
           allow-list defined in <b>Metric Registry</b>. Nothing is hardcoded — edit or add metrics there and they
           appear immediately in this builder.

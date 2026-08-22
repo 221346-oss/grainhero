@@ -95,9 +95,9 @@ function SalesPage() {
         </CardHeader>
         <CardContent className="p-0">
           {ordersQ.isLoading ? (
-            <div className="p-8 text-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading…</div>
+            <div className="p-8 text-center text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading…</div>
           ) : rows.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No orders yet.</div>
+            <div className="p-8 text-center text-muted-foreground">No orders yet.</div>
           ) : (
             <Table>
               <TableHeader><TableRow>
@@ -197,12 +197,12 @@ function OrderDrawer({ orderId, onClose, onChanged }: { orderId: string; onClose
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><div className="text-slate-500">Buyer</div><div className="font-medium">{o.buyers?.company_name ?? o.buyers?.name}</div></div>
-              <div><div className="text-slate-500">Listing</div><div className="font-medium">{o.grain_listings?.title}</div></div>
-              <div><div className="text-slate-500">Quantity</div><div className="font-medium">{Number(o.quantity_kg).toLocaleString()} kg</div></div>
-              <div><div className="text-slate-500">Total</div><div className="font-medium">{o.currency} {Number(o.subtotal).toLocaleString()}</div></div>
-              <div><div className="text-slate-500">Status</div><Badge className={STATUS_COLORS[o.status] ?? ""}>{o.status}</Badge></div>
-              <div><div className="text-slate-500">Placed</div><div className="font-medium">{new Date(o.created_at).toLocaleString()}</div></div>
+              <div><div className="text-muted-foreground">Buyer</div><div className="font-medium">{o.buyers?.company_name ?? o.buyers?.name}</div></div>
+              <div><div className="text-muted-foreground">Listing</div><div className="font-medium">{o.grain_listings?.title}</div></div>
+              <div><div className="text-muted-foreground">Quantity</div><div className="font-medium">{Number(o.quantity_kg).toLocaleString()} kg</div></div>
+              <div><div className="text-muted-foreground">Total</div><div className="font-medium">{o.currency} {Number(o.subtotal).toLocaleString()}</div></div>
+              <div><div className="text-muted-foreground">Status</div><Badge className={STATUS_COLORS[o.status] ?? ""}>{o.status}</Badge></div>
+              <div><div className="text-muted-foreground">Placed</div><div className="font-medium">{new Date(o.created_at).toLocaleString()}</div></div>
             </div>
 
             {/* Transitions */}
@@ -275,7 +275,7 @@ function OrderDrawer({ orderId, onClose, onChanged }: { orderId: string; onClose
                     <div className="text-xs space-y-1 border-t pt-2">
                       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {payments.map((p: any) => (
-                        <div key={p.id} className="flex justify-between text-slate-600">
+                        <div key={p.id} className="flex justify-between text-muted-foreground">
                           <span>{new Date(p.payment_date ?? p.created_at).toLocaleDateString()} · {p.payment_method}{p.payment_reference ? ` · ${p.payment_reference}` : ""}</span>
                           <span className="font-medium">{p.currency ?? inv.currency} {Number(p.amount).toLocaleString()}</span>
                         </div>
@@ -290,10 +290,10 @@ function OrderDrawer({ orderId, onClose, onChanged }: { orderId: string; onClose
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm">Timeline</CardTitle></CardHeader>
               <CardContent className="space-y-1 text-xs">
-                {events.length === 0 && <p className="text-slate-500">No events.</p>}
+                {events.length === 0 && <p className="text-muted-foreground">No events.</p>}
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {events.map((e: any) => (
-                  <div key={e.id} className="flex justify-between text-slate-600 border-b py-1 last:border-0">
+                  <div key={e.id} className="flex justify-between text-muted-foreground border-b py-1 last:border-0">
                     <span>{e.from_state ?? "—"} → <b>{e.to_state}</b>{e.note ? ` · ${e.note}` : ""}</span>
                     <span>{new Date(e.created_at).toLocaleString()}</span>
                   </div>

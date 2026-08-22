@@ -117,7 +117,7 @@ function OrderAuditPage() {
                 {e.metadata && Object.keys(e.metadata as object).length > 0 && (
                   <details className="mt-1">
                     <summary className="text-[10px] text-muted-foreground cursor-pointer">metadata</summary>
-                    <pre className="text-[10px] bg-slate-50 dark:bg-slate-900 rounded p-2 mt-1 overflow-x-auto">
+                    <pre className="text-[10px] bg-muted/20 dark:bg-slate-900 rounded p-2 mt-1 overflow-x-auto">
                       {JSON.stringify(e.metadata, null, 2)}
                     </pre>
                   </details>

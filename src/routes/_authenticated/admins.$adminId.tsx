@@ -153,13 +153,13 @@ function AdminProfilePage() {
             <Row label="Phone" value={p.phone} />
             <Row label="Business type" value={p.business_type} />
             <Row label="Joined" value={p.created_at ? new Date(p.created_at).toLocaleDateString() : "—"} />
-            <div className="pt-3 mt-3 border-t border-border">
+            <div className="pt-3 mt-3 border-t border-border/40">
               <Row label="Plan" value={stats.currentPlan ?? "No plan"} />
               <Row label="Plan status" value={stats.planStatus ?? "—"} />
               <Row label="Monthly" value={money(stats.monthlyPrice)} />
             </div>
             {p.notes && (
-              <div className="pt-3 mt-3 border-t border-border">
+              <div className="pt-3 mt-3 border-t border-border/40">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-1">Notes</div>
                 <p className="text-sm text-foreground whitespace-pre-wrap">{p.notes}</p>
               </div>

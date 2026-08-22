@@ -93,7 +93,7 @@ export function BatchLifecycleActions({ batchId, batchLabel }: { batchId: string
             {(((events.data as { events?: Array<Record<string, unknown>> } | undefined)?.events) ?? []).map((e) => {
               const ev = e as Record<string, unknown>;
               return (
-                <div key={ev.id as string} className="rounded-md border p-2 text-sm">
+                <div key={ev.id as string} className="rounded-md p-2 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="capitalize font-medium">{String(ev.from_state)}</span>
                     <ArrowRight className="h-3 w-3" />

@@ -59,11 +59,11 @@ function FleetPage() {
             <VehicleSheet carriers={carrierOpts} onSave={(p) => saveVeh.mutate(p)} />
           </div>
           {(fleet?.vehicles ?? []).map((v) => (
-            <Card key={v.id} className="border-slate-200/70 hover:border-emerald-400 transition-colors">
+            <Card key={v.id} className="border-border/40/70 hover:border-emerald-400 transition-colors">
               <CardContent className="p-4 flex flex-wrap items-center gap-3">
                 <div className="flex-1">
-                  <div className="font-semibold text-slate-900">{v.registration_no}</div>
-                  <p className="text-xs text-slate-500">
+                  <div className="font-semibold text-foreground">{v.registration_no}</div>
+                  <p className="text-xs text-muted-foreground">
                     {v.type} · {Number(v.capacity_kg ?? 0)}kg · {v.carriers?.name ?? "—"}
                   </p>
                 </div>
@@ -84,18 +84,18 @@ function FleetPage() {
             const warn = daysToExpiry != null && daysToExpiry <= 30;
             const expired = daysToExpiry != null && daysToExpiry < 0;
             return (
-              <Card key={d.id} className="border-slate-200/70 hover:border-emerald-400 transition-colors">
+              <Card key={d.id} className="border-border/40/70 hover:border-emerald-400 transition-colors">
                 <CardContent className="p-4 flex flex-wrap items-center gap-3">
                   <div className="flex-1">
-                    <div className="font-semibold text-slate-900">{d.full_name}</div>
-                    <p className="text-xs text-slate-500">
+                    <div className="font-semibold text-foreground">{d.full_name}</div>
+                    <p className="text-xs text-muted-foreground">
                       {d.carriers?.name ?? "—"} · {d.phone ?? "no phone"}
                       {d.license_no ? ` · Lic ${d.license_no}` : ""}
                     </p>
                   </div>
                   {expired ? <Badge variant="destructive">Licence expired</Badge>
                     : warn ? <Badge className="bg-amber-500">Expires {daysToExpiry}d</Badge>
-                    : d.license_expiry ? <span className="text-xs text-slate-500">exp {String(d.license_expiry).slice(0, 10)}</span>
+                    : d.license_expiry ? <span className="text-xs text-muted-foreground">exp {String(d.license_expiry).slice(0, 10)}</span>
                     : null}
                   <DriverSheet initial={d} carriers={carrierOpts} onSave={(p) => saveDrv.mutate({ ...p, id: d.id })} />
                 </CardContent>

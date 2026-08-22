@@ -85,14 +85,14 @@ export function AutomationRulesDrawer({
           {isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
           ) : rules.length === 0 ? (
-            <div className="text-sm text-muted-foreground rounded-md border border-dashed p-4">No rules yet.</div>
+            <div className="text-sm text-muted-foreground rounded-md border-dashed p-4">No rules yet.</div>
           ) : (
             <div className="space-y-1.5">
               {rules.map((r) => {
                 const rr = r as Record<string, unknown>;
                 const actName = (rr.actuators as { name?: string } | null | undefined)?.name ?? "actuator";
                 return (
-                  <div key={rr.id as string} className="flex items-center justify-between rounded-md border p-2 text-sm">
+                  <div key={rr.id as string} className="flex items-center justify-between rounded-md p-2 text-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className="capitalize">{String(rr.trigger_metric)}</Badge>
                       <span>{rr.trigger_op === "gt" ? ">" : "<"} {String(rr.trigger_value)}</span>
@@ -111,7 +111,7 @@ export function AutomationRulesDrawer({
           )}
         </div>
 
-        <div className="rounded-md border p-3 space-y-3">
+        <div className="rounded-md p-3 space-y-3">
           <div className="text-sm font-medium">New rule</div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">

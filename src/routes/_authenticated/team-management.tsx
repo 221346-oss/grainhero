@@ -316,7 +316,7 @@ function TeamPage() {
         <CardContent className="p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
           <div className="relative">
             <Label className="text-xs font-medium text-slate-500 mb-1 block">Name</Label>
-            <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -413,7 +413,7 @@ function TeamPage() {
           description={`Showing ${filtered.length} of ${members.length}`}
         >
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
               <p className="text-sm">No team members found</p>
             </div>
           ) : (
@@ -432,12 +432,12 @@ function TeamPage() {
                     setAssignBatchId("none");
                   }}
                 >
-                  <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-muted-foreground shrink-0">
                     {(m.name ?? m.email ?? "?").slice(0, 1).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-slate-900 truncate">{m.name ?? "—"}</div>
-                    <div className="text-xs text-slate-500 truncate">{m.email}</div>
+                    <div className="font-medium text-foreground truncate">{m.name ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge className={ROLE_BADGE[isPendingMember(m) ? 'pending' : m.role] ?? ROLE_BADGE.pending} variant="outline">
@@ -485,11 +485,11 @@ function TeamPage() {
 
         {/* Right: Detail panel (shown inline when viewing) */}
         {viewing && (
-          <Card className="h-fit sticky top-4 border border-slate-200 dark:border-slate-800 shadow-lg">
+          <Card className="h-fit sticky top-4 border border-border/40 dark:border-slate-800 shadow-lg">
             <CardContent className="p-0">
               {/* Header with Edit + Close */}
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Member details</h3>
+              <div className="p-4 border-b border-border/40 dark:border-slate-800 flex items-center justify-between">
+                <h3 className="text-base font-semibold text-foreground dark:text-slate-100">Member details</h3>
                 <div className="flex items-center gap-1">
                   {viewing.role === "technician" && canManageMember(viewing.role) && (
                     <Button
@@ -521,7 +521,7 @@ function TeamPage() {
               {/* Body */}
               <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
                 {detailLoading ? (
-                  <div className="flex items-center justify-center py-20 text-slate-400">
+                  <div className="flex items-center justify-center py-20 text-muted-foreground">
                     <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
                   </div>
                 ) : memberDetail ? (
@@ -532,7 +532,7 @@ function TeamPage() {
                         {((memberDetail.name ?? memberDetail.email ?? "?") as string).slice(0, 1).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-900 dark:text-slate-100 text-base">{memberDetail.name ?? "—"}</div>
+                        <div className="font-semibold text-foreground dark:text-slate-100 text-base">{memberDetail.name ?? "—"}</div>
                         <Badge className={ROLE_BADGE[(memberDetail.role as string)] ?? ROLE_BADGE.pending} variant="outline">
                           {memberDetail.role as string}
                         </Badge>
@@ -542,16 +542,16 @@ function TeamPage() {
                     {/* Contact details */}
                     <div className="space-y-2.5">
                       <div className="flex items-center gap-3 text-sm">
-                        <AtSign className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-400 break-all">{memberDetail.email ?? "—"}</span>
+                        <AtSign className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="text-muted-foreground dark:text-muted-foreground break-all">{memberDetail.email ?? "—"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-sm">
-                        <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-400">{(memberDetail.phone as string | null) ?? "—"}</span>
+                        <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="text-muted-foreground dark:text-muted-foreground">{(memberDetail.phone as string | null) ?? "—"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-sm">
-                        <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-400">
+                        <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="text-muted-foreground dark:text-muted-foreground">
                           Joined {memberDetail.created_at ? new Date(memberDetail.created_at as string).toLocaleString() : "—"}
                         </span>
                       </div>
@@ -559,20 +559,20 @@ function TeamPage() {
 
                     {/* Assigned work */}
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Assigned Work</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Assigned Work</p>
                       {memberDetail.assignedBatches.length === 0 ? (
-                        <p className="text-sm text-slate-400">No active batches assigned.</p>
+                        <p className="text-sm text-muted-foreground">No active batches assigned.</p>
                       ) : (
                         <div className="space-y-2">
                           {memberDetail.assignedBatches.map((b) => (
-                            <div key={b.id} className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-1">
-                              <div className="flex items-center gap-2 text-sm font-medium text-slate-800 dark:text-slate-200">
+                            <div key={b.id} className="rounded-lg border-border/40 dark:border-slate-700 p-3 space-y-1">
+                              <div className="flex items-center gap-2 text-sm font-medium text-foreground dark:text-slate-200">
                                 <Package className="w-3.5 h-3.5 text-emerald-500" />
                                 {b.batch_id}
                                 <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]" variant="outline">{b.status}</Badge>
                               </div>
                               {b.silos && (
-                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <Warehouse className="w-3 h-3" />
                                   {b.silos.name} ({b.silos.silo_id})
                                 </div>
@@ -585,8 +585,8 @@ function TeamPage() {
 
                     {/* Manager: Assign silo/batch to technician */}
                     {isManagerOrAdmin && viewing?.role === "technician" && (
-                      <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Assign Work</p>
+                      <div className="border-t border-border/40 dark:border-slate-700 pt-4">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Assign Work</p>
                         <div className="space-y-3">
                           <div>
                             <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">Silo</Label>

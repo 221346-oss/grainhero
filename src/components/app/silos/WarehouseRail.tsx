@@ -23,7 +23,7 @@ export function WarehouseRail({
   totalSilos: number;
 }) {
   return (
-    <aside className="rounded-xl border bg-card/60 backdrop-blur-sm overflow-hidden">
+    <aside className="rounded-2xl bg-card/60 backdrop-blur-sm overflow-hidden">
       <div className="px-3 py-2 border-b border-border/60 flex items-center justify-between">
         <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Warehouses</span>
         <span className="text-[10px] text-muted-foreground tabular-nums">{warehouses.length}</span>

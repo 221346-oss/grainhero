@@ -51,7 +51,7 @@ function PlatformSellersPage() {
                 {(data?.sellers ?? []).map((s) => (
                   <tr key={s.admin_id} className="border-b last:border-0 hover:bg-emerald-50/40">
                     <td className="p-3">
-                      <Link to="/admins/$adminId" params={{ adminId: s.admin_id }} className="font-medium text-slate-900 hover:underline">
+                      <Link to="/admins/$adminId" params={{ adminId: s.admin_id }} className="font-medium text-foreground hover:underline">
                         {s.profile?.company_name || s.profile?.name || s.profile?.email || s.admin_id.slice(0, 8)}
                       </Link>
                       <div className="text-xs text-muted-foreground">{s.profile?.city ?? ""} {s.profile?.country ?? ""}</div>

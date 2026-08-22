@@ -19,7 +19,7 @@ export function MobileAdminHeader({
   onTicketClick,
 }: MobileAdminHeaderProps) {
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-border block md:hidden">
+    <div className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-border/40 block md:hidden">
       <div className="flex items-center justify-between px-4 h-14">
         {/* Left: Menu + Logo */}
         <div className="flex items-center gap-3">

@@ -99,8 +99,8 @@ function PolicyDocumentsPage() {
         <ArrowLeft className="h-4 w-4" /> Back to insurance
       </Link>
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Policy documents</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Policy documents</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Upload and version coverage PDFs. Each new upload becomes the current document.
         </p>
       </div>
@@ -108,9 +108,9 @@ function PolicyDocumentsPage() {
       {policy && (
         <Card>
           <CardContent className="p-4 text-sm flex flex-wrap items-center gap-4">
-            <div><span className="text-slate-500 text-xs uppercase">Policy #</span> <span className="font-mono">{policy.policy_number ?? policy.id.slice(0,8)}</span></div>
-            <div><span className="text-slate-500 text-xs uppercase">Product</span> {policy.product?.name ?? "—"}</div>
-            <div><span className="text-slate-500 text-xs uppercase">Carrier</span> {policy.product?.carrier?.name ?? "—"}</div>
+            <div><span className="text-muted-foreground text-xs uppercase">Policy #</span> <span className="font-mono">{policy.policy_number ?? policy.id.slice(0,8)}</span></div>
+            <div><span className="text-muted-foreground text-xs uppercase">Product</span> {policy.product?.name ?? "—"}</div>
+            <div><span className="text-muted-foreground text-xs uppercase">Carrier</span> {policy.product?.carrier?.name ?? "—"}</div>
             <Badge className="capitalize bg-emerald-100 text-emerald-700 border-emerald-200">{policy.status}</Badge>
           </CardContent>
         </Card>
@@ -140,9 +140,9 @@ function PolicyDocumentsPage() {
         <CardHeader><CardTitle className="text-base">Version history</CardTitle></CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-6 text-slate-500 text-sm">Loading…</div>
+            <div className="p-6 text-muted-foreground text-sm">Loading…</div>
           ) : docs.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">
+            <div className="p-8 text-center text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-2 opacity-40" />
               No documents uploaded yet.
             </div>
@@ -153,11 +153,11 @@ function PolicyDocumentsPage() {
                   <FileText className="h-5 w-5 text-emerald-600 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{d.filename}</div>
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-[11px] text-muted-foreground">
                       v{d.version} · {new Date(d.created_at).toLocaleString()}
                       {d.size_bytes ? ` · ${Math.round(d.size_bytes / 1024)} KB` : ""}
                     </div>
-                    {d.notes && <div className="text-xs text-slate-600 mt-1">{d.notes}</div>}
+                    {d.notes && <div className="text-xs text-muted-foreground mt-1">{d.notes}</div>}
                   </div>
                   {d.is_current && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Current</Badge>}
                   <Button size="sm" variant="outline" onClick={() => openDownload(d.id)}>

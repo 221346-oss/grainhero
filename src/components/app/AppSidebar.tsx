@@ -243,7 +243,7 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
             that don't change between collapsed/expanded, so the card is the
             same height in both states instead of jumping on toggle. */}
         <div className="flex min-h-0 flex-1 flex-col justify-center py-2">
-          <div className="flex w-full max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-3xl border border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/20">
+          <div className="flex w-full max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-3xl border-sidebar-border/60 bg-sidebar shadow-2xl shadow-black/20">
             <div className="overflow-y-auto no-scrollbar py-3">
               <Section items={workspaceNav} role={role} currentPath={currentPath} collapsed={collapsed} />
 

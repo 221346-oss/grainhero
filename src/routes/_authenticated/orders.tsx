@@ -285,8 +285,8 @@ function MyOrdersPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-2 flex-wrap mb-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">My install orders</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-foreground">My install orders</h1>
+          <p className="text-xs text-muted-foreground">
             Track the technician install for each subscription you purchased.
           </p>
         </div>
@@ -321,7 +321,7 @@ function MyOrdersPage() {
 
       {/* Approved-but-unpaid top banner */}
       {orders.some((o) => o.status === "approved") && (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2.5 flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+        <div className="rounded-lg border-emerald-300 bg-emerald-50 p-2.5 flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-emerald-900">Your silo request has been approved!</p>
@@ -338,9 +338,9 @@ function MyOrdersPage() {
           <OrdersSkeleton />
         ) : orders.length === 0 ? (
           <Card>
-            <CardContent className="p-6 text-center text-slate-500 text-sm space-y-2">
+            <CardContent className="p-6 text-center text-muted-foreground text-sm space-y-2">
               <p>No install orders yet.</p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 If you recently submitted a silo request, it may take a moment to appear.
               </p>
               <button
@@ -355,7 +355,7 @@ function MyOrdersPage() {
         ) : (
           <div className="space-y-3 pb-4">
             {orders.map((o) => (
-              <Card key={o.id as string} className="border-slate-200">
+              <Card key={o.id as string} className="border-border/40">
                 <CardHeader className="pb-2 pt-3 px-3">
                   <div className="flex items-start justify-between gap-2 flex-wrap">
                     <div className="flex-1 min-w-0">
@@ -390,33 +390,33 @@ function MyOrdersPage() {
                     />
                   </div>
                 </CardHeader>
-                <CardContent className="grid gap-2 md:grid-cols-2 text-xs text-slate-700 pt-2 px-3 pb-3">
+                <CardContent className="grid gap-2 md:grid-cols-2 text-xs text-foreground pt-2 px-3 pb-3">
                   <div className="flex items-start gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                    <MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                     <div>
                       <div>{o.install_address}</div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-[11px] text-muted-foreground">
                         {o.install_city}, {o.install_country}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" /> 
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> 
                     <span className="truncate">{o.contact_phone ?? "—"}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Wrench className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <Wrench className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     {o.technician_name ? (
                       <span className="truncate">
                         {o.technician_name}
                         {o.technician_phone ? ` · ${o.technician_phone}` : ""}
                       </span>
                     ) : (
-                      <span className="text-slate-500">Technician not yet assigned</span>
+                      <span className="text-muted-foreground">Technician not yet assigned</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span className="truncate">
                       {o.scheduled_install_date
                         ? new Date(o.scheduled_install_date as string).toLocaleString()
@@ -425,7 +425,7 @@ function MyOrdersPage() {
                           : "Awaiting schedule"}
                     </span>
                   </div>
-                  <div className="md:col-span-2 text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 mt-1">
+                  <div className="md:col-span-2 text-[11px] text-muted-foreground border-t border-border/40 pt-1.5 mt-1">
                     Rs. {Number(o.hardware_total ?? 0).toLocaleString()} in hardware · order id:{" "}
                     {o.id}
                   </div>
@@ -490,7 +490,7 @@ function MyOrdersPage() {
               <strong>{typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}</strong> of them.
             </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-600 px-1">
+          <p className="text-sm text-muted-foreground px-1">
             To request additional silos you need to upgrade your plan. Visit the plan management page to
             request a higher tier.
           </p>
@@ -575,14 +575,14 @@ function MyOrdersPage() {
                 className={phoneError ? "border-red-400" : ""}
               />
               {phoneError && <p className="text-xs text-red-500">{phoneError}</p>}
-              <p className="text-[11px] text-slate-400">e.g. +923001234567 or 03001234567</p>
+              <p className="text-[11px] text-muted-foreground">e.g. +923001234567 or 03001234567</p>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="s-notes">Notes (optional)</Label>
               <Textarea id="s-notes" rows={3} value={draftForm.notes} onChange={(e) => setDraftForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Preferred install time, access instructions…" />
             </div>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-700">What happens next</p>
+            <div className="rounded-lg bg-muted/20 border-border/40 p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">What happens next</p>
               <ol className="list-decimal pl-4 space-y-0.5">
                 <li>Our team reviews your request (usually within 24 h).</li>
                 <li>You'll get a notification once approved.</li>
@@ -703,7 +703,7 @@ function CardActions({ order, onTrack, onComplete, completing, onPay, paying }: 
                 </ul>
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="space-y-2 px-1 pb-1 text-xs text-slate-600">
+            <div className="space-y-2 px-1 pb-1 text-xs text-muted-foreground">
               <p>GrainHero will automatically:</p>
               <ul className="list-disc pl-5 space-y-1">
                 <li>Provision a warehouse for this install (if none exists yet).</li>
@@ -728,7 +728,7 @@ function CardActions({ order, onTrack, onComplete, completing, onPay, paying }: 
 
       {/* If installed but no sign-off yet and stage not yet reached — hint */}
       {derived.stage !== "installed" && derived.stage !== "completed" && !derived.blocked && (
-        <span className="text-[11px] text-slate-400">
+        <span className="text-[11px] text-muted-foreground">
           Sign-off available once technician marks installed
         </span>
       )}

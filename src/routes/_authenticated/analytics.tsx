@@ -175,7 +175,7 @@ function AnalyticsPage() {
               <div className="text-xs uppercase text-muted-foreground font-semibold mb-2">Alerts by priority</div>
               <div className="grid grid-cols-4 gap-2">
                 {alertsByPriority.map((a: any) => (
-                  <div key={a.priority} className="text-center p-2 rounded border border-border">
+                  <div key={a.priority} className="text-center p-2 rounded">
                     <div className="text-lg font-bold text-foreground">{a.count}</div>
                     <div className="text-[10px] uppercase text-muted-foreground">{a.priority}</div>
                   </div>

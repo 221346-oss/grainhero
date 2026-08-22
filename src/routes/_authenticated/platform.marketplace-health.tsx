@@ -114,7 +114,7 @@ function SellerCard({ title, sellers, scoreLabel, scoreKey, verifiedMin, pct }: 
               return (
                 <li key={s.adminId} className="flex justify-between items-center">
                   <a href={`/admins/${s.adminId}`} className="font-mono text-xs text-emerald-700 hover:underline">{s.adminId.slice(0, 8)}</a>
-                  <span className={s.score >= verifiedMin ? "text-emerald-700 font-semibold" : "text-slate-700"}>{scoreLabel}: {label}</span>
+                  <span className={s.score >= verifiedMin ? "text-emerald-700 font-semibold" : "text-foreground"}>{scoreLabel}: {label}</span>
                 </li>
               );
             })}
