@@ -150,10 +150,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeInit />
-      <Toaster />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Toaster />
+      {/* App-wide toast host — every toast.success/error() call in the app renders through this one instance. */}
+      <Toaster richColors closeButton position="top-right" />
     </QueryClientProvider>
   );
 }

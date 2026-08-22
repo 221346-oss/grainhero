@@ -31,12 +31,10 @@ export function ManagerDashboard({ name }: { name?: string }) {
           />
           <ManagerBento
             silos={(data?.silos ?? []) as never}
-            alerts={(data?.alerts ?? []) as never}
             qcQueue={(data?.qcQueue ?? []) as never}
             dispatchQueue={(data?.dispatchQueue ?? []) as never}
             actuators={(data?.actuators ?? []) as never}
             buyers={(data?.buyers ?? []) as never}
-            spoiledBatches={(data?.spoiledBatches ?? []) as never}
             technicians={(data?.technicians ?? []) as never}
           />
 

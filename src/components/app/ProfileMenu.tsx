@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Settings as SettingsIcon, User as UserIcon } from "lucide-react";
+import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -51,11 +51,6 @@ export function ProfileMenu() {
           {email ? <span className="text-xs font-normal text-muted-foreground truncate">{email}</span> : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to="/settings" className="cursor-pointer">
-            <UserIcon className="mr-2 h-4 w-4" /> Profile
-          </Link>
-        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/settings" className="cursor-pointer">
             <SettingsIcon className="mr-2 h-4 w-4" /> Settings

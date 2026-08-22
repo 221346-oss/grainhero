@@ -10,6 +10,7 @@ import { getMyRole } from "@/lib/roles.functions";
 import { listAllUsers, toggleUserBlocked } from "@/lib/platform-no-admin.functions";
 import { toast } from "sonner";
 import { CommandConsoleSkeleton } from "@/components/app/skeletons";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 
 export const Route = createFileRoute("/_authenticated/security-center")({
@@ -69,10 +70,14 @@ function SecurityCenterPage() {
   });
 
   if (!roleQ.isLoading && !allowed) {
-    return <div className="p-8 max-w-lg mx-auto"><Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>Security Center is available to admins and super admins.</CardDescription></CardHeader></Card></div>;
+    return (
+      <AdminPageShell title="Security Center" subtitle="Access restricted">
+        <Card><CardHeader><CardTitle>Access restricted</CardTitle><CardDescription>Security Center is available to admins and super admins.</CardDescription></CardHeader></Card>
+      </AdminPageShell>
+    );
   }
 
-  if (roleQ.isLoading) return <CommandConsoleSkeleton />;
+  if (roleQ.isLoading) return <AdminPageShell title="Security Center" subtitle="Loading..."><CommandConsoleSkeleton /></AdminPageShell>;
 
   // Calculate stats from allUsers data
   const totalUsers = allUsers.length;
@@ -85,14 +90,10 @@ function SecurityCenterPage() {
   const logs = data?.logs ?? [];
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8 space-y-4 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground">
-          <ShieldCheck className="h-6 w-6 text-primary" /> Security Center
-        </h1>
-        <p className="text-sm mt-1 text-muted-foreground">User access, privilege overview and recent security events.</p>
-      </div>
-
+    <AdminPageShell 
+      title="Security Center" 
+      subtitle="User access, privilege overview and recent security events."
+    >
       {/* Stats - Neon hairline grid */}
       <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-5">
         <div className="bg-background px-3 py-3">
@@ -196,6 +197,6 @@ function SecurityCenterPage() {
           </div>
         </NeonPanel>
       </HairlineGrid>
-    </div>
+    </AdminPageShell>
   );
 }

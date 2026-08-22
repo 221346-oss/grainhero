@@ -7,36 +7,47 @@ import { motion } from "framer-motion";
 import { TeamSection } from "@/components/administration/TeamSection";
 import { SecuritySection } from "@/components/administration/SecuritySection";
 import { ActivityLogsSection } from "@/components/administration/ActivityLogsSection";
-import { Users, ShieldCheck, ClipboardList, TrendingUp, TrendingDown } from "lucide-react";
+import { ReportsSection } from "@/components/administration/ReportsSection";
+import { KeyMetricsPanel, type KeyMetricsStats } from "@/components/administration/KeyMetricsPanel";
+import { AdministrationOverviewChart } from "@/components/administration/AdministrationOverviewChart";
+import { Users, ShieldCheck, ClipboardList, FileBarChart } from "lucide-react";
 import { getMyRole } from "@/lib/roles.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getSecurityOverview } from "@/lib/operations2.functions";
+import { getReportsData } from "@/lib/monitoring.functions";
+import { listActivityLogs } from "@/lib/notifications-audit.functions";
+
+type Tab = "team" | "security" | "activity" | "reports";
+const TAB_KEYS: Tab[] = ["team", "security", "activity", "reports"];
 
 export const Route = createFileRoute("/_authenticated/administration")({
-  head: () => ({
-    meta: [
-      { title: "Administration — Grain Hero" },
-      { name: "description", content: "Administration workspace in the Grain Hero platform — private, sign-in required." },
-      { property: "og:title", content: "Administration — Grain Hero" },
-      { property: "og:description", content: "Administration workspace in the Grain Hero platform." },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+  // Lets other pages deep-link straight to a tab (e.g. the dashboard's
+  // Field Incidents panel → /administration?tab=field) — mirrors
+  // grain-operations.tsx's validateSearch pattern.
+  validateSearch: (search: Record<string, unknown>): { tab: Tab } => ({
+    tab: (TAB_KEYS as string[]).includes(search.tab as string) ? (search.tab as Tab) : "team",
   }),
   component: AdministrationWorkspace,
 });
 
-type Tab = "team" | "security" | "activity";
-
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "team",     label: "Team Management", icon: Users },
-  { key: "security", label: "Security Center",  icon: ShieldCheck },
-  { key: "activity", label: "Activity Logs",    icon: ClipboardList },
+  { key: "team", label: "Team Management", icon: Users },
+  { key: "security", label: "Security Center", icon: ShieldCheck },
+  { key: "activity", label: "Activity Logs", icon: ClipboardList },
+  { key: "reports", label: "Reports", icon: FileBarChart },
 ];
 
 const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
 
 function AdministrationWorkspace() {
-  const [activeTab, setActiveTab] = useState<Tab>("team");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [activeTab, setActiveTabState] = useState<Tab>(tab);
+  useEffect(() => { setActiveTabState(tab); }, [tab]);
+  function setActiveTab(next: Tab) {
+    setActiveTabState(next);
+    navigate({ search: { tab: next } });
+  }
 
   const fetchRole = useServerFn(getMyRole);
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
@@ -44,9 +55,9 @@ function AdministrationWorkspace() {
   const isSuperAdmin = role === "super_admin";
   const isAdmin = ["super_admin", "admin"].includes(role);
 
-  // Managers only see Activity Logs
+  // Managers only see Activity Logs and Reports
   const visibleTabs =
-    role === "manager" ? TABS.filter((t) => t.key === "activity") : TABS;
+    role === "manager" ? TABS.filter((t) => ["activity", "reports"].includes(t.key)) : TABS;
 
   // Reset to activity tab if manager lands on a restricted tab
   useEffect(() => {
@@ -57,6 +68,8 @@ function AdministrationWorkspace() {
 
   const fetchMembers = useServerFn(listTeamMembers);
   const fetchSecurity = useServerFn(getSecurityOverview);
+  const fetchReports = useServerFn(getReportsData);
+  const fetchActivityLogs = useServerFn(listActivityLogs);
 
   const { data: members } = useQuery({
     queryKey: ["team-members"],
@@ -68,6 +81,14 @@ function AdministrationWorkspace() {
     queryFn: () => fetchSecurity(),
     enabled: isAdmin,
   });
+  const { data: reportsData } = useQuery({
+    queryKey: ["reports"],
+    queryFn: () => fetchReports(),
+  });
+  const { data: activityData } = useQuery({
+    queryKey: ["activity-logs-overview"],
+    queryFn: () => fetchActivityLogs({ page: 1, limit: 1000, search: "", category: null, severity: null } as any),
+  });
 
   const memberList = (members ?? []) as any[];
   const pendingMembers = memberList.filter((m) => m.role === "pending").length;
@@ -77,6 +98,7 @@ function AdministrationWorkspace() {
     team:     memberList.length,
     security: securityEvents,
     activity: 0,
+    reports: 0,
   };
 
   const maxCount = Math.max(...Object.values(counts), 1);
@@ -107,68 +129,25 @@ function AdministrationWorkspace() {
 
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Bar Chart Panel */}
+          {/* Area Chart Panel */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
-              Administration Overview
-            </p>
-            <div className="space-y-4">
-              {visibleTabs.map((tab, i) => {
-                const count = counts[tab.key];
-                const pct = Math.max((count / maxCount) * 100, count > 0 ? 4 : 0);
-                return (
-                  <div key={tab.key} className="flex items-center gap-4">
-                    <span className="w-24 text-xs text-muted-foreground font-mono truncate text-right shrink-0">
-                      {tab.label.split(" ")[0]}…
-                    </span>
-                    <div className="flex-1 h-8 bg-muted rounded-md overflow-hidden relative">
-                      <div
-                        className={`h-full rounded-md bg-gradient-to-r ${BAR_COLORS[i]} transition-all duration-700`}
-                        style={{ width: `${pct}%`, boxShadow: "0 0 12px rgba(99,102,241,0.3)" }}
-                      />
-                      <div
-                        className="absolute inset-0 pointer-events-none opacity-10"
-                        style={{
-                          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-                          backgroundSize: "8px 8px",
-                        }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-xs text-muted-foreground font-mono shrink-0">
-                      {count}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="flex items-start justify-between mb-5">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                Administration Overview
+              </p>
+            </div>
+            <div className="h-[240px]">
+              <AdministrationOverviewChart
+                activityLogs={(activityData?.logs ?? []) as any}
+                batches={(reportsData?.batches ?? []) as any}
+                alerts={(reportsData?.alerts ?? []) as any}
+                invoices={(reportsData?.invoices ?? []) as any}
+              />
             </div>
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-              Key Metrics
-            </p>
-            <div className="space-y-0 divide-y divide-border flex-1">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-center justify-between py-3">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
-                    <span className="text-muted-foreground/60">◇</span>
-                    <span className="truncate max-w-[120px]">{s.label}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-base font-mono">
-                      {s.value}
-                    </span>
-                    {s.up ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <KeyMetricsPanel stats={stats} />
         </div>
 
         {/* Tabbed Sections */}
@@ -217,6 +196,7 @@ function AdministrationWorkspace() {
             {activeTab === "team"     && <TeamSection />}
             {activeTab === "security" && <SecuritySection />}
             {activeTab === "activity" && <ActivityLogsSection />}
+            {activeTab === "reports" && <ReportsSection />}
           </div>
         </div>
       </div>

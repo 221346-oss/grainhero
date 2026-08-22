@@ -9,12 +9,17 @@ import {
   NEON,
 } from "@/components/charts/neon";
 
-export type StatusSlice = { name: string; value: number; tone: "yellow" | "green" | "red" };
+export type StatusSlice = { name: string; value: number; tone: "yellow" | "orange" | "green" | "blue" | "purple" | "red" };
 
-const TONE_TOKEN: Record<StatusSlice["tone"], string> = {
-  yellow: NEON.warning,
-  green: NEON.success,
-  red: NEON.critical,
+// 6-stage scheme: yellow = pending, orange = QC, green = stored,
+// blue = processing, purple = dispatched, red = issue.
+const TONE_HEX: Record<StatusSlice["tone"], string> = {
+  yellow: "#f59e0b",
+  orange: "#f97316",
+  green: "#10b981",
+  blue: "#3b82f6",
+  purple: "#a855f7",
+  red: "#ef4444",
 };
 
 /** Batch status breakdown for one silo — hatched neon donut. */
@@ -25,7 +30,7 @@ export function SiloStatusPie({ data }: { data: StatusSlice[] }) {
 
   return (
     <div className="w-full">
-      <NeonPatternDefs />
+      <NeonPatternDefs colors={Object.values(TONE_HEX)} />
       <div className="h-[140px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -39,7 +44,7 @@ export function SiloStatusPie({ data }: { data: StatusSlice[] }) {
               {...neonAnim}
             >
               {data.map((d, i) => (
-                <Cell key={i} {...getFill(TONE_TOKEN[d.tone])} />
+                <Cell key={i} {...getFill(TONE_HEX[d.tone])} />
               ))}
             </Pie>
             <Tooltip {...neonTooltipStyle} cursor={false} />
@@ -47,7 +52,7 @@ export function SiloStatusPie({ data }: { data: StatusSlice[] }) {
         </ResponsiveContainer>
       </div>
       <NeonLegend
-        items={data.map((d) => ({ label: d.name, color: TONE_TOKEN[d.tone], value: d.value }))}
+        items={data.map((d) => ({ label: d.name, color: TONE_HEX[d.tone], value: d.value }))}
       />
     </div>
   );

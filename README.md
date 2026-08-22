@@ -1,35 +1,39 @@
 # GrainHero
 
-Ship-ready B2B platform for smart grain storage: IoT silo monitoring, spoilage
-prediction, quality control, dispatch and marketplace operations.
+[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
+[![Build Status](https://github.com/grainhero/grainhero/actions/workflows/ci.yml/badge.svg)](https://github.com/grainhero/grainhero/actions)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-emerald.svg)](#)
+
+A high-performance B2B stack for agritech: Real-time grain silo monitoring, IoT telemetry, AI-driven spoilage prediction, and enterprise logistics.
 
 [grainhero.app](https://grainhero.app)
 
-## What it does
+## Platform Capabilities
 
-- **Silo monitoring** — live temperature, humidity, CO2 and moisture telemetry
-  from ESP32 sensor nodes, streamed through Firebase and persisted in Postgres.
-- **Spoilage prediction** — ONNX models per grain type (wheat, rice, maize,
-  barley, sorghum) score each batch and raise graded alerts.
-- **Grain operations** — intake, QC, treatment, dispatch and sale workflows with
-  a full audit history.
-- **Marketplace & commerce** — buyer orders, Stripe checkout, hardware install
-  orders and technician scheduling.
-- **Multi-tenant roles** — super admin, admin (tenant owner), manager and
-  technician, each with a dedicated dashboard and row-level-security scoping.
+- **Real-time Telemetry** — Sub-second monitoring of temperature, humidity, and CO2 levels via ESP32/IoT nodes.
+- **AI Spoilage Prediction** — ONNX-based risk scoring for Wheat, Rice, Maize, Barley, and Sorghum.
+- **Enterprise Operations** — End-to-end QC, intake, and dispatch workflows with full traceability.
+- **Marketplace & CRM** — Integrated Stripe commerce, buyer management, and field service technician dispatch.
+- **Multi-Tenant Security** — Deep RLS integration supporting Super Admin, Admin, Manager, and Technician roles.
 
-## Tech stack
+## Architecture
 
-| Layer | Choice |
-| --- | --- |
-| Framework | TanStack Start v1 (React 19, SSR + server functions) |
-| Build | Vite 7 |
-| Styling | Tailwind CSS v4, shadcn/ui |
-| Database & auth | Supabase (Postgres, RLS, Auth, Storage) |
-| Telemetry ingest | Firebase Realtime Database, synced to Supabase |
-| ML serving | FastAPI + ONNX Runtime (`ml-deploy/`) |
-| Payments | Stripe |
-| Hosting | Cloudflare Workers (edge) |
+```text
+[ IoT Sensors ] -> [ Firebase RTDB ] -> [ Supabase Edge Hooks ]
+                                                |
+[ React 19 / TanStack Start ] <---------- [ Postgres + RLS ]
+            |
+    [ Stripe / Twilio ]
+```
+
+## Tech Stack
+
+- **Core**: TanStack Start v1 (React 19), Vite 7.
+- **Styling**: Tailwind CSS v4 (Emerald/Slate aesthetic).
+- **Backend**: Supabase (Postgres, Auth, Storage, Edge Functions).
+- **AI/ML**: ONNX Runtime serving predictive models.
+- **Hosting**: Cloudflare Workers (Edge runtime).
 
 ## Getting started
 

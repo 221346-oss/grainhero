@@ -171,7 +171,7 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
     silo_id: z.string().uuid().nullable().optional(),
   }).parse(v))
   .handler(async ({ data, context }) => {
-    const { requireRole } = await import("./rbac.server");
+    const { requireRole, getEffectiveRole } = await import("./rbac.server");
     await requireRole(context.supabase, context.userId, ["admin", "manager", "technician", "super_admin"]);
 
     // Resolve tenant id via existing helper
@@ -181,23 +181,55 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
 
     const targetRole = data.target_role ?? "admin";
     const cat = data.title?.trim() || data.category?.trim() || "General Incident";
-    let formattedNotes = data.description?.trim() || data.notes?.trim() || "";
+    const description = data.description?.trim() || data.notes?.trim() || "";
     const reporterName = data.reporter_name?.trim() || profile?.name || profile?.email;
-    if (reporterName) {
-      const roleLabel = data.reporter_role?.trim() ? ` (${data.reporter_role.trim()})` : "";
-      const header = `Reported by: ${reporterName}${roleLabel} ➔ Target Role: ${targetRole.toUpperCase()}`;
-      formattedNotes = formattedNotes ? `${header}\n${formattedNotes}` : header;
+
+    // Determine recipient_id based on target_role
+    // Note: Role is computed via RPC, so we fetch candidate users and check their role
+    let recipientId: string | null = null;
+    if (targetRole !== "admin") {
+      // Find users in the same tenant
+      const { data: tenantUsers } = await context.supabase
+        .from("profiles")
+        .select("id")
+        .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
+        .limit(10);
+      
+      // Check each user's role via RPC until we find a match
+      if (tenantUsers && tenantUsers.length > 0) {
+        for (const user of tenantUsers) {
+          try {
+            const role = await getEffectiveRole(context.supabase, user.id);
+            if (role === targetRole) {
+              recipientId = user.id;
+              break;
+            }
+          } catch (e) {
+            console.warn(`[reportMobileFieldIncident] Failed to get role for user ${user.id}:`, e);
+          }
+        }
+      }
     }
 
-    const { error, data: inserted } = await context.supabase.from("field_incidents").insert({
-      tenant_id: tenantId,
-      reporter_user_id: context.userId,
-      category: cat,
-      severity: data.severity,
-      notes: formattedNotes || null,
-      silo_id: data.silo_id ?? null,
+    // Insert into grain_alerts with source='field_incident' to be visible in monitoring page
+    const { error, data: inserted } = await context.supabase.from("grain_alerts").insert({
+      alert_id: `field-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      admin_id: tenantId, // Required for RLS policy
+      title: cat,
+      message: description || null,
+      priority: data.severity === "high" ? "critical" : data.severity, // Map high to critical
       status: "open",
-      source: "web",
+      alert_type: "in-app", // Must be one of: SMS, voice, in-app, email, push
+      source: "field_incident",
+      created_by: context.userId,
+      recipient_id: recipientId,
+      triggered_at: new Date().toISOString(),
+      custom_fields: {
+        silo_id: data.silo_id ?? null,
+        reporter_name: reporterName,
+        reporter_role: data.reporter_role?.trim() || null,
+        target_role: targetRole,
+      } as never,
     } as never).select("id").maybeSingle();
 
     if (error) throw new Error(error.message);
@@ -206,12 +238,13 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
     try {
       const { emitToRole } = await import("./notify");
       const notifSeverity = data.severity === "critical" || data.severity === "high" ? "warning" : "info";
+      const notifLink = targetRole === "manager" ? "/manager/monitoring" : "/platform/monitoring";
       await emitToRole(context.supabase, tenantId, targetRole, {
         category: "ops",
         severity: notifSeverity,
         title: `New Incident Ticket: ${cat}`,
         body: `${reporterName || "A user"} reported a ${data.severity} incident targetted to ${targetRole}: "${cat}"`,
-        link: "/platform/field-incidents",
+        link: notifLink,
         entityType: "field_incident",
         entityId: (inserted as { id?: string } | null)?.id ?? null,
       });
@@ -226,14 +259,31 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
 export const listOpenFieldIncidents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Updated to use grain_alerts with source='field_incident' instead of field_incidents table
+    // This ensures consistency with other field incident queries across the app
     const { data, error } = await context.supabase
-      .from("field_incidents")
-      .select("id, category, severity, status, notes, silo_id, created_at, assigned_to, reporter_user_id")
-      .in("status", ["open", "investigating"] as never)
+      .from("grain_alerts")
+      .select("id, title, message, status, priority, created_at, resolved_at, created_by, recipient_id, custom_fields, source")
+      .eq("source", "field_incident")
+      .in("status", ["open", "pending", "investigating"] as never)
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    return data ?? [];
+    
+    // Map grain_alerts structure to match expected field_incidents structure for backward compatibility
+    const incidents = (data ?? []).map((incident: any) => ({
+      id: incident.id,
+      category: incident.title,
+      severity: incident.priority ?? "medium",
+      status: incident.status,
+      notes: incident.message,
+      created_at: incident.created_at,
+      reporter_user_id: incident.created_by,
+      assigned_to: incident.recipient_id,
+      silo_id: incident.custom_fields?.silo_id ?? null,
+    }));
+    
+    return incidents;
   });
 
 // ─── List Comments / Discussion for an Incident Ticket ────────────────────────
@@ -355,7 +405,7 @@ export const addIncidentComment = createServerFn({ method: "POST" })
             severity: "info",
             title: `New Comment on Ticket: ${incident.category}`,
             body: `${authorName} (${role}): "${data.message.trim().slice(0, 100)}"`,
-            link: "/platform/field-incidents",
+            link: "/monitoring",
             entityType: "field_incident",
             entityId: data.incident_id,
           });

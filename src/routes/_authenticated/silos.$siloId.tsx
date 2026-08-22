@@ -247,7 +247,7 @@ function SiloDetailPage() {
               </div>
               {wh && (
                 <Button size="sm" variant="ghost" className="h-7 gap-1" asChild>
-                  <Link to="/grain-operations" search={{ tab: "warehouses" }}><Eye className="w-3.5 h-3.5" /> Open</Link>
+                  <Link to="/grain-operations" search={{ tab: "silos" }}><Eye className="w-3.5 h-3.5" /> Open</Link>
                 </Button>
               )}
             </div>

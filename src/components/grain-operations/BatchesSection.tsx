@@ -8,52 +8,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  Package,
-  Plus,
-  Search,
-  Edit2,
-  Trash2,
-  Eye,
-  Loader2,
-  QrCode,
-  Truck,
-  AlertTriangle,
-  User,
-  Calendar,
-  Wheat,
-  FlaskConical,
-  ShieldCheck,
-  Undo2,
+  Package, Plus, Search, Edit2, Trash2, Eye, Loader2, QrCode,
+  Truck, AlertTriangle, User, Calendar, Wheat, FlaskConical, ShieldCheck, Undo2,
+  ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -373,6 +339,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const [selected, setSelected] = useState<Batch | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [spoilageOpen, setSpoilageOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -407,15 +374,6 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const rows = useMemo(() => {
     const all = (data ?? []) as Batch[];
     return all.filter((b) => {
-      // Managers can only see:
-      // 1. Batches they created (pending_approval status)
-      // 2. Outgoing batches (dispatched, sold)
-      if (isManager) {
-        const isManagerBatch = b.status === "pending_approval";
-        const isOutgoing = b.status === "dispatched" || b.status === "sold";
-        if (!isManagerBatch && !isOutgoing) return false;
-      }
-
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (grainFilter !== "all" && b.grain_type !== grainFilter) return false;
       if (!q.trim()) return true;
@@ -670,9 +628,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           columns={batchExportColumns}
         />
         {canCreate && (
-          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap">
-            <Plus className="w-4 h-4" /> New batch
-          </Button>
+          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Package className="w-4 h-4" /> New batch</Button>
         )}
       </div>
 
@@ -681,23 +637,26 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
             <p className="text-sm mb-4">No batches yet.</p>
             {availableSilos.length === 0 ? (
-              <Link
-                to="/grain-operations"
-                search={{ tab: "silos" }}
-                className="text-sm text-primary hover:text-primary/80 underline underline-offset-4"
-              >
-                Create a silo first →
-              </Link>
+              isAdmin ? (
+                <Link
+                  to="/grain-operations"
+                  search={{ tab: "silos" }}
+                  className="text-sm text-primary hover:text-primary/80 underline underline-offset-4"
+                >
+                  Create a silo first →
+                </Link>
+              ) : (
+                <span className="text-sm text-muted-foreground">No available silos in your assigned warehouses.</span>
+              )
             ) : canCreate ? (
-              <Button onClick={openCreate} size="sm" className="gap-2">
-                <Plus className="w-4 h-4" /> Add batch
-              </Button>
+              <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add incoming batch</Button>
             ) : null}
           </CardContent>
         </Card>
       ) : (
         <div className="rounded-xl border bg-card/60 overflow-hidden">
-          <div className="max-h-[70vh] overflow-auto">
+          {/* Fixed height container for 4 entries with vertical scroll */}
+          <div className="h-[280px] overflow-y-auto">
             <Table className="text-xs">
               <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
                 <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
@@ -721,29 +680,18 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   return (
                     <TableRow
                       key={b.id}
-                      className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition"
+                      className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition cursor-pointer"
+                      onClick={() => { setSelected(b); setViewOpen(true); }}
                     >
                       <TableCell className="font-medium">{b.batch_id}</TableCell>
                       <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">
-                        {supplier}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">
-                        {b.silos?.name ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {intake.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">
-                        {remaining.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge value={b.status} />
-                      </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{supplier}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.silos?.name ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell><StatusBadge value={b.status} qcPassedAt={(b as any).qc_passed_at} /></TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <RowActions
                           actions={[
                             ...(myRole === "technician" &&
@@ -1256,8 +1204,39 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
         </DialogContent>
       </Dialog>
 
-      {/* View Dialog */}
-      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+      {/* Overview drawer — quick glance from a row click, with a way out to the full detail popup */}
+      <Sheet open={viewOpen} onOpenChange={setViewOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2 min-w-0">
+                  <Wheat className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span className="truncate">{selected.batch_id}</span>
+                </SheetTitle>
+                <SheetDescription>{selected.grain_type}{selected.variety ? ` · ${selected.variety}` : ""}</SheetDescription>
+              </SheetHeader>
+              <div className="space-y-3 text-sm py-4">
+                <Row label="Status"><StatusBadge value={selected.status} /></Row>
+                <Row label="Quantity">{Number(selected.quantity_kg).toLocaleString()} kg</Row>
+                {selected.dispatched_quantity_kg ? (
+                  <Row label="Dispatched">{Number(selected.dispatched_quantity_kg).toLocaleString()} kg</Row>
+                ) : null}
+                <Row label="Silo">{selected.silos?.name ?? "—"}</Row>
+                {selected.intake_date && <Row label="Intake">{new Date(selected.intake_date).toLocaleDateString()}</Row>}
+              </div>
+              <SheetFooter className="gap-2 sm:justify-start">
+                <Button variant="outline" size="sm" onClick={() => setDetailOpen(true)} className="gap-1">
+                  View full detail <ArrowUpRight className="w-3.5 h-3.5" />
+                </Button>
+              </SheetFooter>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Full detail popup — everything beyond the overview, view-only (Edit stays its own action) */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
           {selected && (
             <>
@@ -1304,26 +1283,11 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                 )}
               </div>
               <DialogFooter className="gap-2 flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelected((b) => b);
-                    setViewOpen(false);
-                    openEdit(selected);
-                  }}
-                  className="gap-1"
-                >
-                  <Edit2 className="w-4 h-4" /> Edit
-                </Button>
+                <Button variant="outline" size="sm" onClick={() => { setDetailOpen(false); setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
                 {/* Dispatch happens from the silo's mixed stock, not a single batch — see dispatchFromSilo/createDispatchFromSilo. */}
                 {selected.silos && (
                   <Button size="sm" asChild className="gap-1">
-                    <Link
-                      to="/silos/$siloId"
-                      params={{ siloId: selected.silos.id }}
-                      onClick={() => setViewOpen(false)}
-                    >
+                    <Link to="/silos/$siloId" params={{ siloId: selected.silos.id }} onClick={() => { setDetailOpen(false); setViewOpen(false); }}>
                       <Truck className="w-4 h-4" /> Dispatch from {selected.silos.name}
                     </Link>
                   </Button>

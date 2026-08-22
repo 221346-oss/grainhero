@@ -2926,6 +2926,61 @@ export type Database = {
           },
         ]
       }
+      grain_alert_comments: {
+        Row: {
+          author_name: string
+          author_role: string
+          created_at: string
+          id: string
+          incident_id: string
+          message: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_name: string
+          author_role: string
+          created_at?: string
+          id?: string
+          incident_id: string
+          message: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string
+          author_role?: string
+          created_at?: string
+          id?: string
+          incident_id?: string
+          message?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_alert_comments_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "grain_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_alert_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_alert_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+        ]
+      }
       grain_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -2934,6 +2989,7 @@ export type Database = {
           actuator_id: string | null
           admin_id: string
           ai_context: Json | null
+          ai_recommendation: string | null
           alert_id: string
           alert_type: string | null
           assigned_to: string | null
@@ -2950,6 +3006,7 @@ export type Database = {
           escalation_level: number | null
           id: string
           message: string
+          notification_sent: boolean | null
           notifications_sent: Json | null
           priority: Database["public"]["Enums"]["alert_priority"]
           recipient_id: string | null
@@ -2977,6 +3034,7 @@ export type Database = {
           actuator_id?: string | null
           admin_id: string
           ai_context?: Json | null
+          ai_recommendation?: string | null
           alert_id: string
           alert_type?: string | null
           assigned_to?: string | null
@@ -2993,6 +3051,7 @@ export type Database = {
           escalation_level?: number | null
           id?: string
           message: string
+          notification_sent?: boolean | null
           notifications_sent?: Json | null
           priority: Database["public"]["Enums"]["alert_priority"]
           recipient_id?: string | null
@@ -3020,6 +3079,7 @@ export type Database = {
           actuator_id?: string | null
           admin_id?: string
           ai_context?: Json | null
+          ai_recommendation?: string | null
           alert_id?: string
           alert_type?: string | null
           assigned_to?: string | null
@@ -3036,6 +3096,7 @@ export type Database = {
           escalation_level?: number | null
           id?: string
           message?: string
+          notification_sent?: boolean | null
           notifications_sent?: Json | null
           priority?: Database["public"]["Enums"]["alert_priority"]
           recipient_id?: string | null
@@ -3241,6 +3302,7 @@ export type Database = {
           actual_dispatch_date: string | null
           admin_id: string
           ai_prediction_confidence: number | null
+          assigned_technician_id: string | null
           batch_id: string
           buyer_id: string | null
           created_at: string | null
@@ -3311,6 +3373,7 @@ export type Database = {
           actual_dispatch_date?: string | null
           admin_id: string
           ai_prediction_confidence?: number | null
+          assigned_technician_id?: string | null
           batch_id: string
           buyer_id?: string | null
           created_at?: string | null
@@ -3381,6 +3444,7 @@ export type Database = {
           actual_dispatch_date?: string | null
           admin_id?: string
           ai_prediction_confidence?: number | null
+          assigned_technician_id?: string | null
           batch_id?: string
           buyer_id?: string | null
           created_at?: string | null
@@ -3623,6 +3687,8 @@ export type Database = {
           admin_id: string
           avg_cost_snapshot: number | null
           avg_unit_cost: number | null
+          buyer_confirmed_at: string | null
+          buyer_confirmed_by: string | null
           buyer_id: string | null
           buyer_order_id: string | null
           created_at: string
@@ -3630,7 +3696,9 @@ export type Database = {
           currency: string
           destination: string | null
           dispatch_number: string
+          dispatch_photo_url: string | null
           dispatched_at: string | null
+          driver_cnic: string | null
           driver_contact: string | null
           driver_name: string | null
           expected_date: string | null
@@ -3655,6 +3723,8 @@ export type Database = {
           admin_id: string
           avg_cost_snapshot?: number | null
           avg_unit_cost?: number | null
+          buyer_confirmed_at?: string | null
+          buyer_confirmed_by?: string | null
           buyer_id?: string | null
           buyer_order_id?: string | null
           created_at?: string
@@ -3662,7 +3732,9 @@ export type Database = {
           currency?: string
           destination?: string | null
           dispatch_number: string
+          dispatch_photo_url?: string | null
           dispatched_at?: string | null
+          driver_cnic?: string | null
           driver_contact?: string | null
           driver_name?: string | null
           expected_date?: string | null
@@ -3687,6 +3759,8 @@ export type Database = {
           admin_id?: string
           avg_cost_snapshot?: number | null
           avg_unit_cost?: number | null
+          buyer_confirmed_at?: string | null
+          buyer_confirmed_by?: string | null
           buyer_id?: string | null
           buyer_order_id?: string | null
           created_at?: string
@@ -3694,7 +3768,9 @@ export type Database = {
           currency?: string
           destination?: string | null
           dispatch_number?: string
+          dispatch_photo_url?: string | null
           dispatched_at?: string | null
+          driver_cnic?: string | null
           driver_contact?: string | null
           driver_name?: string | null
           expected_date?: string | null
@@ -6284,8 +6360,12 @@ export type Database = {
           id: string
           invitation_expires: string | null
           invitation_role: string | null
+          invitation_status:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token: string | null
           invited_by: string | null
+          is_active: boolean | null
           last_active_at: string | null
           last_login: string | null
           location: Json | null
@@ -6350,8 +6430,12 @@ export type Database = {
           id: string
           invitation_expires?: string | null
           invitation_role?: string | null
+          invitation_status?:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token?: string | null
           invited_by?: string | null
+          is_active?: boolean | null
           last_active_at?: string | null
           last_login?: string | null
           location?: Json | null
@@ -6416,8 +6500,12 @@ export type Database = {
           id?: string
           invitation_expires?: string | null
           invitation_role?: string | null
+          invitation_status?:
+            | Database["public"]["Enums"]["invitation_status"]
+            | null
           invitation_token?: string | null
           invited_by?: string | null
+          is_active?: boolean | null
           last_active_at?: string | null
           last_login?: string | null
           location?: Json | null
@@ -8577,6 +8665,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           location: Json | null
+          location_address: string | null
+          location_city: string | null
           manager_id: string | null
           name: string
           notes: string | null
@@ -8600,6 +8690,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           location?: Json | null
+          location_address?: string | null
+          location_city?: string | null
           manager_id?: string | null
           name: string
           notes?: string | null
@@ -8623,6 +8715,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           location?: Json | null
+          location_address?: string | null
+          location_city?: string | null
           manager_id?: string | null
           name?: string
           notes?: string | null
@@ -9124,6 +9218,9 @@ export type Database = {
         | "resolved"
         | "escalated"
         | "closed"
+        | "open"
+        | "investigating"
+        | "dismissed"
       app_role:
         | "super_admin"
         | "admin"
@@ -9144,6 +9241,11 @@ export type Database = {
         | "ready"
         | "rejected"
         | "pending_approval"
+        | "pending_qc"
+        | "qc_submitted"
+        | "qc_failed"
+        | "qc_passed"
+        | "admin_rejected"
       billing_cycle: "monthly" | "yearly" | "quarterly"
       buyer_order_status:
         | "pending"
@@ -9164,6 +9266,17 @@ export type Database = {
       device_status: "active" | "offline" | "error" | "maintenance"
       dispute_status: "open" | "under_review" | "resolved" | "rejected"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
+      hardware_order_status:
+        | "pending_payment"
+        | "new"
+        | "approved"
+        | "tech_assigned"
+        | "installed"
+        | "live"
+        | "cancelled"
+        | "completed"
+        | "paid"
+      invitation_status: "pending" | "accepted" | "declined"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
       notification_cat:
@@ -9345,6 +9458,9 @@ export const Constants = {
         "resolved",
         "escalated",
         "closed",
+        "open",
+        "investigating",
+        "dismissed",
       ],
       app_role: [
         "super_admin",
@@ -9367,6 +9483,11 @@ export const Constants = {
         "ready",
         "rejected",
         "pending_approval",
+        "pending_qc",
+        "qc_submitted",
+        "qc_failed",
+        "qc_passed",
+        "admin_rejected",
       ],
       billing_cycle: ["monthly", "yearly", "quarterly"],
       buyer_order_status: [
@@ -9390,6 +9511,18 @@ export const Constants = {
       device_status: ["active", "offline", "error", "maintenance"],
       dispute_status: ["open", "under_review", "resolved", "rejected"],
       grain_type: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
+      hardware_order_status: [
+        "pending_payment",
+        "new",
+        "approved",
+        "tech_assigned",
+        "installed",
+        "live",
+        "cancelled",
+        "completed",
+        "paid",
+      ],
+      invitation_status: ["pending", "accepted", "declined"],
       listing_status: ["draft", "active", "paused", "sold_out", "archived"],
       listing_visibility: ["private", "buyer_network", "public"],
       notification_cat: [

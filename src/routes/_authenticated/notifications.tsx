@@ -243,43 +243,55 @@ function NotificationsPage() {
             </div>
           ) : (
             <ScrollArea className="max-h-[75vh]">
-              <div className="divide-y">
+              <div className="divide-y divide-gray-200">
                 {notifications.map((n) => {
-                  const t = TYPE_CONFIG[n.type] ?? TYPE_CONFIG.info;
                   const ci = CATEGORY_ICON[n.category] ?? CATEGORY_ICON.system;
+                  const isUnread = !n.read;
                   return (
                     <div
                       key={n.id}
-                      className={`flex items-start gap-3 sm:gap-4 p-4 cursor-pointer transition-colors hover:bg-slate-50 ${!n.read ? "bg-emerald-50/30 border-l-4 border-l-emerald-500" : "border-l-4 border-l-transparent"}`}
-                      onClick={() => !n.read && readMut.mutate(n.id)}
+                      className={`flex items-start gap-3 p-4 transition-colors ${isUnread ? "bg-blue-50/30" : "bg-white"}`}
                     >
-                      <div className={`mt-0.5 shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${t.bg}`}>
-                        <span className={t.color}>{t.icon}</span>
-                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-sm font-semibold leading-snug ${!n.read ? "text-slate-900" : "text-slate-600"}`}>
-                            {n.title}
-                          </p>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {!n.read && <span className="w-2 h-2 bg-emerald-500 rounded-full" />}
-                            <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              {isUnread && <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0" />}
+                              <p className={`text-sm leading-snug ${isUnread ? "text-gray-900 font-semibold" : "text-gray-700"}`}>
+                                {n.title}
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{n.message}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[10px] text-gray-400">
                               {formatTime(n.created_at)}
                             </span>
                           </div>
                         </div>
-                        <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
-                            {ci}
+                          <span className="text-[10px] px-2 py-0.5 border border-gray-300 rounded text-gray-600">
                             {n.category}
-                          </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 border border-gray-300 rounded text-gray-600 capitalize">
                             {n.type}
-                          </Badge>
+                          </span>
+                          {isUnread && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 text-[10px] px-2 ml-auto border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                readMut.mutate(n.id);
+                              }}
+                              disabled={readMut.isPending}
+                            >
+                              Mark Read
+                            </Button>
+                          )}
                           <button
-                            className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
+                            className="text-gray-400 hover:text-red-500 transition-colors ml-auto"
                             onClick={(e) => { e.stopPropagation(); delMut.mutate(n.id); }}
                             title="Delete"
                           >

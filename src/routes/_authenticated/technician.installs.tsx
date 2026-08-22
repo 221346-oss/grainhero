@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listMyInstalls } from "@/lib/hardware-lifecycle.functions";
-import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import { downloadCsv, downloadPdf } from "@/lib/csv-pdf-export";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarClock, MapPin, ChevronRight, Download, FileDown } from "lucide-react";
@@ -36,6 +36,16 @@ function toExportRows(installs: any[]) {
   });
 }
 
+const INSTALL_EXPORT_COLS = [
+  { header: "Order ID", value: (r: any) => r["Order ID"] },
+  { header: "Status", value: (r: any) => r["Status"] },
+  { header: "Scheduled for", value: (r: any) => r["Scheduled for"] },
+  { header: "City", value: (r: any) => r["City"] },
+  { header: "Country", value: (r: any) => r["Country"] },
+  { header: "Plan", value: (r: any) => r["Plan"] },
+  { header: "Qty", value: (r: any) => r["Qty"] },
+];
+
 function TechnicianInstallsPage() {
   const fetchFn = useServerFn(listMyInstalls);
   const { data, isLoading } = useQuery({ queryKey: ["technician.installs"], queryFn: () => fetchFn() });
@@ -55,7 +65,7 @@ function TechnicianInstallsPage() {
         <div className="flex items-center gap-1 shrink-0">
           <button
             disabled={exportRows.length === 0}
-            onClick={() => exportToCSV(exportRows, "my-installs")}
+            onClick={() => downloadCsv("my-installs", exportRows, INSTALL_EXPORT_COLS)}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"
           >
             <Download className="w-3 h-3" /> CSV
@@ -64,7 +74,7 @@ function TechnicianInstallsPage() {
             disabled={exportRows.length === 0 || pdfBusy}
             onClick={async () => {
               setPdfBusy(true);
-              await exportToPDF(exportRows, "My installations", "my-installs").catch(console.error);
+              await downloadPdf("my-installs", "My installations", exportRows, INSTALL_EXPORT_COLS).catch(console.error);
               setPdfBusy(false);
             }}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"

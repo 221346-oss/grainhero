@@ -40,7 +40,7 @@ export const listTeamMembers = createServerFn({ method: "GET" })
     const { data: profiles, error } = await context.supabase
       .from("profiles")
       .select(
-        "id, name, email, phone, avatar, status, blocked, email_verified, department, employee_id, created_at, warehouse_id",
+        "id, name, email, phone, avatar, status, blocked, email_verified, department, employee_id, created_at, updated_at, warehouse_id, invited_by",
       )
       .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
       .order("created_at", { ascending: false });
@@ -58,7 +58,31 @@ export const listTeamMembers = createServerFn({ method: "GET" })
       const cur = roleMap.get(r.user_id);
       if (!cur || order.indexOf(r.role) < order.indexOf(cur)) roleMap.set(r.user_id, r.role);
     }
-    return (profiles ?? []).map((p) => ({ ...p, role: roleMap.get(p.id) ?? "pending" }));
+    const results = (profiles ?? []).map((p) => ({ ...p, role: roleMap.get(p.id) ?? "pending" }));
+
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+    if (userRole === "manager") {
+      const { data: warehouses } = await context.supabase
+        .from("warehouses")
+        .select("technician_ids")
+        .eq("manager_id", context.userId)
+        .is("deleted_at", null);
+      
+      const techIds = new Set<string>();
+      for (const w of warehouses ?? []) {
+        for (const t of w.technician_ids ?? []) techIds.add(t);
+      }
+
+      return results.filter((p) => {
+        if (p.id === tenantId || p.role === "admin" || p.role === "super_admin") return true;
+        if (p.id === context.userId) return true;
+        if (techIds.has(p.id)) return true;
+        if (p.invited_by === context.userId) return true;
+        return false;
+      });
+    }
+
+    return results;
   });
 
 export const inviteTeamMember = createServerFn({ method: "POST" })
@@ -106,7 +130,8 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     const { count: currentUserCount } = await adminForCount
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .or(`admin_id.eq.${admin_id},id.eq.${admin_id}`);
+      .or(`admin_id.eq.${admin_id},id.eq.${admin_id}`)
+      .eq("blocked", false);
     await assertPlanAllows({
       feature: "max_users",
       sb: context.supabase,
@@ -229,6 +254,7 @@ export const updateTeamMember = createServerFn({ method: "POST" })
     (d: {
       id: string;
       name?: string;
+      email?: string;
       phone?: string;
       role?: "admin" | "manager" | "technician" | "pending";
       blocked?: boolean;
@@ -238,16 +264,42 @@ export const updateTeamMember = createServerFn({ method: "POST" })
     const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
     if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
 
+    // Role changes are a privilege-escalation surface — a manager could
+    // otherwise promote any team member (including themselves) to admin,
+    // since the role-change branch below uses a service-role client that
+    // bypasses RLS. Only admin/super_admin may change roles; a manager
+    // attempting it is logged as a security event, not silently ignored.
+    if (data.role && !isSuper && !isAdmin) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: actorProfile } = await context.supabase
+        .from("profiles")
+        .select("admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      await supabaseAdmin.from("security_events").insert({
+        user_id: context.userId,
+        tenant_id: (actorProfile as { admin_id?: string } | null)?.admin_id ?? context.userId,
+        event: "role_escalation_attempt",
+        meta: { targetUserId: data.id, attemptedRole: data.role } as never,
+      });
+      throw new Error("Forbidden: only admins can change roles");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const update: Record<string, any> = {};
     if (data.name !== undefined) update.name = data.name;
+    if (data.email !== undefined) update.email = data.email.trim().toLowerCase();
     if (data.phone !== undefined) update.phone = data.phone;
     if (data.blocked !== undefined) update.blocked = data.blocked;
     if (Object.keys(update).length) {
-      const { error } = await context.supabase
+      const { error } = await supabaseAdmin
         .from("profiles")
         .update(update as any)
         .eq("id", data.id);
       if (error) throw error;
+    }
+    if (data.email !== undefined) {
+      await supabaseAdmin.auth.admin.updateUserById(data.id, { email: data.email.trim().toLowerCase() });
     }
     if (data.role) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -283,10 +335,70 @@ export const removeTeamMember = createServerFn({ method: "POST" })
     const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(data.id, { ban_duration: '876000h' });
     if (banErr) throw new Error(banErr.message);
 
-    // Mark as blocked in profiles so they appear in the Blocked card
-    const { error: pErr } = await context.supabase.from("profiles").update({ blocked: true }).eq("id", data.id);
+    // Mark as blocked and status=deleted in profiles so they appear in the Deleted section/card
+    const { error: pErr } = await supabaseAdmin.from("profiles").update({ blocked: true, status: "deleted" }).eq("id", data.id);
     if (pErr) throw new Error(pErr.message);
 
+    return { ok: true };
+  });
+
+export const getTeamMemberDetail = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: { memberId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
+    if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Fetch full profile
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id, name, email, phone, avatar, created_at, status, blocked, email_verified, warehouse_id")
+      .eq("id", data.memberId)
+      .maybeSingle();
+
+    // Fetch role
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.memberId)
+      .maybeSingle();
+
+    // Fetch assigned batches (via assigned_technician_id on grain_batches)
+    const { data: batches } = await supabaseAdmin
+      .from("grain_batches" as never)
+      .select("id, batch_id, status, grain_type, silo_id, silos:silo_id(id, name, silo_id)" as never)
+      .eq("assigned_technician_id" as never, data.memberId)
+      .not("status", "in", "(dispatched,sold,rejected)") as any;
+
+    return {
+      ...profile,
+      role: roleRow?.role ?? "pending",
+      assignedBatches: (batches ?? []) as Array<{
+        id: string;
+        batch_id: string;
+        status: string;
+        grain_type: string | null;
+        silo_id: string | null;
+        silos: { id: string; name: string; silo_id: string } | null;
+      }>,
+    };
+  });
+
+export const assignTechnicianToBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: { batchId: string; technicianId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { isSuper, isAdmin, isManager } = await roleFlags(context.supabase, context.userId);
+    if (!isSuper && !isAdmin && !isManager) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("grain_batches" as never)
+      .update({ assigned_technician_id: data.technicianId } as never)
+      .eq("id", data.batchId);
+    if (error) throw error;
     return { ok: true };
   });
 

@@ -95,7 +95,12 @@ async function resolvePlan(sb: Sb, userId: string): Promise<{
       .maybeSingle();
     planId = owner?.subscription_plan ?? null;
   }
-  return { tenantAdminId, planId: planId ?? "starter", isSuper };
+  // "basic" is the actual lowest-tier plan_id seeded in plan_thresholds on
+  // this deployment (basic/intermediate/pro) — NOT "starter". A "starter"
+  // default here would never match a plan_thresholds row and would push
+  // every caller with a null subscription_plan into the "unknown plan"
+  // branch below (denies every feature), rather than the real entry tier.
+  return { tenantAdminId, planId: planId ?? "basic", isSuper };
 }
 
 /** Server-only: count current usage for a numeric feature. */

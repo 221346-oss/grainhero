@@ -7,18 +7,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { logActivity } from "@/lib/activity";
+import { insertInvoiceWithUniqueNumber } from "@/lib/invoice-number";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
-
-async function nextInvoiceNumber(sb: unknown, adminId: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const c = sb as any;
-  const { count } = await c.from("buyer_invoices")
-    .select("id", { count: "exact", head: true }).eq("admin_id", adminId);
-  const seq = ((count ?? 0) + 1).toString().padStart(5, "0");
-  return `INV-${new Date().getFullYear()}-${seq}`;
-}
 
 export const generateInvoice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -36,7 +28,6 @@ export const generateInvoice = createServerFn({ method: "POST" })
     const o = order as Row;
     if (!o.batch_id) throw new Error("Order has no batch");
 
-    const invoiceNumber = await nextInvoiceNumber(context.supabase, o.admin_id as string);
     const items = [{
       description: (o.grain_listings as Row)?.title ?? "Grain",
       quantity_kg: Number(o.quantity_kg),
@@ -46,25 +37,27 @@ export const generateInvoice = createServerFn({ method: "POST" })
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 14);
 
-    const { data: inv, error: e2 } = await context.supabase.from("buyer_invoices").insert({
-      admin_id: o.admin_id, invoice_number: invoiceNumber,
-      buyer_id: o.buyer_id, batch_id: o.batch_id, order_id: o.id,
-      buyer_name: (o.buyers as Row)?.name ?? null,
-      buyer_company: (o.buyers as Row)?.company_name ?? null,
-      buyer_contact: {
-        email: (o.buyers as Row)?.contact_email,
-        phone: (o.buyers as Row)?.contact_phone,
-        address: (o.buyers as Row)?.address,
-        city: (o.buyers as Row)?.city,
-        country: (o.buyers as Row)?.country,
-      },
-      batch_ref: (o.grain_listings as Row)?.grain_batches?.batch_number ?? null,
-      items, subtotal: Number(o.subtotal), total_amount: Number(o.subtotal),
-      currency: o.currency, payment_status: "pending",
-      due_date: dueDate.toISOString().slice(0, 10),
-      created_by: context.userId,
-    } as never).select("id").single();
-    if (e2) throw e2;
+    const inv = await insertInvoiceWithUniqueNumber<Row>(context.supabase, o.admin_id as string, (invoiceNumber) =>
+      context.supabase.from("buyer_invoices").insert({
+        admin_id: o.admin_id, invoice_number: invoiceNumber,
+        buyer_id: o.buyer_id, batch_id: o.batch_id, order_id: o.id,
+        buyer_name: (o.buyers as Row)?.name ?? null,
+        buyer_company: (o.buyers as Row)?.company_name ?? null,
+        buyer_contact: {
+          email: (o.buyers as Row)?.contact_email,
+          phone: (o.buyers as Row)?.contact_phone,
+          address: (o.buyers as Row)?.address,
+          city: (o.buyers as Row)?.city,
+          country: (o.buyers as Row)?.country,
+        },
+        batch_ref: (o.grain_listings as Row)?.grain_batches?.batch_number ?? null,
+        items, subtotal: Number(o.subtotal), total_amount: Number(o.subtotal),
+        currency: o.currency, payment_status: "pending",
+        due_date: dueDate.toISOString().slice(0, 10),
+        created_by: context.userId,
+      } as never).select("id, invoice_number").single(),
+    );
+    const invoiceNumber = inv.invoice_number as string;
 
     // Move order to invoiced if still confirmed
     await context.supabase.from("buyer_orders")

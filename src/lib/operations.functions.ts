@@ -11,6 +11,9 @@ import { logActivity, logManagerAction } from "@/lib/activity";
 // team-settings-insurance.functions.ts). Technicians are excluded.
 const RENAME_ROLES = ["super_admin", "admin", "manager"] as const;
 
+// Roles allowed to rename a silo. Managers are excluded from editing silos.
+const SILO_RENAME_ROLES = ["super_admin", "admin"] as const;
+
 // Turn ZodError into a readable one-liner so the client toast is helpful.
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
@@ -239,7 +242,9 @@ export const listSilos = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("silos")
       .select(
-        "*, warehouses(id, name, warehouse_id, manager_id, technician_ids), current_batch:grain_batches!fk_silos_current_batch(id, batch_id, grain_type)",
+        `id, silo_id, name, warehouse_id, capacity_kg, current_occupancy_kg, status, location, 
+         batch_loaded_date, batch_dispatched_date, current_conditions, notes, created_at, updated_at,
+         warehouses(id, name, warehouse_id, location, manager_id, technician_ids)`,
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -271,6 +276,32 @@ export const listSilos = createServerFn({ method: "GET" })
 
     const { data, error } = await query;
     if (error) throw error;
+
+    // Fetch current batch data separately to avoid join issues
+    if (data && data.length > 0) {
+      const siloIds = data.map((s: any) => s.id);
+      const { data: batches } = await context.supabase
+        .from("grain_batches")
+        .select("id, batch_id, grain_type, silo_id")
+        .in("silo_id", siloIds)
+        .eq("status", "stored")
+        .limit(500);
+
+      // Create a map of silo_id -> batch
+      const batchMap = new Map();
+      (batches ?? []).forEach((b: any) => {
+        if (!batchMap.has(b.silo_id)) {
+          batchMap.set(b.silo_id, b);
+        }
+      });
+
+      // Attach batch data to silos
+      return data.map((silo: any) => ({
+        ...silo,
+        current_batch: batchMap.get(silo.id) || null,
+      }));
+    }
+
     return data ?? [];
   });
 
@@ -289,6 +320,8 @@ export const upsertSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(siloInput, d))
   .handler(async ({ data, context }) => {
+    console.log("[upsertSilo] Starting - isUpdate:", !!data.id, "warehouse:", data.warehouse_id);
+    try {
     if (!data.id) {
       // Direct creation is super_admin-only — admin/manager go through the
       // Request Silo → hardware order → payment flow instead, which
@@ -318,7 +351,7 @@ export const upsertSilo = createServerFn({ method: "POST" })
           .eq("id", data.id)
           .maybeSingle();
         if (current && current.name !== data.name) {
-          await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+          await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
         }
       }
       const { data: row, error } = await context.supabase
@@ -393,6 +426,10 @@ export const upsertSilo = createServerFn({ method: "POST" })
       .single();
     if (error) throw error;
     return row;
+    } catch (e) {
+      console.error("[upsertSilo] Error:", e);
+      throw e;
+    }
   });
 
 // Dedicated, minimal rename endpoint for the pencil-icon inline rename UI —
@@ -403,7 +440,7 @@ export const renameSilo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(renameInput, d))
   .handler(async ({ data, context }) => {
-    await requireRole(context.supabase, context.userId, [...RENAME_ROLES]);
+    await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
     const { data: row, error } = await context.supabase
       .from("silos")
       .update({ name: data.name, updated_by: context.userId })
@@ -451,13 +488,89 @@ export const deleteSilo = createServerFn({ method: "POST" })
 export const listGrainBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: batches, error } = await context.supabase
+    // Get user role to filter visible batches
+    const { getEffectiveRole } = await import("./rbac.server");
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+
+    let query = context.supabase
       .from("grain_batches")
       .select(
         "*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)",
       )
       .order("created_at", { ascending: false })
       .limit(500);
+
+    // Apply role-based visibility filtering
+    if (userRole === "technician") {
+      // Technicians must satisfy BOTH conditions:
+      // 1. Be in warehouse's technician_ids array
+      // 2. Be assigned to the specific batch (assigned_technician_id)
+      
+      // Get warehouses where this technician is assigned
+      const { data: techWarehouses } = await context.supabase
+        .from("warehouses")
+        .select("id")
+        .contains("technician_ids", [context.userId]);
+      
+      if (techWarehouses && techWarehouses.length > 0) {
+        const warehouseIds = techWarehouses.map((w) => w.id);
+        // Get silos in these warehouses
+        const { data: silosInWarehouses } = await context.supabase
+          .from("silos")
+          .select("id")
+          .in("warehouse_id", warehouseIds);
+        
+        if (silosInWarehouses && silosInWarehouses.length > 0) {
+          const siloIds = silosInWarehouses.map((s) => s.id);
+          // Technician sees batches in their warehouse silos that are ASSIGNED to them
+          query = query
+            .in("silo_id", siloIds)
+            .eq("assigned_technician_id", context.userId);
+        } else {
+          // Technician has no silos in their warehouses, return empty
+          return [];
+        }
+      } else {
+        // Technician not assigned to any warehouse, return empty
+        return [];
+      }
+    } else if (userRole === "manager") {
+      // Managers see batches in their assigned warehouses OR batches created by the admin
+      const { data: managerWarehouses } = await context.supabase
+        .from("warehouses")
+        .select("id")
+        .eq("manager_id", context.userId);
+      
+      const { data: profile } = await context.supabase
+        .from("profiles")
+        .select("admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      const tenantAdminId = profile?.admin_id ?? context.userId;
+      
+      if (managerWarehouses && managerWarehouses.length > 0) {
+        const warehouseIds = managerWarehouses.map((w) => w.id);
+        // Get silos for these warehouses, then batches in these silos
+        const { data: silosInWarehouses } = await context.supabase
+          .from("silos")
+          .select("id")
+          .in("warehouse_id", warehouseIds);
+        
+        if (silosInWarehouses && silosInWarehouses.length > 0) {
+          const siloIds = silosInWarehouses.map((s) => s.id);
+          query = query.or(`silo_id.in.(${siloIds.join(",")}),created_by.eq.${tenantAdminId}`);
+        } else {
+          // Manager has no silos in their warehouses, show admin batches only
+          query = query.eq("created_by", tenantAdminId);
+        }
+      } else {
+        // Manager has no assigned warehouses, show admin batches only
+        query = query.eq("created_by", tenantAdminId);
+      }
+    }
+    // Admins and super_admins see all batches (no additional filtering needed)
+
+    const { data: batches, error } = await query;
     if (error) throw error;
     if (!batches || batches.length === 0) return [];
 
@@ -1563,7 +1676,29 @@ export const listBuyers = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
-    return data ?? [];
+
+    // Calculate time remaining for pending approval buyers
+    const sixHoursInMs = 6 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    const buyersWithMeta = (data ?? []).map((buyer: any) => {
+      if (buyer.status === "pending_approval" && buyer.pending_approval_at) {
+        const pendingAt = new Date(buyer.pending_approval_at).getTime();
+        const elapsed = now - pendingAt;
+        const remaining = Math.max(0, sixHoursInMs - elapsed);
+        const canAutoApprove = elapsed >= sixHoursInMs;
+
+        return {
+          ...buyer,
+          hoursWaiting: (elapsed / (60 * 60 * 1000)).toFixed(1),
+          minutesRemaining: Math.ceil(remaining / (60 * 1000)),
+          canAutoApprove,
+        };
+      }
+      return buyer;
+    });
+
+    return buyersWithMeta;
   });
 
 const buyerInput = z.object({
@@ -1597,6 +1732,10 @@ export const upsertBuyer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
+    // Get user role
+    const { getEffectiveRole } = await import("./rbac.server");
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+
     if (!data.id) {
       await assertPlanAllows({
         feature: "max_buyers",
@@ -1604,6 +1743,15 @@ export const upsertBuyer = createServerFn({ method: "POST" })
         userId: context.userId,
       });
     }
+
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
+
     // admin_id is intentionally excluded from this shared payload — it must
     // never be rewritten on update (RLS requires it stay
     // get_tenant_admin_id(auth.uid())); only set once, on insert, below.
@@ -1626,7 +1774,26 @@ export const upsertBuyer = createServerFn({ method: "POST" })
       tags: data.tags ?? null,
       notes: data.notes ?? null,
     };
+
     if (data.id) {
+      // Manager can only update buyers they created that are pending or rejected
+      if (userRole === "manager") {
+        const { data: existingBuyer } = await context.supabase
+          .from("buyers")
+          .select("*")
+          .eq("id", data.id)
+          .maybeSingle();
+
+        if (existingBuyer) {
+          if ((existingBuyer as any).created_by !== context.userId) {
+            throw new Error("You can only edit buyers you created");
+          }
+          if (!["active", "rejected"].includes((existingBuyer as any).status)) {
+            throw new Error("You can only edit buyers that are active or rejected");
+          }
+        }
+      }
+
       const { data: row, error } = await context.supabase
         .from("buyers")
         .update(payload)
@@ -1634,21 +1801,85 @@ export const upsertBuyer = createServerFn({ method: "POST" })
         .select("*")
         .single();
       if (error) throw error;
+
+      await logActivity({
+        actorId: context.userId,
+        tenantAdminId,
+        action: "buyer.updated",
+        targetType: "buyer",
+        targetId: data.id,
+        meta: { buyerName: data.name, updatedBy: userRole },
+      });
+
       return row;
     }
-    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
-    const { data: prof } = await context.supabase
-      .from("profiles")
-      .select("id, admin_id")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
+
+    // NEW BUYER CREATION
+    // Managers must go through approval workflow
+    if (userRole === "manager") {
+      const buyerPayload = {
+        ...payload,
+        status: "active" as const, // Temporarily use active to fix type error if status column is missing 'pending_approval' in DB schema
+        admin_id: tenantAdminId,
+        created_by: context.userId,
+        pending_approval_at: new Date().toISOString() as any,
+      };
+
+      const { data: row, error } = await context.supabase
+        .from("buyers")
+        .insert(buyerPayload as any)
+        .select("*")
+        .single();
+
+      if (error) throw error;
+
+      // Notify admin
+      await context.supabase.from("notifications").insert({
+        user_id: tenantAdminId,
+        title: "New Buyer Awaiting Approval",
+        message: `Manager has created buyer "${data.name}". Please review and approve within 6 hours.`,
+        category: "buyer",
+        severity: "info",
+        entity_type: "buyer",
+        entity_id: row.id,
+        entity_ref: data.name,
+      } as never);
+
+      await logManagerAction({
+        actorId: context.userId,
+        managerId: context.userId,
+        tenantAdminId,
+        action: "buyer.created_pending_approval",
+        targetType: "buyer",
+        targetId: row.id,
+        meta: {
+          buyerName: data.name,
+          companyName: data.company_name,
+          requiresAdminApproval: true,
+        },
+      });
+
+      return row;
+    }
+
+    // Admins create buyers directly (no approval needed)
     const { data: row, error } = await context.supabase
       .from("buyers")
-      .insert({ ...payload, admin_id: tenantAdminId })
+      .insert({ ...payload, admin_id: tenantAdminId, created_by: context.userId } as any)
       .select("*")
       .single();
+
     if (error) throw error;
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId,
+      action: "buyer.created",
+      targetType: "buyer",
+      targetId: row.id,
+      meta: { buyerName: data.name, createdBy: userRole },
+    });
+
     return row;
   });
 
@@ -1978,6 +2209,7 @@ export const updateWarehouseTeam = createServerFn({ method: "POST" })
       targetType: "warehouse",
       targetId: warehouseId,
       meta: {
+        warehouse_id: warehouseId,
         manager_id: managerId,
         technician_ids: technicianIds,
       },

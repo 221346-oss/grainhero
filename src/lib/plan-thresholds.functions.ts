@@ -188,13 +188,13 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
           read: false,
         }));
 
-        const { error: notifErr } = await context.supabase
-          .from("notifications")
-          .insert(notifRows as never);
+        // const { error: notifErr } = await context.supabase
+        //   .from("notifications")
+        //   .insert(notifRows as never);
 
-        if (notifErr) {
-          console.warn("[updatePlanThreshold] tenant admin notification insert failed:", notifErr.message);
-        }
+        // if (notifErr) {
+        //   console.warn("[updatePlanThreshold] tenant admin notification insert failed:", notifErr.message);
+        // }
       }
 
       // Only tenant admins are notified. Super admin made the change intentionally
@@ -245,7 +245,7 @@ export const requestPlanChange = createServerFn({ method: "POST" })
     if (!prof) throw new Error("Profile not found");
 
     const tenantAdminId = prof.admin_id ?? prof.id;
-    const current = prof.subscription_plan ?? "starter";
+    const current = prof.subscription_plan ?? "basic";
     const cur = plans?.find((p: any) => p.plan_id === current);
     const next = plans?.find((p: any) => p.plan_id === data.requested_plan);
     if (!next) throw new Error("Requested plan not found");
@@ -276,11 +276,35 @@ export const requestPlanChange = createServerFn({ method: "POST" })
     if (error) throw error;
 
     if (autoApply) {
+      // Update profiles with the new plan_id
       const { error: upErr } = await context.supabase
         .from("profiles")
         .update({ subscription_plan: data.requested_plan } as never)
         .eq("id", tenantAdminId);
       if (upErr) throw upErr;
+      
+      // CRITICAL FIX: Also update subscriptions table with the plan_name
+      // so computeMrr() can find it in plan_thresholds
+      const planNameMap: Record<string, string> = {
+        starter: "Grain Starter",
+        basic: "Grain Starter",
+        professional: "Grain Professional",
+        intermediate: "Grain Professional",
+        growth: "Grain Professional",
+        enterprise: "Grain Enterprise",
+        pro: "Grain Enterprise",
+        scale: "Grain Enterprise",
+      };
+      const planName = planNameMap[String(data.requested_plan).toLowerCase()] ?? String(data.requested_plan);
+      const { error: subErr } = await context.supabase
+        .from("subscriptions")
+        .update({
+          plan_name: planName as never,
+          status: "active" as never,
+          updated_at: new Date().toISOString(),
+        } as never)
+        .eq("admin_id", tenantAdminId);
+      if (subErr) console.warn("[requestPlanChange] subscriptions update failed:", subErr.message);
     }
 
     // Notify super-admins of the incoming request (or auto-applied change).
@@ -396,15 +420,30 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
         .eq("id", req.tenant_admin_id);
       if (e3) throw e3;
 
-      // Best-effort: keep any live subscription row's plan_name in sync so
-      // financials + gates pick it up immediately. Skip if none exists.
+      // CRITICAL FIX: Keep subscription row's plan_name in sync so
+      // computeMrr() can find it in plan_thresholds and count it in revenue.
+      // Map plan_id to the proper plan_name used in plan_thresholds.
       try {
-        // super_admin passes RLS on subscriptions — context.supabase is sufficient
+        const planNameMap: Record<string, string> = {
+          starter: "Grain Starter",
+          basic: "Grain Starter",
+          professional: "Grain Professional",
+          intermediate: "Grain Professional",
+          growth: "Grain Professional",
+          enterprise: "Grain Enterprise",
+          pro: "Grain Enterprise",
+          scale: "Grain Enterprise",
+        };
+        const planName = planNameMap[String(req.requested_plan).toLowerCase()] ?? String(req.requested_plan);
+        
         await context.supabase
           .from("subscriptions")
-          .update({ plan_name: req.requested_plan } as never)
-          .eq("admin_id", req.tenant_admin_id)
-          .in("status", ["active", "trial"]);
+          .update({
+            plan_name: planName as never,
+            status: "active" as never,
+            updated_at: new Date().toISOString(),
+          } as never)
+          .eq("admin_id", req.tenant_admin_id);
       } catch (err) {
         console.warn("[decide] subscription sync failed", err);
       }

@@ -20,6 +20,16 @@ function csvCell(v: string | number | null | undefined): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+/** YYYY-MM-DD, appended to every downloaded filename so repeat exports don't overwrite each other. */
+function dateStamp(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+function stampedFilename(filename: string, ext: string): string {
+  const base = filename.replace(new RegExp(`\\.${ext}$`, "i"), "");
+  return `${base}-${dateStamp()}.${ext}`;
+}
+
 export function toCsv<T>(rows: T[], columns: ExportColumn<T>[]): string {
   const header = columns.map((c) => csvCell(c.header)).join(",");
   const lines = rows.map((r) => columns.map((c) => csvCell(c.value(r))).join(","));
@@ -28,11 +38,12 @@ export function toCsv<T>(rows: T[], columns: ExportColumn<T>[]): string {
 
 export function downloadCsv<T>(filename: string, rows: T[], columns: ExportColumn<T>[]) {
   const csv = toCsv(rows, columns);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  // Leading BOM so Excel renders non-ASCII characters (currency symbols, accented names) correctly.
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename.endsWith(".csv") ? filename : `${filename}.csv`;
+  a.download = stampedFilename(filename, "csv");
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -82,7 +93,7 @@ export async function downloadPdf<T>(filename: string, title: string, rows: T[],
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+  a.download = stampedFilename(filename, "pdf");
   document.body.appendChild(a);
   a.click();
   a.remove();

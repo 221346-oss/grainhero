@@ -6,28 +6,28 @@ import {
   listAllHardwareOrders,
   updateHardwareOrder,
 } from "@/lib/hardware-orders.functions";
-import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
 import { TechnicianAssignmentDialog } from "@/components/app/orders/TechnicianAssignmentDialog";
 import {
-  Truck, MoreHorizontal, Users, Download, FileDown,
+  Truck, MoreHorizontal, Users,
   Search, RefreshCw, MapPin, Phone,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import React from "react";
-
 export const Route = createFileRoute("/_authenticated/platform/orders")({
   head: () => ({ meta: [{ title: "Install orders — Platform" }] }),
   component: PlatformOrdersPage,
@@ -95,45 +95,24 @@ function matchesStatusFilter(orderStatus: string, filter: string): boolean {
   return orderStatus === filter;
 }
 
-// ── Export helper ────────────────────────────────────────────────────────────
-function toExportRows(orders: any[]) {
-  return orders.map((o) => ({
-    "Order ID":      String(o.id ?? "").slice(0, 8),
-    "Plan":          o.plan_name ?? o.plan_id ?? "—",
-    "Buyer name":    o.buyer?.name ?? o.customer_name ?? "—",
-    "Buyer email":   o.buyer?.email ?? o.customer_email ?? "—",
-    "Qty":           o.hardware_quantity ?? 0,
-    "Total (PKR)":   fmt(Number(o.hardware_total ?? 0)),
-    "Status":        STATUS_CFG[o.status]?.label ?? o.status ?? "—",
-    "City":          o.install_city ?? "—",
-    "Country":       o.install_country ?? "—",
-    "Placed":        o.created_at ? new Date(o.created_at).toLocaleDateString() : "—",
-    "Technician":    o.technician_name ?? "—",
-  }));
-}
+// ── Export columns ───────────────────────────────────────────────────────────
+const orderExportColumns: ExportColumn<any>[] = [
+  { header: "Order ID", value: (o) => String(o.id ?? "").slice(0, 8) },
+  { header: "Plan", value: (o) => o.plan_name ?? o.plan_id ?? "—" },
+  { header: "Buyer name", value: (o) => o.buyer?.name ?? o.customer_name ?? "—" },
+  { header: "Buyer email", value: (o) => o.buyer?.email ?? o.customer_email ?? "—" },
+  { header: "Qty", value: (o) => o.hardware_quantity ?? 0 },
+  { header: "Total (PKR)", value: (o) => fmt(Number(o.hardware_total ?? 0)) },
+  { header: "Status", value: (o) => STATUS_CFG[o.status]?.label ?? o.status ?? "—" },
+  { header: "City", value: (o) => o.install_city ?? "—" },
+  { header: "Country", value: (o) => o.install_country ?? "—" },
+  { header: "Placed", value: (o) => o.created_at ? new Date(o.created_at).toLocaleDateString() : "—" },
+  { header: "Technician", value: (o) => o.technician_name ?? "—" },
+];
 
 // ── Export button row ────────────────────────────────────────────────────────
 function ExportRow({ rows, label, filename }: { rows: any[]; label: string; filename: string }) {
-  const [busy, setBusy] = React.useState(false);
-  const data = toExportRows(rows);
-  return (
-    <div className="flex items-center gap-1 shrink-0">
-      <button
-        disabled={data.length === 0}
-        onClick={() => exportToCSV(data, filename)}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"
-      >
-        <Download className="w-3 h-3" /> CSV
-      </button>
-      <button
-        disabled={data.length === 0 || busy}
-        onClick={async () => { setBusy(true); await exportToPDF(data, label, filename).catch(console.error); setBusy(false); }}
-        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors"
-      >
-        <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
-      </button>
-    </div>
-  );
+  return <ExportMenu filename={filename} title={label} rows={rows} columns={orderExportColumns} />;
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
@@ -430,28 +409,30 @@ function PlatformOrdersPage() {
           </div>
         ) : (
           <div className="rounded-lg border border-border bg-background overflow-hidden">
-            {/* Column headers */}
-            <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30/80">
-              <span>Order</span>
-              <span>Buyer</span>
-              <span>Location</span>
-              <span>Total</span>
-              <span>Status</span>
-              <span>Placed</span>
-              <span />
-            </div>
-            <div className="divide-y divide-border">
-              {filtered.map((o) => (
-                <OrderRow
-                  key={o.id as string}
-                  order={o}
-                  tabColor={tabColor}
-                  onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
-                  busy={update.isPending}
-                  onOpenInstall={() => setInstall(o.id as string)}
-                  onAssign={() => setAssign(o)}
-                />
-              ))}
+            <div className="overflow-x-auto">
+              {/* Column headers */}
+              <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 min-w-[900px]">
+                <span>Order</span>
+                <span>Buyer</span>
+                <span>Location</span>
+                <span>Total</span>
+                <span>Status</span>
+                <span>Placed</span>
+                <span />
+              </div>
+              <div className="divide-y divide-border">
+                {filtered.map((o) => (
+                  <OrderRow
+                    key={o.id as string}
+                    order={o}
+                    tabColor={tabColor}
+                    onUpdate={(v) => update.mutate({ orderId: o.id as string, ...v })}
+                    busy={update.isPending}
+                    onOpenInstall={() => setInstall(o.id as string)}
+                    onAssign={() => setAssign(o)}
+                  />
+                ))}
+              </div>
             </div>
             <div className="px-5 py-2.5 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
               <span>{filtered.length} order{filtered.length !== 1 ? "s" : ""}</span>
@@ -509,7 +490,75 @@ function OrderRow({
 
   return (
     <>
-      <div className="grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 items-center px-5 py-3 hover:bg-muted/30/60 transition-colors">
+      {/* Mobile Card View */}
+      <div className="block md:hidden p-4 border-b border-border space-y-3 bg-white">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="text-sm font-bold text-foreground">
+              {order.plan_name ?? order.plan_id ?? "—"}
+            </div>
+            <div className="text-xs text-muted-foreground font-mono mt-0.5">
+              {String(order.id ?? "").slice(0, 8)} · {order.hardware_quantity ?? 0} unit{Number(order.hardware_quantity) !== 1 ? "s" : ""}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-emerald-600">
+              PKR {fmt(Number(order.hardware_total ?? 0))}
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={() => setDetailOpen(true)}>
+                  View &amp; edit details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onAssign}>
+                  <Users className="w-3.5 h-3.5 mr-1.5" /> Assign technician
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenInstall}>
+                  <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled={busy} onClick={() => onUpdate({ status: "completed" })}>
+                  Mark completed
+                </DropdownMenuItem>
+                {order.status !== "cancelled" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>
+                      Cancel order
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/50 pt-2 text-muted-foreground">
+          <div>
+            <span className="font-semibold text-foreground block">{order.buyer?.name ?? order.customer_name ?? "—"}</span>
+            <span className="truncate block text-[11px]">{order.buyer?.email ?? order.customer_email ?? "—"}</span>
+          </div>
+          <div className="flex items-center gap-1 text-[11px]">
+            <MapPin className="w-3 h-3 shrink-0 text-muted-foreground" />
+            <span className="truncate">{[order.install_city, order.install_country].filter(Boolean).join(", ") || "—"}</span>
+          </div>
+        </div>
+
+        <div className="pt-1">
+          <InstallStageTracker
+            variant="row"
+            {...deriveStage(order, order.installation ?? null, order.visit_events ?? [])}
+          />
+        </div>
+      </div>
+
+      {/* Desktop Grid View */}
+      <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 items-center px-5 py-3 hover:bg-muted/30 transition-colors min-w-[900px]">
         {/* Order */}
         <div>
           <div className="text-sm font-medium text-foreground">
@@ -667,14 +716,14 @@ function OrderRow({
         </SheetContent>
       </Sheet>
 
-      {/* ── Cancel Sheet ────────────────────────────────────────── */}
-      <Sheet open={cancelOpen} onOpenChange={setCancelOpen}>
-        <SheetContent className="sm:max-w-sm">
-          <SheetHeader>
-            <SheetTitle>Cancel this order?</SheetTitle>
-            <SheetDescription>The buyer will be notified in-app. Refunds are handled in Stripe.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
+      {/* ── Cancel confirmation — popup modal, not a Sheet (see side-panel convention in components/ui/sheet.tsx) ── */}
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Cancel this order?</DialogTitle>
+            <DialogDescription>The buyer will be notified in-app. Refunds are handled in Stripe.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2">
             <Textarea
               rows={4}
               value={cancelReason}
@@ -682,7 +731,7 @@ function OrderRow({
               placeholder="Reason (optional)"
             />
           </div>
-          <SheetFooter className="mt-6">
+          <DialogFooter className="mt-6">
             <Button variant="outline" size="sm" onClick={() => setCancelOpen(false)}>Back</Button>
             <Button
               variant="destructive"
@@ -692,9 +741,9 @@ function OrderRow({
             >
               Confirm cancel
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

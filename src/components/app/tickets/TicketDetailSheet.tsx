@@ -136,7 +136,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   return (
     <>
       <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-        <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden">
+        <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right">
           {/* Header — title + id on left, Discussion button below the X (not next to it) */}
           <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-200 shrink-0">
             <SheetTitle className="text-base font-bold text-slate-900 leading-snug pr-8">

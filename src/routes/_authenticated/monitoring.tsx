@@ -192,27 +192,35 @@ function MonitoringWorkspace() {
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-              Key Metrics
-            </p>
-            <div className="space-y-0 divide-y divide-border flex-1">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
-                    <span className="text-muted-foreground/60">◇</span>
-                    <span className="truncate max-w-[120px]">{s.label}</span>
+          <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+            <div className="flex justify-between items-start mb-6">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                Key Metrics
+              </p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-md">
+                Last 12 Cycles
+              </p>
+            </div>
+            <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
+              {stats.map((s, idx) => (
+                <div key={s.label} className="w-full">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center w-[45%] min-w-[120px]">
+                      <div className="truncate">
+                        <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
+                        <p className="text-base font-black text-foreground truncate">{s.value}</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center px-2">
+                      <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                        <div className={`absolute left-0 top-0 bottom-0 rounded-full ${s.up ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ width: '0%' }} />
+                      </div>
+                    </div>
+                    <div className="text-right w-12 shrink-0">
+                      <span className="text-sm font-bold text-muted-foreground">0.0%</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-base font-mono">
-                      {s.value}
-                    </span>
-                    {s.up ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                    )}
-                  </div>
+                  {idx < stats.length - 1 && <div className="h-px w-full bg-border mt-6" />}
                 </div>
               ))}
             </div>

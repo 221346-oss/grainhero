@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LedgerSkeleton } from "@/components/app/skeletons";
@@ -29,21 +30,23 @@ function LedgerPage() {
     queryKey: ["ledger", entryType],
     queryFn: () => fn({ data: entryType ? { entryType } : {} }),
   });
-  if (isLoading) return <LedgerSkeleton />;
+  if (isLoading) return <AdminPageShell title="Ledger" subtitle="Append-only entries for every money movement."><LedgerSkeleton /></AdminPageShell>;
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Finance ledger</h1>
-        <p className="text-sm text-muted-foreground mt-1">Append-only entries for every money movement.</p>
-      </div>
-      <div className="flex gap-2 flex-wrap">
-        {ENTRY_TYPES.map((t) => (
-          <button key={t || "all"} onClick={() => setEntryType(t)}
-            className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${entryType === t ? "bg-primary text-primary-foreground border-primary" : "hover:border-primary/40"}`}>
-            {t || "All"}
-          </button>
-        ))}
-      </div>
+    <AdminPageShell 
+      title="Ledger" 
+      subtitle="Append-only entries for every money movement."
+      actions={
+        <div className="flex gap-2 flex-wrap">
+          {ENTRY_TYPES.map((t) => (
+            <button key={t || "all"} onClick={() => setEntryType(t)}
+              className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${entryType === t ? "bg-primary text-primary-foreground border-primary" : "hover:border-primary/40"}`}>
+              {t || "All"}
+            </button>
+          ))}
+        </div>
+      }
+    >
+      <div className="space-y-6 max-w-[1400px]">
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base">Entries ({data?.rows.length ?? 0})</CardTitle></CardHeader>
         <CardContent className="p-0">
@@ -85,6 +88,7 @@ function LedgerPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminPageShell>
   );
 }

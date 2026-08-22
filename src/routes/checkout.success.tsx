@@ -173,10 +173,15 @@ function SuccessPage() {
           return;
         }
 
-        try {
-          await claimFn({ data: sessionId ? { sessionId } : {} });
-        } catch (e) {
-          console.warn("[success] claim checkout failed:", describeError(e));
+        // Only claim when we actually have the Stripe session this page was
+        // reached for — an unconditional call here would re-notify admins
+        // about every already-claimed order if sessionId is ever missing.
+        if (sessionId) {
+          try {
+            await claimFn({ data: { sessionId } });
+          } catch (e) {
+            console.warn("[success] claim checkout failed:", describeError(e));
+          }
         }
 
         try {

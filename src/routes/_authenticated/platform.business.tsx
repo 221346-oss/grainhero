@@ -5,17 +5,18 @@ import React from "react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 import { sendExpiryReminder } from "@/lib/platform-no-admin.functions";
-import { exportToCSV, exportToPDF } from "@/lib/table-export";
+import { ExportMenu } from "@/components/app/ExportMenu";
+import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
+import { RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 import {
   NEON, NeonPatternDefs, useNeonCharts, neonFill, neonGrid, neonAxis,
   neonTooltipStyle, HairlineGrid, NeonPanel, NeonLegend, ChartEmpty,
 } from "@/components/charts/neon";
-import { Download, FileDown, RefreshCw, AlertCircle, Info, HardDrive, Package2, TrendingUp, Bell } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/platform/business")({
   head: () => ({
@@ -53,28 +54,15 @@ const planLabel = (p: string) => PLAN_META[p.toLowerCase()]?.label ?? (p.charAt(
 const ALL_PLANS = ["starter", "professional", "enterprise"] as const;
 
 // ── Export button row ────────────────────────────────────────────────────────
+// Callers here build one-off, pre-shaped summary rows (friendly keys already
+// as the object's own keys) rather than a fixed record type, so the column
+// list is derived from those keys instead of a hand-written ExportColumn[].
 function ExportRow({ data, filename, title }: {
   data: Array<Record<string, any>>; filename: string; title: string;
 }) {
-  const [busy, setBusy] = React.useState(false);
-  return (
-    <div className="flex gap-1 shrink-0">
-      <button
-        onClick={() => exportToCSV(data, filename)}
-        disabled={data.length === 0}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 transition-colors"
-      >
-        <Download className="w-3 h-3" /> CSV
-      </button>
-      <button
-        onClick={async () => { setBusy(true); await exportToPDF(data, title, filename).catch(console.error); setBusy(false); }}
-        disabled={data.length === 0 || busy}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] text-muted-foreground hover:text-foreground hover:bg-muted rounded disabled:opacity-30 transition-colors"
-      >
-        <FileDown className="w-3 h-3" /> {busy ? "…" : "PDF"}
-      </button>
-    </div>
-  );
+  const columns: ExportColumn<Record<string, any>>[] =
+    data.length > 0 ? Object.keys(data[0]).map((k) => ({ header: k, value: (row) => row[k] })) : [];
+  return <ExportMenu filename={filename} title={title} rows={data} columns={columns} />;
 }
 
 // ── Stat tile ────────────────────────────────────────────────────────────────
@@ -669,21 +657,19 @@ function PlatformBusinessPage() {
           </div>
           <ExportRow data={planExport} filename="plan-breakdown" title="Plan Breakdown — GrainHero" />
         </div>
-        <div className="overflow-x-auto">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border bg-muted/30">
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Plan</th>
-              <th className="text-right font-medium text-muted-foreground px-3 py-2">Subscribers</th>
-              <th className="text-right font-medium text-muted-foreground px-3 py-2">MRR</th>
-              <th className="text-right font-medium text-muted-foreground px-3 py-2 w-44">Revenue Share</th>
+              <th className="text-right font-medium text-muted-foreground px-3 py-2">Subs</th>
+              <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">MRR</th>
+              <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Share</th>
             </tr>
           </thead>
           <tbody>
             {ALL_PLANS.map((planId) => {
               const live   = planSeries.find((p) => p.plan.toLowerCase() === planId);
               const mrr    = live?.mrr ?? 0;
-              // Count actual subscribers from adminSubs instead of estimating from MRR ratio
               const subs   = adminSubs.filter((a) => a.plan?.toLowerCase() === planId).length;
               const share  = kpis?.mrr && mrr > 0 ? Math.round((mrr / kpis.mrr) * 100) : 0;
               const col    = planColor(planId);
@@ -697,27 +683,31 @@ function PlatformBusinessPage() {
                   style={active ? { background: "color-mix(in oklab, " + col + " 8%, transparent)" } : undefined}
                 >
                   <td className="px-3 py-2">
-                    <span className="inline-flex items-center gap-2.5">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: col }} />
+                    <span className="inline-flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: col }} />
                       <span className="font-medium text-foreground">{lbl}</span>
                       {active && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-medium hidden sm:inline"
                           style={{ background: "color-mix(in oklab, " + col + " 15%, transparent)", color: col }}>
                           selected
                         </span>
                       )}
                     </span>
+                    {/* Mobile: show MRR inline */}
+                    <div className="sm:hidden text-[11px] text-muted-foreground mt-0.5">
+                      {mrr > 0 ? `PKR ${fmt(mrr)}` : "—"} · {share}%
+                    </div>
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">{subs}</td>
-                  <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                  <td className="px-3 py-2 text-right tabular-nums text-muted-foreground hidden sm:table-cell">
                     {mrr > 0 ? `PKR ${fmt(mrr)}` : <span className="text-muted-foreground/50">—</span>}
                   </td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-3 py-2 text-right hidden sm:table-cell">
                     <div className="flex items-center justify-end gap-2">
-                      <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: `${share}%`, background: col }} />
                       </div>
-                      <span className="text-[11px] text-muted-foreground w-8 tabular-nums text-right">{share}%</span>
+                      <span className="text-[11px] text-muted-foreground w-7 tabular-nums text-right">{share}%</span>
                     </div>
                   </td>
                 </tr>
@@ -725,7 +715,6 @@ function PlatformBusinessPage() {
             })}
           </tbody>
         </table>
-        </div>
       </div>
 
       {/* ── Active Subscribers — only shown when a plan is selected ─── */}
@@ -814,25 +803,24 @@ function PlatformBusinessPage() {
             {expiring.length > 0 && ` · ${expiring.length}`}
           </span>
           {expiring.length > 0 && (
-            <button
-              onClick={() => exportToCSV(expiring.map((s: any) => ({
-                Admin: s.admin_name ?? s.admin_id ?? "—",
-                Plan: s.plan_name ?? "—",
-                Expires: s.end_date ? new Date(s.end_date).toLocaleDateString() : "—",
-              })), "expiring-subscriptions")}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 rounded"
-            >
-              <Download className="w-3 h-3" /> CSV
-            </button>
+            <ExportMenu
+              filename="expiring-subscriptions"
+              title="Expiring Subscriptions — GrainHero"
+              rows={expiring}
+              columns={[
+                { header: "Admin", value: (s: any) => s.admin_name ?? s.admin_id ?? "—" },
+                { header: "Plan", value: (s: any) => s.plan_name ?? "—" },
+                { header: "Expires", value: (s: any) => s.end_date ? new Date(s.end_date).toLocaleDateString() : "—" },
+              ]}
+            />
           )}
         </div>
-        <div className="overflow-x-auto">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-border bg-muted/30">
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant</th>
-              <th className="text-left font-medium text-muted-foreground px-3 py-2">Plan</th>
-              <th className="text-right font-medium text-muted-foreground px-3 py-2">Expires</th>
+              <th className="text-left font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Plan</th>
+              <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Expires</th>
               <th className="text-right font-medium text-muted-foreground px-3 py-2">Action</th>
             </tr>
           </thead>
@@ -850,11 +838,18 @@ function PlatformBusinessPage() {
                 const alreadyNotified = notified.has(s.admin_id);
                 return (
                   <tr key={s.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-3 py-2 text-foreground font-medium truncate max-w-[160px]">
-                      {s.admin_name ?? s.admin_id?.slice(0, 8) ?? "—"}
+                    <td className="px-3 py-2">
+                      <div className="font-medium text-foreground truncate max-w-[140px] sm:max-w-none">
+                        {s.admin_name ?? s.admin_id?.slice(0, 8) ?? "—"}
+                      </div>
+                      {/* Mobile: show plan + expiry inline */}
+                      <div className="sm:hidden text-[11px] text-muted-foreground mt-0.5">
+                        {s.plan_name ?? "—"}
+                        {days !== null && <span style={{ color: NEON.warning }}> · {days}d left</span>}
+                      </div>
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">{s.plan_name ?? "—"}</td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{s.plan_name ?? "—"}</td>
+                    <td className="px-3 py-2 text-right hidden sm:table-cell">
                       <div className="font-medium tabular-nums" style={{ color: NEON.warning }}>
                         {s.end_date ? new Date(s.end_date).toLocaleDateString() : "—"}
                       </div>
@@ -866,14 +861,14 @@ function PlatformBusinessPage() {
                       <button
                         onClick={() => notifyMut.mutate(s.admin_id)}
                         disabled={notifyMut.isPending || alreadyNotified || !s.admin_id}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-40 ${
+                        className={`inline-flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-40 ${
                           alreadyNotified
-                            ? "bg-emerald-100 text-emerald-700 cursor-default dark:bg-emerald-950/40 dark:text-emerald-400"
-                            : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-400"
+                            ? "bg-emerald-100 text-emerald-700 cursor-default"
+                            : "bg-amber-100 text-amber-700 hover:bg-amber-200"
                         }`}
                       >
                         <Bell className="w-3 h-3" />
-                        {alreadyNotified ? "Sent" : "Notify"}
+                        <span className="hidden sm:inline">{alreadyNotified ? "Sent" : "Notify"}</span>
                       </button>
                     </td>
                   </tr>
@@ -881,7 +876,6 @@ function PlatformBusinessPage() {
             })}
           </tbody>
         </table>
-        </div>
       </div>
       </>)}
     </AdminPageShell>

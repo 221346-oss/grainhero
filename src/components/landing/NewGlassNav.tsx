@@ -81,18 +81,14 @@ export function NewGlassNav() {
         }}
         className="fixed top-0 left-0 right-0 w-full z-[110]"
       >
-        <div className="relative w-full px-4 py-3 sm:px-8 sm:py-4 lg:px-12">
-          {/* Scrolled backdrop, desktop only. It lives on its own element rather
-              than as a sm:bg-[#111512] utility because the dark-mode overrides in
-              styles.css match class strings regardless of breakpoint — that would
-              tint phones too, and the header must stay clear over the hero video. */}
-          <div
-            aria-hidden="true"
-            className={`pointer-events-none absolute inset-0 hidden bg-[#111512]/95 shadow-lg backdrop-blur-md transition-opacity duration-300 sm:block ${
-              isScrolled ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-          <div className="relative flex items-center justify-between max-w-7xl mx-auto">
+        <div
+          className={`w-full px-4 sm:px-8 lg:px-12 py-3 sm:py-4 transition-all duration-300 ease-out ${
+            isScrolled
+              ? 'bg-[#111512]/95 backdrop-blur-md shadow-lg'
+              : 'bg-transparent'
+          }`}
+        >
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
             {/* Logo */}
             <Link
               to="/"
