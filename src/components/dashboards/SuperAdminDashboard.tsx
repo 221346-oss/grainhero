@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,14 +7,18 @@ import { WelcomeBanner } from "./WelcomeBanner";
 import { SuperKpiSummary } from "./SuperKpiSummary";
 import { SuperInsightsStrip } from "./SuperInsightsStrip";
 import { SuperBento } from "./SuperBento";
+import { OnboardingFunnel } from "./super/OnboardingFunnel";
 import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
+import { getSuperDashboardAnalytics } from "@/lib/platform-dashboard.functions";
 
 export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
+  const analyticsFn = useServerFn(getSuperDashboardAnalytics);
   const qc = useQueryClient();
+  const [funnelWindow, setFunnelWindow] = useState(30);
 
   // Realtime invalidation — any change to revenue-shaping tables refreshes
   // MRR, revenue trend, and by-plan chart across every SuperAdmin surface.
@@ -56,11 +60,17 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
     queryKey: ["saas-revenue-dashboard"],
     queryFn: () => revenueFn(),
   });
+  const { data: analytics } = useQuery({
+    queryKey: ["super-dashboard-analytics", funnelWindow],
+    queryFn: () => analyticsFn({ data: { windowDays: funnelWindow } }),
+    refetchInterval: 60_000,
+  });
 
   const mrr = revenueData?.kpis?.mrr ?? m?.mrr ?? 0;
-  const mrrSpark = (revenueData?.revenueSeries ?? []).map(
-    (r: { revenue?: number }) => Number(r.revenue ?? 0),
-  );
+  const revenueMonthly = analytics?.revenueMonthly ?? [];
+  const mrrSpark = (revenueMonthly.length
+    ? revenueMonthly.map((r) => r.revenue)
+    : (revenueData?.revenueSeries ?? []).map((r: { revenue?: number }) => Number(r.revenue ?? 0)));
   const mrrDelta = (() => {
     if (mrrSpark.length < 2) return 0;
     const prev = mrrSpark[mrrSpark.length - 2] || 0;
@@ -82,7 +92,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
           <SuperKpiSummary
             mrr={mrr}
             mrrDeltaPct={mrrDelta}
-            mrrSpark={mrrSpark}
+            health={analytics?.health}
+            revenueSeries={revenueMonthly}
             activeSubs={m?.activeSubscriptions ?? 0}
             totalTenants={m?.totalTenants ?? 0}
             totalUsers={m?.totalUsers ?? 0}
@@ -95,8 +106,14 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             ticketsTotal={reporting.totalTickets ?? 0}
             pipelineTotal={w?.pipelineTotal ?? 0}
             criticalAlerts={m?.criticalAlerts ?? 0}
+            series={analytics?.insights}
           />
           <SuperBento recentSignups={w?.recentSignups ?? []} />
+          <OnboardingFunnel
+            data={analytics?.funnel}
+            windowDays={funnelWindow}
+            onWindowChange={setFunnelWindow}
+          />
         </div>
       </div>
     </TooltipProvider>

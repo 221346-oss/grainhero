@@ -1,11 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, UserPlus, Package, AlertTriangle, Settings } from "lucide-react";
+import { UserPlus, Package, AlertTriangle, Settings } from "lucide-react";
 import { getPlatformLogs } from "@/lib/platform-no-admin.functions";
-import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
+import { Panel, PanelHeader } from "./super/super-ui";
 
 type Signup = {
   id: string;
@@ -68,126 +66,103 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
   });
   const rows = logs ?? [];
 
-  // Calculate activity summary
   const activitySummary = {
     signups: recentSignups.length,
-    orders: rows.filter(r => categorizeActivity(r.action) === "order").length,
-    alerts: rows.filter(r => categorizeActivity(r.action) === "alert").length,
+    orders: rows.filter((r) => categorizeActivity(r.action) === "order").length,
+    alerts: rows.filter((r) => categorizeActivity(r.action) === "alert").length,
   };
+
+  const summaryTiles = [
+    { key: "users", icon: UserPlus, tone: "text-success", value: activitySummary.signups, label: "New Users" },
+    { key: "orders", icon: Package, tone: "text-info", value: activitySummary.orders, label: "Orders" },
+    { key: "alerts", icon: AlertTriangle, tone: "text-warning", value: activitySummary.alerts, label: "Alerts" },
+  ];
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
-      {/* Recent signups - Simplified */}
-      <Card className="border-border/60 shadow-sm">
-        <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm">Recent Signups</CardTitle>
-          <Link to="/platform/users" aria-label="Open users" className="text-emerald-600 hover:text-emerald-700">
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-auto max-h-[220px]">
-            <table className="w-full text-xs">
-              <thead className="bg-muted/40 text-muted-foreground text-[10px] uppercase tracking-wider sticky top-0">
-                <tr>
-                  <th className="text-left px-3 py-1.5 font-medium">User</th>
-                  <th className="text-left px-2 py-1.5 font-medium hidden sm:table-cell">Plan</th>
-                  <th className="text-right px-3 py-1.5 font-medium">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {recentSignups.slice(0, 6).map((s) => (
-                  <tr key={s.id} className="hover:bg-muted/30 transition">
-                    <td className="px-3 py-2">
-                      <Link to="/platform/users" className="block min-w-0">
-                        <p className="font-medium truncate">{s.name || "New User"}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{s.email}</p>
-                      </Link>
-                    </td>
-                    <td className="px-2 py-2 hidden sm:table-cell">
-                      <Badge variant="outline" className="text-[10px] py-0 h-5">
-                        {s.subscription_plan ?? "starter"}
-                      </Badge>
-                    </td>
-                    <td className="px-3 py-2 text-right text-[10px] text-muted-foreground whitespace-nowrap">
-                      {s.created_at ? new Date(s.created_at).toLocaleDateString() : "—"}
-                    </td>
-                  </tr>
-                ))}
-                {recentSignups.length === 0 && (
-                  <tr><td colSpan={3} className="text-center text-muted-foreground py-8 text-xs">No recent signups</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── 04 Recent signups ─────────────────────────────────────────────── */}
+      <Panel>
+        <PanelHeader index="04" title="Recent signups" action={{ label: "View all", to: "/platform/users" }} />
 
-      {/* Activity Summary - SIMPLIFIED for beginners */}
-      <Card className="border-border/60 shadow-sm">
-        <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm">Platform Activity</CardTitle>
-          <Link to="/platform/audit-logs" aria-label="View all activity" className="text-emerald-600 hover:text-emerald-700">
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          {/* Activity Summary Cards */}
-          <HairlineGrid cols="grid-cols-3 mb-3">
-            <NeonPanel className="text-center py-2">
-              <div className="flex flex-col items-center gap-1">
-                <UserPlus className="w-4 h-4 text-success" />
-                <span className="text-xl font-bold tabular-nums text-foreground">{activitySummary.signups}</span>
-                <span className="text-[10px] text-muted-foreground">New Users</span>
-              </div>
-            </NeonPanel>
-            <NeonPanel className="text-center py-2">
-              <div className="flex flex-col items-center gap-1">
-                <Package className="w-4 h-4 text-info" />
-                <span className="text-xl font-bold tabular-nums text-foreground">{activitySummary.orders}</span>
-                <span className="text-[10px] text-muted-foreground">Orders</span>
-              </div>
-            </NeonPanel>
-            <NeonPanel className="text-center py-2">
-              <div className="flex flex-col items-center gap-1">
-                <AlertTriangle className="w-4 h-4 text-warning" />
-                <span className="text-xl font-bold tabular-nums text-foreground">{activitySummary.alerts}</span>
-                <span className="text-[10px] text-muted-foreground">Alerts</span>
-              </div>
-            </NeonPanel>
-          </HairlineGrid>
-
-          {/* Recent Events - Simplified */}
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Recent Events</p>
-            {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No recent activity</p>}
-            <div className="space-y-1">
-              {rows.slice(0, 5).map((r) => {
-                const category = activityCategories[categorizeActivity(r.action)] || activityCategories.default;
-                const Icon = category.icon;
-                
-                return (
-                  <Link 
-                    key={r.id} 
-                    to="/platform/audit-logs" 
-                    className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-muted/30 transition rounded group"
-                  >
-                    <div className={`p-1 rounded ${category.bgColor}`}>
-                      <Icon className={`w-3 h-3 ${category.color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-foreground">{category.label}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        {r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
-                      </p>
-                    </div>
+        <table className="mt-5 w-full">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              <th className="pb-3 text-left font-medium">User</th>
+              <th className="pb-3 text-left font-medium">Plan</th>
+              <th className="pb-3 text-right font-medium">Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentSignups.slice(0, 5).map((s) => (
+              <tr key={s.id} className="group">
+                <td className="py-2.5">
+                  <Link to="/platform/users" className="block min-w-0">
+                    <p className="truncate text-xs font-medium text-foreground">{s.name || "New user"}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{s.email}</p>
                   </Link>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                </td>
+                <td className="py-2.5">
+                  <span className="rounded bg-muted/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {s.subscription_plan ?? "starter"}
+                  </span>
+                </td>
+                <td className="py-2.5 text-right text-[11px] tabular-nums text-muted-foreground">
+                  {s.created_at ? new Date(s.created_at).toLocaleDateString("en-GB") : "—"}
+                </td>
+              </tr>
+            ))}
+            {recentSignups.length === 0 && (
+              <tr>
+                <td colSpan={3} className="py-10 text-center text-xs text-muted-foreground">No recent signups</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </Panel>
+
+      {/* ── 05 Platform activity ──────────────────────────────────────────── */}
+      <Panel className="flex flex-col">
+        <PanelHeader index="05" title="Platform activity" action={{ label: "Open log", to: "/platform/audit-logs" }} />
+
+        <div className="mt-5 grid grid-cols-3 rounded-xl bg-muted/25 py-4">
+          {summaryTiles.map((t) => {
+            const Icon = t.icon;
+            return (
+              <div key={t.key} className="flex flex-col items-center gap-1.5">
+                <Icon className={`h-4 w-4 ${t.tone}`} />
+                <span className="text-2xl font-bold leading-none tabular-nums text-foreground">{t.value}</span>
+                <span className="text-[11px] text-muted-foreground">{t.label}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mb-1 mt-5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+          Recent events
+        </p>
+        {rows.length === 0 && <p className="py-3 text-xs text-muted-foreground">No recent activity</p>}
+        <div className="flex-1">
+          {rows.slice(0, 5).map((r) => {
+            const category = activityCategories[categorizeActivity(r.action)] || activityCategories.default;
+            const Icon = category.icon;
+            return (
+              <Link
+                key={r.id}
+                to="/platform/audit-logs"
+                className="-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-muted/25"
+              >
+                <span className={`rounded-md p-1.5 ${category.bgColor}`}>
+                  <Icon className={`h-3 w-3 ${category.color}`} />
+                </span>
+                <span className="flex-1 truncate text-xs font-medium text-foreground">{category.label}</span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">
+                  {r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </Panel>
     </div>
   );
 }
