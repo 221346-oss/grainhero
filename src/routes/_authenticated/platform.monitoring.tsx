@@ -113,7 +113,7 @@ function TenantRow({ t, rank }: { t: any; rank: number }) {
   const pct = total > 0 ? Math.round((t.online / total) * 100) : 100;
   const bar = pct >= 80 ? NEON.success : pct >= 50 ? NEON.warning : NEON.critical;
   return (
-    <div className="flex items-center gap-3 px-4 py-2 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+    <div className="flex items-center gap-3 px-4 py-2 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
       <span className="w-4 text-[9px] text-muted-foreground tabular-nums shrink-0 text-right">{rank}</span>
       <p className="flex-1 text-[12px] text-foreground truncate min-w-0">{t.tenantName}</p>
       <div className="w-20 h-1 rounded-full bg-muted overflow-hidden shrink-0">
@@ -226,7 +226,7 @@ function PlatformMonitoringPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* Tenant health */}
             <div className="rounded-2xl bg-card/50 overflow-hidden">
-              <div className="px-4 h-11 border-b border-border flex items-center justify-between">
+              <div className="px-4 h-11 border-b border-border/40 flex items-center justify-between">
                 <Sk className="h-[13px] w-28" />
                 <div className="flex gap-3">
                   <Sk className="h-[10px] w-16" />
@@ -239,7 +239,7 @@ function PlatformMonitoringPage() {
                 </div>
                 <div className="flex-1">
                   {[0,1,2,3,4].map((i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
+                    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0">
                       <Sk className="h-[11px] w-4 shrink-0" />
                       <Sk className="h-[12px] flex-1" />
                       <Sk className="h-1.5 w-20 rounded-full shrink-0" />
@@ -252,7 +252,7 @@ function PlatformMonitoringPage() {
 
             {/* Incidents panel */}
             <div className="rounded-2xl bg-card/50 overflow-hidden">
-              <div className="px-4 h-11 border-b border-border flex items-center justify-between">
+              <div className="px-4 h-11 border-b border-border/40 flex items-center justify-between">
                 <Sk className="h-[13px] w-40" />
                 <Sk className="h-[11px] w-32" />
               </div>
@@ -261,7 +261,7 @@ function PlatformMonitoringPage() {
               </div>
               <div>
                 {[0,1,2,3].map((i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
+                  <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0">
                     <Sk className="h-[13px] flex-1" />
                     <Sk className="h-[13px] w-8 shrink-0" />
                     <Sk className="h-[13px] w-8 shrink-0" />
@@ -274,17 +274,17 @@ function PlatformMonitoringPage() {
 
           {/* ── Row 4: maintenance table ───────────────────────────── */}
           <div className="rounded-2xl bg-card/50 overflow-hidden">
-            <div className="px-4 h-11 border-b border-border flex items-center justify-between">
+            <div className="px-4 h-11 border-b border-border/40 flex items-center justify-between">
               <Sk className="h-[13px] w-44" />
               <Sk className="h-[11px] w-28" />
             </div>
-            <div className="px-4 py-2.5 border-b border-border bg-muted/30 flex gap-6">
+            <div className="px-4 py-2.5 border-b border-border/40 bg-muted/30 flex gap-6">
               {[24, 36, 16, 14, 20].map((w, i) => (
                 <Sk key={i} className={`h-[10px] w-${w}`} />
               ))}
             </div>
             {[0,1,2,3].map((i) => (
-              <div key={i} className="px-4 py-3 flex items-center gap-5 border-b border-border last:border-0">
+              <div key={i} className="px-4 py-3 flex items-center gap-5 border-b border-border/40 last:border-0">
                 <Sk className="h-[13px] w-28" />
                 <Sk className="h-[13px] w-36" />
                 <Sk className="h-5 w-16 rounded-full" />
@@ -376,7 +376,7 @@ function PlatformMonitoringPage() {
         ) : (
           <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
             <table className="w-full text-[13px]">
-              <thead className="border-b border-border bg-muted/30">
+              <thead className="border-b border-border/40 bg-muted/30">
                 <tr>
                   <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant / Title</th>
                   <th className="text-left font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Priority</th>
@@ -386,7 +386,7 @@ function PlatformMonitoringPage() {
               </thead>
               <tbody>
                 {maints.map((r) => (
-                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={r.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="px-3 py-2">
                       <div className="font-medium text-foreground truncate max-w-[160px] sm:max-w-none">{r.tenantName ?? "—"}</div>
                       <div className="text-[11px] text-muted-foreground truncate max-w-[160px] sm:max-w-none">{r.title}</div>
@@ -502,7 +502,7 @@ function IncidentsBody({ incByTenant }: { incByTenant: any[] }) {
         </div>
       )}
       {/* Table */}
-      <div className="overflow-y-auto max-h-36 border-t border-border mt-2">
+      <div className="overflow-y-auto max-h-36 border-t border-border/40 mt-2">
         {incByTenant.filter((t) => t.open > 0).length === 0 ? (
           <p className="text-[12px] text-muted-foreground text-center py-6">All clear — no open incidents.</p>
         ) : (
@@ -517,7 +517,7 @@ function IncidentsBody({ incByTenant }: { incByTenant: any[] }) {
             </thead>
             <tbody>
               {incByTenant.filter((t) => t.open > 0).map((t) => (
-                <tr key={t.adminId} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                <tr key={t.adminId} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="px-3 py-2 text-foreground truncate max-w-[140px]">{t.tenantName}</td>
                   <td className="px-2 py-2 text-right font-medium tabular-nums" style={{ color: NEON.warning }}>{t.open}</td>
                   <td className="px-2 py-2 text-right">

@@ -131,9 +131,9 @@ function OrdersSkeleton() {
           </div>
         ))}
       </div>
-      <div className="border border-border rounded-md overflow-hidden bg-background">
+      <div className="rounded-2xl overflow-hidden bg-card/50">
         {[0,1,2,3,4].map((i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-border last:border-0">
+          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-border/40 last:border-0">
             <Sk className="h-[13px] w-24" /><Sk className="h-[13px] w-32" /><Sk className="h-[13px] w-20" />
             <Sk className="h-5 w-20 rounded ml-auto" />
           </div>
@@ -340,15 +340,18 @@ function PlatformOrdersPage() {
               onClick={() => { setPlanTab(t.key); setStatus("all"); setSearch(""); }}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all"
               style={active
-                ? { background: "#fff", color: t.color, boxShadow: "0 1px 3px 0 rgba(0,0,0,0.10)" }
-                : { color: "#64748b" }}
+                ? { background: "var(--card)", color: t.color, boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.18)" }
+                : { color: "var(--muted-foreground)" }}
             >
               {t.label}
               <span
                 className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                 style={active
                   ? { background: t.color + "18", color: t.color }
-                  : { background: "#e2e8f0", color: "#64748b" }}
+                  : {
+                      background: "color-mix(in oklab, var(--muted-foreground) 18%, transparent)",
+                      color: "var(--muted-foreground)",
+                    }}
               >
                 {planCounts[t.key] ?? 0}
               </span>
@@ -404,14 +407,14 @@ function PlatformOrdersPage() {
       {/* ── Table ─────────────────────────────────────────────────── */}
       {isLoading ? <OrdersSkeleton /> : (
         filtered.length === 0 ? (
-          <div className="rounded-lg border border-border bg-background py-12 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl bg-card/50 py-12 text-center text-sm text-muted-foreground">
             No orders match your filters
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-background overflow-hidden">
+          <div className="rounded-2xl bg-card/50 overflow-hidden">
             <div className="overflow-x-auto">
               {/* Column headers */}
-              <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 min-w-[900px]">
+              <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border/40 px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 min-w-[900px]">
                 <span>Order</span>
                 <span>Buyer</span>
                 <span>Location</span>
@@ -420,7 +423,7 @@ function PlatformOrdersPage() {
                 <span>Placed</span>
                 <span />
               </div>
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border/40">
                 {filtered.map((o) => (
                   <OrderRow
                     key={o.id as string}
@@ -434,7 +437,7 @@ function PlatformOrdersPage() {
                 ))}
               </div>
             </div>
-            <div className="px-5 py-2.5 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
+            <div className="px-5 py-2.5 border-t border-border/40 text-xs text-muted-foreground flex items-center justify-between">
               <span>{filtered.length} order{filtered.length !== 1 ? "s" : ""}</span>
               <span className="font-medium text-muted-foreground">
                 PKR {fmt(filtered.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0))}
@@ -491,7 +494,7 @@ function OrderRow({
   return (
     <>
       {/* Mobile Card View */}
-      <div className="block md:hidden p-4 border-b border-border space-y-3 bg-white">
+      <div className="block md:hidden p-4 border-b border-border/40 space-y-3 bg-card">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="text-sm font-bold text-foreground">
@@ -647,7 +650,7 @@ function OrderRow({
           </SheetHeader>
 
           {/* Read-only info block */}
-          <div className="mt-4 rounded-lg bg-muted/30 border border-border p-3 text-xs space-y-1.5 text-muted-foreground">
+          <div className="mt-4 rounded-lg bg-muted/30 p-3 text-xs space-y-1.5 text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="font-semibold w-20">Buyer</span>
               <span>{order.buyer?.name ?? order.customer_name ?? "—"} · {order.buyer?.email ?? order.customer_email ?? "—"}</span>

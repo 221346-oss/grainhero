@@ -277,7 +277,7 @@ function SiloRequestsPage() {
         </div>
       ) : (
         <div className="rounded-2xl bg-card/50 overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b border-border px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
+          <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b border-border/40 px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
             <span>Requester</span><span>Plan</span><span>Qty</span>
             <span>Location</span><span>Status</span><span />
           </div>
@@ -286,7 +286,7 @@ function SiloRequestsPage() {
               <RequestRow key={order.id} order={order} tabColor={tabColor} onOpen={() => openSheet(order)} />
             ))}
           </div>
-          <div className="px-4 py-2 border-t border-border text-[12px] text-muted-foreground">
+          <div className="px-4 py-2 border-t border-border/40 text-[12px] text-muted-foreground">
             {filtered.length} request{filtered.length !== 1 ? "s" : ""}
           </div>
         </div>
@@ -380,7 +380,7 @@ function SiloRequestsPage() {
 
               {/* ── Inline approve / reject / upgrade panels (pending only) ── */}
               {PENDING_STATUSES.has(selected.status) && (
-                <div className="mt-4 border-t border-border pt-5 space-y-3">
+                <div className="mt-4 border-t border-border/40 pt-5 space-y-3">
 
                   {/* Default action buttons */}
                   {mode === "view" && (

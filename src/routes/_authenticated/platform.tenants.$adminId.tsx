@@ -121,7 +121,7 @@ function TenantDetailSheet() {
 
             {/* Plan usage bars */}
             {sub && (
-              <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+              <div className="rounded-lg border border-slate-200 bg-card p-4 space-y-3">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Plan Usage</p>
                 <UsageBar used={usage?.silos ?? 0}      max={sub.max_silos      ?? 0} label="Silos" />
                 <UsageBar used={usage?.warehouses ?? 0} max={sub.max_warehouses ?? 0} label="Warehouses" />
@@ -138,7 +138,7 @@ function TenantDetailSheet() {
             )}
 
             {/* Profile */}
-            <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2 text-sm">
+            <div className="rounded-lg border border-slate-200 bg-card p-4 space-y-2 text-sm">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Profile</p>
               <div className="flex justify-between">
                 <span className="text-slate-500">Status</span>
@@ -160,7 +160,7 @@ function TenantDetailSheet() {
 
             {/* Silos */}
             {(silos ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Silos ({(silos ?? []).length})
                 </p>
@@ -179,7 +179,7 @@ function TenantDetailSheet() {
 
             {/* Team */}
             {(team ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Team ({(team ?? []).length})
                 </p>
@@ -199,7 +199,7 @@ function TenantDetailSheet() {
 
             {/* Recent batches */}
             {(recentBatches ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Recent Batches
                 </p>
@@ -218,7 +218,7 @@ function TenantDetailSheet() {
 
             {/* Activity */}
             {(activityLogs ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Recent Activity
                 </p>

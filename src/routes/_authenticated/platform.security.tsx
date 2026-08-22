@@ -134,7 +134,7 @@ function PlatformSecurityPage() {
         {/* User access */}
         <NeonPanel title="User access" subtitle="Roles and blocked accounts - manage user access">
           <div className="border border-border rounded-md overflow-hidden">
-            <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
+            <div className="divide-y divide-border/40 max-h-[500px] overflow-y-auto">
               {allUsers.map((u: any) => (
                 <div key={u.id} className="p-3 flex items-center justify-between text-sm gap-3 hover:bg-muted/30 transition-colors">
                   <div className="min-w-0 flex-1">
@@ -177,7 +177,7 @@ function PlatformSecurityPage() {
         {/* Security events */}
         <NeonPanel title="Security events" subtitle="Recent warnings and errors from the audit log">
           <div className="border border-border rounded-md overflow-hidden">
-            <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+            <div className="divide-y divide-border/40 max-h-[400px] overflow-y-auto">
               {logs.map((l: any) => (
                 <div key={l.id} className="p-3 text-sm hover:bg-muted/30 transition-colors">
                   <div className="flex items-center gap-2 flex-wrap">

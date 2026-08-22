@@ -173,7 +173,7 @@ function UsersPage() {
           {/* 3-tile summary */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+              <div key={i} className="rounded-lg border border-slate-200 bg-card p-4 space-y-2">
                 <div className="h-7 w-10 animate-pulse rounded bg-slate-100" />
                 <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
               </div>
@@ -182,7 +182,7 @@ function UsersPage() {
           {/* Filter bar */}
           <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
           {/* Users table */}
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+          <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
               <div className="h-4 w-20 animate-pulse rounded bg-slate-100" />
               <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />

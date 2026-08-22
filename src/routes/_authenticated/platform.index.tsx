@@ -54,7 +54,7 @@ function OverviewSkeleton() {
         ))}
       </div>
       {/* Row 2: Multi-metric revenue card */}
-      <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+      <div className="rounded-2xl bg-card/50 p-4 space-y-4">
         <div className="space-y-2">
           <Sk className="h-3 w-32" />
           <div className="flex items-baseline gap-2"><Sk className="h-8 w-12" /><Sk className="h-5 w-10" /><Sk className="h-3 w-16" /></div>
@@ -81,8 +81,8 @@ function OverviewSkeleton() {
         ))}
       </div>
       {/* Row 4: API health */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <div className="px-3 h-9 border-b border-border flex items-center justify-between">
+      <div className="rounded-2xl bg-card/50 overflow-hidden">
+        <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
           <Sk className="h-3 w-20" /><Sk className="h-2.5 w-16" />
         </div>
         <div className="p-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -92,7 +92,7 @@ function OverviewSkeleton() {
       {/* Row 5: IoT fleet */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
         {[0,1,2,3,4,5].map(i => (
-          <div key={i} className="rounded-lg border border-border bg-card p-3 space-y-1.5">
+          <div key={i} className="rounded-2xl bg-card/50 p-3 space-y-1.5">
             <Sk className="h-6 w-10" /><Sk className="h-2.5 w-16" />
           </div>
         ))}
@@ -100,12 +100,12 @@ function OverviewSkeleton() {
       {/* Row 6: tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {[0,1].map(c => (
-          <div key={c} className="rounded-lg border border-border bg-card overflow-hidden">
-            <div className="px-3 h-9 border-b border-border flex items-center justify-between">
+          <div key={c} className="rounded-2xl bg-card/50 overflow-hidden">
+            <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
               <Sk className="h-3 w-24" /><Sk className="h-2.5 w-20" />
             </div>
             {[0,1,2,3,4].map(i => (
-              <div key={i} className="px-3 py-2 flex items-center gap-3 border-b border-border last:border-0">
+              <div key={i} className="px-3 py-2 flex items-center gap-3 border-b border-border/40 last:border-0">
                 <div className="flex-1 space-y-1"><Sk className="h-3 w-28" /><Sk className="h-2.5 w-20" /></div>
                 <Sk className="h-2.5 w-12" /><Sk className="h-5 w-12 rounded-full" />
               </div>
@@ -239,7 +239,7 @@ function PlatformOverviewPage() {
           </HairlineGrid>
 
           {/* ── Row 2: Multi-Metric Revenue Card with Neon Charts ── */}
-          <div className="rounded-lg border border-border bg-card p-4">
+          <div className="rounded-2xl bg-card/50 p-4">
             {/* Platform Health Score Bar */}
             <div className="mb-4 pb-3 border-b border-border/60">
               <div className="flex items-center justify-between mb-2">
@@ -529,8 +529,8 @@ function PlatformOverviewPage() {
           </HairlineGrid>
 
           {/* ── Row 4: API health strip ── */}
-          <div className="rounded-lg border border-border bg-card overflow-hidden">
-            <div className="px-3 h-9 border-b border-border flex items-center justify-between shrink-0">
+          <div className="rounded-2xl bg-card/50 overflow-hidden">
+            <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 {apiHealthQ.isLoading
                   ? <Loader2 className="w-3 h-3 text-muted-foreground animate-spin" />
@@ -570,7 +570,7 @@ function PlatformOverviewPage() {
               { val: healthQ.data?.totals?.offline   ?? "—",                    label: "Down",             cls: "text-severity-critical" },
               { val: healthQ.data?.totals?.lowBattery ?? "—",                   label: "Low battery",      cls: "text-warning" },
             ] as Array<{ val: string | number; label: string; cls: string }>).map(({ val, label, cls }) => (
-              <div key={label} className="rounded-lg border border-border bg-card px-3 py-2.5">
+              <div key={label} className="rounded-2xl bg-card/50 px-3 py-2.5">
                 <div className={`text-[20px] font-semibold tabular-nums leading-tight ${cls}`}>{val}</div>
                 <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{label}</div>
               </div>
@@ -581,8 +581,8 @@ function PlatformOverviewPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
             {/* Recent signups */}
-            <div className="rounded-lg border border-border bg-card overflow-hidden">
-              <div className="px-3 h-9 border-b border-border flex items-center justify-between">
+            <div className="rounded-2xl bg-card/50 overflow-hidden">
+              <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
                 <span className="text-[12px] font-medium">Recent signups</span>
                 {w && (
                   <span className="text-[11px] text-muted-foreground">
@@ -595,7 +595,7 @@ function PlatformOverviewPage() {
               </div>
               <div className="overflow-auto max-h-[280px]">
                 <table className="w-full text-[12px]">
-                  <thead className="sticky top-0 bg-muted/40 border-b border-border">
+                  <thead className="sticky top-0 bg-muted/40 border-b border-border/40">
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-3 py-1.5 font-medium">Name</th>
                       <th className="text-left px-2 py-1.5 font-medium hidden sm:table-cell">Business</th>
@@ -606,7 +606,7 @@ function PlatformOverviewPage() {
                   <tbody>
                     {(w?.recentSignups ?? []).map((s: any) => (
                       <tr key={s.id}
-                        className="border-b border-border last:border-0 hover:bg-muted/30 cursor-pointer transition-colors group"
+                        className="border-b border-border/40 last:border-0 hover:bg-muted/30 cursor-pointer transition-colors group"
                         onClick={() => navigate({ to: "/platform/tenants/$adminId", params: { adminId: s.id } })}>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1">
@@ -634,20 +634,20 @@ function PlatformOverviewPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-3 py-1.5 border-t border-border text-[10px] text-muted-foreground/50">
+              <div className="px-3 py-1.5 border-t border-border/40 text-[10px] text-muted-foreground/50">
                 Click a row to view tenant details
               </div>
             </div>
 
             {/* System alerts */}
-            <div className="rounded-lg border border-border bg-card overflow-hidden">
-              <div className="px-3 h-9 border-b border-border flex items-center justify-between">
+            <div className="rounded-2xl bg-card/50 overflow-hidden">
+              <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
                 <span className="text-[12px] font-medium">System alerts</span>
                 {m && <span className="text-[11px] text-muted-foreground">{m.criticalAlerts} critical of {m.totalAlerts} total</span>}
               </div>
               <div className="overflow-auto max-h-[280px]">
                 <table className="w-full text-[12px]">
-                  <thead className="sticky top-0 bg-muted/40 border-b border-border">
+                  <thead className="sticky top-0 bg-muted/40 border-b border-border/40">
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-3 py-1.5 font-medium">Alert</th>
                       <th className="text-left px-2 py-1.5 font-medium">Priority</th>
@@ -656,7 +656,7 @@ function PlatformOverviewPage() {
                   </thead>
                   <tbody>
                     {(w?.systemAlerts ?? []).map((a: any) => (
-                      <tr key={a.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
                         <td className="px-3 py-2">
                           <div className="font-medium text-foreground truncate max-w-[180px] sm:max-w-none">{a.alert_type}</div>
                           <div className="text-[10px] text-muted-foreground truncate max-w-[180px] sm:max-w-none">{a.message}</div>

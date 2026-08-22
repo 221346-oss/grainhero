@@ -127,7 +127,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
 
             {/* ── Plan usage bars ── */}
             {sub && (
-              <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+              <div className="rounded-lg border border-slate-200 bg-card p-4 space-y-3">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Plan Usage</p>
                 <UsageBar used={usage?.silos ?? 0}      max={sub.max_silos      ?? 0} label="Silos" />
                 <UsageBar used={usage?.warehouses ?? 0} max={sub.max_warehouses ?? 0} label="Warehouses" />
@@ -144,7 +144,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
             )}
 
             {/* ── Profile info ── */}
-            <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2 text-sm">
+            <div className="rounded-lg border border-slate-200 bg-card p-4 space-y-2 text-sm">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Profile</p>
               <div className="flex justify-between">
                 <span className="text-slate-500">Status</span>
@@ -166,7 +166,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
 
             {/* ── Silos list ── */}
             {(silos ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Silos ({(silos ?? []).length})
                 </p>
@@ -185,7 +185,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
 
             {/* ── Team ── */}
             {(team ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Team ({(team ?? []).length})
                 </p>
@@ -205,7 +205,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
 
             {/* ── Recent batches ── */}
             {(recentBatches ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Recent Batches
                 </p>
@@ -224,7 +224,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
 
             {/* ── Activity ── */}
             {(activityLogs ?? []).length > 0 && (
-              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <div className="rounded-lg border border-slate-200 bg-card overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                   Recent Activity
                 </p>
@@ -286,12 +286,12 @@ function TenantsPage() {
             ))}
           </div>
           <Sk className="h-11 rounded-md" />
-          <div className="border border-border rounded-md overflow-hidden bg-background">
-            <div className="px-4 py-3 border-b border-border flex justify-between">
+          <div className="rounded-2xl overflow-hidden bg-card/50">
+            <div className="px-4 py-3 border-b border-border/40 flex justify-between">
               <Sk className="h-[13px] w-24" /><Sk className="h-[13px] w-20" />
             </div>
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="px-4 py-3 flex items-center gap-4 border-b border-border last:border-0">
+              <div key={i} className="px-4 py-3 flex items-center gap-4 border-b border-border/40 last:border-0">
                 <div className="flex-1 space-y-1.5"><Sk className="h-[13px] w-40" /><Sk className="h-[11px] w-56" /></div>
                 <Sk className="h-[11px] w-16" /><Sk className="h-5 w-14 rounded" />
               </div>
