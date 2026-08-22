@@ -73,16 +73,38 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
   };
 
   const summaryTiles = [
-    { key: "users", icon: UserPlus, tone: "text-success", value: activitySummary.signups, label: "New Users" },
-    { key: "orders", icon: Package, tone: "text-info", value: activitySummary.orders, label: "Orders" },
-    { key: "alerts", icon: AlertTriangle, tone: "text-warning", value: activitySummary.alerts, label: "Alerts" },
+    {
+      key: "users",
+      icon: UserPlus,
+      tone: "text-success",
+      value: activitySummary.signups,
+      label: "New Users",
+    },
+    {
+      key: "orders",
+      icon: Package,
+      tone: "text-info",
+      value: activitySummary.orders,
+      label: "Orders",
+    },
+    {
+      key: "alerts",
+      icon: AlertTriangle,
+      tone: "text-warning",
+      value: activitySummary.alerts,
+      label: "Alerts",
+    },
   ];
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {/* ── 04 Recent signups ─────────────────────────────────────────────── */}
       <Panel>
-        <PanelHeader index="04" title="Recent signups" action={{ label: "View all", to: "/platform/users" }} />
+        <PanelHeader
+          index="04"
+          title="Recent signups"
+          action={{ label: "View all", to: "/platform/users" }}
+        />
 
         <table className="mt-5 w-full">
           <thead>
@@ -97,7 +119,9 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
               <tr key={s.id} className="group">
                 <td className="py-2.5">
                   <Link to="/platform/users" className="block min-w-0">
-                    <p className="truncate text-xs font-medium text-foreground">{s.name || "New user"}</p>
+                    <p className="truncate text-xs font-medium text-foreground">
+                      {s.name || "New user"}
+                    </p>
                     <p className="truncate text-[11px] text-muted-foreground">{s.email}</p>
                   </Link>
                 </td>
@@ -113,7 +137,9 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
             ))}
             {recentSignups.length === 0 && (
               <tr>
-                <td colSpan={3} className="py-10 text-center text-xs text-muted-foreground">No recent signups</td>
+                <td colSpan={3} className="py-10 text-center text-xs text-muted-foreground">
+                  No recent signups
+                </td>
               </tr>
             )}
           </tbody>
@@ -122,7 +148,11 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
 
       {/* ── 05 Platform activity ──────────────────────────────────────────── */}
       <Panel className="flex flex-col">
-        <PanelHeader index="05" title="Platform activity" action={{ label: "Open log", to: "/platform/audit-logs" }} />
+        <PanelHeader
+          index="05"
+          title="Platform activity"
+          action={{ label: "Open log", to: "/platform/audit-logs" }}
+        />
 
         <div className="mt-5 grid grid-cols-3 rounded-xl bg-muted/25 py-4">
           {summaryTiles.map((t) => {
@@ -130,7 +160,9 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
             return (
               <div key={t.key} className="flex flex-col items-center gap-1.5">
                 <Icon className={`h-4 w-4 ${t.tone}`} />
-                <span className="text-2xl font-bold leading-none tabular-nums text-foreground">{t.value}</span>
+                <span className="text-2xl font-bold leading-none tabular-nums text-foreground">
+                  {t.value}
+                </span>
                 <span className="text-[11px] text-muted-foreground">{t.label}</span>
               </div>
             );
@@ -140,10 +172,13 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
         <p className="mb-1 mt-5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
           Recent events
         </p>
-        {rows.length === 0 && <p className="py-3 text-xs text-muted-foreground">No recent activity</p>}
+        {rows.length === 0 && (
+          <p className="py-3 text-xs text-muted-foreground">No recent activity</p>
+        )}
         <div className="flex-1">
           {rows.slice(0, 5).map((r) => {
-            const category = activityCategories[categorizeActivity(r.action)] || activityCategories.default;
+            const category =
+              activityCategories[categorizeActivity(r.action)] || activityCategories.default;
             const Icon = category.icon;
             return (
               <Link
@@ -154,9 +189,16 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                 <span className={`rounded-md p-1.5 ${category.bgColor}`}>
                   <Icon className={`h-3 w-3 ${category.color}`} />
                 </span>
-                <span className="flex-1 truncate text-xs font-medium text-foreground">{category.label}</span>
+                <span className="flex-1 truncate text-xs font-medium text-foreground">
+                  {category.label}
+                </span>
                 <span className="text-[11px] tabular-nums text-muted-foreground">
-                  {r.created_at ? new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                  {r.created_at
+                    ? new Date(r.created_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : ""}
                 </span>
               </Link>
             );

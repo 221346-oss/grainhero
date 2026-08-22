@@ -1,6 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Panel, SectionLabel, DeltaChip } from "./super-ui";
 
@@ -37,7 +40,6 @@ function lossNote(key: string, lost: number): string {
   return `${lost} dropped here`;
 }
 
-
 /** Stage bar. The count sits inside the fill, or just past it when the bar is short. */
 function BarCell({ count, pct }: { count: number; pct: number }) {
   const width = Math.max(2, Math.min(100, pct));
@@ -73,7 +75,9 @@ function StatRow({ label, value, delta }: { label: string; value: string; delta?
 }
 
 export function OnboardingFunnel({
-  data, windowDays, onWindowChange,
+  data,
+  windowDays,
+  onWindowChange,
 }: {
   data?: FunnelData;
   windowDays: number;
@@ -117,23 +121,35 @@ export function OnboardingFunnel({
                 key={s.key}
                 className="grid grid-cols-[minmax(96px,1fr)_minmax(0,2fr)_auto_auto] items-center gap-x-4"
               >
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {s.label}
+                </span>
 
                 <BarCell count={s.count} pct={first ? (s.count / first) * 100 : 0} />
 
-                <span className="text-right text-[12px] tabular-nums text-muted-foreground">{s.share}%</span>
+                <span className="text-right text-[12px] tabular-nums text-muted-foreground">
+                  {s.share}%
+                </span>
 
                 <div className="w-[124px] text-right">
                   {i === 0 ? (
                     <>
                       <p className="text-[10px] font-bold text-foreground">Start</p>
-                      <p className="text-[10px] text-muted-foreground">of the last {windowDays} days</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        of the last {windowDays} days
+                      </p>
                     </>
                   ) : (
                     <>
-                      <p className={`text-[11px] font-semibold tabular-nums ${
-                        s.keptPct === null ? "text-muted-foreground" : s.keptPct < 80 ? "text-warning" : "text-foreground"
-                      }`}>
+                      <p
+                        className={`text-[11px] font-semibold tabular-nums ${
+                          s.keptPct === null
+                            ? "text-muted-foreground"
+                            : s.keptPct < 80
+                              ? "text-warning"
+                              : "text-foreground"
+                        }`}
+                      >
                         {s.keptPct === null ? "—" : `${s.keptPct}% kept`}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
@@ -145,7 +161,9 @@ export function OnboardingFunnel({
               </div>
             ))}
             {stages.length === 0 && (
-              <p className="py-8 text-center text-xs text-muted-foreground">No signups in this window</p>
+              <p className="py-8 text-center text-xs text-muted-foreground">
+                No signups in this window
+              </p>
             )}
           </div>
 
@@ -167,7 +185,9 @@ export function OnboardingFunnel({
         <div className="flex flex-col">
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Converted</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Converted
+              </p>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-3xl font-bold leading-none tabular-nums text-foreground">
                   {data?.converted ?? 0}
@@ -180,7 +200,9 @@ export function OnboardingFunnel({
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Drop-off</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Drop-off
+              </p>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-3xl font-bold leading-none tabular-nums text-severity-critical">
                   {data?.dropOff ?? 0}%
@@ -188,7 +210,9 @@ export function OnboardingFunnel({
                 <DeltaChip value={data?.dropOffDeltaPct} good={(data?.dropOffDeltaPct ?? 0) < 0} />
               </div>
               <p className="mt-2 text-[11px] text-muted-foreground">
-                {data?.biggestDrop ? `${data.biggestDrop.lost} stalled at ${data.biggestDrop.label.toLowerCase()}` : "no stalled accounts"}
+                {data?.biggestDrop
+                  ? `${data.biggestDrop.lost} stalled at ${data.biggestDrop.label.toLowerCase()}`
+                  : "no stalled accounts"}
               </p>
             </div>
           </div>
@@ -196,15 +220,27 @@ export function OnboardingFunnel({
           <div className="mt-6 divide-y divide-border/40 border-t border-border/40">
             <StatRow
               label="Time to first silo"
-              value={data?.timeToFirstSiloDays === null || data?.timeToFirstSiloDays === undefined ? "—" : `${data.timeToFirstSiloDays} days`}
+              value={
+                data?.timeToFirstSiloDays === null || data?.timeToFirstSiloDays === undefined
+                  ? "—"
+                  : `${data.timeToFirstSiloDays} days`
+              }
             />
             <StatRow
               label="Verify → tenant"
-              value={data?.verifyToTenantHrs === null || data?.verifyToTenantHrs === undefined ? "—" : `${data.verifyToTenantHrs} hrs`}
+              value={
+                data?.verifyToTenantHrs === null || data?.verifyToTenantHrs === undefined
+                  ? "—"
+                  : `${data.verifyToTenantHrs} hrs`
+              }
             />
             <StatRow
               label="Install completion"
-              value={data?.installCompletionPct === null || data?.installCompletionPct === undefined ? "—" : `${data.installCompletionPct}%`}
+              value={
+                data?.installCompletionPct === null || data?.installCompletionPct === undefined
+                  ? "—"
+                  : `${data.installCompletionPct}%`
+              }
             />
           </div>
         </div>

@@ -43,7 +43,9 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [qc]);
 
   const { data: m } = useQuery({
@@ -69,9 +71,9 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
 
   const mrr = revenueData?.kpis?.mrr ?? m?.mrr ?? 0;
   const revenueMonthly = analytics?.revenueMonthly ?? [];
-  const mrrSpark = (revenueMonthly.length
+  const mrrSpark = revenueMonthly.length
     ? revenueMonthly.map((r) => r.revenue)
-    : (revenueData?.revenueSeries ?? []).map((r: { revenue?: number }) => Number(r.revenue ?? 0)));
+    : (revenueData?.revenueSeries ?? []).map((r: { revenue?: number }) => Number(r.revenue ?? 0));
   const mrrDelta = (() => {
     if (mrrSpark.length < 2) return 0;
     const prev = mrrSpark[mrrSpark.length - 2] || 0;

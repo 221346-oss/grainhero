@@ -1,6 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import {
-  ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot,
+  ResponsiveContainer,
+  ComposedChart,
+  Area,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceDot,
 } from "recharts";
 import { Panel, SectionLabel, DeltaChip, fmtPKR, compact } from "./super-ui";
 
@@ -10,7 +18,17 @@ const monthLabel = (m: string) =>
   new Date(`${m}-01T00:00:00Z`).toLocaleDateString(undefined, { month: "short", timeZone: "UTC" });
 
 /** Small floating annotation used for the peak and the current month. */
-function Marker({ viewBox, text, tone, side = "above" }: any) {
+function Marker({
+  viewBox,
+  text,
+  tone,
+  side = "above",
+}: {
+  viewBox?: { x: number; y: number };
+  text: string;
+  tone: string;
+  side?: "above" | "left";
+}) {
   if (!viewBox) return null;
   const w = Math.max(52, text.length * 6.5 + 12);
   const x = side === "left" ? viewBox.x - w - 10 : Math.max(viewBox.x - w / 2, 2);
@@ -18,7 +36,14 @@ function Marker({ viewBox, text, tone, side = "above" }: any) {
   return (
     <g transform={`translate(${x}, ${y})`}>
       <rect width={w} height={16} rx={4} fill="var(--card)" stroke={tone} strokeOpacity={0.5} />
-      <text x={w / 2} y={11} textAnchor="middle" fontSize={9.5} fill="var(--foreground)" letterSpacing="0.04em">
+      <text
+        x={w / 2}
+        y={11}
+        textAnchor="middle"
+        fontSize={9.5}
+        fill="var(--foreground)"
+        letterSpacing="0.04em"
+      >
         {text}
       </text>
     </g>
@@ -26,7 +51,10 @@ function Marker({ viewBox, text, tone, side = "above" }: any) {
 }
 
 export function RevenueCard({
-  mrr, deltaPct, activeSubs, series,
+  mrr,
+  deltaPct,
+  activeSubs,
+  series,
 }: {
   mrr: number;
   deltaPct: number;
@@ -80,42 +108,79 @@ export function RevenueCard({
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis
-              dataKey="month" tickFormatter={monthLabel} tickLine={false} axisLine={false}
-              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} interval="preserveStartEnd" minTickGap={12}
+              dataKey="month"
+              tickFormatter={monthLabel}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+              interval="preserveStartEnd"
+              minTickGap={12}
             />
             <YAxis
-              tickFormatter={(v: number) => compact(v)} tickLine={false} axisLine={false} width={44}
+              tickFormatter={(v: number) => compact(v)}
+              tickLine={false}
+              axisLine={false}
+              width={44}
               tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
             />
             <Tooltip
               contentStyle={{
-                background: "var(--popover)", border: "1px solid var(--border)",
-                borderRadius: 8, fontSize: 12, color: "var(--popover-foreground)",
+                background: "var(--popover)",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                fontSize: 12,
+                color: "var(--popover-foreground)",
               }}
               labelFormatter={(m: string) => monthLabel(m)}
-              formatter={(v: number, name: string) => [fmtPKR.format(v), name === "revenue" ? "This year" : "Last year"]}
+              formatter={(v: number, name: string) => [
+                fmtPKR.format(v),
+                name === "revenue" ? "This year" : "Last year",
+              ]}
             />
             {hasLastYear && (
               <Line
-                type="monotone" dataKey="lastYear" stroke="var(--muted-foreground)" strokeWidth={1.25}
-                strokeDasharray="4 4" strokeOpacity={0.55} dot={false} isAnimationActive={false}
+                type="monotone"
+                dataKey="lastYear"
+                stroke="var(--muted-foreground)"
+                strokeWidth={1.25}
+                strokeDasharray="4 4"
+                strokeOpacity={0.55}
+                dot={false}
+                isAnimationActive={false}
               />
             )}
             <Area
-              type="monotone" dataKey="revenue" stroke="var(--success)" strokeWidth={2}
-              fill="url(#superRevenueFill)" dot={false} activeDot={{ r: 3, strokeWidth: 0 }}
-              isAnimationActive animationDuration={900}
+              type="monotone"
+              dataKey="revenue"
+              stroke="var(--success)"
+              strokeWidth={2}
+              fill="url(#superRevenueFill)"
+              dot={false}
+              activeDot={{ r: 3, strokeWidth: 0 }}
+              isAnimationActive
+              animationDuration={900}
             />
             {peak && peak.revenue > 0 && (
               <ReferenceDot
-                x={peak.month} y={peak.revenue} r={3} fill="var(--success)" stroke="none"
+                x={peak.month}
+                y={peak.revenue}
+                r={3}
+                fill="var(--success)"
+                stroke="none"
                 label={<Marker text={`PEAK ${compact(peak.revenue)}`} tone="var(--success)" />}
               />
             )}
             {now && now.month !== peak?.month && (
               <ReferenceDot
-                x={now.month} y={now.revenue} r={3} fill="var(--card)" stroke="var(--success)" strokeWidth={1.5}
-                label={<Marker text={`NOW ${compact(now.revenue)}`} tone="var(--border)" side="left" />}
+                x={now.month}
+                y={now.revenue}
+                r={3}
+                fill="var(--card)"
+                stroke="var(--success)"
+                strokeWidth={1.5}
+                label={
+                  <Marker text={`NOW ${compact(now.revenue)}`} tone="var(--border)" side="left" />
+                }
               />
             )}
           </ComposedChart>
@@ -128,7 +193,8 @@ export function RevenueCard({
         </span>
         {hasLastYear && (
           <span className="flex items-center gap-1.5">
-            <span className="h-px w-4 border-t border-dashed border-muted-foreground/60" /> Last year
+            <span className="h-px w-4 border-t border-dashed border-muted-foreground/60" /> Last
+            year
           </span>
         )}
       </div>

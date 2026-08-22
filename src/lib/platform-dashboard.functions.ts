@@ -17,6 +17,45 @@ import { getEffectiveRole } from "./rbac.server";
  * returned as `null` so the UI can render an em dash instead of inventing a number.
  */
 
+type ProfileRow = {
+  id: string;
+  admin_id: string | null;
+  email_verified: boolean | null;
+  created_at: string;
+  subscription_plan: string | null;
+};
+type SubRow = {
+  id: string;
+  admin_id: string;
+  status: string | null;
+  created_at: string;
+  canceled_at: string | null;
+  cancellation_date: string | null;
+};
+type AlertRow = {
+  id: string;
+  priority: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+type OwnedRow = { id: string; admin_id: string; created_at: string };
+type InvoiceRow = {
+  amount: number | null;
+  status: string | null;
+  billing_date: string | null;
+  created_at: string | null;
+};
+type HardwareRow = {
+  id: string;
+  admin_id: string | null;
+  hardware_total: number | null;
+  status: string | null;
+  created_at: string | null;
+  installed_at: string | null;
+};
+type LogRow = { id: string; severity: string | null; category: string | null; created_at: string };
+type DatedRow = { created_at?: string | null };
+
 const DAY = 86_400_000;
 const dayKey = (d: Date | string | number) => new Date(d).toISOString().slice(0, 10);
 const monthKey = (d: Date | string | number) => new Date(d).toISOString().slice(0, 7);
@@ -33,8 +72,16 @@ function pct(part: number, whole: number): number {
 }
 
 /** Same shape as the client gauge: revenue 0-40, alerts 0-30, subscriptions 0-30. */
-function healthScore({ revenueDeltaPct, criticalAlerts, activeSubs, tenants }: {
-  revenueDeltaPct: number; criticalAlerts: number; activeSubs: number; tenants: number;
+function healthScore({
+  revenueDeltaPct,
+  criticalAlerts,
+  activeSubs,
+  tenants,
+}: {
+  revenueDeltaPct: number;
+  criticalAlerts: number;
+  activeSubs: number;
+  tenants: number;
 }): number {
   const revenueScore = Math.min(40, Math.max(0, 20 + revenueDeltaPct * 0.5));
   const alertScore = criticalAlerts === 0 ? 30 : Math.max(0, 30 - criticalAlerts * 5);
@@ -42,8 +89,11 @@ function healthScore({ revenueDeltaPct, criticalAlerts, activeSubs, tenants }: {
   return Math.round(revenueScore + alertScore + subsScore);
 }
 
-const soft = <T,>(p: PromiseLike<{ data: T | null }>) =>
-  Promise.resolve(p).then((r) => r.data ?? null, () => null);
+const soft = <T>(p: PromiseLike<{ data: T | null }>) =>
+  Promise.resolve(p).then(
+    (r) => r.data ?? null,
+    () => null,
+  );
 
 export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -61,17 +111,52 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
     const prevStart = new Date(now - windowDays * 2 * DAY);
     const twoYearsAgo = new Date(now - 730 * DAY).toISOString();
 
-    const [profiles, subs, alerts, silosRows, warehouses, invoices, hardware, syncLog, logs] = await Promise.all([
-      soft(sa.from("profiles").select("id, admin_id, email_verified, created_at, subscription_plan")),
-      soft(sa.from("subscriptions").select("id, admin_id, status, price_per_month, created_at, canceled_at, cancellation_date")),
-      soft(sa.from("grain_alerts").select("id, priority, created_at, resolved_at").gte("created_at", twoYearsAgo)),
-      soft(sa.from("silos").select("id, admin_id, created_at")),
-      soft(sa.from("warehouses").select("id, admin_id, created_at")),
-      soft(sa.from("invoices").select("amount, status, billing_date, created_at").gte("created_at", twoYearsAgo).limit(2000)),
-      soft(sa.from("hardware_orders").select("id, admin_id, hardware_total, status, created_at, installed_at").gte("created_at", twoYearsAgo)),
-      soft(sa.from("hubspot_sync_log").select("id, created_at").gte("created_at", new Date(now - 14 * DAY).toISOString())),
-      soft(sa.from("activity_logs").select("id, severity, category, created_at").gte("created_at", new Date(now - 14 * DAY).toISOString())),
-    ]);
+    const [profiles, subs, alerts, silosRows, warehouses, invoices, hardware, syncLog, logs] =
+      await Promise.all([
+        soft(
+          sa.from("profiles").select("id, admin_id, email_verified, created_at, subscription_plan"),
+        ),
+        soft(
+          sa
+            .from("subscriptions")
+            .select(
+              "id, admin_id, status, price_per_month, created_at, canceled_at, cancellation_date",
+            ),
+        ),
+        soft(
+          sa
+            .from("grain_alerts")
+            .select("id, priority, created_at, resolved_at")
+            .gte("created_at", twoYearsAgo),
+        ),
+        soft(sa.from("silos").select("id, admin_id, created_at")),
+        soft(sa.from("warehouses").select("id, admin_id, created_at")),
+        soft(
+          sa
+            .from("invoices")
+            .select("amount, status, billing_date, created_at")
+            .gte("created_at", twoYearsAgo)
+            .limit(2000),
+        ),
+        soft(
+          sa
+            .from("hardware_orders")
+            .select("id, admin_id, hardware_total, status, created_at, installed_at")
+            .gte("created_at", twoYearsAgo),
+        ),
+        soft(
+          sa
+            .from("hubspot_sync_log")
+            .select("id, created_at")
+            .gte("created_at", new Date(now - 14 * DAY).toISOString()),
+        ),
+        soft(
+          sa
+            .from("activity_logs")
+            .select("id, severity, category, created_at")
+            .gte("created_at", new Date(now - 14 * DAY).toISOString()),
+        ),
+      ]);
 
     // `profiles.email_verified` is not maintained by the signup flow, so the real
     // confirmation state comes from auth.users via the service-role client.
@@ -90,13 +175,17 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
       console.warn("[getSuperDashboardAnalytics] auth.admin.listUsers failed:", err);
     }
 
-    const allProfiles = (profiles ?? []) as any[];
-    const allSubs = (subs ?? []) as any[];
-    const allAlerts = (alerts ?? []) as any[];
-    const allSilos = (silosRows ?? []) as any[];
-    const allWarehouses = (warehouses ?? []) as any[];
-    const paidInvoices = ((invoices ?? []) as any[]).filter((i) => i.status === "paid");
-    const hwOrders = ((hardware ?? []) as any[]).filter((o) => o.status !== "cancelled" && o.status !== "refunded");
+    const allProfiles = (profiles ?? []) as unknown as ProfileRow[];
+    const allSubs = (subs ?? []) as unknown as SubRow[];
+    const allAlerts = (alerts ?? []) as unknown as AlertRow[];
+    const allSilos = (silosRows ?? []) as unknown as OwnedRow[];
+    const allWarehouses = (warehouses ?? []) as unknown as OwnedRow[];
+    const paidInvoices = ((invoices ?? []) as unknown as InvoiceRow[]).filter(
+      (i) => i.status === "paid",
+    );
+    const hwOrders = ((hardware ?? []) as unknown as HardwareRow[]).filter(
+      (o) => o.status !== "cancelled" && o.status !== "refunded",
+    );
 
     /* ── revenue by month, 24 months back ─────────────────────────────────── */
     const byMonth: Record<string, number> = {};
@@ -141,7 +230,9 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
     const healthTrend: { date: string; score: number }[] = [];
     for (let i = 13; i >= 0; i--) {
       const at = now - i * DAY;
-      const tenantsAsOf = allProfiles.filter((p) => !p.admin_id && new Date(p.created_at ?? 0).getTime() <= at).length;
+      const tenantsAsOf = allProfiles.filter(
+        (p) => !p.admin_id && new Date(p.created_at ?? 0).getTime() <= at,
+      ).length;
       const activeAsOf = allSubs.filter((s) => {
         const started = new Date(s.created_at ?? 0).getTime();
         if (started > at) return false;
@@ -158,7 +249,12 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
       const revenueDeltaPct = prior > 0 ? ((cur - prior) / prior) * 100 : cur > 0 ? 100 : 0;
       healthTrend.push({
         date: dayKey(at),
-        score: healthScore({ revenueDeltaPct, criticalAlerts: criticalOpen, activeSubs: activeAsOf, tenants: tenantsAsOf }),
+        score: healthScore({
+          revenueDeltaPct,
+          criticalAlerts: criticalOpen,
+          activeSubs: activeAsOf,
+          tenants: tenantsAsOf,
+        }),
       });
     }
     const scores = healthTrend.map((p) => p.score);
@@ -167,20 +263,34 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
     /* ── 14-day sparklines per insight tile ───────────────────────────────── */
     const days: string[] = [];
     for (let i = 13; i >= 0; i--) days.push(dayKey(now - i * DAY));
-    const countByDay = (rows: any[], field = "created_at") => {
+    const countByDay = (rows: DatedRow[]) => {
       const b: Record<string, number> = Object.fromEntries(days.map((d) => [d, 0]));
       for (const r of rows) {
-        const k = dayKey(r[field] ?? 0);
+        const k = dayKey(r.created_at ?? 0);
         if (k in b) b[k] += 1;
       }
       return days.map((d) => b[d]);
     };
-    const allLogs = (logs ?? []) as any[];
+    const allLogs = (logs ?? []) as unknown as LogRow[];
     const insights = {
-      signups: countByDay(allProfiles.filter((p) => new Date(p.created_at ?? 0).getTime() >= now - 14 * DAY)),
-      tickets: countByDay(allLogs.filter((l) => l.severity === "error" || l.severity === "critical" || l.category === "platform_support")),
-      pipeline: countByDay((syncLog ?? []) as any[]),
-      alerts: countByDay(allAlerts.filter((a) => a.priority === "critical" && new Date(a.created_at ?? 0).getTime() >= now - 14 * DAY)),
+      signups: countByDay(
+        allProfiles.filter((p) => new Date(p.created_at ?? 0).getTime() >= now - 14 * DAY),
+      ),
+      tickets: countByDay(
+        allLogs.filter(
+          (l) =>
+            l.severity === "error" ||
+            l.severity === "critical" ||
+            l.category === "platform_support",
+        ),
+      ),
+      pipeline: countByDay((syncLog ?? []) as unknown as DatedRow[]),
+      alerts: countByDay(
+        allAlerts.filter(
+          (a) =>
+            a.priority === "critical" && new Date(a.created_at ?? 0).getTime() >= now - 14 * DAY,
+        ),
+      ),
     };
 
     /* ── onboarding funnel, current window vs the window before it ────────── */
@@ -197,7 +307,9 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
       if (w.admin_id && (prevT === undefined || t < prevT)) warehouseByAdmin.set(w.admin_id, t);
     }
     const subbedAdmins = new Set(
-      allSubs.filter((s) => !["cancelled", "canceled", "expired"].includes(String(s.status))).map((s) => s.admin_id),
+      allSubs
+        .filter((s) => !["cancelled", "canceled", "expired"].includes(String(s.status)))
+        .map((s) => s.admin_id),
     );
 
     const funnelFor = (fromMs: number, toMs: number) => {
@@ -235,10 +347,12 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
         lost,
       };
     });
-    const biggestDrop = stages.slice(1).reduce(
-      (worst, s) => (worst && worst.lost >= s.lost ? worst : s),
-      null as null | (typeof stages)[number],
-    );
+    const biggestDrop = stages
+      .slice(1)
+      .reduce(
+        (worst, s) => (worst && worst.lost >= s.lost ? worst : s),
+        null as null | (typeof stages)[number],
+      );
 
     const convertedPrev = prev.installed.length;
     const converted = cur.installed.length;
@@ -263,9 +377,16 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
         })
         .filter((n) => n >= 0),
     );
-    const windowOrders = hwOrders.filter((o) => new Date(o.created_at ?? 0).getTime() >= windowStart.getTime());
+    const windowOrders = hwOrders.filter(
+      (o) => new Date(o.created_at ?? 0).getTime() >= windowStart.getTime(),
+    );
     const installCompletion = windowOrders.length
-      ? pct(windowOrders.filter((o) => o.installed_at || o.status === "completed" || o.status === "installed").length, windowOrders.length)
+      ? pct(
+          windowOrders.filter(
+            (o) => o.installed_at || o.status === "completed" || o.status === "installed",
+          ).length,
+          windowOrders.length,
+        )
       : null;
 
     return {
@@ -282,13 +403,22 @@ export const getSuperDashboardAnalytics = createServerFn({ method: "GET" })
         windowDays,
         stages,
         converted,
-        convertedDeltaPct: convertedPrev > 0 ? Math.round(((converted - convertedPrev) / convertedPrev) * 100) : null,
+        convertedDeltaPct:
+          convertedPrev > 0
+            ? Math.round(((converted - convertedPrev) / convertedPrev) * 100)
+            : null,
         convertedPrev,
         dropOff,
-        dropOffDeltaPct: dropOffPrev > 0 ? Math.round(((dropOff - dropOffPrev) / dropOffPrev) * 100) : null,
-        biggestDrop: biggestDrop && biggestDrop.lost > 0
-          ? { label: biggestDrop.label, lost: biggestDrop.lost, of: stages[stages.findIndex((s) => s.key === biggestDrop.key) - 1] }
-          : null,
+        dropOffDeltaPct:
+          dropOffPrev > 0 ? Math.round(((dropOff - dropOffPrev) / dropOffPrev) * 100) : null,
+        biggestDrop:
+          biggestDrop && biggestDrop.lost > 0
+            ? {
+                label: biggestDrop.label,
+                lost: biggestDrop.lost,
+                of: stages[stages.findIndex((s) => s.key === biggestDrop.key) - 1],
+              }
+            : null,
         timeToFirstSiloDays: timeToFirstSilo === null ? null : Math.round(timeToFirstSilo),
         verifyToTenantHrs: verifyToTenantHrs === null ? null : Math.round(verifyToTenantHrs),
         installCompletionPct: installCompletion,

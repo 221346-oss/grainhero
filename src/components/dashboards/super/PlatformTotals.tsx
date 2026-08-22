@@ -4,7 +4,11 @@ import { Panel, SectionLabel, Rail } from "./super-ui";
 type Total = { label: string; value: number; to: string; tone?: "success" | "critical" };
 
 export function PlatformTotals({
-  totalTenants, totalUsers, activeSubs, ordersOpen, criticalAlerts,
+  totalTenants,
+  totalUsers,
+  activeSubs,
+  ordersOpen,
+  criticalAlerts,
 }: {
   totalTenants: number;
   totalUsers: number;
@@ -17,13 +21,20 @@ export function PlatformTotals({
     { label: "Users", value: totalUsers, to: "/platform/users" },
     { label: "Active subs", value: activeSubs, to: "/platform/plans" },
     { label: "Install orders", value: ordersOpen, to: "/platform/orders" },
-    { label: "Critical alerts", value: criticalAlerts, to: "/platform/health", tone: criticalAlerts > 0 ? "critical" : "success" },
+    {
+      label: "Critical alerts",
+      value: criticalAlerts,
+      to: "/platform/health",
+      tone: criticalAlerts > 0 ? "critical" : "success",
+    },
   ];
   const max = Math.max(1, ...rows.map((r) => r.value));
 
   return (
     <Panel className="flex flex-col">
-      <SectionLabel index="03" className="mb-5">Platform totals</SectionLabel>
+      <SectionLabel index="03" className="mb-5">
+        Platform totals
+      </SectionLabel>
 
       <div className="flex flex-1 flex-col justify-between gap-5">
         {rows.map((r) => (

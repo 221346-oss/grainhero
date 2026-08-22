@@ -11,8 +11,15 @@ type MonthPoint = { month: string; revenue: number; lastYear: number };
  * and the platform totals rail stack (03).
  */
 export function SuperKpiSummary({
-  mrr, mrrDeltaPct, activeSubs, totalTenants, totalUsers, ordersOpen, criticalAlerts,
-  health, revenueSeries,
+  mrr,
+  mrrDeltaPct,
+  activeSubs,
+  totalTenants,
+  totalUsers,
+  ordersOpen,
+  criticalAlerts,
+  health,
+  revenueSeries,
 }: {
   mrr: number;
   mrrDeltaPct?: number;

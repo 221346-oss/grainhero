@@ -39,8 +39,14 @@ function Spark({ series, tone, id }: { series: number[]; tone: keyof typeof tone
             </linearGradient>
           </defs>
           <Area
-            type="linear" dataKey="v" stroke={toneVar[tone]} strokeWidth={1.5}
-            fill={`url(#spark-${id})`} dot={false} isAnimationActive animationDuration={700}
+            type="linear"
+            dataKey="v"
+            stroke={toneVar[tone]}
+            strokeWidth={1.5}
+            fill={`url(#spark-${id})`}
+            dot={false}
+            isAnimationActive
+            animationDuration={700}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -50,7 +56,12 @@ function Spark({ series, tone, id }: { series: number[]; tone: keyof typeof tone
 
 /** Platform Insights — four headline counters, each with its own 14-day shape. */
 export function SuperInsightsStrip({
-  signupsTotal, wowDelta, ticketsTotal, pipelineTotal, criticalAlerts, series,
+  signupsTotal,
+  wowDelta,
+  ticketsTotal,
+  pipelineTotal,
+  criticalAlerts,
+  series,
 }: {
   signupsTotal: number;
   wowDelta: number;
@@ -61,20 +72,41 @@ export function SuperInsightsStrip({
 }) {
   const tiles: Tile[] = [
     {
-      key: "signups", label: "Signups (30d)", value: signupsTotal, hint: `${wowDelta >= 0 ? "+" : ""}${wowDelta}% WoW`,
-      to: "/platform/users", tone: "warning", delta: wowDelta, series: series?.signups ?? [],
+      key: "signups",
+      label: "Signups (30d)",
+      value: signupsTotal,
+      hint: `${wowDelta >= 0 ? "+" : ""}${wowDelta}% WoW`,
+      to: "/platform/users",
+      tone: "warning",
+      delta: wowDelta,
+      series: series?.signups ?? [],
     },
     {
-      key: "tickets", label: "Support tickets", value: ticketsTotal, hint: "Need attention",
-      to: "/platform/health", tone: "warning", series: series?.tickets ?? [],
+      key: "tickets",
+      label: "Support tickets",
+      value: ticketsTotal,
+      hint: "Need attention",
+      to: "/platform/health",
+      tone: "warning",
+      series: series?.tickets ?? [],
     },
     {
-      key: "pipeline", label: "Pipeline", value: pipelineTotal, hint: "CRM contacts",
-      to: "/platform/pipeline", tone: "success", series: series?.pipeline ?? [],
+      key: "pipeline",
+      label: "Pipeline",
+      value: pipelineTotal,
+      hint: "CRM contacts",
+      to: "/platform/pipeline",
+      tone: "success",
+      series: series?.pipeline ?? [],
     },
     {
-      key: "alerts", label: "Critical alerts", value: criticalAlerts, hint: criticalAlerts > 0 ? "Action required" : "All clear",
-      to: "/platform/health", tone: criticalAlerts > 0 ? "critical" : "success", series: series?.alerts ?? [],
+      key: "alerts",
+      label: "Critical alerts",
+      value: criticalAlerts,
+      hint: criticalAlerts > 0 ? "Action required" : "All clear",
+      to: "/platform/health",
+      tone: criticalAlerts > 0 ? "critical" : "success",
+      series: series?.alerts ?? [],
     },
   ];
 
@@ -97,10 +129,14 @@ export function SuperInsightsStrip({
                 {t.label}
               </span>
               <div className="flex items-baseline gap-2">
-                <span className={`text-2xl font-bold leading-none tabular-nums ${toneText[t.tone]}`}>
+                <span
+                  className={`text-2xl font-bold leading-none tabular-nums ${toneText[t.tone]}`}
+                >
                   {t.value}
                 </span>
-                {t.key === "signups" && <DeltaChip value={t.delta} className="bg-transparent px-0" />}
+                {t.key === "signups" && (
+                  <DeltaChip value={t.delta} className="bg-transparent px-0" />
+                )}
               </div>
               <span className="text-[11px] text-muted-foreground">{t.hint}</span>
               <Spark series={t.series} tone={t.tone} id={t.key} />

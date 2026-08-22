@@ -9,19 +9,37 @@ export function Panel({ className, children }: { className?: string; children: R
 }
 
 /** `01 PLATFORM HEALTH` — the numbered eyebrow that indexes each block. */
-export function SectionLabel({ index, children, className }: { index: string; children: ReactNode; className?: string }) {
+export function SectionLabel({
+  index,
+  children,
+  className,
+}: {
+  index: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <span className="text-[10px] font-semibold tabular-nums text-muted-foreground/40">{index}</span>
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{children}</span>
+      <span className="text-[10px] font-semibold tabular-nums text-muted-foreground/40">
+        {index}
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {children}
+      </span>
     </div>
   );
 }
 
 /** Header row: numbered eyebrow on the left, an optional link on the right. */
 export function PanelHeader({
-  index, title, action,
-}: { index: string; title: string; action?: { label: string; to: string } }) {
+  index,
+  title,
+  action,
+}: {
+  index: string;
+  title: string;
+  action?: { label: string; to: string };
+}) {
   return (
     <div className="flex items-center justify-between gap-3">
       <SectionLabel index={index}>{title}</SectionLabel>
@@ -40,8 +58,14 @@ export function PanelHeader({
 
 /** Delta pill — ▲/▼ plus a percentage, tinted by whether the move is good news. */
 export function DeltaChip({
-  value, good, className,
-}: { value: number | null | undefined; good?: boolean; className?: string }) {
+  value,
+  good,
+  className,
+}: {
+  value: number | null | undefined;
+  good?: boolean;
+  className?: string;
+}) {
   if (value === null || value === undefined || value === 0) return null;
   const up = value >= 0;
   const positive = good ?? up;
@@ -61,8 +85,15 @@ export function DeltaChip({
 }
 
 /** Thin capacity/progress rail used under each platform total. */
-export function Rail({ pct, tone = "success" }: { pct: number; tone?: "success" | "critical" | "warning" }) {
-  const bg = tone === "critical" ? "bg-severity-critical" : tone === "warning" ? "bg-warning" : "bg-success";
+export function Rail({
+  pct,
+  tone = "success",
+}: {
+  pct: number;
+  tone?: "success" | "critical" | "warning";
+}) {
+  const bg =
+    tone === "critical" ? "bg-severity-critical" : tone === "warning" ? "bg-warning" : "bg-success";
   return (
     <div className="h-px w-full bg-border/60">
       <div
@@ -74,7 +105,9 @@ export function Rail({ pct, tone = "success" }: { pct: number; tone?: "success" 
 }
 
 export const fmtPKR = new Intl.NumberFormat("en-PK", {
-  style: "currency", currency: "PKR", maximumFractionDigits: 0,
+  style: "currency",
+  currency: "PKR",
+  maximumFractionDigits: 0,
 });
 
 export function compact(n: number): string {
