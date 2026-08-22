@@ -44,12 +44,23 @@ const PLAN_THEME: Record<string, {
   accent: string; accentLight: string; accentBorder: string;
   label: string; tagline: string;
 }> = {
-  starter:      { accent: "#3b82f6", accentLight: "rgba(59,130,246,0.08)",  accentBorder: "#bfdbfe", label: "Starter",      tagline: "For small teams getting started" },
-  professional: { accent: "#2FAC0C", accentLight: "rgba(47,172,12,0.08)",   accentBorder: "#bbf7d0", label: "Professional", tagline: "For growing grain businesses" },
-  enterprise:   { accent: "#7c3aed", accentLight: "rgba(124,58,237,0.08)",  accentBorder: "#ddd6fe", label: "Enterprise",   tagline: "Unlimited scale for large operations" },
+  starter:      { accent: "#3b82f6", accentLight: "rgba(59,130,246,0.10)",  accentBorder: "rgba(59,130,246,0.22)", label: "Starter",      tagline: "For small teams getting started" },
+  professional: { accent: "#2FAC0C", accentLight: "rgba(47,172,12,0.10)",   accentBorder: "rgba(47,172,12,0.22)", label: "Professional", tagline: "For growing grain businesses" },
+  enterprise:   { accent: "#7c3aed", accentLight: "rgba(124,58,237,0.10)",  accentBorder: "rgba(124,58,237,0.22)", label: "Enterprise",   tagline: "Unlimited scale for large operations" },
+  // plan_thresholds keys these rows by plan_id — basic / intermediate / pro —
+  // not by display name, so alias them or every tier falls back to neutral.
+  basic:        { accent: "#3b82f6", accentLight: "rgba(59,130,246,0.10)",  accentBorder: "rgba(59,130,246,0.22)", label: "Starter",      tagline: "For small teams getting started" },
+  intermediate: { accent: "#2FAC0C", accentLight: "rgba(47,172,12,0.10)",   accentBorder: "rgba(47,172,12,0.22)", label: "Professional", tagline: "For growing grain businesses" },
+  pro:          { accent: "#7c3aed", accentLight: "rgba(124,58,237,0.10)",  accentBorder: "rgba(124,58,237,0.22)", label: "Enterprise",   tagline: "Unlimited scale for large operations" },
 };
 const theme = (id: string) =>
-  PLAN_THEME[id.toLowerCase()] ?? { accent: "#64748b", accentLight: "#f8fafc", accentBorder: "#e2e8f0", label: id, tagline: "" };
+  PLAN_THEME[id.toLowerCase()] ?? {
+    accent: "var(--muted-foreground)",
+    accentLight: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
+    accentBorder: "color-mix(in oklab, var(--muted-foreground) 22%, transparent)",
+    label: id,
+    tagline: "",
+  };
 
 // Feature limit definitions
 const LIMITS = [
@@ -68,7 +79,7 @@ function SkeletonPulse({ className }: { className: string }) {
 
 function PlanCardSkeleton() {
   return (
-    <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+    <div className="rounded-2xl bg-card/50 p-4 space-y-2">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
           <SkeletonPulse className="h-4 w-24" />
@@ -95,7 +106,7 @@ function PlanCardSkeleton() {
 
 function RequestsTableSkeleton() {
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-border/40">
       {[1, 2, 3].map((i) => (
         <div key={i} className="px-5 py-3.5 flex items-center gap-4">
           <SkeletonPulse className="h-4 w-20" />
@@ -118,7 +129,7 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
   const price = Math.round(plan.price_cents / 100);
 
   return (
-    <div className="rounded-xl border border-border bg-background overflow-hidden flex flex-col">
+    <div className="rounded-2xl bg-card/50 overflow-hidden flex flex-col">
       {/* Coloured top stripe */}
       <div className="h-0.5 w-full" style={{ background: t.accent }} />
 
@@ -305,7 +316,7 @@ function EditDrawer({
                 const diff = cur - orig;
                 const pct  = Math.min(100, Math.round((cur / max) * 100));
                 return (
-                  <div key={key} className="rounded-lg border border-border p-3 space-y-2"
+                  <div key={key} className="rounded-xl bg-muted/20 p-3 space-y-2"
                     style={diff !== 0 ? { borderColor: diff > 0 ? "#bbf7d0" : "#fecaca", background: diff > 0 ? "rgba(47,172,12,0.03)" : "rgba(239,68,68,0.03)" } : {}}>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -346,7 +357,7 @@ function EditDrawer({
                 { k: "is_active",  label: "Plan is active",    sub: "Visible and purchasable by tenants" },
                 { k: "is_popular", label: "Mark as popular",   sub: "Highlights this plan on the pricing page" },
               ] as const).map(({ k, label, sub }) => (
-                <div key={k} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                <div key={k} className="flex items-center justify-between rounded-xl bg-muted/20 px-4 py-3">
                   <div>
                     <p className="text-xs font-medium text-foreground">{label}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>
@@ -553,7 +564,7 @@ function PlatformPlansPage() {
 
       {/* ── Change requests — shown when activeView is pending/auto_applied/plans ── */}
       {(activeView === "pending" || activeView === "auto_applied" || activeView === "plans") && (
-      <div className="rounded-xl border border-border bg-background overflow-hidden">
+      <div className="rounded-2xl bg-card/50 overflow-hidden">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -587,7 +598,7 @@ function PlatformPlansPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border">
+                <tr className="text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border/40">
                   <th className="text-left px-5 py-2.5 font-semibold">Tenant</th>
                   <th className="text-left px-4 py-2.5 font-semibold">Change</th>
                   <th className="text-left px-4 py-2.5 font-semibold">Direction</th>
@@ -595,7 +606,7 @@ function PlatformPlansPage() {
                   <th className="text-right px-5 py-2.5 font-semibold">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border/40">
                 {requests.map((r) => (
                   <tr key={r.id} className="hover:bg-muted/30/50 transition-colors">
                     <td className="px-5 py-3.5 font-mono text-[11px] text-muted-foreground">

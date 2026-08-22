@@ -243,7 +243,7 @@ function PlatformBusinessPage() {
         </div>
 
         {/* ── Row 3: Plan Breakdown table ──────────────────────────── */}
-        <div className="rounded-md border border-border bg-background overflow-hidden">
+        <div className="rounded-2xl bg-card/50 overflow-hidden">
           <div className="px-5 h-11 border-b border-border flex items-center justify-between">
             <BSk className="h-[13px] w-32" />
             <div className="flex gap-2">
@@ -273,7 +273,7 @@ function PlatformBusinessPage() {
         </div>
 
         {/* ── Row 4: Expiring soon table ───────────────────────────── */}
-        <div className="rounded-md border border-border bg-background overflow-hidden">
+        <div className="rounded-2xl bg-card/50 overflow-hidden">
           <div className="px-5 h-11 border-b border-border flex items-center justify-between">
             <BSk className="h-[13px] w-36" />
             <BSk className="h-6 w-12 rounded" />
@@ -345,7 +345,7 @@ function PlatformBusinessPage() {
 
       {/* ── Hardware / IoT Revenue Breakdown ───────────────────────── */}
       {(kpis?.hardwareRevenue ?? 0) > 0 || (kpis?.hardwareOrders ?? 0) > 0 ? (
-        <div className="rounded-lg border border-border bg-background overflow-hidden">
+        <div className="rounded-2xl bg-card/50 overflow-hidden">
           <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2">
               <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
@@ -646,7 +646,7 @@ function PlatformBusinessPage() {
       </HairlineGrid>
 
       {/* ── Plan Breakdown — click a row to show/hide subscribers ────── */}
-      <div className="rounded-md border border-border bg-background overflow-hidden">
+      <div className="rounded-2xl bg-card/50 overflow-hidden">
         <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-medium text-foreground">Plan Breakdown</span>
@@ -719,7 +719,7 @@ function PlatformBusinessPage() {
 
       {/* ── Active Subscribers — only shown when a plan is selected ─── */}
       {planFilter !== null && adminSubs.length > 0 && (
-        <div className="rounded-lg border border-border bg-background overflow-hidden">
+        <div className="rounded-2xl bg-card/50 overflow-hidden">
           <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Active Subscribers</span>
@@ -758,7 +758,7 @@ function PlatformBusinessPage() {
             {filteredSubs.map((a, i) => {
               const col = planColor(a.plan);
               return (
-                <div key={i} className="rounded-md border border-border bg-background px-3.5 py-3 hover:border-border transition-colors">
+                <div key={i} className="rounded-xl bg-card/50 px-3.5 py-3 transition-colors hover:bg-muted/20">
                   <div className="text-sm font-medium text-foreground truncate">{a.name}</div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
@@ -796,7 +796,7 @@ function PlatformBusinessPage() {
       )}
 
       {/* ── Expiring soon ───────────────────────────────────────────── */}
-      <div className="rounded-md border border-border bg-background overflow-hidden">
+      <div className="rounded-2xl bg-card/50 overflow-hidden">
         <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
           <span className="text-[13px] font-medium" style={{ color: NEON.warning }}>
             Expiring within 7 days

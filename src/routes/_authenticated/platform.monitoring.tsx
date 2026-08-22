@@ -49,7 +49,7 @@ function DonutStat({
     { v: Math.max(0, total - value) },
   ];
   return (
-    <div className="rounded-md border border-border bg-background p-4 flex flex-col items-center gap-1">
+    <div className="rounded-xl bg-card/50 p-4 flex flex-col items-center gap-1">
       <div className="relative w-24 h-24">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -86,7 +86,7 @@ function SparkCard({
   data: Array<{ x: string; y: number }>;
 }) {
   return (
-    <div className="rounded-md border border-border bg-background p-3 flex flex-col gap-1.5">
+    <div className="rounded-xl bg-card/50 p-3 flex flex-col gap-1.5">
       <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
       <span className="text-2xl font-medium tabular-nums" style={{ color }}>{value}</span>
       <div className="h-8">
@@ -196,7 +196,7 @@ function PlatformMonitoringPage() {
           {/* ── Row 1: 4 donut stat cards — rounded, circle centre ──── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[0,1,2,3].map((i) => (
-              <div key={i} className="rounded-xl border border-border bg-background shadow-sm p-4 flex flex-col items-center gap-2 relative">
+              <div key={i} className="rounded-2xl bg-card/50 p-4 flex flex-col items-center gap-2 relative">
                 <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-muted-foreground/20" />
                 <Sk className="w-20 h-20 rounded-full" />
                 <Sk className="h-[13px] w-24" />
@@ -208,7 +208,7 @@ function PlatformMonitoringPage() {
           {/* ── Row 2: 4 spark trend cards ─────────────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[0,1,2,3].map((i) => (
-              <div key={i} className="rounded-xl border border-border bg-background shadow-sm p-4 flex flex-col gap-2 relative">
+              <div key={i} className="rounded-2xl bg-card/50 p-4 flex flex-col gap-2 relative">
                 <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-muted-foreground/20" />
                 <Sk className="h-[10px] w-24" />
                 <Sk className="h-8 w-14" />
@@ -225,7 +225,7 @@ function PlatformMonitoringPage() {
           {/* ── Row 3: tenant health + incidents panels ─────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* Tenant health */}
-            <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+            <div className="rounded-2xl bg-card/50 overflow-hidden">
               <div className="px-4 h-11 border-b border-border flex items-center justify-between">
                 <Sk className="h-[13px] w-28" />
                 <div className="flex gap-3">
@@ -251,7 +251,7 @@ function PlatformMonitoringPage() {
             </div>
 
             {/* Incidents panel */}
-            <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+            <div className="rounded-2xl bg-card/50 overflow-hidden">
               <div className="px-4 h-11 border-b border-border flex items-center justify-between">
                 <Sk className="h-[13px] w-40" />
                 <Sk className="h-[11px] w-32" />
@@ -273,7 +273,7 @@ function PlatformMonitoringPage() {
           </div>
 
           {/* ── Row 4: maintenance table ───────────────────────────── */}
-          <div className="rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+          <div className="rounded-2xl bg-card/50 overflow-hidden">
             <div className="px-4 h-11 border-b border-border flex items-center justify-between">
               <Sk className="h-[13px] w-44" />
               <Sk className="h-[11px] w-28" />
@@ -507,7 +507,7 @@ function IncidentsBody({ incByTenant }: { incByTenant: any[] }) {
           <p className="text-[12px] text-muted-foreground text-center py-6">All clear — no open incidents.</p>
         ) : (
           <table className="w-full text-[13px]">
-            <thead className="sticky top-0 bg-muted/30 border-b border-border">
+            <thead className="sticky top-0 bg-muted/30 border-b border-border/40">
               <tr>
                 <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant</th>
                 <th className="text-right font-medium text-muted-foreground px-2 py-2">Open</th>

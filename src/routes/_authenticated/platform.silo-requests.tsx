@@ -269,19 +269,19 @@ function SiloRequestsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="border border-border rounded-md bg-background py-16 text-center">
+        <div className="rounded-2xl bg-card/50 py-16 text-center">
           <Package className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
           <p className="text-[13px] text-muted-foreground">
             {tab === "pending" ? "No pending silo requests" : "No requests match your filters"}
           </p>
         </div>
       ) : (
-        <div className="border border-border rounded-md overflow-hidden bg-background">
+        <div className="rounded-2xl bg-card/50 overflow-hidden">
           <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b border-border px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
             <span>Requester</span><span>Plan</span><span>Qty</span>
             <span>Location</span><span>Status</span><span />
           </div>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/40">
             {filtered.map((order) => (
               <RequestRow key={order.id} order={order} tabColor={tabColor} onOpen={() => openSheet(order)} />
             ))}
