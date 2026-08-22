@@ -151,6 +151,12 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
   // When super_admin is impersonating, show admin-level navigation
   const role: AppRole = realRole === "super_admin" && impersonating ? "admin" : realRole;
 
+  // Groups are role-filtered, so for some roles a whole group renders nothing.
+  // Track which ones have items to avoid separators around empty space.
+  const hasWorkspace = workspaceNav.some((i) => i.roles.includes(role));
+  const hasUtility = utilityNav.some((i) => i.roles.includes(role));
+  const hasBottom = bottomNav.some((i) => i.roles.includes(role));
+
   const fetchPending = useServerFn(countPendingOrders);
   const { data: pending } = useQuery({
     queryKey: ["pending-order-count"],
@@ -209,17 +215,16 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
             <div className="overflow-y-auto no-scrollbar py-3">
               <Section items={workspaceNav} role={role} currentPath={currentPath} collapsed={collapsed} />
 
-              <div className="h-4 shrink-0" />
+              {hasWorkspace && hasUtility && <div className="h-4 shrink-0" />}
 
               {/* Platform (super-admin only) + Hide — occupies the slot
                   Traceability used to sit in on its own. Hide only appears
                   once already collapsed, so the flow is strictly
                   full -> collapse -> hide (never a direct full -> hide
-                  jump). A same-size placeholder keeps this group's height
-                  identical between the two states. */}
+                  jump). */}
               <div className={cn(collapsed && "flex flex-col items-center gap-0.5")}>
                 <Section items={utilityNav} role={role} currentPath={currentPath} collapsed={collapsed} />
-                {mode === "collapsed" ? (
+                {mode === "collapsed" && (
                   <Tooltip delayDuration={120}>
                     <TooltipTrigger asChild>
                       <button
@@ -233,12 +238,10 @@ export function AppSidebar({ mode, onModeChange }: { mode: SidebarMode; onModeCh
                     </TooltipTrigger>
                     <TooltipContent side="right" sideOffset={8} className="font-semibold">Hide sidebar</TooltipContent>
                   </Tooltip>
-                ) : (
-                  <div className="h-10" aria-hidden="true" />
                 )}
               </div>
 
-              <div className="h-4 shrink-0" />
+              {hasBottom && <div className="h-4 shrink-0" />}
 
               {/* Settings — always last. */}
               <Section items={bottomNav} role={role} currentPath={currentPath} collapsed={collapsed} />
