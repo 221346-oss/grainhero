@@ -277,7 +277,7 @@ function SiloRequestsPage() {
         </div>
       ) : (
         <div className="rounded-2xl bg-card/50 overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b border-border/40 px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
+          <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
             <span>Requester</span><span>Plan</span><span>Qty</span>
             <span>Location</span><span>Status</span><span />
           </div>
@@ -286,7 +286,7 @@ function SiloRequestsPage() {
               <RequestRow key={order.id} order={order} tabColor={tabColor} onOpen={() => openSheet(order)} />
             ))}
           </div>
-          <div className="px-4 py-2 border-t border-border/40 text-[12px] text-muted-foreground">
+          <div className="px-4 py-2 border-t text-[12px] text-muted-foreground">
             {filtered.length} request{filtered.length !== 1 ? "s" : ""}
           </div>
         </div>
@@ -380,7 +380,7 @@ function SiloRequestsPage() {
 
               {/* ── Inline approve / reject / upgrade panels (pending only) ── */}
               {PENDING_STATUSES.has(selected.status) && (
-                <div className="mt-4 border-t border-border/40 pt-5 space-y-3">
+                <div className="mt-4 border-t pt-5 space-y-3">
 
                   {/* Default action buttons */}
                   {mode === "view" && (
@@ -427,7 +427,7 @@ function SiloRequestsPage() {
 
                   {/* Approve panel */}
                   {mode === "approve" && (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
+                    <div className="rounded-lg border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
                       <p className="text-sm font-semibold text-emerald-900">Approving request</p>
                       <div>
                         <Label htmlFor="approve-notes" className="text-xs font-medium text-foreground">
@@ -452,7 +452,7 @@ function SiloRequestsPage() {
 
                   {/* Reject panel */}
                   {mode === "reject" && (
-                    <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 space-y-3">
+                    <div className="rounded-lg border-red-200 bg-red-50/50 p-4 space-y-3">
                       <p className="text-sm font-semibold text-red-900">Rejecting request</p>
                       <div>
                         <Label htmlFor="reject-reason" className="text-xs font-medium text-foreground">
@@ -477,7 +477,7 @@ function SiloRequestsPage() {
 
                   {/* Upgrade-request panel */}
                   {mode === "upgrade" && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 space-y-3">
+                    <div className="rounded-lg border-amber-200 bg-amber-50/50 p-4 space-y-3">
                       <p className="text-sm font-semibold text-amber-900">Send plan upgrade request to tenant</p>
                       <div>
                         <Label htmlFor="upgrade-note" className="text-xs font-medium text-foreground">
@@ -593,7 +593,7 @@ function RequestRow({ order, tabColor, onOpen }: { order: any; tabColor: string;
             {isPending && <p className="text-[9px] text-amber-500 font-medium">● Awaiting review</p>}
           </div>
         </div>
-        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2 pt-1 border-t border-border/30">
+        <div className="flex items-center justify-between text-xs text-muted-foreground gap-2 pt-1 border-t">
           <div className="truncate">
             <span className="font-medium text-foreground">{order.plan_name ?? order.plan_id ?? "—"}</span>
             <span> · {order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}</span>

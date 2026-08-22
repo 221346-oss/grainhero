@@ -83,11 +83,11 @@ function PlatformHealthPage() {
           </div>
           {/* Events skeleton */}
           <div className="rounded-2xl bg-card/50 overflow-hidden">
-            <div className="px-4 py-3 border-b border-border/40">
+            <div className="px-4 py-3 border-b">
               <div className="animate-pulse rounded bg-muted h-3 w-32" />
             </div>
             {[0,1,2,3].map((i) => (
-              <div key={i} className="px-4 py-3 flex items-center justify-between border-b border-border/40 last:border-0">
+              <div key={i} className="px-4 py-3 flex items-center justify-between border-b last:border-0">
                 <div className="animate-pulse rounded bg-muted h-3 w-48" />
                 <div className="animate-pulse rounded bg-muted h-3 w-24" />
               </div>
@@ -205,7 +205,7 @@ function PlatformHealthPage() {
                 <p className="text-sm">No incidents recorded</p>
               </div>
             ) : (
-              <div className="border border-border rounded-md overflow-hidden">
+              <div className="rounded-md overflow-hidden">
                 <div className="divide-y divide-border/40">
                   {events.map((e) => (
                     <div key={e.id} className="px-4 py-3 flex items-center justify-between hover:bg-muted/30 transition-colors">

@@ -133,7 +133,7 @@ function OrdersSkeleton() {
       </div>
       <div className="rounded-2xl overflow-hidden bg-card/50">
         {[0,1,2,3,4].map((i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-border/40 last:border-0">
+          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b last:border-0">
             <Sk className="h-[13px] w-24" /><Sk className="h-[13px] w-32" /><Sk className="h-[13px] w-20" />
             <Sk className="h-5 w-20 rounded ml-auto" />
           </div>
@@ -414,7 +414,7 @@ function PlatformOrdersPage() {
           <div className="rounded-2xl bg-card/50 overflow-hidden">
             <div className="overflow-x-auto">
               {/* Column headers */}
-              <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border/40 px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 min-w-[900px]">
+              <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 min-w-[900px]">
                 <span>Order</span>
                 <span>Buyer</span>
                 <span>Location</span>
@@ -437,7 +437,7 @@ function PlatformOrdersPage() {
                 ))}
               </div>
             </div>
-            <div className="px-5 py-2.5 border-t border-border/40 text-xs text-muted-foreground flex items-center justify-between">
+            <div className="px-5 py-2.5 border-t text-xs text-muted-foreground flex items-center justify-between">
               <span>{filtered.length} order{filtered.length !== 1 ? "s" : ""}</span>
               <span className="font-medium text-muted-foreground">
                 PKR {fmt(filtered.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0))}
@@ -494,7 +494,7 @@ function OrderRow({
   return (
     <>
       {/* Mobile Card View */}
-      <div className="block md:hidden p-4 border-b border-border/40 space-y-3 bg-card">
+      <div className="block md:hidden p-4 border-b space-y-3 bg-card">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="text-sm font-bold text-foreground">
@@ -541,7 +541,7 @@ function OrderRow({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/50 pt-2 text-muted-foreground">
+        <div className="grid grid-cols-2 gap-2 text-xs border-t pt-2 text-muted-foreground">
           <div>
             <span className="font-semibold text-foreground block">{order.buyer?.name ?? order.customer_name ?? "—"}</span>
             <span className="truncate block text-[11px]">{order.buyer?.email ?? order.customer_email ?? "—"}</span>

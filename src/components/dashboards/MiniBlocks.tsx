@@ -13,7 +13,7 @@ function MiniCard({ to, icon: Icon, label, children }: { to: string; icon: typeo
   return (
     <Link
       to={to}
-      className="group flex flex-col rounded-lg border bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5"
+      className="group flex flex-col rounded-2xl bg-card p-3 transition hover:ring-1 hover:ring-emerald-500/40 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5"
     >
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">

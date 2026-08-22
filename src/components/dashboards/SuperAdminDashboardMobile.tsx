@@ -223,8 +223,8 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
           ></div>
           
           {/* Drawer */}
-          <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-background border-r border-border z-50 overflow-y-auto">
-            <div className="sticky top-0 bg-background border-b border-border px-4 py-4 flex items-center justify-between">
+          <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-background border-r z-50 overflow-y-auto">
+            <div className="sticky top-0 bg-background border-b px-4 py-4 flex items-center justify-between">
               {sidebarView === 'navigation' ? (
                 <>
                   <div className="flex items-center gap-2">
@@ -304,7 +304,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               ) : (
                 // Tickets View - List all tickets
                 <div className="space-y-1">
-                  <div className="px-4 py-3 border-b border-border">
+                  <div className="px-4 py-3 border-b">
                     <p className="text-xs text-muted-foreground">Open incident tickets from all admins</p>
                   </div>
                   {allTickets.length === 0 ? (
@@ -350,7 +350,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
 
         {/* 1. Platform Performance */}
         <RouterLink to="/platform/monitoring">
-          <div className="bg-background border border-border rounded-xl p-4 hover:bg-muted/20 transition-colors">
+          <div className="bg-background rounded-xl p-4 hover:bg-muted/20 transition-colors">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-medium text-foreground">Platform Performance</h3>
@@ -395,7 +395,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
 
         {/* 2. Monthly Revenue */}
         <RouterLink to="/platform/business">
-          <div className="bg-background border border-border rounded-xl p-4 hover:bg-muted/20 transition-colors">
+          <div className="bg-background rounded-xl p-4 hover:bg-muted/20 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <h3 className="text-sm font-medium text-foreground">Monthly Revenue</h3>
@@ -424,28 +424,28 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
         {/* 3. Operational Metrics - 2 Column Grid */}
         <div className="grid grid-cols-2 gap-3">
           <RouterLink to="/platform/users">
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="text-xs text-muted-foreground mb-1">Tenants</div>
               <div className="text-2xl font-bold text-foreground">{m?.totalTenants ?? 9}</div>
             </div>
           </RouterLink>
           
           <RouterLink to="/platform/users">
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="text-xs text-muted-foreground mb-1">Users</div>
               <div className="text-2xl font-bold text-foreground">{m?.totalUsers ?? 29}</div>
             </div>
           </RouterLink>
           
           <RouterLink to="/platform/plans">
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="text-xs text-muted-foreground mb-1">Active Subs</div>
               <div className="text-2xl font-bold text-success">{m?.activeSubscriptions ?? 27}</div>
             </div>
           </RouterLink>
           
           <RouterLink to="/platform/orders">
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="text-xs text-muted-foreground mb-1">Orders</div>
               <div className="text-2xl font-bold text-foreground">{w?.ordersTotal ?? 28}</div>
             </div>
@@ -454,7 +454,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
 
         {/* Critical Alerts - Full Width */}
         <RouterLink to="/platform/health">
-          <div className="bg-background border border-border rounded-xl p-4 hover:bg-muted/20 transition-colors">
+          <div className="bg-background rounded-xl p-4 hover:bg-muted/20 transition-colors">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs text-muted-foreground mb-1">Critical Alerts</div>
@@ -477,7 +477,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
         {/* 4. Quick KPI Summary - 2x2 Grid */}
         <div className="grid grid-cols-2 gap-3">
           <RouterLink to="/platform/users">
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="flex items-center justify-between mb-2">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 <TrendingUp className="w-3 h-3 text-success" />
@@ -489,7 +489,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
           </RouterLink>
           
           <RouterLink to="/platform/reporting" search={{ tab: "hardware" }}>
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="flex items-center justify-between mb-2">
                 <Ticket className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -500,7 +500,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
           </RouterLink>
           
           <RouterLink to="/platform/pipeline">
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="flex items-center justify-between mb-2">
                 <GitBranch className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -511,7 +511,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
           </RouterLink>
           
           <RouterLink to="/platform/health">
-            <div className="bg-background border border-border rounded-xl p-3 hover:bg-muted/20 transition-colors">
+            <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="flex items-center justify-between mb-2">
                 <AlertTriangle className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -523,7 +523,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
         </div>
 
         {/* 5. Recent Signups */}
-        <div className="bg-background border border-border rounded-xl p-4">
+        <div className="bg-background rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-medium text-foreground">Recent Signups</h3>
@@ -559,7 +559,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
         </div>
 
         {/* 6. Platform Activity & Events */}
-        <div className="bg-background border border-border rounded-xl p-4">
+        <div className="bg-background rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-medium text-foreground">Platform Activity & Events</h3>

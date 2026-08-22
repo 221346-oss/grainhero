@@ -101,7 +101,7 @@ export function InsightsStrip({
   ];
 
   return (
-    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
+    <section className="rounded-2xl bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">Insights & Performance</h2>
@@ -116,7 +116,7 @@ export function InsightsStrip({
               key={t.key}
               to={t.to}
               search={t.search as never}
-              className="rounded-lg border bg-card px-3 py-2.5 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40"
+              className="rounded-2xl bg-card px-3 py-2.5 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40"
             >
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -141,7 +141,7 @@ export function InsightsStrip({
       </div>
 
       {pipeline && (pipeline.onHold.count > 0 || pipeline.atRisk.count > 0 || pipeline.damaged.count > 0) && (
-        <div className="mt-2 pt-2 border-t border-border/60">
+        <div className="mt-2 pt-2 border-t">
           <div className="flex items-center gap-1.5 mb-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Why it's stuck</span>
             <InfoDot text="Grain batches currently flagged, at risk, or unusable — with the reason and weight involved, not just a count." />

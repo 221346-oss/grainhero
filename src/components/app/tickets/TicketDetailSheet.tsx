@@ -47,7 +47,7 @@ import {
 import { useEffect, useRef } from "react";
 
 const PRIORITY_BADGE: Record<string, string> = {
-  low: "bg-slate-100 text-slate-700 border-slate-200",
+  low: "bg-muted text-foreground",
   medium: "bg-amber-100 text-amber-700 border-amber-200",
   high: "bg-red-100 text-red-700 border-red-200",
 };
@@ -55,7 +55,7 @@ const PRIORITY_BADGE: Record<string, string> = {
 const STATUS_BADGE: Record<string, string> = {
   open: "border-slate-300 text-slate-600",
   resolved: "border-emerald-300 text-emerald-700 bg-emerald-50",
-  closed: "bg-slate-100 text-slate-500 border-slate-200",
+  closed: "bg-muted text-muted-foreground",
 };
 
 interface Props {
@@ -138,7 +138,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
       <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
         <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right">
           {/* Header — title + id on left, Discussion button below the X (not next to it) */}
-          <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-200 shrink-0">
+          <SheetHeader className="px-5 pt-5 pb-4 border-b border-border/40 shrink-0">
             <SheetTitle className="text-base font-bold text-slate-900 leading-snug pr-8">
               {ticket.title}
             </SheetTitle>

@@ -189,7 +189,7 @@ const GROUPS = [...new Set(ISSUE_TYPES.map((i) => i.group))];
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const PRIORITY_STYLES: Record<Priority, string> = {
-  low: "bg-slate-100 text-slate-600 border-slate-200",
+  low: "bg-muted text-muted-foreground",
   medium: "bg-amber-50 text-amber-700 border-amber-200",
   high: "bg-red-50 text-red-700 border-red-200",
 };
@@ -260,7 +260,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
     !mut.isPending;
 
   return (
-    <div className="relative rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+    <div className="relative rounded-2xl bg-card/50 shadow-sm p-5 space-y-4">
 
       {/* Priority badge — top-right, auto-set by issue type but editable */}
       <div className="absolute top-4 right-4">

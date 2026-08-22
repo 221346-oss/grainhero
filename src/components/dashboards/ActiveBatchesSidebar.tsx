@@ -110,7 +110,7 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
               {batches.map((batch: any) => (
                 <div
                   key={batch.id}
-                  className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                  className="bg-white dark:bg-gray-800 rounded-lg p-4 border-gray-200 dark:border-gray-700"
                 >
                   {/* Batch Header */}
                   <div className="flex items-start justify-between mb-3">

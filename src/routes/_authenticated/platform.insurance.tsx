@@ -119,7 +119,7 @@ function AnalyticsTab() {
   const fn = useServerFn(getInsuranceAnalytics);
   const { data, isLoading } = useQuery({ queryKey: ["ins-analytics"], queryFn: () => fn() });
   const { getFill } = useNeonCharts();
-  if (isLoading || !data) return <div className="p-6 text-sm text-muted-foreground border border-border rounded-md">Loading analytics…</div>;
+  if (isLoading || !data) return <div className="p-6 text-sm text-muted-foreground rounded-md">Loading analytics…</div>;
   return (
     <div className="space-y-4">
       <HairlineGrid cols="grid-cols-1">
@@ -171,9 +171,9 @@ function AnalyticsTab() {
           </div>
         </NeonPanel>
         <NeonPanel title="Product performance" bodyClassName="-m-4 mt-0">
-          <MobileTableWrapper className="border-t border-border/40 overflow-hidden">
+          <MobileTableWrapper className="border-t overflow-hidden">
             <table className="w-full text-[13px] min-w-[600px]">
-              <thead className="border-b border-border/40 bg-muted/30">
+              <thead className="border-b bg-muted/30">
                 <tr>
                   <th className="text-left font-medium text-muted-foreground px-3 py-2">Product</th>
                   <th className="text-right font-medium text-muted-foreground px-3 py-2">Policies</th>
@@ -184,7 +184,7 @@ function AnalyticsTab() {
               </thead>
               <tbody>
                 {data.products.map((p) => (
-                  <tr key={p.name} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={p.name} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="px-3 py-2">{p.name}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{p.policies}</td>
                     <td className="px-3 py-2 text-right tabular-nums">{p.premium.toLocaleString()}</td>
@@ -230,7 +230,7 @@ function ClaimsQueue() {
       </div>
       <MobileTableWrapper>
         <table className="w-full text-[13px] min-w-[700px]">
-          <thead className="border-b border-border/40 bg-muted/30">
+          <thead className="border-b bg-muted/30">
             <tr>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Filed</th>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Product</th>
@@ -247,7 +247,7 @@ function ClaimsQueue() {
               const product = policy?.product as Record<string, unknown> | null;
               const cur = (c.currency as string) ?? "USD";
               return (
-                <tr key={c.id as string} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                <tr key={c.id as string} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="px-3 py-2 tabular-nums">{new Date(c.created_at as string).toLocaleDateString()}</td>
                   <td className="px-3 py-2">{(product?.name as string) ?? "—"}</td>
                   <td className="px-3 py-2 uppercase tracking-wide text-muted-foreground text-[11px]">{c.claim_type as string}</td>
@@ -306,7 +306,7 @@ function ClaimReviewSheet({ claimId, onClose }: { claimId: string; onClose: () =
               <div><div className="text-xs text-muted-foreground">Requested</div><div className="tabular-nums">{money(claim.requested_payout_cents, cur)}</div></div>
             </div>
             {claim.narrative && (
-              <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">{claim.narrative}</div>
+              <div className="rounded-md bg-muted/30 p-3 text-sm whitespace-pre-wrap">{claim.narrative}</div>
             )}
             <div>
               <div className="text-xs text-muted-foreground mb-1">Evidence ({data?.attachments.length ?? 0})</div>
@@ -329,7 +329,7 @@ function ClaimReviewSheet({ claimId, onClose }: { claimId: string; onClose: () =
               </ol>
             </div>
 
-            <div className="space-y-3 rounded-md border p-3">
+            <div className="space-y-3 rounded-md p-3">
               <div className="text-sm font-medium">Decision</div>
               <div className="grid grid-cols-2 gap-2">
                 <Input placeholder={`Approved payout (${cur})`} value={approved} onChange={(e) => setApproved(e.target.value)} type="number" min={0} step="0.01" />
@@ -418,7 +418,7 @@ function ProductsTab() {
       </Sheet>
       <MobileTableWrapper>
         <table className="w-full text-[13px] min-w-[800px]">
-          <thead className="border-b border-border/40 bg-muted/30">
+          <thead className="border-b bg-muted/30">
             <tr>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Code</th>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Name</th>
@@ -434,7 +434,7 @@ function ProductsTab() {
             {(data?.products ?? []).map((p: Record<string, unknown>) => {
               const carrier = p.carrier as Record<string, unknown> | null;
               return (
-                <tr key={p.id as string} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                <tr key={p.id as string} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="px-3 py-2 font-mono text-xs">{p.code as string}</td>
                   <td className="px-3 py-2">{p.name as string}</td>
                   <td className="px-3 py-2">{(carrier?.name as string) ?? "—"}</td>
@@ -508,7 +508,7 @@ function CarriersTab() {
       </Sheet>
       <MobileTableWrapper>
         <table className="w-full text-[13px] min-w-[500px]">
-          <thead className="border-b border-border/40 bg-muted/30">
+          <thead className="border-b bg-muted/30">
             <tr>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Name</th>
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Email</th>
@@ -519,7 +519,7 @@ function CarriersTab() {
           </thead>
           <tbody>
             {(data?.carriers ?? []).map((c: Record<string, unknown>) => (
-              <tr key={c.id as string} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+              <tr key={c.id as string} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="px-3 py-2 font-medium">{c.name as string}</td>
                 <td className="px-3 py-2">{(c.contact_email as string) ?? "—"}</td>
                 <td className="px-3 py-2">{(c.contact_phone as string) ?? "—"}</td>

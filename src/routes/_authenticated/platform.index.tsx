@@ -82,7 +82,7 @@ function OverviewSkeleton() {
       </div>
       {/* Row 4: API health */}
       <div className="rounded-2xl bg-card/50 overflow-hidden">
-        <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
+        <div className="px-3 h-9 border-b flex items-center justify-between">
           <Sk className="h-3 w-20" /><Sk className="h-2.5 w-16" />
         </div>
         <div className="p-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -101,11 +101,11 @@ function OverviewSkeleton() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {[0,1].map(c => (
           <div key={c} className="rounded-2xl bg-card/50 overflow-hidden">
-            <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
+            <div className="px-3 h-9 border-b flex items-center justify-between">
               <Sk className="h-3 w-24" /><Sk className="h-2.5 w-20" />
             </div>
             {[0,1,2,3,4].map(i => (
-              <div key={i} className="px-3 py-2 flex items-center gap-3 border-b border-border/40 last:border-0">
+              <div key={i} className="px-3 py-2 flex items-center gap-3 border-b last:border-0">
                 <div className="flex-1 space-y-1"><Sk className="h-3 w-28" /><Sk className="h-2.5 w-20" /></div>
                 <Sk className="h-2.5 w-12" /><Sk className="h-5 w-12 rounded-full" />
               </div>
@@ -127,7 +127,7 @@ function HealthPill({ label, status, latencyMs }: {
     down:     { dot: "bg-severity-critical", text: "text-severity-critical",badge: "Down"    },
   }[status];
   return (
-    <div className="flex items-center justify-between rounded border border-border px-2.5 py-1.5 bg-muted/30">
+    <div className="flex items-center justify-between rounded px-2.5 py-1.5 bg-muted/30">
       <div className="flex items-center gap-1.5">
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
         <span className="text-[12px] text-foreground">{label}</span>
@@ -167,9 +167,9 @@ function PlatformOverviewPage() {
 
   const actions = (
     <div className="flex gap-2">
-      <Link to="/platform/plans"   className="text-[12px] px-2.5 py-1 rounded border border-border text-muted-foreground hover:bg-muted transition-colors">Plans</Link>
-      <Link to="/platform/tenants" className="text-[12px] px-2.5 py-1 rounded border border-border text-muted-foreground hover:bg-muted transition-colors">Tenants</Link>
-      <Link to="/platform/health"  className="text-[12px] px-2.5 py-1 rounded border border-border text-muted-foreground hover:bg-muted transition-colors">Health</Link>
+      <Link to="/platform/plans"   className="text-[12px] px-2.5 py-1 rounded text-muted-foreground hover:bg-muted transition-colors">Plans</Link>
+      <Link to="/platform/tenants" className="text-[12px] px-2.5 py-1 rounded text-muted-foreground hover:bg-muted transition-colors">Tenants</Link>
+      <Link to="/platform/health"  className="text-[12px] px-2.5 py-1 rounded text-muted-foreground hover:bg-muted transition-colors">Health</Link>
     </div>
   );
 
@@ -241,7 +241,7 @@ function PlatformOverviewPage() {
           {/* ── Row 2: Multi-Metric Revenue Card with Neon Charts ── */}
           <div className="rounded-2xl bg-card/50 p-4">
             {/* Platform Health Score Bar */}
-            <div className="mb-4 pb-3 border-b border-border/60">
+            <div className="mb-4 pb-3 border-b">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Platform Health Score</p>
@@ -530,7 +530,7 @@ function PlatformOverviewPage() {
 
           {/* ── Row 4: API health strip ── */}
           <div className="rounded-2xl bg-card/50 overflow-hidden">
-            <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between shrink-0">
+            <div className="px-3 h-9 border-b flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 {apiHealthQ.isLoading
                   ? <Loader2 className="w-3 h-3 text-muted-foreground animate-spin" />
@@ -582,7 +582,7 @@ function PlatformOverviewPage() {
 
             {/* Recent signups */}
             <div className="rounded-2xl bg-card/50 overflow-hidden">
-              <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
+              <div className="px-3 h-9 border-b flex items-center justify-between">
                 <span className="text-[12px] font-medium">Recent signups</span>
                 {w && (
                   <span className="text-[11px] text-muted-foreground">
@@ -595,7 +595,7 @@ function PlatformOverviewPage() {
               </div>
               <div className="overflow-auto max-h-[280px]">
                 <table className="w-full text-[12px]">
-                  <thead className="sticky top-0 bg-muted/40 border-b border-border/40">
+                  <thead className="sticky top-0 bg-muted/40 border-b">
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-3 py-1.5 font-medium">Name</th>
                       <th className="text-left px-2 py-1.5 font-medium hidden sm:table-cell">Business</th>
@@ -606,7 +606,7 @@ function PlatformOverviewPage() {
                   <tbody>
                     {(w?.recentSignups ?? []).map((s: any) => (
                       <tr key={s.id}
-                        className="border-b border-border/40 last:border-0 hover:bg-muted/30 cursor-pointer transition-colors group"
+                        className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors group"
                         onClick={() => navigate({ to: "/platform/tenants/$adminId", params: { adminId: s.id } })}>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1">
@@ -634,20 +634,20 @@ function PlatformOverviewPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-3 py-1.5 border-t border-border/40 text-[10px] text-muted-foreground/50">
+              <div className="px-3 py-1.5 border-t text-[10px] text-muted-foreground/50">
                 Click a row to view tenant details
               </div>
             </div>
 
             {/* System alerts */}
             <div className="rounded-2xl bg-card/50 overflow-hidden">
-              <div className="px-3 h-9 border-b border-border/40 flex items-center justify-between">
+              <div className="px-3 h-9 border-b flex items-center justify-between">
                 <span className="text-[12px] font-medium">System alerts</span>
                 {m && <span className="text-[11px] text-muted-foreground">{m.criticalAlerts} critical of {m.totalAlerts} total</span>}
               </div>
               <div className="overflow-auto max-h-[280px]">
                 <table className="w-full text-[12px]">
-                  <thead className="sticky top-0 bg-muted/40 border-b border-border/40">
+                  <thead className="sticky top-0 bg-muted/40 border-b">
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                       <th className="text-left px-3 py-1.5 font-medium">Alert</th>
                       <th className="text-left px-2 py-1.5 font-medium">Priority</th>
@@ -656,7 +656,7 @@ function PlatformOverviewPage() {
                   </thead>
                   <tbody>
                     {(w?.systemAlerts ?? []).map((a: any) => (
-                      <tr key={a.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                      <tr key={a.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         <td className="px-3 py-2">
                           <div className="font-medium text-foreground truncate max-w-[180px] sm:max-w-none">{a.alert_type}</div>
                           <div className="text-[10px] text-muted-foreground truncate max-w-[180px] sm:max-w-none">{a.message}</div>

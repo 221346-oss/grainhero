@@ -232,7 +232,7 @@ function PlatformBusinessPage() {
               </div>
             ))}
             {/* ARR progress bar */}
-            <div className="border-t border-border/40 pt-3 space-y-2">
+            <div className="border-t pt-3 space-y-2">
               <div className="flex justify-between">
                 <BSk className="h-[11px] w-24" />
                 <BSk className="h-[11px] w-8" />
@@ -244,7 +244,7 @@ function PlatformBusinessPage() {
 
         {/* ── Row 3: Plan Breakdown table ──────────────────────────── */}
         <div className="rounded-2xl bg-card/50 overflow-hidden">
-          <div className="px-5 h-11 border-b border-border/40 flex items-center justify-between">
+          <div className="px-5 h-11 border-b flex items-center justify-between">
             <BSk className="h-[13px] w-32" />
             <div className="flex gap-2">
               <BSk className="h-6 w-12 rounded" />
@@ -252,12 +252,12 @@ function PlatformBusinessPage() {
             </div>
           </div>
           {/* table header */}
-          <div className="px-3 py-2.5 border-b border-border/40 bg-muted/30 grid grid-cols-4 gap-6">
+          <div className="px-3 py-2.5 border-b bg-muted/30 grid grid-cols-4 gap-6">
             {[20, 12, 16, 24].map((w, i) => <BSk key={i} className={`h-[10px] w-${w}`} />)}
           </div>
           {/* plan rows */}
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="px-3 py-3 flex items-center gap-4 border-b border-border/40 last:border-0">
+            <div key={i} className="px-3 py-3 flex items-center gap-4 border-b last:border-0">
               <div className="flex items-center gap-2.5 flex-1">
                 <BSk className="w-2.5 h-2.5 rounded-full shrink-0" />
                 <BSk className="h-[13px] w-24" />
@@ -274,12 +274,12 @@ function PlatformBusinessPage() {
 
         {/* ── Row 4: Expiring soon table ───────────────────────────── */}
         <div className="rounded-2xl bg-card/50 overflow-hidden">
-          <div className="px-5 h-11 border-b border-border/40 flex items-center justify-between">
+          <div className="px-5 h-11 border-b flex items-center justify-between">
             <BSk className="h-[13px] w-36" />
             <BSk className="h-6 w-12 rounded" />
           </div>
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="px-3 py-3 flex items-center gap-4 border-b border-border/40 last:border-0">
+            <div key={i} className="px-3 py-3 flex items-center gap-4 border-b last:border-0">
               <BSk className="h-[13px] flex-1" />
               <BSk className="h-[12px] w-20" />
               <div className="text-right space-y-1">
@@ -299,7 +299,7 @@ function PlatformBusinessPage() {
   if (revenueQ.isError) {
     return (
       <AdminPageShell title="Business" subtitle="Subscription revenue and hardware sales across every tenant">
-        <div className="border border-severity-critical/20 bg-severity-critical/5 rounded-md p-4 flex items-start gap-3">
+        <div className="border-severity-critical/20 bg-severity-critical/5 rounded-md p-4 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-severity-critical mt-0.5 shrink-0" />
           <div>
             <p className="text-[13px] font-medium text-foreground">Failed to load analytics</p>
@@ -346,7 +346,7 @@ function PlatformBusinessPage() {
       {/* ── Hardware / IoT Revenue Breakdown ───────────────────────── */}
       {(kpis?.hardwareRevenue ?? 0) > 0 || (kpis?.hardwareOrders ?? 0) > 0 ? (
         <div className="rounded-2xl bg-card/50 overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
+          <div className="px-5 py-3.5 border-b flex items-center justify-between">
             <div className="flex items-center gap-2">
               <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Hardware / IoT Revenue</span>
@@ -447,7 +447,7 @@ function PlatformBusinessPage() {
           className="lg:col-span-3"
           title="Revenue Insights"
           action={
-            <div className="flex items-center rounded-md border border-border overflow-hidden text-[10px] font-medium">
+            <div className="flex items-center rounded-md overflow-hidden text-[10px] font-medium">
               <button
                 onClick={() => setRevenueView("monthly")}
                 className="px-2.5 py-1 transition-colors"
@@ -560,7 +560,7 @@ function PlatformBusinessPage() {
             const up   = pct >= 0;
             const barW = Math.min(100, Math.abs(pct));
             return (
-              <div className="mt-4 pt-3 border-t border-border/60">
+              <div className="mt-4 pt-3 border-t">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] text-muted-foreground">
                     Growth vs {revenueView === "monthly" ? "last month" : "last year"}
@@ -629,7 +629,7 @@ function PlatformBusinessPage() {
                 </div>
               </div>
               <NeonLegend items={donutData.map((d) => ({ label: d.name, color: d.color, value: d.value }))} />
-              <div className="mt-4 w-full border-t border-border/40 pt-3">
+              <div className="mt-4 w-full border-t pt-3">
                 <div className="flex justify-between text-[12px] mb-1.5">
                   <span className="text-muted-foreground">ARR vs target</span>
                   <span className="font-semibold" style={{ color: NEON.brand }}>{salesPct}%</span>
@@ -647,7 +647,7 @@ function PlatformBusinessPage() {
 
       {/* ── Plan Breakdown — click a row to show/hide subscribers ────── */}
       <div className="rounded-2xl bg-card/50 overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
+        <div className="px-5 py-3.5 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-medium text-foreground">Plan Breakdown</span>
             <span title="Click a plan row to filter and show its subscribers below"
@@ -659,7 +659,7 @@ function PlatformBusinessPage() {
         </div>
         <table className="w-full text-[13px]">
           <thead>
-            <tr className="border-b border-border/40 bg-muted/30">
+            <tr className="border-b bg-muted/30">
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Plan</th>
               <th className="text-right font-medium text-muted-foreground px-3 py-2">Subs</th>
               <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">MRR</th>
@@ -679,7 +679,7 @@ function PlatformBusinessPage() {
                 <tr
                   key={planId}
                   onClick={() => setPlanFilter(active ? null : planId)}
-                  className="cursor-pointer border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
+                  className="cursor-pointer border-b last:border-0 hover:bg-muted/30 transition-colors"
                   style={active ? { background: "color-mix(in oklab, " + col + " 8%, transparent)" } : undefined}
                 >
                   <td className="px-3 py-2">
@@ -720,7 +720,7 @@ function PlatformBusinessPage() {
       {/* ── Active Subscribers — only shown when a plan is selected ─── */}
       {planFilter !== null && adminSubs.length > 0 && (
         <div className="rounded-2xl bg-card/50 overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between gap-3 flex-wrap">
+          <div className="px-5 py-3.5 border-b flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Active Subscribers</span>
               {/* Plan filter pills */}
@@ -758,7 +758,7 @@ function PlatformBusinessPage() {
             {filteredSubs.map((a, i) => {
               const col = planColor(a.plan);
               return (
-                <div key={i} className="rounded-xl bg-card/50 px-3.5 py-3 transition-colors hover:bg-muted/20">
+                <div key={i} className="rounded-2xl bg-card/50 px-3.5 py-3 transition-colors hover:bg-muted/20">
                   <div className="text-sm font-medium text-foreground truncate">{a.name}</div>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
@@ -782,7 +782,7 @@ function PlatformBusinessPage() {
 
           {/* Footer */}
           {filteredSubs.length > 0 && (
-            <div className="px-5 py-2.5 border-t border-border/40 flex items-center justify-between">
+            <div className="px-5 py-2.5 border-t flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
                 {filteredSubs.length} subscriber{filteredSubs.length !== 1 ? "s" : ""}
                 {planFilter !== "all" ? ` · ${planLabel(planFilter)}` : ""}
@@ -797,7 +797,7 @@ function PlatformBusinessPage() {
 
       {/* ── Expiring soon ───────────────────────────────────────────── */}
       <div className="rounded-2xl bg-card/50 overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-border/40 flex items-center justify-between">
+        <div className="px-5 py-3.5 border-b flex items-center justify-between">
           <span className="text-[13px] font-medium" style={{ color: NEON.warning }}>
             Expiring within 7 days
             {expiring.length > 0 && ` · ${expiring.length}`}
@@ -817,7 +817,7 @@ function PlatformBusinessPage() {
         </div>
         <table className="w-full text-[13px]">
           <thead>
-            <tr className="border-b border-border/40 bg-muted/30">
+            <tr className="border-b bg-muted/30">
               <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant</th>
               <th className="text-left font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Plan</th>
               <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">Expires</th>
@@ -837,7 +837,7 @@ function PlatformBusinessPage() {
                   : null;
                 const alreadyNotified = notified.has(s.admin_id);
                 return (
-                  <tr key={s.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr key={s.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="px-3 py-2">
                       <div className="font-medium text-foreground truncate max-w-[140px] sm:max-w-none">
                         {s.admin_name ?? s.admin_id?.slice(0, 8) ?? "—"}

@@ -135,7 +135,7 @@ function DisputeDialog({ id, onClose }: { id: string; onClose: () => void }) {
         {!d ? <div className="text-sm text-muted-foreground mt-4">Loading…</div> : (
           <div className="space-y-3 text-sm mt-4">
             <div><b>Category:</b> {d.category}</div>
-            <div className="rounded border p-2 bg-muted/40 whitespace-pre-wrap">{d.description}</div>
+            <div className="rounded p-2 bg-muted/40 whitespace-pre-wrap">{d.description}</div>
             {attachments.length > 0 && (
               <div>
                 <div className="text-xs font-medium mb-1">Attachments</div>

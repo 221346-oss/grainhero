@@ -81,7 +81,7 @@ export function RecentBatchesCard({ range }: { range?: string } = {}) {
   const visible = rows.slice(0, 3);
   const overflow = rows.slice(3);
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "batches" }} title="Batches" count={rows.length} />
       <CardContent className="p-2 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">No batches</p>}
@@ -127,7 +127,7 @@ export function RecentAlertsCard() {
   const { data } = useExtras();
   const rows = data?.recentAlerts ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/dashboard" title="Alerts" count={rows.length} />
       <CardContent className="p-2 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">All clear</p>}
@@ -148,12 +148,12 @@ export function TeamCard() {
   const { data } = useExtras();
   const rows = data?.team ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/team-management" title="Team" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No members yet</p>}
         {rows.slice(0, 4).map((u) => (
-          <div key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-border/50">
+          <div key={u.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md">
             <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-[10px] font-semibold shrink-0">{(u.name ?? u.email ?? "?").slice(0, 2).toUpperCase()}</div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium truncate">{u.name ?? "—"}</p>
@@ -208,7 +208,7 @@ export function BuyerOrdersCard() {
   };
 
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "buyers" }} title="Buyers" count={rows.length} />
       <CardContent className="p-3 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No buyers created</p>}
@@ -218,7 +218,7 @@ export function BuyerOrdersCard() {
               key={buyer.id}
               to="/grain-operations"
               search={{ tab: "buyers" }}
-              className="flex flex-col gap-1.5 px-2 py-2 rounded-md border border-border/50 hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition"
+              className="flex flex-col gap-1.5 px-2 py-2 rounded-md hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold truncate flex-1">{buyer.name}</span>
@@ -249,7 +249,7 @@ export function ActuatorsCard() {
   const { data } = useExtras();
   const rows = data?.actuators ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/actuators" title="Actuators" count={rows.length} />
       <CardContent className="p-3 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No devices</p>}
@@ -278,7 +278,7 @@ export function SilosOccupancyCard() {
   const { data } = useExtras();
   const rows = data?.silos ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
@@ -353,7 +353,7 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
   }
 
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Silos" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-1.5">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
@@ -380,11 +380,11 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                   </div>
                   <p className="text-[10px] text-muted-foreground tabular-nums">{occ.toLocaleString()} / {cap.toLocaleString()} kg ({pct}%)</p>
                   <div className="grid grid-cols-2 gap-1 text-[10px]">
-                    <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
+                    <div className="rounded bg-muted/30 px-1.5 py-1">
                       <p className="text-muted-foreground">In</p>
                       <p className="font-semibold tabular-nums">{(incomingBySilo[s.id] ?? 0).toLocaleString()}kg</p>
                     </div>
-                    <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
+                    <div className="rounded bg-muted/30 px-1.5 py-1">
                       <p className="text-muted-foreground">Out</p>
                       <p className="font-semibold tabular-nums">{(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg</p>
                     </div>
@@ -427,7 +427,7 @@ export function IncomingQueueCard({ range }: { range?: string } = {}) {
   const { data } = useExtras(range);
   const incoming = (data?.allBatches ?? []).filter((b) => ["pending_qc", "qc_submitted"].includes(String(b.status)));
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/grain-operations" search={{ tab: "batches" }} title="Incoming Queue" count={incoming.length} />
       <CardContent className="p-2 pt-0">
         {incoming.length === 0 ? (
@@ -467,7 +467,7 @@ export function FieldIncidentsCard() {
   const incidents = (data?.incidents ?? []) as unknown as FieldIncidentRow[];
   const open = incidents.filter((i) => i.status !== "closed");
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/administration" search={{ tab: "field" }} title="Field Incidents" count={open.length} />
       <CardContent className="p-2 pt-0">
         {open.length === 0 ? (
@@ -515,7 +515,7 @@ export function RecentActivityCard() {
   });
   const logs = data?.logs ?? [];
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="shadow-sm">
       <CardHeaderLink to="/activity-logs" title="Recent Activity" count={logs.length} />
       <CardContent className="p-2 pt-0">
         {logs.length === 0 ? (
@@ -640,7 +640,7 @@ export function SupportTicketsCard({
 
   return (
     <>
-      <Card className="border-border/60 shadow-sm flex flex-col">
+      <Card className="shadow-sm flex flex-col">
         {/* Header — no icon, just text + count + actions */}
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 shrink-0">
           <CardTitle className="text-sm flex items-center gap-2">

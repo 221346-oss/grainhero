@@ -113,10 +113,10 @@ function FinancialsPage() {
           <div className="space-y-2 text-sm">
             <PnlRow label="Total sales" value={money(pnl.sales)} />
             <PnlRow label="Cost of goods sold" value={`- ${money(pnl.cogs)}`} negative />
-            <div className="border-t border-border/40 pt-2"><PnlRow label="Gross profit" value={money(pnl.grossProfit)} bold accent="text-primary" /></div>
+            <div className="border-t pt-2"><PnlRow label="Gross profit" value={money(pnl.grossProfit)} bold accent="text-primary" /></div>
             <PnlRow label="Operating expenses" value={`- ${money(pnl.opex)}`} negative />
             <PnlRow label="Other income" value={money(pnl.otherIncome)} />
-            <div className="border-t border-border/40 pt-2"><PnlRow label="Net profit" value={money(pnl.netProfit)} bold accent={pnl.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} /></div>
+            <div className="border-t pt-2"><PnlRow label="Net profit" value={money(pnl.netProfit)} bold accent={pnl.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"} /></div>
             <PnlRow label="Net profit %" value={`${pnl.netProfitPct}%`} bold />
           </div>
         </NeonPanel>

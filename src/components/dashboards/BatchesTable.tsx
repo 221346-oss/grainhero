@@ -54,8 +54,8 @@ export function BatchesTable({ rows }: { rows: Row[] }) {
   }, [rows, q, status]);
 
   return (
-    <section className="rounded-xl border bg-card/60 backdrop-blur-sm">
-      <div className="flex flex-wrap items-center gap-2 p-3 border-b border-border/60">
+    <section className="rounded-2xl bg-card/60 backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-2 p-3 border-b">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">Your batches</h2>
           <InfoDot text="All batches for your tenant. Filter or search inline; open the full page for bulk actions." />
@@ -94,7 +94,7 @@ export function BatchesTable({ rows }: { rows: Row[] }) {
       </div>
       <div className="max-h-[420px] overflow-auto">
         <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-card/95 backdrop-blur border-b border-border/60 z-10">
+          <thead className="sticky top-0 bg-card/95 backdrop-blur border-b z-10">
             <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground">
               <th className="px-3 py-2 font-medium">Batch</th>
               <th className="px-3 py-2 font-medium">Grain</th>

@@ -76,11 +76,11 @@ function MarketplaceSettingsPage() {
             <Field label="Support email"><Input type="email" value={s.supportEmail} onChange={(e) => patch({ supportEmail: e.target.value })} /></Field>
             <Field label="From email (Resend)"><Input value={s.fromEmail} onChange={(e) => patch({ fromEmail: e.target.value })} /></Field>
             <Field label="Default currency (ISO 4217)"><Input value={s.currency} maxLength={3} onChange={(e) => patch({ currency: e.target.value.toUpperCase() })} /></Field>
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center justify-between rounded-md p-3">
               <div><div className="text-sm font-medium">Storefront enabled</div><div className="text-xs text-muted-foreground">Turn off to hide public /marketplace pages.</div></div>
               <Switch checked={s.storefrontEnabled} onCheckedChange={(v) => patch({ storefrontEnabled: v })} />
             </div>
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center justify-between rounded-md p-3">
               <div><div className="text-sm font-medium">Show brand banner</div><div className="text-xs text-muted-foreground">Renders the tagline strip on storefront pages.</div></div>
               <Switch checked={s.showBrandBanner} onCheckedChange={(v) => patch({ showBrandBanner: v })} />
             </div>
@@ -94,7 +94,7 @@ function MarketplaceSettingsPage() {
               Placeholders: <code>{"{{orderNumber}}"}</code>, <code>{"{{quantityKg}}"}</code>, <code>{"{{subtotal}}"}</code>, <code>{"{{currency}}"}</code>, <code>{"{{listingTitle}}"}</code>, <code>{"{{trackingUrl}}"}</code>.
             </p>
             {(["placed","paymentSucceeded","paymentFailed","dispatched","outForDelivery","delivered","exception","reviewPromptBuyer","reviewPromptSeller"] as const).map((k) => (
-              <div key={k} className="space-y-2 rounded-md border p-3">
+              <div key={k} className="space-y-2 rounded-md p-3">
                 <div className="text-sm font-medium capitalize">{k.replace(/([A-Z])/g, " $1")}</div>
                 <Field label="Subject">
                   <Input value={s.emailSubjects[k]} onChange={(e) => patchSub({ [k]: e.target.value } as never)} />
@@ -114,7 +114,7 @@ function MarketplaceSettingsPage() {
               Tracking URL supports <code>{"{{trackingNumber}}"}</code>. Leave blank for couriers without web tracking.
             </p>
             {s.dispatch.couriers.map((c, i) => (
-              <div key={i} className="grid grid-cols-12 items-center gap-2 rounded-md border p-2">
+              <div key={i} className="grid grid-cols-12 items-center gap-2 rounded-md p-2">
                 <Input className="col-span-3" placeholder="key" value={c.key}
                   onChange={(e) => setS((p) => { const cs = [...p.dispatch.couriers]; cs[i] = { ...cs[i], key: e.target.value }; return { ...p, dispatch: { ...p.dispatch, couriers: cs } }; })} />
                 <Input className="col-span-3" placeholder="Label" value={c.label}
@@ -157,15 +157,15 @@ function MarketplaceSettingsPage() {
         <Card>
           <CardHeader><CardTitle>Reviews & moderation</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center justify-between rounded-md p-3">
               <div><div className="text-sm font-medium">Reviews enabled</div><div className="text-xs text-muted-foreground">When off, both sides cannot submit ratings.</div></div>
               <Switch checked={s.reviews.enabled} onCheckedChange={(v) => setS((p) => ({ ...p, reviews: { ...p.reviews, enabled: v } }))} />
             </div>
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center justify-between rounded-md p-3">
               <div><div className="text-sm font-medium">Auto-publish</div><div className="text-xs text-muted-foreground">Skip the moderation queue.</div></div>
               <Switch checked={s.reviews.autoPublish} onCheckedChange={(v) => setS((p) => ({ ...p, reviews: { ...p.reviews, autoPublish: v } }))} />
             </div>
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center justify-between rounded-md p-3">
               <div><div className="text-sm font-medium">Show on storefront</div><div className="text-xs text-muted-foreground">Display average + latest reviews on listings.</div></div>
               <Switch checked={s.reviews.showOnStorefront} onCheckedChange={(v) => setS((p) => ({ ...p, reviews: { ...p.reviews, showOnStorefront: v } }))} />
             </div>

@@ -112,7 +112,7 @@ function EnvHealthPage() {
                   connection again so the app picks up the current key.
                 </li>
               </ol>
-              <div className="mt-4 flex items-start gap-2 rounded-md border border-border p-3">
+              <div className="mt-4 flex items-start gap-2 rounded-md p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
                 <p className="text-xs text-muted-foreground">
                   While this key is missing, admin-only server functions (checkout claims, billing sync, platform

@@ -67,7 +67,7 @@ function MobileDeepLinksPage() {
             <Field label="Description">
               <Input value={draft.description ?? ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
             </Field>
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="flex items-center justify-between rounded-md p-3">
               <span className="text-sm">Active</span>
               <Switch checked={draft.active} onCheckedChange={(v) => setDraft({ ...draft, active: v })} />
             </div>
@@ -80,7 +80,7 @@ function MobileDeepLinksPage() {
           <CardContent className="space-y-2">
             {rows.length === 0 && <p className="text-sm text-muted-foreground">No routes configured.</p>}
             {rows.map((r) => (
-              <div key={r.id ?? r.key} className="rounded-md border p-3 text-sm">
+              <div key={r.id ?? r.key} className="rounded-md p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-mono">{r.key}</div>
                   <div className="flex gap-2">

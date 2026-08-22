@@ -73,7 +73,7 @@ export function KpiSummary({
   ];
 
   return (
-    <section className="rounded-xl border border-border bg-card/60 p-4 backdrop-blur-sm">
+    <section className="rounded-2xl bg-card/60 p-4 backdrop-blur-sm">
       {/* Header with Range Selector */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-1.5">
@@ -84,7 +84,7 @@ export function KpiSummary({
       </div>
 
       {/* Health Score Bar */}
-      <div className="mb-4 pb-3 border-b border-border/60">
+      <div className="mb-4 pb-3 border-b">
         <div className="flex items-center justify-between mb-2">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Business Health Score</p>
@@ -114,7 +114,7 @@ export function KpiSummary({
         {/* Revenue Card with Neon Sparkline */}
         <Link
           to="/subscription"
-          className="group rounded-lg border border-border bg-card p-4 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between min-h-[180px]"
+          className="group rounded-2xl bg-card p-4 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between min-h-[180px]"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">

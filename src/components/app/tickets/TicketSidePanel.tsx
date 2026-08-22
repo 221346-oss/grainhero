@@ -36,7 +36,7 @@ const PRIORITY_DOT: Record<string, string> = {
 };
 
 const PRIORITY_BADGE: Record<string, string> = {
-  low: "bg-slate-100 text-slate-600 border-slate-200",
+  low: "bg-muted text-muted-foreground",
   medium: "bg-amber-50 text-amber-700 border-amber-200",
   high: "bg-red-50 text-red-700 border-red-200",
 };
@@ -150,7 +150,7 @@ export function TicketSidePanel({
       {/* ── Main panel ── */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col overflow-hidden">
-          <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-200 shrink-0">
+          <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/40 shrink-0">
             <SheetTitle className="flex items-center gap-1.5 text-base font-bold text-slate-900 pr-8">
               <Hash className="h-4 w-4 text-slate-500" />
               tickets
@@ -276,7 +276,7 @@ function TicketListItem({
   onDiscuss: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition-colors p-3 space-y-1.5">
+    <div className="rounded-xl bg-card/50 transition-colors hover:bg-muted/30 p-3 space-y-1.5">
       {/* Title row */}
       <div className="flex items-start justify-between gap-2">
         <button type="button" onClick={onClick} className="flex-1 min-w-0 text-left">
@@ -324,7 +324,7 @@ function TicketListItem({
         <button
           type="button"
           onClick={onDiscuss}
-          className="relative text-[10px] font-semibold text-slate-500 border border-slate-200 rounded px-2 py-0.5 hover:border-emerald-400 hover:text-emerald-700 transition"
+          className="relative text-[10px] font-semibold text-muted-foreground border border-border rounded px-2 py-0.5 hover:border-emerald-500 hover:text-emerald-500 transition"
         >
           Discuss
           {unread > 0 && (

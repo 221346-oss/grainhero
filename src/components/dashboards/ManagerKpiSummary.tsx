@@ -119,7 +119,7 @@ function SiloCapacityChart({
   ];
 
   return (
-    <div className="rounded-lg border bg-card p-3 flex flex-col min-h-[240px]">
+    <div className="rounded-2xl bg-card p-3 flex flex-col min-h-[240px]">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-bold uppercase tracking-wider text-foreground">
           Silo Fill
@@ -230,7 +230,7 @@ export function ManagerKpiSummary({
   ];
 
   return (
-    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
+    <section className="rounded-2xl bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">Operations Summary</h2>
@@ -282,7 +282,7 @@ export function ManagerKpiSummary({
         )}
 
         {/* Grain Factors Impact - Bar Chart */}
-        <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="rounded-2xl bg-card overflow-hidden">
           <div className="px-3 py-2 border-b bg-card/60 flex items-center justify-between">
             <h3 className="text-xs font-semibold">Grain Storage Factors Impact</h3>
             <select

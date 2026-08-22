@@ -57,7 +57,7 @@ function BentoCard({
   headerAction?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+    <div className="rounded-2xl bg-card/60 flex flex-col h-[200px]">
       <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-xs font-semibold truncate">{title}</h3>
@@ -129,7 +129,7 @@ function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
   const displayCount = count > 99 ? "99+" : count.toString();
   return (
-    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border border-white dark:border-slate-900">
+    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border-white dark:border-slate-900">
       {displayCount}
     </span>
   );
@@ -348,7 +348,7 @@ export function ManagerBento({
       {/* ── Bottom Row: Field Incidents & Team on Shift ── */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Open Field Incidents */}
-        <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+        <div className="rounded-2xl bg-card/60 flex flex-col h-[200px]">
           <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="text-xs font-semibold truncate">Open field incidents</h3>

@@ -173,7 +173,7 @@ function AssignedIncidentsSection() {
   const incidents = (data ?? []) as AssignedIncident[];
 
   return (
-    <div className="rounded-xl border bg-card/60">
+    <div className="rounded-2xl bg-card/60">
       <header className="flex items-center gap-2 px-4 py-3 border-b">
         <ShieldAlert className="h-4 w-4 text-emerald-600" />
         <h2 className="text-sm font-semibold">My assigned incidents</h2>
@@ -254,7 +254,7 @@ function AllOpenTicketsSection() {
   const tickets = (data ?? []) as OpenTicket[];
 
   return (
-    <div className="rounded-xl border bg-card/60">
+    <div className="rounded-2xl bg-card/60">
       <header className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <Ticket className="h-4 w-4 text-amber-600" />
@@ -293,7 +293,7 @@ function AllOpenTicketsSection() {
           tickets.map((t) => (
             <div
               key={t.id}
-              className="flex items-start gap-3 px-3 py-2 rounded-lg border bg-card/40 hover:bg-muted/30 transition-colors"
+              className="flex items-start gap-3 px-3 py-2 rounded-2xl bg-card/40 hover:bg-muted/30 transition-colors"
             >
               <AlertTriangle
                 className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${

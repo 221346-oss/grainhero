@@ -131,11 +131,11 @@ function SlaAlertsPage() {
                 Overdue shipments ({data.overdue.length})
               </span>
             }
-            className="border border-border rounded-md"
+            className="rounded-md"
           >
-            <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
+            <div className="rounded-md overflow-hidden overflow-x-auto">
               <table className="w-full text-[13px]">
-                <thead className="border-b border-border/40 bg-muted/30">
+                <thead className="border-b bg-muted/30">
                   <tr>
                     <th className="text-left font-medium text-muted-foreground px-3 py-2">Order</th>
                     <th className="text-left font-medium text-muted-foreground px-3 py-2">Buyer</th>
@@ -155,7 +155,7 @@ function SlaAlertsPage() {
                     const buyer = bo?.buyers?.company_name ?? bo?.buyers?.name ?? "—";
                     const hours = (s as { overdueHours: number }).overdueHours;
                     return (
-                      <tr key={s.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                      <tr key={s.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         <td className="px-3 py-2 font-mono text-xs">{bo?.order_number ?? s.order_id}</td>
                         <td className="px-3 py-2">{buyer}</td>
                         <td className="px-3 py-2">{s.courier_label ?? s.courier_key}</td>
@@ -189,11 +189,11 @@ function SlaAlertsPage() {
                 Seller delivery-rate drops
               </span>
             }
-            className="border border-border rounded-md"
+            className="rounded-md"
           >
-            <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
+            <div className="rounded-md overflow-hidden overflow-x-auto">
               <table className="w-full text-[13px]">
-                <thead className="border-b border-border/40 bg-muted/30">
+                <thead className="border-b bg-muted/30">
                   <tr>
                     <th className="text-left font-medium text-muted-foreground px-3 py-2">Seller</th>
                     <th className="text-left font-medium text-muted-foreground px-3 py-2">Shipments</th>
@@ -208,7 +208,7 @@ function SlaAlertsPage() {
                     <tr><td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">No regressions detected.</td></tr>
                   )}
                   {data.sellerDrops.map((s) => (
-                    <tr key={s.adminId} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={s.adminId} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-3 py-2">{s.sellerName}</td>
                       <td className="px-3 py-2 tabular-nums">{s.shipments}</td>
                       <td className="px-3 py-2 tabular-nums">{s.overdue > 0 ? <Badge variant="destructive">{s.overdue}</Badge> : 0}</td>

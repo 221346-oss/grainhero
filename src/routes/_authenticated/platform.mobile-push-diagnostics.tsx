@@ -73,7 +73,7 @@ function PushDiagnosticsPage() {
           <CardContent className="space-y-2 max-h-96 overflow-y-auto">
             {devices.length === 0 && <p className="text-sm text-muted-foreground">No devices registered.</p>}
             {devices.map((d) => (
-              <div key={d.id as string} className="rounded-md border p-2 text-xs">
+              <div key={d.id as string} className="rounded-md p-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-mono">{String(d.id).slice(0, 8)}…</span>
                   <Badge variant={d.revoked_at ? "destructive" : "secondary"}>{String(d.platform)}</Badge>
