@@ -125,34 +125,34 @@ export function WarehouseAssignmentSidebar({
         }`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-card border-b border-border/40 px-6 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Assign Team</h2>
-            <p className="text-xs text-slate-500 mt-1">{warehouse.name}</p>
+            <h2 className="text-lg font-semibold text-foreground">Assign Team</h2>
+            <p className="text-xs text-muted-foreground mt-1">{warehouse.name}</p>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-slate-100 rounded transition-colors"
             aria-label="Close"
           >
-            <X className="w-4 h-4 text-slate-400" />
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           {isLoadingTeam ? (
-            <div className="flex items-center justify-center py-12 text-slate-400">
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
               Loading team members…
             </div>
           ) : isErrorTeam ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 flex gap-3">
+            <div className="rounded-lg border-red-200 bg-red-50 p-3 flex gap-3">
               <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
               <p className="text-sm text-red-700">Failed to load team members</p>
             </div>
           ) : !team || (team.managers.length === 0 && team.technicians.length === 0) ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 flex gap-3">
+            <div className="rounded-lg border-amber-200 bg-amber-50 p-3 flex gap-3">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-sm text-amber-700">No managers or technicians available yet</p>
             </div>
@@ -162,10 +162,10 @@ export function WarehouseAssignmentSidebar({
               {team && team.managers.length > 0 && (
                 <div className="space-y-3">
                   <label className="flex items-center gap-2 font-semibold text-sm text-slate-700">
-                    <User className="w-4 h-4 text-slate-400" />
+                    <User className="w-4 h-4 text-muted-foreground" />
                     Manager
                   </label>
-                  <div className="space-y-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                  <div className="space-y-2 bg-muted/20 border-border/40 rounded-lg p-3">
                     <button
                       onClick={() => handleManagerChange(null)}
                       className={`w-full text-left px-3 py-2 text-sm rounded transition-colors ${
@@ -200,12 +200,12 @@ export function WarehouseAssignmentSidebar({
               {team && team.technicians.length > 0 && (
                 <div className="space-y-3">
                   <label className="flex items-center gap-2 font-semibold text-sm text-slate-700">
-                    <Wrench className="w-4 h-4 text-slate-400" />
+                    <Wrench className="w-4 h-4 text-muted-foreground" />
                     Technicians
                   </label>
-                  <div className="space-y-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                  <div className="space-y-2 bg-muted/20 border-border/40 rounded-lg p-3">
                     {team.technicians.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-2">No technicians available</p>
+                      <p className="text-xs text-muted-foreground py-2">No technicians available</p>
                     ) : (
                       team.technicians.map((tech) => (
                         <label
@@ -218,7 +218,7 @@ export function WarehouseAssignmentSidebar({
                             onChange={() => handleTechToggle(tech.id)}
                             className="w-4 h-4 rounded border-slate-300 text-emerald-500 cursor-pointer"
                           />
-                          <span className="text-sm text-slate-700 flex-1">{tech.name}</span>
+                          <span className="text-sm text-foreground flex-1">{tech.name}</span>
                         </label>
                       ))
                     )}
@@ -230,7 +230,7 @@ export function WarehouseAssignmentSidebar({
         </div>
 
         {/* Footer with action buttons */}
-        <div className="sticky bottom-0 border-t border-slate-200 bg-white px-6 py-4 flex gap-2">
+        <div className="sticky bottom-0 border-t border-border/40 bg-card px-6 py-4 flex gap-2">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded transition-colors"

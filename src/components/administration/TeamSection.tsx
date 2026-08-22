@@ -245,8 +245,8 @@ export function TeamSection() {
       <Card>
         <CardContent className="p-10 text-center space-y-3">
           <Users className="h-10 w-10 text-emerald-600 mx-auto" />
-          <div className="text-lg font-semibold text-slate-900">Platform user management</div>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
+          <div className="text-lg font-semibold text-foreground">Platform user management</div>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
             As a super admin, teams are managed from the platform users page across all tenants.
           </p>
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
@@ -289,7 +289,7 @@ export function TeamSection() {
         <CardContent className="p-3 flex flex-col md:flex-row gap-3 items-stretch md:items-end">
           <div className="relative flex-1">
             <Label className="text-xs font-medium text-slate-500 mb-1 block">Search</Label>
-            <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -316,7 +316,7 @@ export function TeamSection() {
       </Card>
 
       {selected.size > 0 && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-lg border-emerald-200 bg-emerald-50 px-4 py-2">
           <span className="text-sm text-emerald-800 font-medium">{selected.size} selected</span>
           <div className="flex items-center gap-2">
             <ExportMenu filename="team-members" title="Team Members (selected)" rows={selectedMembers} columns={teamExportColumns} />
@@ -334,13 +334,13 @@ export function TeamSection() {
             <ListSkeleton rows={5} />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
             <p className="text-sm">No team members found</p>
           </div>
         ) : (
           <div>
             {/* Sticky column header — sticks to AdminDataCard's own scroll container. */}
-            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-100 bg-card px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/40 bg-card px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               <Checkbox checked={allOnPageSelected} onCheckedChange={toggleSelectAllOnPage} aria-label="Select all on page" />
               <button className="flex-1 min-w-0 flex items-center gap-1 text-left hover:text-slate-600" onClick={() => toggleSort("name")}>
                 Member {sortKey === "name" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
@@ -374,7 +374,7 @@ export function TeamSection() {
                 return (
                   <div key={m.id}>
                     <div
-                      className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer"
+                      className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-muted/20 cursor-pointer"
                       onClick={() => setExpandedId(expanded ? null : m.id)}
                     >
                       <Checkbox
@@ -383,32 +383,32 @@ export function TeamSection() {
                         onClick={(e) => e.stopPropagation()}
                         aria-label={`Select ${m.name ?? m.email}`}
                       />
-                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-muted-foreground shrink-0">
                         {(m.name ?? m.email ?? "?").slice(0, 1).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-900 truncate">{m.name ?? "—"}</div>
-                        <div className="text-xs text-slate-500 truncate">{m.email}</div>
+                        <div className="font-medium text-foreground truncate">{m.name ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                       </div>
-                      <span className="w-20 hidden sm:block text-sm text-slate-600 capitalize truncate">{m.role}</span>
+                      <span className="w-20 hidden sm:block text-sm text-muted-foreground capitalize truncate">{m.role}</span>
                       <span className="w-20">
                         <Badge className={status.cls} variant="outline">{status.label}</Badge>
                       </span>
-                      <span className="w-24 hidden md:block text-xs text-slate-500">
+                      <span className="w-24 hidden md:block text-xs text-muted-foreground">
                         {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
                       </span>
                       <div className="w-8 flex justify-end" onClick={(e) => e.stopPropagation()}>
                         {canManage ? <RowActions actions={rowActions} visible={0} /> : (
-                          expanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />
+                          expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
                     </div>
                     {expanded && (
-                      <div className="px-4 pb-3 pl-16 -mt-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-600 bg-slate-50/60">
-                        <div><span className="text-slate-400 block">Phone</span>{m.phone ?? "—"}</div>
-                        <div><span className="text-slate-400 block">Department</span>{m.department ?? "—"}</div>
-                        <div><span className="text-slate-400 block">Email verified</span>{m.email_verified ? "Yes" : "No"}</div>
-                        <div><span className="text-slate-400 block">Joined</span>{m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}</div>
+                      <div className="px-4 pb-3 pl-16 -mt-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-muted-foreground bg-muted/20">
+                        <div><span className="text-muted-foreground block">Phone</span>{m.phone ?? "—"}</div>
+                        <div><span className="text-muted-foreground block">Department</span>{m.department ?? "—"}</div>
+                        <div><span className="text-muted-foreground block">Email verified</span>{m.email_verified ? "Yes" : "No"}</div>
+                        <div><span className="text-muted-foreground block">Joined</span>{m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}</div>
                       </div>
                     )}
                   </div>
@@ -421,7 +421,7 @@ export function TeamSection() {
 
       {filtered.length > 0 && (
         <div className="flex items-center justify-between gap-3 flex-wrap px-1">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Rows per page</span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-16"><SelectValue /></SelectTrigger>
@@ -432,7 +432,7 @@ export function TeamSection() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
-            <span className="text-sm text-slate-500">Page {page} of {totalPages}</span>
+            <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
             <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
           </div>
         </div>

@@ -115,12 +115,12 @@ export function NotificationsSection() {
         ))}
       </div>
 
-      <Card className="border-slate-200/70">
+      <Card className="border-border/40/70">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-4"><ListSkeleton rows={5} /></div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Bell className="h-12 w-12 mb-3 opacity-30" />
               <p className="text-lg font-medium">No notifications</p>
               <p className="text-sm mt-1">
@@ -149,13 +149,13 @@ export function NotificationsSection() {
                           </p>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {!n.read && <span className="w-2 h-2 bg-emerald-500 rounded-full" />}
-                            <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {formatTime(n.created_at)}
                             </span>
                           </div>
                         </div>
-                        <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
                             {ci}

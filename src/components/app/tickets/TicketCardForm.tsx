@@ -283,8 +283,8 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
 
       {/* Header */}
       <div className="pr-24">
-        <p className="text-sm font-semibold text-slate-900">Open-field incident</p>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="text-sm font-semibold text-foreground">Open-field incident</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Sent to super admin only.
         </p>
       </div>
@@ -299,7 +299,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
           <SelectContent className="max-h-72">
             {GROUPS.map((group) => (
               <SelectGroup key={group}>
-                <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-2 py-1">
+                <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">
                   {group}
                 </SelectLabel>
                 {ISSUE_TYPES.filter((i) => i.group === group).map((issue) => (
@@ -346,7 +346,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
           className="text-sm resize-none"
           maxLength={4000}
         />
-        <p className="text-[10px] text-slate-400 text-right">
+        <p className="text-[10px] text-muted-foreground text-right">
           {description.length}/4000
         </p>
       </div>

@@ -194,20 +194,20 @@ export function InsuranceSection() {
               {policiesLoading ? (
                 <DashboardSkeleton />
               ) : policies.length === 0 ? (
-                <div className="p-10 text-center text-slate-500">No policies yet</div>
+                <div className="p-10 text-center text-muted-foreground">No policies yet</div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {policies.map((p) => (
-                    <div key={p.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
+                    <div key={p.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-muted/20">
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900">{p.policy_number}</div>
-                        <div className="text-xs text-slate-500">{p.provider_name} · {p.coverage_type}</div>
+                        <div className="font-semibold text-foreground">{p.policy_number}</div>
+                        <div className="text-xs text-muted-foreground">{p.provider_name} · {p.coverage_type}</div>
                       </div>
-                      <div className="text-sm text-slate-700">
-                        <span className="text-slate-500">Coverage: </span>${(p.coverage_amount ?? 0).toLocaleString()}
+                      <div className="text-sm text-foreground">
+                        <span className="text-muted-foreground">Coverage: </span>${(p.coverage_amount ?? 0).toLocaleString()}
                       </div>
-                      <div className="text-sm text-slate-700">
-                        <span className="text-slate-500">Premium: </span>${(p.premium_amount ?? 0).toLocaleString()}
+                      <div className="text-sm text-foreground">
+                        <span className="text-muted-foreground">Premium: </span>${(p.premium_amount ?? 0).toLocaleString()}
                       </div>
                       <Badge className={POLICY_STATUS[p.status] ?? POLICY_STATUS.pending} variant="outline">{p.status}</Badge>
                       <div className="flex items-center gap-1">
@@ -233,17 +233,17 @@ export function InsuranceSection() {
               {claimsLoading ? (
                 <DashboardSkeleton />
               ) : claims.length === 0 ? (
-                <div className="p-10 text-center text-slate-500">No claims yet</div>
+                <div className="p-10 text-center text-muted-foreground">No claims yet</div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {claims.map((c) => (
-                    <div key={c.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-slate-50">
+                    <div key={c.id} className="flex flex-wrap items-center gap-4 p-4 hover:bg-muted/20">
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900">{c.claim_number}</div>
-                        <div className="text-xs text-slate-500 truncate">{c.claim_type} · {c.description ?? "—"}</div>
+                        <div className="font-semibold text-foreground">{c.claim_number}</div>
+                        <div className="text-xs text-muted-foreground truncate">{c.claim_type} · {c.description ?? "—"}</div>
                       </div>
-                      <div className="text-sm text-slate-700"><span className="text-slate-500">Claimed: </span>${(c.amount_claimed ?? 0).toLocaleString()}</div>
-                      <div className="text-sm text-slate-700"><span className="text-slate-500">Approved: </span>${(c.amount_approved ?? 0).toLocaleString()}</div>
+                      <div className="text-sm text-foreground"><span className="text-muted-foreground">Claimed: </span>${(c.amount_claimed ?? 0).toLocaleString()}</div>
+                      <div className="text-sm text-foreground"><span className="text-muted-foreground">Approved: </span>${(c.amount_approved ?? 0).toLocaleString()}</div>
                       <Badge className={CLAIM_STATUS[c.status] ?? CLAIM_STATUS.filed} variant="outline">{c.status}</Badge>
                       <div className="flex items-center gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openEditClaim(c)}><Edit2 className="h-4 w-4" /></Button>

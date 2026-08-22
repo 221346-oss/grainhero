@@ -345,7 +345,7 @@ export function NeonLegend({ items }: { items: Array<{ label: string; color: str
 export function ChartEmpty({ label = "No data yet", height = 200 }: { label?: string; height?: number }) {
   return (
     <div
-      className="flex items-center justify-center text-[12px] text-muted-foreground border border-dashed border-border rounded-md"
+      className="flex items-center justify-center text-[12px] text-muted-foreground border-dashed border-border rounded-md"
       style={{ height }}
     >
       {label}

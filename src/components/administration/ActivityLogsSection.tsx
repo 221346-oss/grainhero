@@ -202,7 +202,7 @@ export function ActivityLogsSection() {
             {isLoading ? (
               <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
             ) : logs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <FileText className="h-12 w-12 mb-3" />
                 <p className="text-lg font-medium">No activity logs found</p>
                 <p className="text-sm mt-1">Logs will appear as actions are performed</p>
@@ -222,7 +222,7 @@ export function ActivityLogsSection() {
                       >
                         <div className={`absolute -left-5 top-4 w-3 h-3 rounded-full border-2 ${node} z-10 shadow-sm`} />
                         <div className="flex items-center gap-2 mt-1 flex-wrap flex-1">
-                          <span className="text-xs font-medium text-slate-700">
+                          <span className="text-xs font-medium text-foreground">
                             {log.action.replace(/_/g, " ")}
                           </span>
                           <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${SEVERITY_STYLE[log.severity] ?? ""}`}>
@@ -240,7 +240,7 @@ export function ActivityLogsSection() {
                               {log.entity_ref}
                             </Badge>
                           )}
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-muted-foreground">
                             {log.user_name ?? "System"} · {log.user_role ?? "—"} · {fmtRel(log.created_at)}
                           </span>
                         </div>
@@ -256,7 +256,7 @@ export function ActivityLogsSection() {
           {selected && (
             <div className="space-y-4">
               <DetailField label="Action">
-                <p className="text-sm font-medium text-slate-900">
+                <p className="text-sm font-medium text-foreground">
                   {selected.action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                 </p>
               </DetailField>
@@ -275,22 +275,22 @@ export function ActivityLogsSection() {
               </div>
               {selected.entity_ref && (
                 <DetailField label="Entity">
-                  <span className="text-slate-500">{selected.entity_type ?? "—"}:</span>{" "}
+                  <span className="text-muted-foreground">{selected.entity_type ?? "—"}:</span>{" "}
                   <span className="font-mono font-medium">{selected.entity_ref}</span>
                 </DetailField>
               )}
               <DetailField label="Performed by">
                 {selected.user_name ?? "System"}{" "}
-                <span className="text-slate-400">({selected.user_role ?? "—"})</span>
+                <span className="text-muted-foreground">({selected.user_role ?? "—"})</span>
               </DetailField>
               <DetailField label="Timestamp">{fmtAbs(selected.created_at)}</DetailField>
               {selected.metadata && typeof selected.metadata === "object" && Object.keys(selected.metadata as object).length > 0 && (
                 <DetailField label="Details">
-                  <div className="bg-slate-50 rounded-lg p-3 space-y-1">
+                  <div className="bg-muted/20 rounded-lg p-3 space-y-1">
                     {Object.entries(selected.metadata as Record<string, unknown>).map(([k, v]) => (
                       <div key={k} className="flex justify-between text-xs gap-2">
-                        <span className="text-slate-500">{k.replace(/_/g, " ")}</span>
-                        <span className="text-slate-800 font-medium truncate">{String(v)}</span>
+                        <span className="text-muted-foreground">{k.replace(/_/g, " ")}</span>
+                        <span className="text-foreground font-medium truncate">{String(v)}</span>
                       </div>
                     ))}
                   </div>

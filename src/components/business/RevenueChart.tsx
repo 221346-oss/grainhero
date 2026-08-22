@@ -74,7 +74,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   const dataPoint = payload[0]?.payload;
 
   return (
-    <div className="bg-card/95 backdrop-blur-md border border-border p-3.5 rounded-xl shadow-xl min-w-[210px] space-y-2">
+    <div className="bg-card/95 backdrop-blur-md border-border p-3.5 rounded-xl shadow-xl min-w-[210px] space-y-2">
       <div className="border-b border-border/70 pb-1.5 flex items-center justify-between">
         <p className="text-xs font-bold text-foreground">{label}</p>
         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -424,7 +424,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
+        <div className="bg-primary/5 rounded-lg p-3 border-primary/10">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
             Total Revenue
           </p>
@@ -444,7 +444,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
             )}
           </div>
         </div>
-        <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
+        <div className="bg-amber-500/10 rounded-lg p-3 border-amber-500/20">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
             Collected
           </p>
@@ -525,7 +525,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
       </div>
 
       {/* Clean Compact Legend for all 5 grains */}
-      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-3 border-t border-border">
+      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-3 border-t border-border/40">
         {GRAINS.map((grain) => (
           <div key={grain.key} className="flex items-center gap-1.5 text-xs">
             <div

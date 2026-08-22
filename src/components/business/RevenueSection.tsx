@@ -155,7 +155,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         </div>
       )}
       {!canWrite && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 border-border rounded-lg px-4 py-2">
           <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is restricted to admin.
         </div>
       )}
@@ -215,7 +215,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
             <CardHeader className="flex flex-row justify-between items-center gap-3">
               <div><CardTitle>Buyer invoices</CardTitle><CardDescription>{filteredInv.length} of {invoices.length}</CardDescription></div>
               <div className="flex items-center gap-2">
-                <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search invoices, buyers, batches..." className="pl-8 w-64" /></div>
+                <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search invoices, buyers, batches..." className="pl-8 w-64" /></div>
                 <ExportMenu filename="invoices" title="Buyer Invoices" rows={filteredInv} columns={invoiceExportColumns} />
               </div>
             </CardHeader>
@@ -231,13 +231,13 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                     <div key={i.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-slate-900">{i.invoice_number}</span>
+                          <span className="font-semibold text-foreground">{i.invoice_number}</span>
                           <Badge className={payBadge(i.payment_status)}>{i.payment_status ?? "pending"}</Badge>
                           {dispatch && <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> {dispatch.dispatch_number}</Badge>}
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">{i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}{i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}{i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}</div>
                         {qtyKg != null && pricePerKg != null && (
-                          <div className="text-[11px] text-slate-400 mt-0.5">{qtyKg.toLocaleString()} kg (~{kgToMan(qtyKg).toFixed(1)} man) · {money(pricePerKg, i.currency)}/kg · {money(pricePerKgToPerMan(pricePerKg), i.currency)}/man</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">{qtyKg.toLocaleString()} kg (~{kgToMan(qtyKg).toFixed(1)} man) · {money(pricePerKg, i.currency)}/kg · {money(pricePerKgToPerMan(pricePerKg), i.currency)}/man</div>
                         )}
                       </div>
                       <div className="text-right">
@@ -252,7 +252,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                     </div>
                   );
                 })}
-                {filteredInv.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No invoices.</div>}
+                {filteredInv.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No invoices.</div>}
               </div>
             </CardContent>
           </Card>
@@ -275,7 +275,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                         {p.grain_dispatches && <Badge variant="outline" className="gap-1 text-[10px]"><Truck className="h-3 w-3" /> {p.grain_dispatches.dispatch_number}</Badge>}
                         {p.receipt_url && <Badge variant="outline" className="text-[10px]">OCR receipt</Badge>}
                       </div>
-                      <div className="text-xs text-slate-500">{p.payment_method}{p.payment_date ? ` · ${new Date(p.payment_date).toLocaleDateString()}` : ""}</div>
+                      <div className="text-xs text-muted-foreground">{p.payment_method}{p.payment_date ? ` · ${new Date(p.payment_date).toLocaleDateString()}` : ""}</div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{money(p.amount, p.currency)}</span>
@@ -283,7 +283,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                     </div>
                   </div>
                 ))}
-                {payments.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No payments recorded.</div>}
+                {payments.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No payments recorded.</div>}
               </div>
             </CardContent>
           </Card>

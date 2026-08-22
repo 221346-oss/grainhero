@@ -24,7 +24,7 @@ export function EnvironmentalSection() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(silos as any[]).map((s) => (
-            <div key={s.id} className="bg-muted/30 border border-border rounded-lg p-4">
+            <div key={s.id} className="bg-muted/30 border-border rounded-lg p-4">
               <h3 className="text-sm font-semibold text-foreground mb-3">{s.name}</h3>
               <div className="space-y-2">
                 {s.current_conditions?.temperature && (

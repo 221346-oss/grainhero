@@ -171,11 +171,11 @@ export function SecuritySection() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Total users</div><div className="text-2xl font-bold">{totalUsers}</div></div><Users className="h-6 w-6 text-slate-500" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Admins</div><div className="text-2xl font-bold text-emerald-600">{adminsCount}</div></div><ShieldCheck className="h-6 w-6 text-emerald-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Pending</div><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></div><AlertTriangle className="h-6 w-6 text-amber-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Blocked</div><div className="text-2xl font-bold text-red-600">{blockedCount}</div></div><UserX className="h-6 w-6 text-red-600" /></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Security events</div><div className="text-2xl font-bold">{recentIncidents}</div></div><ShieldAlert className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Total users</div><div className="text-2xl font-bold">{totalUsers}</div></div><Users className="h-6 w-6 text-muted-foreground" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Admins</div><div className="text-2xl font-bold text-emerald-600">{adminsCount}</div></div><ShieldCheck className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Pending</div><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></div><AlertTriangle className="h-6 w-6 text-amber-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Blocked</div><div className="text-2xl font-bold text-red-600">{blockedCount}</div></div><UserX className="h-6 w-6 text-red-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Security events</div><div className="text-2xl font-bold">{recentIncidents}</div></div><ShieldAlert className="h-6 w-6 text-red-600" /></CardContent></Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -183,7 +183,7 @@ export function SecuritySection() {
           <CardHeader><CardTitle>User access</CardTitle><CardDescription>Roles and blocked accounts - manage user access</CardDescription></CardHeader>
           <CardContent className="p-0">
             {overviewError && (
-              <div className="p-3 m-3 rounded-md bg-red-50 border border-red-200 text-xs text-red-700">
+              <div className="p-3 m-3 rounded-md bg-red-50 border-red-200 text-xs text-red-700">
                 Couldn't load users: {(overviewError as Error).message}
               </div>
             )}
@@ -212,7 +212,7 @@ export function SecuritySection() {
                   </Button>
                 </div>
               ))}
-              {users.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No users.</div>}
+              {users.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No users.</div>}
             </div>
           </CardContent>
         </Card>
@@ -244,16 +244,16 @@ export function SecuritySection() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={sevBadge(sev) + " text-[10px] uppercase"}>{sev}</Badge>
                         <span className="font-medium">{eventLabel(ev.event)}</span>
-                        {target && <span className="text-xs text-slate-500">· {target.name ?? target.email}</span>}
+                        {target && <span className="text-xs text-muted-foreground">· {target.name ?? target.email}</span>}
                       </div>
-                      {ev.ip && <div className="text-xs text-slate-600 mt-1">IP: {ev.ip}</div>}
-                      <div className="text-[10px] text-slate-400 mt-1">{new Date(ev.created_at).toLocaleString()}</div>
+                      {ev.ip && <div className="text-xs text-muted-foreground mt-1">IP: {ev.ip}</div>}
+                      <div className="text-[10px] text-muted-foreground mt-1">{new Date(ev.created_at).toLocaleString()}</div>
                     </div>
                     <RowActions actions={actions} visible={0} />
                   </div>
                 );
               })}
-              {events.length === 0 && <div className="p-8 text-center text-sm text-slate-500">No security events yet.</div>}
+              {events.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No security events yet.</div>}
             </div>
           </CardContent>
         </Card>

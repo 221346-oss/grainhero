@@ -103,7 +103,7 @@ function StatusBadge({
 }) {
   return (
     <div className="flex items-center gap-1.5 text-xs">
-      <span className="text-slate-500 font-medium">{label}:</span>
+      <span className="text-muted-foreground font-medium">{label}:</span>
       <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${color}`}>
         {value}
       </span>
@@ -400,7 +400,7 @@ export function DataVisualizationPanel() {
         >
           <CardContent className="py-4">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+              <div className="flex items-center gap-2 text-sm font-bold text-foreground">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -409,7 +409,7 @@ export function DataVisualizationPanel() {
               </div>
 
               {liveTelemetry ? (
-                <div className="flex items-center gap-5 text-sm flex-wrap text-slate-700">
+                <div className="flex items-center gap-5 text-sm flex-wrap text-foreground">
                   <span className="flex items-center gap-1">
                     <Thermometer className="h-4 w-4 text-rose-500" />
                     <strong>{Number(liveTelemetry.temperature).toFixed(1)}°C</strong>
@@ -462,8 +462,8 @@ export function DataVisualizationPanel() {
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Database className="h-4 w-4 text-slate-400" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Database className="h-4 w-4 text-muted-foreground" />
                   Showing latest cached DB conditions
                 </div>
               )}
@@ -476,17 +476,17 @@ export function DataVisualizationPanel() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className={stats ? riskBg(stats.avgTemp > 35 ? 60 : 20) : ""}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-slate-500 font-bold flex items-center gap-2">
+            <CardTitle className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-2">
               <Thermometer className="h-4 w-4 text-rose-500" />
               Avg Temperature
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
+            <div className="text-2xl font-bold text-foreground">
               {stats ? `${stats.avgTemp.toFixed(1)}°C` : "—"}
             </div>
             {stats && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Range: {stats.minTemp.toFixed(1)}° – {stats.maxTemp.toFixed(1)}°
               </p>
             )}
@@ -495,17 +495,17 @@ export function DataVisualizationPanel() {
 
         <Card className={stats ? riskBg(stats.avgHum > 75 ? 60 : 20) : ""}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-slate-500 font-bold flex items-center gap-2">
+            <CardTitle className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-2">
               <Droplets className="h-4 w-4 text-sky-500" />
               Avg Humidity
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
+            <div className="text-2xl font-bold text-foreground">
               {stats ? `${stats.avgHum.toFixed(1)}%` : "—"}
             </div>
             {stats && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Range: {stats.minHum.toFixed(1)}% – {stats.maxHum.toFixed(1)}%
               </p>
             )}
@@ -514,17 +514,17 @@ export function DataVisualizationPanel() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-slate-500 font-bold flex items-center gap-2">
+            <CardTitle className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-2">
               <Wind className="h-4 w-4 text-purple-500" />
               Avg VOC Index
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900">
+            <div className="text-2xl font-bold text-foreground">
               {stats ? `${stats.avgTvoc.toFixed(0)} ppb` : "—"}
             </div>
             {stats && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {stats.count} datapoints analyzed
               </p>
             )}
@@ -533,7 +533,7 @@ export function DataVisualizationPanel() {
 
         <Card className={stats ? riskBg(stats.avgRisk) : ""}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-slate-500 font-bold flex items-center gap-2">
+            <CardTitle className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
               Avg Risk Index
             </CardTitle>
@@ -543,7 +543,7 @@ export function DataVisualizationPanel() {
               {stats ? `${stats.avgRisk.toFixed(0)}/100` : "—"}
             </div>
             {stats && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Aerat. duty: {stats.fanOnPct.toFixed(0)}% of time
               </p>
             )}
@@ -554,7 +554,7 @@ export function DataVisualizationPanel() {
       {/* ML Evaluation Metrics */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+          <CardTitle className="flex items-center gap-2 text-base font-bold text-foreground">
             <Brain className="h-5 w-5 text-indigo-500" />
             ML Model Diagnostics
           </CardTitle>
@@ -586,11 +586,11 @@ export function DataVisualizationPanel() {
                 icon: <Activity className="h-4 w-4 text-purple-500" />,
               },
             ].map(({ label, value, icon }) => (
-              <div key={label} className="border border-slate-100 rounded-xl p-4 flex items-center gap-3 bg-slate-50/30">
+              <div key={label} className="border-border/40 rounded-xl p-4 flex items-center gap-3 bg-muted/20">
                 {icon}
                 <div>
-                  <div className="text-xs uppercase text-slate-500 font-semibold">{label}</div>
-                  <div className="text-2xl font-black text-slate-900">
+                  <div className="text-xs uppercase text-muted-foreground font-semibold">{label}</div>
+                  <div className="text-2xl font-black text-foreground">
                     {(value * 100).toFixed(1)}%
                   </div>
                 </div>
@@ -631,7 +631,7 @@ export function DataVisualizationPanel() {
       {/* Main Temperature & Humidity Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+          <CardTitle className="flex items-center gap-2 text-base font-bold text-foreground">
             <Thermometer className="h-5 w-5 text-rose-500" />
             Core Temperature & Humidity Trend
           </CardTitle>
@@ -645,7 +645,7 @@ export function DataVisualizationPanel() {
         </CardHeader>
         <CardContent className="h-80">
           {isLoadingHistory ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
               <RefreshCw className="h-6 w-6 animate-spin" />
               Loading history...
             </div>
@@ -775,7 +775,7 @@ export function DataVisualizationPanel() {
         {/* Sensor Health Radar */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+            <CardTitle className="flex items-center gap-2 text-base font-bold text-foreground">
               <Zap className="h-4 w-4 text-amber-500" />
               Sensor Health Radar Map
             </CardTitle>
@@ -814,7 +814,7 @@ export function DataVisualizationPanel() {
         {/* Live Silo Condition Blocks */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+            <CardTitle className="flex items-center gap-2 text-base font-bold text-foreground">
               <Activity className="h-4 w-4 text-emerald-500" />
               Active Silo Microclimate Nodes
             </CardTitle>
@@ -884,7 +884,7 @@ export function DataVisualizationPanel() {
                     val: liveTelemetry?.pressure !== undefined
                       ? `${liveTelemetry.pressure} hPa`
                       : "1013 hPa",
-                    icon: <Gauge className="h-4 w-4 text-slate-500" />,
+                    icon: <Gauge className="h-4 w-4 text-muted-foreground" />,
                     warn: false,
                   },
                   {
@@ -910,11 +910,11 @@ export function DataVisualizationPanel() {
                       warn ? "border-rose-100 bg-rose-50/30" : ""
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center bg-white shadow-sm shrink-0">
+                    <div className="w-8 h-8 rounded-lg border-border/40 flex items-center justify-center bg-card shadow-sm shrink-0">
                       {icon}
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">{label}</div>
+                      <div className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">{label}</div>
                       <div className={`font-black text-sm text-slate-800 ${warn ? "text-rose-600" : ""}`}>
                         {val}
                       </div>
@@ -924,7 +924,7 @@ export function DataVisualizationPanel() {
                 ))}
               </div>
             ) : (
-              <div className="text-slate-400 py-12 text-center text-sm">
+              <div className="text-muted-foreground py-12 text-center text-sm">
                 No active device registered for this account.
               </div>
             )}
@@ -934,7 +934,7 @@ export function DataVisualizationPanel() {
 
       {/* Dataset & Integrations Tabs */}
       <Tabs defaultValue="dataset" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-slate-100/80 p-1 rounded-xl">
+        <TabsList className="grid w-full grid-cols-3 bg-muted/80 p-1 rounded-xl">
           <TabsTrigger value="dataset" className="rounded-lg">Dataset Preview</TabsTrigger>
           <TabsTrigger value="actions" className="rounded-lg">Export &amp; Actions</TabsTrigger>
           <TabsTrigger value="diagnostics" className="rounded-lg">Diagnostics</TabsTrigger>
@@ -949,10 +949,10 @@ export function DataVisualizationPanel() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border border-border rounded-md overflow-hidden overflow-x-auto">
+              <div className="border-border rounded-md overflow-hidden overflow-x-auto">
                 <table className="w-full text-[13px]">
                   <thead>
-                    <tr className="border-b border-border bg-muted/30">
+                    <tr className="border-b border-border/40 bg-muted/30">
                       <th className="text-left font-medium text-muted-foreground px-3 py-2">Timestamp</th>
                       <th className="text-left font-medium text-muted-foreground px-3 py-2">Temp (°C)</th>
                       <th className="text-left font-medium text-muted-foreground px-3 py-2">Hum (%)</th>
@@ -969,7 +969,7 @@ export function DataVisualizationPanel() {
                       .reverse()
                       .slice(0, 20)
                       .map((row, idx) => (
-                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <tr key={idx} className="border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
                           <td className="px-3 py-2 text-muted-foreground tabular-nums">{row.fullTime}</td>
                           <td className="px-3 py-2 font-medium text-foreground tabular-nums">{row.temperature.toFixed(1)}°C</td>
                           <td className="px-3 py-2 tabular-nums">{row.humidity.toFixed(1)}%</td>
@@ -1033,8 +1033,8 @@ export function DataVisualizationPanel() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
-                <span className="text-slate-500">Firebase Live Feed Connection:</span>
+              <div className="flex items-center justify-between text-sm border-b border-border/40 pb-2">
+                <span className="text-muted-foreground">Firebase Live Feed Connection:</span>
                 {liveTelemetry ? (
                   <Badge className="bg-emerald-50 border-emerald-200 text-emerald-700 font-bold gap-1">
                     <Wifi className="h-3 w-3" /> Connected
@@ -1045,19 +1045,19 @@ export function DataVisualizationPanel() {
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
-                <span className="text-slate-500">Total Samples In View:</span>
-                <span className="font-mono text-slate-800 font-bold">{history.length}</span>
+              <div className="flex items-center justify-between text-sm border-b border-border/40 pb-2">
+                <span className="text-muted-foreground">Total Samples In View:</span>
+                <span className="font-mono text-foreground font-bold">{history.length}</span>
               </div>
-              <div className="flex items-center justify-between text-sm border-b border-slate-100 pb-2">
-                <span className="text-slate-500">Device Hardware ID:</span>
-                <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono text-slate-700">
+              <div className="flex items-center justify-between text-sm border-b border-border/40 pb-2">
+                <span className="text-muted-foreground">Device Hardware ID:</span>
+                <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">
                   {activeDevice?.device_id || "None"}
                 </code>
               </div>
               <div className="flex items-center justify-between text-sm pb-1">
-                <span className="text-slate-500">MAC Reference:</span>
-                <span className="font-mono text-slate-800 font-medium">
+                <span className="text-muted-foreground">MAC Reference:</span>
+                <span className="font-mono text-foreground font-medium">
                   {activeDevice?.mac_address || "—"}
                 </span>
               </div>

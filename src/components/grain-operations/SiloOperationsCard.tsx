@@ -175,14 +175,14 @@ export function SiloOperationsCard({
 
         {/* Incoming/Outgoing stat mini-cards */}
         <div className="grid grid-cols-2 gap-1.5">
-          <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2 py-1">
+          <div className="flex items-center gap-1.5 rounded-md border-border/50 bg-muted/30 px-2 py-1">
             <PackagePlus className="h-3 w-3 text-emerald-600 shrink-0" />
             <div className="min-w-0">
               <p className="text-[9px] text-muted-foreground leading-none">Incoming</p>
               <p className="text-xs font-semibold tabular-nums leading-tight">{incomingCount}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2 py-1">
+          <div className="flex items-center gap-1.5 rounded-md border-border/50 bg-muted/30 px-2 py-1">
             <PackageMinus className="h-3 w-3 text-sky-600 shrink-0" />
             <div className="min-w-0">
               <p className="text-[9px] text-muted-foreground leading-none">Outgoing</p>

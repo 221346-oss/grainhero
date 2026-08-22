@@ -216,7 +216,7 @@ function VerifyOtpPage() {
           <h1 className="text-2xl font-semibold">Check your email</h1>
           <p className="text-sm text-muted-foreground">
             We sent a 6-digit code to{" "}
-            <span className="font-medium text-slate-900">{email}</span>
+            <span className="font-medium text-foreground">{email}</span>
           </p>
           <p className="text-xs text-muted-foreground">
             If you don't see the email, please check your spam or junk folder.

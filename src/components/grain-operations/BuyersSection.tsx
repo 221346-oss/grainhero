@@ -180,7 +180,7 @@ export function BuyersSection() {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search buyer, contact…" className="pl-9 h-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -208,7 +208,7 @@ export function BuyersSection() {
           // Fixed height container for 4 entries with vertical scroll
           <div className="h-[280px] overflow-y-auto overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border">
+              <thead className="bg-muted/50 border-b border-border/40">
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Buyer</th>
                   <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Contact</th>
@@ -410,14 +410,14 @@ export function BuyersSection() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 items-start">
-      <span className="text-xs uppercase tracking-wider text-slate-500">{label}</span>
-      <span className="text-slate-800 text-right">{children}</span>
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="text-foreground text-right">{children}</span>
     </div>
   );
 }
 
 function StatusBadgeCustom({ value }: { value: string | null | undefined }) {
-  if (!value) return <span className="text-slate-400">—</span>;
+  if (!value) return <span className="text-muted-foreground">—</span>;
   const cls = STATUS_CLASS[value as Status] ?? "bg-slate-100 text-slate-700";
   return <Badge className={`${cls} hover:${cls}`}>{value}</Badge>;
 }

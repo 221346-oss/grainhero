@@ -142,16 +142,16 @@ export function TicketDiscussion({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="p-0 flex flex-col gap-0 overflow-hidden sm:max-w-md max-sm:top-auto max-sm:bottom-0 max-sm:translate-y-0 max-sm:rounded-t-xl max-sm:rounded-b-none"
         style={{ maxHeight: "min(80vh, 600px)" }}>
-        <DialogHeader className="px-5 pt-4 pb-3 border-b border-slate-200 shrink-0">
-          <DialogTitle className="text-sm font-bold text-slate-900">Discussion</DialogTitle>
-          <p className="text-xs text-slate-500 mt-0.5 truncate">{ticketTitle}</p>
+        <DialogHeader className="px-5 pt-4 pb-3 border-b border-border/40 shrink-0">
+          <DialogTitle className="text-sm font-bold text-foreground">Discussion</DialogTitle>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">{ticketTitle}</p>
         </DialogHeader>
 
         {/* Message list */}
         <ScrollArea className="flex-1 min-h-0">
           <div className="px-4 py-3 space-y-3">
             {messages.length === 0 && (
-              <p className="py-10 text-center text-sm text-slate-400">
+              <p className="py-10 text-center text-sm text-muted-foreground">
                 No messages yet.
               </p>
             )}
@@ -167,7 +167,7 @@ export function TicketDiscussion({
                     isMe ? "items-end" : "items-start",
                   )}
                 >
-                  <span className="text-[10px] text-slate-400 px-1">
+                  <span className="text-[10px] text-muted-foreground px-1">
                     {isMe ? "You" : msg.senderLabel} · {formatTime(msg.ts)}
                     {msg.edited && (
                       <span className="ml-1 opacity-60">(edited)</span>
@@ -246,7 +246,7 @@ export function TicketDiscussion({
         </ScrollArea>
 
         {/* Input */}
-        <div className="shrink-0 border-t border-slate-200 px-4 py-3 flex items-center gap-2">
+        <div className="shrink-0 border-t border-border/40 px-4 py-3 flex items-center gap-2">
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}

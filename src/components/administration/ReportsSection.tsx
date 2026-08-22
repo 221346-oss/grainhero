@@ -101,8 +101,8 @@ export function ReportsSection() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Batches</div><div className="text-2xl font-bold">{filtered.batches.length}</div><div className="text-xs text-slate-500">{(totalKg / 1000).toFixed(1)}t inventory</div></div></CardContent></Card>
-        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Revenue</div><div className="text-2xl font-bold">${totalRev.toLocaleString()}</div><div className="text-xs text-emerald-600">${totalProfit.toLocaleString()} profit</div></div><DollarSign className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Batches</div><div className="text-2xl font-bold">{filtered.batches.length}</div><div className="text-xs text-muted-foreground">{(totalKg / 1000).toFixed(1)}t inventory</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-muted-foreground font-semibold">Revenue</div><div className="text-2xl font-bold">${totalRev.toLocaleString()}</div><div className="text-xs text-emerald-600">${totalProfit.toLocaleString()} profit</div></div><DollarSign className="h-6 w-6 text-emerald-600" /></CardContent></Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -124,7 +124,7 @@ export function ReportsSection() {
               {r.rows.length > 0 ? (
                 <div className="space-y-2">
                   {/* Scrollable data preview - 4 entries visible */}
-                  <div className="h-[280px] overflow-y-auto border border-border rounded-lg">
+                  <div className="h-[280px] overflow-y-auto border-border rounded-lg">
                     <div className="divide-y">
                       {r.title === "Batches report" && r.rows.map((batch: Row) => {
                         const isOutgoing = batch.status === "dispatched" || batch.status === "completed";
@@ -227,7 +227,7 @@ export function ReportsSection() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-border rounded-lg">
+                <div className="text-center py-8 text-sm text-muted-foreground border-dashed border-border rounded-lg">
                   Nothing to show for this period.
                 </div>
               )}

@@ -387,7 +387,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
             </div>
 
             {qtyNum > 0 && priceNum > 0 && (
-              <div className="rounded-lg border bg-muted/30 p-3 text-xs space-y-1">
+              <div className="rounded-lg bg-muted/30 p-3 text-xs space-y-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">Revenue</span><span className="font-semibold tabular-nums">{money(total, currency)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Priced at</span><span className="tabular-nums">{money(priceNum, currency)}/kg · {money(pricePerKgToPerMan(priceNum), currency)}/man ({KG_PER_MAN}kg)</span></div>
               </div>
@@ -397,7 +397,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
 
         {step === "invoice" && (
           <div className="py-4 space-y-3">
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-start gap-3">
+            <div className="rounded-lg border-emerald-500/30 bg-emerald-500/10 p-4 flex items-start gap-3">
               <FileText className="h-5 w-5 text-emerald-600 mt-0.5" />
               <div>
                 <div className="font-semibold text-sm">Invoice {invoiceNumber} generated</div>
@@ -413,7 +413,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
             {!dispatchId ? (
               <p className="text-sm text-muted-foreground">Ready to submit the dispatch request — sent to the buyer for confirmation before you finalize it.</p>
             ) : !buyerConfirmed ? (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
+              <div className="rounded-lg border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
                 <Truck className="h-5 w-5 text-amber-600 mt-0.5" />
                 <div>
                   <div className="font-semibold text-sm">Dispatch {dispatchNumber} sent to buyer</div>
@@ -423,7 +423,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-start gap-3">
+              <div className="rounded-lg border-emerald-500/30 bg-emerald-500/10 p-4 flex items-start gap-3">
                 <UserCheck className="h-5 w-5 text-emerald-600 mt-0.5" />
                 <div>
                   <div className="font-semibold text-sm">Buyer confirmation recorded</div>
@@ -436,7 +436,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
 
         {step === "payment" && (
           <div className="py-2 space-y-3">
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs">
+            <div className="rounded-lg border-emerald-500/30 bg-emerald-500/10 p-3 text-xs">
               Dispatch {dispatchNumber} approved — stock deducted. Upload the payment receipt screenshot to record payment.
             </div>
             <div>
@@ -451,7 +451,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
             </div>
 
             {extracted && (
-              <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-xs">
+              <div className="rounded-lg bg-muted/30 p-3 space-y-2 text-xs">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1"><ScanLine className="h-3 w-3" /> Extracted from receipt (OCR — not editable)</div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Payment ID</span><span className="font-mono">{extracted.paymentId ?? "not detected"}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className={`font-semibold ${!extracted.amount ? "text-red-600" : ""}`}>{extracted.amount ? money(extracted.amount, currency) : "not detected"}</span></div>
@@ -461,7 +461,7 @@ export function DispatchSaleWizard({ open, onOpenChange, onDone, resumeDispatch 
             )}
 
             {ocrFailed && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+              <div className="rounded-lg border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
                 <div className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
                   <ScanLine className="h-3 w-3" /> Couldn&apos;t read this automatically — enter it manually
                 </div>

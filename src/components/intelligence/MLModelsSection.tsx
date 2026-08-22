@@ -52,34 +52,34 @@ export function MLModelsSection() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Accuracy</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Accuracy</div>
                   <div className="text-2xl font-bold text-emerald-600">{(m.accuracy * 100).toFixed(1)}%</div>
                   <Progress value={m.accuracy * 100} className="h-1.5 mt-1" />
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Avg confidence</div>
-                  <div className="text-2xl font-bold text-slate-900">{(m.confidence * 100).toFixed(1)}%</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Avg confidence</div>
+                  <div className="text-2xl font-bold text-foreground">{(m.confidence * 100).toFixed(1)}%</div>
                   <Progress value={m.confidence * 100} className="h-1.5 mt-1" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 text-xs">
-                <div className="flex items-center gap-2 text-slate-600"><Database className="h-3.5 w-3.5" />{m.samples} samples</div>
-                <div className="flex items-center gap-2 text-slate-600"><Activity className="h-3.5 w-3.5" />{m.type}</div>
-                <div className="flex items-center gap-2 text-slate-600"><GitBranch className="h-3.5 w-3.5" />{new Date(m.last_trained).toLocaleDateString()}</div>
+                <div className="flex items-center gap-2 text-muted-foreground"><Database className="h-3.5 w-3.5" />{m.samples} samples</div>
+                <div className="flex items-center gap-2 text-muted-foreground"><Activity className="h-3.5 w-3.5" />{m.type}</div>
+                <div className="flex items-center gap-2 text-muted-foreground"><GitBranch className="h-3.5 w-3.5" />{new Date(m.last_trained).toLocaleDateString()}</div>
               </div>
               <div>
-                <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Features</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Features</div>
                 <div className="flex flex-wrap gap-1">
                   {m.features.map((f: string) => (
-                    <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{f}</span>
+                    <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground">{f}</span>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Output classes</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Output classes</div>
                 <div className="flex flex-wrap gap-1">
                   {m.classes.map((c: string) => (
-                    <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">{c}</span>
+                    <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border-emerald-100">{c}</span>
                   ))}
                 </div>
               </div>

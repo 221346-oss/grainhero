@@ -26,7 +26,7 @@ export function PlatformQueryForm() {
   });
 
   return (
-    <Card className="border-slate-200">
+    <Card className="border-border/40">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Contact platform support</CardTitle>
         <CardDescription>Send a question or issue directly to the GrainHero super admin team.</CardDescription>

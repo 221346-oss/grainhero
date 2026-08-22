@@ -148,7 +148,7 @@ export function FieldIncidentsSection() {
       ) : (
         <div className="space-y-3">
           {(incidents as any[]).map((i) => (
-            <div key={i.id} className="bg-muted/30 border border-border rounded-lg p-4">
+            <div key={i.id} className="bg-muted/30 border-border rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <Flag className="w-5 h-5 mt-0.5 shrink-0 text-amber-500" />
                 <div className="flex-1 min-w-0">

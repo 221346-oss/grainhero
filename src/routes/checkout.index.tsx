@@ -360,7 +360,7 @@ function CheckoutPage() {
           <p className="text-muted-foreground mt-2">Step {step + 1} of 4 — {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.</p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur p-3 shadow-sm">
+        <div className="rounded-2xl border-border bg-card/80 backdrop-blur p-3 shadow-sm">
           <div className="grid grid-cols-4 gap-2">
             {stepMeta.map((s, i) => {
               const Icon = s.icon;
@@ -448,13 +448,13 @@ function CheckoutPage() {
                           </div>
                           <CardDescription className="text-xs">{p.description}</CardDescription>
                           <div className="pt-2">
-                            <div className="text-2xl font-bold text-slate-900">{p.priceFrontend}</div>
+                            <div className="text-2xl font-bold text-foreground">{p.priceFrontend}</div>
                           </div>
                         </CardHeader>
                         <CardContent>
                           <ul className="space-y-1.5 text-xs">
                             {p.features.slice(0, 5).map((f: string) => (
-                              <li key={f} className="flex items-start gap-2 text-slate-700">
+                              <li key={f} className="flex items-start gap-2 text-foreground">
                                 <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
                                 {f}
                               </li>
@@ -479,7 +479,7 @@ function CheckoutPage() {
                         className="w-20 h-9 px-2 rounded border border-input bg-background text-foreground text-sm text-center"
                       />
                       <Button type="button" variant="outline" size="sm" onClick={() => setIotQuantity(Math.min(50, iotQuantity + 1))}>+</Button>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         = Rs. {(checkoutTotals?.iotTotal ?? iotQuantity * 7000).toLocaleString()}
                       </span>
                     </div>
@@ -491,21 +491,21 @@ function CheckoutPage() {
                   <CardContent className="p-6">
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Monthly subscription</span>
+                        <span className="text-muted-foreground">Monthly subscription</span>
                         <span className="font-medium">Rs. {planData?.price.toLocaleString()}/mo</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">IoT setup (one-time)</span>
+                        <span className="text-muted-foreground">IoT setup (one-time)</span>
                         <span className="font-medium">Rs. {(iotQuantity * 7000).toLocaleString()}</span>
                       </div>
                       <Separator className="bg-slate-300" />
                       <div className="flex justify-between items-baseline">
-                        <span className="text-base font-semibold text-slate-900">Total due today</span>
+                        <span className="text-base font-semibold text-foreground">Total due today</span>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-emerald-700">
                             Rs. {((planData?.price ?? 0) + iotQuantity * 7000).toLocaleString()}
                           </div>
-                          <div className="text-xs text-slate-500 mt-0.5">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             Then Rs. {planData?.price.toLocaleString()}/month
                           </div>
                         </div>
@@ -548,7 +548,7 @@ function CheckoutPage() {
                     <div>
                       <Label htmlFor="customer-email">Email *</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input 
                           id="customer-email" 
                           type="email" 
@@ -571,7 +571,7 @@ function CheckoutPage() {
                       )}
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="customer-password">Password * <span className="text-slate-400 font-normal text-xs">(min. 8 characters)</span></Label>
+                      <Label htmlFor="customer-password">Password * <span className="text-muted-foreground font-normal text-xs">(min. 8 characters)</span></Label>
                       <div className="relative">
                         <Input
                           id="customer-password"
@@ -723,7 +723,7 @@ function CheckoutPage() {
                     </div>
                   )}
                   {checkoutTotals && (
-                    <div className="rounded-lg border border-emerald-300 dark:border-emerald-800 bg-card p-3">
+                    <div className="rounded-2xl border-emerald-300 dark:border-emerald-800 bg-card p-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Plan (first month)</span>
                         <span className="font-medium">Rs. {checkoutTotals.monthlyPrice.toLocaleString()}</span>
@@ -748,7 +748,7 @@ function CheckoutPage() {
                   </Button>
                   <p className="text-[11px] text-muted-foreground text-center">You'll be redirected to Stripe's secure checkout. No charges until you confirm.</p>
                   {!canPay && missingReasons.length > 0 && (
-                    <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-900 dark:text-amber-300">
+                    <div className="rounded-lg border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-900 dark:text-amber-300">
                       <p className="font-semibold mb-1">Complete these to enable payment:</p>
                       <ul className="list-disc pl-4 space-y-0.5">
                         {missingReasons.map((r) => (<li key={r}>{r}</li>))}

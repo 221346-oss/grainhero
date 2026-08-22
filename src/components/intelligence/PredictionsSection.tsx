@@ -94,7 +94,7 @@ function TenantView() {
           <Card key={s.label}>
             <CardContent className="p-4 flex items-center justify-between">
               <div>
-                <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{s.label}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{s.label}</div>
                 <div className={`text-2xl font-bold ${s.cls}`}>{s.value}</div>
               </div>
               <s.icon className={`h-6 w-6 ${s.cls}`} />
@@ -110,7 +110,7 @@ function TenantView() {
             <CardDescription>{filtered.length} of {preds.length} silos scored</CardDescription>
           </div>
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search silo, grain, level..." className="pl-8 w-64" />
           </div>
         </CardHeader>
@@ -120,26 +120,26 @@ function TenantView() {
               <div key={p.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Link to="/silos/$siloId" params={{ siloId: p.id }} className="font-semibold text-slate-900 hover:text-emerald-600 truncate">{p.name ?? p.silo_id}</Link>
+                    <Link to="/silos/$siloId" params={{ siloId: p.id }} className="font-semibold text-foreground hover:text-emerald-600 truncate">{p.name ?? p.silo_id}</Link>
                     {p.grain_type && <Badge variant="outline" className="text-[10px]">{p.grain_type}</Badge>}
                     <Badge className={levelBadge(p.level) + " text-[10px] uppercase"}>{p.level}</Badge>
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="mt-1 text-xs text-muted-foreground">
                     {p.quantity_kg.toLocaleString()} kg on hand · confidence {(p.confidence * 100).toFixed(0)}% ·{" "}
                     {p.last_reading_at ? `updated ${new Date(p.last_reading_at).toLocaleString()}` : "no recent readings"}
                   </div>
                   {p.factors.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {p.factors.slice(0, 4).map((f: string, i: number) => (
-                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{f}</span>
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground">{f}</span>
                       ))}
                     </div>
                   )}
                 </div>
                 <div className="w-full sm:w-52 space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-500">Risk score</span>
-                    <span className="font-semibold text-slate-900">{p.score}%</span>
+                    <span className="text-muted-foreground">Risk score</span>
+                    <span className="font-semibold text-foreground">{p.score}%</span>
                   </div>
                   <Progress value={p.score} className="h-2" />
                   <Button size="sm" variant="outline" className="w-full mt-2 gap-1.5"
@@ -153,7 +153,7 @@ function TenantView() {
               </div>
             ))}
             {filtered.length === 0 && (
-              <div className="p-10 text-center text-sm text-slate-500">No predictions yet. Add silos and connect sensors.</div>
+              <div className="p-10 text-center text-sm text-muted-foreground">No predictions yet. Add silos and connect sensors.</div>
             )}
           </div>
         </CardContent>
@@ -165,11 +165,11 @@ function TenantView() {
             <DialogTitle className="flex items-center gap-2">AI Spoilage Insight</DialogTitle>
             <DialogDescription>{insight?.silo_name} — risk level <Badge className={levelBadge(insight?.risk_level ?? "low")}>{insight?.risk_level}</Badge></DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap">{insight?.insight}</p>
+          <p className="text-sm text-foreground whitespace-pre-wrap">{insight?.insight}</p>
           {insight?.recommendations && insight.recommendations.length > 0 && (
             <div className="mt-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Recommendations</p>
-              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-700">
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Recommendations</p>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-foreground">
                 {insight.recommendations.map((r, i) => <li key={i}>{r}</li>)}
               </ul>
             </div>

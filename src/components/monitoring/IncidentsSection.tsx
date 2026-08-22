@@ -424,7 +424,7 @@ export function IncidentsSection() {
   return (
     <div className="space-y-4">
       {/* Tab Navigation */}
-      <div className="border-b border-border">
+      <div className="border-b border-border/40">
         <div className="flex items-center gap-1 overflow-x-auto">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;

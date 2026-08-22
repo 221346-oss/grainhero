@@ -736,8 +736,8 @@ export function SupportTicketsCard({
       {/* New Ticket popup — Dialog instead of inline/new page */}
       <Dialog open={showNewTicket} onOpenChange={(o) => !o && setShowNewTicket(false)}>
         <DialogContent className="w-full max-w-lg p-0 overflow-hidden">
-          <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-200">
-            <DialogTitle className="text-sm font-bold text-slate-900">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/40">
+            <DialogTitle className="text-sm font-bold text-foreground">
               New support ticket
             </DialogTitle>
           </DialogHeader>

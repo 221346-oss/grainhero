@@ -148,7 +148,7 @@ export function WelcomeBanner({ name }: { name?: string }) {
           className="overflow-hidden"
         >
           <div className="py-3">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground dark:text-slate-100">
               {typed}
               <span className="inline-block w-[2px] h-6 sm:h-7 align-middle bg-emerald-500 ml-1 animate-pulse" />
             </h1>

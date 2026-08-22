@@ -85,34 +85,34 @@ export function AnalyticsSection() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
-            <div><div className="text-xs uppercase text-slate-500 font-semibold">Total inventory</div><div className="text-2xl font-bold text-slate-900">{fmtKg(t?.totalKg ?? 0)}</div><div className="text-xs text-slate-500 mt-1">{t?.batches ?? 0} batches</div></div>
+            <div><div className="text-xs uppercase text-muted-foreground font-semibold">Total inventory</div><div className="text-2xl font-bold text-foreground">{fmtKg(t?.totalKg ?? 0)}</div><div className="text-xs text-muted-foreground mt-1">{t?.batches ?? 0} batches</div></div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
-            <div><div className="text-xs uppercase text-slate-500 font-semibold">Revenue</div><div className="text-2xl font-bold text-slate-900">{fmtMoney(t?.totalRevenue ?? 0)}</div><div className="text-xs text-emerald-600 mt-1">{((t?.margin ?? 0) * 100).toFixed(1)}% margin</div></div>
+            <div><div className="text-xs uppercase text-muted-foreground font-semibold">Revenue</div><div className="text-2xl font-bold text-foreground">{fmtMoney(t?.totalRevenue ?? 0)}</div><div className="text-xs text-emerald-600 mt-1">{((t?.margin ?? 0) * 100).toFixed(1)}% margin</div></div>
             <DollarSign className="h-6 w-6 text-emerald-600" />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
-            <div><div className="text-xs uppercase text-slate-500 font-semibold">Capacity used</div><div className="text-2xl font-bold text-slate-900">{((t?.utilization ?? 0) * 100).toFixed(0)}%</div>
+            <div><div className="text-xs uppercase text-muted-foreground font-semibold">Capacity used</div><div className="text-2xl font-bold text-foreground">{((t?.utilization ?? 0) * 100).toFixed(0)}%</div>
               <Progress value={(t?.utilization ?? 0) * 100} className="h-1.5 mt-2" /></div>
             <TrendingUp className="h-6 w-6 text-emerald-600" />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center justify-between">
-            <div><div className="text-xs uppercase text-slate-500 font-semibold">Spoilage rate</div><div className="text-2xl font-bold text-red-600">{((t?.spoilageRate ?? 0) * 100).toFixed(1)}%</div><div className="text-xs text-slate-500 mt-1">{t?.spoiled ?? 0} affected · {t?.openAlerts ?? 0} open alerts</div></div>
+            <div><div className="text-xs uppercase text-muted-foreground font-semibold">Spoilage rate</div><div className="text-2xl font-bold text-red-600">{((t?.spoilageRate ?? 0) * 100).toFixed(1)}%</div><div className="text-xs text-muted-foreground mt-1">{t?.spoiled ?? 0} affected · {t?.openAlerts ?? 0} open alerts</div></div>
             <AlertTriangle className="h-6 w-6 text-red-600" />
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card><CardContent className="p-4 flex items-center gap-3"><Thermometer className="h-5 w-5 text-orange-600" /><div><div className="text-xs uppercase text-slate-500 font-semibold">Avg temperature</div><div className="text-xl font-bold">{(env?.avgTemp ?? 0).toFixed(1)}°C</div></div></CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-3"><Droplet className="h-5 w-5 text-blue-600" /><div><div className="text-xs uppercase text-slate-500 font-semibold">Avg humidity</div><div className="text-xl font-bold">{(env?.avgHum ?? 0).toFixed(1)}%</div></div></CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-3"><Wheat className="h-5 w-5 text-amber-600" /><div><div className="text-xs uppercase text-slate-500 font-semibold">Avg moisture</div><div className="text-xl font-bold">{(env?.avgMoist ?? 0).toFixed(1)}%</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><Thermometer className="h-5 w-5 text-orange-600" /><div><div className="text-xs uppercase text-muted-foreground font-semibold">Avg temperature</div><div className="text-xl font-bold">{(env?.avgTemp ?? 0).toFixed(1)}°C</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><Droplet className="h-5 w-5 text-blue-600" /><div><div className="text-xs uppercase text-muted-foreground font-semibold">Avg humidity</div><div className="text-xl font-bold">{(env?.avgHum ?? 0).toFixed(1)}%</div></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><Wheat className="h-5 w-5 text-amber-600" /><div><div className="text-xs uppercase text-muted-foreground font-semibold">Avg moisture</div><div className="text-xl font-bold">{(env?.avgMoist ?? 0).toFixed(1)}%</div></div></CardContent></Card>
       </div>
 
       <Card>
@@ -125,7 +125,7 @@ export function AnalyticsSection() {
               </div>
             ))}
           </div>
-          <div className="flex justify-between text-[10px] text-slate-400 mt-2">
+          <div className="flex justify-between text-[10px] text-muted-foreground mt-2">
             <span>{trend[0]?.date}</span><span>{trend[trend.length - 1]?.date}</span>
           </div>
         </CardContent>
@@ -139,12 +139,12 @@ export function AnalyticsSection() {
               const max = Math.max(1, ...byGrain.map((x: any) => x.kg));
               return (
                 <div key={g.grain}>
-                  <div className="flex justify-between text-sm mb-1"><span className="capitalize font-medium">{g.grain}</span><span className="text-slate-500">{fmtKg(g.kg)} · {fmtMoney(g.revenue)}</span></div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(g.kg / max) * 100}%` }} /></div>
+                  <div className="flex justify-between text-sm mb-1"><span className="capitalize font-medium">{g.grain}</span><span className="text-muted-foreground">{fmtKg(g.kg)} · {fmtMoney(g.revenue)}</span></div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(g.kg / max) * 100}%` }} /></div>
                 </div>
               );
             })}
-            {byGrain.length === 0 && <div className="text-sm text-slate-500 text-center py-6">No batches yet.</div>}
+            {byGrain.length === 0 && <div className="text-sm text-muted-foreground text-center py-6">No batches yet.</div>}
           </CardContent>
         </Card>
 
@@ -152,18 +152,18 @@ export function AnalyticsSection() {
           <CardHeader><CardTitle>Alerts &amp; status</CardTitle><CardDescription>Distribution across priorities and batch states</CardDescription></CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <div className="text-xs uppercase text-slate-500 font-semibold mb-2">Alerts by priority</div>
+              <div className="text-xs uppercase text-muted-foreground font-semibold mb-2">Alerts by priority</div>
               <div className="grid grid-cols-4 gap-2">
                 {alertsByPriority.map((a: any) => (
-                  <div key={a.priority} className="text-center p-2 rounded border border-slate-100">
-                    <div className="text-lg font-bold text-slate-900">{a.count}</div>
-                    <div className="text-[10px] uppercase text-slate-500">{a.priority}</div>
+                  <div key={a.priority} className="text-center p-2 rounded border border-border/40">
+                    <div className="text-lg font-bold text-foreground">{a.count}</div>
+                    <div className="text-[10px] uppercase text-muted-foreground">{a.priority}</div>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <div className="text-xs uppercase text-slate-500 font-semibold mb-2">Batch status</div>
+              <div className="text-xs uppercase text-muted-foreground font-semibold mb-2">Batch status</div>
               <div className="flex flex-wrap gap-2">
                 {byStatus.map((s: any) => (
                   <Badge key={s.status} variant="outline" className="text-xs">{s.status}: {s.count}</Badge>
@@ -176,7 +176,7 @@ export function AnalyticsSection() {
 
       {/* Data Visualization — merged from the former standalone page */}
       {!isSuperAdmin && (
-        <div className="pt-2 border-t border-border">
+        <div className="pt-2 border-t border-border/40">
           <DataVisualizationPanel />
         </div>
       )}

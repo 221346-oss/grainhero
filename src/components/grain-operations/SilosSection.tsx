@@ -316,7 +316,7 @@ export function SilosSection() {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search silo name…" className="pl-9 h-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -404,7 +404,7 @@ export function SilosSection() {
             <div>
               <Label>Name</Label>
               {form.id && !canRename ? (
-                <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">
+                <div className="h-9 flex items-center px-3 rounded-md bg-muted text-sm text-muted-foreground">
                   {form.name || "—"}
                 </div>
               ) : (
@@ -593,7 +593,7 @@ export function SilosSection() {
               <strong>{typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}</strong> of them.
             </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-600 px-1">
+          <p className="text-sm text-muted-foreground px-1">
             To add more silos, upgrade to a higher plan. Visit the plan management page to request an upgrade.
           </p>
           <DialogFooter className="mt-2 flex gap-2">
@@ -614,8 +614,8 @@ export function SilosSection() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 items-start">
-      <span className="text-xs uppercase tracking-wider text-slate-500">{label}</span>
-      <span className="text-slate-800 text-right">{children}</span>
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="text-foreground text-right">{children}</span>
     </div>
   );
 }

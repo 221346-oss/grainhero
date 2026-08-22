@@ -67,7 +67,7 @@ export function AlertsFunnel() {
   ];
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+    <div className="bg-card border-border rounded-2xl p-6 space-y-5">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
         Alert Pipeline
       </p>

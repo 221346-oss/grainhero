@@ -280,7 +280,7 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
           </button>
         </div>
         {open && suggestions.length > 0 && (
-          <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-lg max-h-72 overflow-auto">
+          <div className="absolute z-20 mt-1 w-full rounded-md bg-popover text-popover-foreground shadow-lg max-h-72 overflow-auto">
             {suggestions.map((s) => (
               <button
                 key={s.placeId}
@@ -303,7 +303,7 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
         )}
       </div>
 
-      <div className="relative rounded-lg overflow-hidden border" style={{ height: 300 }}>
+      <div className="relative rounded-lg overflow-hidden" style={{ height: 300 }}>
         <div ref={mapEl} className="absolute inset-0 bg-muted" />
         {status === "loading" && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted/60 text-sm text-muted-foreground">

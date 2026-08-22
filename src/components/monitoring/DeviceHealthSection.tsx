@@ -26,32 +26,32 @@ export function DeviceHealthSection() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="bg-muted/30 border border-border rounded-lg p-3">
+        <div className="bg-muted/30 border-border rounded-lg p-3">
           <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Uptime</div>
           <div className="text-xl font-bold text-emerald-400 mt-1">{uptime.toFixed(1)}%</div>
         </div>
-        <div className="bg-muted/30 border border-border rounded-lg p-3 flex items-center gap-2">
+        <div className="bg-muted/30 border-border rounded-lg p-3 flex items-center gap-2">
           <div className="flex-1">
             <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Online</div>
             <div className="text-xl font-bold text-foreground mt-1">{totals.online}</div>
           </div>
           <Wifi className="w-5 h-5 text-emerald-400" />
         </div>
-        <div className="bg-muted/30 border border-border rounded-lg p-3 flex items-center gap-2">
+        <div className="bg-muted/30 border-border rounded-lg p-3 flex items-center gap-2">
           <div className="flex-1">
             <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Offline</div>
             <div className="text-xl font-bold text-red-400 mt-1">{totals.offline}</div>
           </div>
           <WifiOff className="w-5 h-5 text-red-400" />
         </div>
-        <div className="bg-muted/30 border border-border rounded-lg p-3 flex items-center gap-2">
+        <div className="bg-muted/30 border-border rounded-lg p-3 flex items-center gap-2">
           <div className="flex-1">
             <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Low Batt</div>
             <div className="text-xl font-bold text-amber-400 mt-1">{totals.lowBattery}</div>
           </div>
           <Battery className="w-5 h-5 text-amber-400" />
         </div>
-        <div className="bg-muted/30 border border-border rounded-lg p-3 flex items-center gap-2">
+        <div className="bg-muted/30 border-border rounded-lg p-3 flex items-center gap-2">
           <div className="flex-1">
             <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Weak Signal</div>
             <div className="text-xl font-bold text-amber-400 mt-1">{totals.weakSignal}</div>
@@ -60,8 +60,8 @@ export function DeviceHealthSection() {
         </div>
       </div>
 
-      <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-border">
+      <div className="bg-muted/30 border-border rounded-lg overflow-hidden">
+        <div className="p-4 border-b border-border/40">
           <h3 className="text-sm font-semibold text-foreground">Devices</h3>
           <p className="text-xs text-muted-foreground mt-0.5">{devices.length} sensors</p>
         </div>

@@ -105,7 +105,7 @@ export function PlanManagementSection() {
           <CardDescription>Auto-approve upgrades so they apply without super-admin review.</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-between">
-          <div className="text-sm text-slate-700">Automatically apply upgrade requests</div>
+          <div className="text-sm text-foreground">Automatically apply upgrade requests</div>
           <Switch checked={autoUpgrade} onCheckedChange={(v) => autoMut.mutate(v)} disabled={autoMut.isPending} />
         </CardContent>
       </Card>
@@ -120,17 +120,17 @@ export function PlanManagementSection() {
                   <CardTitle className="text-base">{p.name}</CardTitle>
                   {isCurrent && <Badge className="bg-emerald-600 text-white">Current</Badge>}
                 </div>
-                <div className="text-2xl font-bold text-slate-900 mt-1">
+                <div className="text-2xl font-bold text-foreground mt-1">
                   ${(p.price_cents / 100).toFixed(0)}
-                  <span className="text-xs font-normal text-slate-500">/mo</span>
+                  <span className="text-xs font-normal text-muted-foreground">/mo</span>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-slate-700">
+              <CardContent className="space-y-2 text-sm text-foreground">
                 {(["max_users", "max_silos", "max_batches", "max_sensors"] as PlanNumericFeature[]).map((feature) => {
                   const gate = isCurrent ? usageGates[feature]?.data : undefined;
                   return (
                     <div key={feature} className="flex justify-between">
-                      <span className="text-slate-500">{USAGE_LABELS[feature]}</span>
+                      <span className="text-muted-foreground">{USAGE_LABELS[feature]}</span>
                       {isCurrent && gate ? (
                         <span className={gate.used != null && Number(gate.limit) > 0 && gate.used >= Number(gate.limit) ? "font-semibold text-amber-600" : ""}>
                           {gate.used ?? "—"} / {p[feature]}
@@ -171,7 +171,7 @@ export function PlanManagementSection() {
 
       <AdminDataCard title="Request history" description={`${requests.length} total`}>
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+          <thead className="bg-muted/20 text-muted-foreground text-xs uppercase tracking-wider">
             <tr>
               <th className="text-left px-4 py-2 font-medium">Requested</th>
               <th className="text-left px-2 py-2 font-medium">From → To</th>
@@ -182,11 +182,11 @@ export function PlanManagementSection() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {requests.map((r: any) => (
-              <tr key={r.id} className="hover:bg-slate-50">
-                <td className="px-4 py-2 text-slate-600 whitespace-nowrap">
+              <tr key={r.id} className="hover:bg-muted/20">
+                <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">
                   {new Date(r.created_at).toLocaleDateString()}
                 </td>
-                <td className="px-2 py-2 text-slate-700">
+                <td className="px-2 py-2 text-foreground">
                   {r.current_plan ?? "—"} → <span className="font-medium">{r.requested_plan}</span>
                 </td>
                 <td className="px-2 py-2">
@@ -201,14 +201,14 @@ export function PlanManagementSection() {
                   {r.status === "pending" ? (
                     <Button size="sm" variant="outline" onClick={() => cancelMut.mutate(r.id)}>Cancel</Button>
                   ) : (
-                    <span className="text-xs text-slate-400">—</span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </td>
               </tr>
             ))}
             {requests.length === 0 && !reqQ.isLoading && (
               <tr>
-                <td colSpan={5} className="text-center text-slate-400 py-8">No requests yet</td>
+                <td colSpan={5} className="text-center text-muted-foreground py-8">No requests yet</td>
               </tr>
             )}
           </tbody>

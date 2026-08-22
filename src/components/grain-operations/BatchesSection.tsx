@@ -587,7 +587,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
 
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -654,7 +654,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-xl border bg-card/60 overflow-hidden">
+        <div className="rounded-2xl bg-card/60 overflow-hidden">
           {/* Fixed height container for 4 entries with vertical scroll */}
           <div className="h-[280px] overflow-y-auto">
             <Table className="text-xs">
@@ -1049,11 +1049,11 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                     required
                   />
                 ) : suppliersQ.isLoading ? (
-                  <div className="h-9 flex items-center gap-2 rounded-md border border-input px-3 text-xs text-muted-foreground">
+                  <div className="h-9 flex items-center gap-2 rounded-md border-input px-3 text-xs text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading suppliers…
                   </div>
                 ) : suppliersQ.isError ? (
-                  <div className="h-9 flex items-center gap-2 rounded-md border border-red-500/40 bg-red-500/5 px-3 text-xs text-red-600">
+                  <div className="h-9 flex items-center gap-2 rounded-md border-red-500/40 bg-red-500/5 px-3 text-xs text-red-600">
                     <span className="flex-1">Failed to load suppliers</span>
                     <button
                       type="button"
@@ -1068,7 +1068,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                     const options = suppliers.filter((s) => s.kind === form.source_kind);
                     if (options.length === 0) {
                       return (
-                        <div className="h-9 flex items-center gap-2 rounded-md border border-dashed border-input px-3 text-xs text-muted-foreground">
+                        <div className="h-9 flex items-center gap-2 rounded-md border-dashed border-input px-3 text-xs text-muted-foreground">
                           No {form.source_kind.replace("_", " ")} suppliers.
                           <Link to="/suppliers" className="text-emerald-600 underline">
                             Add one →
@@ -1467,8 +1467,8 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 items-start">
-      <span className="text-xs uppercase tracking-wider text-slate-500 pt-0.5">{label}</span>
-      <span className="text-slate-800 text-right min-w-0">{children}</span>
+      <span className="text-xs uppercase tracking-wider text-muted-foreground pt-0.5">{label}</span>
+      <span className="text-foreground text-right min-w-0">{children}</span>
     </div>
   );
 }

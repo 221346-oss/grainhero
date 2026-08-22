@@ -151,8 +151,8 @@ export function TicketSidePanel({
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col overflow-hidden">
           <SheetHeader className="px-5 pt-5 pb-3 border-b border-border/40 shrink-0">
-            <SheetTitle className="flex items-center gap-1.5 text-base font-bold text-slate-900 pr-8">
-              <Hash className="h-4 w-4 text-slate-500" />
+            <SheetTitle className="flex items-center gap-1.5 text-base font-bold text-foreground pr-8">
+              <Hash className="h-4 w-4 text-muted-foreground" />
               tickets
               {openCount > 0 && (
                 <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
@@ -161,7 +161,7 @@ export function TicketSidePanel({
               )}
             </SheetTitle>
             <div className="flex items-center justify-between mt-2">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 {isSuperAdmin
                   ? "Open incident tickets from all admins"
                   : "Your open incident tickets"}
@@ -183,7 +183,7 @@ export function TicketSidePanel({
           <div className="flex-1 overflow-hidden flex flex-col">
             {/* Inline form (admin only) */}
             {showForm && !isSuperAdmin && (
-              <div className="px-4 pt-4 pb-2 border-b border-slate-100 shrink-0">
+              <div className="px-4 pt-4 pb-2 border-b border-border/40 shrink-0">
                 <TicketCardForm
                   onSuccess={handleFormSuccess}
                   onCancel={() => setShowForm(false)}
@@ -194,15 +194,15 @@ export function TicketSidePanel({
             <ScrollArea className="flex-1">
               <div className="px-4 py-3 space-y-2">
                 {isLoading ? (
-                  <div className="py-10 text-center text-sm text-slate-400">Loading…</div>
+                  <div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>
                 ) : ticketsError ? (
                   <div className="py-6 text-center space-y-1">
                     <p className="text-sm font-medium text-red-600">Failed to load tickets</p>
-                    <p className="text-xs text-slate-500 px-4">{(ticketsError as Error).message}</p>
+                    <p className="text-xs text-muted-foreground px-4">{(ticketsError as Error).message}</p>
                   </div>
                 ) : tickets.length === 0 ? (
                   <div className="py-10 text-center space-y-2">
-                    <p className="text-sm text-slate-500">No open tickets</p>
+                    <p className="text-sm text-muted-foreground">No open tickets</p>
                     {!isSuperAdmin && (
                       <Button size="sm" variant="outline" onClick={() => setShowForm(true)} className="text-xs">
                         <Plus className="h-3.5 w-3.5 mr-1" />
@@ -226,7 +226,7 @@ export function TicketSidePanel({
             </ScrollArea>
 
             {isSuperAdmin && (
-              <div className="shrink-0 border-t border-slate-100 px-5 py-2.5">
+              <div className="shrink-0 border-t border-border/40 px-5 py-2.5">
                 <a
                   href="/platform/reporting?tab=tickets"
                   className="text-[11px] font-medium text-emerald-700 hover:text-emerald-800 block text-center"
@@ -276,11 +276,11 @@ function TicketListItem({
   onDiscuss: () => void;
 }) {
   return (
-    <div className="rounded-xl bg-card/50 transition-colors hover:bg-muted/30 p-3 space-y-1.5">
+    <div className="rounded-2xl bg-card/50 transition-colors hover:bg-muted/30 p-3 space-y-1.5">
       {/* Title row */}
       <div className="flex items-start justify-between gap-2">
         <button type="button" onClick={onClick} className="flex-1 min-w-0 text-left">
-          <p className="font-semibold text-sm text-slate-900 leading-snug truncate">
+          <p className="font-semibold text-sm text-foreground leading-snug truncate">
             {ticket.title}
           </p>
         </button>
@@ -295,7 +295,7 @@ function TicketListItem({
       </div>
 
       {/* Meta row */}
-      <div className="flex items-center gap-2 text-xs text-slate-500">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", PRIORITY_DOT[ticket.priority])} />
         <span className="truncate">
           {ticket.reporter_name}
@@ -306,7 +306,7 @@ function TicketListItem({
       </div>
 
       {isSuperAdmin && (ticket.admin_name || ticket.admin_email) && (
-        <p className="text-[11px] text-slate-400 truncate">
+        <p className="text-[11px] text-muted-foreground truncate">
           From: {ticket.admin_name ?? ticket.admin_email}
         </p>
       )}

@@ -110,7 +110,7 @@ export default function QRCodeDisplay({
                     alt={`QR Code for batch ${batchId}`}
                     width={250}
                     height={250}
-                    className="border rounded-lg shadow-sm mx-auto"
+                    className="rounded-lg shadow-sm mx-auto"
                   />
                   <p className="text-xs text-muted-foreground mt-2">
                     QR Code: {qrCode}

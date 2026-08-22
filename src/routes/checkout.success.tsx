@@ -218,8 +218,8 @@ function SuccessPage() {
               <div className="mx-auto h-14 w-14 rounded-full bg-red-100 flex items-center justify-center">
                 <PartyPopper className="h-7 w-7 text-red-500" />
               </div>
-              <h1 className="text-xl font-bold text-slate-900">Something went wrong</h1>
-              <p className="text-sm text-slate-600">{errorMsg}</p>
+              <h1 className="text-xl font-bold text-foreground">Something went wrong</h1>
+              <p className="text-sm text-muted-foreground">{errorMsg}</p>
               <Button
                 className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
                 onClick={() => navigate({ to: "/auth/login" })}
@@ -232,13 +232,13 @@ function SuccessPage() {
               <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center">
                 <CheckCircle2 className="h-7 w-7 text-emerald-600" />
               </div>
-              <h1 className="text-xl font-bold text-slate-900">Payment confirmed!</h1>
-              <p className="text-sm text-slate-600">Taking you to your dashboard…</p>
+              <h1 className="text-xl font-bold text-foreground">Payment confirmed!</h1>
+              <p className="text-sm text-muted-foreground">Taking you to your dashboard…</p>
             </>
           ) : (
             <>
               <Loader2 className="h-10 w-10 animate-spin text-emerald-600 mx-auto" />
-              <p className="text-sm font-medium text-slate-700">{statusMessages[status]}</p>
+              <p className="text-sm font-medium text-foreground">{statusMessages[status]}</p>
             </>
           )}
         </CardContent>

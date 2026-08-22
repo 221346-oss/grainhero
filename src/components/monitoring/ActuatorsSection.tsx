@@ -22,10 +22,10 @@ export function ActuatorsSection() {
           <p className="text-sm">No actuators registered.</p>
         </div>
       ) : (
-        <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
+        <div className="bg-muted/30 border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/40 border-b border-border">
+              <thead className="bg-muted/40 border-b border-border/40">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actuator</th>
                   <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>

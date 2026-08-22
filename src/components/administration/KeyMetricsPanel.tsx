@@ -25,7 +25,7 @@ export function KeyMetricsPanel({ stats }: KeyMetricsPanelProps) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+    <div className="bg-card border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
       <div className="flex justify-between items-start mb-6">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
           Key Metrics
